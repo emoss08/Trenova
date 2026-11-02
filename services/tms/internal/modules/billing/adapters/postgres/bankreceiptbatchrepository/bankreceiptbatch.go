@@ -127,7 +127,7 @@ func (r *repository) DistinctSources(
 	)
 }
 
-func sourceOptions(query string) *keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+func sourceOptions(query string) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
 	b := bankreceiptbatchdb.BankReceiptBatches
 	search := strings.TrimSpace(query)
 

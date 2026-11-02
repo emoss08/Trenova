@@ -324,6 +324,7 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIConnection":                                              "a connection of the EDI partner that carries it",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.EDIDocumentType":                                    "the document type an EDI message or communication profile is for",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfile":                                          "the field mapping of the EDI partner that carries it",
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile.Profile":                                    "the shipment tracking settings of the customer that carries it",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfileItem":                                      "one mapping of an EDI mapping profile",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.EDIMessageValidationError":                           "a validation error of the EDI message that carries it",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.EDITransactionSet":                                  "the X12 transaction set an EDI document type names",

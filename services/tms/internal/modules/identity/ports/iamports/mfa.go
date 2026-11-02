@@ -53,6 +53,7 @@ type MFAChallenge struct {
 	BusinessUnitID pulid.ID                `json:"businessUnitId"`
 	SwitchOrg      bool                    `json:"switchOrg"`
 	EmailAddress   string                  `json:"emailAddress"`
+	SessionEpoch   int64                   `json:"sessionEpoch"`
 	IssuedAt       int64                   `json:"issuedAt"`
 	ExpiresAt      int64                   `json:"expiresAt"`
 	Federation     *MFAChallengeFederation `json:"federation,omitempty"`

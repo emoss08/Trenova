@@ -4,6 +4,7 @@ package agentmemorydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -84,7 +85,7 @@ var memoriesRef = keel.Ref{Table: &memoriesTable}
 
 // MemoriesTable is the table of agentmemory.Memory.
 type MemoriesTable struct {
-	keel.Handle[*agentmemory.Memory]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -126,7 +127,7 @@ type MemoriesTable struct {
 
 // Memories references the agent_memories table.
 var Memories = &MemoriesTable{
-	Handle:            keel.Handle[*agentmemory.Memory]{Ref: &memoriesRef},
+	TableBase:         keel.TableBase{Ref: &memoriesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 2}}},
@@ -166,10 +167,10 @@ var Memories = &MemoriesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 36}},
 }
 
-// BuildMemories builds the handle of agent_memories for ref. Generated relation and alias methods call it.
+// BuildMemories builds the table of agent_memories for ref. Generated relation and alias methods call it.
 func BuildMemories(r *keel.Ref) *MemoriesTable {
 	return &MemoriesTable{
-		Handle:            keel.Handle[*agentmemory.Memory]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -221,6 +222,365 @@ func (t *MemoriesTable) As(alias string) *MemoriesTable {
 // Get returns the agent_memories row with the given key, or keel.ErrNotFound.
 func (t *MemoriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentmemory.Memory, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MemoriesQuery is a query over agentmemory.Memory.
+type MemoriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentmemory.Memory] = (*MemoriesTable)(nil)
+
+var _ keel.Query[*agentmemory.Memory] = (*MemoriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MemoriesTable) Query() keel.Query[*agentmemory.Memory] {
+	return &MemoriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MemoriesQuery.Where.
+func (t *MemoriesTable) Where(ps ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MemoriesQuery.Pick.
+func (t *MemoriesTable) Pick(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MemoriesQuery.Load.
+func (t *MemoriesTable) Load(ls ...keel.Loader) keel.Query[*agentmemory.Memory] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MemoriesQuery.Omit.
+func (t *MemoriesTable) Omit(cols ...keel.Column) keel.Query[*agentmemory.Memory] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MemoriesQuery.Order.
+func (t *MemoriesTable) Order(os ...keel.Order) keel.Query[*agentmemory.Memory] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MemoriesQuery.Limit.
+func (t *MemoriesTable) Limit(n int) keel.Query[*agentmemory.Memory] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MemoriesQuery.Group.
+func (t *MemoriesTable) Group(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MemoriesQuery.GroupingSets.
+func (t *MemoriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MemoriesQuery.Rollup.
+func (t *MemoriesTable) Rollup(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MemoriesQuery.Cube.
+func (t *MemoriesTable) Cube(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MemoriesQuery.AllTenants.
+func (t *MemoriesTable) AllTenants() keel.Query[*agentmemory.Memory] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MemoriesQuery.Join.
+func (t *MemoriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MemoriesQuery.LeftJoin.
+func (t *MemoriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MemoriesQuery.LeftJoinLateral.
+func (t *MemoriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.Memory] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MemoriesQuery.JoinLateral.
+func (t *MemoriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.Memory] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MemoriesQuery.Lock.
+func (t *MemoriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentmemory.Memory] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MemoriesQuery.DistinctOn.
+func (t *MemoriesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MemoriesQuery.Cache.
+func (t *MemoriesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentmemory.Memory] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MemoriesQuery.LoadStrategy.
+func (t *MemoriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentmemory.Memory] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MemoriesQuery.With.
+func (t *MemoriesTable) With(ctes ...*keel.CTETable) keel.Query[*agentmemory.Memory] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MemoriesQuery.Compute.
+func (t *MemoriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentmemory.Memory] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MemoriesTable) Create(ctx context.Context, db *keel.DB, row *agentmemory.Memory) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MemoriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MemoriesTable) Save(ctx context.Context, db *keel.DB, row *agentmemory.Memory, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MemoriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentmemory.Memory, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MemoriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentmemory.Memory) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MemoriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MemoriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MemoriesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MemoriesQuery) Where(ps ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MemoriesQuery) Pick(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MemoriesQuery) Omit(cols ...keel.Column) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MemoriesQuery) Load(ls ...keel.Loader) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MemoriesQuery) Order(os ...keel.Order) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MemoriesQuery) Distinct() keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MemoriesQuery) Group(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MemoriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MemoriesQuery) Rollup(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MemoriesQuery) Cube(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MemoriesQuery) Window(name string, w keel.Window) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MemoriesQuery) Having(ps ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MemoriesQuery) Limit(n int) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MemoriesQuery) Offset(n int) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MemoriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MemoriesQuery) AllTenants() keel.Query[*agentmemory.Memory] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MemoriesQuery) CustomPlan() keel.Query[*agentmemory.Memory] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MemoriesQuery) Timeout(d time.Duration) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MemoriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MemoriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MemoriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MemoriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MemoriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MemoriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MemoriesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MemoriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MemoriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentmemory.Memory] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MemoriesQuery) Clone() keel.Query[*agentmemory.Memory] {
+	return &MemoriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MemoriesQuery) One(ctx context.Context, db *keel.DB) (*agentmemory.Memory, error) {
+	return keel.One[*agentmemory.Memory](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MemoriesQuery) First(ctx context.Context, db *keel.DB) (*agentmemory.Memory, error) {
+	return keel.First[*agentmemory.Memory](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MemoriesQuery) List(ctx context.Context, db *keel.DB) ([]*agentmemory.Memory, error) {
+	return keel.List[*agentmemory.Memory](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MemoriesQuery) All(ctx context.Context, db *keel.DB) ([]*agentmemory.Memory, error) {
+	return keel.All[*agentmemory.Memory](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MemoriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentmemory.Memory, error) {
+	return keel.UpdateReturning[*agentmemory.Memory](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MemoriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentmemory.Memory], error) {
+	return keel.PageOf[*agentmemory.Memory](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MemoriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentmemory.Memory) error) error {
+	return keel.Each[*agentmemory.Memory](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMemory() unsafe.Pointer { return unsafe.Pointer(new(agentmemory.Memory)) }
@@ -506,7 +866,7 @@ var memoryPreferencesRef = keel.Ref{Table: &memoryPreferencesTable}
 
 // MemoryPreferencesTable is the table of agentmemory.MemoryPreference.
 type MemoryPreferencesTable struct {
-	keel.Handle[*agentmemory.MemoryPreference]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -519,7 +879,7 @@ type MemoryPreferencesTable struct {
 
 // MemoryPreferences references the agent_memory_preferences table.
 var MemoryPreferences = &MemoryPreferencesTable{
-	Handle:         keel.Handle[*agentmemory.MemoryPreference]{Ref: &memoryPreferencesRef},
+	TableBase:      keel.TableBase{Ref: &memoryPreferencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 2}}},
@@ -530,10 +890,10 @@ var MemoryPreferences = &MemoryPreferencesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 7}},
 }
 
-// BuildMemoryPreferences builds the handle of agent_memory_preferences for ref. Generated relation and alias methods call it.
+// BuildMemoryPreferences builds the table of agent_memory_preferences for ref. Generated relation and alias methods call it.
 func BuildMemoryPreferences(r *keel.Ref) *MemoryPreferencesTable {
 	return &MemoryPreferencesTable{
-		Handle:         keel.Handle[*agentmemory.MemoryPreference]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -556,6 +916,365 @@ func (t *MemoryPreferencesTable) As(alias string) *MemoryPreferencesTable {
 // Get returns the agent_memory_preferences row with the given key, or keel.ErrNotFound.
 func (t *MemoryPreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentmemory.MemoryPreference, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MemoryPreferencesQuery is a query over agentmemory.MemoryPreference.
+type MemoryPreferencesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentmemory.MemoryPreference] = (*MemoryPreferencesTable)(nil)
+
+var _ keel.Query[*agentmemory.MemoryPreference] = (*MemoryPreferencesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MemoryPreferencesTable) Query() keel.Query[*agentmemory.MemoryPreference] {
+	return &MemoryPreferencesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MemoryPreferencesQuery.Where.
+func (t *MemoryPreferencesTable) Where(ps ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MemoryPreferencesQuery.Pick.
+func (t *MemoryPreferencesTable) Pick(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MemoryPreferencesQuery.Load.
+func (t *MemoryPreferencesTable) Load(ls ...keel.Loader) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MemoryPreferencesQuery.Omit.
+func (t *MemoryPreferencesTable) Omit(cols ...keel.Column) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MemoryPreferencesQuery.Order.
+func (t *MemoryPreferencesTable) Order(os ...keel.Order) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MemoryPreferencesQuery.Limit.
+func (t *MemoryPreferencesTable) Limit(n int) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MemoryPreferencesQuery.Group.
+func (t *MemoryPreferencesTable) Group(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MemoryPreferencesQuery.GroupingSets.
+func (t *MemoryPreferencesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MemoryPreferencesQuery.Rollup.
+func (t *MemoryPreferencesTable) Rollup(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MemoryPreferencesQuery.Cube.
+func (t *MemoryPreferencesTable) Cube(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MemoryPreferencesQuery.AllTenants.
+func (t *MemoryPreferencesTable) AllTenants() keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MemoryPreferencesQuery.Join.
+func (t *MemoryPreferencesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MemoryPreferencesQuery.LeftJoin.
+func (t *MemoryPreferencesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MemoryPreferencesQuery.LeftJoinLateral.
+func (t *MemoryPreferencesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MemoryPreferencesQuery.JoinLateral.
+func (t *MemoryPreferencesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MemoryPreferencesQuery.Lock.
+func (t *MemoryPreferencesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MemoryPreferencesQuery.DistinctOn.
+func (t *MemoryPreferencesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MemoryPreferencesQuery.Cache.
+func (t *MemoryPreferencesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MemoryPreferencesQuery.LoadStrategy.
+func (t *MemoryPreferencesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MemoryPreferencesQuery.With.
+func (t *MemoryPreferencesTable) With(ctes ...*keel.CTETable) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MemoryPreferencesQuery.Compute.
+func (t *MemoryPreferencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MemoryPreferencesTable) Create(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MemoryPreferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MemoryPreferencesTable) Save(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MemoryPreferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MemoryPreferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MemoryPreferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MemoryPreferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MemoryPreferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MemoryPreferencesQuery) Where(ps ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MemoryPreferencesQuery) Pick(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MemoryPreferencesQuery) Omit(cols ...keel.Column) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MemoryPreferencesQuery) Load(ls ...keel.Loader) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MemoryPreferencesQuery) Order(os ...keel.Order) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MemoryPreferencesQuery) Distinct() keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MemoryPreferencesQuery) Group(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MemoryPreferencesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MemoryPreferencesQuery) Rollup(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MemoryPreferencesQuery) Cube(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MemoryPreferencesQuery) Window(name string, w keel.Window) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MemoryPreferencesQuery) Having(ps ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MemoryPreferencesQuery) Limit(n int) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MemoryPreferencesQuery) Offset(n int) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MemoryPreferencesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MemoryPreferencesQuery) AllTenants() keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MemoryPreferencesQuery) CustomPlan() keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MemoryPreferencesQuery) Timeout(d time.Duration) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MemoryPreferencesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MemoryPreferencesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MemoryPreferencesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MemoryPreferencesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MemoryPreferencesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MemoryPreferencesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MemoryPreferencesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MemoryPreferencesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MemoryPreferencesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentmemory.MemoryPreference] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MemoryPreferencesQuery) Clone() keel.Query[*agentmemory.MemoryPreference] {
+	return &MemoryPreferencesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MemoryPreferencesQuery) One(ctx context.Context, db *keel.DB) (*agentmemory.MemoryPreference, error) {
+	return keel.One[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MemoryPreferencesQuery) First(ctx context.Context, db *keel.DB) (*agentmemory.MemoryPreference, error) {
+	return keel.First[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MemoryPreferencesQuery) List(ctx context.Context, db *keel.DB) ([]*agentmemory.MemoryPreference, error) {
+	return keel.List[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MemoryPreferencesQuery) All(ctx context.Context, db *keel.DB) ([]*agentmemory.MemoryPreference, error) {
+	return keel.All[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MemoryPreferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentmemory.MemoryPreference, error) {
+	return keel.UpdateReturning[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MemoryPreferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentmemory.MemoryPreference], error) {
+	return keel.PageOf[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MemoryPreferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentmemory.MemoryPreference) error) error {
+	return keel.Each[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMemoryPreference() unsafe.Pointer { return unsafe.Pointer(new(agentmemory.MemoryPreference)) }

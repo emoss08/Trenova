@@ -4,6 +4,7 @@ package shipmenttypedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -61,7 +62,7 @@ var shipmentTypesRef = keel.Ref{Table: &shipmentTypesTable}
 
 // ShipmentTypesTable is the table of shipmenttype.ShipmentType.
 type ShipmentTypesTable struct {
-	keel.Handle[*shipmenttype.ShipmentType]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -78,7 +79,7 @@ type ShipmentTypesTable struct {
 
 // ShipmentTypes references the shipment_types table.
 var ShipmentTypes = &ShipmentTypesTable{
-	Handle:         keel.Handle[*shipmenttype.ShipmentType]{Ref: &shipmentTypesRef},
+	TableBase:      keel.TableBase{Ref: &shipmentTypesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 2}}},
@@ -93,10 +94,10 @@ var ShipmentTypes = &ShipmentTypesTable{
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &shipmentTypesRef, Index: 11}},
 }
 
-// BuildShipmentTypes builds the handle of shipment_types for ref. Generated relation and alias methods call it.
+// BuildShipmentTypes builds the table of shipment_types for ref. Generated relation and alias methods call it.
 func BuildShipmentTypes(r *keel.Ref) *ShipmentTypesTable {
 	return &ShipmentTypesTable{
-		Handle:         keel.Handle[*shipmenttype.ShipmentType]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -123,6 +124,365 @@ func (t *ShipmentTypesTable) As(alias string) *ShipmentTypesTable {
 // Get returns the shipment_types row with the given key, or keel.ErrNotFound.
 func (t *ShipmentTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipmenttype.ShipmentType, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ShipmentTypesQuery is a query over shipmenttype.ShipmentType.
+type ShipmentTypesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*shipmenttype.ShipmentType] = (*ShipmentTypesTable)(nil)
+
+var _ keel.Query[*shipmenttype.ShipmentType] = (*ShipmentTypesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ShipmentTypesTable) Query() keel.Query[*shipmenttype.ShipmentType] {
+	return &ShipmentTypesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ShipmentTypesQuery.Where.
+func (t *ShipmentTypesTable) Where(ps ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ShipmentTypesQuery.Pick.
+func (t *ShipmentTypesTable) Pick(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ShipmentTypesQuery.Load.
+func (t *ShipmentTypesTable) Load(ls ...keel.Loader) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ShipmentTypesQuery.Omit.
+func (t *ShipmentTypesTable) Omit(cols ...keel.Column) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ShipmentTypesQuery.Order.
+func (t *ShipmentTypesTable) Order(os ...keel.Order) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ShipmentTypesQuery.Limit.
+func (t *ShipmentTypesTable) Limit(n int) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ShipmentTypesQuery.Group.
+func (t *ShipmentTypesTable) Group(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ShipmentTypesQuery.GroupingSets.
+func (t *ShipmentTypesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ShipmentTypesQuery.Rollup.
+func (t *ShipmentTypesTable) Rollup(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ShipmentTypesQuery.Cube.
+func (t *ShipmentTypesTable) Cube(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ShipmentTypesQuery.AllTenants.
+func (t *ShipmentTypesTable) AllTenants() keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ShipmentTypesQuery.Join.
+func (t *ShipmentTypesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ShipmentTypesQuery.LeftJoin.
+func (t *ShipmentTypesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ShipmentTypesQuery.LeftJoinLateral.
+func (t *ShipmentTypesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ShipmentTypesQuery.JoinLateral.
+func (t *ShipmentTypesTable) JoinLateral(sub keel.LateralSource) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ShipmentTypesQuery.Lock.
+func (t *ShipmentTypesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ShipmentTypesQuery.DistinctOn.
+func (t *ShipmentTypesTable) DistinctOn(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ShipmentTypesQuery.Cache.
+func (t *ShipmentTypesTable) Cache(opts ...keel.CacheOption) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ShipmentTypesQuery.LoadStrategy.
+func (t *ShipmentTypesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ShipmentTypesQuery.With.
+func (t *ShipmentTypesTable) With(ctes ...*keel.CTETable) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ShipmentTypesQuery.Compute.
+func (t *ShipmentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ShipmentTypesTable) Create(ctx context.Context, db *keel.DB, row *shipmenttype.ShipmentType) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ShipmentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmenttype.ShipmentType) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ShipmentTypesTable) Save(ctx context.Context, db *keel.DB, row *shipmenttype.ShipmentType, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ShipmentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmenttype.ShipmentType, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ShipmentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmenttype.ShipmentType) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ShipmentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmenttype.ShipmentType, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ShipmentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmenttype.ShipmentType, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ShipmentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmenttype.ShipmentType) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ShipmentTypesQuery) Where(ps ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ShipmentTypesQuery) Pick(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ShipmentTypesQuery) Omit(cols ...keel.Column) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ShipmentTypesQuery) Load(ls ...keel.Loader) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ShipmentTypesQuery) Order(os ...keel.Order) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ShipmentTypesQuery) Distinct() keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ShipmentTypesQuery) Group(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ShipmentTypesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ShipmentTypesQuery) Rollup(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ShipmentTypesQuery) Cube(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ShipmentTypesQuery) Window(name string, w keel.Window) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ShipmentTypesQuery) Having(ps ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ShipmentTypesQuery) Limit(n int) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ShipmentTypesQuery) Offset(n int) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ShipmentTypesQuery) DistinctOn(es ...keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ShipmentTypesQuery) AllTenants() keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ShipmentTypesQuery) CustomPlan() keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ShipmentTypesQuery) Timeout(d time.Duration) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ShipmentTypesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ShipmentTypesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ShipmentTypesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ShipmentTypesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ShipmentTypesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ShipmentTypesQuery) Cache(opts ...keel.CacheOption) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ShipmentTypesQuery) With(ctes ...*keel.CTETable) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ShipmentTypesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ShipmentTypesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmenttype.ShipmentType] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ShipmentTypesQuery) Clone() keel.Query[*shipmenttype.ShipmentType] {
+	return &ShipmentTypesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ShipmentTypesQuery) One(ctx context.Context, db *keel.DB) (*shipmenttype.ShipmentType, error) {
+	return keel.One[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ShipmentTypesQuery) First(ctx context.Context, db *keel.DB) (*shipmenttype.ShipmentType, error) {
+	return keel.First[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ShipmentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*shipmenttype.ShipmentType, error) {
+	return keel.List[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ShipmentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*shipmenttype.ShipmentType, error) {
+	return keel.All[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ShipmentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmenttype.ShipmentType, error) {
+	return keel.UpdateReturning[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ShipmentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmenttype.ShipmentType], error) {
+	return keel.PageOf[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ShipmentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmenttype.ShipmentType) error) error {
+	return keel.Each[*shipmenttype.ShipmentType](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newShipmentType() unsafe.Pointer { return unsafe.Pointer(new(shipmenttype.ShipmentType)) }

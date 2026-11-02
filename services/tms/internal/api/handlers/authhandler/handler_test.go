@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -17,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -228,9 +231,7 @@ func TestLogout_Success(t *testing.T) {
 	sessionID := pulid.MustNew("ses_")
 
 	svc := tenantportsmock.NewMockAuthService(t)
-	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).
-		Return(&session.Session{ID: sessionID}, nil)
-	svc.On("Logout", mock.Anything, sessionID).Return(nil)
+	svc.On("SignOut", mock.Anything, sessionID.String()).Return(nil)
 
 	_, r := newTestHandler(svc)
 
@@ -243,7 +244,7 @@ func TestLogout_Success(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
-	svc.AssertCalled(t, "Logout", mock.Anything, sessionID)
+	svc.AssertCalled(t, "SignOut", mock.Anything, sessionID.String())
 
 	cookies := w.Result().Cookies()
 	for _, c := range cookies {
@@ -324,14 +325,33 @@ func TestKeepSessionAlive_EndedSessionClearsTheCookie(t *testing.T) {
 	assert.Negative(t, cookies[0].MaxAge)
 }
 
+func TestKeepSessionAlive_LeavesTheCookieWhenOnlyTheSecretIsStale(t *testing.T) {
+	t.Parallel()
+
+	svc := tenantportsmock.NewMockAuthService(t)
+	svc.On("KeepSessionAlive", mock.Anything, "token-value").
+		Return(nil, errortypes.NewAuthenticationError("Session is invalid. Please login again.").
+			WithInternal(sessionports.ErrSessionSecretMismatch))
+
+	_, r := newTestHandler(svc)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/session/keepalive", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "token-value"})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Empty(t, w.Result().Cookies())
+}
+
 func TestLogout_RefusesACookieThatDoesNotAuthenticate(t *testing.T) {
 	t.Parallel()
 
 	sessionID := pulid.MustNew("ses_")
 
 	svc := tenantportsmock.NewMockAuthService(t)
-	svc.On("AuthenticateSession", mock.Anything, sessionID.String()).
-		Return(nil, errortypes.NewAuthenticationError("Session is invalid. Please login again."))
+	svc.On("SignOut", mock.Anything, sessionID.String()).
+		Return(errortypes.NewAuthenticationError("Session is invalid. Please login again."))
 
 	_, r := newTestHandler(svc)
 
@@ -341,7 +361,6 @@ func TestLogout_RefusesACookieThatDoesNotAuthenticate(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	svc.AssertNotCalled(t, "Logout", mock.Anything, mock.Anything)
 }
 
 func TestSSOCallbackSendsAnUntrustedFederationToTheSecondFactorWithoutASession(t *testing.T) {
@@ -388,4 +407,39 @@ func TestSSOCallbackSendsAnUntrustedFederationToTheSecondFactorWithoutASession(t
 	assert.Equal(t, "challenge/token+1", fragment.Get("mfa_challenge"))
 	assert.Equal(t, "1800000300", fragment.Get("mfa_expires"))
 	assert.Empty(t, w.Header().Values("Set-Cookie"))
+}
+
+func TestActivateSessionRoles_SetsTheRotatedSessionCookie(t *testing.T) {
+	t.Parallel()
+
+	sessionID := pulid.MustNew("ses_")
+	roleID := pulid.MustNew("rol_")
+	svc := tenantportsmock.NewMockAuthService(t)
+	svc.EXPECT().AuthenticateSession(mock.Anything, "token-value").
+		Return(&session.Session{ID: sessionID}, nil).
+		Once()
+	svc.EXPECT().ActivateSessionRoles(mock.Anything, tenantports.ActivateSessionRolesRequest{
+		SessionID: sessionID,
+		RoleIDs:   []pulid.ID{roleID},
+	}).Return(&tenantports.ActivateSessionRolesResponse{
+		ActiveRoleIDs: []pulid.ID{roleID},
+		SessionToken:  "rotated-token",
+		ExpiresAt:     time.Now().Add(time.Hour).Unix(),
+	}, nil).Once()
+
+	_, r := newTestHandler(svc)
+
+	body := strings.NewReader(`{"roleIds":["` + roleID.String() + `"]}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/session/roles/activate", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "token-value"})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	cookies := w.Result().Cookies()
+	require.Len(t, cookies, 1)
+	assert.Equal(t, "session_id", cookies[0].Name)
+	assert.Equal(t, "rotated-token", cookies[0].Value)
+	assert.NotContains(t, w.Body.String(), "rotated-token")
 }

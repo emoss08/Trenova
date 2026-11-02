@@ -4,6 +4,7 @@ package payescrowdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -72,7 +73,7 @@ var escrowAccountsRef = keel.Ref{Table: &escrowAccountsTable}
 
 // EscrowAccountsTable is the table of payescrow.EscrowAccount.
 type EscrowAccountsTable struct {
-	keel.Handle[*payescrow.EscrowAccount]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -92,7 +93,7 @@ type EscrowAccountsTable struct {
 
 // EscrowAccounts references the escrow_accounts table.
 var EscrowAccounts = &EscrowAccountsTable{
-	Handle:                  keel.Handle[*payescrow.EscrowAccount]{Ref: &escrowAccountsRef},
+	TableBase:               keel.TableBase{Ref: &escrowAccountsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowAccountsRef, Index: 2}}},
@@ -110,10 +111,10 @@ var EscrowAccounts = &EscrowAccountsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &escrowAccountsRef, Index: 14}},
 }
 
-// BuildEscrowAccounts builds the handle of escrow_accounts for ref. Generated relation and alias methods call it.
+// BuildEscrowAccounts builds the table of escrow_accounts for ref. Generated relation and alias methods call it.
 func BuildEscrowAccounts(r *keel.Ref) *EscrowAccountsTable {
 	return &EscrowAccountsTable{
-		Handle:                  keel.Handle[*payescrow.EscrowAccount]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -158,6 +159,365 @@ func (t *EscrowAccountsTable) LatestTransaction() *EscrowTransactionsTable {
 // Get returns the escrow_accounts row with the given key, or keel.ErrNotFound.
 func (t *EscrowAccountsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payescrow.EscrowAccount, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EscrowAccountsQuery is a query over payescrow.EscrowAccount.
+type EscrowAccountsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*payescrow.EscrowAccount] = (*EscrowAccountsTable)(nil)
+
+var _ keel.Query[*payescrow.EscrowAccount] = (*EscrowAccountsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EscrowAccountsTable) Query() keel.Query[*payescrow.EscrowAccount] {
+	return &EscrowAccountsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EscrowAccountsQuery.Where.
+func (t *EscrowAccountsTable) Where(ps ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EscrowAccountsQuery.Pick.
+func (t *EscrowAccountsTable) Pick(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EscrowAccountsQuery.Load.
+func (t *EscrowAccountsTable) Load(ls ...keel.Loader) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EscrowAccountsQuery.Omit.
+func (t *EscrowAccountsTable) Omit(cols ...keel.Column) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EscrowAccountsQuery.Order.
+func (t *EscrowAccountsTable) Order(os ...keel.Order) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EscrowAccountsQuery.Limit.
+func (t *EscrowAccountsTable) Limit(n int) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EscrowAccountsQuery.Group.
+func (t *EscrowAccountsTable) Group(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EscrowAccountsQuery.GroupingSets.
+func (t *EscrowAccountsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EscrowAccountsQuery.Rollup.
+func (t *EscrowAccountsTable) Rollup(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EscrowAccountsQuery.Cube.
+func (t *EscrowAccountsTable) Cube(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EscrowAccountsQuery.AllTenants.
+func (t *EscrowAccountsTable) AllTenants() keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EscrowAccountsQuery.Join.
+func (t *EscrowAccountsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EscrowAccountsQuery.LeftJoin.
+func (t *EscrowAccountsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EscrowAccountsQuery.LeftJoinLateral.
+func (t *EscrowAccountsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EscrowAccountsQuery.JoinLateral.
+func (t *EscrowAccountsTable) JoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EscrowAccountsQuery.Lock.
+func (t *EscrowAccountsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EscrowAccountsQuery.DistinctOn.
+func (t *EscrowAccountsTable) DistinctOn(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EscrowAccountsQuery.Cache.
+func (t *EscrowAccountsTable) Cache(opts ...keel.CacheOption) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EscrowAccountsQuery.LoadStrategy.
+func (t *EscrowAccountsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EscrowAccountsQuery.With.
+func (t *EscrowAccountsTable) With(ctes ...*keel.CTETable) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EscrowAccountsQuery.Compute.
+func (t *EscrowAccountsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EscrowAccountsTable) Create(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EscrowAccountsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EscrowAccountsTable) Save(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EscrowAccountsTable) SaveExcept(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EscrowAccountsTable) DeleteRow(ctx context.Context, db *keel.DB, row *payescrow.EscrowAccount) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EscrowAccountsTable) Upsert(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EscrowAccountsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EscrowAccountsTable) Copy(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowAccount) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EscrowAccountsQuery) Where(ps ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EscrowAccountsQuery) Pick(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EscrowAccountsQuery) Omit(cols ...keel.Column) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EscrowAccountsQuery) Load(ls ...keel.Loader) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EscrowAccountsQuery) Order(os ...keel.Order) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EscrowAccountsQuery) Distinct() keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EscrowAccountsQuery) Group(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EscrowAccountsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EscrowAccountsQuery) Rollup(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EscrowAccountsQuery) Cube(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EscrowAccountsQuery) Window(name string, w keel.Window) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EscrowAccountsQuery) Having(ps ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EscrowAccountsQuery) Limit(n int) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EscrowAccountsQuery) Offset(n int) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EscrowAccountsQuery) DistinctOn(es ...keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EscrowAccountsQuery) AllTenants() keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EscrowAccountsQuery) CustomPlan() keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EscrowAccountsQuery) Timeout(d time.Duration) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EscrowAccountsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EscrowAccountsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EscrowAccountsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EscrowAccountsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EscrowAccountsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EscrowAccountsQuery) Cache(opts ...keel.CacheOption) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EscrowAccountsQuery) With(ctes ...*keel.CTETable) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EscrowAccountsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EscrowAccountsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*payescrow.EscrowAccount] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EscrowAccountsQuery) Clone() keel.Query[*payescrow.EscrowAccount] {
+	return &EscrowAccountsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EscrowAccountsQuery) One(ctx context.Context, db *keel.DB) (*payescrow.EscrowAccount, error) {
+	return keel.One[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EscrowAccountsQuery) First(ctx context.Context, db *keel.DB) (*payescrow.EscrowAccount, error) {
+	return keel.First[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EscrowAccountsQuery) List(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowAccount, error) {
+	return keel.List[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EscrowAccountsQuery) All(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowAccount, error) {
+	return keel.All[*payescrow.EscrowAccount](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EscrowAccountsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payescrow.EscrowAccount, error) {
+	return keel.UpdateReturning[*payescrow.EscrowAccount](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EscrowAccountsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payescrow.EscrowAccount], error) {
+	return keel.PageOf[*payescrow.EscrowAccount](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EscrowAccountsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payescrow.EscrowAccount) error) error {
+	return keel.Each[*payescrow.EscrowAccount](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEscrowAccount() unsafe.Pointer { return unsafe.Pointer(new(payescrow.EscrowAccount)) }
@@ -312,7 +672,7 @@ var escrowTransactionsRef = keel.Ref{Table: &escrowTransactionsTable}
 
 // EscrowTransactionsTable is the table of payescrow.EscrowTransaction.
 type EscrowTransactionsTable struct {
-	keel.Handle[*payescrow.EscrowTransaction]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -329,7 +689,7 @@ type EscrowTransactionsTable struct {
 
 // EscrowTransactions references the escrow_transactions table.
 var EscrowTransactions = &EscrowTransactionsTable{
-	Handle:            keel.Handle[*payescrow.EscrowTransaction]{Ref: &escrowTransactionsRef},
+	TableBase:         keel.TableBase{Ref: &escrowTransactionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 2}}},
@@ -344,10 +704,10 @@ var EscrowTransactions = &EscrowTransactionsTable{
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &escrowTransactionsRef, Index: 11}},
 }
 
-// BuildEscrowTransactions builds the handle of escrow_transactions for ref. Generated relation and alias methods call it.
+// BuildEscrowTransactions builds the table of escrow_transactions for ref. Generated relation and alias methods call it.
 func BuildEscrowTransactions(r *keel.Ref) *EscrowTransactionsTable {
 	return &EscrowTransactionsTable{
-		Handle:            keel.Handle[*payescrow.EscrowTransaction]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -379,6 +739,365 @@ func (t *EscrowTransactionsTable) EscrowAccount() *EscrowAccountsTable {
 // Get returns the escrow_transactions row with the given key, or keel.ErrNotFound.
 func (t *EscrowTransactionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payescrow.EscrowTransaction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EscrowTransactionsQuery is a query over payescrow.EscrowTransaction.
+type EscrowTransactionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*payescrow.EscrowTransaction] = (*EscrowTransactionsTable)(nil)
+
+var _ keel.Query[*payescrow.EscrowTransaction] = (*EscrowTransactionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EscrowTransactionsTable) Query() keel.Query[*payescrow.EscrowTransaction] {
+	return &EscrowTransactionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EscrowTransactionsQuery.Where.
+func (t *EscrowTransactionsTable) Where(ps ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EscrowTransactionsQuery.Pick.
+func (t *EscrowTransactionsTable) Pick(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EscrowTransactionsQuery.Load.
+func (t *EscrowTransactionsTable) Load(ls ...keel.Loader) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EscrowTransactionsQuery.Omit.
+func (t *EscrowTransactionsTable) Omit(cols ...keel.Column) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EscrowTransactionsQuery.Order.
+func (t *EscrowTransactionsTable) Order(os ...keel.Order) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EscrowTransactionsQuery.Limit.
+func (t *EscrowTransactionsTable) Limit(n int) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EscrowTransactionsQuery.Group.
+func (t *EscrowTransactionsTable) Group(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EscrowTransactionsQuery.GroupingSets.
+func (t *EscrowTransactionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EscrowTransactionsQuery.Rollup.
+func (t *EscrowTransactionsTable) Rollup(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EscrowTransactionsQuery.Cube.
+func (t *EscrowTransactionsTable) Cube(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EscrowTransactionsQuery.AllTenants.
+func (t *EscrowTransactionsTable) AllTenants() keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EscrowTransactionsQuery.Join.
+func (t *EscrowTransactionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EscrowTransactionsQuery.LeftJoin.
+func (t *EscrowTransactionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EscrowTransactionsQuery.LeftJoinLateral.
+func (t *EscrowTransactionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EscrowTransactionsQuery.JoinLateral.
+func (t *EscrowTransactionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EscrowTransactionsQuery.Lock.
+func (t *EscrowTransactionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EscrowTransactionsQuery.DistinctOn.
+func (t *EscrowTransactionsTable) DistinctOn(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EscrowTransactionsQuery.Cache.
+func (t *EscrowTransactionsTable) Cache(opts ...keel.CacheOption) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EscrowTransactionsQuery.LoadStrategy.
+func (t *EscrowTransactionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EscrowTransactionsQuery.With.
+func (t *EscrowTransactionsTable) With(ctes ...*keel.CTETable) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EscrowTransactionsQuery.Compute.
+func (t *EscrowTransactionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EscrowTransactionsTable) Create(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EscrowTransactionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EscrowTransactionsTable) Save(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EscrowTransactionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EscrowTransactionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *payescrow.EscrowTransaction) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EscrowTransactionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EscrowTransactionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EscrowTransactionsTable) Copy(ctx context.Context, db *keel.DB, rows []*payescrow.EscrowTransaction) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EscrowTransactionsQuery) Where(ps ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EscrowTransactionsQuery) Pick(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EscrowTransactionsQuery) Omit(cols ...keel.Column) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EscrowTransactionsQuery) Load(ls ...keel.Loader) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EscrowTransactionsQuery) Order(os ...keel.Order) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EscrowTransactionsQuery) Distinct() keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EscrowTransactionsQuery) Group(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EscrowTransactionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EscrowTransactionsQuery) Rollup(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EscrowTransactionsQuery) Cube(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EscrowTransactionsQuery) Window(name string, w keel.Window) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EscrowTransactionsQuery) Having(ps ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EscrowTransactionsQuery) Limit(n int) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EscrowTransactionsQuery) Offset(n int) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EscrowTransactionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EscrowTransactionsQuery) AllTenants() keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EscrowTransactionsQuery) CustomPlan() keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EscrowTransactionsQuery) Timeout(d time.Duration) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EscrowTransactionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EscrowTransactionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EscrowTransactionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EscrowTransactionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EscrowTransactionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EscrowTransactionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EscrowTransactionsQuery) With(ctes ...*keel.CTETable) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EscrowTransactionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EscrowTransactionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*payescrow.EscrowTransaction] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EscrowTransactionsQuery) Clone() keel.Query[*payescrow.EscrowTransaction] {
+	return &EscrowTransactionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EscrowTransactionsQuery) One(ctx context.Context, db *keel.DB) (*payescrow.EscrowTransaction, error) {
+	return keel.One[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EscrowTransactionsQuery) First(ctx context.Context, db *keel.DB) (*payescrow.EscrowTransaction, error) {
+	return keel.First[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EscrowTransactionsQuery) List(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowTransaction, error) {
+	return keel.List[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EscrowTransactionsQuery) All(ctx context.Context, db *keel.DB) ([]*payescrow.EscrowTransaction, error) {
+	return keel.All[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EscrowTransactionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payescrow.EscrowTransaction, error) {
+	return keel.UpdateReturning[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EscrowTransactionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payescrow.EscrowTransaction], error) {
+	return keel.PageOf[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EscrowTransactionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payescrow.EscrowTransaction) error) error {
+	return keel.Each[*payescrow.EscrowTransaction](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEscrowTransaction() unsafe.Pointer { return unsafe.Pointer(new(payescrow.EscrowTransaction)) }

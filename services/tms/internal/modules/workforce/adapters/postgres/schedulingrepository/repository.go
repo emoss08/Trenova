@@ -356,7 +356,7 @@ func (r *repository) UpsertPreference(
 
 func swapsQuery(
 	req *workerscheduleports.ListShiftSwapsRequest,
-) *keel.Query[*workerschedule.ShiftSwapRequest] {
+) keel.Query[*workerschedule.ShiftSwapRequest] {
 	s := workerscheduledb.ShiftSwapRequests
 
 	return s.Where(

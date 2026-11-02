@@ -1401,10 +1401,10 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 				volumegen.Stamp{Id: d.ID, Created: d.CreatedAt, Updated: d.CreatedAt},
 			)
 		}
-		if err := volumegen.InsertRows(ctx, tx, documentdb.Documents.Handle, run.docs); err != nil {
+		if err := volumegen.InsertRows(ctx, tx, documentdb.Documents, run.docs); err != nil {
 			return fmt.Errorf("insert remittance documents: %w", err)
 		}
-		if err := volumegen.Backdate(ctx, tx, documentdb.Documents.Handle, marks); err != nil {
+		if err := volumegen.Backdate(ctx, tx, documentdb.Documents, marks); err != nil {
 			return err
 		}
 	}
@@ -1427,10 +1427,10 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 			)
 		}
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringsubmissiondb.Submissions.Handle, subs); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringsubmissiondb.Submissions, subs); err != nil {
 		return fmt.Errorf("insert factoring submissions: %w", err)
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringsubmissiondb.SubmissionItems.Handle, items); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringsubmissiondb.SubmissionItems, items); err != nil {
 		return fmt.Errorf("insert factoring submission items: %w", err)
 	}
 
@@ -1440,10 +1440,10 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 		a.line.MatchStatus = factoringremittance.RemittanceLineMatched
 		a.line.ReserveEntryID = pulid.Nil
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringremittancedb.Remittances.Handle, run.remittances); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringremittancedb.Remittances, run.remittances); err != nil {
 		return fmt.Errorf("insert factoring remittances: %w", err)
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringremittancedb.RemittanceLines.Handle, run.lines); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringremittancedb.RemittanceLines, run.lines); err != nil {
 		return fmt.Errorf("insert factoring remittance lines: %w", err)
 	}
 	profileMarks := make([]volumegen.Stamp, 0, len(run.profiles))
@@ -1453,14 +1453,14 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 			volumegen.Stamp{Id: p.ID, Created: p.CreatedAt, Updated: p.CreatedAt},
 		)
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringremittancedb.RemittanceProfiles.Handle, run.profiles); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringremittancedb.RemittanceProfiles, run.profiles); err != nil {
 		return fmt.Errorf("insert factoring remittance profiles: %w", err)
 	}
 
 	if err := g.Write(ctx, tx, run.rows); err != nil {
 		return err
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringledgerdb.ReserveEntries.Handle, run.entries); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringledgerdb.ReserveEntries, run.entries); err != nil {
 		return fmt.Errorf("insert factoring reserve entries: %w", err)
 	}
 
@@ -1478,7 +1478,7 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 			tx,
 			rl.MatchStatus.To(factoringremittance.RemittanceLineApplied),
 			rl.ReserveEntryID.ToExpr(d.Col("reserve_entry_id")),
-			volumegen.KeepUpdated(rl.Handle),
+			volumegen.KeepUpdated(rl),
 		); err != nil {
 			return fmt.Errorf("mark remittance lines applied: %w", err)
 		}
@@ -1487,7 +1487,7 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 	if err := g.facUpdateInvoices(ctx, tx, run); err != nil {
 		return err
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringreadinessdb.InvoiceStates.Handle, run.states); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringreadinessdb.InvoiceStates, run.states); err != nil {
 		return fmt.Errorf("insert factoring invoice states: %w", err)
 	}
 
@@ -1505,7 +1505,7 @@ func (g *factoringPhase) facWrite(ctx context.Context, tx *keel.DB, run *facRun)
 		}
 	}
 	if len(profileMarks) > 0 {
-		if err := volumegen.Backdate(ctx, tx, factoringremittancedb.RemittanceProfiles.Handle, profileMarks); err != nil {
+		if err := volumegen.Backdate(ctx, tx, factoringremittancedb.RemittanceProfiles, profileMarks); err != nil {
 			return err
 		}
 	}

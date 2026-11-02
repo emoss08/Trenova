@@ -4,6 +4,7 @@ package ratesimulationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -76,7 +77,7 @@ var rateSimulationsRef = keel.Ref{Table: &rateSimulationsTable}
 
 // RateSimulationsTable is the table of ratesimulation.RateSimulation.
 type RateSimulationsTable struct {
-	keel.Handle[*ratesimulation.RateSimulation]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -102,7 +103,7 @@ type RateSimulationsTable struct {
 
 // RateSimulations references the rate_simulations table.
 var RateSimulations = &RateSimulationsTable{
-	Handle:          keel.Handle[*ratesimulation.RateSimulation]{Ref: &rateSimulationsRef},
+	TableBase:       keel.TableBase{Ref: &rateSimulationsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationsRef, Index: 2}}},
@@ -126,10 +127,10 @@ var RateSimulations = &RateSimulationsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateSimulationsRef, Index: 20}},
 }
 
-// BuildRateSimulations builds the handle of rate_simulations for ref. Generated relation and alias methods call it.
+// BuildRateSimulations builds the table of rate_simulations for ref. Generated relation and alias methods call it.
 func BuildRateSimulations(r *keel.Ref) *RateSimulationsTable {
 	return &RateSimulationsTable{
-		Handle:          keel.Handle[*ratesimulation.RateSimulation]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -175,6 +176,365 @@ func (t *RateSimulationsTable) Results() *RateSimulationResultsTable {
 // Get returns the rate_simulations row with the given key, or keel.ErrNotFound.
 func (t *RateSimulationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratesimulation.RateSimulation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateSimulationsQuery is a query over ratesimulation.RateSimulation.
+type RateSimulationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratesimulation.RateSimulation] = (*RateSimulationsTable)(nil)
+
+var _ keel.Query[*ratesimulation.RateSimulation] = (*RateSimulationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateSimulationsTable) Query() keel.Query[*ratesimulation.RateSimulation] {
+	return &RateSimulationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateSimulationsQuery.Where.
+func (t *RateSimulationsTable) Where(ps ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateSimulationsQuery.Pick.
+func (t *RateSimulationsTable) Pick(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateSimulationsQuery.Load.
+func (t *RateSimulationsTable) Load(ls ...keel.Loader) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateSimulationsQuery.Omit.
+func (t *RateSimulationsTable) Omit(cols ...keel.Column) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateSimulationsQuery.Order.
+func (t *RateSimulationsTable) Order(os ...keel.Order) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateSimulationsQuery.Limit.
+func (t *RateSimulationsTable) Limit(n int) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateSimulationsQuery.Group.
+func (t *RateSimulationsTable) Group(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateSimulationsQuery.GroupingSets.
+func (t *RateSimulationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateSimulationsQuery.Rollup.
+func (t *RateSimulationsTable) Rollup(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateSimulationsQuery.Cube.
+func (t *RateSimulationsTable) Cube(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateSimulationsQuery.AllTenants.
+func (t *RateSimulationsTable) AllTenants() keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateSimulationsQuery.Join.
+func (t *RateSimulationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateSimulationsQuery.LeftJoin.
+func (t *RateSimulationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateSimulationsQuery.LeftJoinLateral.
+func (t *RateSimulationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateSimulationsQuery.JoinLateral.
+func (t *RateSimulationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateSimulationsQuery.Lock.
+func (t *RateSimulationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateSimulationsQuery.DistinctOn.
+func (t *RateSimulationsTable) DistinctOn(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateSimulationsQuery.Cache.
+func (t *RateSimulationsTable) Cache(opts ...keel.CacheOption) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateSimulationsQuery.LoadStrategy.
+func (t *RateSimulationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateSimulationsQuery.With.
+func (t *RateSimulationsTable) With(ctes ...*keel.CTETable) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateSimulationsQuery.Compute.
+func (t *RateSimulationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateSimulationsTable) Create(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateSimulationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateSimulationsTable) Save(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateSimulationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateSimulationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateSimulationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateSimulationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateSimulationsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateSimulationsQuery) Where(ps ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateSimulationsQuery) Pick(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateSimulationsQuery) Omit(cols ...keel.Column) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateSimulationsQuery) Load(ls ...keel.Loader) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateSimulationsQuery) Order(os ...keel.Order) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateSimulationsQuery) Distinct() keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateSimulationsQuery) Group(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateSimulationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateSimulationsQuery) Rollup(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateSimulationsQuery) Cube(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateSimulationsQuery) Window(name string, w keel.Window) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateSimulationsQuery) Having(ps ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateSimulationsQuery) Limit(n int) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateSimulationsQuery) Offset(n int) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateSimulationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateSimulationsQuery) AllTenants() keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateSimulationsQuery) CustomPlan() keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateSimulationsQuery) Timeout(d time.Duration) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateSimulationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateSimulationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateSimulationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateSimulationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateSimulationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateSimulationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateSimulationsQuery) With(ctes ...*keel.CTETable) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateSimulationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateSimulationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratesimulation.RateSimulation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateSimulationsQuery) Clone() keel.Query[*ratesimulation.RateSimulation] {
+	return &RateSimulationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateSimulationsQuery) One(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulation, error) {
+	return keel.One[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateSimulationsQuery) First(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulation, error) {
+	return keel.First[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateSimulationsQuery) List(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulation, error) {
+	return keel.List[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateSimulationsQuery) All(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulation, error) {
+	return keel.All[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateSimulationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratesimulation.RateSimulation, error) {
+	return keel.UpdateReturning[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateSimulationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratesimulation.RateSimulation], error) {
+	return keel.PageOf[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateSimulationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratesimulation.RateSimulation) error) error {
+	return keel.Each[*ratesimulation.RateSimulation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateSimulation() unsafe.Pointer { return unsafe.Pointer(new(ratesimulation.RateSimulation)) }
@@ -374,7 +734,7 @@ var rateSimulationResultsRef = keel.Ref{Table: &rateSimulationResultsTable}
 
 // RateSimulationResultsTable is the table of ratesimulation.RateSimulationResult.
 type RateSimulationResultsTable struct {
-	keel.Handle[*ratesimulation.RateSimulationResult]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -397,7 +757,7 @@ type RateSimulationResultsTable struct {
 
 // RateSimulationResults references the rate_simulation_results table.
 var RateSimulationResults = &RateSimulationResultsTable{
-	Handle:           keel.Handle[*ratesimulation.RateSimulationResult]{Ref: &rateSimulationResultsRef},
+	TableBase:        keel.TableBase{Ref: &rateSimulationResultsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 2}}},
@@ -418,10 +778,10 @@ var RateSimulationResults = &RateSimulationResultsTable{
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &rateSimulationResultsRef, Index: 17}},
 }
 
-// BuildRateSimulationResults builds the handle of rate_simulation_results for ref. Generated relation and alias methods call it.
+// BuildRateSimulationResults builds the table of rate_simulation_results for ref. Generated relation and alias methods call it.
 func BuildRateSimulationResults(r *keel.Ref) *RateSimulationResultsTable {
 	return &RateSimulationResultsTable{
-		Handle:           keel.Handle[*ratesimulation.RateSimulationResult]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -459,6 +819,365 @@ func (t *RateSimulationResultsTable) Simulation() *RateSimulationsTable {
 // Get returns the rate_simulation_results row with the given key, or keel.ErrNotFound.
 func (t *RateSimulationResultsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratesimulation.RateSimulationResult, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateSimulationResultsQuery is a query over ratesimulation.RateSimulationResult.
+type RateSimulationResultsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratesimulation.RateSimulationResult] = (*RateSimulationResultsTable)(nil)
+
+var _ keel.Query[*ratesimulation.RateSimulationResult] = (*RateSimulationResultsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateSimulationResultsTable) Query() keel.Query[*ratesimulation.RateSimulationResult] {
+	return &RateSimulationResultsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateSimulationResultsQuery.Where.
+func (t *RateSimulationResultsTable) Where(ps ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateSimulationResultsQuery.Pick.
+func (t *RateSimulationResultsTable) Pick(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateSimulationResultsQuery.Load.
+func (t *RateSimulationResultsTable) Load(ls ...keel.Loader) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateSimulationResultsQuery.Omit.
+func (t *RateSimulationResultsTable) Omit(cols ...keel.Column) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateSimulationResultsQuery.Order.
+func (t *RateSimulationResultsTable) Order(os ...keel.Order) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateSimulationResultsQuery.Limit.
+func (t *RateSimulationResultsTable) Limit(n int) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateSimulationResultsQuery.Group.
+func (t *RateSimulationResultsTable) Group(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateSimulationResultsQuery.GroupingSets.
+func (t *RateSimulationResultsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateSimulationResultsQuery.Rollup.
+func (t *RateSimulationResultsTable) Rollup(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateSimulationResultsQuery.Cube.
+func (t *RateSimulationResultsTable) Cube(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateSimulationResultsQuery.AllTenants.
+func (t *RateSimulationResultsTable) AllTenants() keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateSimulationResultsQuery.Join.
+func (t *RateSimulationResultsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateSimulationResultsQuery.LeftJoin.
+func (t *RateSimulationResultsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateSimulationResultsQuery.LeftJoinLateral.
+func (t *RateSimulationResultsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateSimulationResultsQuery.JoinLateral.
+func (t *RateSimulationResultsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateSimulationResultsQuery.Lock.
+func (t *RateSimulationResultsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateSimulationResultsQuery.DistinctOn.
+func (t *RateSimulationResultsTable) DistinctOn(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateSimulationResultsQuery.Cache.
+func (t *RateSimulationResultsTable) Cache(opts ...keel.CacheOption) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateSimulationResultsQuery.LoadStrategy.
+func (t *RateSimulationResultsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateSimulationResultsQuery.With.
+func (t *RateSimulationResultsTable) With(ctes ...*keel.CTETable) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateSimulationResultsQuery.Compute.
+func (t *RateSimulationResultsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateSimulationResultsTable) Create(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateSimulationResultsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateSimulationResultsTable) Save(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateSimulationResultsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateSimulationResultsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratesimulation.RateSimulationResult) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateSimulationResultsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateSimulationResultsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateSimulationResultsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratesimulation.RateSimulationResult) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateSimulationResultsQuery) Where(ps ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateSimulationResultsQuery) Pick(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateSimulationResultsQuery) Omit(cols ...keel.Column) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateSimulationResultsQuery) Load(ls ...keel.Loader) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateSimulationResultsQuery) Order(os ...keel.Order) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateSimulationResultsQuery) Distinct() keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateSimulationResultsQuery) Group(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateSimulationResultsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateSimulationResultsQuery) Rollup(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateSimulationResultsQuery) Cube(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateSimulationResultsQuery) Window(name string, w keel.Window) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateSimulationResultsQuery) Having(ps ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateSimulationResultsQuery) Limit(n int) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateSimulationResultsQuery) Offset(n int) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateSimulationResultsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateSimulationResultsQuery) AllTenants() keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateSimulationResultsQuery) CustomPlan() keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateSimulationResultsQuery) Timeout(d time.Duration) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateSimulationResultsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateSimulationResultsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateSimulationResultsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateSimulationResultsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateSimulationResultsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateSimulationResultsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateSimulationResultsQuery) With(ctes ...*keel.CTETable) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateSimulationResultsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateSimulationResultsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratesimulation.RateSimulationResult] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateSimulationResultsQuery) Clone() keel.Query[*ratesimulation.RateSimulationResult] {
+	return &RateSimulationResultsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateSimulationResultsQuery) One(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulationResult, error) {
+	return keel.One[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateSimulationResultsQuery) First(ctx context.Context, db *keel.DB) (*ratesimulation.RateSimulationResult, error) {
+	return keel.First[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateSimulationResultsQuery) List(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulationResult, error) {
+	return keel.List[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateSimulationResultsQuery) All(ctx context.Context, db *keel.DB) ([]*ratesimulation.RateSimulationResult, error) {
+	return keel.All[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateSimulationResultsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratesimulation.RateSimulationResult, error) {
+	return keel.UpdateReturning[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateSimulationResultsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratesimulation.RateSimulationResult], error) {
+	return keel.PageOf[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateSimulationResultsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratesimulation.RateSimulationResult) error) error {
+	return keel.Each[*ratesimulation.RateSimulationResult](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateSimulationResult() unsafe.Pointer {

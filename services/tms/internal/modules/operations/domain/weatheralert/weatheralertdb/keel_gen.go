@@ -4,6 +4,7 @@ package weatheralertdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -56,7 +57,7 @@ var activitiesRef = keel.Ref{Table: &activitiesTable}
 
 // ActivitiesTable is the table of weatheralert.Activity.
 type ActivitiesTable struct {
-	keel.Handle[*weatheralert.Activity]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -70,7 +71,7 @@ type ActivitiesTable struct {
 
 // Activities references the weather_alert_activities table.
 var Activities = &ActivitiesTable{
-	Handle:         keel.Handle[*weatheralert.Activity]{Ref: &activitiesRef},
+	TableBase:      keel.TableBase{Ref: &activitiesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
@@ -82,10 +83,10 @@ var Activities = &ActivitiesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &activitiesRef, Index: 8}},
 }
 
-// BuildActivities builds the handle of weather_alert_activities for ref. Generated relation and alias methods call it.
+// BuildActivities builds the table of weather_alert_activities for ref. Generated relation and alias methods call it.
 func BuildActivities(r *keel.Ref) *ActivitiesTable {
 	return &ActivitiesTable{
-		Handle:         keel.Handle[*weatheralert.Activity]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -109,6 +110,365 @@ func (t *ActivitiesTable) As(alias string) *ActivitiesTable {
 // Get returns the weather_alert_activities row with the given key, or keel.ErrNotFound.
 func (t *ActivitiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*weatheralert.Activity, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ActivitiesQuery is a query over weatheralert.Activity.
+type ActivitiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*weatheralert.Activity] = (*ActivitiesTable)(nil)
+
+var _ keel.Query[*weatheralert.Activity] = (*ActivitiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ActivitiesTable) Query() keel.Query[*weatheralert.Activity] {
+	return &ActivitiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ActivitiesQuery.Where.
+func (t *ActivitiesTable) Where(ps ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ActivitiesQuery.Pick.
+func (t *ActivitiesTable) Pick(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ActivitiesQuery.Load.
+func (t *ActivitiesTable) Load(ls ...keel.Loader) keel.Query[*weatheralert.Activity] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ActivitiesQuery.Omit.
+func (t *ActivitiesTable) Omit(cols ...keel.Column) keel.Query[*weatheralert.Activity] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ActivitiesQuery.Order.
+func (t *ActivitiesTable) Order(os ...keel.Order) keel.Query[*weatheralert.Activity] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ActivitiesQuery.Limit.
+func (t *ActivitiesTable) Limit(n int) keel.Query[*weatheralert.Activity] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ActivitiesQuery.Group.
+func (t *ActivitiesTable) Group(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ActivitiesQuery.GroupingSets.
+func (t *ActivitiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ActivitiesQuery.Rollup.
+func (t *ActivitiesTable) Rollup(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ActivitiesQuery.Cube.
+func (t *ActivitiesTable) Cube(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ActivitiesQuery.AllTenants.
+func (t *ActivitiesTable) AllTenants() keel.Query[*weatheralert.Activity] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ActivitiesQuery.Join.
+func (t *ActivitiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ActivitiesQuery.LeftJoin.
+func (t *ActivitiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ActivitiesQuery.LeftJoinLateral.
+func (t *ActivitiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.Activity] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ActivitiesQuery.JoinLateral.
+func (t *ActivitiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.Activity] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ActivitiesQuery.Lock.
+func (t *ActivitiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*weatheralert.Activity] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ActivitiesQuery.DistinctOn.
+func (t *ActivitiesTable) DistinctOn(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ActivitiesQuery.Cache.
+func (t *ActivitiesTable) Cache(opts ...keel.CacheOption) keel.Query[*weatheralert.Activity] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ActivitiesQuery.LoadStrategy.
+func (t *ActivitiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*weatheralert.Activity] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ActivitiesQuery.With.
+func (t *ActivitiesTable) With(ctes ...*keel.CTETable) keel.Query[*weatheralert.Activity] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ActivitiesQuery.Compute.
+func (t *ActivitiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*weatheralert.Activity] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ActivitiesTable) Create(ctx context.Context, db *keel.DB, row *weatheralert.Activity) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ActivitiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ActivitiesTable) Save(ctx context.Context, db *keel.DB, row *weatheralert.Activity, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ActivitiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *weatheralert.Activity, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ActivitiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *weatheralert.Activity) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ActivitiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ActivitiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ActivitiesTable) Copy(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ActivitiesQuery) Where(ps ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ActivitiesQuery) Pick(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ActivitiesQuery) Omit(cols ...keel.Column) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ActivitiesQuery) Load(ls ...keel.Loader) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ActivitiesQuery) Order(os ...keel.Order) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ActivitiesQuery) Distinct() keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ActivitiesQuery) Group(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ActivitiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ActivitiesQuery) Rollup(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ActivitiesQuery) Cube(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ActivitiesQuery) Window(name string, w keel.Window) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ActivitiesQuery) Having(ps ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ActivitiesQuery) Limit(n int) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ActivitiesQuery) Offset(n int) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ActivitiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ActivitiesQuery) AllTenants() keel.Query[*weatheralert.Activity] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ActivitiesQuery) CustomPlan() keel.Query[*weatheralert.Activity] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ActivitiesQuery) Timeout(d time.Duration) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ActivitiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ActivitiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ActivitiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ActivitiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ActivitiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ActivitiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ActivitiesQuery) With(ctes ...*keel.CTETable) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ActivitiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ActivitiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*weatheralert.Activity] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ActivitiesQuery) Clone() keel.Query[*weatheralert.Activity] {
+	return &ActivitiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ActivitiesQuery) One(ctx context.Context, db *keel.DB) (*weatheralert.Activity, error) {
+	return keel.One[*weatheralert.Activity](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ActivitiesQuery) First(ctx context.Context, db *keel.DB) (*weatheralert.Activity, error) {
+	return keel.First[*weatheralert.Activity](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ActivitiesQuery) List(ctx context.Context, db *keel.DB) ([]*weatheralert.Activity, error) {
+	return keel.List[*weatheralert.Activity](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ActivitiesQuery) All(ctx context.Context, db *keel.DB) ([]*weatheralert.Activity, error) {
+	return keel.All[*weatheralert.Activity](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ActivitiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*weatheralert.Activity, error) {
+	return keel.UpdateReturning[*weatheralert.Activity](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ActivitiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*weatheralert.Activity], error) {
+	return keel.PageOf[*weatheralert.Activity](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ActivitiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*weatheralert.Activity) error) error {
+	return keel.Each[*weatheralert.Activity](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newActivity() unsafe.Pointer { return unsafe.Pointer(new(weatheralert.Activity)) }
@@ -232,7 +592,7 @@ var weatherAlertsRef = keel.Ref{Table: &weatherAlertsTable}
 
 // WeatherAlertsTable is the table of weatheralert.WeatherAlert.
 type WeatherAlertsTable struct {
-	keel.Handle[*weatheralert.WeatherAlert]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -266,7 +626,7 @@ type WeatherAlertsTable struct {
 
 // WeatherAlerts references the weather_alerts table.
 var WeatherAlerts = &WeatherAlertsTable{
-	Handle:         keel.Handle[*weatheralert.WeatherAlert]{Ref: &weatherAlertsRef},
+	TableBase:      keel.TableBase{Ref: &weatherAlertsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 2}}},
@@ -298,10 +658,10 @@ var WeatherAlerts = &WeatherAlertsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &weatherAlertsRef, Index: 28}},
 }
 
-// BuildWeatherAlerts builds the handle of weather_alerts for ref. Generated relation and alias methods call it.
+// BuildWeatherAlerts builds the table of weather_alerts for ref. Generated relation and alias methods call it.
 func BuildWeatherAlerts(r *keel.Ref) *WeatherAlertsTable {
 	return &WeatherAlertsTable{
-		Handle:         keel.Handle[*weatheralert.WeatherAlert]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -345,6 +705,365 @@ func (t *WeatherAlertsTable) As(alias string) *WeatherAlertsTable {
 // Get returns the weather_alerts row with the given key, or keel.ErrNotFound.
 func (t *WeatherAlertsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*weatheralert.WeatherAlert, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WeatherAlertsQuery is a query over weatheralert.WeatherAlert.
+type WeatherAlertsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*weatheralert.WeatherAlert] = (*WeatherAlertsTable)(nil)
+
+var _ keel.Query[*weatheralert.WeatherAlert] = (*WeatherAlertsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WeatherAlertsTable) Query() keel.Query[*weatheralert.WeatherAlert] {
+	return &WeatherAlertsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WeatherAlertsQuery.Where.
+func (t *WeatherAlertsTable) Where(ps ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WeatherAlertsQuery.Pick.
+func (t *WeatherAlertsTable) Pick(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WeatherAlertsQuery.Load.
+func (t *WeatherAlertsTable) Load(ls ...keel.Loader) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WeatherAlertsQuery.Omit.
+func (t *WeatherAlertsTable) Omit(cols ...keel.Column) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WeatherAlertsQuery.Order.
+func (t *WeatherAlertsTable) Order(os ...keel.Order) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WeatherAlertsQuery.Limit.
+func (t *WeatherAlertsTable) Limit(n int) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WeatherAlertsQuery.Group.
+func (t *WeatherAlertsTable) Group(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WeatherAlertsQuery.GroupingSets.
+func (t *WeatherAlertsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WeatherAlertsQuery.Rollup.
+func (t *WeatherAlertsTable) Rollup(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WeatherAlertsQuery.Cube.
+func (t *WeatherAlertsTable) Cube(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WeatherAlertsQuery.AllTenants.
+func (t *WeatherAlertsTable) AllTenants() keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WeatherAlertsQuery.Join.
+func (t *WeatherAlertsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WeatherAlertsQuery.LeftJoin.
+func (t *WeatherAlertsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WeatherAlertsQuery.LeftJoinLateral.
+func (t *WeatherAlertsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WeatherAlertsQuery.JoinLateral.
+func (t *WeatherAlertsTable) JoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WeatherAlertsQuery.Lock.
+func (t *WeatherAlertsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WeatherAlertsQuery.DistinctOn.
+func (t *WeatherAlertsTable) DistinctOn(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WeatherAlertsQuery.Cache.
+func (t *WeatherAlertsTable) Cache(opts ...keel.CacheOption) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WeatherAlertsQuery.LoadStrategy.
+func (t *WeatherAlertsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WeatherAlertsQuery.With.
+func (t *WeatherAlertsTable) With(ctes ...*keel.CTETable) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WeatherAlertsQuery.Compute.
+func (t *WeatherAlertsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WeatherAlertsTable) Create(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WeatherAlertsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WeatherAlertsTable) Save(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WeatherAlertsTable) SaveExcept(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WeatherAlertsTable) DeleteRow(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WeatherAlertsTable) Upsert(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WeatherAlertsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WeatherAlertsTable) Copy(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WeatherAlertsQuery) Where(ps ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WeatherAlertsQuery) Pick(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WeatherAlertsQuery) Omit(cols ...keel.Column) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WeatherAlertsQuery) Load(ls ...keel.Loader) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WeatherAlertsQuery) Order(os ...keel.Order) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WeatherAlertsQuery) Distinct() keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WeatherAlertsQuery) Group(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WeatherAlertsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WeatherAlertsQuery) Rollup(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WeatherAlertsQuery) Cube(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WeatherAlertsQuery) Window(name string, w keel.Window) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WeatherAlertsQuery) Having(ps ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WeatherAlertsQuery) Limit(n int) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WeatherAlertsQuery) Offset(n int) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WeatherAlertsQuery) DistinctOn(es ...keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WeatherAlertsQuery) AllTenants() keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WeatherAlertsQuery) CustomPlan() keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WeatherAlertsQuery) Timeout(d time.Duration) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WeatherAlertsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WeatherAlertsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WeatherAlertsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WeatherAlertsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WeatherAlertsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WeatherAlertsQuery) Cache(opts ...keel.CacheOption) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WeatherAlertsQuery) With(ctes ...*keel.CTETable) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WeatherAlertsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WeatherAlertsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*weatheralert.WeatherAlert] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WeatherAlertsQuery) Clone() keel.Query[*weatheralert.WeatherAlert] {
+	return &WeatherAlertsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WeatherAlertsQuery) One(ctx context.Context, db *keel.DB) (*weatheralert.WeatherAlert, error) {
+	return keel.One[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WeatherAlertsQuery) First(ctx context.Context, db *keel.DB) (*weatheralert.WeatherAlert, error) {
+	return keel.First[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WeatherAlertsQuery) List(ctx context.Context, db *keel.DB) ([]*weatheralert.WeatherAlert, error) {
+	return keel.List[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WeatherAlertsQuery) All(ctx context.Context, db *keel.DB) ([]*weatheralert.WeatherAlert, error) {
+	return keel.All[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WeatherAlertsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*weatheralert.WeatherAlert, error) {
+	return keel.UpdateReturning[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WeatherAlertsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*weatheralert.WeatherAlert], error) {
+	return keel.PageOf[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WeatherAlertsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*weatheralert.WeatherAlert) error) error {
+	return keel.Each[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWeatherAlert() unsafe.Pointer { return unsafe.Pointer(new(weatheralert.WeatherAlert)) }

@@ -4,6 +4,7 @@ package workerinjurydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -81,7 +82,7 @@ var oSHAAnnualSummariesRef = keel.Ref{Table: &oSHAAnnualSummariesTable}
 
 // OSHAAnnualSummariesTable is the table of workerinjury.OSHAAnnualSummary.
 type OSHAAnnualSummariesTable struct {
-	keel.Handle[*workerinjury.OSHAAnnualSummary]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -107,7 +108,7 @@ type OSHAAnnualSummariesTable struct {
 
 // OSHAAnnualSummaries references the osha_annual_summaries table.
 var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
-	Handle:              keel.Handle[*workerinjury.OSHAAnnualSummary]{Ref: &oSHAAnnualSummariesRef},
+	TableBase:           keel.TableBase{Ref: &oSHAAnnualSummariesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 2}}},
@@ -131,10 +132,10 @@ var OSHAAnnualSummaries = &OSHAAnnualSummariesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &oSHAAnnualSummariesRef, Index: 20}},
 }
 
-// BuildOSHAAnnualSummaries builds the handle of osha_annual_summaries for ref. Generated relation and alias methods call it.
+// BuildOSHAAnnualSummaries builds the table of osha_annual_summaries for ref. Generated relation and alias methods call it.
 func BuildOSHAAnnualSummaries(r *keel.Ref) *OSHAAnnualSummariesTable {
 	return &OSHAAnnualSummariesTable{
-		Handle:              keel.Handle[*workerinjury.OSHAAnnualSummary]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -175,6 +176,365 @@ func (t *OSHAAnnualSummariesTable) CertifiedBy() *tenantdb.UsersTable {
 // Get returns the osha_annual_summaries row with the given key, or keel.ErrNotFound.
 func (t *OSHAAnnualSummariesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerinjury.OSHAAnnualSummary, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// OSHAAnnualSummariesQuery is a query over workerinjury.OSHAAnnualSummary.
+type OSHAAnnualSummariesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerinjury.OSHAAnnualSummary] = (*OSHAAnnualSummariesTable)(nil)
+
+var _ keel.Query[*workerinjury.OSHAAnnualSummary] = (*OSHAAnnualSummariesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *OSHAAnnualSummariesTable) Query() keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return &OSHAAnnualSummariesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see OSHAAnnualSummariesQuery.Where.
+func (t *OSHAAnnualSummariesTable) Where(ps ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see OSHAAnnualSummariesQuery.Pick.
+func (t *OSHAAnnualSummariesTable) Pick(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see OSHAAnnualSummariesQuery.Load.
+func (t *OSHAAnnualSummariesTable) Load(ls ...keel.Loader) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see OSHAAnnualSummariesQuery.Omit.
+func (t *OSHAAnnualSummariesTable) Omit(cols ...keel.Column) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see OSHAAnnualSummariesQuery.Order.
+func (t *OSHAAnnualSummariesTable) Order(os ...keel.Order) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see OSHAAnnualSummariesQuery.Limit.
+func (t *OSHAAnnualSummariesTable) Limit(n int) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see OSHAAnnualSummariesQuery.Group.
+func (t *OSHAAnnualSummariesTable) Group(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see OSHAAnnualSummariesQuery.GroupingSets.
+func (t *OSHAAnnualSummariesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see OSHAAnnualSummariesQuery.Rollup.
+func (t *OSHAAnnualSummariesTable) Rollup(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see OSHAAnnualSummariesQuery.Cube.
+func (t *OSHAAnnualSummariesTable) Cube(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see OSHAAnnualSummariesQuery.AllTenants.
+func (t *OSHAAnnualSummariesTable) AllTenants() keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see OSHAAnnualSummariesQuery.Join.
+func (t *OSHAAnnualSummariesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see OSHAAnnualSummariesQuery.LeftJoin.
+func (t *OSHAAnnualSummariesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see OSHAAnnualSummariesQuery.LeftJoinLateral.
+func (t *OSHAAnnualSummariesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see OSHAAnnualSummariesQuery.JoinLateral.
+func (t *OSHAAnnualSummariesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see OSHAAnnualSummariesQuery.Lock.
+func (t *OSHAAnnualSummariesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see OSHAAnnualSummariesQuery.DistinctOn.
+func (t *OSHAAnnualSummariesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see OSHAAnnualSummariesQuery.Cache.
+func (t *OSHAAnnualSummariesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see OSHAAnnualSummariesQuery.LoadStrategy.
+func (t *OSHAAnnualSummariesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see OSHAAnnualSummariesQuery.With.
+func (t *OSHAAnnualSummariesTable) With(ctes ...*keel.CTETable) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see OSHAAnnualSummariesQuery.Compute.
+func (t *OSHAAnnualSummariesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *OSHAAnnualSummariesTable) Create(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *OSHAAnnualSummariesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *OSHAAnnualSummariesTable) Save(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *OSHAAnnualSummariesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *OSHAAnnualSummariesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerinjury.OSHAAnnualSummary) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *OSHAAnnualSummariesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *OSHAAnnualSummariesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *OSHAAnnualSummariesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerinjury.OSHAAnnualSummary) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *OSHAAnnualSummariesQuery) Where(ps ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *OSHAAnnualSummariesQuery) Pick(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *OSHAAnnualSummariesQuery) Omit(cols ...keel.Column) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *OSHAAnnualSummariesQuery) Load(ls ...keel.Loader) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *OSHAAnnualSummariesQuery) Order(os ...keel.Order) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *OSHAAnnualSummariesQuery) Distinct() keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *OSHAAnnualSummariesQuery) Group(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *OSHAAnnualSummariesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *OSHAAnnualSummariesQuery) Rollup(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *OSHAAnnualSummariesQuery) Cube(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *OSHAAnnualSummariesQuery) Window(name string, w keel.Window) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *OSHAAnnualSummariesQuery) Having(ps ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *OSHAAnnualSummariesQuery) Limit(n int) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *OSHAAnnualSummariesQuery) Offset(n int) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *OSHAAnnualSummariesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *OSHAAnnualSummariesQuery) AllTenants() keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *OSHAAnnualSummariesQuery) CustomPlan() keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *OSHAAnnualSummariesQuery) Timeout(d time.Duration) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *OSHAAnnualSummariesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *OSHAAnnualSummariesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *OSHAAnnualSummariesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *OSHAAnnualSummariesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *OSHAAnnualSummariesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *OSHAAnnualSummariesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *OSHAAnnualSummariesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *OSHAAnnualSummariesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *OSHAAnnualSummariesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerinjury.OSHAAnnualSummary] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *OSHAAnnualSummariesQuery) Clone() keel.Query[*workerinjury.OSHAAnnualSummary] {
+	return &OSHAAnnualSummariesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *OSHAAnnualSummariesQuery) One(ctx context.Context, db *keel.DB) (*workerinjury.OSHAAnnualSummary, error) {
+	return keel.One[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *OSHAAnnualSummariesQuery) First(ctx context.Context, db *keel.DB) (*workerinjury.OSHAAnnualSummary, error) {
+	return keel.First[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *OSHAAnnualSummariesQuery) List(ctx context.Context, db *keel.DB) ([]*workerinjury.OSHAAnnualSummary, error) {
+	return keel.List[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *OSHAAnnualSummariesQuery) All(ctx context.Context, db *keel.DB) ([]*workerinjury.OSHAAnnualSummary, error) {
+	return keel.All[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *OSHAAnnualSummariesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerinjury.OSHAAnnualSummary, error) {
+	return keel.UpdateReturning[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *OSHAAnnualSummariesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerinjury.OSHAAnnualSummary], error) {
+	return keel.PageOf[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *OSHAAnnualSummariesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerinjury.OSHAAnnualSummary) error) error {
+	return keel.Each[*workerinjury.OSHAAnnualSummary](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newOSHAAnnualSummary() unsafe.Pointer {
@@ -402,7 +762,7 @@ var workerInjuriesRef = keel.Ref{Table: &workerInjuriesTable}
 
 // WorkerInjuriesTable is the table of workerinjury.WorkerInjury.
 type WorkerInjuriesTable struct {
-	keel.Handle[*workerinjury.WorkerInjury]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -439,7 +799,7 @@ type WorkerInjuriesTable struct {
 
 // WorkerInjuries references the worker_injuries table.
 var WorkerInjuries = &WorkerInjuriesTable{
-	Handle:           keel.Handle[*workerinjury.WorkerInjury]{Ref: &workerInjuriesRef},
+	TableBase:        keel.TableBase{Ref: &workerInjuriesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerInjuriesRef, Index: 2}}},
@@ -474,10 +834,10 @@ var WorkerInjuries = &WorkerInjuriesTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerInjuriesRef, Index: 31}},
 }
 
-// BuildWorkerInjuries builds the handle of worker_injuries for ref. Generated relation and alias methods call it.
+// BuildWorkerInjuries builds the table of worker_injuries for ref. Generated relation and alias methods call it.
 func BuildWorkerInjuries(r *keel.Ref) *WorkerInjuriesTable {
 	return &WorkerInjuriesTable{
-		Handle:           keel.Handle[*workerinjury.WorkerInjury]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -544,6 +904,365 @@ func (t *WorkerInjuriesTable) RecordedBy() *tenantdb.UsersTable {
 // Get returns the worker_injuries row with the given key, or keel.ErrNotFound.
 func (t *WorkerInjuriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerinjury.WorkerInjury, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerInjuriesQuery is a query over workerinjury.WorkerInjury.
+type WorkerInjuriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerinjury.WorkerInjury] = (*WorkerInjuriesTable)(nil)
+
+var _ keel.Query[*workerinjury.WorkerInjury] = (*WorkerInjuriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerInjuriesTable) Query() keel.Query[*workerinjury.WorkerInjury] {
+	return &WorkerInjuriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerInjuriesQuery.Where.
+func (t *WorkerInjuriesTable) Where(ps ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerInjuriesQuery.Pick.
+func (t *WorkerInjuriesTable) Pick(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerInjuriesQuery.Load.
+func (t *WorkerInjuriesTable) Load(ls ...keel.Loader) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerInjuriesQuery.Omit.
+func (t *WorkerInjuriesTable) Omit(cols ...keel.Column) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerInjuriesQuery.Order.
+func (t *WorkerInjuriesTable) Order(os ...keel.Order) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerInjuriesQuery.Limit.
+func (t *WorkerInjuriesTable) Limit(n int) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerInjuriesQuery.Group.
+func (t *WorkerInjuriesTable) Group(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerInjuriesQuery.GroupingSets.
+func (t *WorkerInjuriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerInjuriesQuery.Rollup.
+func (t *WorkerInjuriesTable) Rollup(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerInjuriesQuery.Cube.
+func (t *WorkerInjuriesTable) Cube(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerInjuriesQuery.AllTenants.
+func (t *WorkerInjuriesTable) AllTenants() keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerInjuriesQuery.Join.
+func (t *WorkerInjuriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerInjuriesQuery.LeftJoin.
+func (t *WorkerInjuriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerInjuriesQuery.LeftJoinLateral.
+func (t *WorkerInjuriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerInjuriesQuery.JoinLateral.
+func (t *WorkerInjuriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerInjuriesQuery.Lock.
+func (t *WorkerInjuriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerInjuriesQuery.DistinctOn.
+func (t *WorkerInjuriesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerInjuriesQuery.Cache.
+func (t *WorkerInjuriesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerInjuriesQuery.LoadStrategy.
+func (t *WorkerInjuriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerInjuriesQuery.With.
+func (t *WorkerInjuriesTable) With(ctes ...*keel.CTETable) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerInjuriesQuery.Compute.
+func (t *WorkerInjuriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerInjuriesTable) Create(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerInjuriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerInjuriesTable) Save(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerInjuriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerInjuriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerinjury.WorkerInjury) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerInjuriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerInjuriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerInjuriesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerinjury.WorkerInjury) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerInjuriesQuery) Where(ps ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerInjuriesQuery) Pick(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerInjuriesQuery) Omit(cols ...keel.Column) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerInjuriesQuery) Load(ls ...keel.Loader) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerInjuriesQuery) Order(os ...keel.Order) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerInjuriesQuery) Distinct() keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerInjuriesQuery) Group(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerInjuriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerInjuriesQuery) Rollup(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerInjuriesQuery) Cube(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerInjuriesQuery) Window(name string, w keel.Window) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerInjuriesQuery) Having(ps ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerInjuriesQuery) Limit(n int) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerInjuriesQuery) Offset(n int) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerInjuriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerInjuriesQuery) AllTenants() keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerInjuriesQuery) CustomPlan() keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerInjuriesQuery) Timeout(d time.Duration) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerInjuriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerInjuriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerInjuriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerInjuriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerInjuriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerInjuriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerInjuriesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerInjuriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerInjuriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerinjury.WorkerInjury] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerInjuriesQuery) Clone() keel.Query[*workerinjury.WorkerInjury] {
+	return &WorkerInjuriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerInjuriesQuery) One(ctx context.Context, db *keel.DB) (*workerinjury.WorkerInjury, error) {
+	return keel.One[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerInjuriesQuery) First(ctx context.Context, db *keel.DB) (*workerinjury.WorkerInjury, error) {
+	return keel.First[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerInjuriesQuery) List(ctx context.Context, db *keel.DB) ([]*workerinjury.WorkerInjury, error) {
+	return keel.List[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerInjuriesQuery) All(ctx context.Context, db *keel.DB) ([]*workerinjury.WorkerInjury, error) {
+	return keel.All[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerInjuriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerinjury.WorkerInjury, error) {
+	return keel.UpdateReturning[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerInjuriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerinjury.WorkerInjury], error) {
+	return keel.PageOf[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerInjuriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerinjury.WorkerInjury) error) error {
+	return keel.Each[*workerinjury.WorkerInjury](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerInjury() unsafe.Pointer { return unsafe.Pointer(new(workerinjury.WorkerInjury)) }

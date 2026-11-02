@@ -4,6 +4,7 @@ package dashcontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -71,7 +72,7 @@ var dashControlsRef = keel.Ref{Table: &dashControlsTable}
 
 // DashControlsTable is the table of dashcontrol.DashControl.
 type DashControlsTable struct {
-	keel.Handle[*dashcontrol.DashControl]
+	keel.TableBase
 	ID                             keelkinds.PulidIDCol
 	BusinessUnitID                 keelkinds.PulidIDCol
 	OrganizationID                 keelkinds.PulidIDCol
@@ -101,7 +102,7 @@ type DashControlsTable struct {
 
 // DashControls references the dash_controls table.
 var DashControls = &DashControlsTable{
-	Handle:                         keel.Handle[*dashcontrol.DashControl]{Ref: &dashControlsRef},
+	TableBase:                      keel.TableBase{Ref: &dashControlsRef},
 	ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 0}}},
 	BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 1}}},
 	OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashControlsRef, Index: 2}}},
@@ -129,10 +130,10 @@ var DashControls = &DashControlsTable{
 	UpdatedAt:                      keel.Int64Col{Col: keel.Col{Ref: &dashControlsRef, Index: 24}},
 }
 
-// BuildDashControls builds the handle of dash_controls for ref. Generated relation and alias methods call it.
+// BuildDashControls builds the table of dash_controls for ref. Generated relation and alias methods call it.
 func BuildDashControls(r *keel.Ref) *DashControlsTable {
 	return &DashControlsTable{
-		Handle:                         keel.Handle[*dashcontrol.DashControl]{Ref: r},
+		TableBase:                      keel.TableBase{Ref: r},
 		ID:                             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -172,6 +173,365 @@ func (t *DashControlsTable) As(alias string) *DashControlsTable {
 // Get returns the dash_controls row with the given key, or keel.ErrNotFound.
 func (t *DashControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dashcontrol.DashControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DashControlsQuery is a query over dashcontrol.DashControl.
+type DashControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*dashcontrol.DashControl] = (*DashControlsTable)(nil)
+
+var _ keel.Query[*dashcontrol.DashControl] = (*DashControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DashControlsTable) Query() keel.Query[*dashcontrol.DashControl] {
+	return &DashControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DashControlsQuery.Where.
+func (t *DashControlsTable) Where(ps ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DashControlsQuery.Pick.
+func (t *DashControlsTable) Pick(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DashControlsQuery.Load.
+func (t *DashControlsTable) Load(ls ...keel.Loader) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DashControlsQuery.Omit.
+func (t *DashControlsTable) Omit(cols ...keel.Column) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DashControlsQuery.Order.
+func (t *DashControlsTable) Order(os ...keel.Order) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DashControlsQuery.Limit.
+func (t *DashControlsTable) Limit(n int) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DashControlsQuery.Group.
+func (t *DashControlsTable) Group(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DashControlsQuery.GroupingSets.
+func (t *DashControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DashControlsQuery.Rollup.
+func (t *DashControlsTable) Rollup(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DashControlsQuery.Cube.
+func (t *DashControlsTable) Cube(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DashControlsQuery.AllTenants.
+func (t *DashControlsTable) AllTenants() keel.Query[*dashcontrol.DashControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DashControlsQuery.Join.
+func (t *DashControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DashControlsQuery.LeftJoin.
+func (t *DashControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DashControlsQuery.LeftJoinLateral.
+func (t *DashControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DashControlsQuery.JoinLateral.
+func (t *DashControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DashControlsQuery.Lock.
+func (t *DashControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DashControlsQuery.DistinctOn.
+func (t *DashControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DashControlsQuery.Cache.
+func (t *DashControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DashControlsQuery.LoadStrategy.
+func (t *DashControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DashControlsQuery.With.
+func (t *DashControlsTable) With(ctes ...*keel.CTETable) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DashControlsQuery.Compute.
+func (t *DashControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DashControlsTable) Create(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DashControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DashControlsTable) Save(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DashControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DashControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dashcontrol.DashControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DashControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DashControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DashControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*dashcontrol.DashControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DashControlsQuery) Where(ps ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DashControlsQuery) Pick(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DashControlsQuery) Omit(cols ...keel.Column) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DashControlsQuery) Load(ls ...keel.Loader) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DashControlsQuery) Order(os ...keel.Order) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DashControlsQuery) Distinct() keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DashControlsQuery) Group(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DashControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DashControlsQuery) Rollup(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DashControlsQuery) Cube(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DashControlsQuery) Window(name string, w keel.Window) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DashControlsQuery) Having(ps ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DashControlsQuery) Limit(n int) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DashControlsQuery) Offset(n int) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DashControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DashControlsQuery) AllTenants() keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DashControlsQuery) CustomPlan() keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DashControlsQuery) Timeout(d time.Duration) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DashControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DashControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DashControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DashControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DashControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DashControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DashControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DashControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DashControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*dashcontrol.DashControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DashControlsQuery) Clone() keel.Query[*dashcontrol.DashControl] {
+	return &DashControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DashControlsQuery) One(ctx context.Context, db *keel.DB) (*dashcontrol.DashControl, error) {
+	return keel.One[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DashControlsQuery) First(ctx context.Context, db *keel.DB) (*dashcontrol.DashControl, error) {
+	return keel.First[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DashControlsQuery) List(ctx context.Context, db *keel.DB) ([]*dashcontrol.DashControl, error) {
+	return keel.List[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DashControlsQuery) All(ctx context.Context, db *keel.DB) ([]*dashcontrol.DashControl, error) {
+	return keel.All[*dashcontrol.DashControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DashControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dashcontrol.DashControl, error) {
+	return keel.UpdateReturning[*dashcontrol.DashControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DashControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dashcontrol.DashControl], error) {
+	return keel.PageOf[*dashcontrol.DashControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DashControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dashcontrol.DashControl) error) error {
+	return keel.Each[*dashcontrol.DashControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDashControl() unsafe.Pointer { return unsafe.Pointer(new(dashcontrol.DashControl)) }

@@ -4,6 +4,7 @@ package shipmentbriefdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -60,7 +61,7 @@ var briefsRef = keel.Ref{Table: &briefsTable}
 
 // BriefsTable is the table of shipmentbrief.Brief.
 type BriefsTable struct {
-	keel.Handle[*shipmentbrief.Brief]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -80,7 +81,7 @@ type BriefsTable struct {
 
 // Briefs references the shipment_board_briefs table.
 var Briefs = &BriefsTable{
-	Handle:          keel.Handle[*shipmentbrief.Brief]{Ref: &briefsRef},
+	TableBase:       keel.TableBase{Ref: &briefsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &briefsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &briefsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &briefsRef, Index: 2}}},
@@ -98,10 +99,10 @@ var Briefs = &BriefsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefsRef, Index: 14}},
 }
 
-// BuildBriefs builds the handle of shipment_board_briefs for ref. Generated relation and alias methods call it.
+// BuildBriefs builds the table of shipment_board_briefs for ref. Generated relation and alias methods call it.
 func BuildBriefs(r *keel.Ref) *BriefsTable {
 	return &BriefsTable{
-		Handle:          keel.Handle[*shipmentbrief.Brief]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -129,6 +130,365 @@ func (t *BriefsTable) As(alias string) *BriefsTable { return keel.Alias(t.Ref, a
 // Get returns the shipment_board_briefs row with the given key, or keel.ErrNotFound.
 func (t *BriefsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipmentbrief.Brief, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BriefsQuery is a query over shipmentbrief.Brief.
+type BriefsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*shipmentbrief.Brief] = (*BriefsTable)(nil)
+
+var _ keel.Query[*shipmentbrief.Brief] = (*BriefsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BriefsTable) Query() keel.Query[*shipmentbrief.Brief] {
+	return &BriefsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BriefsQuery.Where.
+func (t *BriefsTable) Where(ps ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BriefsQuery.Pick.
+func (t *BriefsTable) Pick(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BriefsQuery.Load.
+func (t *BriefsTable) Load(ls ...keel.Loader) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BriefsQuery.Omit.
+func (t *BriefsTable) Omit(cols ...keel.Column) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BriefsQuery.Order.
+func (t *BriefsTable) Order(os ...keel.Order) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BriefsQuery.Limit.
+func (t *BriefsTable) Limit(n int) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BriefsQuery.Group.
+func (t *BriefsTable) Group(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BriefsQuery.GroupingSets.
+func (t *BriefsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BriefsQuery.Rollup.
+func (t *BriefsTable) Rollup(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BriefsQuery.Cube.
+func (t *BriefsTable) Cube(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BriefsQuery.AllTenants.
+func (t *BriefsTable) AllTenants() keel.Query[*shipmentbrief.Brief] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BriefsQuery.Join.
+func (t *BriefsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BriefsQuery.LeftJoin.
+func (t *BriefsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BriefsQuery.LeftJoinLateral.
+func (t *BriefsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BriefsQuery.JoinLateral.
+func (t *BriefsTable) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BriefsQuery.Lock.
+func (t *BriefsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BriefsQuery.DistinctOn.
+func (t *BriefsTable) DistinctOn(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BriefsQuery.Cache.
+func (t *BriefsTable) Cache(opts ...keel.CacheOption) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BriefsQuery.LoadStrategy.
+func (t *BriefsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BriefsQuery.With.
+func (t *BriefsTable) With(ctes ...*keel.CTETable) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BriefsQuery.Compute.
+func (t *BriefsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BriefsTable) Create(ctx context.Context, db *keel.DB, row *shipmentbrief.Brief) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BriefsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentbrief.Brief) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BriefsTable) Save(ctx context.Context, db *keel.DB, row *shipmentbrief.Brief, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BriefsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentbrief.Brief, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BriefsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentbrief.Brief) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BriefsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentbrief.Brief, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BriefsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentbrief.Brief, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BriefsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentbrief.Brief) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BriefsQuery) Where(ps ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BriefsQuery) Pick(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BriefsQuery) Omit(cols ...keel.Column) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BriefsQuery) Load(ls ...keel.Loader) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BriefsQuery) Order(os ...keel.Order) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BriefsQuery) Distinct() keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BriefsQuery) Group(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BriefsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BriefsQuery) Rollup(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BriefsQuery) Cube(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BriefsQuery) Window(name string, w keel.Window) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BriefsQuery) Having(ps ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BriefsQuery) Limit(n int) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BriefsQuery) Offset(n int) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BriefsQuery) DistinctOn(es ...keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BriefsQuery) AllTenants() keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BriefsQuery) CustomPlan() keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BriefsQuery) Timeout(d time.Duration) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BriefsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BriefsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BriefsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BriefsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BriefsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BriefsQuery) Cache(opts ...keel.CacheOption) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BriefsQuery) With(ctes ...*keel.CTETable) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BriefsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BriefsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentbrief.Brief] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BriefsQuery) Clone() keel.Query[*shipmentbrief.Brief] {
+	return &BriefsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BriefsQuery) One(ctx context.Context, db *keel.DB) (*shipmentbrief.Brief, error) {
+	return keel.One[*shipmentbrief.Brief](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BriefsQuery) First(ctx context.Context, db *keel.DB) (*shipmentbrief.Brief, error) {
+	return keel.First[*shipmentbrief.Brief](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BriefsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentbrief.Brief, error) {
+	return keel.List[*shipmentbrief.Brief](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BriefsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentbrief.Brief, error) {
+	return keel.All[*shipmentbrief.Brief](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BriefsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentbrief.Brief, error) {
+	return keel.UpdateReturning[*shipmentbrief.Brief](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BriefsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentbrief.Brief], error) {
+	return keel.PageOf[*shipmentbrief.Brief](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BriefsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentbrief.Brief) error) error {
+	return keel.Each[*shipmentbrief.Brief](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBrief() unsafe.Pointer { return unsafe.Pointer(new(shipmentbrief.Brief)) }

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func previousRateOrigins(originLocationID pulid.ID) *keel.Query[*shipment.ShipmentMove] {
+func previousRateOrigins(originLocationID pulid.ID) keel.Query[*shipment.ShipmentMove] {
 	firstMove := shipmentdb.ShipmentMoves.As("first_move")
 	originStop := shipmentdb.Stops.As("origin_stop")
 
@@ -22,7 +22,7 @@ func previousRateOrigins(originLocationID pulid.ID) *keel.Query[*shipment.Shipme
 		)
 }
 
-func previousRateDestinations(destinationLocationID pulid.ID) *keel.Query[*shipment.ShipmentMove] {
+func previousRateDestinations(destinationLocationID pulid.ID) keel.Query[*shipment.ShipmentMove] {
 	lastMove := shipmentdb.ShipmentMoves.As("last_move")
 	deliveryStop := shipmentdb.Stops.As("delivery_stop")
 	otherMove := shipmentdb.ShipmentMoves.As("sm3")

@@ -4,6 +4,7 @@ package detentionnoticedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -79,7 +80,7 @@ var detentionNoticesRef = keel.Ref{Table: &detentionNoticesTable}
 
 // DetentionNoticesTable is the table of detentionnotice.DetentionNotice.
 type DetentionNoticesTable struct {
-	keel.Handle[*detentionnotice.DetentionNotice]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -114,7 +115,7 @@ type DetentionNoticesTable struct {
 
 // DetentionNotices references the detention_notices table.
 var DetentionNotices = &DetentionNoticesTable{
-	Handle:                keel.Handle[*detentionnotice.DetentionNotice]{Ref: &detentionNoticesRef},
+	TableBase:             keel.TableBase{Ref: &detentionNoticesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionNoticesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionNoticesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionNoticesRef, Index: 2}}},
@@ -147,10 +148,10 @@ var DetentionNotices = &DetentionNoticesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &detentionNoticesRef, Index: 29}},
 }
 
-// BuildDetentionNotices builds the handle of detention_notices for ref. Generated relation and alias methods call it.
+// BuildDetentionNotices builds the table of detention_notices for ref. Generated relation and alias methods call it.
 func BuildDetentionNotices(r *keel.Ref) *DetentionNoticesTable {
 	return &DetentionNoticesTable{
-		Handle:                keel.Handle[*detentionnotice.DetentionNotice]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -195,6 +196,365 @@ func (t *DetentionNoticesTable) As(alias string) *DetentionNoticesTable {
 // Get returns the detention_notices row with the given key, or keel.ErrNotFound.
 func (t *DetentionNoticesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*detentionnotice.DetentionNotice, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DetentionNoticesQuery is a query over detentionnotice.DetentionNotice.
+type DetentionNoticesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*detentionnotice.DetentionNotice] = (*DetentionNoticesTable)(nil)
+
+var _ keel.Query[*detentionnotice.DetentionNotice] = (*DetentionNoticesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DetentionNoticesTable) Query() keel.Query[*detentionnotice.DetentionNotice] {
+	return &DetentionNoticesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DetentionNoticesQuery.Where.
+func (t *DetentionNoticesTable) Where(ps ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DetentionNoticesQuery.Pick.
+func (t *DetentionNoticesTable) Pick(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DetentionNoticesQuery.Load.
+func (t *DetentionNoticesTable) Load(ls ...keel.Loader) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DetentionNoticesQuery.Omit.
+func (t *DetentionNoticesTable) Omit(cols ...keel.Column) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DetentionNoticesQuery.Order.
+func (t *DetentionNoticesTable) Order(os ...keel.Order) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DetentionNoticesQuery.Limit.
+func (t *DetentionNoticesTable) Limit(n int) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DetentionNoticesQuery.Group.
+func (t *DetentionNoticesTable) Group(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DetentionNoticesQuery.GroupingSets.
+func (t *DetentionNoticesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DetentionNoticesQuery.Rollup.
+func (t *DetentionNoticesTable) Rollup(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DetentionNoticesQuery.Cube.
+func (t *DetentionNoticesTable) Cube(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DetentionNoticesQuery.AllTenants.
+func (t *DetentionNoticesTable) AllTenants() keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DetentionNoticesQuery.Join.
+func (t *DetentionNoticesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DetentionNoticesQuery.LeftJoin.
+func (t *DetentionNoticesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DetentionNoticesQuery.LeftJoinLateral.
+func (t *DetentionNoticesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DetentionNoticesQuery.JoinLateral.
+func (t *DetentionNoticesTable) JoinLateral(sub keel.LateralSource) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DetentionNoticesQuery.Lock.
+func (t *DetentionNoticesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DetentionNoticesQuery.DistinctOn.
+func (t *DetentionNoticesTable) DistinctOn(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DetentionNoticesQuery.Cache.
+func (t *DetentionNoticesTable) Cache(opts ...keel.CacheOption) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DetentionNoticesQuery.LoadStrategy.
+func (t *DetentionNoticesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DetentionNoticesQuery.With.
+func (t *DetentionNoticesTable) With(ctes ...*keel.CTETable) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DetentionNoticesQuery.Compute.
+func (t *DetentionNoticesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DetentionNoticesTable) Create(ctx context.Context, db *keel.DB, row *detentionnotice.DetentionNotice) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DetentionNoticesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*detentionnotice.DetentionNotice) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DetentionNoticesTable) Save(ctx context.Context, db *keel.DB, row *detentionnotice.DetentionNotice, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DetentionNoticesTable) SaveExcept(ctx context.Context, db *keel.DB, row *detentionnotice.DetentionNotice, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DetentionNoticesTable) DeleteRow(ctx context.Context, db *keel.DB, row *detentionnotice.DetentionNotice) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DetentionNoticesTable) Upsert(ctx context.Context, db *keel.DB, rows []*detentionnotice.DetentionNotice, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DetentionNoticesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*detentionnotice.DetentionNotice, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DetentionNoticesTable) Copy(ctx context.Context, db *keel.DB, rows []*detentionnotice.DetentionNotice) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DetentionNoticesQuery) Where(ps ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DetentionNoticesQuery) Pick(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DetentionNoticesQuery) Omit(cols ...keel.Column) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DetentionNoticesQuery) Load(ls ...keel.Loader) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DetentionNoticesQuery) Order(os ...keel.Order) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DetentionNoticesQuery) Distinct() keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DetentionNoticesQuery) Group(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DetentionNoticesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DetentionNoticesQuery) Rollup(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DetentionNoticesQuery) Cube(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DetentionNoticesQuery) Window(name string, w keel.Window) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DetentionNoticesQuery) Having(ps ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DetentionNoticesQuery) Limit(n int) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DetentionNoticesQuery) Offset(n int) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DetentionNoticesQuery) DistinctOn(es ...keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DetentionNoticesQuery) AllTenants() keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DetentionNoticesQuery) CustomPlan() keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DetentionNoticesQuery) Timeout(d time.Duration) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DetentionNoticesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DetentionNoticesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DetentionNoticesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DetentionNoticesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DetentionNoticesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DetentionNoticesQuery) Cache(opts ...keel.CacheOption) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DetentionNoticesQuery) With(ctes ...*keel.CTETable) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DetentionNoticesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DetentionNoticesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*detentionnotice.DetentionNotice] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DetentionNoticesQuery) Clone() keel.Query[*detentionnotice.DetentionNotice] {
+	return &DetentionNoticesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DetentionNoticesQuery) One(ctx context.Context, db *keel.DB) (*detentionnotice.DetentionNotice, error) {
+	return keel.One[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DetentionNoticesQuery) First(ctx context.Context, db *keel.DB) (*detentionnotice.DetentionNotice, error) {
+	return keel.First[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DetentionNoticesQuery) List(ctx context.Context, db *keel.DB) ([]*detentionnotice.DetentionNotice, error) {
+	return keel.List[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DetentionNoticesQuery) All(ctx context.Context, db *keel.DB) ([]*detentionnotice.DetentionNotice, error) {
+	return keel.All[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DetentionNoticesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*detentionnotice.DetentionNotice, error) {
+	return keel.UpdateReturning[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DetentionNoticesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*detentionnotice.DetentionNotice], error) {
+	return keel.PageOf[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DetentionNoticesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*detentionnotice.DetentionNotice) error) error {
+	return keel.Each[*detentionnotice.DetentionNotice](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDetentionNotice() unsafe.Pointer { return unsafe.Pointer(new(detentionnotice.DetentionNotice)) }

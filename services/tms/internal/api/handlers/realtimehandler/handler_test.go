@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -103,24 +104,47 @@ var (
 	testSessionID = pulid.MustNew("ses_")
 )
 
+const testSessionSecretHash = "test-session-secret-hash"
+
 type stubLiveness struct {
-	mu    sync.Mutex
-	ended bool
+	mu      sync.Mutex
+	ended   bool
+	rotated bool
 }
 
-func (l *stubLiveness) Ended(_ context.Context, sessionIDs []pulid.ID) ([]pulid.ID, error) {
+func (l *stubLiveness) Standings(
+	_ context.Context,
+	sessionIDs []pulid.ID,
+) ([]sessionports.SessionStanding, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if !l.ended {
-		return nil, nil
+
+	secrets := []string{testSessionSecretHash}
+	if l.rotated {
+		secrets = []string{"a-newer-secret-hash"}
 	}
-	return sessionIDs, nil
+	standings := make([]sessionports.SessionStanding, 0, len(sessionIDs))
+	for _, sessionID := range sessionIDs {
+		standings = append(standings, sessionports.SessionStanding{
+			ID:           sessionID,
+			Ended:        l.ended,
+			SecretsKnown: !l.ended,
+			SecretHashes: secrets,
+		})
+	}
+	return standings, nil
 }
 
 func (l *stubLiveness) end() {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.ended = true
+}
+
+func (l *stubLiveness) rotate() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.rotated = true
 }
 
 func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engine {
@@ -180,10 +204,11 @@ func newTestRouterWithSessions(
 			authctx.SetAuthContext(c, testUserID, testBUID, testOrgID)
 		case authSession:
 			authctx.SetSessionAuthContext(c, authctx.SessionAuthContextParams{
-				SessionID:      testSessionID,
-				UserID:         testUserID,
-				BusinessUnitID: testBUID,
-				OrganizationID: testOrgID,
+				SessionID:         testSessionID,
+				SessionSecretHash: testSessionSecretHash,
+				UserID:            testUserID,
+				BusinessUnitID:    testBUID,
+				OrganizationID:    testOrgID,
 			})
 		}
 		c.Next()
@@ -241,8 +266,11 @@ func TestStream_WritesPreludeLiveFramesAndCloseReason(t *testing.T) {
 	assert.True(t, stream.closed)
 }
 
-func TestStream_ClosesOnceItsSessionEnds(t *testing.T) {
-	t.Parallel()
+func streamUntilClosed(
+	t *testing.T,
+	change func(*stubLiveness),
+) string {
+	t.Helper()
 
 	stream := &stubStream{
 		id:     "rtc_1",
@@ -266,24 +294,35 @@ func TestStream_ClosesOnceItsSessionEnds(t *testing.T) {
 	case <-time.After(50 * time.Millisecond):
 	}
 
-	liveness.end()
+	change(liveness)
 	deadline := time.After(5 * time.Second)
 	for {
 		sessions.Sweep(t.Context())
 		select {
 		case <-done:
-			assert.Contains(
-				t,
-				w.Body.String(),
-				"event: close\ndata: {\"reason\":\"session_ended\"}",
-			)
 			assert.True(t, stream.closed)
-			return
+			return w.Body.String()
 		case <-deadline:
 			t.Fatal("the stream outlived its session")
 		case <-time.After(10 * time.Millisecond):
 		}
 	}
+}
+
+func TestStream_ClosesOnceItsSessionEnds(t *testing.T) {
+	t.Parallel()
+
+	body := streamUntilClosed(t, (*stubLiveness).end)
+
+	assert.Contains(t, body, "event: close\ndata: {\"reason\":\"session_ended\"}")
+}
+
+func TestStream_AsksForAReconnectOnceItsSecretIsSuperseded(t *testing.T) {
+	t.Parallel()
+
+	body := streamUntilClosed(t, (*stubLiveness).rotate)
+
+	assert.Contains(t, body, "event: close\ndata: {\"reason\":\"rotate\"}")
 }
 
 func TestStream_PortalUsersAreMarked(t *testing.T) {

@@ -4,6 +4,7 @@ package factoringreadinessdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -72,7 +73,7 @@ var invoiceStatesRef = keel.Ref{Table: &invoiceStatesTable}
 
 // InvoiceStatesTable is the table of factoringreadiness.InvoiceState.
 type InvoiceStatesTable struct {
-	keel.Handle[*factoringreadiness.InvoiceState]
+	keel.TableBase
 	InvoiceID          keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -90,7 +91,7 @@ type InvoiceStatesTable struct {
 
 // InvoiceStates references the factoring_invoice_states table.
 var InvoiceStates = &InvoiceStatesTable{
-	Handle:             keel.Handle[*factoringreadiness.InvoiceState]{Ref: &invoiceStatesRef},
+	TableBase:          keel.TableBase{Ref: &invoiceStatesRef},
 	InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceStatesRef, Index: 2}}},
@@ -106,10 +107,10 @@ var InvoiceStates = &InvoiceStatesTable{
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &invoiceStatesRef, Index: 12}},
 }
 
-// BuildInvoiceStates builds the handle of factoring_invoice_states for ref. Generated relation and alias methods call it.
+// BuildInvoiceStates builds the table of factoring_invoice_states for ref. Generated relation and alias methods call it.
 func BuildInvoiceStates(r *keel.Ref) *InvoiceStatesTable {
 	return &InvoiceStatesTable{
-		Handle:             keel.Handle[*factoringreadiness.InvoiceState]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		InvoiceID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -152,6 +153,365 @@ func (t *InvoiceStatesTable) FactoringCompany() *factoringcompanydb.FactoringCom
 // Get returns the factoring_invoice_states row with the given key, or keel.ErrNotFound.
 func (t *InvoiceStatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringreadiness.InvoiceState, error) {
 	return t.Where(t.InvoiceID.Eq(key)).One(ctx, db)
+}
+
+// InvoiceStatesQuery is a query over factoringreadiness.InvoiceState.
+type InvoiceStatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringreadiness.InvoiceState] = (*InvoiceStatesTable)(nil)
+
+var _ keel.Query[*factoringreadiness.InvoiceState] = (*InvoiceStatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceStatesTable) Query() keel.Query[*factoringreadiness.InvoiceState] {
+	return &InvoiceStatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceStatesQuery.Where.
+func (t *InvoiceStatesTable) Where(ps ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceStatesQuery.Pick.
+func (t *InvoiceStatesTable) Pick(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceStatesQuery.Load.
+func (t *InvoiceStatesTable) Load(ls ...keel.Loader) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceStatesQuery.Omit.
+func (t *InvoiceStatesTable) Omit(cols ...keel.Column) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceStatesQuery.Order.
+func (t *InvoiceStatesTable) Order(os ...keel.Order) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceStatesQuery.Limit.
+func (t *InvoiceStatesTable) Limit(n int) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceStatesQuery.Group.
+func (t *InvoiceStatesTable) Group(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceStatesQuery.GroupingSets.
+func (t *InvoiceStatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceStatesQuery.Rollup.
+func (t *InvoiceStatesTable) Rollup(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceStatesQuery.Cube.
+func (t *InvoiceStatesTable) Cube(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceStatesQuery.AllTenants.
+func (t *InvoiceStatesTable) AllTenants() keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceStatesQuery.Join.
+func (t *InvoiceStatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceStatesQuery.LeftJoin.
+func (t *InvoiceStatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceStatesQuery.LeftJoinLateral.
+func (t *InvoiceStatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceStatesQuery.JoinLateral.
+func (t *InvoiceStatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceStatesQuery.Lock.
+func (t *InvoiceStatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceStatesQuery.DistinctOn.
+func (t *InvoiceStatesTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceStatesQuery.Cache.
+func (t *InvoiceStatesTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceStatesQuery.LoadStrategy.
+func (t *InvoiceStatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceStatesQuery.With.
+func (t *InvoiceStatesTable) With(ctes ...*keel.CTETable) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceStatesQuery.Compute.
+func (t *InvoiceStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceStatesTable) Create(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceStatesTable) Save(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringreadiness.InvoiceState) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringreadiness.InvoiceState) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceStatesQuery) Where(ps ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceStatesQuery) Pick(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceStatesQuery) Omit(cols ...keel.Column) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceStatesQuery) Load(ls ...keel.Loader) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceStatesQuery) Order(os ...keel.Order) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceStatesQuery) Distinct() keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceStatesQuery) Group(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceStatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceStatesQuery) Rollup(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceStatesQuery) Cube(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceStatesQuery) Window(name string, w keel.Window) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceStatesQuery) Having(ps ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceStatesQuery) Limit(n int) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceStatesQuery) Offset(n int) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceStatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceStatesQuery) AllTenants() keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceStatesQuery) CustomPlan() keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceStatesQuery) Timeout(d time.Duration) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceStatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceStatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceStatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceStatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceStatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceStatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceStatesQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceStatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceStatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringreadiness.InvoiceState] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceStatesQuery) Clone() keel.Query[*factoringreadiness.InvoiceState] {
+	return &InvoiceStatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceStatesQuery) One(ctx context.Context, db *keel.DB) (*factoringreadiness.InvoiceState, error) {
+	return keel.One[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceStatesQuery) First(ctx context.Context, db *keel.DB) (*factoringreadiness.InvoiceState, error) {
+	return keel.First[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceStatesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringreadiness.InvoiceState, error) {
+	return keel.List[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceStatesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringreadiness.InvoiceState, error) {
+	return keel.All[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringreadiness.InvoiceState, error) {
+	return keel.UpdateReturning[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringreadiness.InvoiceState], error) {
+	return keel.PageOf[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringreadiness.InvoiceState) error) error {
+	return keel.Each[*factoringreadiness.InvoiceState](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoiceState() unsafe.Pointer { return unsafe.Pointer(new(factoringreadiness.InvoiceState)) }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -104,4 +105,38 @@ func TestLogout_LeavesRepliesRunningWhenTheSessionWasNotEnded(t *testing.T) {
 
 	require.Error(t, deps.svc.Logout(t.Context(), sess.ID))
 	assert.Empty(t, stopper.asked)
+}
+
+func TestSignOut_EndsTheSessionWithoutConfirmingAccess(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.turns = &turnStopper{}
+	sessionID := pulid.MustNew("ses_")
+	issued, err := testTokens.Issue(sessionID, testSessionUserID)
+	require.NoError(t, err)
+	stored := storedSession(sessionID, issued.SecretHash)
+	stored.IssuedBySignIn = true
+	stored.AccessConfirmedAt = 1
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(stored, nil)
+	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(nil).Once()
+
+	require.NoError(t, deps.svc.SignOut(t.Context(), issued.Token))
+
+	deps.sessionRepo.AssertCalled(t, "Delete", mock.Anything, sessionID)
+	deps.userRepo.AssertNotCalled(t, "GetTenantMember", mock.Anything, mock.Anything)
+}
+
+func TestSignOut_RefusesACookieWhoseSecretDoesNotMatch(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	sessionID := pulid.MustNew("ses_")
+	issued, err := testTokens.Issue(sessionID, testSessionUserID)
+	require.NoError(t, err)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(storedSession(sessionID, issued.SecretHash), nil)
+
+	err = deps.svc.SignOut(t.Context(), sessionID.String()+".guessed-secret")
+
+	require.ErrorIs(t, err, sessionports.ErrSessionSecretMismatch)
+	deps.sessionRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
 }

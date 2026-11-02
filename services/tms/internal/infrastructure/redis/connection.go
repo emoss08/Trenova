@@ -39,7 +39,7 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 
 	poolSize := intutils.WithDefault(cacheConfig.PoolSize, defaultPoolSize)
 
-	client := redis.NewClient(&redis.Options{
+	options := &redis.Options{
 		Addr:            cacheConfig.GetRedisAddr(),
 		Username:        cacheConfig.Username,
 		Password:        cacheConfig.Password,
@@ -58,7 +58,16 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 		MaxRetries:      intutils.WithDefault(cacheConfig.MaxRetries, defaultMaxRetries),
 		MinRetryBackoff: cacheConfig.MinRetryBackoff,
 		MaxRetryBackoff: cacheConfig.MaxRetryBackoff,
-	})
+	}
+	if cacheConfig.TLS.Enabled {
+		tlsConfig, err := cacheConfig.TLSClientConfig()
+		if err != nil {
+			return nil, err
+		}
+		options.TLSConfig = tlsConfig
+	}
+
+	client := redis.NewClient(options)
 
 	if p.MonitoringConfig.Tracing.Enabled {
 		if err := redisotel.InstrumentTracing(client); err != nil {

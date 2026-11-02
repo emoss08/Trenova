@@ -102,7 +102,7 @@ func (r *repository) List(
 							trailerdb.Trailers.ID,
 						),
 					},
-					Shape: func(q *keel.Query[*trailer.Trailer]) *keel.Query[*trailer.Trailer] {
+					Shape: func(q keel.Query[*trailer.Trailer]) keel.Query[*trailer.Trailer] {
 						return r.withInProgressMove(
 							r.withLastKnownLocation(q.Load(loads...), &req.TrailerRelationIncludes),
 							&req.TrailerRelationIncludes,
@@ -258,7 +258,7 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) trailerQuery(
 	includes *trailerports.TrailerRelationIncludes,
-) (*keel.Query[*trailer.Trailer], error) {
+) (keel.Query[*trailer.Trailer], error) {
 	loads, err := trailerLoads(includes)
 	if err != nil {
 		return nil, err
@@ -333,9 +333,9 @@ const (
 )
 
 func (r *repository) withInProgressMove(
-	q *keel.Query[*trailer.Trailer],
+	q keel.Query[*trailer.Trailer],
 	includes *trailerports.TrailerRelationIncludes,
-) *keel.Query[*trailer.Trailer] {
+) keel.Query[*trailer.Trailer] {
 	if !includes.IncludeInProgressMove {
 		return q
 	}
@@ -350,9 +350,9 @@ func (r *repository) withInProgressMove(
 }
 
 func (r *repository) withLastKnownLocation(
-	q *keel.Query[*trailer.Trailer],
+	q keel.Query[*trailer.Trailer],
 	includes *trailerports.TrailerRelationIncludes,
-) *keel.Query[*trailer.Trailer] {
+) keel.Query[*trailer.Trailer] {
 	if !includes.IncludeLastKnownLocation {
 		return q
 	}

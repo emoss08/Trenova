@@ -4,6 +4,7 @@ package payexpensedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -78,7 +79,7 @@ var expensesRef = keel.Ref{Table: &expensesTable}
 
 // ExpensesTable is the table of payexpense.Expense.
 type ExpensesTable struct {
-	keel.Handle[*payexpense.Expense]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -103,7 +104,7 @@ type ExpensesTable struct {
 
 // Expenses references the driver_expenses table.
 var Expenses = &ExpensesTable{
-	Handle:            keel.Handle[*payexpense.Expense]{Ref: &expensesRef},
+	TableBase:         keel.TableBase{Ref: &expensesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &expensesRef, Index: 2}}},
@@ -126,10 +127,10 @@ var Expenses = &ExpensesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &expensesRef, Index: 19}},
 }
 
-// BuildExpenses builds the handle of driver_expenses for ref. Generated relation and alias methods call it.
+// BuildExpenses builds the table of driver_expenses for ref. Generated relation and alias methods call it.
 func BuildExpenses(r *keel.Ref) *ExpensesTable {
 	return &ExpensesTable{
-		Handle:            keel.Handle[*payexpense.Expense]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -179,6 +180,365 @@ func (t *ExpensesTable) ReviewedBy() *tenantdb.UsersTable {
 // Get returns the driver_expenses row with the given key, or keel.ErrNotFound.
 func (t *ExpensesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payexpense.Expense, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExpensesQuery is a query over payexpense.Expense.
+type ExpensesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*payexpense.Expense] = (*ExpensesTable)(nil)
+
+var _ keel.Query[*payexpense.Expense] = (*ExpensesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExpensesTable) Query() keel.Query[*payexpense.Expense] {
+	return &ExpensesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExpensesQuery.Where.
+func (t *ExpensesTable) Where(ps ...keel.Pred) keel.Query[*payexpense.Expense] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExpensesQuery.Pick.
+func (t *ExpensesTable) Pick(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExpensesQuery.Load.
+func (t *ExpensesTable) Load(ls ...keel.Loader) keel.Query[*payexpense.Expense] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExpensesQuery.Omit.
+func (t *ExpensesTable) Omit(cols ...keel.Column) keel.Query[*payexpense.Expense] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExpensesQuery.Order.
+func (t *ExpensesTable) Order(os ...keel.Order) keel.Query[*payexpense.Expense] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExpensesQuery.Limit.
+func (t *ExpensesTable) Limit(n int) keel.Query[*payexpense.Expense] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExpensesQuery.Group.
+func (t *ExpensesTable) Group(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExpensesQuery.GroupingSets.
+func (t *ExpensesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExpensesQuery.Rollup.
+func (t *ExpensesTable) Rollup(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExpensesQuery.Cube.
+func (t *ExpensesTable) Cube(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExpensesQuery.AllTenants.
+func (t *ExpensesTable) AllTenants() keel.Query[*payexpense.Expense] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExpensesQuery.Join.
+func (t *ExpensesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payexpense.Expense] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExpensesQuery.LeftJoin.
+func (t *ExpensesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payexpense.Expense] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExpensesQuery.LeftJoinLateral.
+func (t *ExpensesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payexpense.Expense] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExpensesQuery.JoinLateral.
+func (t *ExpensesTable) JoinLateral(sub keel.LateralSource) keel.Query[*payexpense.Expense] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExpensesQuery.Lock.
+func (t *ExpensesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payexpense.Expense] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExpensesQuery.DistinctOn.
+func (t *ExpensesTable) DistinctOn(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExpensesQuery.Cache.
+func (t *ExpensesTable) Cache(opts ...keel.CacheOption) keel.Query[*payexpense.Expense] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExpensesQuery.LoadStrategy.
+func (t *ExpensesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*payexpense.Expense] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExpensesQuery.With.
+func (t *ExpensesTable) With(ctes ...*keel.CTETable) keel.Query[*payexpense.Expense] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExpensesQuery.Compute.
+func (t *ExpensesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payexpense.Expense] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExpensesTable) Create(ctx context.Context, db *keel.DB, row *payexpense.Expense) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExpensesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payexpense.Expense) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExpensesTable) Save(ctx context.Context, db *keel.DB, row *payexpense.Expense, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExpensesTable) SaveExcept(ctx context.Context, db *keel.DB, row *payexpense.Expense, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExpensesTable) DeleteRow(ctx context.Context, db *keel.DB, row *payexpense.Expense) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExpensesTable) Upsert(ctx context.Context, db *keel.DB, rows []*payexpense.Expense, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExpensesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payexpense.Expense, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExpensesTable) Copy(ctx context.Context, db *keel.DB, rows []*payexpense.Expense) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExpensesQuery) Where(ps ...keel.Pred) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExpensesQuery) Pick(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExpensesQuery) Omit(cols ...keel.Column) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExpensesQuery) Load(ls ...keel.Loader) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExpensesQuery) Order(os ...keel.Order) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExpensesQuery) Distinct() keel.Query[*payexpense.Expense] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExpensesQuery) Group(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExpensesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExpensesQuery) Rollup(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExpensesQuery) Cube(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExpensesQuery) Window(name string, w keel.Window) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExpensesQuery) Having(ps ...keel.Pred) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExpensesQuery) Limit(n int) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExpensesQuery) Offset(n int) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExpensesQuery) DistinctOn(es ...keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExpensesQuery) AllTenants() keel.Query[*payexpense.Expense] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExpensesQuery) CustomPlan() keel.Query[*payexpense.Expense] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExpensesQuery) Timeout(d time.Duration) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExpensesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExpensesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExpensesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payexpense.Expense] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExpensesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payexpense.Expense] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExpensesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*payexpense.Expense] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExpensesQuery) Cache(opts ...keel.CacheOption) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExpensesQuery) With(ctes ...*keel.CTETable) keel.Query[*payexpense.Expense] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExpensesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*payexpense.Expense] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExpensesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*payexpense.Expense] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExpensesQuery) Clone() keel.Query[*payexpense.Expense] {
+	return &ExpensesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExpensesQuery) One(ctx context.Context, db *keel.DB) (*payexpense.Expense, error) {
+	return keel.One[*payexpense.Expense](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExpensesQuery) First(ctx context.Context, db *keel.DB) (*payexpense.Expense, error) {
+	return keel.First[*payexpense.Expense](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExpensesQuery) List(ctx context.Context, db *keel.DB) ([]*payexpense.Expense, error) {
+	return keel.List[*payexpense.Expense](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExpensesQuery) All(ctx context.Context, db *keel.DB) ([]*payexpense.Expense, error) {
+	return keel.All[*payexpense.Expense](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExpensesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payexpense.Expense, error) {
+	return keel.UpdateReturning[*payexpense.Expense](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExpensesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payexpense.Expense], error) {
+	return keel.PageOf[*payexpense.Expense](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExpensesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payexpense.Expense) error) error {
+	return keel.Each[*payexpense.Expense](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExpense() unsafe.Pointer { return unsafe.Pointer(new(payexpense.Expense)) }

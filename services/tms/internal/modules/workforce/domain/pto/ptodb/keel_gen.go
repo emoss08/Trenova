@@ -4,6 +4,7 @@ package ptodb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -61,7 +62,7 @@ var orgHolidaysRef = keel.Ref{Table: &orgHolidaysTable}
 
 // OrgHolidaysTable is the table of pto.OrgHoliday.
 type OrgHolidaysTable struct {
-	keel.Handle[*pto.OrgHoliday]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -77,7 +78,7 @@ type OrgHolidaysTable struct {
 
 // OrgHolidays references the org_holidays table.
 var OrgHolidays = &OrgHolidaysTable{
-	Handle:         keel.Handle[*pto.OrgHoliday]{Ref: &orgHolidaysRef},
+	TableBase:      keel.TableBase{Ref: &orgHolidaysRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 2}}},
@@ -91,10 +92,10 @@ var OrgHolidays = &OrgHolidaysTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &orgHolidaysRef, Index: 10}},
 }
 
-// BuildOrgHolidays builds the handle of org_holidays for ref. Generated relation and alias methods call it.
+// BuildOrgHolidays builds the table of org_holidays for ref. Generated relation and alias methods call it.
 func BuildOrgHolidays(r *keel.Ref) *OrgHolidaysTable {
 	return &OrgHolidaysTable{
-		Handle:         keel.Handle[*pto.OrgHoliday]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -120,6 +121,365 @@ func (t *OrgHolidaysTable) As(alias string) *OrgHolidaysTable {
 // Get returns the org_holidays row with the given key, or keel.ErrNotFound.
 func (t *OrgHolidaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.OrgHoliday, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// OrgHolidaysQuery is a query over pto.OrgHoliday.
+type OrgHolidaysQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*pto.OrgHoliday] = (*OrgHolidaysTable)(nil)
+
+var _ keel.Query[*pto.OrgHoliday] = (*OrgHolidaysQuery)(nil)
+
+// Query starts a query over the table.
+func (t *OrgHolidaysTable) Query() keel.Query[*pto.OrgHoliday] {
+	return &OrgHolidaysQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see OrgHolidaysQuery.Where.
+func (t *OrgHolidaysTable) Where(ps ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see OrgHolidaysQuery.Pick.
+func (t *OrgHolidaysTable) Pick(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see OrgHolidaysQuery.Load.
+func (t *OrgHolidaysTable) Load(ls ...keel.Loader) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see OrgHolidaysQuery.Omit.
+func (t *OrgHolidaysTable) Omit(cols ...keel.Column) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see OrgHolidaysQuery.Order.
+func (t *OrgHolidaysTable) Order(os ...keel.Order) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see OrgHolidaysQuery.Limit.
+func (t *OrgHolidaysTable) Limit(n int) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see OrgHolidaysQuery.Group.
+func (t *OrgHolidaysTable) Group(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see OrgHolidaysQuery.GroupingSets.
+func (t *OrgHolidaysTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see OrgHolidaysQuery.Rollup.
+func (t *OrgHolidaysTable) Rollup(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see OrgHolidaysQuery.Cube.
+func (t *OrgHolidaysTable) Cube(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see OrgHolidaysQuery.AllTenants.
+func (t *OrgHolidaysTable) AllTenants() keel.Query[*pto.OrgHoliday] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see OrgHolidaysQuery.Join.
+func (t *OrgHolidaysTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see OrgHolidaysQuery.LeftJoin.
+func (t *OrgHolidaysTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see OrgHolidaysQuery.LeftJoinLateral.
+func (t *OrgHolidaysTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.OrgHoliday] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see OrgHolidaysQuery.JoinLateral.
+func (t *OrgHolidaysTable) JoinLateral(sub keel.LateralSource) keel.Query[*pto.OrgHoliday] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see OrgHolidaysQuery.Lock.
+func (t *OrgHolidaysTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see OrgHolidaysQuery.DistinctOn.
+func (t *OrgHolidaysTable) DistinctOn(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see OrgHolidaysQuery.Cache.
+func (t *OrgHolidaysTable) Cache(opts ...keel.CacheOption) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see OrgHolidaysQuery.LoadStrategy.
+func (t *OrgHolidaysTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.OrgHoliday] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see OrgHolidaysQuery.With.
+func (t *OrgHolidaysTable) With(ctes ...*keel.CTETable) keel.Query[*pto.OrgHoliday] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see OrgHolidaysQuery.Compute.
+func (t *OrgHolidaysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.OrgHoliday] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *OrgHolidaysTable) Create(ctx context.Context, db *keel.DB, row *pto.OrgHoliday) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *OrgHolidaysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *OrgHolidaysTable) Save(ctx context.Context, db *keel.DB, row *pto.OrgHoliday, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *OrgHolidaysTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.OrgHoliday, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *OrgHolidaysTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.OrgHoliday) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *OrgHolidaysTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *OrgHolidaysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *OrgHolidaysTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *OrgHolidaysQuery) Where(ps ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *OrgHolidaysQuery) Pick(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *OrgHolidaysQuery) Omit(cols ...keel.Column) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *OrgHolidaysQuery) Load(ls ...keel.Loader) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *OrgHolidaysQuery) Order(os ...keel.Order) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *OrgHolidaysQuery) Distinct() keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *OrgHolidaysQuery) Group(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *OrgHolidaysQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *OrgHolidaysQuery) Rollup(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *OrgHolidaysQuery) Cube(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *OrgHolidaysQuery) Window(name string, w keel.Window) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *OrgHolidaysQuery) Having(ps ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *OrgHolidaysQuery) Limit(n int) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *OrgHolidaysQuery) Offset(n int) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *OrgHolidaysQuery) DistinctOn(es ...keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *OrgHolidaysQuery) AllTenants() keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *OrgHolidaysQuery) CustomPlan() keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *OrgHolidaysQuery) Timeout(d time.Duration) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *OrgHolidaysQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *OrgHolidaysQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *OrgHolidaysQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *OrgHolidaysQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *OrgHolidaysQuery) JoinLateral(sub keel.LateralSource) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *OrgHolidaysQuery) Cache(opts ...keel.CacheOption) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *OrgHolidaysQuery) With(ctes ...*keel.CTETable) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *OrgHolidaysQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *OrgHolidaysQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.OrgHoliday] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *OrgHolidaysQuery) Clone() keel.Query[*pto.OrgHoliday] {
+	return &OrgHolidaysQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *OrgHolidaysQuery) One(ctx context.Context, db *keel.DB) (*pto.OrgHoliday, error) {
+	return keel.One[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *OrgHolidaysQuery) First(ctx context.Context, db *keel.DB) (*pto.OrgHoliday, error) {
+	return keel.First[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *OrgHolidaysQuery) List(ctx context.Context, db *keel.DB) ([]*pto.OrgHoliday, error) {
+	return keel.List[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *OrgHolidaysQuery) All(ctx context.Context, db *keel.DB) ([]*pto.OrgHoliday, error) {
+	return keel.All[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *OrgHolidaysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.OrgHoliday, error) {
+	return keel.UpdateReturning[*pto.OrgHoliday](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *OrgHolidaysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.OrgHoliday], error) {
+	return keel.PageOf[*pto.OrgHoliday](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *OrgHolidaysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.OrgHoliday) error) error {
+	return keel.Each[*pto.OrgHoliday](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newOrgHoliday() unsafe.Pointer { return unsafe.Pointer(new(pto.OrgHoliday)) }
@@ -250,7 +610,7 @@ var pTOPoliciesRef = keel.Ref{Table: &pTOPoliciesTable}
 
 // PTOPoliciesTable is the table of pto.PTOPolicy.
 type PTOPoliciesTable struct {
-	keel.Handle[*pto.PTOPolicy]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -274,7 +634,7 @@ type PTOPoliciesTable struct {
 
 // PTOPolicies references the pto_policies table.
 var PTOPolicies = &PTOPoliciesTable{
-	Handle:            keel.Handle[*pto.PTOPolicy]{Ref: &pTOPoliciesRef},
+	TableBase:         keel.TableBase{Ref: &pTOPoliciesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 2}}},
@@ -296,10 +656,10 @@ var PTOPolicies = &PTOPoliciesTable{
 	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 18}},
 }
 
-// BuildPTOPolicies builds the handle of pto_policies for ref. Generated relation and alias methods call it.
+// BuildPTOPolicies builds the table of pto_policies for ref. Generated relation and alias methods call it.
 func BuildPTOPolicies(r *keel.Ref) *PTOPoliciesTable {
 	return &PTOPoliciesTable{
-		Handle:            keel.Handle[*pto.PTOPolicy]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -338,6 +698,365 @@ func (t *PTOPoliciesTable) Rules() *PTOPolicyRulesTable {
 // Get returns the pto_policies row with the given key, or keel.ErrNotFound.
 func (t *PTOPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.PTOPolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PTOPoliciesQuery is a query over pto.PTOPolicy.
+type PTOPoliciesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*pto.PTOPolicy] = (*PTOPoliciesTable)(nil)
+
+var _ keel.Query[*pto.PTOPolicy] = (*PTOPoliciesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PTOPoliciesTable) Query() keel.Query[*pto.PTOPolicy] {
+	return &PTOPoliciesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PTOPoliciesQuery.Where.
+func (t *PTOPoliciesTable) Where(ps ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PTOPoliciesQuery.Pick.
+func (t *PTOPoliciesTable) Pick(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PTOPoliciesQuery.Load.
+func (t *PTOPoliciesTable) Load(ls ...keel.Loader) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PTOPoliciesQuery.Omit.
+func (t *PTOPoliciesTable) Omit(cols ...keel.Column) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PTOPoliciesQuery.Order.
+func (t *PTOPoliciesTable) Order(os ...keel.Order) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PTOPoliciesQuery.Limit.
+func (t *PTOPoliciesTable) Limit(n int) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PTOPoliciesQuery.Group.
+func (t *PTOPoliciesTable) Group(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PTOPoliciesQuery.GroupingSets.
+func (t *PTOPoliciesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PTOPoliciesQuery.Rollup.
+func (t *PTOPoliciesTable) Rollup(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PTOPoliciesQuery.Cube.
+func (t *PTOPoliciesTable) Cube(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PTOPoliciesQuery.AllTenants.
+func (t *PTOPoliciesTable) AllTenants() keel.Query[*pto.PTOPolicy] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PTOPoliciesQuery.Join.
+func (t *PTOPoliciesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PTOPoliciesQuery.LeftJoin.
+func (t *PTOPoliciesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PTOPoliciesQuery.LeftJoinLateral.
+func (t *PTOPoliciesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicy] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PTOPoliciesQuery.JoinLateral.
+func (t *PTOPoliciesTable) JoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicy] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PTOPoliciesQuery.Lock.
+func (t *PTOPoliciesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PTOPoliciesQuery.DistinctOn.
+func (t *PTOPoliciesTable) DistinctOn(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PTOPoliciesQuery.Cache.
+func (t *PTOPoliciesTable) Cache(opts ...keel.CacheOption) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PTOPoliciesQuery.LoadStrategy.
+func (t *PTOPoliciesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.PTOPolicy] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PTOPoliciesQuery.With.
+func (t *PTOPoliciesTable) With(ctes ...*keel.CTETable) keel.Query[*pto.PTOPolicy] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PTOPoliciesQuery.Compute.
+func (t *PTOPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.PTOPolicy] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PTOPoliciesTable) Create(ctx context.Context, db *keel.DB, row *pto.PTOPolicy) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PTOPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PTOPoliciesTable) Save(ctx context.Context, db *keel.DB, row *pto.PTOPolicy, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PTOPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.PTOPolicy, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PTOPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.PTOPolicy) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PTOPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PTOPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PTOPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PTOPoliciesQuery) Where(ps ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PTOPoliciesQuery) Pick(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PTOPoliciesQuery) Omit(cols ...keel.Column) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PTOPoliciesQuery) Load(ls ...keel.Loader) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PTOPoliciesQuery) Order(os ...keel.Order) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PTOPoliciesQuery) Distinct() keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PTOPoliciesQuery) Group(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PTOPoliciesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PTOPoliciesQuery) Rollup(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PTOPoliciesQuery) Cube(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PTOPoliciesQuery) Window(name string, w keel.Window) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PTOPoliciesQuery) Having(ps ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PTOPoliciesQuery) Limit(n int) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PTOPoliciesQuery) Offset(n int) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PTOPoliciesQuery) DistinctOn(es ...keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PTOPoliciesQuery) AllTenants() keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PTOPoliciesQuery) CustomPlan() keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PTOPoliciesQuery) Timeout(d time.Duration) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PTOPoliciesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PTOPoliciesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PTOPoliciesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PTOPoliciesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PTOPoliciesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PTOPoliciesQuery) Cache(opts ...keel.CacheOption) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PTOPoliciesQuery) With(ctes ...*keel.CTETable) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PTOPoliciesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PTOPoliciesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.PTOPolicy] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PTOPoliciesQuery) Clone() keel.Query[*pto.PTOPolicy] {
+	return &PTOPoliciesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PTOPoliciesQuery) One(ctx context.Context, db *keel.DB) (*pto.PTOPolicy, error) {
+	return keel.One[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PTOPoliciesQuery) First(ctx context.Context, db *keel.DB) (*pto.PTOPolicy, error) {
+	return keel.First[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PTOPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicy, error) {
+	return keel.List[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PTOPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicy, error) {
+	return keel.All[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PTOPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.PTOPolicy, error) {
+	return keel.UpdateReturning[*pto.PTOPolicy](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PTOPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.PTOPolicy], error) {
+	return keel.PageOf[*pto.PTOPolicy](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PTOPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.PTOPolicy) error) error {
+	return keel.Each[*pto.PTOPolicy](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPTOPolicy() unsafe.Pointer { return unsafe.Pointer(new(pto.PTOPolicy)) }
@@ -501,7 +1220,7 @@ var pTOPolicyRulesRef = keel.Ref{Table: &pTOPolicyRulesTable}
 
 // PTOPolicyRulesTable is the table of pto.PTOPolicyRule.
 type PTOPolicyRulesTable struct {
-	keel.Handle[*pto.PTOPolicyRule]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -521,7 +1240,7 @@ type PTOPolicyRulesTable struct {
 
 // PTOPolicyRules references the pto_policy_rules table.
 var PTOPolicyRules = &PTOPolicyRulesTable{
-	Handle:              keel.Handle[*pto.PTOPolicyRule]{Ref: &pTOPolicyRulesRef},
+	TableBase:           keel.TableBase{Ref: &pTOPolicyRulesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 2}}},
@@ -539,10 +1258,10 @@ var PTOPolicyRules = &PTOPolicyRulesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 14}},
 }
 
-// BuildPTOPolicyRules builds the handle of pto_policy_rules for ref. Generated relation and alias methods call it.
+// BuildPTOPolicyRules builds the table of pto_policy_rules for ref. Generated relation and alias methods call it.
 func BuildPTOPolicyRules(r *keel.Ref) *PTOPolicyRulesTable {
 	return &PTOPolicyRulesTable{
-		Handle:              keel.Handle[*pto.PTOPolicyRule]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -572,6 +1291,365 @@ func (t *PTOPolicyRulesTable) As(alias string) *PTOPolicyRulesTable {
 // Get returns the pto_policy_rules row with the given key, or keel.ErrNotFound.
 func (t *PTOPolicyRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.PTOPolicyRule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PTOPolicyRulesQuery is a query over pto.PTOPolicyRule.
+type PTOPolicyRulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*pto.PTOPolicyRule] = (*PTOPolicyRulesTable)(nil)
+
+var _ keel.Query[*pto.PTOPolicyRule] = (*PTOPolicyRulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PTOPolicyRulesTable) Query() keel.Query[*pto.PTOPolicyRule] {
+	return &PTOPolicyRulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PTOPolicyRulesQuery.Where.
+func (t *PTOPolicyRulesTable) Where(ps ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PTOPolicyRulesQuery.Pick.
+func (t *PTOPolicyRulesTable) Pick(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PTOPolicyRulesQuery.Load.
+func (t *PTOPolicyRulesTable) Load(ls ...keel.Loader) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PTOPolicyRulesQuery.Omit.
+func (t *PTOPolicyRulesTable) Omit(cols ...keel.Column) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PTOPolicyRulesQuery.Order.
+func (t *PTOPolicyRulesTable) Order(os ...keel.Order) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PTOPolicyRulesQuery.Limit.
+func (t *PTOPolicyRulesTable) Limit(n int) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PTOPolicyRulesQuery.Group.
+func (t *PTOPolicyRulesTable) Group(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PTOPolicyRulesQuery.GroupingSets.
+func (t *PTOPolicyRulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PTOPolicyRulesQuery.Rollup.
+func (t *PTOPolicyRulesTable) Rollup(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PTOPolicyRulesQuery.Cube.
+func (t *PTOPolicyRulesTable) Cube(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PTOPolicyRulesQuery.AllTenants.
+func (t *PTOPolicyRulesTable) AllTenants() keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PTOPolicyRulesQuery.Join.
+func (t *PTOPolicyRulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PTOPolicyRulesQuery.LeftJoin.
+func (t *PTOPolicyRulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PTOPolicyRulesQuery.LeftJoinLateral.
+func (t *PTOPolicyRulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PTOPolicyRulesQuery.JoinLateral.
+func (t *PTOPolicyRulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PTOPolicyRulesQuery.Lock.
+func (t *PTOPolicyRulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PTOPolicyRulesQuery.DistinctOn.
+func (t *PTOPolicyRulesTable) DistinctOn(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PTOPolicyRulesQuery.Cache.
+func (t *PTOPolicyRulesTable) Cache(opts ...keel.CacheOption) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PTOPolicyRulesQuery.LoadStrategy.
+func (t *PTOPolicyRulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PTOPolicyRulesQuery.With.
+func (t *PTOPolicyRulesTable) With(ctes ...*keel.CTETable) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PTOPolicyRulesQuery.Compute.
+func (t *PTOPolicyRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PTOPolicyRulesTable) Create(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PTOPolicyRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PTOPolicyRulesTable) Save(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PTOPolicyRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PTOPolicyRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PTOPolicyRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PTOPolicyRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PTOPolicyRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PTOPolicyRulesQuery) Where(ps ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PTOPolicyRulesQuery) Pick(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PTOPolicyRulesQuery) Omit(cols ...keel.Column) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PTOPolicyRulesQuery) Load(ls ...keel.Loader) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PTOPolicyRulesQuery) Order(os ...keel.Order) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PTOPolicyRulesQuery) Distinct() keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PTOPolicyRulesQuery) Group(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PTOPolicyRulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PTOPolicyRulesQuery) Rollup(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PTOPolicyRulesQuery) Cube(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PTOPolicyRulesQuery) Window(name string, w keel.Window) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PTOPolicyRulesQuery) Having(ps ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PTOPolicyRulesQuery) Limit(n int) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PTOPolicyRulesQuery) Offset(n int) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PTOPolicyRulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PTOPolicyRulesQuery) AllTenants() keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PTOPolicyRulesQuery) CustomPlan() keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PTOPolicyRulesQuery) Timeout(d time.Duration) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PTOPolicyRulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PTOPolicyRulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PTOPolicyRulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PTOPolicyRulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PTOPolicyRulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PTOPolicyRulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PTOPolicyRulesQuery) With(ctes ...*keel.CTETable) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PTOPolicyRulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PTOPolicyRulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.PTOPolicyRule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PTOPolicyRulesQuery) Clone() keel.Query[*pto.PTOPolicyRule] {
+	return &PTOPolicyRulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PTOPolicyRulesQuery) One(ctx context.Context, db *keel.DB) (*pto.PTOPolicyRule, error) {
+	return keel.One[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PTOPolicyRulesQuery) First(ctx context.Context, db *keel.DB) (*pto.PTOPolicyRule, error) {
+	return keel.First[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PTOPolicyRulesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicyRule, error) {
+	return keel.List[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PTOPolicyRulesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicyRule, error) {
+	return keel.All[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PTOPolicyRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.PTOPolicyRule, error) {
+	return keel.UpdateReturning[*pto.PTOPolicyRule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PTOPolicyRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.PTOPolicyRule], error) {
+	return keel.PageOf[*pto.PTOPolicyRule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PTOPolicyRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.PTOPolicyRule) error) error {
+	return keel.Each[*pto.PTOPolicyRule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPTOPolicyRule() unsafe.Pointer { return unsafe.Pointer(new(pto.PTOPolicyRule)) }
@@ -720,7 +1798,7 @@ var workerPTOBalancesRef = keel.Ref{Table: &workerPTOBalancesTable}
 
 // WorkerPTOBalancesTable is the table of pto.WorkerPTOBalance.
 type WorkerPTOBalancesTable struct {
-	keel.Handle[*pto.WorkerPTOBalance]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -741,7 +1819,7 @@ type WorkerPTOBalancesTable struct {
 
 // WorkerPTOBalances references the worker_pto_balances table.
 var WorkerPTOBalances = &WorkerPTOBalancesTable{
-	Handle:               keel.Handle[*pto.WorkerPTOBalance]{Ref: &workerPTOBalancesRef},
+	TableBase:            keel.TableBase{Ref: &workerPTOBalancesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 2}}},
@@ -760,10 +1838,10 @@ var WorkerPTOBalances = &WorkerPTOBalancesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 15}},
 }
 
-// BuildWorkerPTOBalances builds the handle of worker_pto_balances for ref. Generated relation and alias methods call it.
+// BuildWorkerPTOBalances builds the table of worker_pto_balances for ref. Generated relation and alias methods call it.
 func BuildWorkerPTOBalances(r *keel.Ref) *WorkerPTOBalancesTable {
 	return &WorkerPTOBalancesTable{
-		Handle:               keel.Handle[*pto.WorkerPTOBalance]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -799,6 +1877,365 @@ func (t *WorkerPTOBalancesTable) Worker() *workerdb.WorkersTable {
 // Get returns the worker_pto_balances row with the given key, or keel.ErrNotFound.
 func (t *WorkerPTOBalancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.WorkerPTOBalance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerPTOBalancesQuery is a query over pto.WorkerPTOBalance.
+type WorkerPTOBalancesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*pto.WorkerPTOBalance] = (*WorkerPTOBalancesTable)(nil)
+
+var _ keel.Query[*pto.WorkerPTOBalance] = (*WorkerPTOBalancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerPTOBalancesTable) Query() keel.Query[*pto.WorkerPTOBalance] {
+	return &WorkerPTOBalancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerPTOBalancesQuery.Where.
+func (t *WorkerPTOBalancesTable) Where(ps ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerPTOBalancesQuery.Pick.
+func (t *WorkerPTOBalancesTable) Pick(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerPTOBalancesQuery.Load.
+func (t *WorkerPTOBalancesTable) Load(ls ...keel.Loader) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerPTOBalancesQuery.Omit.
+func (t *WorkerPTOBalancesTable) Omit(cols ...keel.Column) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerPTOBalancesQuery.Order.
+func (t *WorkerPTOBalancesTable) Order(os ...keel.Order) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerPTOBalancesQuery.Limit.
+func (t *WorkerPTOBalancesTable) Limit(n int) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerPTOBalancesQuery.Group.
+func (t *WorkerPTOBalancesTable) Group(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerPTOBalancesQuery.GroupingSets.
+func (t *WorkerPTOBalancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerPTOBalancesQuery.Rollup.
+func (t *WorkerPTOBalancesTable) Rollup(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerPTOBalancesQuery.Cube.
+func (t *WorkerPTOBalancesTable) Cube(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerPTOBalancesQuery.AllTenants.
+func (t *WorkerPTOBalancesTable) AllTenants() keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerPTOBalancesQuery.Join.
+func (t *WorkerPTOBalancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerPTOBalancesQuery.LeftJoin.
+func (t *WorkerPTOBalancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerPTOBalancesQuery.LeftJoinLateral.
+func (t *WorkerPTOBalancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerPTOBalancesQuery.JoinLateral.
+func (t *WorkerPTOBalancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerPTOBalancesQuery.Lock.
+func (t *WorkerPTOBalancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerPTOBalancesQuery.DistinctOn.
+func (t *WorkerPTOBalancesTable) DistinctOn(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerPTOBalancesQuery.Cache.
+func (t *WorkerPTOBalancesTable) Cache(opts ...keel.CacheOption) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerPTOBalancesQuery.LoadStrategy.
+func (t *WorkerPTOBalancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerPTOBalancesQuery.With.
+func (t *WorkerPTOBalancesTable) With(ctes ...*keel.CTETable) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerPTOBalancesQuery.Compute.
+func (t *WorkerPTOBalancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerPTOBalancesTable) Create(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerPTOBalancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerPTOBalancesTable) Save(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerPTOBalancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerPTOBalancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerPTOBalancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerPTOBalancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerPTOBalancesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerPTOBalancesQuery) Where(ps ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerPTOBalancesQuery) Pick(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerPTOBalancesQuery) Omit(cols ...keel.Column) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerPTOBalancesQuery) Load(ls ...keel.Loader) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerPTOBalancesQuery) Order(os ...keel.Order) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerPTOBalancesQuery) Distinct() keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerPTOBalancesQuery) Group(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerPTOBalancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerPTOBalancesQuery) Rollup(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerPTOBalancesQuery) Cube(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerPTOBalancesQuery) Window(name string, w keel.Window) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerPTOBalancesQuery) Having(ps ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerPTOBalancesQuery) Limit(n int) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerPTOBalancesQuery) Offset(n int) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerPTOBalancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerPTOBalancesQuery) AllTenants() keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerPTOBalancesQuery) CustomPlan() keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerPTOBalancesQuery) Timeout(d time.Duration) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerPTOBalancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerPTOBalancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerPTOBalancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerPTOBalancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerPTOBalancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerPTOBalancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerPTOBalancesQuery) With(ctes ...*keel.CTETable) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerPTOBalancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerPTOBalancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.WorkerPTOBalance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerPTOBalancesQuery) Clone() keel.Query[*pto.WorkerPTOBalance] {
+	return &WorkerPTOBalancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerPTOBalancesQuery) One(ctx context.Context, db *keel.DB) (*pto.WorkerPTOBalance, error) {
+	return keel.One[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerPTOBalancesQuery) First(ctx context.Context, db *keel.DB) (*pto.WorkerPTOBalance, error) {
+	return keel.First[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerPTOBalancesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOBalance, error) {
+	return keel.List[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerPTOBalancesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOBalance, error) {
+	return keel.All[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerPTOBalancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.WorkerPTOBalance, error) {
+	return keel.UpdateReturning[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerPTOBalancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.WorkerPTOBalance], error) {
+	return keel.PageOf[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerPTOBalancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.WorkerPTOBalance) error) error {
+	return keel.Each[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerPTOBalance() unsafe.Pointer { return unsafe.Pointer(new(pto.WorkerPTOBalance)) }
@@ -958,7 +2395,7 @@ var workerPTOLedgerEntriesRef = keel.Ref{Table: &workerPTOLedgerEntriesTable}
 
 // WorkerPTOLedgerEntriesTable is the table of pto.WorkerPTOLedgerEntry.
 type WorkerPTOLedgerEntriesTable struct {
-	keel.Handle[*pto.WorkerPTOLedgerEntry]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -981,7 +2418,7 @@ type WorkerPTOLedgerEntriesTable struct {
 
 // WorkerPTOLedgerEntries references the worker_pto_ledger table.
 var WorkerPTOLedgerEntries = &WorkerPTOLedgerEntriesTable{
-	Handle:           keel.Handle[*pto.WorkerPTOLedgerEntry]{Ref: &workerPTOLedgerEntriesRef},
+	TableBase:        keel.TableBase{Ref: &workerPTOLedgerEntriesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 2}}},
@@ -1002,10 +2439,10 @@ var WorkerPTOLedgerEntries = &WorkerPTOLedgerEntriesTable{
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 17}},
 }
 
-// BuildWorkerPTOLedgerEntries builds the handle of worker_pto_ledger for ref. Generated relation and alias methods call it.
+// BuildWorkerPTOLedgerEntries builds the table of worker_pto_ledger for ref. Generated relation and alias methods call it.
 func BuildWorkerPTOLedgerEntries(r *keel.Ref) *WorkerPTOLedgerEntriesTable {
 	return &WorkerPTOLedgerEntriesTable{
-		Handle:           keel.Handle[*pto.WorkerPTOLedgerEntry]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1048,6 +2485,365 @@ func (t *WorkerPTOLedgerEntriesTable) SourcePTO() *workerdb.WorkerPTOsTable {
 // Get returns the worker_pto_ledger row with the given key, or keel.ErrNotFound.
 func (t *WorkerPTOLedgerEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.WorkerPTOLedgerEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerPTOLedgerEntriesQuery is a query over pto.WorkerPTOLedgerEntry.
+type WorkerPTOLedgerEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*pto.WorkerPTOLedgerEntry] = (*WorkerPTOLedgerEntriesTable)(nil)
+
+var _ keel.Query[*pto.WorkerPTOLedgerEntry] = (*WorkerPTOLedgerEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerPTOLedgerEntriesTable) Query() keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return &WorkerPTOLedgerEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerPTOLedgerEntriesQuery.Where.
+func (t *WorkerPTOLedgerEntriesTable) Where(ps ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerPTOLedgerEntriesQuery.Pick.
+func (t *WorkerPTOLedgerEntriesTable) Pick(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerPTOLedgerEntriesQuery.Load.
+func (t *WorkerPTOLedgerEntriesTable) Load(ls ...keel.Loader) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerPTOLedgerEntriesQuery.Omit.
+func (t *WorkerPTOLedgerEntriesTable) Omit(cols ...keel.Column) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerPTOLedgerEntriesQuery.Order.
+func (t *WorkerPTOLedgerEntriesTable) Order(os ...keel.Order) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerPTOLedgerEntriesQuery.Limit.
+func (t *WorkerPTOLedgerEntriesTable) Limit(n int) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerPTOLedgerEntriesQuery.Group.
+func (t *WorkerPTOLedgerEntriesTable) Group(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerPTOLedgerEntriesQuery.GroupingSets.
+func (t *WorkerPTOLedgerEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerPTOLedgerEntriesQuery.Rollup.
+func (t *WorkerPTOLedgerEntriesTable) Rollup(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerPTOLedgerEntriesQuery.Cube.
+func (t *WorkerPTOLedgerEntriesTable) Cube(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerPTOLedgerEntriesQuery.AllTenants.
+func (t *WorkerPTOLedgerEntriesTable) AllTenants() keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerPTOLedgerEntriesQuery.Join.
+func (t *WorkerPTOLedgerEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerPTOLedgerEntriesQuery.LeftJoin.
+func (t *WorkerPTOLedgerEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerPTOLedgerEntriesQuery.LeftJoinLateral.
+func (t *WorkerPTOLedgerEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerPTOLedgerEntriesQuery.JoinLateral.
+func (t *WorkerPTOLedgerEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerPTOLedgerEntriesQuery.Lock.
+func (t *WorkerPTOLedgerEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerPTOLedgerEntriesQuery.DistinctOn.
+func (t *WorkerPTOLedgerEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerPTOLedgerEntriesQuery.Cache.
+func (t *WorkerPTOLedgerEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerPTOLedgerEntriesQuery.LoadStrategy.
+func (t *WorkerPTOLedgerEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerPTOLedgerEntriesQuery.With.
+func (t *WorkerPTOLedgerEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerPTOLedgerEntriesQuery.Compute.
+func (t *WorkerPTOLedgerEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerPTOLedgerEntriesTable) Create(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerPTOLedgerEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerPTOLedgerEntriesTable) Save(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerPTOLedgerEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerPTOLedgerEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerPTOLedgerEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerPTOLedgerEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerPTOLedgerEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerPTOLedgerEntriesQuery) Where(ps ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerPTOLedgerEntriesQuery) Pick(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerPTOLedgerEntriesQuery) Omit(cols ...keel.Column) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerPTOLedgerEntriesQuery) Load(ls ...keel.Loader) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerPTOLedgerEntriesQuery) Order(os ...keel.Order) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerPTOLedgerEntriesQuery) Distinct() keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerPTOLedgerEntriesQuery) Group(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerPTOLedgerEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerPTOLedgerEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerPTOLedgerEntriesQuery) Cube(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerPTOLedgerEntriesQuery) Window(name string, w keel.Window) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerPTOLedgerEntriesQuery) Having(ps ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerPTOLedgerEntriesQuery) Limit(n int) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerPTOLedgerEntriesQuery) Offset(n int) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerPTOLedgerEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerPTOLedgerEntriesQuery) AllTenants() keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerPTOLedgerEntriesQuery) CustomPlan() keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerPTOLedgerEntriesQuery) Timeout(d time.Duration) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerPTOLedgerEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerPTOLedgerEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerPTOLedgerEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerPTOLedgerEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerPTOLedgerEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerPTOLedgerEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerPTOLedgerEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerPTOLedgerEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerPTOLedgerEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.WorkerPTOLedgerEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerPTOLedgerEntriesQuery) Clone() keel.Query[*pto.WorkerPTOLedgerEntry] {
+	return &WorkerPTOLedgerEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerPTOLedgerEntriesQuery) One(ctx context.Context, db *keel.DB) (*pto.WorkerPTOLedgerEntry, error) {
+	return keel.One[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerPTOLedgerEntriesQuery) First(ctx context.Context, db *keel.DB) (*pto.WorkerPTOLedgerEntry, error) {
+	return keel.First[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerPTOLedgerEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOLedgerEntry, error) {
+	return keel.List[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerPTOLedgerEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOLedgerEntry, error) {
+	return keel.All[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerPTOLedgerEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.WorkerPTOLedgerEntry, error) {
+	return keel.UpdateReturning[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerPTOLedgerEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.WorkerPTOLedgerEntry], error) {
+	return keel.PageOf[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerPTOLedgerEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.WorkerPTOLedgerEntry) error) error {
+	return keel.Each[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerPTOLedgerEntry() unsafe.Pointer { return unsafe.Pointer(new(pto.WorkerPTOLedgerEntry)) }
@@ -1224,7 +3020,7 @@ var workerPTOPolicyAssignmentsRef = keel.Ref{Table: &workerPTOPolicyAssignmentsT
 
 // WorkerPTOPolicyAssignmentsTable is the table of pto.WorkerPTOPolicyAssignment.
 type WorkerPTOPolicyAssignmentsTable struct {
-	keel.Handle[*pto.WorkerPTOPolicyAssignment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1241,7 +3037,7 @@ type WorkerPTOPolicyAssignmentsTable struct {
 
 // WorkerPTOPolicyAssignments references the worker_pto_policy_assignments table.
 var WorkerPTOPolicyAssignments = &WorkerPTOPolicyAssignmentsTable{
-	Handle:         keel.Handle[*pto.WorkerPTOPolicyAssignment]{Ref: &workerPTOPolicyAssignmentsRef},
+	TableBase:      keel.TableBase{Ref: &workerPTOPolicyAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 2}}},
@@ -1256,10 +3052,10 @@ var WorkerPTOPolicyAssignments = &WorkerPTOPolicyAssignmentsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 11}},
 }
 
-// BuildWorkerPTOPolicyAssignments builds the handle of worker_pto_policy_assignments for ref. Generated relation and alias methods call it.
+// BuildWorkerPTOPolicyAssignments builds the table of worker_pto_policy_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerPTOPolicyAssignments(r *keel.Ref) *WorkerPTOPolicyAssignmentsTable {
 	return &WorkerPTOPolicyAssignmentsTable{
-		Handle:         keel.Handle[*pto.WorkerPTOPolicyAssignment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1296,6 +3092,365 @@ func (t *WorkerPTOPolicyAssignmentsTable) Worker() *workerdb.WorkersTable {
 // Get returns the worker_pto_policy_assignments row with the given key, or keel.ErrNotFound.
 func (t *WorkerPTOPolicyAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*pto.WorkerPTOPolicyAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerPTOPolicyAssignmentsQuery is a query over pto.WorkerPTOPolicyAssignment.
+type WorkerPTOPolicyAssignmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*pto.WorkerPTOPolicyAssignment] = (*WorkerPTOPolicyAssignmentsTable)(nil)
+
+var _ keel.Query[*pto.WorkerPTOPolicyAssignment] = (*WorkerPTOPolicyAssignmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerPTOPolicyAssignmentsTable) Query() keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return &WorkerPTOPolicyAssignmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerPTOPolicyAssignmentsQuery.Where.
+func (t *WorkerPTOPolicyAssignmentsTable) Where(ps ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerPTOPolicyAssignmentsQuery.Pick.
+func (t *WorkerPTOPolicyAssignmentsTable) Pick(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerPTOPolicyAssignmentsQuery.Load.
+func (t *WorkerPTOPolicyAssignmentsTable) Load(ls ...keel.Loader) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerPTOPolicyAssignmentsQuery.Omit.
+func (t *WorkerPTOPolicyAssignmentsTable) Omit(cols ...keel.Column) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerPTOPolicyAssignmentsQuery.Order.
+func (t *WorkerPTOPolicyAssignmentsTable) Order(os ...keel.Order) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerPTOPolicyAssignmentsQuery.Limit.
+func (t *WorkerPTOPolicyAssignmentsTable) Limit(n int) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerPTOPolicyAssignmentsQuery.Group.
+func (t *WorkerPTOPolicyAssignmentsTable) Group(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerPTOPolicyAssignmentsQuery.GroupingSets.
+func (t *WorkerPTOPolicyAssignmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerPTOPolicyAssignmentsQuery.Rollup.
+func (t *WorkerPTOPolicyAssignmentsTable) Rollup(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerPTOPolicyAssignmentsQuery.Cube.
+func (t *WorkerPTOPolicyAssignmentsTable) Cube(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerPTOPolicyAssignmentsQuery.AllTenants.
+func (t *WorkerPTOPolicyAssignmentsTable) AllTenants() keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerPTOPolicyAssignmentsQuery.Join.
+func (t *WorkerPTOPolicyAssignmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerPTOPolicyAssignmentsQuery.LeftJoin.
+func (t *WorkerPTOPolicyAssignmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerPTOPolicyAssignmentsQuery.LeftJoinLateral.
+func (t *WorkerPTOPolicyAssignmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerPTOPolicyAssignmentsQuery.JoinLateral.
+func (t *WorkerPTOPolicyAssignmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerPTOPolicyAssignmentsQuery.Lock.
+func (t *WorkerPTOPolicyAssignmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerPTOPolicyAssignmentsQuery.DistinctOn.
+func (t *WorkerPTOPolicyAssignmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerPTOPolicyAssignmentsQuery.Cache.
+func (t *WorkerPTOPolicyAssignmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerPTOPolicyAssignmentsQuery.LoadStrategy.
+func (t *WorkerPTOPolicyAssignmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerPTOPolicyAssignmentsQuery.With.
+func (t *WorkerPTOPolicyAssignmentsTable) With(ctes ...*keel.CTETable) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerPTOPolicyAssignmentsQuery.Compute.
+func (t *WorkerPTOPolicyAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerPTOPolicyAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerPTOPolicyAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerPTOPolicyAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerPTOPolicyAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerPTOPolicyAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerPTOPolicyAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerPTOPolicyAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerPTOPolicyAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerPTOPolicyAssignmentsQuery) Where(ps ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerPTOPolicyAssignmentsQuery) Pick(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerPTOPolicyAssignmentsQuery) Omit(cols ...keel.Column) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) Load(ls ...keel.Loader) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerPTOPolicyAssignmentsQuery) Order(os ...keel.Order) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerPTOPolicyAssignmentsQuery) Distinct() keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerPTOPolicyAssignmentsQuery) Group(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerPTOPolicyAssignmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerPTOPolicyAssignmentsQuery) Rollup(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerPTOPolicyAssignmentsQuery) Cube(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerPTOPolicyAssignmentsQuery) Window(name string, w keel.Window) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerPTOPolicyAssignmentsQuery) Having(ps ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) Limit(n int) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) Offset(n int) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerPTOPolicyAssignmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerPTOPolicyAssignmentsQuery) AllTenants() keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerPTOPolicyAssignmentsQuery) CustomPlan() keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerPTOPolicyAssignmentsQuery) Timeout(d time.Duration) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerPTOPolicyAssignmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerPTOPolicyAssignmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerPTOPolicyAssignmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerPTOPolicyAssignmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerPTOPolicyAssignmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerPTOPolicyAssignmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerPTOPolicyAssignmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerPTOPolicyAssignmentsQuery) Clone() keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	return &WorkerPTOPolicyAssignmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerPTOPolicyAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*pto.WorkerPTOPolicyAssignment, error) {
+	return keel.One[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerPTOPolicyAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*pto.WorkerPTOPolicyAssignment, error) {
+	return keel.First[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerPTOPolicyAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOPolicyAssignment, error) {
+	return keel.List[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerPTOPolicyAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOPolicyAssignment, error) {
+	return keel.All[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.WorkerPTOPolicyAssignment, error) {
+	return keel.UpdateReturning[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerPTOPolicyAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.WorkerPTOPolicyAssignment], error) {
+	return keel.PageOf[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerPTOPolicyAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.WorkerPTOPolicyAssignment) error) error {
+	return keel.Each[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerPTOPolicyAssignment() unsafe.Pointer {

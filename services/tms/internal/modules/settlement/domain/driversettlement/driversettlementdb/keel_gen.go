@@ -4,6 +4,7 @@ package driversettlementdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -80,7 +81,7 @@ var disputesRef = keel.Ref{Table: &disputesTable}
 
 // DisputesTable is the table of driversettlement.Dispute.
 type DisputesTable struct {
-	keel.Handle[*driversettlement.Dispute]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -102,7 +103,7 @@ type DisputesTable struct {
 
 // Disputes references the settlement_disputes table.
 var Disputes = &DisputesTable{
-	Handle:            keel.Handle[*driversettlement.Dispute]{Ref: &disputesRef},
+	TableBase:         keel.TableBase{Ref: &disputesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 2}}},
@@ -122,10 +123,10 @@ var Disputes = &DisputesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &disputesRef, Index: 16}},
 }
 
-// BuildDisputes builds the handle of settlement_disputes for ref. Generated relation and alias methods call it.
+// BuildDisputes builds the table of settlement_disputes for ref. Generated relation and alias methods call it.
 func BuildDisputes(r *keel.Ref) *DisputesTable {
 	return &DisputesTable{
-		Handle:            keel.Handle[*driversettlement.Dispute]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -175,6 +176,365 @@ func (t *DisputesTable) ResolvedBy() *tenantdb.UsersTable {
 // Get returns the settlement_disputes row with the given key, or keel.ErrNotFound.
 func (t *DisputesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driversettlement.Dispute, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DisputesQuery is a query over driversettlement.Dispute.
+type DisputesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driversettlement.Dispute] = (*DisputesTable)(nil)
+
+var _ keel.Query[*driversettlement.Dispute] = (*DisputesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DisputesTable) Query() keel.Query[*driversettlement.Dispute] {
+	return &DisputesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DisputesQuery.Where.
+func (t *DisputesTable) Where(ps ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DisputesQuery.Pick.
+func (t *DisputesTable) Pick(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DisputesQuery.Load.
+func (t *DisputesTable) Load(ls ...keel.Loader) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DisputesQuery.Omit.
+func (t *DisputesTable) Omit(cols ...keel.Column) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DisputesQuery.Order.
+func (t *DisputesTable) Order(os ...keel.Order) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DisputesQuery.Limit.
+func (t *DisputesTable) Limit(n int) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DisputesQuery.Group.
+func (t *DisputesTable) Group(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DisputesQuery.GroupingSets.
+func (t *DisputesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DisputesQuery.Rollup.
+func (t *DisputesTable) Rollup(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DisputesQuery.Cube.
+func (t *DisputesTable) Cube(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DisputesQuery.AllTenants.
+func (t *DisputesTable) AllTenants() keel.Query[*driversettlement.Dispute] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DisputesQuery.Join.
+func (t *DisputesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DisputesQuery.LeftJoin.
+func (t *DisputesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DisputesQuery.LeftJoinLateral.
+func (t *DisputesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Dispute] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DisputesQuery.JoinLateral.
+func (t *DisputesTable) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Dispute] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DisputesQuery.Lock.
+func (t *DisputesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DisputesQuery.DistinctOn.
+func (t *DisputesTable) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DisputesQuery.Cache.
+func (t *DisputesTable) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DisputesQuery.LoadStrategy.
+func (t *DisputesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.Dispute] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DisputesQuery.With.
+func (t *DisputesTable) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.Dispute] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DisputesQuery.Compute.
+func (t *DisputesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.Dispute] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DisputesTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.Dispute) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DisputesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DisputesTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.Dispute, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DisputesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.Dispute, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DisputesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.Dispute) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DisputesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DisputesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DisputesTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DisputesQuery) Where(ps ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DisputesQuery) Pick(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DisputesQuery) Omit(cols ...keel.Column) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DisputesQuery) Load(ls ...keel.Loader) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DisputesQuery) Order(os ...keel.Order) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DisputesQuery) Distinct() keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DisputesQuery) Group(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DisputesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DisputesQuery) Rollup(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DisputesQuery) Cube(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DisputesQuery) Window(name string, w keel.Window) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DisputesQuery) Having(ps ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DisputesQuery) Limit(n int) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DisputesQuery) Offset(n int) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DisputesQuery) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DisputesQuery) AllTenants() keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DisputesQuery) CustomPlan() keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DisputesQuery) Timeout(d time.Duration) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DisputesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DisputesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DisputesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DisputesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DisputesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DisputesQuery) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DisputesQuery) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DisputesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DisputesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.Dispute] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DisputesQuery) Clone() keel.Query[*driversettlement.Dispute] {
+	return &DisputesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DisputesQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.Dispute, error) {
+	return keel.One[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DisputesQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.Dispute, error) {
+	return keel.First[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DisputesQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.Dispute, error) {
+	return keel.List[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DisputesQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.Dispute, error) {
+	return keel.All[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DisputesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.Dispute, error) {
+	return keel.UpdateReturning[*driversettlement.Dispute](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DisputesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.Dispute], error) {
+	return keel.PageOf[*driversettlement.Dispute](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DisputesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.Dispute) error) error {
+	return keel.Each[*driversettlement.Dispute](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDispute() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.Dispute)) }
@@ -365,7 +725,7 @@ var payEventsRef = keel.Ref{Table: &payEventsTable}
 
 // PayEventsTable is the table of driversettlement.PayEvent.
 type PayEventsTable struct {
-	keel.Handle[*driversettlement.PayEvent]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -395,7 +755,7 @@ type PayEventsTable struct {
 
 // PayEvents references the driver_pay_events table.
 var PayEvents = &PayEventsTable{
-	Handle:           keel.Handle[*driversettlement.PayEvent]{Ref: &payEventsRef},
+	TableBase:        keel.TableBase{Ref: &payEventsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 2}}},
@@ -423,10 +783,10 @@ var PayEvents = &PayEventsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &payEventsRef, Index: 24}},
 }
 
-// BuildPayEvents builds the handle of driver_pay_events for ref. Generated relation and alias methods call it.
+// BuildPayEvents builds the table of driver_pay_events for ref. Generated relation and alias methods call it.
 func BuildPayEvents(r *keel.Ref) *PayEventsTable {
 	return &PayEventsTable{
-		Handle:           keel.Handle[*driversettlement.PayEvent]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -479,6 +839,365 @@ func (t *PayEventsTable) Settlement() *SettlementsTable { return keel.Path(t.Ref
 // Get returns the driver_pay_events row with the given key, or keel.ErrNotFound.
 func (t *PayEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driversettlement.PayEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PayEventsQuery is a query over driversettlement.PayEvent.
+type PayEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driversettlement.PayEvent] = (*PayEventsTable)(nil)
+
+var _ keel.Query[*driversettlement.PayEvent] = (*PayEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PayEventsTable) Query() keel.Query[*driversettlement.PayEvent] {
+	return &PayEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PayEventsQuery.Where.
+func (t *PayEventsTable) Where(ps ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PayEventsQuery.Pick.
+func (t *PayEventsTable) Pick(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PayEventsQuery.Load.
+func (t *PayEventsTable) Load(ls ...keel.Loader) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PayEventsQuery.Omit.
+func (t *PayEventsTable) Omit(cols ...keel.Column) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PayEventsQuery.Order.
+func (t *PayEventsTable) Order(os ...keel.Order) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PayEventsQuery.Limit.
+func (t *PayEventsTable) Limit(n int) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PayEventsQuery.Group.
+func (t *PayEventsTable) Group(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PayEventsQuery.GroupingSets.
+func (t *PayEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PayEventsQuery.Rollup.
+func (t *PayEventsTable) Rollup(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PayEventsQuery.Cube.
+func (t *PayEventsTable) Cube(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PayEventsQuery.AllTenants.
+func (t *PayEventsTable) AllTenants() keel.Query[*driversettlement.PayEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PayEventsQuery.Join.
+func (t *PayEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PayEventsQuery.LeftJoin.
+func (t *PayEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PayEventsQuery.LeftJoinLateral.
+func (t *PayEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PayEventsQuery.JoinLateral.
+func (t *PayEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PayEventsQuery.Lock.
+func (t *PayEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PayEventsQuery.DistinctOn.
+func (t *PayEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PayEventsQuery.Cache.
+func (t *PayEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PayEventsQuery.LoadStrategy.
+func (t *PayEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PayEventsQuery.With.
+func (t *PayEventsTable) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PayEventsQuery.Compute.
+func (t *PayEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PayEventsTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PayEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PayEventsTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PayEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PayEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PayEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PayEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PayEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PayEventsQuery) Where(ps ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PayEventsQuery) Pick(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PayEventsQuery) Omit(cols ...keel.Column) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PayEventsQuery) Load(ls ...keel.Loader) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PayEventsQuery) Order(os ...keel.Order) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PayEventsQuery) Distinct() keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PayEventsQuery) Group(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PayEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PayEventsQuery) Rollup(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PayEventsQuery) Cube(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PayEventsQuery) Window(name string, w keel.Window) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PayEventsQuery) Having(ps ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PayEventsQuery) Limit(n int) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PayEventsQuery) Offset(n int) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PayEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PayEventsQuery) AllTenants() keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PayEventsQuery) CustomPlan() keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PayEventsQuery) Timeout(d time.Duration) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PayEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PayEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PayEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PayEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PayEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PayEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PayEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PayEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PayEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.PayEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PayEventsQuery) Clone() keel.Query[*driversettlement.PayEvent] {
+	return &PayEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PayEventsQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.PayEvent, error) {
+	return keel.One[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PayEventsQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.PayEvent, error) {
+	return keel.First[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PayEventsQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.PayEvent, error) {
+	return keel.List[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PayEventsQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.PayEvent, error) {
+	return keel.All[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PayEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.PayEvent, error) {
+	return keel.UpdateReturning[*driversettlement.PayEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PayEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.PayEvent], error) {
+	return keel.PageOf[*driversettlement.PayEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PayEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.PayEvent) error) error {
+	return keel.Each[*driversettlement.PayEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayEvent() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.PayEvent)) }
@@ -739,7 +1458,7 @@ var settlementsRef = keel.Ref{Table: &settlementsTable}
 
 // SettlementsTable is the table of driversettlement.Settlement.
 type SettlementsTable struct {
-	keel.Handle[*driversettlement.Settlement]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -793,7 +1512,7 @@ type SettlementsTable struct {
 
 // Settlements references the driver_settlements table.
 var Settlements = &SettlementsTable{
-	Handle:                 keel.Handle[*driversettlement.Settlement]{Ref: &settlementsRef},
+	TableBase:              keel.TableBase{Ref: &settlementsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 2}}},
@@ -845,10 +1564,10 @@ var Settlements = &SettlementsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 48}},
 }
 
-// BuildSettlements builds the handle of driver_settlements for ref. Generated relation and alias methods call it.
+// BuildSettlements builds the table of driver_settlements for ref. Generated relation and alias methods call it.
 func BuildSettlements(r *keel.Ref) *SettlementsTable {
 	return &SettlementsTable{
-		Handle:                 keel.Handle[*driversettlement.Settlement]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -932,6 +1651,365 @@ func (t *SettlementsTable) Lines() *SettlementLinesTable {
 // Get returns the driver_settlements row with the given key, or keel.ErrNotFound.
 func (t *SettlementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driversettlement.Settlement, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SettlementsQuery is a query over driversettlement.Settlement.
+type SettlementsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driversettlement.Settlement] = (*SettlementsTable)(nil)
+
+var _ keel.Query[*driversettlement.Settlement] = (*SettlementsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SettlementsTable) Query() keel.Query[*driversettlement.Settlement] {
+	return &SettlementsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SettlementsQuery.Where.
+func (t *SettlementsTable) Where(ps ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SettlementsQuery.Pick.
+func (t *SettlementsTable) Pick(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SettlementsQuery.Load.
+func (t *SettlementsTable) Load(ls ...keel.Loader) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SettlementsQuery.Omit.
+func (t *SettlementsTable) Omit(cols ...keel.Column) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SettlementsQuery.Order.
+func (t *SettlementsTable) Order(os ...keel.Order) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SettlementsQuery.Limit.
+func (t *SettlementsTable) Limit(n int) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SettlementsQuery.Group.
+func (t *SettlementsTable) Group(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SettlementsQuery.GroupingSets.
+func (t *SettlementsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SettlementsQuery.Rollup.
+func (t *SettlementsTable) Rollup(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SettlementsQuery.Cube.
+func (t *SettlementsTable) Cube(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SettlementsQuery.AllTenants.
+func (t *SettlementsTable) AllTenants() keel.Query[*driversettlement.Settlement] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SettlementsQuery.Join.
+func (t *SettlementsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SettlementsQuery.LeftJoin.
+func (t *SettlementsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SettlementsQuery.LeftJoinLateral.
+func (t *SettlementsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Settlement] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SettlementsQuery.JoinLateral.
+func (t *SettlementsTable) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Settlement] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SettlementsQuery.Lock.
+func (t *SettlementsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SettlementsQuery.DistinctOn.
+func (t *SettlementsTable) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SettlementsQuery.Cache.
+func (t *SettlementsTable) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SettlementsQuery.LoadStrategy.
+func (t *SettlementsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.Settlement] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SettlementsQuery.With.
+func (t *SettlementsTable) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.Settlement] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SettlementsQuery.Compute.
+func (t *SettlementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.Settlement] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SettlementsTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.Settlement) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SettlementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SettlementsTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.Settlement, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SettlementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.Settlement, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SettlementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.Settlement) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SettlementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SettlementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SettlementsTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SettlementsQuery) Where(ps ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SettlementsQuery) Pick(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SettlementsQuery) Omit(cols ...keel.Column) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SettlementsQuery) Load(ls ...keel.Loader) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SettlementsQuery) Order(os ...keel.Order) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SettlementsQuery) Distinct() keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SettlementsQuery) Group(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SettlementsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SettlementsQuery) Rollup(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SettlementsQuery) Cube(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SettlementsQuery) Window(name string, w keel.Window) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SettlementsQuery) Having(ps ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SettlementsQuery) Limit(n int) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SettlementsQuery) Offset(n int) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SettlementsQuery) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SettlementsQuery) AllTenants() keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SettlementsQuery) CustomPlan() keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SettlementsQuery) Timeout(d time.Duration) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SettlementsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SettlementsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SettlementsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SettlementsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SettlementsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SettlementsQuery) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SettlementsQuery) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SettlementsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SettlementsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.Settlement] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SettlementsQuery) Clone() keel.Query[*driversettlement.Settlement] {
+	return &SettlementsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SettlementsQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.Settlement, error) {
+	return keel.One[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SettlementsQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.Settlement, error) {
+	return keel.First[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SettlementsQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.Settlement, error) {
+	return keel.List[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SettlementsQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.Settlement, error) {
+	return keel.All[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SettlementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.Settlement, error) {
+	return keel.UpdateReturning[*driversettlement.Settlement](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SettlementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.Settlement], error) {
+	return keel.PageOf[*driversettlement.Settlement](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SettlementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.Settlement) error) error {
+	return keel.Each[*driversettlement.Settlement](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSettlement() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.Settlement)) }
@@ -1301,7 +2379,7 @@ var settlementBatchesRef = keel.Ref{Table: &settlementBatchesTable}
 
 // SettlementBatchesTable is the table of driversettlement.SettlementBatch.
 type SettlementBatchesTable struct {
-	keel.Handle[*driversettlement.SettlementBatch]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -1328,7 +2406,7 @@ type SettlementBatchesTable struct {
 
 // SettlementBatches references the driver_settlement_batches table.
 var SettlementBatches = &SettlementBatchesTable{
-	Handle:          keel.Handle[*driversettlement.SettlementBatch]{Ref: &settlementBatchesRef},
+	TableBase:       keel.TableBase{Ref: &settlementBatchesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 2}}},
@@ -1353,10 +2431,10 @@ var SettlementBatches = &SettlementBatchesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 21}},
 }
 
-// BuildSettlementBatches builds the handle of driver_settlement_batches for ref. Generated relation and alias methods call it.
+// BuildSettlementBatches builds the table of driver_settlement_batches for ref. Generated relation and alias methods call it.
 func BuildSettlementBatches(r *keel.Ref) *SettlementBatchesTable {
 	return &SettlementBatchesTable{
-		Handle:          keel.Handle[*driversettlement.SettlementBatch]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1398,6 +2476,365 @@ func (t *SettlementBatchesTable) Settlements() *SettlementsTable {
 // Get returns the driver_settlement_batches row with the given key, or keel.ErrNotFound.
 func (t *SettlementBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driversettlement.SettlementBatch, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SettlementBatchesQuery is a query over driversettlement.SettlementBatch.
+type SettlementBatchesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driversettlement.SettlementBatch] = (*SettlementBatchesTable)(nil)
+
+var _ keel.Query[*driversettlement.SettlementBatch] = (*SettlementBatchesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SettlementBatchesTable) Query() keel.Query[*driversettlement.SettlementBatch] {
+	return &SettlementBatchesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SettlementBatchesQuery.Where.
+func (t *SettlementBatchesTable) Where(ps ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SettlementBatchesQuery.Pick.
+func (t *SettlementBatchesTable) Pick(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SettlementBatchesQuery.Load.
+func (t *SettlementBatchesTable) Load(ls ...keel.Loader) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SettlementBatchesQuery.Omit.
+func (t *SettlementBatchesTable) Omit(cols ...keel.Column) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SettlementBatchesQuery.Order.
+func (t *SettlementBatchesTable) Order(os ...keel.Order) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SettlementBatchesQuery.Limit.
+func (t *SettlementBatchesTable) Limit(n int) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SettlementBatchesQuery.Group.
+func (t *SettlementBatchesTable) Group(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SettlementBatchesQuery.GroupingSets.
+func (t *SettlementBatchesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SettlementBatchesQuery.Rollup.
+func (t *SettlementBatchesTable) Rollup(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SettlementBatchesQuery.Cube.
+func (t *SettlementBatchesTable) Cube(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SettlementBatchesQuery.AllTenants.
+func (t *SettlementBatchesTable) AllTenants() keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SettlementBatchesQuery.Join.
+func (t *SettlementBatchesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SettlementBatchesQuery.LeftJoin.
+func (t *SettlementBatchesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SettlementBatchesQuery.LeftJoinLateral.
+func (t *SettlementBatchesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SettlementBatchesQuery.JoinLateral.
+func (t *SettlementBatchesTable) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SettlementBatchesQuery.Lock.
+func (t *SettlementBatchesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SettlementBatchesQuery.DistinctOn.
+func (t *SettlementBatchesTable) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SettlementBatchesQuery.Cache.
+func (t *SettlementBatchesTable) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SettlementBatchesQuery.LoadStrategy.
+func (t *SettlementBatchesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SettlementBatchesQuery.With.
+func (t *SettlementBatchesTable) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SettlementBatchesQuery.Compute.
+func (t *SettlementBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SettlementBatchesTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SettlementBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SettlementBatchesTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SettlementBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SettlementBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SettlementBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SettlementBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SettlementBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SettlementBatchesQuery) Where(ps ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SettlementBatchesQuery) Pick(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SettlementBatchesQuery) Omit(cols ...keel.Column) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SettlementBatchesQuery) Load(ls ...keel.Loader) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SettlementBatchesQuery) Order(os ...keel.Order) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SettlementBatchesQuery) Distinct() keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SettlementBatchesQuery) Group(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SettlementBatchesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SettlementBatchesQuery) Rollup(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SettlementBatchesQuery) Cube(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SettlementBatchesQuery) Window(name string, w keel.Window) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SettlementBatchesQuery) Having(ps ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SettlementBatchesQuery) Limit(n int) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SettlementBatchesQuery) Offset(n int) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SettlementBatchesQuery) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SettlementBatchesQuery) AllTenants() keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SettlementBatchesQuery) CustomPlan() keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SettlementBatchesQuery) Timeout(d time.Duration) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SettlementBatchesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SettlementBatchesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SettlementBatchesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SettlementBatchesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SettlementBatchesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SettlementBatchesQuery) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SettlementBatchesQuery) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SettlementBatchesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SettlementBatchesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.SettlementBatch] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SettlementBatchesQuery) Clone() keel.Query[*driversettlement.SettlementBatch] {
+	return &SettlementBatchesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SettlementBatchesQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.SettlementBatch, error) {
+	return keel.One[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SettlementBatchesQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.SettlementBatch, error) {
+	return keel.First[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SettlementBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementBatch, error) {
+	return keel.List[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SettlementBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementBatch, error) {
+	return keel.All[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SettlementBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.SettlementBatch, error) {
+	return keel.UpdateReturning[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SettlementBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.SettlementBatch], error) {
+	return keel.PageOf[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SettlementBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.SettlementBatch) error) error {
+	return keel.Each[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSettlementBatch() unsafe.Pointer {
@@ -1605,7 +3042,7 @@ var settlementLinesRef = keel.Ref{Table: &settlementLinesTable}
 
 // SettlementLinesTable is the table of driversettlement.SettlementLine.
 type SettlementLinesTable struct {
-	keel.Handle[*driversettlement.SettlementLine]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -1634,7 +3071,7 @@ type SettlementLinesTable struct {
 
 // SettlementLines references the driver_settlement_lines table.
 var SettlementLines = &SettlementLinesTable{
-	Handle:               keel.Handle[*driversettlement.SettlementLine]{Ref: &settlementLinesRef},
+	TableBase:            keel.TableBase{Ref: &settlementLinesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 2}}},
@@ -1661,10 +3098,10 @@ var SettlementLines = &SettlementLinesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &settlementLinesRef, Index: 23}},
 }
 
-// BuildSettlementLines builds the handle of driver_settlement_lines for ref. Generated relation and alias methods call it.
+// BuildSettlementLines builds the table of driver_settlement_lines for ref. Generated relation and alias methods call it.
 func BuildSettlementLines(r *keel.Ref) *SettlementLinesTable {
 	return &SettlementLinesTable{
-		Handle:               keel.Handle[*driversettlement.SettlementLine]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1718,6 +3155,365 @@ func (t *SettlementLinesTable) PayCode() *paycodedb.PayCodesTable {
 // Get returns the driver_settlement_lines row with the given key, or keel.ErrNotFound.
 func (t *SettlementLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*driversettlement.SettlementLine, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SettlementLinesQuery is a query over driversettlement.SettlementLine.
+type SettlementLinesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*driversettlement.SettlementLine] = (*SettlementLinesTable)(nil)
+
+var _ keel.Query[*driversettlement.SettlementLine] = (*SettlementLinesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SettlementLinesTable) Query() keel.Query[*driversettlement.SettlementLine] {
+	return &SettlementLinesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SettlementLinesQuery.Where.
+func (t *SettlementLinesTable) Where(ps ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SettlementLinesQuery.Pick.
+func (t *SettlementLinesTable) Pick(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SettlementLinesQuery.Load.
+func (t *SettlementLinesTable) Load(ls ...keel.Loader) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SettlementLinesQuery.Omit.
+func (t *SettlementLinesTable) Omit(cols ...keel.Column) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SettlementLinesQuery.Order.
+func (t *SettlementLinesTable) Order(os ...keel.Order) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SettlementLinesQuery.Limit.
+func (t *SettlementLinesTable) Limit(n int) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SettlementLinesQuery.Group.
+func (t *SettlementLinesTable) Group(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SettlementLinesQuery.GroupingSets.
+func (t *SettlementLinesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SettlementLinesQuery.Rollup.
+func (t *SettlementLinesTable) Rollup(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SettlementLinesQuery.Cube.
+func (t *SettlementLinesTable) Cube(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SettlementLinesQuery.AllTenants.
+func (t *SettlementLinesTable) AllTenants() keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SettlementLinesQuery.Join.
+func (t *SettlementLinesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SettlementLinesQuery.LeftJoin.
+func (t *SettlementLinesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SettlementLinesQuery.LeftJoinLateral.
+func (t *SettlementLinesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SettlementLinesQuery.JoinLateral.
+func (t *SettlementLinesTable) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SettlementLinesQuery.Lock.
+func (t *SettlementLinesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SettlementLinesQuery.DistinctOn.
+func (t *SettlementLinesTable) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SettlementLinesQuery.Cache.
+func (t *SettlementLinesTable) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SettlementLinesQuery.LoadStrategy.
+func (t *SettlementLinesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SettlementLinesQuery.With.
+func (t *SettlementLinesTable) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SettlementLinesQuery.Compute.
+func (t *SettlementLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SettlementLinesTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SettlementLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SettlementLinesTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SettlementLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SettlementLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SettlementLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SettlementLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SettlementLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SettlementLinesQuery) Where(ps ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SettlementLinesQuery) Pick(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SettlementLinesQuery) Omit(cols ...keel.Column) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SettlementLinesQuery) Load(ls ...keel.Loader) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SettlementLinesQuery) Order(os ...keel.Order) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SettlementLinesQuery) Distinct() keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SettlementLinesQuery) Group(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SettlementLinesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SettlementLinesQuery) Rollup(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SettlementLinesQuery) Cube(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SettlementLinesQuery) Window(name string, w keel.Window) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SettlementLinesQuery) Having(ps ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SettlementLinesQuery) Limit(n int) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SettlementLinesQuery) Offset(n int) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SettlementLinesQuery) DistinctOn(es ...keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SettlementLinesQuery) AllTenants() keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SettlementLinesQuery) CustomPlan() keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SettlementLinesQuery) Timeout(d time.Duration) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SettlementLinesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SettlementLinesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SettlementLinesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SettlementLinesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SettlementLinesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SettlementLinesQuery) Cache(opts ...keel.CacheOption) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SettlementLinesQuery) With(ctes ...*keel.CTETable) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SettlementLinesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SettlementLinesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*driversettlement.SettlementLine] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SettlementLinesQuery) Clone() keel.Query[*driversettlement.SettlementLine] {
+	return &SettlementLinesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SettlementLinesQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.SettlementLine, error) {
+	return keel.One[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SettlementLinesQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.SettlementLine, error) {
+	return keel.First[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SettlementLinesQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementLine, error) {
+	return keel.List[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SettlementLinesQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementLine, error) {
+	return keel.All[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SettlementLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.SettlementLine, error) {
+	return keel.UpdateReturning[*driversettlement.SettlementLine](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SettlementLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.SettlementLine], error) {
+	return keel.PageOf[*driversettlement.SettlementLine](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SettlementLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.SettlementLine) error) error {
+	return keel.Each[*driversettlement.SettlementLine](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSettlementLine() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.SettlementLine)) }

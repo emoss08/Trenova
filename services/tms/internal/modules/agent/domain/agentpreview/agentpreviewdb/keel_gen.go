@@ -4,6 +4,7 @@ package agentpreviewdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -53,7 +54,7 @@ var proposalBaselinesRef = keel.Ref{Table: &proposalBaselinesTable}
 
 // ProposalBaselinesTable is the table of agentpreview.ProposalBaseline.
 type ProposalBaselinesTable struct {
-	keel.Handle[*agentpreview.ProposalBaseline]
+	keel.TableBase
 	ProposalID     keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -65,7 +66,7 @@ type ProposalBaselinesTable struct {
 
 // ProposalBaselines references the agent_proposal_baselines table.
 var ProposalBaselines = &ProposalBaselinesTable{
-	Handle:         keel.Handle[*agentpreview.ProposalBaseline]{Ref: &proposalBaselinesRef},
+	TableBase:      keel.TableBase{Ref: &proposalBaselinesRef},
 	ProposalID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &proposalBaselinesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &proposalBaselinesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &proposalBaselinesRef, Index: 2}}},
@@ -75,10 +76,10 @@ var ProposalBaselines = &ProposalBaselinesTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &proposalBaselinesRef, Index: 6}},
 }
 
-// BuildProposalBaselines builds the handle of agent_proposal_baselines for ref. Generated relation and alias methods call it.
+// BuildProposalBaselines builds the table of agent_proposal_baselines for ref. Generated relation and alias methods call it.
 func BuildProposalBaselines(r *keel.Ref) *ProposalBaselinesTable {
 	return &ProposalBaselinesTable{
-		Handle:         keel.Handle[*agentpreview.ProposalBaseline]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ProposalID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -100,6 +101,365 @@ func (t *ProposalBaselinesTable) As(alias string) *ProposalBaselinesTable {
 // Get returns the agent_proposal_baselines row with the given key, or keel.ErrNotFound.
 func (t *ProposalBaselinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentpreview.ProposalBaseline, error) {
 	return t.Where(t.ProposalID.Eq(key)).One(ctx, db)
+}
+
+// ProposalBaselinesQuery is a query over agentpreview.ProposalBaseline.
+type ProposalBaselinesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentpreview.ProposalBaseline] = (*ProposalBaselinesTable)(nil)
+
+var _ keel.Query[*agentpreview.ProposalBaseline] = (*ProposalBaselinesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProposalBaselinesTable) Query() keel.Query[*agentpreview.ProposalBaseline] {
+	return &ProposalBaselinesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProposalBaselinesQuery.Where.
+func (t *ProposalBaselinesTable) Where(ps ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProposalBaselinesQuery.Pick.
+func (t *ProposalBaselinesTable) Pick(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProposalBaselinesQuery.Load.
+func (t *ProposalBaselinesTable) Load(ls ...keel.Loader) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProposalBaselinesQuery.Omit.
+func (t *ProposalBaselinesTable) Omit(cols ...keel.Column) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProposalBaselinesQuery.Order.
+func (t *ProposalBaselinesTable) Order(os ...keel.Order) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProposalBaselinesQuery.Limit.
+func (t *ProposalBaselinesTable) Limit(n int) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProposalBaselinesQuery.Group.
+func (t *ProposalBaselinesTable) Group(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProposalBaselinesQuery.GroupingSets.
+func (t *ProposalBaselinesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProposalBaselinesQuery.Rollup.
+func (t *ProposalBaselinesTable) Rollup(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProposalBaselinesQuery.Cube.
+func (t *ProposalBaselinesTable) Cube(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProposalBaselinesQuery.AllTenants.
+func (t *ProposalBaselinesTable) AllTenants() keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProposalBaselinesQuery.Join.
+func (t *ProposalBaselinesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProposalBaselinesQuery.LeftJoin.
+func (t *ProposalBaselinesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProposalBaselinesQuery.LeftJoinLateral.
+func (t *ProposalBaselinesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProposalBaselinesQuery.JoinLateral.
+func (t *ProposalBaselinesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProposalBaselinesQuery.Lock.
+func (t *ProposalBaselinesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProposalBaselinesQuery.DistinctOn.
+func (t *ProposalBaselinesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProposalBaselinesQuery.Cache.
+func (t *ProposalBaselinesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProposalBaselinesQuery.LoadStrategy.
+func (t *ProposalBaselinesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProposalBaselinesQuery.With.
+func (t *ProposalBaselinesTable) With(ctes ...*keel.CTETable) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProposalBaselinesQuery.Compute.
+func (t *ProposalBaselinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProposalBaselinesTable) Create(ctx context.Context, db *keel.DB, row *agentpreview.ProposalBaseline) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProposalBaselinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentpreview.ProposalBaseline) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProposalBaselinesTable) Save(ctx context.Context, db *keel.DB, row *agentpreview.ProposalBaseline, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProposalBaselinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentpreview.ProposalBaseline, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProposalBaselinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentpreview.ProposalBaseline) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProposalBaselinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentpreview.ProposalBaseline, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProposalBaselinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentpreview.ProposalBaseline, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProposalBaselinesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentpreview.ProposalBaseline) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProposalBaselinesQuery) Where(ps ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProposalBaselinesQuery) Pick(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProposalBaselinesQuery) Omit(cols ...keel.Column) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProposalBaselinesQuery) Load(ls ...keel.Loader) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProposalBaselinesQuery) Order(os ...keel.Order) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProposalBaselinesQuery) Distinct() keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProposalBaselinesQuery) Group(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProposalBaselinesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProposalBaselinesQuery) Rollup(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProposalBaselinesQuery) Cube(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProposalBaselinesQuery) Window(name string, w keel.Window) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProposalBaselinesQuery) Having(ps ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProposalBaselinesQuery) Limit(n int) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProposalBaselinesQuery) Offset(n int) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProposalBaselinesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProposalBaselinesQuery) AllTenants() keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProposalBaselinesQuery) CustomPlan() keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProposalBaselinesQuery) Timeout(d time.Duration) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProposalBaselinesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProposalBaselinesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProposalBaselinesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProposalBaselinesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProposalBaselinesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProposalBaselinesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProposalBaselinesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProposalBaselinesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProposalBaselinesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentpreview.ProposalBaseline] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProposalBaselinesQuery) Clone() keel.Query[*agentpreview.ProposalBaseline] {
+	return &ProposalBaselinesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProposalBaselinesQuery) One(ctx context.Context, db *keel.DB) (*agentpreview.ProposalBaseline, error) {
+	return keel.One[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProposalBaselinesQuery) First(ctx context.Context, db *keel.DB) (*agentpreview.ProposalBaseline, error) {
+	return keel.First[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProposalBaselinesQuery) List(ctx context.Context, db *keel.DB) ([]*agentpreview.ProposalBaseline, error) {
+	return keel.List[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProposalBaselinesQuery) All(ctx context.Context, db *keel.DB) ([]*agentpreview.ProposalBaseline, error) {
+	return keel.All[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProposalBaselinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentpreview.ProposalBaseline, error) {
+	return keel.UpdateReturning[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProposalBaselinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentpreview.ProposalBaseline], error) {
+	return keel.PageOf[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProposalBaselinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentpreview.ProposalBaseline) error) error {
+	return keel.Each[*agentpreview.ProposalBaseline](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProposalBaseline() unsafe.Pointer { return unsafe.Pointer(new(agentpreview.ProposalBaseline)) }

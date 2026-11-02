@@ -4,6 +4,7 @@ package timesheetdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var payrollExportsRef = keel.Ref{Table: &payrollExportsTable}
 
 // PayrollExportsTable is the table of timesheet.PayrollExport.
 type PayrollExportsTable struct {
-	keel.Handle[*timesheet.PayrollExport]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -90,7 +91,7 @@ type PayrollExportsTable struct {
 
 // PayrollExports references the payroll_exports table.
 var PayrollExports = &PayrollExportsTable{
-	Handle:           keel.Handle[*timesheet.PayrollExport]{Ref: &payrollExportsRef},
+	TableBase:        keel.TableBase{Ref: &payrollExportsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 2}}},
@@ -111,10 +112,10 @@ var PayrollExports = &PayrollExportsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 17}},
 }
 
-// BuildPayrollExports builds the handle of payroll_exports for ref. Generated relation and alias methods call it.
+// BuildPayrollExports builds the table of payroll_exports for ref. Generated relation and alias methods call it.
 func BuildPayrollExports(r *keel.Ref) *PayrollExportsTable {
 	return &PayrollExportsTable{
-		Handle:           keel.Handle[*timesheet.PayrollExport]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -147,6 +148,365 @@ func (t *PayrollExportsTable) As(alias string) *PayrollExportsTable {
 // Get returns the payroll_exports row with the given key, or keel.ErrNotFound.
 func (t *PayrollExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*timesheet.PayrollExport, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PayrollExportsQuery is a query over timesheet.PayrollExport.
+type PayrollExportsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*timesheet.PayrollExport] = (*PayrollExportsTable)(nil)
+
+var _ keel.Query[*timesheet.PayrollExport] = (*PayrollExportsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PayrollExportsTable) Query() keel.Query[*timesheet.PayrollExport] {
+	return &PayrollExportsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PayrollExportsQuery.Where.
+func (t *PayrollExportsTable) Where(ps ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PayrollExportsQuery.Pick.
+func (t *PayrollExportsTable) Pick(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PayrollExportsQuery.Load.
+func (t *PayrollExportsTable) Load(ls ...keel.Loader) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PayrollExportsQuery.Omit.
+func (t *PayrollExportsTable) Omit(cols ...keel.Column) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PayrollExportsQuery.Order.
+func (t *PayrollExportsTable) Order(os ...keel.Order) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PayrollExportsQuery.Limit.
+func (t *PayrollExportsTable) Limit(n int) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PayrollExportsQuery.Group.
+func (t *PayrollExportsTable) Group(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PayrollExportsQuery.GroupingSets.
+func (t *PayrollExportsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PayrollExportsQuery.Rollup.
+func (t *PayrollExportsTable) Rollup(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PayrollExportsQuery.Cube.
+func (t *PayrollExportsTable) Cube(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PayrollExportsQuery.AllTenants.
+func (t *PayrollExportsTable) AllTenants() keel.Query[*timesheet.PayrollExport] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PayrollExportsQuery.Join.
+func (t *PayrollExportsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PayrollExportsQuery.LeftJoin.
+func (t *PayrollExportsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PayrollExportsQuery.LeftJoinLateral.
+func (t *PayrollExportsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PayrollExportsQuery.JoinLateral.
+func (t *PayrollExportsTable) JoinLateral(sub keel.LateralSource) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PayrollExportsQuery.Lock.
+func (t *PayrollExportsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PayrollExportsQuery.DistinctOn.
+func (t *PayrollExportsTable) DistinctOn(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PayrollExportsQuery.Cache.
+func (t *PayrollExportsTable) Cache(opts ...keel.CacheOption) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PayrollExportsQuery.LoadStrategy.
+func (t *PayrollExportsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PayrollExportsQuery.With.
+func (t *PayrollExportsTable) With(ctes ...*keel.CTETable) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PayrollExportsQuery.Compute.
+func (t *PayrollExportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PayrollExportsTable) Create(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PayrollExportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PayrollExportsTable) Save(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PayrollExportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PayrollExportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PayrollExportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PayrollExportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PayrollExportsTable) Copy(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PayrollExportsQuery) Where(ps ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PayrollExportsQuery) Pick(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PayrollExportsQuery) Omit(cols ...keel.Column) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PayrollExportsQuery) Load(ls ...keel.Loader) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PayrollExportsQuery) Order(os ...keel.Order) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PayrollExportsQuery) Distinct() keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PayrollExportsQuery) Group(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PayrollExportsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PayrollExportsQuery) Rollup(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PayrollExportsQuery) Cube(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PayrollExportsQuery) Window(name string, w keel.Window) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PayrollExportsQuery) Having(ps ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PayrollExportsQuery) Limit(n int) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PayrollExportsQuery) Offset(n int) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PayrollExportsQuery) DistinctOn(es ...keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PayrollExportsQuery) AllTenants() keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PayrollExportsQuery) CustomPlan() keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PayrollExportsQuery) Timeout(d time.Duration) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PayrollExportsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PayrollExportsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PayrollExportsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PayrollExportsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PayrollExportsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PayrollExportsQuery) Cache(opts ...keel.CacheOption) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PayrollExportsQuery) With(ctes ...*keel.CTETable) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PayrollExportsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PayrollExportsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*timesheet.PayrollExport] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PayrollExportsQuery) Clone() keel.Query[*timesheet.PayrollExport] {
+	return &PayrollExportsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PayrollExportsQuery) One(ctx context.Context, db *keel.DB) (*timesheet.PayrollExport, error) {
+	return keel.One[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PayrollExportsQuery) First(ctx context.Context, db *keel.DB) (*timesheet.PayrollExport, error) {
+	return keel.First[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PayrollExportsQuery) List(ctx context.Context, db *keel.DB) ([]*timesheet.PayrollExport, error) {
+	return keel.List[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PayrollExportsQuery) All(ctx context.Context, db *keel.DB) ([]*timesheet.PayrollExport, error) {
+	return keel.All[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PayrollExportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*timesheet.PayrollExport, error) {
+	return keel.UpdateReturning[*timesheet.PayrollExport](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PayrollExportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*timesheet.PayrollExport], error) {
+	return keel.PageOf[*timesheet.PayrollExport](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PayrollExportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*timesheet.PayrollExport) error) error {
+	return keel.Each[*timesheet.PayrollExport](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayrollExport() unsafe.Pointer { return unsafe.Pointer(new(timesheet.PayrollExport)) }
@@ -315,7 +675,7 @@ var timeClockEntriesRef = keel.Ref{Table: &timeClockEntriesTable}
 
 // TimeClockEntriesTable is the table of timesheet.TimeClockEntry.
 type TimeClockEntriesTable struct {
-	keel.Handle[*timesheet.TimeClockEntry]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -336,7 +696,7 @@ type TimeClockEntriesTable struct {
 
 // TimeClockEntries references the time_clock_entries table.
 var TimeClockEntries = &TimeClockEntriesTable{
-	Handle:         keel.Handle[*timesheet.TimeClockEntry]{Ref: &timeClockEntriesRef},
+	TableBase:      keel.TableBase{Ref: &timeClockEntriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 2}}},
@@ -355,10 +715,10 @@ var TimeClockEntries = &TimeClockEntriesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 15}},
 }
 
-// BuildTimeClockEntries builds the handle of time_clock_entries for ref. Generated relation and alias methods call it.
+// BuildTimeClockEntries builds the table of time_clock_entries for ref. Generated relation and alias methods call it.
 func BuildTimeClockEntries(r *keel.Ref) *TimeClockEntriesTable {
 	return &TimeClockEntriesTable{
-		Handle:         keel.Handle[*timesheet.TimeClockEntry]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -394,6 +754,365 @@ func (t *TimeClockEntriesTable) Worker() *workerdb.WorkersTable {
 // Get returns the time_clock_entries row with the given key, or keel.ErrNotFound.
 func (t *TimeClockEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*timesheet.TimeClockEntry, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TimeClockEntriesQuery is a query over timesheet.TimeClockEntry.
+type TimeClockEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*timesheet.TimeClockEntry] = (*TimeClockEntriesTable)(nil)
+
+var _ keel.Query[*timesheet.TimeClockEntry] = (*TimeClockEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TimeClockEntriesTable) Query() keel.Query[*timesheet.TimeClockEntry] {
+	return &TimeClockEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TimeClockEntriesQuery.Where.
+func (t *TimeClockEntriesTable) Where(ps ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TimeClockEntriesQuery.Pick.
+func (t *TimeClockEntriesTable) Pick(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TimeClockEntriesQuery.Load.
+func (t *TimeClockEntriesTable) Load(ls ...keel.Loader) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TimeClockEntriesQuery.Omit.
+func (t *TimeClockEntriesTable) Omit(cols ...keel.Column) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TimeClockEntriesQuery.Order.
+func (t *TimeClockEntriesTable) Order(os ...keel.Order) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TimeClockEntriesQuery.Limit.
+func (t *TimeClockEntriesTable) Limit(n int) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TimeClockEntriesQuery.Group.
+func (t *TimeClockEntriesTable) Group(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TimeClockEntriesQuery.GroupingSets.
+func (t *TimeClockEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TimeClockEntriesQuery.Rollup.
+func (t *TimeClockEntriesTable) Rollup(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TimeClockEntriesQuery.Cube.
+func (t *TimeClockEntriesTable) Cube(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TimeClockEntriesQuery.AllTenants.
+func (t *TimeClockEntriesTable) AllTenants() keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TimeClockEntriesQuery.Join.
+func (t *TimeClockEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TimeClockEntriesQuery.LeftJoin.
+func (t *TimeClockEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TimeClockEntriesQuery.LeftJoinLateral.
+func (t *TimeClockEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TimeClockEntriesQuery.JoinLateral.
+func (t *TimeClockEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TimeClockEntriesQuery.Lock.
+func (t *TimeClockEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TimeClockEntriesQuery.DistinctOn.
+func (t *TimeClockEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TimeClockEntriesQuery.Cache.
+func (t *TimeClockEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TimeClockEntriesQuery.LoadStrategy.
+func (t *TimeClockEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TimeClockEntriesQuery.With.
+func (t *TimeClockEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TimeClockEntriesQuery.Compute.
+func (t *TimeClockEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TimeClockEntriesTable) Create(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TimeClockEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TimeClockEntriesTable) Save(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TimeClockEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TimeClockEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TimeClockEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TimeClockEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TimeClockEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TimeClockEntriesQuery) Where(ps ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TimeClockEntriesQuery) Pick(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TimeClockEntriesQuery) Omit(cols ...keel.Column) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TimeClockEntriesQuery) Load(ls ...keel.Loader) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TimeClockEntriesQuery) Order(os ...keel.Order) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TimeClockEntriesQuery) Distinct() keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TimeClockEntriesQuery) Group(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TimeClockEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TimeClockEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TimeClockEntriesQuery) Cube(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TimeClockEntriesQuery) Window(name string, w keel.Window) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TimeClockEntriesQuery) Having(ps ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TimeClockEntriesQuery) Limit(n int) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TimeClockEntriesQuery) Offset(n int) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TimeClockEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TimeClockEntriesQuery) AllTenants() keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TimeClockEntriesQuery) CustomPlan() keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TimeClockEntriesQuery) Timeout(d time.Duration) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TimeClockEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TimeClockEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TimeClockEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TimeClockEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TimeClockEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TimeClockEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TimeClockEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TimeClockEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TimeClockEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*timesheet.TimeClockEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TimeClockEntriesQuery) Clone() keel.Query[*timesheet.TimeClockEntry] {
+	return &TimeClockEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TimeClockEntriesQuery) One(ctx context.Context, db *keel.DB) (*timesheet.TimeClockEntry, error) {
+	return keel.One[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TimeClockEntriesQuery) First(ctx context.Context, db *keel.DB) (*timesheet.TimeClockEntry, error) {
+	return keel.First[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TimeClockEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*timesheet.TimeClockEntry, error) {
+	return keel.List[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TimeClockEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*timesheet.TimeClockEntry, error) {
+	return keel.All[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TimeClockEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*timesheet.TimeClockEntry, error) {
+	return keel.UpdateReturning[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TimeClockEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*timesheet.TimeClockEntry], error) {
+	return keel.PageOf[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TimeClockEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*timesheet.TimeClockEntry) error) error {
+	return keel.Each[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTimeClockEntry() unsafe.Pointer { return unsafe.Pointer(new(timesheet.TimeClockEntry)) }
@@ -570,7 +1289,7 @@ var timesheetsRef = keel.Ref{Table: &timesheetsTable}
 
 // TimesheetsTable is the table of timesheet.Timesheet.
 type TimesheetsTable struct {
-	keel.Handle[*timesheet.Timesheet]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -596,7 +1315,7 @@ type TimesheetsTable struct {
 
 // Timesheets references the timesheets table.
 var Timesheets = &TimesheetsTable{
-	Handle:                   keel.Handle[*timesheet.Timesheet]{Ref: &timesheetsRef},
+	TableBase:                keel.TableBase{Ref: &timesheetsRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 2}}},
@@ -620,10 +1339,10 @@ var Timesheets = &TimesheetsTable{
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 20}},
 }
 
-// BuildTimesheets builds the handle of timesheets for ref. Generated relation and alias methods call it.
+// BuildTimesheets builds the table of timesheets for ref. Generated relation and alias methods call it.
 func BuildTimesheets(r *keel.Ref) *TimesheetsTable {
 	return &TimesheetsTable{
-		Handle:                   keel.Handle[*timesheet.Timesheet]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -664,6 +1383,365 @@ func (t *TimesheetsTable) Worker() *workerdb.WorkersTable {
 // Get returns the timesheets row with the given key, or keel.ErrNotFound.
 func (t *TimesheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*timesheet.Timesheet, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TimesheetsQuery is a query over timesheet.Timesheet.
+type TimesheetsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*timesheet.Timesheet] = (*TimesheetsTable)(nil)
+
+var _ keel.Query[*timesheet.Timesheet] = (*TimesheetsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TimesheetsTable) Query() keel.Query[*timesheet.Timesheet] {
+	return &TimesheetsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TimesheetsQuery.Where.
+func (t *TimesheetsTable) Where(ps ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TimesheetsQuery.Pick.
+func (t *TimesheetsTable) Pick(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TimesheetsQuery.Load.
+func (t *TimesheetsTable) Load(ls ...keel.Loader) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TimesheetsQuery.Omit.
+func (t *TimesheetsTable) Omit(cols ...keel.Column) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TimesheetsQuery.Order.
+func (t *TimesheetsTable) Order(os ...keel.Order) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TimesheetsQuery.Limit.
+func (t *TimesheetsTable) Limit(n int) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TimesheetsQuery.Group.
+func (t *TimesheetsTable) Group(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TimesheetsQuery.GroupingSets.
+func (t *TimesheetsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TimesheetsQuery.Rollup.
+func (t *TimesheetsTable) Rollup(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TimesheetsQuery.Cube.
+func (t *TimesheetsTable) Cube(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TimesheetsQuery.AllTenants.
+func (t *TimesheetsTable) AllTenants() keel.Query[*timesheet.Timesheet] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TimesheetsQuery.Join.
+func (t *TimesheetsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TimesheetsQuery.LeftJoin.
+func (t *TimesheetsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TimesheetsQuery.LeftJoinLateral.
+func (t *TimesheetsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*timesheet.Timesheet] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TimesheetsQuery.JoinLateral.
+func (t *TimesheetsTable) JoinLateral(sub keel.LateralSource) keel.Query[*timesheet.Timesheet] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TimesheetsQuery.Lock.
+func (t *TimesheetsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TimesheetsQuery.DistinctOn.
+func (t *TimesheetsTable) DistinctOn(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TimesheetsQuery.Cache.
+func (t *TimesheetsTable) Cache(opts ...keel.CacheOption) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TimesheetsQuery.LoadStrategy.
+func (t *TimesheetsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*timesheet.Timesheet] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TimesheetsQuery.With.
+func (t *TimesheetsTable) With(ctes ...*keel.CTETable) keel.Query[*timesheet.Timesheet] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TimesheetsQuery.Compute.
+func (t *TimesheetsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*timesheet.Timesheet] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TimesheetsTable) Create(ctx context.Context, db *keel.DB, row *timesheet.Timesheet) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TimesheetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TimesheetsTable) Save(ctx context.Context, db *keel.DB, row *timesheet.Timesheet, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TimesheetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *timesheet.Timesheet, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TimesheetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *timesheet.Timesheet) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TimesheetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TimesheetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TimesheetsTable) Copy(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TimesheetsQuery) Where(ps ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TimesheetsQuery) Pick(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TimesheetsQuery) Omit(cols ...keel.Column) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TimesheetsQuery) Load(ls ...keel.Loader) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TimesheetsQuery) Order(os ...keel.Order) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TimesheetsQuery) Distinct() keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TimesheetsQuery) Group(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TimesheetsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TimesheetsQuery) Rollup(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TimesheetsQuery) Cube(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TimesheetsQuery) Window(name string, w keel.Window) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TimesheetsQuery) Having(ps ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TimesheetsQuery) Limit(n int) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TimesheetsQuery) Offset(n int) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TimesheetsQuery) DistinctOn(es ...keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TimesheetsQuery) AllTenants() keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TimesheetsQuery) CustomPlan() keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TimesheetsQuery) Timeout(d time.Duration) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TimesheetsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TimesheetsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TimesheetsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TimesheetsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TimesheetsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TimesheetsQuery) Cache(opts ...keel.CacheOption) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TimesheetsQuery) With(ctes ...*keel.CTETable) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TimesheetsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TimesheetsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*timesheet.Timesheet] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TimesheetsQuery) Clone() keel.Query[*timesheet.Timesheet] {
+	return &TimesheetsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TimesheetsQuery) One(ctx context.Context, db *keel.DB) (*timesheet.Timesheet, error) {
+	return keel.One[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TimesheetsQuery) First(ctx context.Context, db *keel.DB) (*timesheet.Timesheet, error) {
+	return keel.First[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TimesheetsQuery) List(ctx context.Context, db *keel.DB) ([]*timesheet.Timesheet, error) {
+	return keel.List[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TimesheetsQuery) All(ctx context.Context, db *keel.DB) ([]*timesheet.Timesheet, error) {
+	return keel.All[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TimesheetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*timesheet.Timesheet, error) {
+	return keel.UpdateReturning[*timesheet.Timesheet](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TimesheetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*timesheet.Timesheet], error) {
+	return keel.PageOf[*timesheet.Timesheet](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TimesheetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*timesheet.Timesheet) error) error {
+	return keel.Each[*timesheet.Timesheet](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTimesheet() unsafe.Pointer { return unsafe.Pointer(new(timesheet.Timesheet)) }

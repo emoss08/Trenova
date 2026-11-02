@@ -55,10 +55,11 @@ func selfTenant(c *gin.Context) pagination.TenantInfo {
 	}
 }
 
-func sessionScope(c *gin.Context) userservice.SessionScope {
-	return userservice.SessionScope{
-		TenantInfo:       selfTenant(c),
-		CurrentSessionID: authctx.GetAuthContext(c).SessionID,
+func sessionScope(c *gin.Context) *userservice.SessionScope {
+	return &userservice.SessionScope{
+		TenantInfo:        selfTenant(c),
+		CurrentSessionID:  authctx.GetAuthContext(c).SessionID,
+		CurrentSecretHash: authctx.GetSessionSecretHash(c),
 	}
 }
 
@@ -287,6 +288,7 @@ func (h *Handler) revokeMySession(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} userhandler.RevokeSessionsResponse
 // @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /users/me/sessions/revoke-others/ [post]
 func (h *Handler) revokeMyOtherSessions(c *gin.Context) {

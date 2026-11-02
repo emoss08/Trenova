@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/sessioncookie"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,6 +67,7 @@ func (h *Handler) confirmTOTPEnrollment(c *gin.Context) {
 	}
 	req.TenantInfo = tenantInfoOf(authCtx)
 	req.SessionID = authCtx.SessionID
+	req.SessionSecretHash = authctx.GetSessionSecretHash(c)
 
 	resp, err := h.mfa.ConfirmTOTPEnrollment(c.Request.Context(), &req)
 	if err != nil {
@@ -73,6 +75,9 @@ func (h *Handler) confirmTOTPEnrollment(c *gin.Context) {
 		return
 	}
 
+	if resp.SessionToken != "" {
+		sessioncookie.Set(c, &h.securityConfig.Session, resp.SessionToken, resp.ExpiresAt)
+	}
 	c.Header("Cache-Control", "no-store")
 	helpers.JSON(c, http.StatusOK, resp)
 }

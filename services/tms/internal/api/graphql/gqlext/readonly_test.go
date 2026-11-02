@@ -8,9 +8,9 @@ import (
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -97,4 +97,24 @@ func TestReadOnlyExtensionIsInertOutsideCloudMode(t *testing.T) {
 	))
 	assert.Equal(t, readOnlyExtensionName, ext.ExtensionName())
 	require.NoError(t, ext.Validate(nil))
+}
+
+func TestReadOnlyExtensionRefusesMutationsFromASupersededSecret(t *testing.T) {
+	t.Parallel()
+
+	tenant := plantest.Tenant()
+	ext := NewReadOnlyExtension(ReadOnlyParams{Logger: zap.NewNop()})
+	status := gqlctx.NewResponseStatus()
+	ctx := authctx.WithSupersededSessionSecret(readOnlyContext(tenant, status))
+
+	gqlErr := ext.MutateOperationContext(ctx, readOnlyOperation(ast.Mutation))
+
+	require.NotNil(t, gqlErr)
+	stale, ok := errors.AsType[*errortypes.SessionContextStaleError](gqlErr)
+	require.True(t, ok)
+	assert.Equal(t, tenant.OrgID, stale.OrganizationID)
+	code, overridden := status.Code()
+	assert.True(t, overridden)
+	assert.Equal(t, http.StatusConflict, code)
+	assert.Nil(t, ext.MutateOperationContext(ctx, readOnlyOperation(ast.Query)))
 }

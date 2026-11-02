@@ -4,6 +4,7 @@ package customerdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -105,7 +106,7 @@ var customersRef = keel.Ref{Table: &customersTable}
 
 // CustomersTable is the table of customer.Customer.
 type CustomersTable struct {
-	keel.Handle[*customer.Customer]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -142,7 +143,7 @@ type CustomersTable struct {
 
 // Customers references the customers table.
 var Customers = &CustomersTable{
-	Handle:                  keel.Handle[*customer.Customer]{Ref: &customersRef},
+	TableBase:               keel.TableBase{Ref: &customersRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customersRef, Index: 2}}},
@@ -177,10 +178,10 @@ var Customers = &CustomersTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &customersRef, Index: 31}},
 }
 
-// BuildCustomers builds the handle of customers for ref. Generated relation and alias methods call it.
+// BuildCustomers builds the table of customers for ref. Generated relation and alias methods call it.
 func BuildCustomers(r *keel.Ref) *CustomersTable {
 	return &CustomersTable{
-		Handle:                  keel.Handle[*customer.Customer]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -247,6 +248,365 @@ func (t *CustomersTable) State() *usstatedb.UsStatesTable {
 // Get returns the customers row with the given key, or keel.ErrNotFound.
 func (t *CustomersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customer.Customer, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CustomersQuery is a query over customer.Customer.
+type CustomersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customer.Customer] = (*CustomersTable)(nil)
+
+var _ keel.Query[*customer.Customer] = (*CustomersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CustomersTable) Query() keel.Query[*customer.Customer] {
+	return &CustomersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CustomersQuery.Where.
+func (t *CustomersTable) Where(ps ...keel.Pred) keel.Query[*customer.Customer] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CustomersQuery.Pick.
+func (t *CustomersTable) Pick(es ...keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CustomersQuery.Load.
+func (t *CustomersTable) Load(ls ...keel.Loader) keel.Query[*customer.Customer] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CustomersQuery.Omit.
+func (t *CustomersTable) Omit(cols ...keel.Column) keel.Query[*customer.Customer] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CustomersQuery.Order.
+func (t *CustomersTable) Order(os ...keel.Order) keel.Query[*customer.Customer] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CustomersQuery.Limit.
+func (t *CustomersTable) Limit(n int) keel.Query[*customer.Customer] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CustomersQuery.Group.
+func (t *CustomersTable) Group(es ...keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CustomersQuery.GroupingSets.
+func (t *CustomersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CustomersQuery.Rollup.
+func (t *CustomersTable) Rollup(es ...keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CustomersQuery.Cube.
+func (t *CustomersTable) Cube(es ...keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CustomersQuery.AllTenants.
+func (t *CustomersTable) AllTenants() keel.Query[*customer.Customer] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CustomersQuery.Join.
+func (t *CustomersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.Customer] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CustomersQuery.LeftJoin.
+func (t *CustomersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.Customer] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CustomersQuery.LeftJoinLateral.
+func (t *CustomersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.Customer] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CustomersQuery.JoinLateral.
+func (t *CustomersTable) JoinLateral(sub keel.LateralSource) keel.Query[*customer.Customer] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CustomersQuery.Lock.
+func (t *CustomersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.Customer] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CustomersQuery.DistinctOn.
+func (t *CustomersTable) DistinctOn(es ...keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CustomersQuery.Cache.
+func (t *CustomersTable) Cache(opts ...keel.CacheOption) keel.Query[*customer.Customer] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CustomersQuery.LoadStrategy.
+func (t *CustomersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.Customer] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CustomersQuery.With.
+func (t *CustomersTable) With(ctes ...*keel.CTETable) keel.Query[*customer.Customer] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CustomersQuery.Compute.
+func (t *CustomersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.Customer] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CustomersTable) Create(ctx context.Context, db *keel.DB, row *customer.Customer) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CustomersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.Customer) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CustomersTable) Save(ctx context.Context, db *keel.DB, row *customer.Customer, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CustomersTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.Customer, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CustomersTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.Customer) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CustomersTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.Customer, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CustomersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.Customer, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CustomersTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.Customer) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CustomersQuery) Where(ps ...keel.Pred) keel.Query[*customer.Customer] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CustomersQuery) Pick(es ...keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CustomersQuery) Omit(cols ...keel.Column) keel.Query[*customer.Customer] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CustomersQuery) Load(ls ...keel.Loader) keel.Query[*customer.Customer] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CustomersQuery) Order(os ...keel.Order) keel.Query[*customer.Customer] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CustomersQuery) Distinct() keel.Query[*customer.Customer] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CustomersQuery) Group(es ...keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CustomersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CustomersQuery) Rollup(es ...keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CustomersQuery) Cube(es ...keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CustomersQuery) Window(name string, w keel.Window) keel.Query[*customer.Customer] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CustomersQuery) Having(ps ...keel.Pred) keel.Query[*customer.Customer] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CustomersQuery) Limit(n int) keel.Query[*customer.Customer] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CustomersQuery) Offset(n int) keel.Query[*customer.Customer] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CustomersQuery) DistinctOn(es ...keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CustomersQuery) AllTenants() keel.Query[*customer.Customer] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CustomersQuery) CustomPlan() keel.Query[*customer.Customer] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CustomersQuery) Timeout(d time.Duration) keel.Query[*customer.Customer] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CustomersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.Customer] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CustomersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.Customer] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CustomersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.Customer] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CustomersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.Customer] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CustomersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customer.Customer] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CustomersQuery) Cache(opts ...keel.CacheOption) keel.Query[*customer.Customer] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CustomersQuery) With(ctes ...*keel.CTETable) keel.Query[*customer.Customer] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CustomersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.Customer] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CustomersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.Customer] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CustomersQuery) Clone() keel.Query[*customer.Customer] {
+	return &CustomersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CustomersQuery) One(ctx context.Context, db *keel.DB) (*customer.Customer, error) {
+	return keel.One[*customer.Customer](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CustomersQuery) First(ctx context.Context, db *keel.DB) (*customer.Customer, error) {
+	return keel.First[*customer.Customer](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CustomersQuery) List(ctx context.Context, db *keel.DB) ([]*customer.Customer, error) {
+	return keel.List[*customer.Customer](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CustomersQuery) All(ctx context.Context, db *keel.DB) ([]*customer.Customer, error) {
+	return keel.All[*customer.Customer](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CustomersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.Customer, error) {
+	return keel.UpdateReturning[*customer.Customer](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CustomersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.Customer], error) {
+	return keel.PageOf[*customer.Customer](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CustomersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.Customer) error) error {
+	return keel.Each[*customer.Customer](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCustomer() unsafe.Pointer { return unsafe.Pointer(new(customer.Customer)) }
@@ -569,7 +929,7 @@ var customerBillingProfilesRef = keel.Ref{Table: &customerBillingProfilesTable}
 
 // CustomerBillingProfilesTable is the table of customer.CustomerBillingProfile.
 type CustomerBillingProfilesTable struct {
-	keel.Handle[*customer.CustomerBillingProfile]
+	keel.TableBase
 	ID                              keelkinds.PulidIDCol
 	BusinessUnitID                  keelkinds.PulidIDCol
 	OrganizationID                  keelkinds.PulidIDCol
@@ -634,7 +994,7 @@ type CustomerBillingProfilesTable struct {
 
 // CustomerBillingProfiles references the customer_billing_profiles table.
 var CustomerBillingProfiles = &CustomerBillingProfilesTable{
-	Handle:                          keel.Handle[*customer.CustomerBillingProfile]{Ref: &customerBillingProfilesRef},
+	TableBase:                       keel.TableBase{Ref: &customerBillingProfilesRef},
 	ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 0}}},
 	BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 1}}},
 	OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 2}}},
@@ -697,10 +1057,10 @@ var CustomerBillingProfiles = &CustomerBillingProfilesTable{
 	UpdatedAt:                       keel.Int64Col{Col: keel.Col{Ref: &customerBillingProfilesRef, Index: 59}},
 }
 
-// BuildCustomerBillingProfiles builds the handle of customer_billing_profiles for ref. Generated relation and alias methods call it.
+// BuildCustomerBillingProfiles builds the table of customer_billing_profiles for ref. Generated relation and alias methods call it.
 func BuildCustomerBillingProfiles(r *keel.Ref) *CustomerBillingProfilesTable {
 	return &CustomerBillingProfilesTable{
-		Handle:                          keel.Handle[*customer.CustomerBillingProfile]{Ref: r},
+		TableBase:                       keel.TableBase{Ref: r},
 		ID:                              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -805,6 +1165,365 @@ func (t *CustomerBillingProfilesTable) FactoringCompany() *factoringcompanydb.Fa
 // Get returns the customer_billing_profiles row with the given key, or keel.ErrNotFound.
 func (t *CustomerBillingProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customer.CustomerBillingProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CustomerBillingProfilesQuery is a query over customer.CustomerBillingProfile.
+type CustomerBillingProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customer.CustomerBillingProfile] = (*CustomerBillingProfilesTable)(nil)
+
+var _ keel.Query[*customer.CustomerBillingProfile] = (*CustomerBillingProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CustomerBillingProfilesTable) Query() keel.Query[*customer.CustomerBillingProfile] {
+	return &CustomerBillingProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CustomerBillingProfilesQuery.Where.
+func (t *CustomerBillingProfilesTable) Where(ps ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CustomerBillingProfilesQuery.Pick.
+func (t *CustomerBillingProfilesTable) Pick(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CustomerBillingProfilesQuery.Load.
+func (t *CustomerBillingProfilesTable) Load(ls ...keel.Loader) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CustomerBillingProfilesQuery.Omit.
+func (t *CustomerBillingProfilesTable) Omit(cols ...keel.Column) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CustomerBillingProfilesQuery.Order.
+func (t *CustomerBillingProfilesTable) Order(os ...keel.Order) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CustomerBillingProfilesQuery.Limit.
+func (t *CustomerBillingProfilesTable) Limit(n int) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CustomerBillingProfilesQuery.Group.
+func (t *CustomerBillingProfilesTable) Group(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CustomerBillingProfilesQuery.GroupingSets.
+func (t *CustomerBillingProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CustomerBillingProfilesQuery.Rollup.
+func (t *CustomerBillingProfilesTable) Rollup(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CustomerBillingProfilesQuery.Cube.
+func (t *CustomerBillingProfilesTable) Cube(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CustomerBillingProfilesQuery.AllTenants.
+func (t *CustomerBillingProfilesTable) AllTenants() keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CustomerBillingProfilesQuery.Join.
+func (t *CustomerBillingProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CustomerBillingProfilesQuery.LeftJoin.
+func (t *CustomerBillingProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CustomerBillingProfilesQuery.LeftJoinLateral.
+func (t *CustomerBillingProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CustomerBillingProfilesQuery.JoinLateral.
+func (t *CustomerBillingProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CustomerBillingProfilesQuery.Lock.
+func (t *CustomerBillingProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CustomerBillingProfilesQuery.DistinctOn.
+func (t *CustomerBillingProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CustomerBillingProfilesQuery.Cache.
+func (t *CustomerBillingProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CustomerBillingProfilesQuery.LoadStrategy.
+func (t *CustomerBillingProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CustomerBillingProfilesQuery.With.
+func (t *CustomerBillingProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CustomerBillingProfilesQuery.Compute.
+func (t *CustomerBillingProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CustomerBillingProfilesTable) Create(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CustomerBillingProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CustomerBillingProfilesTable) Save(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CustomerBillingProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CustomerBillingProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CustomerBillingProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CustomerBillingProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CustomerBillingProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CustomerBillingProfilesQuery) Where(ps ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CustomerBillingProfilesQuery) Pick(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CustomerBillingProfilesQuery) Omit(cols ...keel.Column) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CustomerBillingProfilesQuery) Load(ls ...keel.Loader) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CustomerBillingProfilesQuery) Order(os ...keel.Order) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CustomerBillingProfilesQuery) Distinct() keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CustomerBillingProfilesQuery) Group(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CustomerBillingProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CustomerBillingProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CustomerBillingProfilesQuery) Cube(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CustomerBillingProfilesQuery) Window(name string, w keel.Window) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CustomerBillingProfilesQuery) Having(ps ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CustomerBillingProfilesQuery) Limit(n int) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CustomerBillingProfilesQuery) Offset(n int) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CustomerBillingProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CustomerBillingProfilesQuery) AllTenants() keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CustomerBillingProfilesQuery) CustomPlan() keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CustomerBillingProfilesQuery) Timeout(d time.Duration) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CustomerBillingProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CustomerBillingProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CustomerBillingProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CustomerBillingProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CustomerBillingProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CustomerBillingProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CustomerBillingProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CustomerBillingProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CustomerBillingProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.CustomerBillingProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CustomerBillingProfilesQuery) Clone() keel.Query[*customer.CustomerBillingProfile] {
+	return &CustomerBillingProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CustomerBillingProfilesQuery) One(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfile, error) {
+	return keel.One[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CustomerBillingProfilesQuery) First(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfile, error) {
+	return keel.First[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CustomerBillingProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfile, error) {
+	return keel.List[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CustomerBillingProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfile, error) {
+	return keel.All[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CustomerBillingProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.CustomerBillingProfile, error) {
+	return keel.UpdateReturning[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CustomerBillingProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.CustomerBillingProfile], error) {
+	return keel.PageOf[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CustomerBillingProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.CustomerBillingProfile) error) error {
+	return keel.Each[*customer.CustomerBillingProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCustomerBillingProfile() unsafe.Pointer {
@@ -1179,7 +1898,7 @@ var customerBillingProfileDocumentTypesRef = keel.Ref{Table: &customerBillingPro
 
 // CustomerBillingProfileDocumentTypesTable is the table of customer.CustomerBillingProfileDocumentType.
 type CustomerBillingProfileDocumentTypesTable struct {
-	keel.Handle[*customer.CustomerBillingProfileDocumentType]
+	keel.TableBase
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	BillingProfileID keelkinds.PulidIDCol
@@ -1188,17 +1907,17 @@ type CustomerBillingProfileDocumentTypesTable struct {
 
 // CustomerBillingProfileDocumentTypes references the customer_billing_profile_document_types table.
 var CustomerBillingProfileDocumentTypes = &CustomerBillingProfileDocumentTypesTable{
-	Handle:           keel.Handle[*customer.CustomerBillingProfileDocumentType]{Ref: &customerBillingProfileDocumentTypesRef},
+	TableBase:        keel.TableBase{Ref: &customerBillingProfileDocumentTypesRef},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 1}}},
 	BillingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 2}}},
 	DocumentTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerBillingProfileDocumentTypesRef, Index: 3}}},
 }
 
-// BuildCustomerBillingProfileDocumentTypes builds the handle of customer_billing_profile_document_types for ref. Generated relation and alias methods call it.
+// BuildCustomerBillingProfileDocumentTypes builds the table of customer_billing_profile_document_types for ref. Generated relation and alias methods call it.
 func BuildCustomerBillingProfileDocumentTypes(r *keel.Ref) *CustomerBillingProfileDocumentTypesTable {
 	return &CustomerBillingProfileDocumentTypesTable{
-		Handle:           keel.Handle[*customer.CustomerBillingProfileDocumentType]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BillingProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1224,6 +1943,365 @@ func (t *CustomerBillingProfileDocumentTypesTable) BillingProfile() *CustomerBil
 // DocumentType is the belongs relation.
 func (t *CustomerBillingProfileDocumentTypesTable) DocumentType() *documenttypedb.DocumentTypesTable {
 	return keel.Path(t.Ref, 1, documenttypedb.BuildDocumentTypes)
+}
+
+// CustomerBillingProfileDocumentTypesQuery is a query over customer.CustomerBillingProfileDocumentType.
+type CustomerBillingProfileDocumentTypesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customer.CustomerBillingProfileDocumentType] = (*CustomerBillingProfileDocumentTypesTable)(nil)
+
+var _ keel.Query[*customer.CustomerBillingProfileDocumentType] = (*CustomerBillingProfileDocumentTypesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CustomerBillingProfileDocumentTypesTable) Query() keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return &CustomerBillingProfileDocumentTypesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CustomerBillingProfileDocumentTypesQuery.Where.
+func (t *CustomerBillingProfileDocumentTypesTable) Where(ps ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CustomerBillingProfileDocumentTypesQuery.Pick.
+func (t *CustomerBillingProfileDocumentTypesTable) Pick(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CustomerBillingProfileDocumentTypesQuery.Load.
+func (t *CustomerBillingProfileDocumentTypesTable) Load(ls ...keel.Loader) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CustomerBillingProfileDocumentTypesQuery.Omit.
+func (t *CustomerBillingProfileDocumentTypesTable) Omit(cols ...keel.Column) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CustomerBillingProfileDocumentTypesQuery.Order.
+func (t *CustomerBillingProfileDocumentTypesTable) Order(os ...keel.Order) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CustomerBillingProfileDocumentTypesQuery.Limit.
+func (t *CustomerBillingProfileDocumentTypesTable) Limit(n int) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CustomerBillingProfileDocumentTypesQuery.Group.
+func (t *CustomerBillingProfileDocumentTypesTable) Group(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CustomerBillingProfileDocumentTypesQuery.GroupingSets.
+func (t *CustomerBillingProfileDocumentTypesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CustomerBillingProfileDocumentTypesQuery.Rollup.
+func (t *CustomerBillingProfileDocumentTypesTable) Rollup(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CustomerBillingProfileDocumentTypesQuery.Cube.
+func (t *CustomerBillingProfileDocumentTypesTable) Cube(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CustomerBillingProfileDocumentTypesQuery.AllTenants.
+func (t *CustomerBillingProfileDocumentTypesTable) AllTenants() keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CustomerBillingProfileDocumentTypesQuery.Join.
+func (t *CustomerBillingProfileDocumentTypesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CustomerBillingProfileDocumentTypesQuery.LeftJoin.
+func (t *CustomerBillingProfileDocumentTypesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CustomerBillingProfileDocumentTypesQuery.LeftJoinLateral.
+func (t *CustomerBillingProfileDocumentTypesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CustomerBillingProfileDocumentTypesQuery.JoinLateral.
+func (t *CustomerBillingProfileDocumentTypesTable) JoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CustomerBillingProfileDocumentTypesQuery.Lock.
+func (t *CustomerBillingProfileDocumentTypesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CustomerBillingProfileDocumentTypesQuery.DistinctOn.
+func (t *CustomerBillingProfileDocumentTypesTable) DistinctOn(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CustomerBillingProfileDocumentTypesQuery.Cache.
+func (t *CustomerBillingProfileDocumentTypesTable) Cache(opts ...keel.CacheOption) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CustomerBillingProfileDocumentTypesQuery.LoadStrategy.
+func (t *CustomerBillingProfileDocumentTypesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CustomerBillingProfileDocumentTypesQuery.With.
+func (t *CustomerBillingProfileDocumentTypesTable) With(ctes ...*keel.CTETable) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CustomerBillingProfileDocumentTypesQuery.Compute.
+func (t *CustomerBillingProfileDocumentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CustomerBillingProfileDocumentTypesTable) Create(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CustomerBillingProfileDocumentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CustomerBillingProfileDocumentTypesTable) Save(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CustomerBillingProfileDocumentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CustomerBillingProfileDocumentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.CustomerBillingProfileDocumentType) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CustomerBillingProfileDocumentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CustomerBillingProfileDocumentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CustomerBillingProfileDocumentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.CustomerBillingProfileDocumentType) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CustomerBillingProfileDocumentTypesQuery) Where(ps ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CustomerBillingProfileDocumentTypesQuery) Pick(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CustomerBillingProfileDocumentTypesQuery) Omit(cols ...keel.Column) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) Load(ls ...keel.Loader) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CustomerBillingProfileDocumentTypesQuery) Order(os ...keel.Order) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CustomerBillingProfileDocumentTypesQuery) Distinct() keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CustomerBillingProfileDocumentTypesQuery) Group(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CustomerBillingProfileDocumentTypesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CustomerBillingProfileDocumentTypesQuery) Rollup(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CustomerBillingProfileDocumentTypesQuery) Cube(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CustomerBillingProfileDocumentTypesQuery) Window(name string, w keel.Window) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CustomerBillingProfileDocumentTypesQuery) Having(ps ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) Limit(n int) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) Offset(n int) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CustomerBillingProfileDocumentTypesQuery) DistinctOn(es ...keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CustomerBillingProfileDocumentTypesQuery) AllTenants() keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CustomerBillingProfileDocumentTypesQuery) CustomPlan() keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CustomerBillingProfileDocumentTypesQuery) Timeout(d time.Duration) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CustomerBillingProfileDocumentTypesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CustomerBillingProfileDocumentTypesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CustomerBillingProfileDocumentTypesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CustomerBillingProfileDocumentTypesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CustomerBillingProfileDocumentTypesQuery) Cache(opts ...keel.CacheOption) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CustomerBillingProfileDocumentTypesQuery) With(ctes ...*keel.CTETable) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CustomerBillingProfileDocumentTypesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CustomerBillingProfileDocumentTypesQuery) Clone() keel.Query[*customer.CustomerBillingProfileDocumentType] {
+	return &CustomerBillingProfileDocumentTypesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CustomerBillingProfileDocumentTypesQuery) One(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfileDocumentType, error) {
+	return keel.One[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CustomerBillingProfileDocumentTypesQuery) First(ctx context.Context, db *keel.DB) (*customer.CustomerBillingProfileDocumentType, error) {
+	return keel.First[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CustomerBillingProfileDocumentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfileDocumentType, error) {
+	return keel.List[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CustomerBillingProfileDocumentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*customer.CustomerBillingProfileDocumentType, error) {
+	return keel.All[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.CustomerBillingProfileDocumentType, error) {
+	return keel.UpdateReturning[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CustomerBillingProfileDocumentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.CustomerBillingProfileDocumentType], error) {
+	return keel.PageOf[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CustomerBillingProfileDocumentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.CustomerBillingProfileDocumentType) error) error {
+	return keel.Each[*customer.CustomerBillingProfileDocumentType](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCustomerBillingProfileDocumentType() unsafe.Pointer {
@@ -1321,7 +2399,7 @@ var customerEmailProfilesRef = keel.Ref{Table: &customerEmailProfilesTable}
 
 // CustomerEmailProfilesTable is the table of customer.CustomerEmailProfile.
 type CustomerEmailProfilesTable struct {
-	keel.Handle[*customer.CustomerEmailProfile]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -1341,7 +2419,7 @@ type CustomerEmailProfilesTable struct {
 
 // CustomerEmailProfiles references the customer_email_profiles table.
 var CustomerEmailProfiles = &CustomerEmailProfilesTable{
-	Handle:                keel.Handle[*customer.CustomerEmailProfile]{Ref: &customerEmailProfilesRef},
+	TableBase:             keel.TableBase{Ref: &customerEmailProfilesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 2}}},
@@ -1359,10 +2437,10 @@ var CustomerEmailProfiles = &CustomerEmailProfilesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &customerEmailProfilesRef, Index: 14}},
 }
 
-// BuildCustomerEmailProfiles builds the handle of customer_email_profiles for ref. Generated relation and alias methods call it.
+// BuildCustomerEmailProfiles builds the table of customer_email_profiles for ref. Generated relation and alias methods call it.
 func BuildCustomerEmailProfiles(r *keel.Ref) *CustomerEmailProfilesTable {
 	return &CustomerEmailProfilesTable{
-		Handle:                keel.Handle[*customer.CustomerEmailProfile]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1392,6 +2470,365 @@ func (t *CustomerEmailProfilesTable) As(alias string) *CustomerEmailProfilesTabl
 // Get returns the customer_email_profiles row with the given key, or keel.ErrNotFound.
 func (t *CustomerEmailProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customer.CustomerEmailProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CustomerEmailProfilesQuery is a query over customer.CustomerEmailProfile.
+type CustomerEmailProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customer.CustomerEmailProfile] = (*CustomerEmailProfilesTable)(nil)
+
+var _ keel.Query[*customer.CustomerEmailProfile] = (*CustomerEmailProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CustomerEmailProfilesTable) Query() keel.Query[*customer.CustomerEmailProfile] {
+	return &CustomerEmailProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CustomerEmailProfilesQuery.Where.
+func (t *CustomerEmailProfilesTable) Where(ps ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CustomerEmailProfilesQuery.Pick.
+func (t *CustomerEmailProfilesTable) Pick(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CustomerEmailProfilesQuery.Load.
+func (t *CustomerEmailProfilesTable) Load(ls ...keel.Loader) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CustomerEmailProfilesQuery.Omit.
+func (t *CustomerEmailProfilesTable) Omit(cols ...keel.Column) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CustomerEmailProfilesQuery.Order.
+func (t *CustomerEmailProfilesTable) Order(os ...keel.Order) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CustomerEmailProfilesQuery.Limit.
+func (t *CustomerEmailProfilesTable) Limit(n int) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CustomerEmailProfilesQuery.Group.
+func (t *CustomerEmailProfilesTable) Group(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CustomerEmailProfilesQuery.GroupingSets.
+func (t *CustomerEmailProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CustomerEmailProfilesQuery.Rollup.
+func (t *CustomerEmailProfilesTable) Rollup(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CustomerEmailProfilesQuery.Cube.
+func (t *CustomerEmailProfilesTable) Cube(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CustomerEmailProfilesQuery.AllTenants.
+func (t *CustomerEmailProfilesTable) AllTenants() keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CustomerEmailProfilesQuery.Join.
+func (t *CustomerEmailProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CustomerEmailProfilesQuery.LeftJoin.
+func (t *CustomerEmailProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CustomerEmailProfilesQuery.LeftJoinLateral.
+func (t *CustomerEmailProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CustomerEmailProfilesQuery.JoinLateral.
+func (t *CustomerEmailProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CustomerEmailProfilesQuery.Lock.
+func (t *CustomerEmailProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CustomerEmailProfilesQuery.DistinctOn.
+func (t *CustomerEmailProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CustomerEmailProfilesQuery.Cache.
+func (t *CustomerEmailProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CustomerEmailProfilesQuery.LoadStrategy.
+func (t *CustomerEmailProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CustomerEmailProfilesQuery.With.
+func (t *CustomerEmailProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CustomerEmailProfilesQuery.Compute.
+func (t *CustomerEmailProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CustomerEmailProfilesTable) Create(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CustomerEmailProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CustomerEmailProfilesTable) Save(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CustomerEmailProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CustomerEmailProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *customer.CustomerEmailProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CustomerEmailProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CustomerEmailProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CustomerEmailProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*customer.CustomerEmailProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CustomerEmailProfilesQuery) Where(ps ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CustomerEmailProfilesQuery) Pick(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CustomerEmailProfilesQuery) Omit(cols ...keel.Column) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CustomerEmailProfilesQuery) Load(ls ...keel.Loader) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CustomerEmailProfilesQuery) Order(os ...keel.Order) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CustomerEmailProfilesQuery) Distinct() keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CustomerEmailProfilesQuery) Group(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CustomerEmailProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CustomerEmailProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CustomerEmailProfilesQuery) Cube(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CustomerEmailProfilesQuery) Window(name string, w keel.Window) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CustomerEmailProfilesQuery) Having(ps ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CustomerEmailProfilesQuery) Limit(n int) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CustomerEmailProfilesQuery) Offset(n int) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CustomerEmailProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CustomerEmailProfilesQuery) AllTenants() keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CustomerEmailProfilesQuery) CustomPlan() keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CustomerEmailProfilesQuery) Timeout(d time.Duration) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CustomerEmailProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CustomerEmailProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CustomerEmailProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CustomerEmailProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CustomerEmailProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CustomerEmailProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CustomerEmailProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CustomerEmailProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CustomerEmailProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customer.CustomerEmailProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CustomerEmailProfilesQuery) Clone() keel.Query[*customer.CustomerEmailProfile] {
+	return &CustomerEmailProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CustomerEmailProfilesQuery) One(ctx context.Context, db *keel.DB) (*customer.CustomerEmailProfile, error) {
+	return keel.One[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CustomerEmailProfilesQuery) First(ctx context.Context, db *keel.DB) (*customer.CustomerEmailProfile, error) {
+	return keel.First[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CustomerEmailProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*customer.CustomerEmailProfile, error) {
+	return keel.List[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CustomerEmailProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*customer.CustomerEmailProfile, error) {
+	return keel.All[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CustomerEmailProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customer.CustomerEmailProfile, error) {
+	return keel.UpdateReturning[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CustomerEmailProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customer.CustomerEmailProfile], error) {
+	return keel.PageOf[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CustomerEmailProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customer.CustomerEmailProfile) error) error {
+	return keel.Each[*customer.CustomerEmailProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCustomerEmailProfile() unsafe.Pointer {

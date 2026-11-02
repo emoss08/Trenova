@@ -4,6 +4,7 @@ package documentuploaddb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -81,7 +82,7 @@ var documentUploadSessionsRef = keel.Ref{Table: &documentUploadSessionsTable}
 
 // DocumentUploadSessionsTable is the table of documentupload.DocumentUploadSession.
 type DocumentUploadSessionsTable struct {
-	keel.Handle[*documentupload.DocumentUploadSession]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
@@ -118,7 +119,7 @@ type DocumentUploadSessionsTable struct {
 
 // DocumentUploadSessions references the document_upload_sessions table.
 var DocumentUploadSessions = &DocumentUploadSessionsTable{
-	Handle:                  keel.Handle[*documentupload.DocumentUploadSession]{Ref: &documentUploadSessionsRef},
+	TableBase:               keel.TableBase{Ref: &documentUploadSessionsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 0}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 1}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 2}}},
@@ -153,10 +154,10 @@ var DocumentUploadSessions = &DocumentUploadSessionsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 31}},
 }
 
-// BuildDocumentUploadSessions builds the handle of document_upload_sessions for ref. Generated relation and alias methods call it.
+// BuildDocumentUploadSessions builds the table of document_upload_sessions for ref. Generated relation and alias methods call it.
 func BuildDocumentUploadSessions(r *keel.Ref) *DocumentUploadSessionsTable {
 	return &DocumentUploadSessionsTable{
-		Handle:                  keel.Handle[*documentupload.DocumentUploadSession]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -203,6 +204,365 @@ func (t *DocumentUploadSessionsTable) As(alias string) *DocumentUploadSessionsTa
 // Get returns the document_upload_sessions row with the given key, or keel.ErrNotFound.
 func (t *DocumentUploadSessionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documentupload.DocumentUploadSession, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DocumentUploadSessionsQuery is a query over documentupload.DocumentUploadSession.
+type DocumentUploadSessionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*documentupload.DocumentUploadSession] = (*DocumentUploadSessionsTable)(nil)
+
+var _ keel.Query[*documentupload.DocumentUploadSession] = (*DocumentUploadSessionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DocumentUploadSessionsTable) Query() keel.Query[*documentupload.DocumentUploadSession] {
+	return &DocumentUploadSessionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DocumentUploadSessionsQuery.Where.
+func (t *DocumentUploadSessionsTable) Where(ps ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DocumentUploadSessionsQuery.Pick.
+func (t *DocumentUploadSessionsTable) Pick(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DocumentUploadSessionsQuery.Load.
+func (t *DocumentUploadSessionsTable) Load(ls ...keel.Loader) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DocumentUploadSessionsQuery.Omit.
+func (t *DocumentUploadSessionsTable) Omit(cols ...keel.Column) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DocumentUploadSessionsQuery.Order.
+func (t *DocumentUploadSessionsTable) Order(os ...keel.Order) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DocumentUploadSessionsQuery.Limit.
+func (t *DocumentUploadSessionsTable) Limit(n int) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DocumentUploadSessionsQuery.Group.
+func (t *DocumentUploadSessionsTable) Group(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DocumentUploadSessionsQuery.GroupingSets.
+func (t *DocumentUploadSessionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DocumentUploadSessionsQuery.Rollup.
+func (t *DocumentUploadSessionsTable) Rollup(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DocumentUploadSessionsQuery.Cube.
+func (t *DocumentUploadSessionsTable) Cube(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DocumentUploadSessionsQuery.AllTenants.
+func (t *DocumentUploadSessionsTable) AllTenants() keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DocumentUploadSessionsQuery.Join.
+func (t *DocumentUploadSessionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DocumentUploadSessionsQuery.LeftJoin.
+func (t *DocumentUploadSessionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DocumentUploadSessionsQuery.LeftJoinLateral.
+func (t *DocumentUploadSessionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DocumentUploadSessionsQuery.JoinLateral.
+func (t *DocumentUploadSessionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DocumentUploadSessionsQuery.Lock.
+func (t *DocumentUploadSessionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DocumentUploadSessionsQuery.DistinctOn.
+func (t *DocumentUploadSessionsTable) DistinctOn(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DocumentUploadSessionsQuery.Cache.
+func (t *DocumentUploadSessionsTable) Cache(opts ...keel.CacheOption) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DocumentUploadSessionsQuery.LoadStrategy.
+func (t *DocumentUploadSessionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DocumentUploadSessionsQuery.With.
+func (t *DocumentUploadSessionsTable) With(ctes ...*keel.CTETable) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DocumentUploadSessionsQuery.Compute.
+func (t *DocumentUploadSessionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DocumentUploadSessionsTable) Create(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DocumentUploadSessionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DocumentUploadSessionsTable) Save(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DocumentUploadSessionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DocumentUploadSessionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentupload.DocumentUploadSession) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DocumentUploadSessionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DocumentUploadSessionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DocumentUploadSessionsTable) Copy(ctx context.Context, db *keel.DB, rows []*documentupload.DocumentUploadSession) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DocumentUploadSessionsQuery) Where(ps ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DocumentUploadSessionsQuery) Pick(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DocumentUploadSessionsQuery) Omit(cols ...keel.Column) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DocumentUploadSessionsQuery) Load(ls ...keel.Loader) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DocumentUploadSessionsQuery) Order(os ...keel.Order) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DocumentUploadSessionsQuery) Distinct() keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DocumentUploadSessionsQuery) Group(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DocumentUploadSessionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DocumentUploadSessionsQuery) Rollup(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DocumentUploadSessionsQuery) Cube(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DocumentUploadSessionsQuery) Window(name string, w keel.Window) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DocumentUploadSessionsQuery) Having(ps ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DocumentUploadSessionsQuery) Limit(n int) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DocumentUploadSessionsQuery) Offset(n int) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DocumentUploadSessionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DocumentUploadSessionsQuery) AllTenants() keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DocumentUploadSessionsQuery) CustomPlan() keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DocumentUploadSessionsQuery) Timeout(d time.Duration) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DocumentUploadSessionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DocumentUploadSessionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DocumentUploadSessionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DocumentUploadSessionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DocumentUploadSessionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DocumentUploadSessionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DocumentUploadSessionsQuery) With(ctes ...*keel.CTETable) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DocumentUploadSessionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DocumentUploadSessionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentupload.DocumentUploadSession] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DocumentUploadSessionsQuery) Clone() keel.Query[*documentupload.DocumentUploadSession] {
+	return &DocumentUploadSessionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DocumentUploadSessionsQuery) One(ctx context.Context, db *keel.DB) (*documentupload.DocumentUploadSession, error) {
+	return keel.One[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DocumentUploadSessionsQuery) First(ctx context.Context, db *keel.DB) (*documentupload.DocumentUploadSession, error) {
+	return keel.First[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DocumentUploadSessionsQuery) List(ctx context.Context, db *keel.DB) ([]*documentupload.DocumentUploadSession, error) {
+	return keel.List[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DocumentUploadSessionsQuery) All(ctx context.Context, db *keel.DB) ([]*documentupload.DocumentUploadSession, error) {
+	return keel.All[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DocumentUploadSessionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentupload.DocumentUploadSession, error) {
+	return keel.UpdateReturning[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DocumentUploadSessionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentupload.DocumentUploadSession], error) {
+	return keel.PageOf[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DocumentUploadSessionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentupload.DocumentUploadSession) error) error {
+	return keel.Each[*documentupload.DocumentUploadSession](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDocumentUploadSession() unsafe.Pointer {

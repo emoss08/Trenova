@@ -349,7 +349,7 @@ type postedLinesFilter struct {
 	includeClosing bool
 }
 
-func postedLines(filter *postedLinesFilter) *keel.Query[*journalentry.JournalEntryLine] {
+func postedLines(filter *postedLinesFilter) keel.Query[*journalentry.JournalEntryLine] {
 	jel := journalentrydb.JournalEntryLines
 	je := jel.JournalEntry()
 	excluded := unsentEntryTypes()

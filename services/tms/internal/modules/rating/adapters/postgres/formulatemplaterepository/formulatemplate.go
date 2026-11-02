@@ -360,7 +360,7 @@ type usageRow struct {
 
 func (r *repository) usageQuery(
 	templateID pulid.ID,
-) *keel.Query[*formulatemplate.FormulaTemplate] {
+) keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
 	bc := billingcontroldb.BillingControls
@@ -375,7 +375,7 @@ func (r *repository) usageQuery(
 func (r *repository) shipmentUsage(ft *formulatemplatedb.FormulaTemplatesTable) keel.Expr {
 	sp := r.consumers.Shipments
 	return keel.Scalar(
-		keel.Handle[*keel.Row]{Ref: sp.Ref}.Pick(keel.Count()).Where(sp.EqCol(ft.ID)),
+		keel.RowsOf(sp.Ref).Pick(keel.Count()).Where(sp.EqCol(ft.ID)),
 	)
 }
 

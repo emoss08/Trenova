@@ -4,6 +4,7 @@ package trailerdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -107,7 +108,7 @@ var trailersRef = keel.Ref{Table: &trailersTable}
 
 // TrailersTable is the table of trailer.Trailer.
 type TrailersTable struct {
-	keel.Handle[*trailer.Trailer]
+	keel.TableBase
 	ID                         keelkinds.PulidIDCol
 	BusinessUnitID             keelkinds.PulidIDCol
 	OrganizationID             keelkinds.PulidIDCol
@@ -148,7 +149,7 @@ type TrailersTable struct {
 
 // Trailers references the trailers table.
 var Trailers = &TrailersTable{
-	Handle:                     keel.Handle[*trailer.Trailer]{Ref: &trailersRef},
+	TableBase:                  keel.TableBase{Ref: &trailersRef},
 	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 0}}},
 	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 1}}},
 	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 2}}},
@@ -187,10 +188,10 @@ var Trailers = &TrailersTable{
 	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 35}},
 }
 
-// BuildTrailers builds the handle of trailers for ref. Generated relation and alias methods call it.
+// BuildTrailers builds the table of trailers for ref. Generated relation and alias methods call it.
 func BuildTrailers(r *keel.Ref) *TrailersTable {
 	return &TrailersTable{
-		Handle:                     keel.Handle[*trailer.Trailer]{Ref: r},
+		TableBase:                  keel.TableBase{Ref: r},
 		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -276,6 +277,365 @@ func (t *TrailersTable) OwnerWorker() *workerdb.WorkersTable {
 // Get returns the trailers row with the given key, or keel.ErrNotFound.
 func (t *TrailersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*trailer.Trailer, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TrailersQuery is a query over trailer.Trailer.
+type TrailersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*trailer.Trailer] = (*TrailersTable)(nil)
+
+var _ keel.Query[*trailer.Trailer] = (*TrailersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TrailersTable) Query() keel.Query[*trailer.Trailer] {
+	return &TrailersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TrailersQuery.Where.
+func (t *TrailersTable) Where(ps ...keel.Pred) keel.Query[*trailer.Trailer] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TrailersQuery.Pick.
+func (t *TrailersTable) Pick(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TrailersQuery.Load.
+func (t *TrailersTable) Load(ls ...keel.Loader) keel.Query[*trailer.Trailer] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TrailersQuery.Omit.
+func (t *TrailersTable) Omit(cols ...keel.Column) keel.Query[*trailer.Trailer] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TrailersQuery.Order.
+func (t *TrailersTable) Order(os ...keel.Order) keel.Query[*trailer.Trailer] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TrailersQuery.Limit.
+func (t *TrailersTable) Limit(n int) keel.Query[*trailer.Trailer] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TrailersQuery.Group.
+func (t *TrailersTable) Group(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TrailersQuery.GroupingSets.
+func (t *TrailersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TrailersQuery.Rollup.
+func (t *TrailersTable) Rollup(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TrailersQuery.Cube.
+func (t *TrailersTable) Cube(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TrailersQuery.AllTenants.
+func (t *TrailersTable) AllTenants() keel.Query[*trailer.Trailer] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TrailersQuery.Join.
+func (t *TrailersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trailer.Trailer] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TrailersQuery.LeftJoin.
+func (t *TrailersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trailer.Trailer] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TrailersQuery.LeftJoinLateral.
+func (t *TrailersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*trailer.Trailer] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TrailersQuery.JoinLateral.
+func (t *TrailersTable) JoinLateral(sub keel.LateralSource) keel.Query[*trailer.Trailer] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TrailersQuery.Lock.
+func (t *TrailersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*trailer.Trailer] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TrailersQuery.DistinctOn.
+func (t *TrailersTable) DistinctOn(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TrailersQuery.Cache.
+func (t *TrailersTable) Cache(opts ...keel.CacheOption) keel.Query[*trailer.Trailer] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TrailersQuery.LoadStrategy.
+func (t *TrailersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*trailer.Trailer] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TrailersQuery.With.
+func (t *TrailersTable) With(ctes ...*keel.CTETable) keel.Query[*trailer.Trailer] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TrailersQuery.Compute.
+func (t *TrailersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*trailer.Trailer] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TrailersTable) Create(ctx context.Context, db *keel.DB, row *trailer.Trailer) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TrailersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*trailer.Trailer) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TrailersTable) Save(ctx context.Context, db *keel.DB, row *trailer.Trailer, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TrailersTable) SaveExcept(ctx context.Context, db *keel.DB, row *trailer.Trailer, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TrailersTable) DeleteRow(ctx context.Context, db *keel.DB, row *trailer.Trailer) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TrailersTable) Upsert(ctx context.Context, db *keel.DB, rows []*trailer.Trailer, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TrailersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*trailer.Trailer, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TrailersTable) Copy(ctx context.Context, db *keel.DB, rows []*trailer.Trailer) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TrailersQuery) Where(ps ...keel.Pred) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TrailersQuery) Pick(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TrailersQuery) Omit(cols ...keel.Column) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TrailersQuery) Load(ls ...keel.Loader) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TrailersQuery) Order(os ...keel.Order) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TrailersQuery) Distinct() keel.Query[*trailer.Trailer] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TrailersQuery) Group(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TrailersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TrailersQuery) Rollup(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TrailersQuery) Cube(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TrailersQuery) Window(name string, w keel.Window) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TrailersQuery) Having(ps ...keel.Pred) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TrailersQuery) Limit(n int) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TrailersQuery) Offset(n int) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TrailersQuery) DistinctOn(es ...keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TrailersQuery) AllTenants() keel.Query[*trailer.Trailer] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TrailersQuery) CustomPlan() keel.Query[*trailer.Trailer] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TrailersQuery) Timeout(d time.Duration) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TrailersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TrailersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TrailersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trailer.Trailer] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TrailersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*trailer.Trailer] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TrailersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*trailer.Trailer] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TrailersQuery) Cache(opts ...keel.CacheOption) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TrailersQuery) With(ctes ...*keel.CTETable) keel.Query[*trailer.Trailer] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TrailersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*trailer.Trailer] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TrailersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*trailer.Trailer] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TrailersQuery) Clone() keel.Query[*trailer.Trailer] {
+	return &TrailersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TrailersQuery) One(ctx context.Context, db *keel.DB) (*trailer.Trailer, error) {
+	return keel.One[*trailer.Trailer](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TrailersQuery) First(ctx context.Context, db *keel.DB) (*trailer.Trailer, error) {
+	return keel.First[*trailer.Trailer](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TrailersQuery) List(ctx context.Context, db *keel.DB) ([]*trailer.Trailer, error) {
+	return keel.List[*trailer.Trailer](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TrailersQuery) All(ctx context.Context, db *keel.DB) ([]*trailer.Trailer, error) {
+	return keel.All[*trailer.Trailer](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TrailersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*trailer.Trailer, error) {
+	return keel.UpdateReturning[*trailer.Trailer](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TrailersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*trailer.Trailer], error) {
+	return keel.PageOf[*trailer.Trailer](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TrailersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*trailer.Trailer) error) error {
+	return keel.Each[*trailer.Trailer](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTrailer() unsafe.Pointer { return unsafe.Pointer(new(trailer.Trailer)) }

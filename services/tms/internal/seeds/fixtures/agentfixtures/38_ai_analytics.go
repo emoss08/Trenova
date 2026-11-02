@@ -673,10 +673,10 @@ func (s *AIAnalyticsSeed) write(
 		addRun(rating.unitIndex)
 	}
 
-	if err := insertChunks(ctx, db, "analytics runs", agentdb.AgentRuns.Handle, runs); err != nil {
+	if err := insertChunks(ctx, db, "analytics runs", agentdb.AgentRuns, runs); err != nil {
 		return err
 	}
-	if err := tenantfixtures.Backdate(ctx, db, agentdb.AgentRuns.Handle, runIDs, runAts); err != nil {
+	if err := tenantfixtures.Backdate(ctx, db, agentdb.AgentRuns, runIDs, runAts); err != nil {
 		return err
 	}
 
@@ -722,16 +722,16 @@ func (s *AIAnalyticsSeed) write(
 		decisionIDs = append(decisionIDs, decision.ID.String())
 		decidedAts = append(decidedAts, item.at)
 	}
-	if err := insertChunks(ctx, db, "analytics proposals", agentdb.AgentProposals.Handle, proposals); err != nil {
+	if err := insertChunks(ctx, db, "analytics proposals", agentdb.AgentProposals, proposals); err != nil {
 		return err
 	}
-	if err := insertChunks(ctx, db, "analytics decisions", agentdecisiondb.AgentDecisions.Handle, decisions); err != nil {
+	if err := insertChunks(ctx, db, "analytics decisions", agentdecisiondb.AgentDecisions, decisions); err != nil {
 		return err
 	}
-	if err := tenantfixtures.Backdate(ctx, db, agentdb.AgentProposals.Handle, proposalIDs, decidedAts); err != nil {
+	if err := tenantfixtures.Backdate(ctx, db, agentdb.AgentProposals, proposalIDs, decidedAts); err != nil {
 		return err
 	}
-	if err := tenantfixtures.Backdate(ctx, db, agentdecisiondb.AgentDecisions.Handle, decisionIDs, decidedAts); err != nil {
+	if err := tenantfixtures.Backdate(ctx, db, agentdecisiondb.AgentDecisions, decisionIDs, decidedAts); err != nil {
 		return err
 	}
 
@@ -760,24 +760,24 @@ func (s *AIAnalyticsSeed) write(
 	for _, row := range feedback {
 		ratedAts = append(ratedAts, row.CreatedAt)
 	}
-	if err := insertChunks(ctx, db, "analytics ratings", aifeedbackdb.Feedbacks.Handle, feedback); err != nil {
+	if err := insertChunks(ctx, db, "analytics ratings", aifeedbackdb.Feedbacks, feedback); err != nil {
 		return err
 	}
 	feedbackIDs := make([]string, 0, len(feedback))
 	for _, row := range feedback {
 		feedbackIDs = append(feedbackIDs, row.ID.String())
 	}
-	if err := tenantfixtures.Backdate(ctx, db, aifeedbackdb.Feedbacks.Handle, feedbackIDs, ratedAts); err != nil {
+	if err := tenantfixtures.Backdate(ctx, db, aifeedbackdb.Feedbacks, feedbackIDs, ratedAts); err != nil {
 		return err
 	}
 
-	if err := insertChunks(ctx, db, "ai work units", aianalyticsdb.WorkUnits.Handle, data.units); err != nil {
+	if err := insertChunks(ctx, db, "ai work units", aianalyticsdb.WorkUnits, data.units); err != nil {
 		return err
 	}
-	if err := insertChunks(ctx, db, "ai work unit tools", aianalyticsdb.UnitTools.Handle, data.tools); err != nil {
+	if err := insertChunks(ctx, db, "ai work unit tools", aianalyticsdb.UnitTools, data.tools); err != nil {
 		return err
 	}
-	if err := insertChunks(ctx, db, "ai provider hours", aianalyticsdb.ProviderHours.Handle, data.hours); err != nil {
+	if err := insertChunks(ctx, db, "ai provider hours", aianalyticsdb.ProviderHours, data.hours); err != nil {
 		return err
 	}
 	if err := s.writeProviderHistory(ctx, db, sr, refs); err != nil {
@@ -837,7 +837,7 @@ func (s *AIAnalyticsSeed) writeProviderHistory(
 	if err := tenantfixtures.Backdate(
 		ctx,
 		db,
-		settingversiondb.SettingVersions.Handle,
+		settingversiondb.SettingVersions,
 		[]string{versions[0].ID.String(), versions[1].ID.String()},
 		[]int64{
 			refs.now - 45*analyticsSeedDay,

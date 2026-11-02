@@ -4,6 +4,7 @@ package instancebootstrapdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -53,7 +54,7 @@ var instanceBootstrapsRef = keel.Ref{Table: &instanceBootstrapsTable}
 
 // InstanceBootstrapsTable is the table of instancebootstrap.InstanceBootstrap.
 type InstanceBootstrapsTable struct {
-	keel.Handle[*instancebootstrap.InstanceBootstrap]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -65,7 +66,7 @@ type InstanceBootstrapsTable struct {
 
 // InstanceBootstraps references the instance_bootstraps table.
 var InstanceBootstraps = &InstanceBootstrapsTable{
-	Handle:         keel.Handle[*instancebootstrap.InstanceBootstrap]{Ref: &instanceBootstrapsRef},
+	TableBase:      keel.TableBase{Ref: &instanceBootstrapsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 2}}},
@@ -75,10 +76,10 @@ var InstanceBootstraps = &InstanceBootstrapsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &instanceBootstrapsRef, Index: 6}},
 }
 
-// BuildInstanceBootstraps builds the handle of instance_bootstraps for ref. Generated relation and alias methods call it.
+// BuildInstanceBootstraps builds the table of instance_bootstraps for ref. Generated relation and alias methods call it.
 func BuildInstanceBootstraps(r *keel.Ref) *InstanceBootstrapsTable {
 	return &InstanceBootstrapsTable{
-		Handle:         keel.Handle[*instancebootstrap.InstanceBootstrap]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -100,6 +101,365 @@ func (t *InstanceBootstrapsTable) As(alias string) *InstanceBootstrapsTable {
 // Get returns the instance_bootstraps row with the given key, or keel.ErrNotFound.
 func (t *InstanceBootstrapsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*instancebootstrap.InstanceBootstrap, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InstanceBootstrapsQuery is a query over instancebootstrap.InstanceBootstrap.
+type InstanceBootstrapsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*instancebootstrap.InstanceBootstrap] = (*InstanceBootstrapsTable)(nil)
+
+var _ keel.Query[*instancebootstrap.InstanceBootstrap] = (*InstanceBootstrapsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InstanceBootstrapsTable) Query() keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return &InstanceBootstrapsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InstanceBootstrapsQuery.Where.
+func (t *InstanceBootstrapsTable) Where(ps ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InstanceBootstrapsQuery.Pick.
+func (t *InstanceBootstrapsTable) Pick(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InstanceBootstrapsQuery.Load.
+func (t *InstanceBootstrapsTable) Load(ls ...keel.Loader) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InstanceBootstrapsQuery.Omit.
+func (t *InstanceBootstrapsTable) Omit(cols ...keel.Column) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InstanceBootstrapsQuery.Order.
+func (t *InstanceBootstrapsTable) Order(os ...keel.Order) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InstanceBootstrapsQuery.Limit.
+func (t *InstanceBootstrapsTable) Limit(n int) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InstanceBootstrapsQuery.Group.
+func (t *InstanceBootstrapsTable) Group(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InstanceBootstrapsQuery.GroupingSets.
+func (t *InstanceBootstrapsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InstanceBootstrapsQuery.Rollup.
+func (t *InstanceBootstrapsTable) Rollup(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InstanceBootstrapsQuery.Cube.
+func (t *InstanceBootstrapsTable) Cube(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InstanceBootstrapsQuery.AllTenants.
+func (t *InstanceBootstrapsTable) AllTenants() keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InstanceBootstrapsQuery.Join.
+func (t *InstanceBootstrapsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InstanceBootstrapsQuery.LeftJoin.
+func (t *InstanceBootstrapsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InstanceBootstrapsQuery.LeftJoinLateral.
+func (t *InstanceBootstrapsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InstanceBootstrapsQuery.JoinLateral.
+func (t *InstanceBootstrapsTable) JoinLateral(sub keel.LateralSource) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InstanceBootstrapsQuery.Lock.
+func (t *InstanceBootstrapsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InstanceBootstrapsQuery.DistinctOn.
+func (t *InstanceBootstrapsTable) DistinctOn(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InstanceBootstrapsQuery.Cache.
+func (t *InstanceBootstrapsTable) Cache(opts ...keel.CacheOption) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InstanceBootstrapsQuery.LoadStrategy.
+func (t *InstanceBootstrapsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InstanceBootstrapsQuery.With.
+func (t *InstanceBootstrapsTable) With(ctes ...*keel.CTETable) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InstanceBootstrapsQuery.Compute.
+func (t *InstanceBootstrapsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InstanceBootstrapsTable) Create(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InstanceBootstrapsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InstanceBootstrapsTable) Save(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InstanceBootstrapsTable) SaveExcept(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InstanceBootstrapsTable) DeleteRow(ctx context.Context, db *keel.DB, row *instancebootstrap.InstanceBootstrap) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InstanceBootstrapsTable) Upsert(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InstanceBootstrapsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InstanceBootstrapsTable) Copy(ctx context.Context, db *keel.DB, rows []*instancebootstrap.InstanceBootstrap) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InstanceBootstrapsQuery) Where(ps ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InstanceBootstrapsQuery) Pick(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InstanceBootstrapsQuery) Omit(cols ...keel.Column) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InstanceBootstrapsQuery) Load(ls ...keel.Loader) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InstanceBootstrapsQuery) Order(os ...keel.Order) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InstanceBootstrapsQuery) Distinct() keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InstanceBootstrapsQuery) Group(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InstanceBootstrapsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InstanceBootstrapsQuery) Rollup(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InstanceBootstrapsQuery) Cube(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InstanceBootstrapsQuery) Window(name string, w keel.Window) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InstanceBootstrapsQuery) Having(ps ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InstanceBootstrapsQuery) Limit(n int) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InstanceBootstrapsQuery) Offset(n int) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InstanceBootstrapsQuery) DistinctOn(es ...keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InstanceBootstrapsQuery) AllTenants() keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InstanceBootstrapsQuery) CustomPlan() keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InstanceBootstrapsQuery) Timeout(d time.Duration) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InstanceBootstrapsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InstanceBootstrapsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InstanceBootstrapsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InstanceBootstrapsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InstanceBootstrapsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InstanceBootstrapsQuery) Cache(opts ...keel.CacheOption) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InstanceBootstrapsQuery) With(ctes ...*keel.CTETable) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InstanceBootstrapsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InstanceBootstrapsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*instancebootstrap.InstanceBootstrap] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InstanceBootstrapsQuery) Clone() keel.Query[*instancebootstrap.InstanceBootstrap] {
+	return &InstanceBootstrapsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InstanceBootstrapsQuery) One(ctx context.Context, db *keel.DB) (*instancebootstrap.InstanceBootstrap, error) {
+	return keel.One[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InstanceBootstrapsQuery) First(ctx context.Context, db *keel.DB) (*instancebootstrap.InstanceBootstrap, error) {
+	return keel.First[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InstanceBootstrapsQuery) List(ctx context.Context, db *keel.DB) ([]*instancebootstrap.InstanceBootstrap, error) {
+	return keel.List[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InstanceBootstrapsQuery) All(ctx context.Context, db *keel.DB) ([]*instancebootstrap.InstanceBootstrap, error) {
+	return keel.All[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InstanceBootstrapsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*instancebootstrap.InstanceBootstrap, error) {
+	return keel.UpdateReturning[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InstanceBootstrapsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*instancebootstrap.InstanceBootstrap], error) {
+	return keel.PageOf[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InstanceBootstrapsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*instancebootstrap.InstanceBootstrap) error) error {
+	return keel.Each[*instancebootstrap.InstanceBootstrap](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInstanceBootstrap() unsafe.Pointer {

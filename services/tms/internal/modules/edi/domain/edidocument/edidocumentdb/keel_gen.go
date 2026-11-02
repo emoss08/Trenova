@@ -4,6 +4,7 @@ package edidocumentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -60,7 +61,7 @@ var eDIControlNumberSequencesRef = keel.Ref{Table: &eDIControlNumberSequencesTab
 
 // EDIControlNumberSequencesTable is the table of edidocument.EDIControlNumberSequence.
 type EDIControlNumberSequencesTable struct {
-	keel.Handle[*edidocument.EDIControlNumberSequence]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -77,7 +78,7 @@ type EDIControlNumberSequencesTable struct {
 
 // EDIControlNumberSequences references the edi_control_number_sequences table.
 var EDIControlNumberSequences = &EDIControlNumberSequencesTable{
-	Handle:         keel.Handle[*edidocument.EDIControlNumberSequence]{Ref: &eDIControlNumberSequencesRef},
+	TableBase:      keel.TableBase{Ref: &eDIControlNumberSequencesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 2}}},
@@ -92,10 +93,10 @@ var EDIControlNumberSequences = &EDIControlNumberSequencesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDIControlNumberSequencesRef, Index: 11}},
 }
 
-// BuildEDIControlNumberSequences builds the handle of edi_control_number_sequences for ref. Generated relation and alias methods call it.
+// BuildEDIControlNumberSequences builds the table of edi_control_number_sequences for ref. Generated relation and alias methods call it.
 func BuildEDIControlNumberSequences(r *keel.Ref) *EDIControlNumberSequencesTable {
 	return &EDIControlNumberSequencesTable{
-		Handle:         keel.Handle[*edidocument.EDIControlNumberSequence]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -122,6 +123,365 @@ func (t *EDIControlNumberSequencesTable) As(alias string) *EDIControlNumberSeque
 // Get returns the edi_control_number_sequences row with the given key, or keel.ErrNotFound.
 func (t *EDIControlNumberSequencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edidocument.EDIControlNumberSequence, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIControlNumberSequencesQuery is a query over edidocument.EDIControlNumberSequence.
+type EDIControlNumberSequencesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edidocument.EDIControlNumberSequence] = (*EDIControlNumberSequencesTable)(nil)
+
+var _ keel.Query[*edidocument.EDIControlNumberSequence] = (*EDIControlNumberSequencesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIControlNumberSequencesTable) Query() keel.Query[*edidocument.EDIControlNumberSequence] {
+	return &EDIControlNumberSequencesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIControlNumberSequencesQuery.Where.
+func (t *EDIControlNumberSequencesTable) Where(ps ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIControlNumberSequencesQuery.Pick.
+func (t *EDIControlNumberSequencesTable) Pick(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIControlNumberSequencesQuery.Load.
+func (t *EDIControlNumberSequencesTable) Load(ls ...keel.Loader) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIControlNumberSequencesQuery.Omit.
+func (t *EDIControlNumberSequencesTable) Omit(cols ...keel.Column) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIControlNumberSequencesQuery.Order.
+func (t *EDIControlNumberSequencesTable) Order(os ...keel.Order) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIControlNumberSequencesQuery.Limit.
+func (t *EDIControlNumberSequencesTable) Limit(n int) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIControlNumberSequencesQuery.Group.
+func (t *EDIControlNumberSequencesTable) Group(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIControlNumberSequencesQuery.GroupingSets.
+func (t *EDIControlNumberSequencesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIControlNumberSequencesQuery.Rollup.
+func (t *EDIControlNumberSequencesTable) Rollup(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIControlNumberSequencesQuery.Cube.
+func (t *EDIControlNumberSequencesTable) Cube(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIControlNumberSequencesQuery.AllTenants.
+func (t *EDIControlNumberSequencesTable) AllTenants() keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIControlNumberSequencesQuery.Join.
+func (t *EDIControlNumberSequencesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIControlNumberSequencesQuery.LeftJoin.
+func (t *EDIControlNumberSequencesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIControlNumberSequencesQuery.LeftJoinLateral.
+func (t *EDIControlNumberSequencesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIControlNumberSequencesQuery.JoinLateral.
+func (t *EDIControlNumberSequencesTable) JoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIControlNumberSequencesQuery.Lock.
+func (t *EDIControlNumberSequencesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIControlNumberSequencesQuery.DistinctOn.
+func (t *EDIControlNumberSequencesTable) DistinctOn(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIControlNumberSequencesQuery.Cache.
+func (t *EDIControlNumberSequencesTable) Cache(opts ...keel.CacheOption) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIControlNumberSequencesQuery.LoadStrategy.
+func (t *EDIControlNumberSequencesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIControlNumberSequencesQuery.With.
+func (t *EDIControlNumberSequencesTable) With(ctes ...*keel.CTETable) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIControlNumberSequencesQuery.Compute.
+func (t *EDIControlNumberSequencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIControlNumberSequencesTable) Create(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIControlNumberSequencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIControlNumberSequencesTable) Save(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIControlNumberSequencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIControlNumberSequencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edidocument.EDIControlNumberSequence) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIControlNumberSequencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIControlNumberSequencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIControlNumberSequencesTable) Copy(ctx context.Context, db *keel.DB, rows []*edidocument.EDIControlNumberSequence) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIControlNumberSequencesQuery) Where(ps ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIControlNumberSequencesQuery) Pick(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIControlNumberSequencesQuery) Omit(cols ...keel.Column) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIControlNumberSequencesQuery) Load(ls ...keel.Loader) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIControlNumberSequencesQuery) Order(os ...keel.Order) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIControlNumberSequencesQuery) Distinct() keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIControlNumberSequencesQuery) Group(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIControlNumberSequencesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIControlNumberSequencesQuery) Rollup(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIControlNumberSequencesQuery) Cube(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIControlNumberSequencesQuery) Window(name string, w keel.Window) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIControlNumberSequencesQuery) Having(ps ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIControlNumberSequencesQuery) Limit(n int) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIControlNumberSequencesQuery) Offset(n int) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIControlNumberSequencesQuery) DistinctOn(es ...keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIControlNumberSequencesQuery) AllTenants() keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIControlNumberSequencesQuery) CustomPlan() keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIControlNumberSequencesQuery) Timeout(d time.Duration) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIControlNumberSequencesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIControlNumberSequencesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIControlNumberSequencesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIControlNumberSequencesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIControlNumberSequencesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIControlNumberSequencesQuery) Cache(opts ...keel.CacheOption) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIControlNumberSequencesQuery) With(ctes ...*keel.CTETable) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIControlNumberSequencesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIControlNumberSequencesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edidocument.EDIControlNumberSequence] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIControlNumberSequencesQuery) Clone() keel.Query[*edidocument.EDIControlNumberSequence] {
+	return &EDIControlNumberSequencesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIControlNumberSequencesQuery) One(ctx context.Context, db *keel.DB) (*edidocument.EDIControlNumberSequence, error) {
+	return keel.One[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIControlNumberSequencesQuery) First(ctx context.Context, db *keel.DB) (*edidocument.EDIControlNumberSequence, error) {
+	return keel.First[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIControlNumberSequencesQuery) List(ctx context.Context, db *keel.DB) ([]*edidocument.EDIControlNumberSequence, error) {
+	return keel.List[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIControlNumberSequencesQuery) All(ctx context.Context, db *keel.DB) ([]*edidocument.EDIControlNumberSequence, error) {
+	return keel.All[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIControlNumberSequencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edidocument.EDIControlNumberSequence, error) {
+	return keel.UpdateReturning[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIControlNumberSequencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edidocument.EDIControlNumberSequence], error) {
+	return keel.PageOf[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIControlNumberSequencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edidocument.EDIControlNumberSequence) error) error {
+	return keel.Each[*edidocument.EDIControlNumberSequence](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIControlNumberSequence() unsafe.Pointer {
@@ -253,7 +613,7 @@ var eDIDocumentTypesRef = keel.Ref{Table: &eDIDocumentTypesTable}
 
 // EDIDocumentTypesTable is the table of edidocument.EDIDocumentType.
 type EDIDocumentTypesTable struct {
-	keel.Handle[*edidocument.EDIDocumentType]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	Code             keel.StringCol
 	Name             keel.StringCol
@@ -269,7 +629,7 @@ type EDIDocumentTypesTable struct {
 
 // EDIDocumentTypes references the edi_document_types table.
 var EDIDocumentTypes = &EDIDocumentTypesTable{
-	Handle:           keel.Handle[*edidocument.EDIDocumentType]{Ref: &eDIDocumentTypesRef},
+	TableBase:        keel.TableBase{Ref: &eDIDocumentTypesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 0}}},
 	Code:             keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 1}},
 	Name:             keel.StringCol{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 2}},
@@ -283,10 +643,10 @@ var EDIDocumentTypes = &EDIDocumentTypesTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDIDocumentTypesRef, Index: 10}},
 }
 
-// BuildEDIDocumentTypes builds the handle of edi_document_types for ref. Generated relation and alias methods call it.
+// BuildEDIDocumentTypes builds the table of edi_document_types for ref. Generated relation and alias methods call it.
 func BuildEDIDocumentTypes(r *keel.Ref) *EDIDocumentTypesTable {
 	return &EDIDocumentTypesTable{
-		Handle:           keel.Handle[*edidocument.EDIDocumentType]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Code:             keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Name:             keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -317,6 +677,365 @@ func (t *EDIDocumentTypesTable) TransactionSetRef() *EDITransactionSetsTable {
 // Get returns the edi_document_types row with the given key, or keel.ErrNotFound.
 func (t *EDIDocumentTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edidocument.EDIDocumentType, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIDocumentTypesQuery is a query over edidocument.EDIDocumentType.
+type EDIDocumentTypesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edidocument.EDIDocumentType] = (*EDIDocumentTypesTable)(nil)
+
+var _ keel.Query[*edidocument.EDIDocumentType] = (*EDIDocumentTypesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIDocumentTypesTable) Query() keel.Query[*edidocument.EDIDocumentType] {
+	return &EDIDocumentTypesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIDocumentTypesQuery.Where.
+func (t *EDIDocumentTypesTable) Where(ps ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIDocumentTypesQuery.Pick.
+func (t *EDIDocumentTypesTable) Pick(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIDocumentTypesQuery.Load.
+func (t *EDIDocumentTypesTable) Load(ls ...keel.Loader) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIDocumentTypesQuery.Omit.
+func (t *EDIDocumentTypesTable) Omit(cols ...keel.Column) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIDocumentTypesQuery.Order.
+func (t *EDIDocumentTypesTable) Order(os ...keel.Order) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIDocumentTypesQuery.Limit.
+func (t *EDIDocumentTypesTable) Limit(n int) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIDocumentTypesQuery.Group.
+func (t *EDIDocumentTypesTable) Group(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIDocumentTypesQuery.GroupingSets.
+func (t *EDIDocumentTypesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIDocumentTypesQuery.Rollup.
+func (t *EDIDocumentTypesTable) Rollup(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIDocumentTypesQuery.Cube.
+func (t *EDIDocumentTypesTable) Cube(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIDocumentTypesQuery.AllTenants.
+func (t *EDIDocumentTypesTable) AllTenants() keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIDocumentTypesQuery.Join.
+func (t *EDIDocumentTypesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIDocumentTypesQuery.LeftJoin.
+func (t *EDIDocumentTypesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIDocumentTypesQuery.LeftJoinLateral.
+func (t *EDIDocumentTypesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIDocumentTypesQuery.JoinLateral.
+func (t *EDIDocumentTypesTable) JoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIDocumentTypesQuery.Lock.
+func (t *EDIDocumentTypesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIDocumentTypesQuery.DistinctOn.
+func (t *EDIDocumentTypesTable) DistinctOn(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIDocumentTypesQuery.Cache.
+func (t *EDIDocumentTypesTable) Cache(opts ...keel.CacheOption) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIDocumentTypesQuery.LoadStrategy.
+func (t *EDIDocumentTypesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIDocumentTypesQuery.With.
+func (t *EDIDocumentTypesTable) With(ctes ...*keel.CTETable) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIDocumentTypesQuery.Compute.
+func (t *EDIDocumentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIDocumentTypesTable) Create(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIDocumentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIDocumentTypesTable) Save(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIDocumentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIDocumentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edidocument.EDIDocumentType) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIDocumentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIDocumentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIDocumentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*edidocument.EDIDocumentType) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIDocumentTypesQuery) Where(ps ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIDocumentTypesQuery) Pick(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIDocumentTypesQuery) Omit(cols ...keel.Column) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIDocumentTypesQuery) Load(ls ...keel.Loader) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIDocumentTypesQuery) Order(os ...keel.Order) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIDocumentTypesQuery) Distinct() keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIDocumentTypesQuery) Group(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIDocumentTypesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIDocumentTypesQuery) Rollup(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIDocumentTypesQuery) Cube(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIDocumentTypesQuery) Window(name string, w keel.Window) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIDocumentTypesQuery) Having(ps ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIDocumentTypesQuery) Limit(n int) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIDocumentTypesQuery) Offset(n int) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIDocumentTypesQuery) DistinctOn(es ...keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIDocumentTypesQuery) AllTenants() keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIDocumentTypesQuery) CustomPlan() keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIDocumentTypesQuery) Timeout(d time.Duration) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIDocumentTypesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIDocumentTypesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIDocumentTypesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIDocumentTypesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIDocumentTypesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIDocumentTypesQuery) Cache(opts ...keel.CacheOption) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIDocumentTypesQuery) With(ctes ...*keel.CTETable) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIDocumentTypesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIDocumentTypesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edidocument.EDIDocumentType] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIDocumentTypesQuery) Clone() keel.Query[*edidocument.EDIDocumentType] {
+	return &EDIDocumentTypesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIDocumentTypesQuery) One(ctx context.Context, db *keel.DB) (*edidocument.EDIDocumentType, error) {
+	return keel.One[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIDocumentTypesQuery) First(ctx context.Context, db *keel.DB) (*edidocument.EDIDocumentType, error) {
+	return keel.First[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIDocumentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*edidocument.EDIDocumentType, error) {
+	return keel.List[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIDocumentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*edidocument.EDIDocumentType, error) {
+	return keel.All[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIDocumentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edidocument.EDIDocumentType, error) {
+	return keel.UpdateReturning[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIDocumentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edidocument.EDIDocumentType], error) {
+	return keel.PageOf[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIDocumentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edidocument.EDIDocumentType) error) error {
+	return keel.Each[*edidocument.EDIDocumentType](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIDocumentType() unsafe.Pointer { return unsafe.Pointer(new(edidocument.EDIDocumentType)) }
@@ -432,7 +1151,7 @@ var eDITransactionSetsRef = keel.Ref{Table: &eDITransactionSetsTable}
 
 // EDITransactionSetsTable is the table of edidocument.EDITransactionSet.
 type EDITransactionSetsTable struct {
-	keel.Handle[*edidocument.EDITransactionSet]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	Standard       EDIStandardCol
 	Code           TransactionSetCol
@@ -446,7 +1165,7 @@ type EDITransactionSetsTable struct {
 
 // EDITransactionSets references the edi_transaction_sets table.
 var EDITransactionSets = &EDITransactionSetsTable{
-	Handle:         keel.Handle[*edidocument.EDITransactionSet]{Ref: &eDITransactionSetsRef},
+	TableBase:      keel.TableBase{Ref: &eDITransactionSetsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 0}}},
 	Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 1}}},
 	Code:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 2}}},
@@ -458,10 +1177,10 @@ var EDITransactionSets = &EDITransactionSetsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDITransactionSetsRef, Index: 8}},
 }
 
-// BuildEDITransactionSets builds the handle of edi_transaction_sets for ref. Generated relation and alias methods call it.
+// BuildEDITransactionSets builds the table of edi_transaction_sets for ref. Generated relation and alias methods call it.
 func BuildEDITransactionSets(r *keel.Ref) *EDITransactionSetsTable {
 	return &EDITransactionSetsTable{
-		Handle:         keel.Handle[*edidocument.EDITransactionSet]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Code:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -485,6 +1204,365 @@ func (t *EDITransactionSetsTable) As(alias string) *EDITransactionSetsTable {
 // Get returns the edi_transaction_sets row with the given key, or keel.ErrNotFound.
 func (t *EDITransactionSetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edidocument.EDITransactionSet, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDITransactionSetsQuery is a query over edidocument.EDITransactionSet.
+type EDITransactionSetsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edidocument.EDITransactionSet] = (*EDITransactionSetsTable)(nil)
+
+var _ keel.Query[*edidocument.EDITransactionSet] = (*EDITransactionSetsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDITransactionSetsTable) Query() keel.Query[*edidocument.EDITransactionSet] {
+	return &EDITransactionSetsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDITransactionSetsQuery.Where.
+func (t *EDITransactionSetsTable) Where(ps ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDITransactionSetsQuery.Pick.
+func (t *EDITransactionSetsTable) Pick(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDITransactionSetsQuery.Load.
+func (t *EDITransactionSetsTable) Load(ls ...keel.Loader) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDITransactionSetsQuery.Omit.
+func (t *EDITransactionSetsTable) Omit(cols ...keel.Column) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDITransactionSetsQuery.Order.
+func (t *EDITransactionSetsTable) Order(os ...keel.Order) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDITransactionSetsQuery.Limit.
+func (t *EDITransactionSetsTable) Limit(n int) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDITransactionSetsQuery.Group.
+func (t *EDITransactionSetsTable) Group(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDITransactionSetsQuery.GroupingSets.
+func (t *EDITransactionSetsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDITransactionSetsQuery.Rollup.
+func (t *EDITransactionSetsTable) Rollup(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDITransactionSetsQuery.Cube.
+func (t *EDITransactionSetsTable) Cube(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDITransactionSetsQuery.AllTenants.
+func (t *EDITransactionSetsTable) AllTenants() keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDITransactionSetsQuery.Join.
+func (t *EDITransactionSetsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDITransactionSetsQuery.LeftJoin.
+func (t *EDITransactionSetsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDITransactionSetsQuery.LeftJoinLateral.
+func (t *EDITransactionSetsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDITransactionSetsQuery.JoinLateral.
+func (t *EDITransactionSetsTable) JoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDITransactionSetsQuery.Lock.
+func (t *EDITransactionSetsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDITransactionSetsQuery.DistinctOn.
+func (t *EDITransactionSetsTable) DistinctOn(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDITransactionSetsQuery.Cache.
+func (t *EDITransactionSetsTable) Cache(opts ...keel.CacheOption) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDITransactionSetsQuery.LoadStrategy.
+func (t *EDITransactionSetsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDITransactionSetsQuery.With.
+func (t *EDITransactionSetsTable) With(ctes ...*keel.CTETable) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDITransactionSetsQuery.Compute.
+func (t *EDITransactionSetsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDITransactionSetsTable) Create(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDITransactionSetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDITransactionSetsTable) Save(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDITransactionSetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDITransactionSetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edidocument.EDITransactionSet) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDITransactionSetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDITransactionSetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDITransactionSetsTable) Copy(ctx context.Context, db *keel.DB, rows []*edidocument.EDITransactionSet) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDITransactionSetsQuery) Where(ps ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDITransactionSetsQuery) Pick(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDITransactionSetsQuery) Omit(cols ...keel.Column) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDITransactionSetsQuery) Load(ls ...keel.Loader) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDITransactionSetsQuery) Order(os ...keel.Order) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDITransactionSetsQuery) Distinct() keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDITransactionSetsQuery) Group(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDITransactionSetsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDITransactionSetsQuery) Rollup(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDITransactionSetsQuery) Cube(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDITransactionSetsQuery) Window(name string, w keel.Window) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDITransactionSetsQuery) Having(ps ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDITransactionSetsQuery) Limit(n int) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDITransactionSetsQuery) Offset(n int) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDITransactionSetsQuery) DistinctOn(es ...keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDITransactionSetsQuery) AllTenants() keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDITransactionSetsQuery) CustomPlan() keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDITransactionSetsQuery) Timeout(d time.Duration) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDITransactionSetsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDITransactionSetsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDITransactionSetsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDITransactionSetsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDITransactionSetsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDITransactionSetsQuery) Cache(opts ...keel.CacheOption) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDITransactionSetsQuery) With(ctes ...*keel.CTETable) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDITransactionSetsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDITransactionSetsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edidocument.EDITransactionSet] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDITransactionSetsQuery) Clone() keel.Query[*edidocument.EDITransactionSet] {
+	return &EDITransactionSetsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDITransactionSetsQuery) One(ctx context.Context, db *keel.DB) (*edidocument.EDITransactionSet, error) {
+	return keel.One[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDITransactionSetsQuery) First(ctx context.Context, db *keel.DB) (*edidocument.EDITransactionSet, error) {
+	return keel.First[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDITransactionSetsQuery) List(ctx context.Context, db *keel.DB) ([]*edidocument.EDITransactionSet, error) {
+	return keel.List[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDITransactionSetsQuery) All(ctx context.Context, db *keel.DB) ([]*edidocument.EDITransactionSet, error) {
+	return keel.All[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDITransactionSetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edidocument.EDITransactionSet, error) {
+	return keel.UpdateReturning[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDITransactionSetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edidocument.EDITransactionSet], error) {
+	return keel.PageOf[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDITransactionSetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edidocument.EDITransactionSet) error) error {
+	return keel.Each[*edidocument.EDITransactionSet](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDITransactionSet() unsafe.Pointer { return unsafe.Pointer(new(edidocument.EDITransactionSet)) }

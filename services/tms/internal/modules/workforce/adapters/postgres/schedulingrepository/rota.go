@@ -38,13 +38,13 @@ func rosterFilter(req *workerscheduleports.RotaQuery) []keel.Pred {
 	}
 }
 
-func rosterQuery(req *workerscheduleports.RotaQuery) *keel.Query[*worker.Worker] {
+func rosterQuery(req *workerscheduleports.RotaQuery) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 
 	return w.Pick(w.ID).Where(rosterFilter(req)...)
 }
 
-func rotaWorkersQuery(req *workerscheduleports.RotaQuery) *keel.Query[*worker.Worker] {
+func rotaWorkersQuery(req *workerscheduleports.RotaQuery) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	fc := w.FleetCode()
 	sa := workerscheduledb.WorkerShiftAssignments
@@ -153,12 +153,12 @@ func (r *repository) RotaLeaveRanges(
 	)
 }
 
-func (r *repository) assignedDaysQuery(req *workerscheduleports.RotaQuery) *keel.Query[*keel.Row] {
+func (r *repository) assignedDaysQuery(req *workerscheduleports.RotaQuery) keel.Query[*keel.Row] {
 	a := r.assignments
 	secondsPerDay := keel.ConstInt64(timeutils.SecondsPerDay)
 	day := a.CreatedAt.Div(secondsPerDay).Mul(secondsPerDay)
 
-	return keel.Handle[*keel.Row]{Ref: a.WorkerID.Ref}.
+	return keel.RowsOf(a.WorkerID.Ref).
 		Pick(a.WorkerID, day, keel.Count()).
 		Where(
 			a.ArchivedAt.IsNull(),

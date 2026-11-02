@@ -374,7 +374,7 @@ func (r *repository) GetNeighbors(
 }
 
 type neighbors struct {
-	base         func() *keel.Query[*billingqueue.BillingQueueItem]
+	base         func() keel.Query[*billingqueue.BillingQueueItem]
 	after        keel.Pred
 	beforeAnchor keel.Pred
 }
@@ -387,7 +387,7 @@ func neighborQueries(
 	id := req.ItemID.String()
 
 	return neighbors{
-		base: func() *keel.Query[*billingqueue.BillingQueueItem] {
+		base: func() keel.Query[*billingqueue.BillingQueueItem] {
 			return listquery.Filter(
 				bq.Where(keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted))),
 				req.Filter,
@@ -440,7 +440,7 @@ func (r *repository) FindDuplicates(
 
 func duplicateItems(
 	req *billingqueueports.FindBillingQueueDuplicatesRequest,
-) *keel.Query[*billingqueue.BillingQueueItem] {
+) keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 	return bq.Pick(bq.ID, bq.Number, bq.Status).
 		Where(
@@ -458,7 +458,7 @@ func duplicateItems(
 
 func duplicateInvoices(
 	req *billingqueueports.FindBillingQueueDuplicatesRequest,
-) *keel.Query[*invoice.Invoice] {
+) keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 	lines := inv.Lines()
 	return inv.Pick(inv.ID, inv.Number, inv.Status).
@@ -526,7 +526,7 @@ func (r *repository) ListSummaries(
 	)
 }
 
-func itemSummaries(itemIDs []pulid.ID) *keel.Query[*billingqueue.BillingQueueItem] {
+func itemSummaries(itemIDs []pulid.ID) keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 	iss := billingqueuedb.Issues
 	open := keel.Scalar(iss.Pick(iss.ID.Count()).Where(

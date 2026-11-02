@@ -34,14 +34,21 @@ type TOTPEnrollment struct {
 }
 
 type ConfirmTOTPEnrollmentRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	SessionID  pulid.ID              `json:"-"`
-	Code       string                `json:"code"`
-	Name       string                `json:"name"`
+	TenantInfo        pagination.TenantInfo `json:"-"`
+	SessionID         pulid.ID              `json:"-"`
+	SessionSecretHash string                `json:"-"`
+	Code              string                `json:"code"`
+	Name              string                `json:"name"`
 }
 
 type RecoveryCodesResponse struct {
 	RecoveryCodes []string `json:"recoveryCodes"`
+}
+
+type TOTPEnrollmentResponse struct {
+	RecoveryCodes []string `json:"recoveryCodes"`
+	SessionToken  string   `json:"-"`
+	ExpiresAt     int64    `json:"-"`
 }
 
 type DisableTOTPRequest struct {
@@ -87,7 +94,7 @@ type MFAService interface {
 	ConfirmTOTPEnrollment(
 		ctx context.Context,
 		req *ConfirmTOTPEnrollmentRequest,
-	) (*RecoveryCodesResponse, error)
+	) (*TOTPEnrollmentResponse, error)
 	DisableTOTP(ctx context.Context, req *DisableTOTPRequest) error
 	RegenerateRecoveryCodes(
 		ctx context.Context,

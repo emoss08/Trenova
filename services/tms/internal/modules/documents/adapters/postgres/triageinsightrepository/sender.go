@@ -87,7 +87,7 @@ func fromSender(req *triageports.SenderStatsRequest) []keel.Pred {
 
 func senderKindsQuery(
 	req *triageports.SenderStatsRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	classification := text(m.Classification)
 
@@ -100,7 +100,7 @@ func senderKindsQuery(
 
 func senderSummaryQuery(
 	req *triageports.SenderStatsRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return messages().
@@ -116,7 +116,7 @@ func senderSummaryQuery(
 
 func senderRecentQuery(
 	req *triageports.SenderStatsRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return withReference(messages()).

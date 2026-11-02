@@ -192,7 +192,7 @@ func (g *factorPhase) facAccounts(ctx context.Context, tx *keel.DB) (map[string]
 		byCode[def.code] = account.ID
 	}
 	if len(created) > 0 {
-		if err := volumegen.InsertRows(ctx, tx, glaccountdb.GLAccounts.Handle, created); err != nil {
+		if err := volumegen.InsertRows(ctx, tx, glaccountdb.GLAccounts, created); err != nil {
 			return nil, fmt.Errorf("insert factoring gl accounts: %w", err)
 		}
 		g.Report.Add("GL accounts", len(created))
@@ -410,21 +410,21 @@ func (g *factorPhase) facFactors(
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				factoringcompanydb.FactoringCompanies.Handle,
+				factoringcompanydb.FactoringCompanies,
 				newCompanies,
 			)
 		}, companyStamps},
 		{"factoring_agreements", len(newAgreements), func() error {
-			return volumegen.InsertRows(ctx, tx, factoringdb.Agreements.Handle, newAgreements)
+			return volumegen.InsertRows(ctx, tx, factoringdb.Agreements, newAgreements)
 		}, agreementStamps},
 		{"factoring_fee_tiers", len(newTiers), func() error {
-			return volumegen.InsertRows(ctx, tx, factoringdb.FeeTiers.Handle, newTiers)
+			return volumegen.InsertRows(ctx, tx, factoringdb.FeeTiers, newTiers)
 		}, nil},
 		{"factoring_transports", len(newTransports), func() error {
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				factoringsubmissiondb.Transports.Handle,
+				factoringsubmissiondb.Transports,
 				newTransports,
 			)
 		}, transportStamps},
@@ -585,17 +585,17 @@ func (g *factorPhase) facAssign(ctx context.Context, tx *keel.DB, st *volumegen.
 				volumegen.Stamp{Id: d.ID, Created: d.CreatedAt, Updated: d.CreatedAt},
 			)
 		}
-		if err := volumegen.InsertRows(ctx, tx, documentdb.Documents.Handle, docs); err != nil {
+		if err := volumegen.InsertRows(ctx, tx, documentdb.Documents, docs); err != nil {
 			return fmt.Errorf("insert signed notice documents: %w", err)
 		}
-		if err := volumegen.Backdate(ctx, tx, documentdb.Documents.Handle, docStamps); err != nil {
+		if err := volumegen.Backdate(ctx, tx, documentdb.Documents, docStamps); err != nil {
 			return err
 		}
 	}
-	if err := volumegen.InsertRows(ctx, tx, factoringdb.Noas.Handle, noas); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, factoringdb.Noas, noas); err != nil {
 		return fmt.Errorf("insert notices of assignment: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, factoringdb.Noas.Handle, noaStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, factoringdb.Noas, noaStamps); err != nil {
 		return err
 	}
 	cbp := customerdb.CustomerBillingProfiles
@@ -609,7 +609,7 @@ func (g *factorPhase) facAssign(ctx context.Context, tx *keel.DB, st *volumegen.
 		Where(keel.True()).
 		Update(ctx, tx,
 			cbp.FactoringCompanyID.ToExpr(assigned.Col("factoring_company_id")),
-			volumegen.KeepUpdated(cbp.Handle),
+			volumegen.KeepUpdated(cbp),
 		); err != nil {
 		return fmt.Errorf("assign factoring companies to billing profiles: %w", err)
 	}

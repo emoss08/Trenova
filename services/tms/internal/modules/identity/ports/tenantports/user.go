@@ -40,6 +40,7 @@ type OrgSummary struct {
 
 type SwitchOrganizationRequest struct {
 	SessionID      pulid.ID
+	SecretHash     string
 	OrganizationID pulid.ID
 }
 
@@ -141,7 +142,9 @@ type UserRepository interface {
 	UpdateCurrentOrganization(ctx context.Context, userID, orgID, buID pulid.ID) error
 	GetUserOrganizationSummaries(ctx context.Context, userID pulid.ID) ([]OrgSummary, error)
 	UpdateColumns(ctx context.Context, req UpdateUserColumnsRequest) (*tenant.User, error)
-	UpdatePassword(ctx context.Context, req UpdateUserPasswordRequest) error
+	UpdatePassword(ctx context.Context, req UpdateUserPasswordRequest) (int64, error)
+	AdvanceSessionEpoch(ctx context.Context, userID pulid.ID) error
+	GetSessionEpoch(ctx context.Context, userID pulid.ID) (int64, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *BulkUpdateUserStatusRequest,

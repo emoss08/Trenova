@@ -4,6 +4,7 @@ package agentprofiledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var guidancesRef = keel.Ref{Table: &guidancesTable}
 
 // GuidancesTable is the table of agentprofile.Guidance.
 type GuidancesTable struct {
-	keel.Handle[*agentprofile.Guidance]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -87,7 +88,7 @@ type GuidancesTable struct {
 
 // Guidances references the agent_profile_guidance table.
 var Guidances = &GuidancesTable{
-	Handle:         keel.Handle[*agentprofile.Guidance]{Ref: &guidancesRef},
+	TableBase:      keel.TableBase{Ref: &guidancesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &guidancesRef, Index: 2}}},
@@ -105,10 +106,10 @@ var Guidances = &GuidancesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &guidancesRef, Index: 14}},
 }
 
-// BuildGuidances builds the handle of agent_profile_guidance for ref. Generated relation and alias methods call it.
+// BuildGuidances builds the table of agent_profile_guidance for ref. Generated relation and alias methods call it.
 func BuildGuidances(r *keel.Ref) *GuidancesTable {
 	return &GuidancesTable{
-		Handle:         keel.Handle[*agentprofile.Guidance]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -143,6 +144,365 @@ func (t *GuidancesTable) CreatedBy() *tenantdb.UsersTable {
 // Get returns the agent_profile_guidance row with the given key, or keel.ErrNotFound.
 func (t *GuidancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentprofile.Guidance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// GuidancesQuery is a query over agentprofile.Guidance.
+type GuidancesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentprofile.Guidance] = (*GuidancesTable)(nil)
+
+var _ keel.Query[*agentprofile.Guidance] = (*GuidancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *GuidancesTable) Query() keel.Query[*agentprofile.Guidance] {
+	return &GuidancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see GuidancesQuery.Where.
+func (t *GuidancesTable) Where(ps ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see GuidancesQuery.Pick.
+func (t *GuidancesTable) Pick(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see GuidancesQuery.Load.
+func (t *GuidancesTable) Load(ls ...keel.Loader) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see GuidancesQuery.Omit.
+func (t *GuidancesTable) Omit(cols ...keel.Column) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see GuidancesQuery.Order.
+func (t *GuidancesTable) Order(os ...keel.Order) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see GuidancesQuery.Limit.
+func (t *GuidancesTable) Limit(n int) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see GuidancesQuery.Group.
+func (t *GuidancesTable) Group(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see GuidancesQuery.GroupingSets.
+func (t *GuidancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see GuidancesQuery.Rollup.
+func (t *GuidancesTable) Rollup(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see GuidancesQuery.Cube.
+func (t *GuidancesTable) Cube(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see GuidancesQuery.AllTenants.
+func (t *GuidancesTable) AllTenants() keel.Query[*agentprofile.Guidance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see GuidancesQuery.Join.
+func (t *GuidancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see GuidancesQuery.LeftJoin.
+func (t *GuidancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see GuidancesQuery.LeftJoinLateral.
+func (t *GuidancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Guidance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see GuidancesQuery.JoinLateral.
+func (t *GuidancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Guidance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see GuidancesQuery.Lock.
+func (t *GuidancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see GuidancesQuery.DistinctOn.
+func (t *GuidancesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see GuidancesQuery.Cache.
+func (t *GuidancesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see GuidancesQuery.LoadStrategy.
+func (t *GuidancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentprofile.Guidance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see GuidancesQuery.With.
+func (t *GuidancesTable) With(ctes ...*keel.CTETable) keel.Query[*agentprofile.Guidance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see GuidancesQuery.Compute.
+func (t *GuidancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentprofile.Guidance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *GuidancesTable) Create(ctx context.Context, db *keel.DB, row *agentprofile.Guidance) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *GuidancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *GuidancesTable) Save(ctx context.Context, db *keel.DB, row *agentprofile.Guidance, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *GuidancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentprofile.Guidance, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *GuidancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentprofile.Guidance) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *GuidancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *GuidancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *GuidancesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentprofile.Guidance) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *GuidancesQuery) Where(ps ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *GuidancesQuery) Pick(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *GuidancesQuery) Omit(cols ...keel.Column) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *GuidancesQuery) Load(ls ...keel.Loader) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *GuidancesQuery) Order(os ...keel.Order) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *GuidancesQuery) Distinct() keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *GuidancesQuery) Group(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *GuidancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *GuidancesQuery) Rollup(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *GuidancesQuery) Cube(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *GuidancesQuery) Window(name string, w keel.Window) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *GuidancesQuery) Having(ps ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *GuidancesQuery) Limit(n int) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *GuidancesQuery) Offset(n int) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *GuidancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *GuidancesQuery) AllTenants() keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *GuidancesQuery) CustomPlan() keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *GuidancesQuery) Timeout(d time.Duration) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *GuidancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *GuidancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *GuidancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *GuidancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *GuidancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *GuidancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *GuidancesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *GuidancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *GuidancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentprofile.Guidance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *GuidancesQuery) Clone() keel.Query[*agentprofile.Guidance] {
+	return &GuidancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *GuidancesQuery) One(ctx context.Context, db *keel.DB) (*agentprofile.Guidance, error) {
+	return keel.One[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *GuidancesQuery) First(ctx context.Context, db *keel.DB) (*agentprofile.Guidance, error) {
+	return keel.First[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *GuidancesQuery) List(ctx context.Context, db *keel.DB) ([]*agentprofile.Guidance, error) {
+	return keel.List[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *GuidancesQuery) All(ctx context.Context, db *keel.DB) ([]*agentprofile.Guidance, error) {
+	return keel.All[*agentprofile.Guidance](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *GuidancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentprofile.Guidance, error) {
+	return keel.UpdateReturning[*agentprofile.Guidance](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *GuidancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentprofile.Guidance], error) {
+	return keel.PageOf[*agentprofile.Guidance](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *GuidancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentprofile.Guidance) error) error {
+	return keel.Each[*agentprofile.Guidance](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newGuidance() unsafe.Pointer { return unsafe.Pointer(new(agentprofile.Guidance)) }
@@ -303,7 +663,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of agentprofile.Profile.
 type ProfilesTable struct {
-	keel.Handle[*agentprofile.Profile]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -329,7 +689,7 @@ type ProfilesTable struct {
 
 // Profiles references the agent_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:         keel.Handle[*agentprofile.Profile]{Ref: &profilesRef},
+	TableBase:      keel.TableBase{Ref: &profilesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -353,10 +713,10 @@ var Profiles = &ProfilesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 20}},
 }
 
-// BuildProfiles builds the handle of agent_profiles for ref. Generated relation and alias methods call it.
+// BuildProfiles builds the table of agent_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:         keel.Handle[*agentprofile.Profile]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -392,6 +752,365 @@ func (t *ProfilesTable) As(alias string) *ProfilesTable {
 // Get returns the agent_profiles row with the given key, or keel.ErrNotFound.
 func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentprofile.Profile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProfilesQuery is a query over agentprofile.Profile.
+type ProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentprofile.Profile] = (*ProfilesTable)(nil)
+
+var _ keel.Query[*agentprofile.Profile] = (*ProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProfilesTable) Query() keel.Query[*agentprofile.Profile] {
+	return &ProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProfilesQuery.Where.
+func (t *ProfilesTable) Where(ps ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProfilesQuery.Pick.
+func (t *ProfilesTable) Pick(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProfilesQuery.Load.
+func (t *ProfilesTable) Load(ls ...keel.Loader) keel.Query[*agentprofile.Profile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProfilesQuery.Omit.
+func (t *ProfilesTable) Omit(cols ...keel.Column) keel.Query[*agentprofile.Profile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProfilesQuery.Order.
+func (t *ProfilesTable) Order(os ...keel.Order) keel.Query[*agentprofile.Profile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProfilesQuery.Limit.
+func (t *ProfilesTable) Limit(n int) keel.Query[*agentprofile.Profile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProfilesQuery.Group.
+func (t *ProfilesTable) Group(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProfilesQuery.GroupingSets.
+func (t *ProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProfilesQuery.Rollup.
+func (t *ProfilesTable) Rollup(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProfilesQuery.Cube.
+func (t *ProfilesTable) Cube(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProfilesQuery.AllTenants.
+func (t *ProfilesTable) AllTenants() keel.Query[*agentprofile.Profile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProfilesQuery.Join.
+func (t *ProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProfilesQuery.LeftJoin.
+func (t *ProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProfilesQuery.LeftJoinLateral.
+func (t *ProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Profile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProfilesQuery.JoinLateral.
+func (t *ProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Profile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProfilesQuery.Lock.
+func (t *ProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentprofile.Profile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProfilesQuery.DistinctOn.
+func (t *ProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProfilesQuery.Cache.
+func (t *ProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentprofile.Profile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProfilesQuery.LoadStrategy.
+func (t *ProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentprofile.Profile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProfilesQuery.With.
+func (t *ProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*agentprofile.Profile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProfilesQuery.Compute.
+func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentprofile.Profile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *agentprofile.Profile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *agentprofile.Profile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentprofile.Profile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentprofile.Profile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentprofile.Profile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProfilesQuery) Where(ps ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProfilesQuery) Pick(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProfilesQuery) Omit(cols ...keel.Column) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProfilesQuery) Load(ls ...keel.Loader) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProfilesQuery) Order(os ...keel.Order) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProfilesQuery) Distinct() keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProfilesQuery) Group(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProfilesQuery) Cube(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProfilesQuery) Window(name string, w keel.Window) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProfilesQuery) Having(ps ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProfilesQuery) Limit(n int) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProfilesQuery) Offset(n int) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProfilesQuery) AllTenants() keel.Query[*agentprofile.Profile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProfilesQuery) CustomPlan() keel.Query[*agentprofile.Profile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProfilesQuery) Timeout(d time.Duration) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentprofile.Profile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProfilesQuery) Clone() keel.Query[*agentprofile.Profile] {
+	return &ProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*agentprofile.Profile, error) {
+	return keel.One[*agentprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*agentprofile.Profile, error) {
+	return keel.First[*agentprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*agentprofile.Profile, error) {
+	return keel.List[*agentprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*agentprofile.Profile, error) {
+	return keel.All[*agentprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentprofile.Profile, error) {
+	return keel.UpdateReturning[*agentprofile.Profile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentprofile.Profile], error) {
+	return keel.PageOf[*agentprofile.Profile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentprofile.Profile) error) error {
+	return keel.Each[*agentprofile.Profile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(agentprofile.Profile)) }

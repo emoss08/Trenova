@@ -34,3 +34,17 @@ func TestValidateProductionLocalKey_RequiresLength(t *testing.T) {
 	require.ErrorIs(t, validateProductionLocalKey("short"), ErrProductionLocalEncryptionKeyRequired)
 	require.NoError(t, validateProductionLocalKey("3f9b1c7e5a2d48f6b0c9e1a7d4f2b8c6"))
 }
+
+func TestValidateProduction_RequiresAHostPrefixedSessionCookie(t *testing.T) {
+	t.Parallel()
+
+	c := &Config{Session: SessionConfig{
+		Name:     "trenova_session",
+		Secure:   true,
+		HTTPOnly: true,
+		SameSite: "strict",
+		Path:     "/",
+	}}
+
+	require.ErrorIs(t, c.ValidateProduction(), ErrProductionSessionCookieRequired)
+}

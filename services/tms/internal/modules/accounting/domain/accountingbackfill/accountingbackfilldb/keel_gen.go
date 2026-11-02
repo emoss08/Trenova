@@ -4,6 +4,7 @@ package accountingbackfilldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var accountingBackfillsRef = keel.Ref{Table: &accountingBackfillsTable}
 
 // AccountingBackfillsTable is the table of accountingbackfill.AccountingBackfill.
 type AccountingBackfillsTable struct {
-	keel.Handle[*accountingbackfill.AccountingBackfill]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -86,7 +87,7 @@ type AccountingBackfillsTable struct {
 
 // AccountingBackfills references the accounting_backfills table.
 var AccountingBackfills = &AccountingBackfillsTable{
-	Handle:             keel.Handle[*accountingbackfill.AccountingBackfill]{Ref: &accountingBackfillsRef},
+	TableBase:          keel.TableBase{Ref: &accountingBackfillsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 2}}},
@@ -107,10 +108,10 @@ var AccountingBackfills = &AccountingBackfillsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 17}},
 }
 
-// BuildAccountingBackfills builds the handle of accounting_backfills for ref. Generated relation and alias methods call it.
+// BuildAccountingBackfills builds the table of accounting_backfills for ref. Generated relation and alias methods call it.
 func BuildAccountingBackfills(r *keel.Ref) *AccountingBackfillsTable {
 	return &AccountingBackfillsTable{
-		Handle:             keel.Handle[*accountingbackfill.AccountingBackfill]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -143,6 +144,365 @@ func (t *AccountingBackfillsTable) As(alias string) *AccountingBackfillsTable {
 // Get returns the accounting_backfills row with the given key, or keel.ErrNotFound.
 func (t *AccountingBackfillsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accountingbackfill.AccountingBackfill, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccountingBackfillsQuery is a query over accountingbackfill.AccountingBackfill.
+type AccountingBackfillsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accountingbackfill.AccountingBackfill] = (*AccountingBackfillsTable)(nil)
+
+var _ keel.Query[*accountingbackfill.AccountingBackfill] = (*AccountingBackfillsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccountingBackfillsTable) Query() keel.Query[*accountingbackfill.AccountingBackfill] {
+	return &AccountingBackfillsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccountingBackfillsQuery.Where.
+func (t *AccountingBackfillsTable) Where(ps ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccountingBackfillsQuery.Pick.
+func (t *AccountingBackfillsTable) Pick(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccountingBackfillsQuery.Load.
+func (t *AccountingBackfillsTable) Load(ls ...keel.Loader) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccountingBackfillsQuery.Omit.
+func (t *AccountingBackfillsTable) Omit(cols ...keel.Column) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccountingBackfillsQuery.Order.
+func (t *AccountingBackfillsTable) Order(os ...keel.Order) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccountingBackfillsQuery.Limit.
+func (t *AccountingBackfillsTable) Limit(n int) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccountingBackfillsQuery.Group.
+func (t *AccountingBackfillsTable) Group(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccountingBackfillsQuery.GroupingSets.
+func (t *AccountingBackfillsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccountingBackfillsQuery.Rollup.
+func (t *AccountingBackfillsTable) Rollup(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccountingBackfillsQuery.Cube.
+func (t *AccountingBackfillsTable) Cube(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccountingBackfillsQuery.AllTenants.
+func (t *AccountingBackfillsTable) AllTenants() keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccountingBackfillsQuery.Join.
+func (t *AccountingBackfillsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccountingBackfillsQuery.LeftJoin.
+func (t *AccountingBackfillsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccountingBackfillsQuery.LeftJoinLateral.
+func (t *AccountingBackfillsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccountingBackfillsQuery.JoinLateral.
+func (t *AccountingBackfillsTable) JoinLateral(sub keel.LateralSource) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccountingBackfillsQuery.Lock.
+func (t *AccountingBackfillsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccountingBackfillsQuery.DistinctOn.
+func (t *AccountingBackfillsTable) DistinctOn(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccountingBackfillsQuery.Cache.
+func (t *AccountingBackfillsTable) Cache(opts ...keel.CacheOption) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccountingBackfillsQuery.LoadStrategy.
+func (t *AccountingBackfillsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccountingBackfillsQuery.With.
+func (t *AccountingBackfillsTable) With(ctes ...*keel.CTETable) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccountingBackfillsQuery.Compute.
+func (t *AccountingBackfillsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccountingBackfillsTable) Create(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccountingBackfillsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccountingBackfillsTable) Save(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccountingBackfillsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccountingBackfillsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccountingBackfillsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccountingBackfillsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccountingBackfillsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccountingBackfillsQuery) Where(ps ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccountingBackfillsQuery) Pick(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccountingBackfillsQuery) Omit(cols ...keel.Column) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccountingBackfillsQuery) Load(ls ...keel.Loader) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccountingBackfillsQuery) Order(os ...keel.Order) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccountingBackfillsQuery) Distinct() keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccountingBackfillsQuery) Group(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccountingBackfillsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccountingBackfillsQuery) Rollup(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccountingBackfillsQuery) Cube(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccountingBackfillsQuery) Window(name string, w keel.Window) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccountingBackfillsQuery) Having(ps ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccountingBackfillsQuery) Limit(n int) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccountingBackfillsQuery) Offset(n int) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccountingBackfillsQuery) DistinctOn(es ...keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccountingBackfillsQuery) AllTenants() keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccountingBackfillsQuery) CustomPlan() keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccountingBackfillsQuery) Timeout(d time.Duration) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccountingBackfillsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccountingBackfillsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccountingBackfillsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccountingBackfillsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccountingBackfillsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccountingBackfillsQuery) Cache(opts ...keel.CacheOption) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccountingBackfillsQuery) With(ctes ...*keel.CTETable) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccountingBackfillsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccountingBackfillsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingbackfill.AccountingBackfill] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccountingBackfillsQuery) Clone() keel.Query[*accountingbackfill.AccountingBackfill] {
+	return &AccountingBackfillsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccountingBackfillsQuery) One(ctx context.Context, db *keel.DB) (*accountingbackfill.AccountingBackfill, error) {
+	return keel.One[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccountingBackfillsQuery) First(ctx context.Context, db *keel.DB) (*accountingbackfill.AccountingBackfill, error) {
+	return keel.First[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccountingBackfillsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingbackfill.AccountingBackfill, error) {
+	return keel.List[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccountingBackfillsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingbackfill.AccountingBackfill, error) {
+	return keel.All[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccountingBackfillsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingbackfill.AccountingBackfill, error) {
+	return keel.UpdateReturning[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccountingBackfillsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingbackfill.AccountingBackfill], error) {
+	return keel.PageOf[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccountingBackfillsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingbackfill.AccountingBackfill) error) error {
+	return keel.Each[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccountingBackfill() unsafe.Pointer {

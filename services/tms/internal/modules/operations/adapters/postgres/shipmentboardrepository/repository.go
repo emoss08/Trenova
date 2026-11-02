@@ -45,7 +45,7 @@ func NewWatchlistRepository(
 	return r
 }
 
-func scoped(scope *shipmentboardports.ShipmentBoardScope) (*keel.Query[*shipment.Shipment], error) {
+func scoped(scope *shipmentboardports.ShipmentBoardScope) (keel.Query[*shipment.Shipment], error) {
 	if scope == nil {
 		return nil, ErrScopeMissing
 	}
@@ -148,10 +148,10 @@ func (r *Repository) QuickFilterTotals(
 }
 
 func quickFilterTotalsQuery(
-	q *keel.Query[*shipment.Shipment],
+	q keel.Query[*shipment.Shipment],
 	basis *shipmentports.ShipmentQuickFilterBasis,
 	filters []quickfilter.QuickFilterSpec,
-) (*keel.Query[*shipment.Shipment], error) {
+) (keel.Query[*shipment.Shipment], error) {
 	counts := make([]keel.Int64Value, 0, len(filters))
 	revenues := make([]keel.StringValue, 0, len(filters))
 	for _, spec := range filters {

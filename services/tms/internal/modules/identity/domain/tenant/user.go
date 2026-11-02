@@ -91,6 +91,7 @@ type User struct {
 	AwayDelegateUserID    *pulid.ID              `json:"awayDelegateUserId"    keel:"away_delegate_user_id"`
 	AwayNote              string                 `json:"awayNote"              keel:"away_note"`
 	PasswordChangedAt     *int64                 `json:"passwordChangedAt"     keel:"password_changed_at"`
+	SessionEpoch          int64                  `json:"-"                     keel:"session_epoch"`
 	AssistantHidden       bool                   `json:"assistantHidden"       keel:"assistant_hidden"`
 
 	BusinessUnit        *BusinessUnit              `json:"-"`

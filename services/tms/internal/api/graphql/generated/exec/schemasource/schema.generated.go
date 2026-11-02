@@ -28013,7 +28013,7 @@ type Shipment {
   tariffInputs: JSON!
   "The freight the shipment bills, line by line, as its last rating produced it."
   freightLines: [ShipmentFreightLine!]!
-  totalChargeAmount: Decimal!
+  totalChargeAmount: Decimal
   pieces: Int
   weight: Int
   temperatureMin: Int

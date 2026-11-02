@@ -4,6 +4,7 @@ package rateimportdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -75,7 +76,7 @@ var rateImportBatchesRef = keel.Ref{Table: &rateImportBatchesTable}
 
 // RateImportBatchesTable is the table of rateimport.RateImportBatch.
 type RateImportBatchesTable struct {
-	keel.Handle[*rateimport.RateImportBatch]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -101,7 +102,7 @@ type RateImportBatchesTable struct {
 
 // RateImportBatches references the rate_import_batches table.
 var RateImportBatches = &RateImportBatchesTable{
-	Handle:          keel.Handle[*rateimport.RateImportBatch]{Ref: &rateImportBatchesRef},
+	TableBase:       keel.TableBase{Ref: &rateImportBatchesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 2}}},
@@ -125,10 +126,10 @@ var RateImportBatches = &RateImportBatchesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 20}},
 }
 
-// BuildRateImportBatches builds the handle of rate_import_batches for ref. Generated relation and alias methods call it.
+// BuildRateImportBatches builds the table of rate_import_batches for ref. Generated relation and alias methods call it.
 func BuildRateImportBatches(r *keel.Ref) *RateImportBatchesTable {
 	return &RateImportBatchesTable{
-		Handle:          keel.Handle[*rateimport.RateImportBatch]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -174,6 +175,365 @@ func (t *RateImportBatchesTable) Rows() *RateImportRowsTable {
 // Get returns the rate_import_batches row with the given key, or keel.ErrNotFound.
 func (t *RateImportBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateimport.RateImportBatch, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateImportBatchesQuery is a query over rateimport.RateImportBatch.
+type RateImportBatchesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateimport.RateImportBatch] = (*RateImportBatchesTable)(nil)
+
+var _ keel.Query[*rateimport.RateImportBatch] = (*RateImportBatchesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateImportBatchesTable) Query() keel.Query[*rateimport.RateImportBatch] {
+	return &RateImportBatchesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateImportBatchesQuery.Where.
+func (t *RateImportBatchesTable) Where(ps ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateImportBatchesQuery.Pick.
+func (t *RateImportBatchesTable) Pick(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateImportBatchesQuery.Load.
+func (t *RateImportBatchesTable) Load(ls ...keel.Loader) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateImportBatchesQuery.Omit.
+func (t *RateImportBatchesTable) Omit(cols ...keel.Column) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateImportBatchesQuery.Order.
+func (t *RateImportBatchesTable) Order(os ...keel.Order) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateImportBatchesQuery.Limit.
+func (t *RateImportBatchesTable) Limit(n int) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateImportBatchesQuery.Group.
+func (t *RateImportBatchesTable) Group(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateImportBatchesQuery.GroupingSets.
+func (t *RateImportBatchesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateImportBatchesQuery.Rollup.
+func (t *RateImportBatchesTable) Rollup(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateImportBatchesQuery.Cube.
+func (t *RateImportBatchesTable) Cube(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateImportBatchesQuery.AllTenants.
+func (t *RateImportBatchesTable) AllTenants() keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateImportBatchesQuery.Join.
+func (t *RateImportBatchesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateImportBatchesQuery.LeftJoin.
+func (t *RateImportBatchesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateImportBatchesQuery.LeftJoinLateral.
+func (t *RateImportBatchesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateImportBatchesQuery.JoinLateral.
+func (t *RateImportBatchesTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateImportBatchesQuery.Lock.
+func (t *RateImportBatchesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateImportBatchesQuery.DistinctOn.
+func (t *RateImportBatchesTable) DistinctOn(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateImportBatchesQuery.Cache.
+func (t *RateImportBatchesTable) Cache(opts ...keel.CacheOption) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateImportBatchesQuery.LoadStrategy.
+func (t *RateImportBatchesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateImportBatchesQuery.With.
+func (t *RateImportBatchesTable) With(ctes ...*keel.CTETable) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateImportBatchesQuery.Compute.
+func (t *RateImportBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateImportBatchesTable) Create(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateImportBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateImportBatchesTable) Save(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateImportBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateImportBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateImportBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateImportBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateImportBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateImportBatchesQuery) Where(ps ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateImportBatchesQuery) Pick(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateImportBatchesQuery) Omit(cols ...keel.Column) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateImportBatchesQuery) Load(ls ...keel.Loader) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateImportBatchesQuery) Order(os ...keel.Order) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateImportBatchesQuery) Distinct() keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateImportBatchesQuery) Group(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateImportBatchesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateImportBatchesQuery) Rollup(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateImportBatchesQuery) Cube(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateImportBatchesQuery) Window(name string, w keel.Window) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateImportBatchesQuery) Having(ps ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateImportBatchesQuery) Limit(n int) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateImportBatchesQuery) Offset(n int) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateImportBatchesQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateImportBatchesQuery) AllTenants() keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateImportBatchesQuery) CustomPlan() keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateImportBatchesQuery) Timeout(d time.Duration) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateImportBatchesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateImportBatchesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateImportBatchesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateImportBatchesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateImportBatchesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateImportBatchesQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateImportBatchesQuery) With(ctes ...*keel.CTETable) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateImportBatchesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateImportBatchesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateimport.RateImportBatch] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateImportBatchesQuery) Clone() keel.Query[*rateimport.RateImportBatch] {
+	return &RateImportBatchesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateImportBatchesQuery) One(ctx context.Context, db *keel.DB) (*rateimport.RateImportBatch, error) {
+	return keel.One[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateImportBatchesQuery) First(ctx context.Context, db *keel.DB) (*rateimport.RateImportBatch, error) {
+	return keel.First[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateImportBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportBatch, error) {
+	return keel.List[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateImportBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportBatch, error) {
+	return keel.All[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateImportBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateimport.RateImportBatch, error) {
+	return keel.UpdateReturning[*rateimport.RateImportBatch](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateImportBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateimport.RateImportBatch], error) {
+	return keel.PageOf[*rateimport.RateImportBatch](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateImportBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateimport.RateImportBatch) error) error {
+	return keel.Each[*rateimport.RateImportBatch](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateImportBatch() unsafe.Pointer { return unsafe.Pointer(new(rateimport.RateImportBatch)) }
@@ -365,7 +725,7 @@ var rateImportRowsRef = keel.Ref{Table: &rateImportRowsTable}
 
 // RateImportRowsTable is the table of rateimport.RateImportRow.
 type RateImportRowsTable struct {
-	keel.Handle[*rateimport.RateImportRow]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -380,7 +740,7 @@ type RateImportRowsTable struct {
 
 // RateImportRows references the rate_import_rows table.
 var RateImportRows = &RateImportRowsTable{
-	Handle:            keel.Handle[*rateimport.RateImportRow]{Ref: &rateImportRowsRef},
+	TableBase:         keel.TableBase{Ref: &rateImportRowsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 2}}},
@@ -393,10 +753,10 @@ var RateImportRows = &RateImportRowsTable{
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &rateImportRowsRef, Index: 9}},
 }
 
-// BuildRateImportRows builds the handle of rate_import_rows for ref. Generated relation and alias methods call it.
+// BuildRateImportRows builds the table of rate_import_rows for ref. Generated relation and alias methods call it.
 func BuildRateImportRows(r *keel.Ref) *RateImportRowsTable {
 	return &RateImportRowsTable{
-		Handle:            keel.Handle[*rateimport.RateImportRow]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -426,6 +786,365 @@ func (t *RateImportRowsTable) Batch() *RateImportBatchesTable {
 // Get returns the rate_import_rows row with the given key, or keel.ErrNotFound.
 func (t *RateImportRowsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateimport.RateImportRow, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateImportRowsQuery is a query over rateimport.RateImportRow.
+type RateImportRowsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateimport.RateImportRow] = (*RateImportRowsTable)(nil)
+
+var _ keel.Query[*rateimport.RateImportRow] = (*RateImportRowsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateImportRowsTable) Query() keel.Query[*rateimport.RateImportRow] {
+	return &RateImportRowsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateImportRowsQuery.Where.
+func (t *RateImportRowsTable) Where(ps ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateImportRowsQuery.Pick.
+func (t *RateImportRowsTable) Pick(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateImportRowsQuery.Load.
+func (t *RateImportRowsTable) Load(ls ...keel.Loader) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateImportRowsQuery.Omit.
+func (t *RateImportRowsTable) Omit(cols ...keel.Column) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateImportRowsQuery.Order.
+func (t *RateImportRowsTable) Order(os ...keel.Order) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateImportRowsQuery.Limit.
+func (t *RateImportRowsTable) Limit(n int) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateImportRowsQuery.Group.
+func (t *RateImportRowsTable) Group(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateImportRowsQuery.GroupingSets.
+func (t *RateImportRowsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateImportRowsQuery.Rollup.
+func (t *RateImportRowsTable) Rollup(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateImportRowsQuery.Cube.
+func (t *RateImportRowsTable) Cube(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateImportRowsQuery.AllTenants.
+func (t *RateImportRowsTable) AllTenants() keel.Query[*rateimport.RateImportRow] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateImportRowsQuery.Join.
+func (t *RateImportRowsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateImportRowsQuery.LeftJoin.
+func (t *RateImportRowsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateImportRowsQuery.LeftJoinLateral.
+func (t *RateImportRowsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateImportRowsQuery.JoinLateral.
+func (t *RateImportRowsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateImportRowsQuery.Lock.
+func (t *RateImportRowsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateImportRowsQuery.DistinctOn.
+func (t *RateImportRowsTable) DistinctOn(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateImportRowsQuery.Cache.
+func (t *RateImportRowsTable) Cache(opts ...keel.CacheOption) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateImportRowsQuery.LoadStrategy.
+func (t *RateImportRowsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateImportRowsQuery.With.
+func (t *RateImportRowsTable) With(ctes ...*keel.CTETable) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateImportRowsQuery.Compute.
+func (t *RateImportRowsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateImportRowsTable) Create(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateImportRowsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateImportRowsTable) Save(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateImportRowsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateImportRowsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateImportRowsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateImportRowsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateImportRowsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateImportRowsQuery) Where(ps ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateImportRowsQuery) Pick(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateImportRowsQuery) Omit(cols ...keel.Column) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateImportRowsQuery) Load(ls ...keel.Loader) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateImportRowsQuery) Order(os ...keel.Order) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateImportRowsQuery) Distinct() keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateImportRowsQuery) Group(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateImportRowsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateImportRowsQuery) Rollup(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateImportRowsQuery) Cube(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateImportRowsQuery) Window(name string, w keel.Window) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateImportRowsQuery) Having(ps ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateImportRowsQuery) Limit(n int) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateImportRowsQuery) Offset(n int) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateImportRowsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateImportRowsQuery) AllTenants() keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateImportRowsQuery) CustomPlan() keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateImportRowsQuery) Timeout(d time.Duration) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateImportRowsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateImportRowsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateImportRowsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateImportRowsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateImportRowsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateImportRowsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateImportRowsQuery) With(ctes ...*keel.CTETable) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateImportRowsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateImportRowsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateimport.RateImportRow] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateImportRowsQuery) Clone() keel.Query[*rateimport.RateImportRow] {
+	return &RateImportRowsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateImportRowsQuery) One(ctx context.Context, db *keel.DB) (*rateimport.RateImportRow, error) {
+	return keel.One[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateImportRowsQuery) First(ctx context.Context, db *keel.DB) (*rateimport.RateImportRow, error) {
+	return keel.First[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateImportRowsQuery) List(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportRow, error) {
+	return keel.List[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateImportRowsQuery) All(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportRow, error) {
+	return keel.All[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateImportRowsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateimport.RateImportRow, error) {
+	return keel.UpdateReturning[*rateimport.RateImportRow](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateImportRowsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateimport.RateImportRow], error) {
+	return keel.PageOf[*rateimport.RateImportRow](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateImportRowsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateimport.RateImportRow) error) error {
+	return keel.Each[*rateimport.RateImportRow](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateImportRow() unsafe.Pointer { return unsafe.Pointer(new(rateimport.RateImportRow)) }

@@ -97,7 +97,7 @@ and still break production or the build.
   reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
   `writecoverage.yml`; access changes are audited through `SecurityAuditor`.
 - **Generics.** No exported type or signature mentions a concrete generic type that has methods,
-  and no widely reachable type holds a `sync.Map`; see "Generics and build time" in
+  and no widely reachable type holds a `sync.Map` (`genericlint`); see "Generics and build time" in
   [module-architecture.md](docs/engineering/module-architecture.md).
 - **Small packages.** One abstraction per package, within 1,500 lines (domain, ports, contract,
   `pkg`, `shared`) or 3,000 (everything else); `pkgsizelint` enforces it. See "Small packages" in

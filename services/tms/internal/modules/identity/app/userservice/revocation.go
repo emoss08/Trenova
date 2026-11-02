@@ -6,18 +6,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
-)
-
-const (
-	revokedAllSessions          = "all"
-	revokedOrganizationSessions = "organization"
 )
 
 func lostSignInAccess(before, after *tenant.User) bool {
@@ -41,8 +35,30 @@ func (s *Service) endAllSessions(
 		return fmt.Errorf("end sessions for user %s: %w", userID, err)
 	}
 
-	s.recordSessionsEnded(ctx, tenantInfo, userID, revokedAllSessions)
+	s.recordSessionsEnded(ctx, tenantInfo, userID, iamports.SessionRevocationAll)
 	return nil
+}
+
+func (s *Service) endOtherSessions(ctx context.Context, scope *SessionScope) (int, error) {
+	sessions, err := s.sr.ListForUser(ctx, scope.TenantInfo.UserID)
+	if err != nil {
+		return 0, fmt.Errorf("list sessions for user %s: %w", scope.TenantInfo.UserID, err)
+	}
+
+	var errs []error
+	ended := 0
+	for _, sess := range sessions {
+		if sess.ID == scope.CurrentSessionID {
+			continue
+		}
+		if err = s.sr.Delete(ctx, sess.ID); err != nil {
+			errs = append(errs, fmt.Errorf("end session %s: %w", sess.ID, err))
+			continue
+		}
+		ended++
+	}
+
+	return ended, errors.Join(errs...)
 }
 
 func (s *Service) endLingeringSessions(
@@ -90,7 +106,7 @@ func (s *Service) endOrganizationSessions(
 	}
 
 	if ended > 0 {
-		s.recordSessionsEnded(ctx, tenantInfo, userID, revokedOrganizationSessions)
+		s.recordSessionsEnded(ctx, tenantInfo, userID, iamports.SessionRevocationOrganization)
 	}
 
 	return errors.Join(errs...)
@@ -226,12 +242,5 @@ func (s *Service) recordSessionsEnded(
 	if s.authEvents == nil {
 		return
 	}
-	s.authEvents.Record(ctx, &iamports.AuthEventRecord{
-		Provider:       iamports.AuthEventProviderSessionRevoked,
-		Outcome:        iam.AuthEventOutcomeSuccess,
-		UserID:         userID,
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		MFAState:       scope,
-	})
+	s.authEvents.Record(ctx, iamports.SessionRevokedEvent(tenantInfo, userID, scope))
 }

@@ -4,6 +4,7 @@ package ratezonedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -64,7 +65,7 @@ var rateZonesRef = keel.Ref{Table: &rateZonesTable}
 
 // RateZonesTable is the table of ratezone.RateZone.
 type RateZonesTable struct {
-	keel.Handle[*ratezone.RateZone]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -82,7 +83,7 @@ type RateZonesTable struct {
 
 // RateZones references the rate_zones table.
 var RateZones = &RateZonesTable{
-	Handle:         keel.Handle[*ratezone.RateZone]{Ref: &rateZonesRef},
+	TableBase:      keel.TableBase{Ref: &rateZonesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 2}}},
@@ -98,10 +99,10 @@ var RateZones = &RateZonesTable{
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &rateZonesRef, Index: 12}},
 }
 
-// BuildRateZones builds the handle of rate_zones for ref. Generated relation and alias methods call it.
+// BuildRateZones builds the table of rate_zones for ref. Generated relation and alias methods call it.
 func BuildRateZones(r *keel.Ref) *RateZonesTable {
 	return &RateZonesTable{
-		Handle:         keel.Handle[*ratezone.RateZone]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -134,6 +135,365 @@ func (t *RateZonesTable) Members() *RateZoneMembersTable {
 // Get returns the rate_zones row with the given key, or keel.ErrNotFound.
 func (t *RateZonesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratezone.RateZone, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateZonesQuery is a query over ratezone.RateZone.
+type RateZonesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratezone.RateZone] = (*RateZonesTable)(nil)
+
+var _ keel.Query[*ratezone.RateZone] = (*RateZonesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateZonesTable) Query() keel.Query[*ratezone.RateZone] {
+	return &RateZonesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateZonesQuery.Where.
+func (t *RateZonesTable) Where(ps ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateZonesQuery.Pick.
+func (t *RateZonesTable) Pick(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateZonesQuery.Load.
+func (t *RateZonesTable) Load(ls ...keel.Loader) keel.Query[*ratezone.RateZone] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateZonesQuery.Omit.
+func (t *RateZonesTable) Omit(cols ...keel.Column) keel.Query[*ratezone.RateZone] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateZonesQuery.Order.
+func (t *RateZonesTable) Order(os ...keel.Order) keel.Query[*ratezone.RateZone] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateZonesQuery.Limit.
+func (t *RateZonesTable) Limit(n int) keel.Query[*ratezone.RateZone] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateZonesQuery.Group.
+func (t *RateZonesTable) Group(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateZonesQuery.GroupingSets.
+func (t *RateZonesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateZonesQuery.Rollup.
+func (t *RateZonesTable) Rollup(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateZonesQuery.Cube.
+func (t *RateZonesTable) Cube(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateZonesQuery.AllTenants.
+func (t *RateZonesTable) AllTenants() keel.Query[*ratezone.RateZone] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateZonesQuery.Join.
+func (t *RateZonesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateZonesQuery.LeftJoin.
+func (t *RateZonesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateZonesQuery.LeftJoinLateral.
+func (t *RateZonesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZone] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateZonesQuery.JoinLateral.
+func (t *RateZonesTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZone] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateZonesQuery.Lock.
+func (t *RateZonesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratezone.RateZone] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateZonesQuery.DistinctOn.
+func (t *RateZonesTable) DistinctOn(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateZonesQuery.Cache.
+func (t *RateZonesTable) Cache(opts ...keel.CacheOption) keel.Query[*ratezone.RateZone] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateZonesQuery.LoadStrategy.
+func (t *RateZonesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratezone.RateZone] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateZonesQuery.With.
+func (t *RateZonesTable) With(ctes ...*keel.CTETable) keel.Query[*ratezone.RateZone] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateZonesQuery.Compute.
+func (t *RateZonesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratezone.RateZone] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateZonesTable) Create(ctx context.Context, db *keel.DB, row *ratezone.RateZone) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateZonesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateZonesTable) Save(ctx context.Context, db *keel.DB, row *ratezone.RateZone, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateZonesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratezone.RateZone, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateZonesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratezone.RateZone) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateZonesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateZonesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateZonesTable) Copy(ctx context.Context, db *keel.DB, rows []*ratezone.RateZone) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateZonesQuery) Where(ps ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateZonesQuery) Pick(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateZonesQuery) Omit(cols ...keel.Column) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateZonesQuery) Load(ls ...keel.Loader) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateZonesQuery) Order(os ...keel.Order) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateZonesQuery) Distinct() keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateZonesQuery) Group(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateZonesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateZonesQuery) Rollup(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateZonesQuery) Cube(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateZonesQuery) Window(name string, w keel.Window) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateZonesQuery) Having(ps ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateZonesQuery) Limit(n int) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateZonesQuery) Offset(n int) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateZonesQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateZonesQuery) AllTenants() keel.Query[*ratezone.RateZone] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateZonesQuery) CustomPlan() keel.Query[*ratezone.RateZone] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateZonesQuery) Timeout(d time.Duration) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateZonesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateZonesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateZonesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateZonesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateZonesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateZonesQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateZonesQuery) With(ctes ...*keel.CTETable) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateZonesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateZonesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratezone.RateZone] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateZonesQuery) Clone() keel.Query[*ratezone.RateZone] {
+	return &RateZonesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateZonesQuery) One(ctx context.Context, db *keel.DB) (*ratezone.RateZone, error) {
+	return keel.One[*ratezone.RateZone](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateZonesQuery) First(ctx context.Context, db *keel.DB) (*ratezone.RateZone, error) {
+	return keel.First[*ratezone.RateZone](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateZonesQuery) List(ctx context.Context, db *keel.DB) ([]*ratezone.RateZone, error) {
+	return keel.List[*ratezone.RateZone](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateZonesQuery) All(ctx context.Context, db *keel.DB) ([]*ratezone.RateZone, error) {
+	return keel.All[*ratezone.RateZone](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateZonesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratezone.RateZone, error) {
+	return keel.UpdateReturning[*ratezone.RateZone](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateZonesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratezone.RateZone], error) {
+	return keel.PageOf[*ratezone.RateZone](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateZonesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratezone.RateZone) error) error {
+	return keel.Each[*ratezone.RateZone](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateZone() unsafe.Pointer { return unsafe.Pointer(new(ratezone.RateZone)) }
@@ -273,7 +633,7 @@ var rateZoneMembersRef = keel.Ref{Table: &rateZoneMembersTable}
 
 // RateZoneMembersTable is the table of ratezone.RateZoneMember.
 type RateZoneMembersTable struct {
-	keel.Handle[*ratezone.RateZoneMember]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -288,7 +648,7 @@ type RateZoneMembersTable struct {
 
 // RateZoneMembers references the rate_zone_members table.
 var RateZoneMembers = &RateZoneMembersTable{
-	Handle:         keel.Handle[*ratezone.RateZoneMember]{Ref: &rateZoneMembersRef},
+	TableBase:      keel.TableBase{Ref: &rateZoneMembersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 2}}},
@@ -301,10 +661,10 @@ var RateZoneMembers = &RateZoneMembersTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &rateZoneMembersRef, Index: 9}},
 }
 
-// BuildRateZoneMembers builds the handle of rate_zone_members for ref. Generated relation and alias methods call it.
+// BuildRateZoneMembers builds the table of rate_zone_members for ref. Generated relation and alias methods call it.
 func BuildRateZoneMembers(r *keel.Ref) *RateZoneMembersTable {
 	return &RateZoneMembersTable{
-		Handle:         keel.Handle[*ratezone.RateZoneMember]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -332,6 +692,365 @@ func (t *RateZoneMembersTable) RateZone() *RateZonesTable { return keel.Path(t.R
 // Get returns the rate_zone_members row with the given key, or keel.ErrNotFound.
 func (t *RateZoneMembersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratezone.RateZoneMember, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateZoneMembersQuery is a query over ratezone.RateZoneMember.
+type RateZoneMembersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratezone.RateZoneMember] = (*RateZoneMembersTable)(nil)
+
+var _ keel.Query[*ratezone.RateZoneMember] = (*RateZoneMembersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateZoneMembersTable) Query() keel.Query[*ratezone.RateZoneMember] {
+	return &RateZoneMembersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateZoneMembersQuery.Where.
+func (t *RateZoneMembersTable) Where(ps ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateZoneMembersQuery.Pick.
+func (t *RateZoneMembersTable) Pick(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateZoneMembersQuery.Load.
+func (t *RateZoneMembersTable) Load(ls ...keel.Loader) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateZoneMembersQuery.Omit.
+func (t *RateZoneMembersTable) Omit(cols ...keel.Column) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateZoneMembersQuery.Order.
+func (t *RateZoneMembersTable) Order(os ...keel.Order) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateZoneMembersQuery.Limit.
+func (t *RateZoneMembersTable) Limit(n int) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateZoneMembersQuery.Group.
+func (t *RateZoneMembersTable) Group(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateZoneMembersQuery.GroupingSets.
+func (t *RateZoneMembersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateZoneMembersQuery.Rollup.
+func (t *RateZoneMembersTable) Rollup(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateZoneMembersQuery.Cube.
+func (t *RateZoneMembersTable) Cube(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateZoneMembersQuery.AllTenants.
+func (t *RateZoneMembersTable) AllTenants() keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateZoneMembersQuery.Join.
+func (t *RateZoneMembersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateZoneMembersQuery.LeftJoin.
+func (t *RateZoneMembersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateZoneMembersQuery.LeftJoinLateral.
+func (t *RateZoneMembersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateZoneMembersQuery.JoinLateral.
+func (t *RateZoneMembersTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateZoneMembersQuery.Lock.
+func (t *RateZoneMembersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateZoneMembersQuery.DistinctOn.
+func (t *RateZoneMembersTable) DistinctOn(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateZoneMembersQuery.Cache.
+func (t *RateZoneMembersTable) Cache(opts ...keel.CacheOption) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateZoneMembersQuery.LoadStrategy.
+func (t *RateZoneMembersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateZoneMembersQuery.With.
+func (t *RateZoneMembersTable) With(ctes ...*keel.CTETable) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateZoneMembersQuery.Compute.
+func (t *RateZoneMembersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateZoneMembersTable) Create(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateZoneMembersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateZoneMembersTable) Save(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateZoneMembersTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateZoneMembersTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratezone.RateZoneMember) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateZoneMembersTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateZoneMembersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateZoneMembersTable) Copy(ctx context.Context, db *keel.DB, rows []*ratezone.RateZoneMember) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateZoneMembersQuery) Where(ps ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateZoneMembersQuery) Pick(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateZoneMembersQuery) Omit(cols ...keel.Column) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateZoneMembersQuery) Load(ls ...keel.Loader) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateZoneMembersQuery) Order(os ...keel.Order) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateZoneMembersQuery) Distinct() keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateZoneMembersQuery) Group(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateZoneMembersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateZoneMembersQuery) Rollup(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateZoneMembersQuery) Cube(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateZoneMembersQuery) Window(name string, w keel.Window) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateZoneMembersQuery) Having(ps ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateZoneMembersQuery) Limit(n int) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateZoneMembersQuery) Offset(n int) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateZoneMembersQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateZoneMembersQuery) AllTenants() keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateZoneMembersQuery) CustomPlan() keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateZoneMembersQuery) Timeout(d time.Duration) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateZoneMembersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateZoneMembersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateZoneMembersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateZoneMembersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateZoneMembersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateZoneMembersQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateZoneMembersQuery) With(ctes ...*keel.CTETable) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateZoneMembersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateZoneMembersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratezone.RateZoneMember] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateZoneMembersQuery) Clone() keel.Query[*ratezone.RateZoneMember] {
+	return &RateZoneMembersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateZoneMembersQuery) One(ctx context.Context, db *keel.DB) (*ratezone.RateZoneMember, error) {
+	return keel.One[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateZoneMembersQuery) First(ctx context.Context, db *keel.DB) (*ratezone.RateZoneMember, error) {
+	return keel.First[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateZoneMembersQuery) List(ctx context.Context, db *keel.DB) ([]*ratezone.RateZoneMember, error) {
+	return keel.List[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateZoneMembersQuery) All(ctx context.Context, db *keel.DB) ([]*ratezone.RateZoneMember, error) {
+	return keel.All[*ratezone.RateZoneMember](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateZoneMembersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratezone.RateZoneMember, error) {
+	return keel.UpdateReturning[*ratezone.RateZoneMember](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateZoneMembersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratezone.RateZoneMember], error) {
+	return keel.PageOf[*ratezone.RateZoneMember](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateZoneMembersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratezone.RateZoneMember) error) error {
+	return keel.Each[*ratezone.RateZoneMember](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateZoneMember() unsafe.Pointer { return unsafe.Pointer(new(ratezone.RateZoneMember)) }

@@ -54,7 +54,7 @@ func (r *repository) GetLaneStats(
 	)
 }
 
-func laneStats() *keel.Query[*billingqueue.BillingQueueItem] {
+func laneStats() keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 
 	return bq.Pick(bq.Lane, keel.Count(), bq.AllocatedTotalAmountMinor.Sum()).
@@ -125,13 +125,13 @@ func (r *repository) GetPulse(
 	)
 }
 
-func oldestWaiting() *keel.Query[*billingqueue.BillingQueueItem] {
+func oldestWaiting() keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 
 	return bq.Pick(bq.CreatedAt.Min()).Where(bq.Lane.In(billingqueue.ReviewLanes()...))
 }
 
-func approvedSince(dayStart int64) *keel.Query[*billingqueue.BillingQueueItem] {
+func approvedSince(dayStart int64) keel.Query[*billingqueue.BillingQueueItem] {
 	bq := billingqueuedb.BillingQueueItems
 	duration := bq.ReviewCompletedAt.Sub(bq.ReviewStartedAt)
 
@@ -145,7 +145,7 @@ func approvedSince(dayStart int64) *keel.Query[*billingqueue.BillingQueueItem] {
 	)
 }
 
-func deliveryToInvoice(windowStart, priorStart int64) *keel.Query[*invoice.Invoice] {
+func deliveryToInvoice(windowStart, priorStart int64) keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 	sp := shipmentdb.Shipments
 	lag := inv.CreatedAt.Sub(sp.LastDeliveryArrivalAt)

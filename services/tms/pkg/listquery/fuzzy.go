@@ -139,7 +139,7 @@ func fuzzyList[T any](
 
 type fuzzyRead[T any] struct {
 	match     fuzzyMatch
-	unmatched *keel.Query[*T]
+	unmatched keel.Query[*T]
 	req       *Request[T]
 }
 

@@ -20,7 +20,7 @@ type statsRow struct {
 
 func (r *repository) statsQuery(
 	templateIDs []pulid.ID,
-) *keel.Query[*formulatemplate.FormulaTemplate] {
+) keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
 	rules := keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID)))

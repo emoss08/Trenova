@@ -404,7 +404,7 @@ func reminderQuery(
 	ctx context.Context,
 	req *workertrainingports.ListTrainingRemindersRequest,
 	window keel.Pred,
-) *keel.Query[*workertraining.WorkerTrainingRecord] {
+) keel.Query[*workertraining.WorkerTrainingRecord] {
 	tr := workertrainingdb.WorkerTrainingRecords
 	limit := req.Limit
 	if limit <= 0 {

@@ -4,6 +4,7 @@ package iamdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -62,7 +63,7 @@ var accessPoliciesRef = keel.Ref{Table: &accessPoliciesTable}
 
 // AccessPoliciesTable is the table of iam.AccessPolicy.
 type AccessPoliciesTable struct {
-	keel.Handle[*iam.AccessPolicy]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -79,7 +80,7 @@ type AccessPoliciesTable struct {
 
 // AccessPolicies references the access_policies table.
 var AccessPolicies = &AccessPoliciesTable{
-	Handle:         keel.Handle[*iam.AccessPolicy]{Ref: &accessPoliciesRef},
+	TableBase:      keel.TableBase{Ref: &accessPoliciesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessPoliciesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessPoliciesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessPoliciesRef, Index: 2}}},
@@ -94,10 +95,10 @@ var AccessPolicies = &AccessPoliciesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &accessPoliciesRef, Index: 11}},
 }
 
-// BuildAccessPolicies builds the handle of access_policies for ref. Generated relation and alias methods call it.
+// BuildAccessPolicies builds the table of access_policies for ref. Generated relation and alias methods call it.
 func BuildAccessPolicies(r *keel.Ref) *AccessPoliciesTable {
 	return &AccessPoliciesTable{
-		Handle:         keel.Handle[*iam.AccessPolicy]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -124,6 +125,365 @@ func (t *AccessPoliciesTable) As(alias string) *AccessPoliciesTable {
 // Get returns the access_policies row with the given key, or keel.ErrNotFound.
 func (t *AccessPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.AccessPolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccessPoliciesQuery is a query over iam.AccessPolicy.
+type AccessPoliciesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.AccessPolicy] = (*AccessPoliciesTable)(nil)
+
+var _ keel.Query[*iam.AccessPolicy] = (*AccessPoliciesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccessPoliciesTable) Query() keel.Query[*iam.AccessPolicy] {
+	return &AccessPoliciesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccessPoliciesQuery.Where.
+func (t *AccessPoliciesTable) Where(ps ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccessPoliciesQuery.Pick.
+func (t *AccessPoliciesTable) Pick(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccessPoliciesQuery.Load.
+func (t *AccessPoliciesTable) Load(ls ...keel.Loader) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccessPoliciesQuery.Omit.
+func (t *AccessPoliciesTable) Omit(cols ...keel.Column) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccessPoliciesQuery.Order.
+func (t *AccessPoliciesTable) Order(os ...keel.Order) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccessPoliciesQuery.Limit.
+func (t *AccessPoliciesTable) Limit(n int) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccessPoliciesQuery.Group.
+func (t *AccessPoliciesTable) Group(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccessPoliciesQuery.GroupingSets.
+func (t *AccessPoliciesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccessPoliciesQuery.Rollup.
+func (t *AccessPoliciesTable) Rollup(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccessPoliciesQuery.Cube.
+func (t *AccessPoliciesTable) Cube(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccessPoliciesQuery.AllTenants.
+func (t *AccessPoliciesTable) AllTenants() keel.Query[*iam.AccessPolicy] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccessPoliciesQuery.Join.
+func (t *AccessPoliciesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccessPoliciesQuery.LeftJoin.
+func (t *AccessPoliciesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccessPoliciesQuery.LeftJoinLateral.
+func (t *AccessPoliciesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessPolicy] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccessPoliciesQuery.JoinLateral.
+func (t *AccessPoliciesTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessPolicy] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccessPoliciesQuery.Lock.
+func (t *AccessPoliciesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccessPoliciesQuery.DistinctOn.
+func (t *AccessPoliciesTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccessPoliciesQuery.Cache.
+func (t *AccessPoliciesTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccessPoliciesQuery.LoadStrategy.
+func (t *AccessPoliciesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.AccessPolicy] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccessPoliciesQuery.With.
+func (t *AccessPoliciesTable) With(ctes ...*keel.CTETable) keel.Query[*iam.AccessPolicy] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccessPoliciesQuery.Compute.
+func (t *AccessPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.AccessPolicy] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccessPoliciesTable) Create(ctx context.Context, db *keel.DB, row *iam.AccessPolicy) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccessPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.AccessPolicy) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccessPoliciesTable) Save(ctx context.Context, db *keel.DB, row *iam.AccessPolicy, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccessPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.AccessPolicy, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccessPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.AccessPolicy) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccessPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.AccessPolicy, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccessPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.AccessPolicy, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccessPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.AccessPolicy) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccessPoliciesQuery) Where(ps ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccessPoliciesQuery) Pick(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccessPoliciesQuery) Omit(cols ...keel.Column) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccessPoliciesQuery) Load(ls ...keel.Loader) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccessPoliciesQuery) Order(os ...keel.Order) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccessPoliciesQuery) Distinct() keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccessPoliciesQuery) Group(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccessPoliciesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccessPoliciesQuery) Rollup(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccessPoliciesQuery) Cube(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccessPoliciesQuery) Window(name string, w keel.Window) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccessPoliciesQuery) Having(ps ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccessPoliciesQuery) Limit(n int) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccessPoliciesQuery) Offset(n int) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccessPoliciesQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccessPoliciesQuery) AllTenants() keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccessPoliciesQuery) CustomPlan() keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccessPoliciesQuery) Timeout(d time.Duration) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccessPoliciesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccessPoliciesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccessPoliciesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccessPoliciesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccessPoliciesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccessPoliciesQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccessPoliciesQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccessPoliciesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccessPoliciesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.AccessPolicy] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccessPoliciesQuery) Clone() keel.Query[*iam.AccessPolicy] {
+	return &AccessPoliciesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccessPoliciesQuery) One(ctx context.Context, db *keel.DB) (*iam.AccessPolicy, error) {
+	return keel.One[*iam.AccessPolicy](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccessPoliciesQuery) First(ctx context.Context, db *keel.DB) (*iam.AccessPolicy, error) {
+	return keel.First[*iam.AccessPolicy](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccessPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*iam.AccessPolicy, error) {
+	return keel.List[*iam.AccessPolicy](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccessPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*iam.AccessPolicy, error) {
+	return keel.All[*iam.AccessPolicy](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccessPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.AccessPolicy, error) {
+	return keel.UpdateReturning[*iam.AccessPolicy](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccessPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.AccessPolicy], error) {
+	return keel.PageOf[*iam.AccessPolicy](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccessPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.AccessPolicy) error) error {
+	return keel.Each[*iam.AccessPolicy](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccessPolicy() unsafe.Pointer { return unsafe.Pointer(new(iam.AccessPolicy)) }
@@ -244,7 +604,7 @@ var accessSettingsesRef = keel.Ref{Table: &accessSettingsesTable}
 
 // AccessSettingsesTable is the table of iam.AccessSettings.
 type AccessSettingsesTable struct {
-	keel.Handle[*iam.AccessSettings]
+	keel.TableBase
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	RequireRoleActivation keel.BoolCol
@@ -256,7 +616,7 @@ type AccessSettingsesTable struct {
 
 // AccessSettingses references the organization_access_settings table.
 var AccessSettingses = &AccessSettingsesTable{
-	Handle:                keel.Handle[*iam.AccessSettings]{Ref: &accessSettingsesRef},
+	TableBase:             keel.TableBase{Ref: &accessSettingsesRef},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessSettingsesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessSettingsesRef, Index: 1}}},
 	RequireRoleActivation: keel.BoolCol{Col: keel.Col{Ref: &accessSettingsesRef, Index: 2}},
@@ -266,10 +626,10 @@ var AccessSettingses = &AccessSettingsesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &accessSettingsesRef, Index: 6}},
 }
 
-// BuildAccessSettingses builds the handle of organization_access_settings for ref. Generated relation and alias methods call it.
+// BuildAccessSettingses builds the table of organization_access_settings for ref. Generated relation and alias methods call it.
 func BuildAccessSettingses(r *keel.Ref) *AccessSettingsesTable {
 	return &AccessSettingsesTable{
-		Handle:                keel.Handle[*iam.AccessSettings]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RequireRoleActivation: keel.BoolCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -286,6 +646,365 @@ func AccessSettingsesSchema() *schema.Table { return &accessSettingsesTable }
 // As returns a handle that references organization_access_settings under its own alias.
 func (t *AccessSettingsesTable) As(alias string) *AccessSettingsesTable {
 	return keel.Alias(t.Ref, alias, BuildAccessSettingses)
+}
+
+// AccessSettingsesQuery is a query over iam.AccessSettings.
+type AccessSettingsesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.AccessSettings] = (*AccessSettingsesTable)(nil)
+
+var _ keel.Query[*iam.AccessSettings] = (*AccessSettingsesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccessSettingsesTable) Query() keel.Query[*iam.AccessSettings] {
+	return &AccessSettingsesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccessSettingsesQuery.Where.
+func (t *AccessSettingsesTable) Where(ps ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccessSettingsesQuery.Pick.
+func (t *AccessSettingsesTable) Pick(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccessSettingsesQuery.Load.
+func (t *AccessSettingsesTable) Load(ls ...keel.Loader) keel.Query[*iam.AccessSettings] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccessSettingsesQuery.Omit.
+func (t *AccessSettingsesTable) Omit(cols ...keel.Column) keel.Query[*iam.AccessSettings] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccessSettingsesQuery.Order.
+func (t *AccessSettingsesTable) Order(os ...keel.Order) keel.Query[*iam.AccessSettings] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccessSettingsesQuery.Limit.
+func (t *AccessSettingsesTable) Limit(n int) keel.Query[*iam.AccessSettings] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccessSettingsesQuery.Group.
+func (t *AccessSettingsesTable) Group(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccessSettingsesQuery.GroupingSets.
+func (t *AccessSettingsesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccessSettingsesQuery.Rollup.
+func (t *AccessSettingsesTable) Rollup(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccessSettingsesQuery.Cube.
+func (t *AccessSettingsesTable) Cube(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccessSettingsesQuery.AllTenants.
+func (t *AccessSettingsesTable) AllTenants() keel.Query[*iam.AccessSettings] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccessSettingsesQuery.Join.
+func (t *AccessSettingsesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccessSettingsesQuery.LeftJoin.
+func (t *AccessSettingsesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccessSettingsesQuery.LeftJoinLateral.
+func (t *AccessSettingsesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessSettings] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccessSettingsesQuery.JoinLateral.
+func (t *AccessSettingsesTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessSettings] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccessSettingsesQuery.Lock.
+func (t *AccessSettingsesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.AccessSettings] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccessSettingsesQuery.DistinctOn.
+func (t *AccessSettingsesTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccessSettingsesQuery.Cache.
+func (t *AccessSettingsesTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.AccessSettings] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccessSettingsesQuery.LoadStrategy.
+func (t *AccessSettingsesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.AccessSettings] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccessSettingsesQuery.With.
+func (t *AccessSettingsesTable) With(ctes ...*keel.CTETable) keel.Query[*iam.AccessSettings] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccessSettingsesQuery.Compute.
+func (t *AccessSettingsesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.AccessSettings] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccessSettingsesTable) Create(ctx context.Context, db *keel.DB, row *iam.AccessSettings) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccessSettingsesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.AccessSettings) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccessSettingsesTable) Save(ctx context.Context, db *keel.DB, row *iam.AccessSettings, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccessSettingsesTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.AccessSettings, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccessSettingsesTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.AccessSettings) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccessSettingsesTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.AccessSettings, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccessSettingsesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.AccessSettings, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccessSettingsesTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.AccessSettings) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccessSettingsesQuery) Where(ps ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccessSettingsesQuery) Pick(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccessSettingsesQuery) Omit(cols ...keel.Column) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccessSettingsesQuery) Load(ls ...keel.Loader) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccessSettingsesQuery) Order(os ...keel.Order) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccessSettingsesQuery) Distinct() keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccessSettingsesQuery) Group(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccessSettingsesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccessSettingsesQuery) Rollup(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccessSettingsesQuery) Cube(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccessSettingsesQuery) Window(name string, w keel.Window) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccessSettingsesQuery) Having(ps ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccessSettingsesQuery) Limit(n int) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccessSettingsesQuery) Offset(n int) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccessSettingsesQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccessSettingsesQuery) AllTenants() keel.Query[*iam.AccessSettings] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccessSettingsesQuery) CustomPlan() keel.Query[*iam.AccessSettings] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccessSettingsesQuery) Timeout(d time.Duration) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccessSettingsesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccessSettingsesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccessSettingsesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccessSettingsesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccessSettingsesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccessSettingsesQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccessSettingsesQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccessSettingsesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccessSettingsesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.AccessSettings] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccessSettingsesQuery) Clone() keel.Query[*iam.AccessSettings] {
+	return &AccessSettingsesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccessSettingsesQuery) One(ctx context.Context, db *keel.DB) (*iam.AccessSettings, error) {
+	return keel.One[*iam.AccessSettings](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccessSettingsesQuery) First(ctx context.Context, db *keel.DB) (*iam.AccessSettings, error) {
+	return keel.First[*iam.AccessSettings](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccessSettingsesQuery) List(ctx context.Context, db *keel.DB) ([]*iam.AccessSettings, error) {
+	return keel.List[*iam.AccessSettings](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccessSettingsesQuery) All(ctx context.Context, db *keel.DB) ([]*iam.AccessSettings, error) {
+	return keel.All[*iam.AccessSettings](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccessSettingsesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.AccessSettings, error) {
+	return keel.UpdateReturning[*iam.AccessSettings](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccessSettingsesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.AccessSettings], error) {
+	return keel.PageOf[*iam.AccessSettings](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccessSettingsesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.AccessSettings) error) error {
+	return keel.Each[*iam.AccessSettings](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccessSettings() unsafe.Pointer { return unsafe.Pointer(new(iam.AccessSettings)) }
@@ -390,7 +1109,7 @@ var authEventsRef = keel.Ref{Table: &authEventsTable}
 
 // AuthEventsTable is the table of iam.AuthEvent.
 type AuthEventsTable struct {
-	keel.Handle[*iam.AuthEvent]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	UserID             keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -412,7 +1131,7 @@ type AuthEventsTable struct {
 
 // AuthEvents references the auth_events table.
 var AuthEvents = &AuthEventsTable{
-	Handle:             keel.Handle[*iam.AuthEvent]{Ref: &authEventsRef},
+	TableBase:          keel.TableBase{Ref: &authEventsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &authEventsRef, Index: 0}}},
 	UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &authEventsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &authEventsRef, Index: 2}}},
@@ -432,10 +1151,10 @@ var AuthEvents = &AuthEventsTable{
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &authEventsRef, Index: 16}},
 }
 
-// BuildAuthEvents builds the handle of auth_events for ref. Generated relation and alias methods call it.
+// BuildAuthEvents builds the table of auth_events for ref. Generated relation and alias methods call it.
 func BuildAuthEvents(r *keel.Ref) *AuthEventsTable {
 	return &AuthEventsTable{
-		Handle:             keel.Handle[*iam.AuthEvent]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -467,6 +1186,365 @@ func (t *AuthEventsTable) As(alias string) *AuthEventsTable {
 // Get returns the auth_events row with the given key, or keel.ErrNotFound.
 func (t *AuthEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.AuthEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AuthEventsQuery is a query over iam.AuthEvent.
+type AuthEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.AuthEvent] = (*AuthEventsTable)(nil)
+
+var _ keel.Query[*iam.AuthEvent] = (*AuthEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AuthEventsTable) Query() keel.Query[*iam.AuthEvent] {
+	return &AuthEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AuthEventsQuery.Where.
+func (t *AuthEventsTable) Where(ps ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AuthEventsQuery.Pick.
+func (t *AuthEventsTable) Pick(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AuthEventsQuery.Load.
+func (t *AuthEventsTable) Load(ls ...keel.Loader) keel.Query[*iam.AuthEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AuthEventsQuery.Omit.
+func (t *AuthEventsTable) Omit(cols ...keel.Column) keel.Query[*iam.AuthEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AuthEventsQuery.Order.
+func (t *AuthEventsTable) Order(os ...keel.Order) keel.Query[*iam.AuthEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AuthEventsQuery.Limit.
+func (t *AuthEventsTable) Limit(n int) keel.Query[*iam.AuthEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AuthEventsQuery.Group.
+func (t *AuthEventsTable) Group(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AuthEventsQuery.GroupingSets.
+func (t *AuthEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AuthEventsQuery.Rollup.
+func (t *AuthEventsTable) Rollup(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AuthEventsQuery.Cube.
+func (t *AuthEventsTable) Cube(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AuthEventsQuery.AllTenants.
+func (t *AuthEventsTable) AllTenants() keel.Query[*iam.AuthEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AuthEventsQuery.Join.
+func (t *AuthEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AuthEventsQuery.LeftJoin.
+func (t *AuthEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AuthEventsQuery.LeftJoinLateral.
+func (t *AuthEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.AuthEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AuthEventsQuery.JoinLateral.
+func (t *AuthEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.AuthEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AuthEventsQuery.Lock.
+func (t *AuthEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.AuthEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AuthEventsQuery.DistinctOn.
+func (t *AuthEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AuthEventsQuery.Cache.
+func (t *AuthEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.AuthEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AuthEventsQuery.LoadStrategy.
+func (t *AuthEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.AuthEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AuthEventsQuery.With.
+func (t *AuthEventsTable) With(ctes ...*keel.CTETable) keel.Query[*iam.AuthEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AuthEventsQuery.Compute.
+func (t *AuthEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.AuthEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AuthEventsTable) Create(ctx context.Context, db *keel.DB, row *iam.AuthEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AuthEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.AuthEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AuthEventsTable) Save(ctx context.Context, db *keel.DB, row *iam.AuthEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AuthEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.AuthEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AuthEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.AuthEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AuthEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.AuthEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AuthEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.AuthEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AuthEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.AuthEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AuthEventsQuery) Where(ps ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AuthEventsQuery) Pick(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AuthEventsQuery) Omit(cols ...keel.Column) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AuthEventsQuery) Load(ls ...keel.Loader) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AuthEventsQuery) Order(os ...keel.Order) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AuthEventsQuery) Distinct() keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AuthEventsQuery) Group(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AuthEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AuthEventsQuery) Rollup(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AuthEventsQuery) Cube(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AuthEventsQuery) Window(name string, w keel.Window) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AuthEventsQuery) Having(ps ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AuthEventsQuery) Limit(n int) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AuthEventsQuery) Offset(n int) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AuthEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AuthEventsQuery) AllTenants() keel.Query[*iam.AuthEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AuthEventsQuery) CustomPlan() keel.Query[*iam.AuthEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AuthEventsQuery) Timeout(d time.Duration) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AuthEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AuthEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AuthEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AuthEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AuthEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AuthEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AuthEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AuthEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AuthEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.AuthEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AuthEventsQuery) Clone() keel.Query[*iam.AuthEvent] {
+	return &AuthEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AuthEventsQuery) One(ctx context.Context, db *keel.DB) (*iam.AuthEvent, error) {
+	return keel.One[*iam.AuthEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AuthEventsQuery) First(ctx context.Context, db *keel.DB) (*iam.AuthEvent, error) {
+	return keel.First[*iam.AuthEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AuthEventsQuery) List(ctx context.Context, db *keel.DB) ([]*iam.AuthEvent, error) {
+	return keel.List[*iam.AuthEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AuthEventsQuery) All(ctx context.Context, db *keel.DB) ([]*iam.AuthEvent, error) {
+	return keel.All[*iam.AuthEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AuthEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.AuthEvent, error) {
+	return keel.UpdateReturning[*iam.AuthEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AuthEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.AuthEvent], error) {
+	return keel.PageOf[*iam.AuthEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AuthEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.AuthEvent) error) error {
+	return keel.Each[*iam.AuthEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAuthEvent() unsafe.Pointer { return unsafe.Pointer(new(iam.AuthEvent)) }
@@ -638,7 +1716,7 @@ var externalIdentitiesRef = keel.Ref{Table: &externalIdentitiesTable}
 
 // ExternalIdentitiesTable is the table of iam.ExternalIdentity.
 type ExternalIdentitiesTable struct {
-	keel.Handle[*iam.ExternalIdentity]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	UserID             keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -655,7 +1733,7 @@ type ExternalIdentitiesTable struct {
 
 // ExternalIdentities references the external_identities table.
 var ExternalIdentities = &ExternalIdentitiesTable{
-	Handle:             keel.Handle[*iam.ExternalIdentity]{Ref: &externalIdentitiesRef},
+	TableBase:          keel.TableBase{Ref: &externalIdentitiesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 0}}},
 	UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 2}}},
@@ -670,10 +1748,10 @@ var ExternalIdentities = &ExternalIdentitiesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &externalIdentitiesRef, Index: 11}},
 }
 
-// BuildExternalIdentities builds the handle of external_identities for ref. Generated relation and alias methods call it.
+// BuildExternalIdentities builds the table of external_identities for ref. Generated relation and alias methods call it.
 func BuildExternalIdentities(r *keel.Ref) *ExternalIdentitiesTable {
 	return &ExternalIdentitiesTable{
-		Handle:             keel.Handle[*iam.ExternalIdentity]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -700,6 +1778,365 @@ func (t *ExternalIdentitiesTable) As(alias string) *ExternalIdentitiesTable {
 // Get returns the external_identities row with the given key, or keel.ErrNotFound.
 func (t *ExternalIdentitiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.ExternalIdentity, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExternalIdentitiesQuery is a query over iam.ExternalIdentity.
+type ExternalIdentitiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.ExternalIdentity] = (*ExternalIdentitiesTable)(nil)
+
+var _ keel.Query[*iam.ExternalIdentity] = (*ExternalIdentitiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExternalIdentitiesTable) Query() keel.Query[*iam.ExternalIdentity] {
+	return &ExternalIdentitiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExternalIdentitiesQuery.Where.
+func (t *ExternalIdentitiesTable) Where(ps ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExternalIdentitiesQuery.Pick.
+func (t *ExternalIdentitiesTable) Pick(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExternalIdentitiesQuery.Load.
+func (t *ExternalIdentitiesTable) Load(ls ...keel.Loader) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExternalIdentitiesQuery.Omit.
+func (t *ExternalIdentitiesTable) Omit(cols ...keel.Column) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExternalIdentitiesQuery.Order.
+func (t *ExternalIdentitiesTable) Order(os ...keel.Order) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExternalIdentitiesQuery.Limit.
+func (t *ExternalIdentitiesTable) Limit(n int) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExternalIdentitiesQuery.Group.
+func (t *ExternalIdentitiesTable) Group(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExternalIdentitiesQuery.GroupingSets.
+func (t *ExternalIdentitiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExternalIdentitiesQuery.Rollup.
+func (t *ExternalIdentitiesTable) Rollup(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExternalIdentitiesQuery.Cube.
+func (t *ExternalIdentitiesTable) Cube(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExternalIdentitiesQuery.AllTenants.
+func (t *ExternalIdentitiesTable) AllTenants() keel.Query[*iam.ExternalIdentity] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExternalIdentitiesQuery.Join.
+func (t *ExternalIdentitiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExternalIdentitiesQuery.LeftJoin.
+func (t *ExternalIdentitiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExternalIdentitiesQuery.LeftJoinLateral.
+func (t *ExternalIdentitiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExternalIdentitiesQuery.JoinLateral.
+func (t *ExternalIdentitiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExternalIdentitiesQuery.Lock.
+func (t *ExternalIdentitiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExternalIdentitiesQuery.DistinctOn.
+func (t *ExternalIdentitiesTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExternalIdentitiesQuery.Cache.
+func (t *ExternalIdentitiesTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExternalIdentitiesQuery.LoadStrategy.
+func (t *ExternalIdentitiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExternalIdentitiesQuery.With.
+func (t *ExternalIdentitiesTable) With(ctes ...*keel.CTETable) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExternalIdentitiesQuery.Compute.
+func (t *ExternalIdentitiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExternalIdentitiesTable) Create(ctx context.Context, db *keel.DB, row *iam.ExternalIdentity) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExternalIdentitiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.ExternalIdentity) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExternalIdentitiesTable) Save(ctx context.Context, db *keel.DB, row *iam.ExternalIdentity, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExternalIdentitiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.ExternalIdentity, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExternalIdentitiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.ExternalIdentity) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExternalIdentitiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.ExternalIdentity, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExternalIdentitiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.ExternalIdentity, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExternalIdentitiesTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.ExternalIdentity) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExternalIdentitiesQuery) Where(ps ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExternalIdentitiesQuery) Pick(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExternalIdentitiesQuery) Omit(cols ...keel.Column) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExternalIdentitiesQuery) Load(ls ...keel.Loader) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExternalIdentitiesQuery) Order(os ...keel.Order) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExternalIdentitiesQuery) Distinct() keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExternalIdentitiesQuery) Group(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExternalIdentitiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExternalIdentitiesQuery) Rollup(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExternalIdentitiesQuery) Cube(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExternalIdentitiesQuery) Window(name string, w keel.Window) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExternalIdentitiesQuery) Having(ps ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExternalIdentitiesQuery) Limit(n int) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExternalIdentitiesQuery) Offset(n int) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExternalIdentitiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExternalIdentitiesQuery) AllTenants() keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExternalIdentitiesQuery) CustomPlan() keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExternalIdentitiesQuery) Timeout(d time.Duration) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExternalIdentitiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExternalIdentitiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExternalIdentitiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExternalIdentitiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExternalIdentitiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExternalIdentitiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExternalIdentitiesQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExternalIdentitiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExternalIdentitiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.ExternalIdentity] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExternalIdentitiesQuery) Clone() keel.Query[*iam.ExternalIdentity] {
+	return &ExternalIdentitiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExternalIdentitiesQuery) One(ctx context.Context, db *keel.DB) (*iam.ExternalIdentity, error) {
+	return keel.One[*iam.ExternalIdentity](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExternalIdentitiesQuery) First(ctx context.Context, db *keel.DB) (*iam.ExternalIdentity, error) {
+	return keel.First[*iam.ExternalIdentity](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExternalIdentitiesQuery) List(ctx context.Context, db *keel.DB) ([]*iam.ExternalIdentity, error) {
+	return keel.List[*iam.ExternalIdentity](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExternalIdentitiesQuery) All(ctx context.Context, db *keel.DB) ([]*iam.ExternalIdentity, error) {
+	return keel.All[*iam.ExternalIdentity](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExternalIdentitiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.ExternalIdentity, error) {
+	return keel.UpdateReturning[*iam.ExternalIdentity](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExternalIdentitiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.ExternalIdentity], error) {
+	return keel.PageOf[*iam.ExternalIdentity](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExternalIdentitiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.ExternalIdentity) error) error {
+	return keel.Each[*iam.ExternalIdentity](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExternalIdentity() unsafe.Pointer { return unsafe.Pointer(new(iam.ExternalIdentity)) }
@@ -850,7 +2287,7 @@ var identityProvidersRef = keel.Ref{Table: &identityProvidersTable}
 
 // IdentityProvidersTable is the table of iam.IdentityProvider.
 type IdentityProvidersTable struct {
-	keel.Handle[*iam.IdentityProvider]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -880,7 +2317,7 @@ type IdentityProvidersTable struct {
 
 // IdentityProviders references the identity_providers table.
 var IdentityProviders = &IdentityProvidersTable{
-	Handle:              keel.Handle[*iam.IdentityProvider]{Ref: &identityProvidersRef},
+	TableBase:           keel.TableBase{Ref: &identityProvidersRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &identityProvidersRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &identityProvidersRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &identityProvidersRef, Index: 2}}},
@@ -908,10 +2345,10 @@ var IdentityProviders = &IdentityProvidersTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &identityProvidersRef, Index: 24}},
 }
 
-// BuildIdentityProviders builds the handle of identity_providers for ref. Generated relation and alias methods call it.
+// BuildIdentityProviders builds the table of identity_providers for ref. Generated relation and alias methods call it.
 func BuildIdentityProviders(r *keel.Ref) *IdentityProvidersTable {
 	return &IdentityProvidersTable{
-		Handle:              keel.Handle[*iam.IdentityProvider]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -951,6 +2388,365 @@ func (t *IdentityProvidersTable) As(alias string) *IdentityProvidersTable {
 // Get returns the identity_providers row with the given key, or keel.ErrNotFound.
 func (t *IdentityProvidersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.IdentityProvider, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// IdentityProvidersQuery is a query over iam.IdentityProvider.
+type IdentityProvidersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.IdentityProvider] = (*IdentityProvidersTable)(nil)
+
+var _ keel.Query[*iam.IdentityProvider] = (*IdentityProvidersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *IdentityProvidersTable) Query() keel.Query[*iam.IdentityProvider] {
+	return &IdentityProvidersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see IdentityProvidersQuery.Where.
+func (t *IdentityProvidersTable) Where(ps ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see IdentityProvidersQuery.Pick.
+func (t *IdentityProvidersTable) Pick(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see IdentityProvidersQuery.Load.
+func (t *IdentityProvidersTable) Load(ls ...keel.Loader) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see IdentityProvidersQuery.Omit.
+func (t *IdentityProvidersTable) Omit(cols ...keel.Column) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see IdentityProvidersQuery.Order.
+func (t *IdentityProvidersTable) Order(os ...keel.Order) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see IdentityProvidersQuery.Limit.
+func (t *IdentityProvidersTable) Limit(n int) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see IdentityProvidersQuery.Group.
+func (t *IdentityProvidersTable) Group(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see IdentityProvidersQuery.GroupingSets.
+func (t *IdentityProvidersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see IdentityProvidersQuery.Rollup.
+func (t *IdentityProvidersTable) Rollup(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see IdentityProvidersQuery.Cube.
+func (t *IdentityProvidersTable) Cube(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see IdentityProvidersQuery.AllTenants.
+func (t *IdentityProvidersTable) AllTenants() keel.Query[*iam.IdentityProvider] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see IdentityProvidersQuery.Join.
+func (t *IdentityProvidersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see IdentityProvidersQuery.LeftJoin.
+func (t *IdentityProvidersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see IdentityProvidersQuery.LeftJoinLateral.
+func (t *IdentityProvidersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.IdentityProvider] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see IdentityProvidersQuery.JoinLateral.
+func (t *IdentityProvidersTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.IdentityProvider] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see IdentityProvidersQuery.Lock.
+func (t *IdentityProvidersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see IdentityProvidersQuery.DistinctOn.
+func (t *IdentityProvidersTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see IdentityProvidersQuery.Cache.
+func (t *IdentityProvidersTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see IdentityProvidersQuery.LoadStrategy.
+func (t *IdentityProvidersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.IdentityProvider] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see IdentityProvidersQuery.With.
+func (t *IdentityProvidersTable) With(ctes ...*keel.CTETable) keel.Query[*iam.IdentityProvider] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see IdentityProvidersQuery.Compute.
+func (t *IdentityProvidersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.IdentityProvider] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *IdentityProvidersTable) Create(ctx context.Context, db *keel.DB, row *iam.IdentityProvider) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *IdentityProvidersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.IdentityProvider) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *IdentityProvidersTable) Save(ctx context.Context, db *keel.DB, row *iam.IdentityProvider, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *IdentityProvidersTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.IdentityProvider, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *IdentityProvidersTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.IdentityProvider) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *IdentityProvidersTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.IdentityProvider, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *IdentityProvidersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.IdentityProvider, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *IdentityProvidersTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.IdentityProvider) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *IdentityProvidersQuery) Where(ps ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *IdentityProvidersQuery) Pick(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *IdentityProvidersQuery) Omit(cols ...keel.Column) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *IdentityProvidersQuery) Load(ls ...keel.Loader) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *IdentityProvidersQuery) Order(os ...keel.Order) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *IdentityProvidersQuery) Distinct() keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *IdentityProvidersQuery) Group(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *IdentityProvidersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *IdentityProvidersQuery) Rollup(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *IdentityProvidersQuery) Cube(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *IdentityProvidersQuery) Window(name string, w keel.Window) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *IdentityProvidersQuery) Having(ps ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *IdentityProvidersQuery) Limit(n int) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *IdentityProvidersQuery) Offset(n int) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *IdentityProvidersQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *IdentityProvidersQuery) AllTenants() keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *IdentityProvidersQuery) CustomPlan() keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *IdentityProvidersQuery) Timeout(d time.Duration) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *IdentityProvidersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *IdentityProvidersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *IdentityProvidersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *IdentityProvidersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *IdentityProvidersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *IdentityProvidersQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *IdentityProvidersQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *IdentityProvidersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *IdentityProvidersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.IdentityProvider] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *IdentityProvidersQuery) Clone() keel.Query[*iam.IdentityProvider] {
+	return &IdentityProvidersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *IdentityProvidersQuery) One(ctx context.Context, db *keel.DB) (*iam.IdentityProvider, error) {
+	return keel.One[*iam.IdentityProvider](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *IdentityProvidersQuery) First(ctx context.Context, db *keel.DB) (*iam.IdentityProvider, error) {
+	return keel.First[*iam.IdentityProvider](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *IdentityProvidersQuery) List(ctx context.Context, db *keel.DB) ([]*iam.IdentityProvider, error) {
+	return keel.List[*iam.IdentityProvider](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *IdentityProvidersQuery) All(ctx context.Context, db *keel.DB) ([]*iam.IdentityProvider, error) {
+	return keel.All[*iam.IdentityProvider](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *IdentityProvidersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.IdentityProvider, error) {
+	return keel.UpdateReturning[*iam.IdentityProvider](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *IdentityProvidersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.IdentityProvider], error) {
+	return keel.PageOf[*iam.IdentityProvider](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *IdentityProvidersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.IdentityProvider) error) error {
+	return keel.Each[*iam.IdentityProvider](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newIdentityProvider() unsafe.Pointer { return unsafe.Pointer(new(iam.IdentityProvider)) }
@@ -1166,7 +2962,7 @@ var mFAAuthenticatorsRef = keel.Ref{Table: &mFAAuthenticatorsTable}
 
 // MFAAuthenticatorsTable is the table of iam.MFAAuthenticator.
 type MFAAuthenticatorsTable struct {
-	keel.Handle[*iam.MFAAuthenticator]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1184,7 +2980,7 @@ type MFAAuthenticatorsTable struct {
 
 // MFAAuthenticators references the mfa_authenticators table.
 var MFAAuthenticators = &MFAAuthenticatorsTable{
-	Handle:         keel.Handle[*iam.MFAAuthenticator]{Ref: &mFAAuthenticatorsRef},
+	TableBase:      keel.TableBase{Ref: &mFAAuthenticatorsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 2}}},
@@ -1200,10 +2996,10 @@ var MFAAuthenticators = &MFAAuthenticatorsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFAAuthenticatorsRef, Index: 12}},
 }
 
-// BuildMFAAuthenticators builds the handle of mfa_authenticators for ref. Generated relation and alias methods call it.
+// BuildMFAAuthenticators builds the table of mfa_authenticators for ref. Generated relation and alias methods call it.
 func BuildMFAAuthenticators(r *keel.Ref) *MFAAuthenticatorsTable {
 	return &MFAAuthenticatorsTable{
-		Handle:         keel.Handle[*iam.MFAAuthenticator]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1231,6 +3027,365 @@ func (t *MFAAuthenticatorsTable) As(alias string) *MFAAuthenticatorsTable {
 // Get returns the mfa_authenticators row with the given key, or keel.ErrNotFound.
 func (t *MFAAuthenticatorsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.MFAAuthenticator, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MFAAuthenticatorsQuery is a query over iam.MFAAuthenticator.
+type MFAAuthenticatorsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.MFAAuthenticator] = (*MFAAuthenticatorsTable)(nil)
+
+var _ keel.Query[*iam.MFAAuthenticator] = (*MFAAuthenticatorsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MFAAuthenticatorsTable) Query() keel.Query[*iam.MFAAuthenticator] {
+	return &MFAAuthenticatorsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MFAAuthenticatorsQuery.Where.
+func (t *MFAAuthenticatorsTable) Where(ps ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MFAAuthenticatorsQuery.Pick.
+func (t *MFAAuthenticatorsTable) Pick(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MFAAuthenticatorsQuery.Load.
+func (t *MFAAuthenticatorsTable) Load(ls ...keel.Loader) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MFAAuthenticatorsQuery.Omit.
+func (t *MFAAuthenticatorsTable) Omit(cols ...keel.Column) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MFAAuthenticatorsQuery.Order.
+func (t *MFAAuthenticatorsTable) Order(os ...keel.Order) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MFAAuthenticatorsQuery.Limit.
+func (t *MFAAuthenticatorsTable) Limit(n int) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MFAAuthenticatorsQuery.Group.
+func (t *MFAAuthenticatorsTable) Group(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MFAAuthenticatorsQuery.GroupingSets.
+func (t *MFAAuthenticatorsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MFAAuthenticatorsQuery.Rollup.
+func (t *MFAAuthenticatorsTable) Rollup(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MFAAuthenticatorsQuery.Cube.
+func (t *MFAAuthenticatorsTable) Cube(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MFAAuthenticatorsQuery.AllTenants.
+func (t *MFAAuthenticatorsTable) AllTenants() keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MFAAuthenticatorsQuery.Join.
+func (t *MFAAuthenticatorsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MFAAuthenticatorsQuery.LeftJoin.
+func (t *MFAAuthenticatorsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MFAAuthenticatorsQuery.LeftJoinLateral.
+func (t *MFAAuthenticatorsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MFAAuthenticatorsQuery.JoinLateral.
+func (t *MFAAuthenticatorsTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MFAAuthenticatorsQuery.Lock.
+func (t *MFAAuthenticatorsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MFAAuthenticatorsQuery.DistinctOn.
+func (t *MFAAuthenticatorsTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MFAAuthenticatorsQuery.Cache.
+func (t *MFAAuthenticatorsTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MFAAuthenticatorsQuery.LoadStrategy.
+func (t *MFAAuthenticatorsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MFAAuthenticatorsQuery.With.
+func (t *MFAAuthenticatorsTable) With(ctes ...*keel.CTETable) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MFAAuthenticatorsQuery.Compute.
+func (t *MFAAuthenticatorsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MFAAuthenticatorsTable) Create(ctx context.Context, db *keel.DB, row *iam.MFAAuthenticator) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MFAAuthenticatorsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.MFAAuthenticator) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MFAAuthenticatorsTable) Save(ctx context.Context, db *keel.DB, row *iam.MFAAuthenticator, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MFAAuthenticatorsTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.MFAAuthenticator, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MFAAuthenticatorsTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.MFAAuthenticator) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MFAAuthenticatorsTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.MFAAuthenticator, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MFAAuthenticatorsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.MFAAuthenticator, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MFAAuthenticatorsTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.MFAAuthenticator) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MFAAuthenticatorsQuery) Where(ps ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MFAAuthenticatorsQuery) Pick(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MFAAuthenticatorsQuery) Omit(cols ...keel.Column) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MFAAuthenticatorsQuery) Load(ls ...keel.Loader) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MFAAuthenticatorsQuery) Order(os ...keel.Order) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MFAAuthenticatorsQuery) Distinct() keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MFAAuthenticatorsQuery) Group(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MFAAuthenticatorsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MFAAuthenticatorsQuery) Rollup(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MFAAuthenticatorsQuery) Cube(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MFAAuthenticatorsQuery) Window(name string, w keel.Window) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MFAAuthenticatorsQuery) Having(ps ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MFAAuthenticatorsQuery) Limit(n int) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MFAAuthenticatorsQuery) Offset(n int) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MFAAuthenticatorsQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MFAAuthenticatorsQuery) AllTenants() keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MFAAuthenticatorsQuery) CustomPlan() keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MFAAuthenticatorsQuery) Timeout(d time.Duration) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MFAAuthenticatorsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MFAAuthenticatorsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MFAAuthenticatorsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MFAAuthenticatorsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MFAAuthenticatorsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MFAAuthenticatorsQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MFAAuthenticatorsQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MFAAuthenticatorsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MFAAuthenticatorsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.MFAAuthenticator] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MFAAuthenticatorsQuery) Clone() keel.Query[*iam.MFAAuthenticator] {
+	return &MFAAuthenticatorsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MFAAuthenticatorsQuery) One(ctx context.Context, db *keel.DB) (*iam.MFAAuthenticator, error) {
+	return keel.One[*iam.MFAAuthenticator](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MFAAuthenticatorsQuery) First(ctx context.Context, db *keel.DB) (*iam.MFAAuthenticator, error) {
+	return keel.First[*iam.MFAAuthenticator](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MFAAuthenticatorsQuery) List(ctx context.Context, db *keel.DB) ([]*iam.MFAAuthenticator, error) {
+	return keel.List[*iam.MFAAuthenticator](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MFAAuthenticatorsQuery) All(ctx context.Context, db *keel.DB) ([]*iam.MFAAuthenticator, error) {
+	return keel.All[*iam.MFAAuthenticator](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MFAAuthenticatorsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.MFAAuthenticator, error) {
+	return keel.UpdateReturning[*iam.MFAAuthenticator](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MFAAuthenticatorsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.MFAAuthenticator], error) {
+	return keel.PageOf[*iam.MFAAuthenticator](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MFAAuthenticatorsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.MFAAuthenticator) error) error {
+	return keel.Each[*iam.MFAAuthenticator](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMFAAuthenticator() unsafe.Pointer { return unsafe.Pointer(new(iam.MFAAuthenticator)) }
@@ -1356,7 +3511,7 @@ var mFARecoveryCodesRef = keel.Ref{Table: &mFARecoveryCodesTable}
 
 // MFARecoveryCodesTable is the table of iam.MFARecoveryCode.
 type MFARecoveryCodesTable struct {
-	keel.Handle[*iam.MFARecoveryCode]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1368,7 +3523,7 @@ type MFARecoveryCodesTable struct {
 
 // MFARecoveryCodes references the mfa_recovery_codes table.
 var MFARecoveryCodes = &MFARecoveryCodesTable{
-	Handle:         keel.Handle[*iam.MFARecoveryCode]{Ref: &mFARecoveryCodesRef},
+	TableBase:      keel.TableBase{Ref: &mFARecoveryCodesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 2}}},
@@ -1378,10 +3533,10 @@ var MFARecoveryCodes = &MFARecoveryCodesTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mFARecoveryCodesRef, Index: 6}},
 }
 
-// BuildMFARecoveryCodes builds the handle of mfa_recovery_codes for ref. Generated relation and alias methods call it.
+// BuildMFARecoveryCodes builds the table of mfa_recovery_codes for ref. Generated relation and alias methods call it.
 func BuildMFARecoveryCodes(r *keel.Ref) *MFARecoveryCodesTable {
 	return &MFARecoveryCodesTable{
-		Handle:         keel.Handle[*iam.MFARecoveryCode]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1403,6 +3558,365 @@ func (t *MFARecoveryCodesTable) As(alias string) *MFARecoveryCodesTable {
 // Get returns the mfa_recovery_codes row with the given key, or keel.ErrNotFound.
 func (t *MFARecoveryCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.MFARecoveryCode, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MFARecoveryCodesQuery is a query over iam.MFARecoveryCode.
+type MFARecoveryCodesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.MFARecoveryCode] = (*MFARecoveryCodesTable)(nil)
+
+var _ keel.Query[*iam.MFARecoveryCode] = (*MFARecoveryCodesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MFARecoveryCodesTable) Query() keel.Query[*iam.MFARecoveryCode] {
+	return &MFARecoveryCodesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MFARecoveryCodesQuery.Where.
+func (t *MFARecoveryCodesTable) Where(ps ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MFARecoveryCodesQuery.Pick.
+func (t *MFARecoveryCodesTable) Pick(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MFARecoveryCodesQuery.Load.
+func (t *MFARecoveryCodesTable) Load(ls ...keel.Loader) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MFARecoveryCodesQuery.Omit.
+func (t *MFARecoveryCodesTable) Omit(cols ...keel.Column) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MFARecoveryCodesQuery.Order.
+func (t *MFARecoveryCodesTable) Order(os ...keel.Order) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MFARecoveryCodesQuery.Limit.
+func (t *MFARecoveryCodesTable) Limit(n int) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MFARecoveryCodesQuery.Group.
+func (t *MFARecoveryCodesTable) Group(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MFARecoveryCodesQuery.GroupingSets.
+func (t *MFARecoveryCodesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MFARecoveryCodesQuery.Rollup.
+func (t *MFARecoveryCodesTable) Rollup(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MFARecoveryCodesQuery.Cube.
+func (t *MFARecoveryCodesTable) Cube(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MFARecoveryCodesQuery.AllTenants.
+func (t *MFARecoveryCodesTable) AllTenants() keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MFARecoveryCodesQuery.Join.
+func (t *MFARecoveryCodesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MFARecoveryCodesQuery.LeftJoin.
+func (t *MFARecoveryCodesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MFARecoveryCodesQuery.LeftJoinLateral.
+func (t *MFARecoveryCodesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MFARecoveryCodesQuery.JoinLateral.
+func (t *MFARecoveryCodesTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MFARecoveryCodesQuery.Lock.
+func (t *MFARecoveryCodesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MFARecoveryCodesQuery.DistinctOn.
+func (t *MFARecoveryCodesTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MFARecoveryCodesQuery.Cache.
+func (t *MFARecoveryCodesTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MFARecoveryCodesQuery.LoadStrategy.
+func (t *MFARecoveryCodesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MFARecoveryCodesQuery.With.
+func (t *MFARecoveryCodesTable) With(ctes ...*keel.CTETable) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MFARecoveryCodesQuery.Compute.
+func (t *MFARecoveryCodesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MFARecoveryCodesTable) Create(ctx context.Context, db *keel.DB, row *iam.MFARecoveryCode) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MFARecoveryCodesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.MFARecoveryCode) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MFARecoveryCodesTable) Save(ctx context.Context, db *keel.DB, row *iam.MFARecoveryCode, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MFARecoveryCodesTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.MFARecoveryCode, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MFARecoveryCodesTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.MFARecoveryCode) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MFARecoveryCodesTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.MFARecoveryCode, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MFARecoveryCodesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.MFARecoveryCode, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MFARecoveryCodesTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.MFARecoveryCode) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MFARecoveryCodesQuery) Where(ps ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MFARecoveryCodesQuery) Pick(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MFARecoveryCodesQuery) Omit(cols ...keel.Column) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MFARecoveryCodesQuery) Load(ls ...keel.Loader) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MFARecoveryCodesQuery) Order(os ...keel.Order) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MFARecoveryCodesQuery) Distinct() keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MFARecoveryCodesQuery) Group(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MFARecoveryCodesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MFARecoveryCodesQuery) Rollup(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MFARecoveryCodesQuery) Cube(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MFARecoveryCodesQuery) Window(name string, w keel.Window) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MFARecoveryCodesQuery) Having(ps ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MFARecoveryCodesQuery) Limit(n int) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MFARecoveryCodesQuery) Offset(n int) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MFARecoveryCodesQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MFARecoveryCodesQuery) AllTenants() keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MFARecoveryCodesQuery) CustomPlan() keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MFARecoveryCodesQuery) Timeout(d time.Duration) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MFARecoveryCodesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MFARecoveryCodesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MFARecoveryCodesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MFARecoveryCodesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MFARecoveryCodesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MFARecoveryCodesQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MFARecoveryCodesQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MFARecoveryCodesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MFARecoveryCodesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.MFARecoveryCode] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MFARecoveryCodesQuery) Clone() keel.Query[*iam.MFARecoveryCode] {
+	return &MFARecoveryCodesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MFARecoveryCodesQuery) One(ctx context.Context, db *keel.DB) (*iam.MFARecoveryCode, error) {
+	return keel.One[*iam.MFARecoveryCode](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MFARecoveryCodesQuery) First(ctx context.Context, db *keel.DB) (*iam.MFARecoveryCode, error) {
+	return keel.First[*iam.MFARecoveryCode](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MFARecoveryCodesQuery) List(ctx context.Context, db *keel.DB) ([]*iam.MFARecoveryCode, error) {
+	return keel.List[*iam.MFARecoveryCode](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MFARecoveryCodesQuery) All(ctx context.Context, db *keel.DB) ([]*iam.MFARecoveryCode, error) {
+	return keel.All[*iam.MFARecoveryCode](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MFARecoveryCodesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.MFARecoveryCode, error) {
+	return keel.UpdateReturning[*iam.MFARecoveryCode](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MFARecoveryCodesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.MFARecoveryCode], error) {
+	return keel.PageOf[*iam.MFARecoveryCode](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MFARecoveryCodesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.MFARecoveryCode) error) error {
+	return keel.Each[*iam.MFARecoveryCode](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMFARecoveryCode() unsafe.Pointer { return unsafe.Pointer(new(iam.MFARecoveryCode)) }
@@ -1498,7 +4012,7 @@ var provisioningAuditRecordsRef = keel.Ref{Table: &provisioningAuditRecordsTable
 
 // ProvisioningAuditRecordsTable is the table of iam.ProvisioningAuditRecord.
 type ProvisioningAuditRecordsTable struct {
-	keel.Handle[*iam.ProvisioningAuditRecord]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	DirectoryID    keelkinds.PulidIDCol
@@ -1513,7 +4027,7 @@ type ProvisioningAuditRecordsTable struct {
 
 // ProvisioningAuditRecords references the provisioning_audit_records table.
 var ProvisioningAuditRecords = &ProvisioningAuditRecordsTable{
-	Handle:         keel.Handle[*iam.ProvisioningAuditRecord]{Ref: &provisioningAuditRecordsRef},
+	TableBase:      keel.TableBase{Ref: &provisioningAuditRecordsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 1}}},
 	DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 2}}},
@@ -1526,10 +4040,10 @@ var ProvisioningAuditRecords = &ProvisioningAuditRecordsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &provisioningAuditRecordsRef, Index: 9}},
 }
 
-// BuildProvisioningAuditRecords builds the handle of provisioning_audit_records for ref. Generated relation and alias methods call it.
+// BuildProvisioningAuditRecords builds the table of provisioning_audit_records for ref. Generated relation and alias methods call it.
 func BuildProvisioningAuditRecords(r *keel.Ref) *ProvisioningAuditRecordsTable {
 	return &ProvisioningAuditRecordsTable{
-		Handle:         keel.Handle[*iam.ProvisioningAuditRecord]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1554,6 +4068,365 @@ func (t *ProvisioningAuditRecordsTable) As(alias string) *ProvisioningAuditRecor
 // Get returns the provisioning_audit_records row with the given key, or keel.ErrNotFound.
 func (t *ProvisioningAuditRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.ProvisioningAuditRecord, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProvisioningAuditRecordsQuery is a query over iam.ProvisioningAuditRecord.
+type ProvisioningAuditRecordsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.ProvisioningAuditRecord] = (*ProvisioningAuditRecordsTable)(nil)
+
+var _ keel.Query[*iam.ProvisioningAuditRecord] = (*ProvisioningAuditRecordsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProvisioningAuditRecordsTable) Query() keel.Query[*iam.ProvisioningAuditRecord] {
+	return &ProvisioningAuditRecordsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProvisioningAuditRecordsQuery.Where.
+func (t *ProvisioningAuditRecordsTable) Where(ps ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProvisioningAuditRecordsQuery.Pick.
+func (t *ProvisioningAuditRecordsTable) Pick(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProvisioningAuditRecordsQuery.Load.
+func (t *ProvisioningAuditRecordsTable) Load(ls ...keel.Loader) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProvisioningAuditRecordsQuery.Omit.
+func (t *ProvisioningAuditRecordsTable) Omit(cols ...keel.Column) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProvisioningAuditRecordsQuery.Order.
+func (t *ProvisioningAuditRecordsTable) Order(os ...keel.Order) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProvisioningAuditRecordsQuery.Limit.
+func (t *ProvisioningAuditRecordsTable) Limit(n int) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProvisioningAuditRecordsQuery.Group.
+func (t *ProvisioningAuditRecordsTable) Group(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProvisioningAuditRecordsQuery.GroupingSets.
+func (t *ProvisioningAuditRecordsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProvisioningAuditRecordsQuery.Rollup.
+func (t *ProvisioningAuditRecordsTable) Rollup(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProvisioningAuditRecordsQuery.Cube.
+func (t *ProvisioningAuditRecordsTable) Cube(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProvisioningAuditRecordsQuery.AllTenants.
+func (t *ProvisioningAuditRecordsTable) AllTenants() keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProvisioningAuditRecordsQuery.Join.
+func (t *ProvisioningAuditRecordsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProvisioningAuditRecordsQuery.LeftJoin.
+func (t *ProvisioningAuditRecordsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProvisioningAuditRecordsQuery.LeftJoinLateral.
+func (t *ProvisioningAuditRecordsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProvisioningAuditRecordsQuery.JoinLateral.
+func (t *ProvisioningAuditRecordsTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProvisioningAuditRecordsQuery.Lock.
+func (t *ProvisioningAuditRecordsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProvisioningAuditRecordsQuery.DistinctOn.
+func (t *ProvisioningAuditRecordsTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProvisioningAuditRecordsQuery.Cache.
+func (t *ProvisioningAuditRecordsTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProvisioningAuditRecordsQuery.LoadStrategy.
+func (t *ProvisioningAuditRecordsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProvisioningAuditRecordsQuery.With.
+func (t *ProvisioningAuditRecordsTable) With(ctes ...*keel.CTETable) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProvisioningAuditRecordsQuery.Compute.
+func (t *ProvisioningAuditRecordsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProvisioningAuditRecordsTable) Create(ctx context.Context, db *keel.DB, row *iam.ProvisioningAuditRecord) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProvisioningAuditRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.ProvisioningAuditRecord) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProvisioningAuditRecordsTable) Save(ctx context.Context, db *keel.DB, row *iam.ProvisioningAuditRecord, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProvisioningAuditRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.ProvisioningAuditRecord, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProvisioningAuditRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.ProvisioningAuditRecord) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProvisioningAuditRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.ProvisioningAuditRecord, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProvisioningAuditRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.ProvisioningAuditRecord, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProvisioningAuditRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.ProvisioningAuditRecord) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProvisioningAuditRecordsQuery) Where(ps ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProvisioningAuditRecordsQuery) Pick(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProvisioningAuditRecordsQuery) Omit(cols ...keel.Column) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProvisioningAuditRecordsQuery) Load(ls ...keel.Loader) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProvisioningAuditRecordsQuery) Order(os ...keel.Order) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProvisioningAuditRecordsQuery) Distinct() keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProvisioningAuditRecordsQuery) Group(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProvisioningAuditRecordsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProvisioningAuditRecordsQuery) Rollup(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProvisioningAuditRecordsQuery) Cube(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProvisioningAuditRecordsQuery) Window(name string, w keel.Window) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProvisioningAuditRecordsQuery) Having(ps ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProvisioningAuditRecordsQuery) Limit(n int) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProvisioningAuditRecordsQuery) Offset(n int) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProvisioningAuditRecordsQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProvisioningAuditRecordsQuery) AllTenants() keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProvisioningAuditRecordsQuery) CustomPlan() keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProvisioningAuditRecordsQuery) Timeout(d time.Duration) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProvisioningAuditRecordsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProvisioningAuditRecordsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProvisioningAuditRecordsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProvisioningAuditRecordsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProvisioningAuditRecordsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProvisioningAuditRecordsQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProvisioningAuditRecordsQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProvisioningAuditRecordsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProvisioningAuditRecordsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.ProvisioningAuditRecord] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProvisioningAuditRecordsQuery) Clone() keel.Query[*iam.ProvisioningAuditRecord] {
+	return &ProvisioningAuditRecordsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProvisioningAuditRecordsQuery) One(ctx context.Context, db *keel.DB) (*iam.ProvisioningAuditRecord, error) {
+	return keel.One[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProvisioningAuditRecordsQuery) First(ctx context.Context, db *keel.DB) (*iam.ProvisioningAuditRecord, error) {
+	return keel.First[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProvisioningAuditRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*iam.ProvisioningAuditRecord, error) {
+	return keel.List[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProvisioningAuditRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*iam.ProvisioningAuditRecord, error) {
+	return keel.All[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProvisioningAuditRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.ProvisioningAuditRecord, error) {
+	return keel.UpdateReturning[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProvisioningAuditRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.ProvisioningAuditRecord], error) {
+	return keel.PageOf[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProvisioningAuditRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.ProvisioningAuditRecord) error) error {
+	return keel.Each[*iam.ProvisioningAuditRecord](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProvisioningAuditRecord() unsafe.Pointer {
@@ -1669,7 +4542,7 @@ var riskDecisionsRef = keel.Ref{Table: &riskDecisionsTable}
 
 // RiskDecisionsTable is the table of iam.RiskDecision.
 type RiskDecisionsTable struct {
-	keel.Handle[*iam.RiskDecision]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1682,7 +4555,7 @@ type RiskDecisionsTable struct {
 
 // RiskDecisions references the risk_decisions table.
 var RiskDecisions = &RiskDecisionsTable{
-	Handle:         keel.Handle[*iam.RiskDecision]{Ref: &riskDecisionsRef},
+	TableBase:      keel.TableBase{Ref: &riskDecisionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &riskDecisionsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &riskDecisionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &riskDecisionsRef, Index: 2}}},
@@ -1693,10 +4566,10 @@ var RiskDecisions = &RiskDecisionsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &riskDecisionsRef, Index: 7}},
 }
 
-// BuildRiskDecisions builds the handle of risk_decisions for ref. Generated relation and alias methods call it.
+// BuildRiskDecisions builds the table of risk_decisions for ref. Generated relation and alias methods call it.
 func BuildRiskDecisions(r *keel.Ref) *RiskDecisionsTable {
 	return &RiskDecisionsTable{
-		Handle:         keel.Handle[*iam.RiskDecision]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1719,6 +4592,365 @@ func (t *RiskDecisionsTable) As(alias string) *RiskDecisionsTable {
 // Get returns the risk_decisions row with the given key, or keel.ErrNotFound.
 func (t *RiskDecisionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.RiskDecision, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RiskDecisionsQuery is a query over iam.RiskDecision.
+type RiskDecisionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.RiskDecision] = (*RiskDecisionsTable)(nil)
+
+var _ keel.Query[*iam.RiskDecision] = (*RiskDecisionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RiskDecisionsTable) Query() keel.Query[*iam.RiskDecision] {
+	return &RiskDecisionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RiskDecisionsQuery.Where.
+func (t *RiskDecisionsTable) Where(ps ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RiskDecisionsQuery.Pick.
+func (t *RiskDecisionsTable) Pick(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RiskDecisionsQuery.Load.
+func (t *RiskDecisionsTable) Load(ls ...keel.Loader) keel.Query[*iam.RiskDecision] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RiskDecisionsQuery.Omit.
+func (t *RiskDecisionsTable) Omit(cols ...keel.Column) keel.Query[*iam.RiskDecision] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RiskDecisionsQuery.Order.
+func (t *RiskDecisionsTable) Order(os ...keel.Order) keel.Query[*iam.RiskDecision] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RiskDecisionsQuery.Limit.
+func (t *RiskDecisionsTable) Limit(n int) keel.Query[*iam.RiskDecision] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RiskDecisionsQuery.Group.
+func (t *RiskDecisionsTable) Group(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RiskDecisionsQuery.GroupingSets.
+func (t *RiskDecisionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RiskDecisionsQuery.Rollup.
+func (t *RiskDecisionsTable) Rollup(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RiskDecisionsQuery.Cube.
+func (t *RiskDecisionsTable) Cube(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RiskDecisionsQuery.AllTenants.
+func (t *RiskDecisionsTable) AllTenants() keel.Query[*iam.RiskDecision] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RiskDecisionsQuery.Join.
+func (t *RiskDecisionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RiskDecisionsQuery.LeftJoin.
+func (t *RiskDecisionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RiskDecisionsQuery.LeftJoinLateral.
+func (t *RiskDecisionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.RiskDecision] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RiskDecisionsQuery.JoinLateral.
+func (t *RiskDecisionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.RiskDecision] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RiskDecisionsQuery.Lock.
+func (t *RiskDecisionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.RiskDecision] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RiskDecisionsQuery.DistinctOn.
+func (t *RiskDecisionsTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RiskDecisionsQuery.Cache.
+func (t *RiskDecisionsTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.RiskDecision] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RiskDecisionsQuery.LoadStrategy.
+func (t *RiskDecisionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.RiskDecision] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RiskDecisionsQuery.With.
+func (t *RiskDecisionsTable) With(ctes ...*keel.CTETable) keel.Query[*iam.RiskDecision] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RiskDecisionsQuery.Compute.
+func (t *RiskDecisionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.RiskDecision] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RiskDecisionsTable) Create(ctx context.Context, db *keel.DB, row *iam.RiskDecision) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RiskDecisionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.RiskDecision) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RiskDecisionsTable) Save(ctx context.Context, db *keel.DB, row *iam.RiskDecision, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RiskDecisionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.RiskDecision, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RiskDecisionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.RiskDecision) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RiskDecisionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.RiskDecision, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RiskDecisionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.RiskDecision, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RiskDecisionsTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.RiskDecision) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RiskDecisionsQuery) Where(ps ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RiskDecisionsQuery) Pick(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RiskDecisionsQuery) Omit(cols ...keel.Column) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RiskDecisionsQuery) Load(ls ...keel.Loader) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RiskDecisionsQuery) Order(os ...keel.Order) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RiskDecisionsQuery) Distinct() keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RiskDecisionsQuery) Group(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RiskDecisionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RiskDecisionsQuery) Rollup(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RiskDecisionsQuery) Cube(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RiskDecisionsQuery) Window(name string, w keel.Window) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RiskDecisionsQuery) Having(ps ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RiskDecisionsQuery) Limit(n int) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RiskDecisionsQuery) Offset(n int) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RiskDecisionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RiskDecisionsQuery) AllTenants() keel.Query[*iam.RiskDecision] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RiskDecisionsQuery) CustomPlan() keel.Query[*iam.RiskDecision] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RiskDecisionsQuery) Timeout(d time.Duration) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RiskDecisionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RiskDecisionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RiskDecisionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RiskDecisionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RiskDecisionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RiskDecisionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RiskDecisionsQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RiskDecisionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RiskDecisionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.RiskDecision] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RiskDecisionsQuery) Clone() keel.Query[*iam.RiskDecision] {
+	return &RiskDecisionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RiskDecisionsQuery) One(ctx context.Context, db *keel.DB) (*iam.RiskDecision, error) {
+	return keel.One[*iam.RiskDecision](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RiskDecisionsQuery) First(ctx context.Context, db *keel.DB) (*iam.RiskDecision, error) {
+	return keel.First[*iam.RiskDecision](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RiskDecisionsQuery) List(ctx context.Context, db *keel.DB) ([]*iam.RiskDecision, error) {
+	return keel.List[*iam.RiskDecision](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RiskDecisionsQuery) All(ctx context.Context, db *keel.DB) ([]*iam.RiskDecision, error) {
+	return keel.All[*iam.RiskDecision](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RiskDecisionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.RiskDecision, error) {
+	return keel.UpdateReturning[*iam.RiskDecision](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RiskDecisionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.RiskDecision], error) {
+	return keel.PageOf[*iam.RiskDecision](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RiskDecisionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.RiskDecision) error) error {
+	return keel.Each[*iam.RiskDecision](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRiskDecision() unsafe.Pointer { return unsafe.Pointer(new(iam.RiskDecision)) }
@@ -1835,7 +5067,7 @@ var sCIMDirectoriesRef = keel.Ref{Table: &sCIMDirectoriesTable}
 
 // SCIMDirectoriesTable is the table of iam.SCIMDirectory.
 type SCIMDirectoriesTable struct {
-	keel.Handle[*iam.SCIMDirectory]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -1847,7 +5079,7 @@ type SCIMDirectoriesTable struct {
 
 // SCIMDirectories references the scim_directories table.
 var SCIMDirectories = &SCIMDirectoriesTable{
-	Handle:         keel.Handle[*iam.SCIMDirectory]{Ref: &sCIMDirectoriesRef},
+	TableBase:      keel.TableBase{Ref: &sCIMDirectoriesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 2}}},
@@ -1857,10 +5089,10 @@ var SCIMDirectories = &SCIMDirectoriesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &sCIMDirectoriesRef, Index: 6}},
 }
 
-// BuildSCIMDirectories builds the handle of scim_directories for ref. Generated relation and alias methods call it.
+// BuildSCIMDirectories builds the table of scim_directories for ref. Generated relation and alias methods call it.
 func BuildSCIMDirectories(r *keel.Ref) *SCIMDirectoriesTable {
 	return &SCIMDirectoriesTable{
-		Handle:         keel.Handle[*iam.SCIMDirectory]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1882,6 +5114,365 @@ func (t *SCIMDirectoriesTable) As(alias string) *SCIMDirectoriesTable {
 // Get returns the scim_directories row with the given key, or keel.ErrNotFound.
 func (t *SCIMDirectoriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.SCIMDirectory, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SCIMDirectoriesQuery is a query over iam.SCIMDirectory.
+type SCIMDirectoriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.SCIMDirectory] = (*SCIMDirectoriesTable)(nil)
+
+var _ keel.Query[*iam.SCIMDirectory] = (*SCIMDirectoriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SCIMDirectoriesTable) Query() keel.Query[*iam.SCIMDirectory] {
+	return &SCIMDirectoriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SCIMDirectoriesQuery.Where.
+func (t *SCIMDirectoriesTable) Where(ps ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SCIMDirectoriesQuery.Pick.
+func (t *SCIMDirectoriesTable) Pick(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SCIMDirectoriesQuery.Load.
+func (t *SCIMDirectoriesTable) Load(ls ...keel.Loader) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SCIMDirectoriesQuery.Omit.
+func (t *SCIMDirectoriesTable) Omit(cols ...keel.Column) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SCIMDirectoriesQuery.Order.
+func (t *SCIMDirectoriesTable) Order(os ...keel.Order) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SCIMDirectoriesQuery.Limit.
+func (t *SCIMDirectoriesTable) Limit(n int) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SCIMDirectoriesQuery.Group.
+func (t *SCIMDirectoriesTable) Group(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SCIMDirectoriesQuery.GroupingSets.
+func (t *SCIMDirectoriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SCIMDirectoriesQuery.Rollup.
+func (t *SCIMDirectoriesTable) Rollup(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SCIMDirectoriesQuery.Cube.
+func (t *SCIMDirectoriesTable) Cube(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SCIMDirectoriesQuery.AllTenants.
+func (t *SCIMDirectoriesTable) AllTenants() keel.Query[*iam.SCIMDirectory] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SCIMDirectoriesQuery.Join.
+func (t *SCIMDirectoriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SCIMDirectoriesQuery.LeftJoin.
+func (t *SCIMDirectoriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SCIMDirectoriesQuery.LeftJoinLateral.
+func (t *SCIMDirectoriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SCIMDirectoriesQuery.JoinLateral.
+func (t *SCIMDirectoriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SCIMDirectoriesQuery.Lock.
+func (t *SCIMDirectoriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SCIMDirectoriesQuery.DistinctOn.
+func (t *SCIMDirectoriesTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SCIMDirectoriesQuery.Cache.
+func (t *SCIMDirectoriesTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SCIMDirectoriesQuery.LoadStrategy.
+func (t *SCIMDirectoriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SCIMDirectoriesQuery.With.
+func (t *SCIMDirectoriesTable) With(ctes ...*keel.CTETable) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SCIMDirectoriesQuery.Compute.
+func (t *SCIMDirectoriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SCIMDirectoriesTable) Create(ctx context.Context, db *keel.DB, row *iam.SCIMDirectory) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SCIMDirectoriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.SCIMDirectory) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SCIMDirectoriesTable) Save(ctx context.Context, db *keel.DB, row *iam.SCIMDirectory, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SCIMDirectoriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.SCIMDirectory, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SCIMDirectoriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.SCIMDirectory) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SCIMDirectoriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.SCIMDirectory, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SCIMDirectoriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.SCIMDirectory, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SCIMDirectoriesTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.SCIMDirectory) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SCIMDirectoriesQuery) Where(ps ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SCIMDirectoriesQuery) Pick(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SCIMDirectoriesQuery) Omit(cols ...keel.Column) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SCIMDirectoriesQuery) Load(ls ...keel.Loader) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SCIMDirectoriesQuery) Order(os ...keel.Order) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SCIMDirectoriesQuery) Distinct() keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SCIMDirectoriesQuery) Group(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SCIMDirectoriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SCIMDirectoriesQuery) Rollup(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SCIMDirectoriesQuery) Cube(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SCIMDirectoriesQuery) Window(name string, w keel.Window) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SCIMDirectoriesQuery) Having(ps ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SCIMDirectoriesQuery) Limit(n int) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SCIMDirectoriesQuery) Offset(n int) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SCIMDirectoriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SCIMDirectoriesQuery) AllTenants() keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SCIMDirectoriesQuery) CustomPlan() keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SCIMDirectoriesQuery) Timeout(d time.Duration) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SCIMDirectoriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SCIMDirectoriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SCIMDirectoriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SCIMDirectoriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SCIMDirectoriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SCIMDirectoriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SCIMDirectoriesQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SCIMDirectoriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SCIMDirectoriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.SCIMDirectory] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SCIMDirectoriesQuery) Clone() keel.Query[*iam.SCIMDirectory] {
+	return &SCIMDirectoriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SCIMDirectoriesQuery) One(ctx context.Context, db *keel.DB) (*iam.SCIMDirectory, error) {
+	return keel.One[*iam.SCIMDirectory](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SCIMDirectoriesQuery) First(ctx context.Context, db *keel.DB) (*iam.SCIMDirectory, error) {
+	return keel.First[*iam.SCIMDirectory](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SCIMDirectoriesQuery) List(ctx context.Context, db *keel.DB) ([]*iam.SCIMDirectory, error) {
+	return keel.List[*iam.SCIMDirectory](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SCIMDirectoriesQuery) All(ctx context.Context, db *keel.DB) ([]*iam.SCIMDirectory, error) {
+	return keel.All[*iam.SCIMDirectory](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SCIMDirectoriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.SCIMDirectory, error) {
+	return keel.UpdateReturning[*iam.SCIMDirectory](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SCIMDirectoriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.SCIMDirectory], error) {
+	return keel.PageOf[*iam.SCIMDirectory](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SCIMDirectoriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.SCIMDirectory) error) error {
+	return keel.Each[*iam.SCIMDirectory](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSCIMDirectory() unsafe.Pointer { return unsafe.Pointer(new(iam.SCIMDirectory)) }
@@ -1981,7 +5572,7 @@ var sCIMGroupRoleMappingsRef = keel.Ref{Table: &sCIMGroupRoleMappingsTable}
 
 // SCIMGroupRoleMappingsTable is the table of iam.SCIMGroupRoleMapping.
 type SCIMGroupRoleMappingsTable struct {
-	keel.Handle[*iam.SCIMGroupRoleMapping]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
@@ -1998,7 +5589,7 @@ type SCIMGroupRoleMappingsTable struct {
 
 // SCIMGroupRoleMappings references the scim_group_role_mappings table.
 var SCIMGroupRoleMappings = &SCIMGroupRoleMappingsTable{
-	Handle:          keel.Handle[*iam.SCIMGroupRoleMapping]{Ref: &sCIMGroupRoleMappingsRef},
+	TableBase:       keel.TableBase{Ref: &sCIMGroupRoleMappingsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 0}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 1}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 2}}},
@@ -2013,10 +5604,10 @@ var SCIMGroupRoleMappings = &SCIMGroupRoleMappingsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 11}},
 }
 
-// BuildSCIMGroupRoleMappings builds the handle of scim_group_role_mappings for ref. Generated relation and alias methods call it.
+// BuildSCIMGroupRoleMappings builds the table of scim_group_role_mappings for ref. Generated relation and alias methods call it.
 func BuildSCIMGroupRoleMappings(r *keel.Ref) *SCIMGroupRoleMappingsTable {
 	return &SCIMGroupRoleMappingsTable{
-		Handle:          keel.Handle[*iam.SCIMGroupRoleMapping]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2048,6 +5639,365 @@ func (t *SCIMGroupRoleMappingsTable) Role() *rbacdb.RolesTable {
 // Get returns the scim_group_role_mappings row with the given key, or keel.ErrNotFound.
 func (t *SCIMGroupRoleMappingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.SCIMGroupRoleMapping, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SCIMGroupRoleMappingsQuery is a query over iam.SCIMGroupRoleMapping.
+type SCIMGroupRoleMappingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.SCIMGroupRoleMapping] = (*SCIMGroupRoleMappingsTable)(nil)
+
+var _ keel.Query[*iam.SCIMGroupRoleMapping] = (*SCIMGroupRoleMappingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SCIMGroupRoleMappingsTable) Query() keel.Query[*iam.SCIMGroupRoleMapping] {
+	return &SCIMGroupRoleMappingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SCIMGroupRoleMappingsQuery.Where.
+func (t *SCIMGroupRoleMappingsTable) Where(ps ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SCIMGroupRoleMappingsQuery.Pick.
+func (t *SCIMGroupRoleMappingsTable) Pick(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SCIMGroupRoleMappingsQuery.Load.
+func (t *SCIMGroupRoleMappingsTable) Load(ls ...keel.Loader) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SCIMGroupRoleMappingsQuery.Omit.
+func (t *SCIMGroupRoleMappingsTable) Omit(cols ...keel.Column) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SCIMGroupRoleMappingsQuery.Order.
+func (t *SCIMGroupRoleMappingsTable) Order(os ...keel.Order) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SCIMGroupRoleMappingsQuery.Limit.
+func (t *SCIMGroupRoleMappingsTable) Limit(n int) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SCIMGroupRoleMappingsQuery.Group.
+func (t *SCIMGroupRoleMappingsTable) Group(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SCIMGroupRoleMappingsQuery.GroupingSets.
+func (t *SCIMGroupRoleMappingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SCIMGroupRoleMappingsQuery.Rollup.
+func (t *SCIMGroupRoleMappingsTable) Rollup(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SCIMGroupRoleMappingsQuery.Cube.
+func (t *SCIMGroupRoleMappingsTable) Cube(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SCIMGroupRoleMappingsQuery.AllTenants.
+func (t *SCIMGroupRoleMappingsTable) AllTenants() keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SCIMGroupRoleMappingsQuery.Join.
+func (t *SCIMGroupRoleMappingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SCIMGroupRoleMappingsQuery.LeftJoin.
+func (t *SCIMGroupRoleMappingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SCIMGroupRoleMappingsQuery.LeftJoinLateral.
+func (t *SCIMGroupRoleMappingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SCIMGroupRoleMappingsQuery.JoinLateral.
+func (t *SCIMGroupRoleMappingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SCIMGroupRoleMappingsQuery.Lock.
+func (t *SCIMGroupRoleMappingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SCIMGroupRoleMappingsQuery.DistinctOn.
+func (t *SCIMGroupRoleMappingsTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SCIMGroupRoleMappingsQuery.Cache.
+func (t *SCIMGroupRoleMappingsTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SCIMGroupRoleMappingsQuery.LoadStrategy.
+func (t *SCIMGroupRoleMappingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SCIMGroupRoleMappingsQuery.With.
+func (t *SCIMGroupRoleMappingsTable) With(ctes ...*keel.CTETable) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SCIMGroupRoleMappingsQuery.Compute.
+func (t *SCIMGroupRoleMappingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SCIMGroupRoleMappingsTable) Create(ctx context.Context, db *keel.DB, row *iam.SCIMGroupRoleMapping) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SCIMGroupRoleMappingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.SCIMGroupRoleMapping) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SCIMGroupRoleMappingsTable) Save(ctx context.Context, db *keel.DB, row *iam.SCIMGroupRoleMapping, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SCIMGroupRoleMappingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.SCIMGroupRoleMapping, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SCIMGroupRoleMappingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.SCIMGroupRoleMapping) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SCIMGroupRoleMappingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.SCIMGroupRoleMapping, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SCIMGroupRoleMappingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.SCIMGroupRoleMapping, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SCIMGroupRoleMappingsTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.SCIMGroupRoleMapping) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SCIMGroupRoleMappingsQuery) Where(ps ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SCIMGroupRoleMappingsQuery) Pick(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SCIMGroupRoleMappingsQuery) Omit(cols ...keel.Column) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SCIMGroupRoleMappingsQuery) Load(ls ...keel.Loader) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SCIMGroupRoleMappingsQuery) Order(os ...keel.Order) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SCIMGroupRoleMappingsQuery) Distinct() keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SCIMGroupRoleMappingsQuery) Group(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SCIMGroupRoleMappingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SCIMGroupRoleMappingsQuery) Rollup(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SCIMGroupRoleMappingsQuery) Cube(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SCIMGroupRoleMappingsQuery) Window(name string, w keel.Window) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SCIMGroupRoleMappingsQuery) Having(ps ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SCIMGroupRoleMappingsQuery) Limit(n int) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SCIMGroupRoleMappingsQuery) Offset(n int) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SCIMGroupRoleMappingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SCIMGroupRoleMappingsQuery) AllTenants() keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SCIMGroupRoleMappingsQuery) CustomPlan() keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SCIMGroupRoleMappingsQuery) Timeout(d time.Duration) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SCIMGroupRoleMappingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SCIMGroupRoleMappingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SCIMGroupRoleMappingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SCIMGroupRoleMappingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SCIMGroupRoleMappingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SCIMGroupRoleMappingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SCIMGroupRoleMappingsQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SCIMGroupRoleMappingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SCIMGroupRoleMappingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.SCIMGroupRoleMapping] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SCIMGroupRoleMappingsQuery) Clone() keel.Query[*iam.SCIMGroupRoleMapping] {
+	return &SCIMGroupRoleMappingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SCIMGroupRoleMappingsQuery) One(ctx context.Context, db *keel.DB) (*iam.SCIMGroupRoleMapping, error) {
+	return keel.One[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SCIMGroupRoleMappingsQuery) First(ctx context.Context, db *keel.DB) (*iam.SCIMGroupRoleMapping, error) {
+	return keel.First[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SCIMGroupRoleMappingsQuery) List(ctx context.Context, db *keel.DB) ([]*iam.SCIMGroupRoleMapping, error) {
+	return keel.List[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SCIMGroupRoleMappingsQuery) All(ctx context.Context, db *keel.DB) ([]*iam.SCIMGroupRoleMapping, error) {
+	return keel.All[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SCIMGroupRoleMappingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.SCIMGroupRoleMapping, error) {
+	return keel.UpdateReturning[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SCIMGroupRoleMappingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.SCIMGroupRoleMapping], error) {
+	return keel.PageOf[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SCIMGroupRoleMappingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.SCIMGroupRoleMapping) error) error {
+	return keel.Each[*iam.SCIMGroupRoleMapping](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSCIMGroupRoleMapping() unsafe.Pointer { return unsafe.Pointer(new(iam.SCIMGroupRoleMapping)) }
@@ -2169,7 +6119,7 @@ var sCIMTokensRef = keel.Ref{Table: &sCIMTokensTable}
 
 // SCIMTokensTable is the table of iam.SCIMToken.
 type SCIMTokensTable struct {
-	keel.Handle[*iam.SCIMToken]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	DirectoryID    keelkinds.PulidIDCol
@@ -2185,7 +6135,7 @@ type SCIMTokensTable struct {
 
 // SCIMTokens references the scim_tokens table.
 var SCIMTokens = &SCIMTokensTable{
-	Handle:         keel.Handle[*iam.SCIMToken]{Ref: &sCIMTokensRef},
+	TableBase:      keel.TableBase{Ref: &sCIMTokensRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMTokensRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMTokensRef, Index: 1}}},
 	DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMTokensRef, Index: 2}}},
@@ -2199,10 +6149,10 @@ var SCIMTokens = &SCIMTokensTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &sCIMTokensRef, Index: 10}},
 }
 
-// BuildSCIMTokens builds the handle of scim_tokens for ref. Generated relation and alias methods call it.
+// BuildSCIMTokens builds the table of scim_tokens for ref. Generated relation and alias methods call it.
 func BuildSCIMTokens(r *keel.Ref) *SCIMTokensTable {
 	return &SCIMTokensTable{
-		Handle:         keel.Handle[*iam.SCIMToken]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		DirectoryID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -2228,6 +6178,365 @@ func (t *SCIMTokensTable) As(alias string) *SCIMTokensTable {
 // Get returns the scim_tokens row with the given key, or keel.ErrNotFound.
 func (t *SCIMTokensTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*iam.SCIMToken, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SCIMTokensQuery is a query over iam.SCIMToken.
+type SCIMTokensQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*iam.SCIMToken] = (*SCIMTokensTable)(nil)
+
+var _ keel.Query[*iam.SCIMToken] = (*SCIMTokensQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SCIMTokensTable) Query() keel.Query[*iam.SCIMToken] {
+	return &SCIMTokensQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SCIMTokensQuery.Where.
+func (t *SCIMTokensTable) Where(ps ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SCIMTokensQuery.Pick.
+func (t *SCIMTokensTable) Pick(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SCIMTokensQuery.Load.
+func (t *SCIMTokensTable) Load(ls ...keel.Loader) keel.Query[*iam.SCIMToken] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SCIMTokensQuery.Omit.
+func (t *SCIMTokensTable) Omit(cols ...keel.Column) keel.Query[*iam.SCIMToken] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SCIMTokensQuery.Order.
+func (t *SCIMTokensTable) Order(os ...keel.Order) keel.Query[*iam.SCIMToken] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SCIMTokensQuery.Limit.
+func (t *SCIMTokensTable) Limit(n int) keel.Query[*iam.SCIMToken] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SCIMTokensQuery.Group.
+func (t *SCIMTokensTable) Group(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SCIMTokensQuery.GroupingSets.
+func (t *SCIMTokensTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SCIMTokensQuery.Rollup.
+func (t *SCIMTokensTable) Rollup(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SCIMTokensQuery.Cube.
+func (t *SCIMTokensTable) Cube(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SCIMTokensQuery.AllTenants.
+func (t *SCIMTokensTable) AllTenants() keel.Query[*iam.SCIMToken] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SCIMTokensQuery.Join.
+func (t *SCIMTokensTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SCIMTokensQuery.LeftJoin.
+func (t *SCIMTokensTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SCIMTokensQuery.LeftJoinLateral.
+func (t *SCIMTokensTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMToken] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SCIMTokensQuery.JoinLateral.
+func (t *SCIMTokensTable) JoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMToken] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SCIMTokensQuery.Lock.
+func (t *SCIMTokensTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.SCIMToken] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SCIMTokensQuery.DistinctOn.
+func (t *SCIMTokensTable) DistinctOn(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SCIMTokensQuery.Cache.
+func (t *SCIMTokensTable) Cache(opts ...keel.CacheOption) keel.Query[*iam.SCIMToken] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SCIMTokensQuery.LoadStrategy.
+func (t *SCIMTokensTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.SCIMToken] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SCIMTokensQuery.With.
+func (t *SCIMTokensTable) With(ctes ...*keel.CTETable) keel.Query[*iam.SCIMToken] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SCIMTokensQuery.Compute.
+func (t *SCIMTokensTable) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.SCIMToken] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SCIMTokensTable) Create(ctx context.Context, db *keel.DB, row *iam.SCIMToken) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SCIMTokensTable) CreateMany(ctx context.Context, db *keel.DB, rows []*iam.SCIMToken) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SCIMTokensTable) Save(ctx context.Context, db *keel.DB, row *iam.SCIMToken, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SCIMTokensTable) SaveExcept(ctx context.Context, db *keel.DB, row *iam.SCIMToken, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SCIMTokensTable) DeleteRow(ctx context.Context, db *keel.DB, row *iam.SCIMToken) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SCIMTokensTable) Upsert(ctx context.Context, db *keel.DB, rows []*iam.SCIMToken, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SCIMTokensTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*iam.SCIMToken, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SCIMTokensTable) Copy(ctx context.Context, db *keel.DB, rows []*iam.SCIMToken) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SCIMTokensQuery) Where(ps ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SCIMTokensQuery) Pick(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SCIMTokensQuery) Omit(cols ...keel.Column) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SCIMTokensQuery) Load(ls ...keel.Loader) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SCIMTokensQuery) Order(os ...keel.Order) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SCIMTokensQuery) Distinct() keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SCIMTokensQuery) Group(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SCIMTokensQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SCIMTokensQuery) Rollup(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SCIMTokensQuery) Cube(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SCIMTokensQuery) Window(name string, w keel.Window) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SCIMTokensQuery) Having(ps ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SCIMTokensQuery) Limit(n int) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SCIMTokensQuery) Offset(n int) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SCIMTokensQuery) DistinctOn(es ...keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SCIMTokensQuery) AllTenants() keel.Query[*iam.SCIMToken] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SCIMTokensQuery) CustomPlan() keel.Query[*iam.SCIMToken] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SCIMTokensQuery) Timeout(d time.Duration) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SCIMTokensQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SCIMTokensQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SCIMTokensQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SCIMTokensQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SCIMTokensQuery) JoinLateral(sub keel.LateralSource) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SCIMTokensQuery) Cache(opts ...keel.CacheOption) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SCIMTokensQuery) With(ctes ...*keel.CTETable) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SCIMTokensQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SCIMTokensQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*iam.SCIMToken] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SCIMTokensQuery) Clone() keel.Query[*iam.SCIMToken] {
+	return &SCIMTokensQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SCIMTokensQuery) One(ctx context.Context, db *keel.DB) (*iam.SCIMToken, error) {
+	return keel.One[*iam.SCIMToken](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SCIMTokensQuery) First(ctx context.Context, db *keel.DB) (*iam.SCIMToken, error) {
+	return keel.First[*iam.SCIMToken](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SCIMTokensQuery) List(ctx context.Context, db *keel.DB) ([]*iam.SCIMToken, error) {
+	return keel.List[*iam.SCIMToken](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SCIMTokensQuery) All(ctx context.Context, db *keel.DB) ([]*iam.SCIMToken, error) {
+	return keel.All[*iam.SCIMToken](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SCIMTokensQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*iam.SCIMToken, error) {
+	return keel.UpdateReturning[*iam.SCIMToken](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SCIMTokensQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*iam.SCIMToken], error) {
+	return keel.PageOf[*iam.SCIMToken](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SCIMTokensQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*iam.SCIMToken) error) error {
+	return keel.Each[*iam.SCIMToken](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSCIMToken() unsafe.Pointer { return unsafe.Pointer(new(iam.SCIMToken)) }

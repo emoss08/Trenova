@@ -3,6 +3,7 @@ package sessionwatch
 import (
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"time"
 
@@ -13,7 +14,15 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrSessionEnded = errors.New("session ended")
+var (
+	ErrSessionEnded   = errors.New("session ended")
+	ErrSessionRotated = errors.New("session secret rotated")
+)
+
+func Ended(ctx context.Context) bool {
+	cause := context.Cause(ctx)
+	return errors.Is(cause, ErrSessionEnded) || errors.Is(cause, ErrSessionRotated)
+}
 
 type Params struct {
 	fx.In
@@ -25,8 +34,27 @@ type Params struct {
 }
 
 type watched struct {
-	ended    chan struct{}
+	done     chan struct{}
+	cause    error
 	watchers int
+}
+
+type Ending struct {
+	entry *watched
+}
+
+func (e Ending) Done() <-chan struct{} {
+	if e.entry == nil {
+		return nil
+	}
+	return e.entry.done
+}
+
+func (e Ending) Cause() error {
+	if e.entry == nil {
+		return nil
+	}
+	return e.entry.cause
 }
 
 type Watch struct {
@@ -35,7 +63,7 @@ type Watch struct {
 	l        *zap.Logger
 
 	mu       sync.Mutex
-	sessions map[pulid.ID]*watched
+	sessions map[pulid.ID]map[string]*watched
 }
 
 func New(p Params) *Watch {
@@ -71,42 +99,48 @@ func NewWatch(
 		liveness: liveness,
 		interval: interval,
 		l:        logger,
-		sessions: make(map[pulid.ID]*watched),
+		sessions: make(map[pulid.ID]map[string]*watched),
 	}
 }
 
-func (w *Watch) Watch(sessionID pulid.ID) (<-chan struct{}, func()) {
+func (w *Watch) Watch(sessionID pulid.ID, secretHash string) (ending Ending, stop func()) {
 	if sessionID.IsNil() {
-		return nil, func() {}
+		return Ending{}, func() {}
 	}
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	entry, ok := w.sessions[sessionID]
+	bySecret, ok := w.sessions[sessionID]
 	if !ok {
-		entry = &watched{ended: make(chan struct{})}
-		w.sessions[sessionID] = entry
+		bySecret = make(map[string]*watched)
+		w.sessions[sessionID] = bySecret
+	}
+	entry, ok := bySecret[secretHash]
+	if !ok {
+		entry = &watched{done: make(chan struct{})}
+		bySecret[secretHash] = entry
 	}
 	entry.watchers++
 
 	var once sync.Once
-	return entry.ended, func() {
-		once.Do(func() { w.release(sessionID, entry) })
+	return Ending{entry: entry}, func() {
+		once.Do(func() { w.release(sessionID, secretHash, entry) })
 	}
 }
 
 func (w *Watch) Context(
 	parent context.Context,
 	sessionID pulid.ID,
+	secretHash string,
 ) (context.Context, context.CancelFunc) {
-	ended, stop := w.Watch(sessionID)
+	ending, stop := w.Watch(sessionID, secretHash)
 	ctx, cancel := context.WithCancelCause(parent)
-	if ended != nil {
+	if done := ending.Done(); done != nil {
 		go func() {
 			select {
-			case <-ended:
-				cancel(ErrSessionEnded)
+			case <-done:
+				cancel(ending.Cause())
 			case <-ctx.Done():
 			}
 		}()
@@ -118,12 +152,24 @@ func (w *Watch) Context(
 	}
 }
 
-func (w *Watch) release(sessionID pulid.ID, entry *watched) {
+func (w *Watch) SessionContext(
+	parent context.Context,
+	sessionID pulid.ID,
+) (context.Context, context.CancelFunc) {
+	return w.Context(parent, sessionID, "")
+}
+
+func (w *Watch) release(sessionID pulid.ID, secretHash string, entry *watched) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
 	entry.watchers--
-	if entry.watchers == 0 && w.sessions[sessionID] == entry {
+	bySecret := w.sessions[sessionID]
+	if entry.watchers > 0 || bySecret[secretHash] != entry {
+		return
+	}
+	delete(bySecret, secretHash)
+	if len(bySecret) == 0 {
 		delete(w.sessions, sessionID)
 	}
 }
@@ -151,7 +197,7 @@ func (w *Watch) Sweep(ctx context.Context) {
 	checkCtx, cancel := context.WithTimeout(ctx, w.interval)
 	defer cancel()
 
-	ended, err := w.liveness.Ended(checkCtx, sessionIDs)
+	standings, err := w.liveness.Standings(checkCtx, sessionIDs)
 	if err != nil {
 		w.l.Warn(
 			"could not check whether open streams' sessions have ended; checking again next sweep",
@@ -161,7 +207,7 @@ func (w *Watch) Sweep(ctx context.Context) {
 		return
 	}
 
-	w.end(ended)
+	w.settle(standings)
 }
 
 func (w *Watch) watchedIDs() []pulid.ID {
@@ -175,14 +221,37 @@ func (w *Watch) watchedIDs() []pulid.ID {
 	return sessionIDs
 }
 
-func (w *Watch) end(sessionIDs []pulid.ID) {
+func (w *Watch) settle(standings []sessionports.SessionStanding) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	for _, sessionID := range sessionIDs {
-		if entry, ok := w.sessions[sessionID]; ok {
-			close(entry.ended)
-			delete(w.sessions, sessionID)
+	for _, standing := range standings {
+		bySecret, ok := w.sessions[standing.ID]
+		if !ok {
+			continue
+		}
+		for secretHash, entry := range bySecret {
+			cause := endingCause(standing, secretHash)
+			if cause == nil {
+				continue
+			}
+			entry.cause = cause
+			close(entry.done)
+			delete(bySecret, secretHash)
+		}
+		if len(bySecret) == 0 {
+			delete(w.sessions, standing.ID)
 		}
 	}
+}
+
+func endingCause(standing sessionports.SessionStanding, secretHash string) error {
+	if standing.Ended {
+		return ErrSessionEnded
+	}
+	if secretHash != "" && standing.SecretsKnown &&
+		!slices.Contains(standing.SecretHashes, secretHash) {
+		return ErrSessionRotated
+	}
+	return nil
 }

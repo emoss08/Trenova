@@ -4,6 +4,7 @@ package dispatchcontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -98,7 +99,7 @@ var dispatchControlsRef = keel.Ref{Table: &dispatchControlsTable}
 
 // DispatchControlsTable is the table of dispatchcontrol.DispatchControl.
 type DispatchControlsTable struct {
-	keel.Handle[*dispatchcontrol.DispatchControl]
+	keel.TableBase
 	ID                                   keelkinds.PulidIDCol
 	BusinessUnitID                       keelkinds.PulidIDCol
 	OrganizationID                       keelkinds.PulidIDCol
@@ -155,7 +156,7 @@ type DispatchControlsTable struct {
 
 // DispatchControls references the dispatch_controls table.
 var DispatchControls = &DispatchControlsTable{
-	Handle:                               keel.Handle[*dispatchcontrol.DispatchControl]{Ref: &dispatchControlsRef},
+	TableBase:                            keel.TableBase{Ref: &dispatchControlsRef},
 	ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 0}}},
 	BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 1}}},
 	OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dispatchControlsRef, Index: 2}}},
@@ -210,10 +211,10 @@ var DispatchControls = &DispatchControlsTable{
 	UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &dispatchControlsRef, Index: 51}},
 }
 
-// BuildDispatchControls builds the handle of dispatch_controls for ref. Generated relation and alias methods call it.
+// BuildDispatchControls builds the table of dispatch_controls for ref. Generated relation and alias methods call it.
 func BuildDispatchControls(r *keel.Ref) *DispatchControlsTable {
 	return &DispatchControlsTable{
-		Handle:                               keel.Handle[*dispatchcontrol.DispatchControl]{Ref: r},
+		TableBase:                            keel.TableBase{Ref: r},
 		ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -280,6 +281,365 @@ func (t *DispatchControlsTable) As(alias string) *DispatchControlsTable {
 // Get returns the dispatch_controls row with the given key, or keel.ErrNotFound.
 func (t *DispatchControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dispatchcontrol.DispatchControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DispatchControlsQuery is a query over dispatchcontrol.DispatchControl.
+type DispatchControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*dispatchcontrol.DispatchControl] = (*DispatchControlsTable)(nil)
+
+var _ keel.Query[*dispatchcontrol.DispatchControl] = (*DispatchControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DispatchControlsTable) Query() keel.Query[*dispatchcontrol.DispatchControl] {
+	return &DispatchControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DispatchControlsQuery.Where.
+func (t *DispatchControlsTable) Where(ps ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DispatchControlsQuery.Pick.
+func (t *DispatchControlsTable) Pick(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DispatchControlsQuery.Load.
+func (t *DispatchControlsTable) Load(ls ...keel.Loader) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DispatchControlsQuery.Omit.
+func (t *DispatchControlsTable) Omit(cols ...keel.Column) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DispatchControlsQuery.Order.
+func (t *DispatchControlsTable) Order(os ...keel.Order) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DispatchControlsQuery.Limit.
+func (t *DispatchControlsTable) Limit(n int) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DispatchControlsQuery.Group.
+func (t *DispatchControlsTable) Group(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DispatchControlsQuery.GroupingSets.
+func (t *DispatchControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DispatchControlsQuery.Rollup.
+func (t *DispatchControlsTable) Rollup(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DispatchControlsQuery.Cube.
+func (t *DispatchControlsTable) Cube(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DispatchControlsQuery.AllTenants.
+func (t *DispatchControlsTable) AllTenants() keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DispatchControlsQuery.Join.
+func (t *DispatchControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DispatchControlsQuery.LeftJoin.
+func (t *DispatchControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DispatchControlsQuery.LeftJoinLateral.
+func (t *DispatchControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DispatchControlsQuery.JoinLateral.
+func (t *DispatchControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DispatchControlsQuery.Lock.
+func (t *DispatchControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DispatchControlsQuery.DistinctOn.
+func (t *DispatchControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DispatchControlsQuery.Cache.
+func (t *DispatchControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DispatchControlsQuery.LoadStrategy.
+func (t *DispatchControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DispatchControlsQuery.With.
+func (t *DispatchControlsTable) With(ctes ...*keel.CTETable) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DispatchControlsQuery.Compute.
+func (t *DispatchControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DispatchControlsTable) Create(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DispatchControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DispatchControlsTable) Save(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DispatchControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DispatchControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dispatchcontrol.DispatchControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DispatchControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DispatchControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DispatchControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*dispatchcontrol.DispatchControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DispatchControlsQuery) Where(ps ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DispatchControlsQuery) Pick(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DispatchControlsQuery) Omit(cols ...keel.Column) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DispatchControlsQuery) Load(ls ...keel.Loader) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DispatchControlsQuery) Order(os ...keel.Order) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DispatchControlsQuery) Distinct() keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DispatchControlsQuery) Group(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DispatchControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DispatchControlsQuery) Rollup(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DispatchControlsQuery) Cube(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DispatchControlsQuery) Window(name string, w keel.Window) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DispatchControlsQuery) Having(ps ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DispatchControlsQuery) Limit(n int) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DispatchControlsQuery) Offset(n int) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DispatchControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DispatchControlsQuery) AllTenants() keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DispatchControlsQuery) CustomPlan() keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DispatchControlsQuery) Timeout(d time.Duration) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DispatchControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DispatchControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DispatchControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DispatchControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DispatchControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DispatchControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DispatchControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DispatchControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DispatchControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*dispatchcontrol.DispatchControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DispatchControlsQuery) Clone() keel.Query[*dispatchcontrol.DispatchControl] {
+	return &DispatchControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DispatchControlsQuery) One(ctx context.Context, db *keel.DB) (*dispatchcontrol.DispatchControl, error) {
+	return keel.One[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DispatchControlsQuery) First(ctx context.Context, db *keel.DB) (*dispatchcontrol.DispatchControl, error) {
+	return keel.First[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DispatchControlsQuery) List(ctx context.Context, db *keel.DB) ([]*dispatchcontrol.DispatchControl, error) {
+	return keel.List[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DispatchControlsQuery) All(ctx context.Context, db *keel.DB) ([]*dispatchcontrol.DispatchControl, error) {
+	return keel.All[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DispatchControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dispatchcontrol.DispatchControl, error) {
+	return keel.UpdateReturning[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DispatchControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dispatchcontrol.DispatchControl], error) {
+	return keel.PageOf[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DispatchControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dispatchcontrol.DispatchControl) error) error {
+	return keel.Each[*dispatchcontrol.DispatchControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDispatchControl() unsafe.Pointer { return unsafe.Pointer(new(dispatchcontrol.DispatchControl)) }

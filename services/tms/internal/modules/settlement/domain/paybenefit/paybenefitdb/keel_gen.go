@@ -4,6 +4,7 @@ package paybenefitdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -77,7 +78,7 @@ var benefitPlansRef = keel.Ref{Table: &benefitPlansTable}
 
 // BenefitPlansTable is the table of paybenefit.BenefitPlan.
 type BenefitPlansTable struct {
-	keel.Handle[*paybenefit.BenefitPlan]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -101,7 +102,7 @@ type BenefitPlansTable struct {
 
 // BenefitPlans references the benefit_plans table.
 var BenefitPlans = &BenefitPlansTable{
-	Handle:            keel.Handle[*paybenefit.BenefitPlan]{Ref: &benefitPlansRef},
+	TableBase:         keel.TableBase{Ref: &benefitPlansRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &benefitPlansRef, Index: 2}}},
@@ -123,10 +124,10 @@ var BenefitPlans = &BenefitPlansTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &benefitPlansRef, Index: 18}},
 }
 
-// BuildBenefitPlans builds the handle of benefit_plans for ref. Generated relation and alias methods call it.
+// BuildBenefitPlans builds the table of benefit_plans for ref. Generated relation and alias methods call it.
 func BuildBenefitPlans(r *keel.Ref) *BenefitPlansTable {
 	return &BenefitPlansTable{
-		Handle:            keel.Handle[*paybenefit.BenefitPlan]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -165,6 +166,365 @@ func (t *BenefitPlansTable) PayCode() *paycodedb.PayCodesTable {
 // Get returns the benefit_plans row with the given key, or keel.ErrNotFound.
 func (t *BenefitPlansTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paybenefit.BenefitPlan, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BenefitPlansQuery is a query over paybenefit.BenefitPlan.
+type BenefitPlansQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*paybenefit.BenefitPlan] = (*BenefitPlansTable)(nil)
+
+var _ keel.Query[*paybenefit.BenefitPlan] = (*BenefitPlansQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BenefitPlansTable) Query() keel.Query[*paybenefit.BenefitPlan] {
+	return &BenefitPlansQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BenefitPlansQuery.Where.
+func (t *BenefitPlansTable) Where(ps ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BenefitPlansQuery.Pick.
+func (t *BenefitPlansTable) Pick(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BenefitPlansQuery.Load.
+func (t *BenefitPlansTable) Load(ls ...keel.Loader) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BenefitPlansQuery.Omit.
+func (t *BenefitPlansTable) Omit(cols ...keel.Column) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BenefitPlansQuery.Order.
+func (t *BenefitPlansTable) Order(os ...keel.Order) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BenefitPlansQuery.Limit.
+func (t *BenefitPlansTable) Limit(n int) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BenefitPlansQuery.Group.
+func (t *BenefitPlansTable) Group(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BenefitPlansQuery.GroupingSets.
+func (t *BenefitPlansTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BenefitPlansQuery.Rollup.
+func (t *BenefitPlansTable) Rollup(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BenefitPlansQuery.Cube.
+func (t *BenefitPlansTable) Cube(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BenefitPlansQuery.AllTenants.
+func (t *BenefitPlansTable) AllTenants() keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BenefitPlansQuery.Join.
+func (t *BenefitPlansTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BenefitPlansQuery.LeftJoin.
+func (t *BenefitPlansTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BenefitPlansQuery.LeftJoinLateral.
+func (t *BenefitPlansTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BenefitPlansQuery.JoinLateral.
+func (t *BenefitPlansTable) JoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BenefitPlansQuery.Lock.
+func (t *BenefitPlansTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BenefitPlansQuery.DistinctOn.
+func (t *BenefitPlansTable) DistinctOn(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BenefitPlansQuery.Cache.
+func (t *BenefitPlansTable) Cache(opts ...keel.CacheOption) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BenefitPlansQuery.LoadStrategy.
+func (t *BenefitPlansTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BenefitPlansQuery.With.
+func (t *BenefitPlansTable) With(ctes ...*keel.CTETable) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BenefitPlansQuery.Compute.
+func (t *BenefitPlansTable) Compute(col keel.Column, e keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BenefitPlansTable) Create(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BenefitPlansTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BenefitPlansTable) Save(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BenefitPlansTable) SaveExcept(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BenefitPlansTable) DeleteRow(ctx context.Context, db *keel.DB, row *paybenefit.BenefitPlan) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BenefitPlansTable) Upsert(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BenefitPlansTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BenefitPlansTable) Copy(ctx context.Context, db *keel.DB, rows []*paybenefit.BenefitPlan) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BenefitPlansQuery) Where(ps ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BenefitPlansQuery) Pick(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BenefitPlansQuery) Omit(cols ...keel.Column) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BenefitPlansQuery) Load(ls ...keel.Loader) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BenefitPlansQuery) Order(os ...keel.Order) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BenefitPlansQuery) Distinct() keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BenefitPlansQuery) Group(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BenefitPlansQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BenefitPlansQuery) Rollup(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BenefitPlansQuery) Cube(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BenefitPlansQuery) Window(name string, w keel.Window) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BenefitPlansQuery) Having(ps ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BenefitPlansQuery) Limit(n int) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BenefitPlansQuery) Offset(n int) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BenefitPlansQuery) DistinctOn(es ...keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BenefitPlansQuery) AllTenants() keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BenefitPlansQuery) CustomPlan() keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BenefitPlansQuery) Timeout(d time.Duration) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BenefitPlansQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BenefitPlansQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BenefitPlansQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BenefitPlansQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BenefitPlansQuery) JoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BenefitPlansQuery) Cache(opts ...keel.CacheOption) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BenefitPlansQuery) With(ctes ...*keel.CTETable) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BenefitPlansQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BenefitPlansQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*paybenefit.BenefitPlan] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BenefitPlansQuery) Clone() keel.Query[*paybenefit.BenefitPlan] {
+	return &BenefitPlansQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BenefitPlansQuery) One(ctx context.Context, db *keel.DB) (*paybenefit.BenefitPlan, error) {
+	return keel.One[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BenefitPlansQuery) First(ctx context.Context, db *keel.DB) (*paybenefit.BenefitPlan, error) {
+	return keel.First[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BenefitPlansQuery) List(ctx context.Context, db *keel.DB) ([]*paybenefit.BenefitPlan, error) {
+	return keel.List[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BenefitPlansQuery) All(ctx context.Context, db *keel.DB) ([]*paybenefit.BenefitPlan, error) {
+	return keel.All[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BenefitPlansQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paybenefit.BenefitPlan, error) {
+	return keel.UpdateReturning[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BenefitPlansQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paybenefit.BenefitPlan], error) {
+	return keel.PageOf[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BenefitPlansQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paybenefit.BenefitPlan) error) error {
+	return keel.Each[*paybenefit.BenefitPlan](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBenefitPlan() unsafe.Pointer { return unsafe.Pointer(new(paybenefit.BenefitPlan)) }
@@ -343,7 +703,7 @@ var workerBenefitEnrollmentsRef = keel.Ref{Table: &workerBenefitEnrollmentsTable
 
 // WorkerBenefitEnrollmentsTable is the table of paybenefit.WorkerBenefitEnrollment.
 type WorkerBenefitEnrollmentsTable struct {
-	keel.Handle[*paybenefit.WorkerBenefitEnrollment]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -366,7 +726,7 @@ type WorkerBenefitEnrollmentsTable struct {
 
 // WorkerBenefitEnrollments references the worker_benefit_enrollments table.
 var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
-	Handle:               keel.Handle[*paybenefit.WorkerBenefitEnrollment]{Ref: &workerBenefitEnrollmentsRef},
+	TableBase:            keel.TableBase{Ref: &workerBenefitEnrollmentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 2}}},
@@ -387,10 +747,10 @@ var WorkerBenefitEnrollments = &WorkerBenefitEnrollmentsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerBenefitEnrollmentsRef, Index: 17}},
 }
 
-// BuildWorkerBenefitEnrollments builds the handle of worker_benefit_enrollments for ref. Generated relation and alias methods call it.
+// BuildWorkerBenefitEnrollments builds the table of worker_benefit_enrollments for ref. Generated relation and alias methods call it.
 func BuildWorkerBenefitEnrollments(r *keel.Ref) *WorkerBenefitEnrollmentsTable {
 	return &WorkerBenefitEnrollmentsTable{
-		Handle:               keel.Handle[*paybenefit.WorkerBenefitEnrollment]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -438,6 +798,365 @@ func (t *WorkerBenefitEnrollmentsTable) Deduction() *recurringpaydb.RecurringDed
 // Get returns the worker_benefit_enrollments row with the given key, or keel.ErrNotFound.
 func (t *WorkerBenefitEnrollmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paybenefit.WorkerBenefitEnrollment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerBenefitEnrollmentsQuery is a query over paybenefit.WorkerBenefitEnrollment.
+type WorkerBenefitEnrollmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*paybenefit.WorkerBenefitEnrollment] = (*WorkerBenefitEnrollmentsTable)(nil)
+
+var _ keel.Query[*paybenefit.WorkerBenefitEnrollment] = (*WorkerBenefitEnrollmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerBenefitEnrollmentsTable) Query() keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return &WorkerBenefitEnrollmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerBenefitEnrollmentsQuery.Where.
+func (t *WorkerBenefitEnrollmentsTable) Where(ps ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerBenefitEnrollmentsQuery.Pick.
+func (t *WorkerBenefitEnrollmentsTable) Pick(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerBenefitEnrollmentsQuery.Load.
+func (t *WorkerBenefitEnrollmentsTable) Load(ls ...keel.Loader) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerBenefitEnrollmentsQuery.Omit.
+func (t *WorkerBenefitEnrollmentsTable) Omit(cols ...keel.Column) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerBenefitEnrollmentsQuery.Order.
+func (t *WorkerBenefitEnrollmentsTable) Order(os ...keel.Order) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerBenefitEnrollmentsQuery.Limit.
+func (t *WorkerBenefitEnrollmentsTable) Limit(n int) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerBenefitEnrollmentsQuery.Group.
+func (t *WorkerBenefitEnrollmentsTable) Group(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerBenefitEnrollmentsQuery.GroupingSets.
+func (t *WorkerBenefitEnrollmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerBenefitEnrollmentsQuery.Rollup.
+func (t *WorkerBenefitEnrollmentsTable) Rollup(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerBenefitEnrollmentsQuery.Cube.
+func (t *WorkerBenefitEnrollmentsTable) Cube(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerBenefitEnrollmentsQuery.AllTenants.
+func (t *WorkerBenefitEnrollmentsTable) AllTenants() keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerBenefitEnrollmentsQuery.Join.
+func (t *WorkerBenefitEnrollmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerBenefitEnrollmentsQuery.LeftJoin.
+func (t *WorkerBenefitEnrollmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerBenefitEnrollmentsQuery.LeftJoinLateral.
+func (t *WorkerBenefitEnrollmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerBenefitEnrollmentsQuery.JoinLateral.
+func (t *WorkerBenefitEnrollmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerBenefitEnrollmentsQuery.Lock.
+func (t *WorkerBenefitEnrollmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerBenefitEnrollmentsQuery.DistinctOn.
+func (t *WorkerBenefitEnrollmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerBenefitEnrollmentsQuery.Cache.
+func (t *WorkerBenefitEnrollmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerBenefitEnrollmentsQuery.LoadStrategy.
+func (t *WorkerBenefitEnrollmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerBenefitEnrollmentsQuery.With.
+func (t *WorkerBenefitEnrollmentsTable) With(ctes ...*keel.CTETable) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerBenefitEnrollmentsQuery.Compute.
+func (t *WorkerBenefitEnrollmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerBenefitEnrollmentsTable) Create(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerBenefitEnrollmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerBenefitEnrollmentsTable) Save(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerBenefitEnrollmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerBenefitEnrollmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *paybenefit.WorkerBenefitEnrollment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerBenefitEnrollmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerBenefitEnrollmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerBenefitEnrollmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*paybenefit.WorkerBenefitEnrollment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerBenefitEnrollmentsQuery) Where(ps ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerBenefitEnrollmentsQuery) Pick(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerBenefitEnrollmentsQuery) Omit(cols ...keel.Column) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerBenefitEnrollmentsQuery) Load(ls ...keel.Loader) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerBenefitEnrollmentsQuery) Order(os ...keel.Order) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerBenefitEnrollmentsQuery) Distinct() keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerBenefitEnrollmentsQuery) Group(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerBenefitEnrollmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerBenefitEnrollmentsQuery) Rollup(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerBenefitEnrollmentsQuery) Cube(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerBenefitEnrollmentsQuery) Window(name string, w keel.Window) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerBenefitEnrollmentsQuery) Having(ps ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerBenefitEnrollmentsQuery) Limit(n int) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerBenefitEnrollmentsQuery) Offset(n int) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerBenefitEnrollmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerBenefitEnrollmentsQuery) AllTenants() keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerBenefitEnrollmentsQuery) CustomPlan() keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerBenefitEnrollmentsQuery) Timeout(d time.Duration) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerBenefitEnrollmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerBenefitEnrollmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerBenefitEnrollmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerBenefitEnrollmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerBenefitEnrollmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerBenefitEnrollmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerBenefitEnrollmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerBenefitEnrollmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerBenefitEnrollmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerBenefitEnrollmentsQuery) Clone() keel.Query[*paybenefit.WorkerBenefitEnrollment] {
+	return &WorkerBenefitEnrollmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerBenefitEnrollmentsQuery) One(ctx context.Context, db *keel.DB) (*paybenefit.WorkerBenefitEnrollment, error) {
+	return keel.One[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerBenefitEnrollmentsQuery) First(ctx context.Context, db *keel.DB) (*paybenefit.WorkerBenefitEnrollment, error) {
+	return keel.First[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerBenefitEnrollmentsQuery) List(ctx context.Context, db *keel.DB) ([]*paybenefit.WorkerBenefitEnrollment, error) {
+	return keel.List[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerBenefitEnrollmentsQuery) All(ctx context.Context, db *keel.DB) ([]*paybenefit.WorkerBenefitEnrollment, error) {
+	return keel.All[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerBenefitEnrollmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paybenefit.WorkerBenefitEnrollment, error) {
+	return keel.UpdateReturning[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerBenefitEnrollmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paybenefit.WorkerBenefitEnrollment], error) {
+	return keel.PageOf[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerBenefitEnrollmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paybenefit.WorkerBenefitEnrollment) error) error {
+	return keel.Each[*paybenefit.WorkerBenefitEnrollment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerBenefitEnrollment() unsafe.Pointer {

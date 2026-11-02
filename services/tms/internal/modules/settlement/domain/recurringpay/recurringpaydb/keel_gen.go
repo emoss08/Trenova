@@ -4,6 +4,7 @@ package recurringpaydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -85,7 +86,7 @@ var recurringDeductionsRef = keel.Ref{Table: &recurringDeductionsTable}
 
 // RecurringDeductionsTable is the table of recurringpay.RecurringDeduction.
 type RecurringDeductionsTable struct {
-	keel.Handle[*recurringpay.RecurringDeduction]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -114,7 +115,7 @@ type RecurringDeductionsTable struct {
 
 // RecurringDeductions references the recurring_deductions table.
 var RecurringDeductions = &RecurringDeductionsTable{
-	Handle:              keel.Handle[*recurringpay.RecurringDeduction]{Ref: &recurringDeductionsRef},
+	TableBase:           keel.TableBase{Ref: &recurringDeductionsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 2}}},
@@ -141,10 +142,10 @@ var RecurringDeductions = &RecurringDeductionsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 23}},
 }
 
-// BuildRecurringDeductions builds the handle of recurring_deductions for ref. Generated relation and alias methods call it.
+// BuildRecurringDeductions builds the table of recurring_deductions for ref. Generated relation and alias methods call it.
 func BuildRecurringDeductions(r *keel.Ref) *RecurringDeductionsTable {
 	return &RecurringDeductionsTable{
-		Handle:              keel.Handle[*recurringpay.RecurringDeduction]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -198,6 +199,365 @@ func (t *RecurringDeductionsTable) EscrowAccount() *payescrowdb.EscrowAccountsTa
 // Get returns the recurring_deductions row with the given key, or keel.ErrNotFound.
 func (t *RecurringDeductionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*recurringpay.RecurringDeduction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RecurringDeductionsQuery is a query over recurringpay.RecurringDeduction.
+type RecurringDeductionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*recurringpay.RecurringDeduction] = (*RecurringDeductionsTable)(nil)
+
+var _ keel.Query[*recurringpay.RecurringDeduction] = (*RecurringDeductionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RecurringDeductionsTable) Query() keel.Query[*recurringpay.RecurringDeduction] {
+	return &RecurringDeductionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RecurringDeductionsQuery.Where.
+func (t *RecurringDeductionsTable) Where(ps ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RecurringDeductionsQuery.Pick.
+func (t *RecurringDeductionsTable) Pick(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RecurringDeductionsQuery.Load.
+func (t *RecurringDeductionsTable) Load(ls ...keel.Loader) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RecurringDeductionsQuery.Omit.
+func (t *RecurringDeductionsTable) Omit(cols ...keel.Column) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RecurringDeductionsQuery.Order.
+func (t *RecurringDeductionsTable) Order(os ...keel.Order) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RecurringDeductionsQuery.Limit.
+func (t *RecurringDeductionsTable) Limit(n int) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RecurringDeductionsQuery.Group.
+func (t *RecurringDeductionsTable) Group(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RecurringDeductionsQuery.GroupingSets.
+func (t *RecurringDeductionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RecurringDeductionsQuery.Rollup.
+func (t *RecurringDeductionsTable) Rollup(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RecurringDeductionsQuery.Cube.
+func (t *RecurringDeductionsTable) Cube(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RecurringDeductionsQuery.AllTenants.
+func (t *RecurringDeductionsTable) AllTenants() keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RecurringDeductionsQuery.Join.
+func (t *RecurringDeductionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RecurringDeductionsQuery.LeftJoin.
+func (t *RecurringDeductionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RecurringDeductionsQuery.LeftJoinLateral.
+func (t *RecurringDeductionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RecurringDeductionsQuery.JoinLateral.
+func (t *RecurringDeductionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RecurringDeductionsQuery.Lock.
+func (t *RecurringDeductionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RecurringDeductionsQuery.DistinctOn.
+func (t *RecurringDeductionsTable) DistinctOn(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RecurringDeductionsQuery.Cache.
+func (t *RecurringDeductionsTable) Cache(opts ...keel.CacheOption) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RecurringDeductionsQuery.LoadStrategy.
+func (t *RecurringDeductionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RecurringDeductionsQuery.With.
+func (t *RecurringDeductionsTable) With(ctes ...*keel.CTETable) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RecurringDeductionsQuery.Compute.
+func (t *RecurringDeductionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RecurringDeductionsTable) Create(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RecurringDeductionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RecurringDeductionsTable) Save(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RecurringDeductionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RecurringDeductionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RecurringDeductionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RecurringDeductionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RecurringDeductionsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RecurringDeductionsQuery) Where(ps ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RecurringDeductionsQuery) Pick(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RecurringDeductionsQuery) Omit(cols ...keel.Column) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RecurringDeductionsQuery) Load(ls ...keel.Loader) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RecurringDeductionsQuery) Order(os ...keel.Order) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RecurringDeductionsQuery) Distinct() keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RecurringDeductionsQuery) Group(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RecurringDeductionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RecurringDeductionsQuery) Rollup(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RecurringDeductionsQuery) Cube(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RecurringDeductionsQuery) Window(name string, w keel.Window) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RecurringDeductionsQuery) Having(ps ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RecurringDeductionsQuery) Limit(n int) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RecurringDeductionsQuery) Offset(n int) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RecurringDeductionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RecurringDeductionsQuery) AllTenants() keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RecurringDeductionsQuery) CustomPlan() keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RecurringDeductionsQuery) Timeout(d time.Duration) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RecurringDeductionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RecurringDeductionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RecurringDeductionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RecurringDeductionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RecurringDeductionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RecurringDeductionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RecurringDeductionsQuery) With(ctes ...*keel.CTETable) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RecurringDeductionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RecurringDeductionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringpay.RecurringDeduction] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RecurringDeductionsQuery) Clone() keel.Query[*recurringpay.RecurringDeduction] {
+	return &RecurringDeductionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RecurringDeductionsQuery) One(ctx context.Context, db *keel.DB) (*recurringpay.RecurringDeduction, error) {
+	return keel.One[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RecurringDeductionsQuery) First(ctx context.Context, db *keel.DB) (*recurringpay.RecurringDeduction, error) {
+	return keel.First[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RecurringDeductionsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringDeduction, error) {
+	return keel.List[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RecurringDeductionsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringDeduction, error) {
+	return keel.All[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RecurringDeductionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringpay.RecurringDeduction, error) {
+	return keel.UpdateReturning[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RecurringDeductionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringpay.RecurringDeduction], error) {
+	return keel.PageOf[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RecurringDeductionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringpay.RecurringDeduction) error) error {
+	return keel.Each[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRecurringDeduction() unsafe.Pointer {
@@ -415,7 +775,7 @@ var recurringEarningsRef = keel.Ref{Table: &recurringEarningsTable}
 
 // RecurringEarningsTable is the table of recurringpay.RecurringEarning.
 type RecurringEarningsTable struct {
-	keel.Handle[*recurringpay.RecurringEarning]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -439,7 +799,7 @@ type RecurringEarningsTable struct {
 
 // RecurringEarnings references the recurring_earnings table.
 var RecurringEarnings = &RecurringEarningsTable{
-	Handle:          keel.Handle[*recurringpay.RecurringEarning]{Ref: &recurringEarningsRef},
+	TableBase:       keel.TableBase{Ref: &recurringEarningsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 2}}},
@@ -461,10 +821,10 @@ var RecurringEarnings = &RecurringEarningsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 18}},
 }
 
-// BuildRecurringEarnings builds the handle of recurring_earnings for ref. Generated relation and alias methods call it.
+// BuildRecurringEarnings builds the table of recurring_earnings for ref. Generated relation and alias methods call it.
 func BuildRecurringEarnings(r *keel.Ref) *RecurringEarningsTable {
 	return &RecurringEarningsTable{
-		Handle:          keel.Handle[*recurringpay.RecurringEarning]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -508,6 +868,365 @@ func (t *RecurringEarningsTable) PayCode() *paycodedb.PayCodesTable {
 // Get returns the recurring_earnings row with the given key, or keel.ErrNotFound.
 func (t *RecurringEarningsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*recurringpay.RecurringEarning, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RecurringEarningsQuery is a query over recurringpay.RecurringEarning.
+type RecurringEarningsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*recurringpay.RecurringEarning] = (*RecurringEarningsTable)(nil)
+
+var _ keel.Query[*recurringpay.RecurringEarning] = (*RecurringEarningsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RecurringEarningsTable) Query() keel.Query[*recurringpay.RecurringEarning] {
+	return &RecurringEarningsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RecurringEarningsQuery.Where.
+func (t *RecurringEarningsTable) Where(ps ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RecurringEarningsQuery.Pick.
+func (t *RecurringEarningsTable) Pick(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RecurringEarningsQuery.Load.
+func (t *RecurringEarningsTable) Load(ls ...keel.Loader) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RecurringEarningsQuery.Omit.
+func (t *RecurringEarningsTable) Omit(cols ...keel.Column) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RecurringEarningsQuery.Order.
+func (t *RecurringEarningsTable) Order(os ...keel.Order) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RecurringEarningsQuery.Limit.
+func (t *RecurringEarningsTable) Limit(n int) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RecurringEarningsQuery.Group.
+func (t *RecurringEarningsTable) Group(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RecurringEarningsQuery.GroupingSets.
+func (t *RecurringEarningsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RecurringEarningsQuery.Rollup.
+func (t *RecurringEarningsTable) Rollup(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RecurringEarningsQuery.Cube.
+func (t *RecurringEarningsTable) Cube(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RecurringEarningsQuery.AllTenants.
+func (t *RecurringEarningsTable) AllTenants() keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RecurringEarningsQuery.Join.
+func (t *RecurringEarningsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RecurringEarningsQuery.LeftJoin.
+func (t *RecurringEarningsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RecurringEarningsQuery.LeftJoinLateral.
+func (t *RecurringEarningsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RecurringEarningsQuery.JoinLateral.
+func (t *RecurringEarningsTable) JoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RecurringEarningsQuery.Lock.
+func (t *RecurringEarningsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RecurringEarningsQuery.DistinctOn.
+func (t *RecurringEarningsTable) DistinctOn(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RecurringEarningsQuery.Cache.
+func (t *RecurringEarningsTable) Cache(opts ...keel.CacheOption) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RecurringEarningsQuery.LoadStrategy.
+func (t *RecurringEarningsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RecurringEarningsQuery.With.
+func (t *RecurringEarningsTable) With(ctes ...*keel.CTETable) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RecurringEarningsQuery.Compute.
+func (t *RecurringEarningsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RecurringEarningsTable) Create(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RecurringEarningsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RecurringEarningsTable) Save(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RecurringEarningsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RecurringEarningsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RecurringEarningsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RecurringEarningsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RecurringEarningsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RecurringEarningsQuery) Where(ps ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RecurringEarningsQuery) Pick(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RecurringEarningsQuery) Omit(cols ...keel.Column) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RecurringEarningsQuery) Load(ls ...keel.Loader) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RecurringEarningsQuery) Order(os ...keel.Order) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RecurringEarningsQuery) Distinct() keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RecurringEarningsQuery) Group(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RecurringEarningsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RecurringEarningsQuery) Rollup(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RecurringEarningsQuery) Cube(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RecurringEarningsQuery) Window(name string, w keel.Window) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RecurringEarningsQuery) Having(ps ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RecurringEarningsQuery) Limit(n int) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RecurringEarningsQuery) Offset(n int) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RecurringEarningsQuery) DistinctOn(es ...keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RecurringEarningsQuery) AllTenants() keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RecurringEarningsQuery) CustomPlan() keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RecurringEarningsQuery) Timeout(d time.Duration) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RecurringEarningsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RecurringEarningsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RecurringEarningsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RecurringEarningsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RecurringEarningsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RecurringEarningsQuery) Cache(opts ...keel.CacheOption) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RecurringEarningsQuery) With(ctes ...*keel.CTETable) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RecurringEarningsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RecurringEarningsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringpay.RecurringEarning] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RecurringEarningsQuery) Clone() keel.Query[*recurringpay.RecurringEarning] {
+	return &RecurringEarningsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RecurringEarningsQuery) One(ctx context.Context, db *keel.DB) (*recurringpay.RecurringEarning, error) {
+	return keel.One[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RecurringEarningsQuery) First(ctx context.Context, db *keel.DB) (*recurringpay.RecurringEarning, error) {
+	return keel.First[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RecurringEarningsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringEarning, error) {
+	return keel.List[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RecurringEarningsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringEarning, error) {
+	return keel.All[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RecurringEarningsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringpay.RecurringEarning, error) {
+	return keel.UpdateReturning[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RecurringEarningsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringpay.RecurringEarning], error) {
+	return keel.PageOf[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RecurringEarningsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringpay.RecurringEarning) error) error {
+	return keel.Each[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRecurringEarning() unsafe.Pointer { return unsafe.Pointer(new(recurringpay.RecurringEarning)) }

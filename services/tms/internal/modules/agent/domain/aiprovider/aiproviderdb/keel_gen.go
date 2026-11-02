@@ -4,6 +4,7 @@ package aiproviderdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -95,7 +96,7 @@ var providersRef = keel.Ref{Table: &providersTable}
 
 // ProvidersTable is the table of aiprovider.Provider.
 type ProvidersTable struct {
-	keel.Handle[*aiprovider.Provider]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -148,7 +149,7 @@ type ProvidersTable struct {
 
 // Providers references the ai_providers table.
 var Providers = &ProvidersTable{
-	Handle:                   keel.Handle[*aiprovider.Provider]{Ref: &providersRef},
+	TableBase:                keel.TableBase{Ref: &providersRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providersRef, Index: 2}}},
@@ -199,10 +200,10 @@ var Providers = &ProvidersTable{
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &providersRef, Index: 47}},
 }
 
-// BuildProviders builds the handle of ai_providers for ref. Generated relation and alias methods call it.
+// BuildProviders builds the table of ai_providers for ref. Generated relation and alias methods call it.
 func BuildProviders(r *keel.Ref) *ProvidersTable {
 	return &ProvidersTable{
-		Handle:                   keel.Handle[*aiprovider.Provider]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -265,6 +266,365 @@ func (t *ProvidersTable) As(alias string) *ProvidersTable {
 // Get returns the ai_providers row with the given key, or keel.ErrNotFound.
 func (t *ProvidersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiprovider.Provider, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProvidersQuery is a query over aiprovider.Provider.
+type ProvidersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aiprovider.Provider] = (*ProvidersTable)(nil)
+
+var _ keel.Query[*aiprovider.Provider] = (*ProvidersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProvidersTable) Query() keel.Query[*aiprovider.Provider] {
+	return &ProvidersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProvidersQuery.Where.
+func (t *ProvidersTable) Where(ps ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProvidersQuery.Pick.
+func (t *ProvidersTable) Pick(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProvidersQuery.Load.
+func (t *ProvidersTable) Load(ls ...keel.Loader) keel.Query[*aiprovider.Provider] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProvidersQuery.Omit.
+func (t *ProvidersTable) Omit(cols ...keel.Column) keel.Query[*aiprovider.Provider] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProvidersQuery.Order.
+func (t *ProvidersTable) Order(os ...keel.Order) keel.Query[*aiprovider.Provider] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProvidersQuery.Limit.
+func (t *ProvidersTable) Limit(n int) keel.Query[*aiprovider.Provider] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProvidersQuery.Group.
+func (t *ProvidersTable) Group(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProvidersQuery.GroupingSets.
+func (t *ProvidersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProvidersQuery.Rollup.
+func (t *ProvidersTable) Rollup(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProvidersQuery.Cube.
+func (t *ProvidersTable) Cube(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProvidersQuery.AllTenants.
+func (t *ProvidersTable) AllTenants() keel.Query[*aiprovider.Provider] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProvidersQuery.Join.
+func (t *ProvidersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProvidersQuery.LeftJoin.
+func (t *ProvidersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProvidersQuery.LeftJoinLateral.
+func (t *ProvidersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiprovider.Provider] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProvidersQuery.JoinLateral.
+func (t *ProvidersTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiprovider.Provider] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProvidersQuery.Lock.
+func (t *ProvidersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiprovider.Provider] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProvidersQuery.DistinctOn.
+func (t *ProvidersTable) DistinctOn(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProvidersQuery.Cache.
+func (t *ProvidersTable) Cache(opts ...keel.CacheOption) keel.Query[*aiprovider.Provider] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProvidersQuery.LoadStrategy.
+func (t *ProvidersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiprovider.Provider] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProvidersQuery.With.
+func (t *ProvidersTable) With(ctes ...*keel.CTETable) keel.Query[*aiprovider.Provider] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProvidersQuery.Compute.
+func (t *ProvidersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiprovider.Provider] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProvidersTable) Create(ctx context.Context, db *keel.DB, row *aiprovider.Provider) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProvidersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProvidersTable) Save(ctx context.Context, db *keel.DB, row *aiprovider.Provider, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProvidersTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiprovider.Provider, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProvidersTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiprovider.Provider) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProvidersTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProvidersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProvidersTable) Copy(ctx context.Context, db *keel.DB, rows []*aiprovider.Provider) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProvidersQuery) Where(ps ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProvidersQuery) Pick(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProvidersQuery) Omit(cols ...keel.Column) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProvidersQuery) Load(ls ...keel.Loader) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProvidersQuery) Order(os ...keel.Order) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProvidersQuery) Distinct() keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProvidersQuery) Group(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProvidersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProvidersQuery) Rollup(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProvidersQuery) Cube(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProvidersQuery) Window(name string, w keel.Window) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProvidersQuery) Having(ps ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProvidersQuery) Limit(n int) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProvidersQuery) Offset(n int) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProvidersQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProvidersQuery) AllTenants() keel.Query[*aiprovider.Provider] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProvidersQuery) CustomPlan() keel.Query[*aiprovider.Provider] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProvidersQuery) Timeout(d time.Duration) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProvidersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProvidersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProvidersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProvidersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProvidersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProvidersQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProvidersQuery) With(ctes ...*keel.CTETable) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProvidersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProvidersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiprovider.Provider] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProvidersQuery) Clone() keel.Query[*aiprovider.Provider] {
+	return &ProvidersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProvidersQuery) One(ctx context.Context, db *keel.DB) (*aiprovider.Provider, error) {
+	return keel.One[*aiprovider.Provider](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProvidersQuery) First(ctx context.Context, db *keel.DB) (*aiprovider.Provider, error) {
+	return keel.First[*aiprovider.Provider](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProvidersQuery) List(ctx context.Context, db *keel.DB) ([]*aiprovider.Provider, error) {
+	return keel.List[*aiprovider.Provider](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProvidersQuery) All(ctx context.Context, db *keel.DB) ([]*aiprovider.Provider, error) {
+	return keel.All[*aiprovider.Provider](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProvidersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiprovider.Provider, error) {
+	return keel.UpdateReturning[*aiprovider.Provider](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProvidersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiprovider.Provider], error) {
+	return keel.PageOf[*aiprovider.Provider](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProvidersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiprovider.Provider) error) error {
+	return keel.Each[*aiprovider.Provider](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProvider() unsafe.Pointer { return unsafe.Pointer(new(aiprovider.Provider)) }

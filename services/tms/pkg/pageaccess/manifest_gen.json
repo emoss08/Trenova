@@ -1,5 +1,5 @@
 {
-  "version": "sha256:835c4b4eeb47292da4a7688afc43428b421fbcb7da446d202290b190c8d68ce8",
+  "version": "sha256:79f39fd33dda434b3b27e62c04fa3793b3d2308f3953cf8231d98f9d315dd9ea",
   "screens": [
     {
       "path": "/",
@@ -6430,13 +6430,10 @@
         "CreateMemo",
         "CustomerBrokerIntelligence",
         "CustomerTable",
-        "CustomerTrackingProfile",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
         "DataTableSeries",
-        "DeskCustomerCard",
-        "DeskCustomerRateAgreements",
         "DeskInvoiceCard",
         "DraftFactoringNoa",
         "ExportTableView",
@@ -6473,11 +6470,9 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SendFactoringNoa",
-        "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
         "StartBulkEdit",
         "UndoMyBulkEdit",
-        "UpdateCustomerTrackingProfile",
         "VetCustomerBroker"
       ],
       "endpoints": [
@@ -6602,8 +6597,7 @@
         "factoring_remittance",
         "factoring_reserve",
         "factoring_submission",
-        "invoice",
-        "rate_agreement"
+        "invoice"
       ],
       "references": [
         "customer_payment",
@@ -11555,6 +11549,7 @@
       ],
       "declared": [
         "invoice_dispute",
+        "shipment",
         "user"
       ]
     },
@@ -12185,6 +12180,7 @@
         "worker"
       ],
       "declared": [
+        "shipment",
         "user"
       ]
     },
@@ -24991,7 +24987,8 @@
         "worker"
       ],
       "declared": [
-        "invoice_dispute"
+        "invoice_dispute",
+        "shipment"
       ]
     },
     {
@@ -25785,7 +25782,8 @@
         "worker"
       ],
       "declared": [
-        "invoice_dispute"
+        "invoice_dispute",
+        "shipment"
       ]
     },
     {
@@ -26820,7 +26818,8 @@
         "worker"
       ],
       "declared": [
-        "invoice_dispute"
+        "invoice_dispute",
+        "shipment"
       ]
     },
     {
@@ -28370,6 +28369,7 @@
         "invoice_dispute",
         "performance_review",
         "shift_template",
+        "shipment",
         "user",
         "worker_checklist",
         "worker_credential_type"
@@ -34718,7 +34718,9 @@
           ]
         }
       ],
-      "declared": []
+      "declared": [
+        "shipment"
+      ]
     },
     {
       "name": "BillingQueueRateAgreement",
@@ -36233,7 +36235,9 @@
     {
       "name": "CustomerTrackingProfile",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "customer"
+      ],
       "linked": [],
       "declared": []
     },
@@ -42764,13 +42768,6 @@
     },
     {
       "name": "UpdateCostingControl",
-      "type": "mutation",
-      "reads": [],
-      "linked": [],
-      "declared": []
-    },
-    {
-      "name": "UpdateCustomerTrackingProfile",
       "type": "mutation",
       "reads": [],
       "linked": [],

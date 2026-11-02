@@ -4,6 +4,7 @@ package fuelsurchargedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var fuelIndexesRef = keel.Ref{Table: &fuelIndexesTable}
 
 // FuelIndexesTable is the table of fuelsurcharge.FuelIndex.
 type FuelIndexesTable struct {
-	keel.Handle[*fuelsurcharge.FuelIndex]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -89,7 +90,7 @@ type FuelIndexesTable struct {
 
 // FuelIndexes references the fuel_indices table.
 var FuelIndexes = &FuelIndexesTable{
-	Handle:         keel.Handle[*fuelsurcharge.FuelIndex]{Ref: &fuelIndexesRef},
+	TableBase:      keel.TableBase{Ref: &fuelIndexesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 2}}},
@@ -109,10 +110,10 @@ var FuelIndexes = &FuelIndexesTable{
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 16}},
 }
 
-// BuildFuelIndexes builds the handle of fuel_indices for ref. Generated relation and alias methods call it.
+// BuildFuelIndexes builds the table of fuel_indices for ref. Generated relation and alias methods call it.
 func BuildFuelIndexes(r *keel.Ref) *FuelIndexesTable {
 	return &FuelIndexesTable{
-		Handle:         keel.Handle[*fuelsurcharge.FuelIndex]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -144,6 +145,365 @@ func (t *FuelIndexesTable) As(alias string) *FuelIndexesTable {
 // Get returns the fuel_indices row with the given key, or keel.ErrNotFound.
 func (t *FuelIndexesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fuelsurcharge.FuelIndex, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FuelIndexesQuery is a query over fuelsurcharge.FuelIndex.
+type FuelIndexesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fuelsurcharge.FuelIndex] = (*FuelIndexesTable)(nil)
+
+var _ keel.Query[*fuelsurcharge.FuelIndex] = (*FuelIndexesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FuelIndexesTable) Query() keel.Query[*fuelsurcharge.FuelIndex] {
+	return &FuelIndexesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FuelIndexesQuery.Where.
+func (t *FuelIndexesTable) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FuelIndexesQuery.Pick.
+func (t *FuelIndexesTable) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FuelIndexesQuery.Load.
+func (t *FuelIndexesTable) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FuelIndexesQuery.Omit.
+func (t *FuelIndexesTable) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FuelIndexesQuery.Order.
+func (t *FuelIndexesTable) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FuelIndexesQuery.Limit.
+func (t *FuelIndexesTable) Limit(n int) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FuelIndexesQuery.Group.
+func (t *FuelIndexesTable) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FuelIndexesQuery.GroupingSets.
+func (t *FuelIndexesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FuelIndexesQuery.Rollup.
+func (t *FuelIndexesTable) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FuelIndexesQuery.Cube.
+func (t *FuelIndexesTable) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FuelIndexesQuery.AllTenants.
+func (t *FuelIndexesTable) AllTenants() keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FuelIndexesQuery.Join.
+func (t *FuelIndexesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FuelIndexesQuery.LeftJoin.
+func (t *FuelIndexesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FuelIndexesQuery.LeftJoinLateral.
+func (t *FuelIndexesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FuelIndexesQuery.JoinLateral.
+func (t *FuelIndexesTable) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FuelIndexesQuery.Lock.
+func (t *FuelIndexesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FuelIndexesQuery.DistinctOn.
+func (t *FuelIndexesTable) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FuelIndexesQuery.Cache.
+func (t *FuelIndexesTable) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FuelIndexesQuery.LoadStrategy.
+func (t *FuelIndexesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FuelIndexesQuery.With.
+func (t *FuelIndexesTable) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FuelIndexesQuery.Compute.
+func (t *FuelIndexesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FuelIndexesTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FuelIndexesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FuelIndexesTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FuelIndexesTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FuelIndexesTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FuelIndexesTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FuelIndexesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FuelIndexesTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FuelIndexesQuery) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FuelIndexesQuery) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FuelIndexesQuery) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FuelIndexesQuery) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FuelIndexesQuery) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FuelIndexesQuery) Distinct() keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FuelIndexesQuery) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FuelIndexesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FuelIndexesQuery) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FuelIndexesQuery) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FuelIndexesQuery) Window(name string, w keel.Window) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FuelIndexesQuery) Having(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FuelIndexesQuery) Limit(n int) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FuelIndexesQuery) Offset(n int) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FuelIndexesQuery) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FuelIndexesQuery) AllTenants() keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FuelIndexesQuery) CustomPlan() keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FuelIndexesQuery) Timeout(d time.Duration) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FuelIndexesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FuelIndexesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FuelIndexesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FuelIndexesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FuelIndexesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FuelIndexesQuery) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FuelIndexesQuery) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FuelIndexesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FuelIndexesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelIndex] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FuelIndexesQuery) Clone() keel.Query[*fuelsurcharge.FuelIndex] {
+	return &FuelIndexesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FuelIndexesQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndex, error) {
+	return keel.One[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FuelIndexesQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndex, error) {
+	return keel.First[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FuelIndexesQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndex, error) {
+	return keel.List[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FuelIndexesQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndex, error) {
+	return keel.All[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FuelIndexesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelIndex, error) {
+	return keel.UpdateReturning[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FuelIndexesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelIndex], error) {
+	return keel.PageOf[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FuelIndexesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelIndex) error) error {
+	return keel.Each[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFuelIndex() unsafe.Pointer { return unsafe.Pointer(new(fuelsurcharge.FuelIndex)) }
@@ -301,7 +661,7 @@ var fuelIndexPricesRef = keel.Ref{Table: &fuelIndexPricesTable}
 
 // FuelIndexPricesTable is the table of fuelsurcharge.FuelIndexPrice.
 type FuelIndexPricesTable struct {
-	keel.Handle[*fuelsurcharge.FuelIndexPrice]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -317,7 +677,7 @@ type FuelIndexPricesTable struct {
 
 // FuelIndexPrices references the fuel_index_prices table.
 var FuelIndexPrices = &FuelIndexPricesTable{
-	Handle:         keel.Handle[*fuelsurcharge.FuelIndexPrice]{Ref: &fuelIndexPricesRef},
+	TableBase:      keel.TableBase{Ref: &fuelIndexPricesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 2}}},
@@ -331,10 +691,10 @@ var FuelIndexPrices = &FuelIndexPricesTable{
 	FetchedAt:      keel.TimeCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 10}},
 }
 
-// BuildFuelIndexPrices builds the handle of fuel_index_prices for ref. Generated relation and alias methods call it.
+// BuildFuelIndexPrices builds the table of fuel_index_prices for ref. Generated relation and alias methods call it.
 func BuildFuelIndexPrices(r *keel.Ref) *FuelIndexPricesTable {
 	return &FuelIndexPricesTable{
-		Handle:         keel.Handle[*fuelsurcharge.FuelIndexPrice]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -365,6 +725,365 @@ func (t *FuelIndexPricesTable) FuelIndex() *FuelIndexesTable {
 // Get returns the fuel_index_prices row with the given key, or keel.ErrNotFound.
 func (t *FuelIndexPricesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fuelsurcharge.FuelIndexPrice, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FuelIndexPricesQuery is a query over fuelsurcharge.FuelIndexPrice.
+type FuelIndexPricesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fuelsurcharge.FuelIndexPrice] = (*FuelIndexPricesTable)(nil)
+
+var _ keel.Query[*fuelsurcharge.FuelIndexPrice] = (*FuelIndexPricesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FuelIndexPricesTable) Query() keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return &FuelIndexPricesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FuelIndexPricesQuery.Where.
+func (t *FuelIndexPricesTable) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FuelIndexPricesQuery.Pick.
+func (t *FuelIndexPricesTable) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FuelIndexPricesQuery.Load.
+func (t *FuelIndexPricesTable) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FuelIndexPricesQuery.Omit.
+func (t *FuelIndexPricesTable) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FuelIndexPricesQuery.Order.
+func (t *FuelIndexPricesTable) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FuelIndexPricesQuery.Limit.
+func (t *FuelIndexPricesTable) Limit(n int) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FuelIndexPricesQuery.Group.
+func (t *FuelIndexPricesTable) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FuelIndexPricesQuery.GroupingSets.
+func (t *FuelIndexPricesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FuelIndexPricesQuery.Rollup.
+func (t *FuelIndexPricesTable) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FuelIndexPricesQuery.Cube.
+func (t *FuelIndexPricesTable) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FuelIndexPricesQuery.AllTenants.
+func (t *FuelIndexPricesTable) AllTenants() keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FuelIndexPricesQuery.Join.
+func (t *FuelIndexPricesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FuelIndexPricesQuery.LeftJoin.
+func (t *FuelIndexPricesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FuelIndexPricesQuery.LeftJoinLateral.
+func (t *FuelIndexPricesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FuelIndexPricesQuery.JoinLateral.
+func (t *FuelIndexPricesTable) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FuelIndexPricesQuery.Lock.
+func (t *FuelIndexPricesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FuelIndexPricesQuery.DistinctOn.
+func (t *FuelIndexPricesTable) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FuelIndexPricesQuery.Cache.
+func (t *FuelIndexPricesTable) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FuelIndexPricesQuery.LoadStrategy.
+func (t *FuelIndexPricesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FuelIndexPricesQuery.With.
+func (t *FuelIndexPricesTable) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FuelIndexPricesQuery.Compute.
+func (t *FuelIndexPricesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FuelIndexPricesTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FuelIndexPricesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FuelIndexPricesTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FuelIndexPricesTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FuelIndexPricesTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FuelIndexPricesTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FuelIndexPricesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FuelIndexPricesTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FuelIndexPricesQuery) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FuelIndexPricesQuery) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FuelIndexPricesQuery) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FuelIndexPricesQuery) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FuelIndexPricesQuery) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FuelIndexPricesQuery) Distinct() keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FuelIndexPricesQuery) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FuelIndexPricesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FuelIndexPricesQuery) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FuelIndexPricesQuery) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FuelIndexPricesQuery) Window(name string, w keel.Window) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FuelIndexPricesQuery) Having(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FuelIndexPricesQuery) Limit(n int) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FuelIndexPricesQuery) Offset(n int) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FuelIndexPricesQuery) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FuelIndexPricesQuery) AllTenants() keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FuelIndexPricesQuery) CustomPlan() keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FuelIndexPricesQuery) Timeout(d time.Duration) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FuelIndexPricesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FuelIndexPricesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FuelIndexPricesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FuelIndexPricesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FuelIndexPricesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FuelIndexPricesQuery) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FuelIndexPricesQuery) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FuelIndexPricesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FuelIndexPricesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FuelIndexPricesQuery) Clone() keel.Query[*fuelsurcharge.FuelIndexPrice] {
+	return &FuelIndexPricesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FuelIndexPricesQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndexPrice, error) {
+	return keel.One[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FuelIndexPricesQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndexPrice, error) {
+	return keel.First[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FuelIndexPricesQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndexPrice, error) {
+	return keel.List[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FuelIndexPricesQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndexPrice, error) {
+	return keel.All[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FuelIndexPricesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelIndexPrice, error) {
+	return keel.UpdateReturning[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FuelIndexPricesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelIndexPrice], error) {
+	return keel.PageOf[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FuelIndexPricesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelIndexPrice) error) error {
+	return keel.Each[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFuelIndexPrice() unsafe.Pointer { return unsafe.Pointer(new(fuelsurcharge.FuelIndexPrice)) }
@@ -528,7 +1247,7 @@ var fuelSurchargeProgramsRef = keel.Ref{Table: &fuelSurchargeProgramsTable}
 
 // FuelSurchargeProgramsTable is the table of fuelsurcharge.FuelSurchargeProgram.
 type FuelSurchargeProgramsTable struct {
-	keel.Handle[*fuelsurcharge.FuelSurchargeProgram]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -567,7 +1286,7 @@ type FuelSurchargeProgramsTable struct {
 
 // FuelSurchargePrograms references the fuel_surcharge_programs table.
 var FuelSurchargePrograms = &FuelSurchargeProgramsTable{
-	Handle:               keel.Handle[*fuelsurcharge.FuelSurchargeProgram]{Ref: &fuelSurchargeProgramsRef},
+	TableBase:            keel.TableBase{Ref: &fuelSurchargeProgramsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 2}}},
@@ -604,10 +1323,10 @@ var FuelSurchargePrograms = &FuelSurchargeProgramsTable{
 	Rank:                 keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 33}},
 }
 
-// BuildFuelSurchargePrograms builds the handle of fuel_surcharge_programs for ref. Generated relation and alias methods call it.
+// BuildFuelSurchargePrograms builds the table of fuel_surcharge_programs for ref. Generated relation and alias methods call it.
 func BuildFuelSurchargePrograms(r *keel.Ref) *FuelSurchargeProgramsTable {
 	return &FuelSurchargeProgramsTable{
-		Handle:               keel.Handle[*fuelsurcharge.FuelSurchargeProgram]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -671,6 +1390,365 @@ func (t *FuelSurchargeProgramsTable) TableRows() *FuelSurchargeTableRowsTable {
 // Get returns the fuel_surcharge_programs row with the given key, or keel.ErrNotFound.
 func (t *FuelSurchargeProgramsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fuelsurcharge.FuelSurchargeProgram, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FuelSurchargeProgramsQuery is a query over fuelsurcharge.FuelSurchargeProgram.
+type FuelSurchargeProgramsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fuelsurcharge.FuelSurchargeProgram] = (*FuelSurchargeProgramsTable)(nil)
+
+var _ keel.Query[*fuelsurcharge.FuelSurchargeProgram] = (*FuelSurchargeProgramsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FuelSurchargeProgramsTable) Query() keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return &FuelSurchargeProgramsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FuelSurchargeProgramsQuery.Where.
+func (t *FuelSurchargeProgramsTable) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FuelSurchargeProgramsQuery.Pick.
+func (t *FuelSurchargeProgramsTable) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FuelSurchargeProgramsQuery.Load.
+func (t *FuelSurchargeProgramsTable) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FuelSurchargeProgramsQuery.Omit.
+func (t *FuelSurchargeProgramsTable) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FuelSurchargeProgramsQuery.Order.
+func (t *FuelSurchargeProgramsTable) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FuelSurchargeProgramsQuery.Limit.
+func (t *FuelSurchargeProgramsTable) Limit(n int) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FuelSurchargeProgramsQuery.Group.
+func (t *FuelSurchargeProgramsTable) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FuelSurchargeProgramsQuery.GroupingSets.
+func (t *FuelSurchargeProgramsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FuelSurchargeProgramsQuery.Rollup.
+func (t *FuelSurchargeProgramsTable) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FuelSurchargeProgramsQuery.Cube.
+func (t *FuelSurchargeProgramsTable) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FuelSurchargeProgramsQuery.AllTenants.
+func (t *FuelSurchargeProgramsTable) AllTenants() keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FuelSurchargeProgramsQuery.Join.
+func (t *FuelSurchargeProgramsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FuelSurchargeProgramsQuery.LeftJoin.
+func (t *FuelSurchargeProgramsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FuelSurchargeProgramsQuery.LeftJoinLateral.
+func (t *FuelSurchargeProgramsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FuelSurchargeProgramsQuery.JoinLateral.
+func (t *FuelSurchargeProgramsTable) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FuelSurchargeProgramsQuery.Lock.
+func (t *FuelSurchargeProgramsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FuelSurchargeProgramsQuery.DistinctOn.
+func (t *FuelSurchargeProgramsTable) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FuelSurchargeProgramsQuery.Cache.
+func (t *FuelSurchargeProgramsTable) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FuelSurchargeProgramsQuery.LoadStrategy.
+func (t *FuelSurchargeProgramsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FuelSurchargeProgramsQuery.With.
+func (t *FuelSurchargeProgramsTable) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FuelSurchargeProgramsQuery.Compute.
+func (t *FuelSurchargeProgramsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FuelSurchargeProgramsTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FuelSurchargeProgramsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FuelSurchargeProgramsTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FuelSurchargeProgramsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FuelSurchargeProgramsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FuelSurchargeProgramsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FuelSurchargeProgramsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FuelSurchargeProgramsTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FuelSurchargeProgramsQuery) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FuelSurchargeProgramsQuery) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FuelSurchargeProgramsQuery) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FuelSurchargeProgramsQuery) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FuelSurchargeProgramsQuery) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FuelSurchargeProgramsQuery) Distinct() keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FuelSurchargeProgramsQuery) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FuelSurchargeProgramsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FuelSurchargeProgramsQuery) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FuelSurchargeProgramsQuery) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FuelSurchargeProgramsQuery) Window(name string, w keel.Window) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FuelSurchargeProgramsQuery) Having(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FuelSurchargeProgramsQuery) Limit(n int) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FuelSurchargeProgramsQuery) Offset(n int) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FuelSurchargeProgramsQuery) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FuelSurchargeProgramsQuery) AllTenants() keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FuelSurchargeProgramsQuery) CustomPlan() keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FuelSurchargeProgramsQuery) Timeout(d time.Duration) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FuelSurchargeProgramsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FuelSurchargeProgramsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FuelSurchargeProgramsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FuelSurchargeProgramsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FuelSurchargeProgramsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FuelSurchargeProgramsQuery) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FuelSurchargeProgramsQuery) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FuelSurchargeProgramsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FuelSurchargeProgramsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FuelSurchargeProgramsQuery) Clone() keel.Query[*fuelsurcharge.FuelSurchargeProgram] {
+	return &FuelSurchargeProgramsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FuelSurchargeProgramsQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeProgram, error) {
+	return keel.One[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FuelSurchargeProgramsQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeProgram, error) {
+	return keel.First[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FuelSurchargeProgramsQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+	return keel.List[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FuelSurchargeProgramsQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+	return keel.All[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FuelSurchargeProgramsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+	return keel.UpdateReturning[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FuelSurchargeProgramsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelSurchargeProgram], error) {
+	return keel.PageOf[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FuelSurchargeProgramsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelSurchargeProgram) error) error {
+	return keel.Each[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFuelSurchargeProgram() unsafe.Pointer {
@@ -914,7 +1992,7 @@ var fuelSurchargeTableRowsRef = keel.Ref{Table: &fuelSurchargeTableRowsTable}
 
 // FuelSurchargeTableRowsTable is the table of fuelsurcharge.FuelSurchargeTableRow.
 type FuelSurchargeTableRowsTable struct {
-	keel.Handle[*fuelsurcharge.FuelSurchargeTableRow]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -929,7 +2007,7 @@ type FuelSurchargeTableRowsTable struct {
 
 // FuelSurchargeTableRows references the fuel_surcharge_table_rows table.
 var FuelSurchargeTableRows = &FuelSurchargeTableRowsTable{
-	Handle:                 keel.Handle[*fuelsurcharge.FuelSurchargeTableRow]{Ref: &fuelSurchargeTableRowsRef},
+	TableBase:              keel.TableBase{Ref: &fuelSurchargeTableRowsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 2}}},
@@ -942,10 +2020,10 @@ var FuelSurchargeTableRows = &FuelSurchargeTableRowsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 9}},
 }
 
-// BuildFuelSurchargeTableRows builds the handle of fuel_surcharge_table_rows for ref. Generated relation and alias methods call it.
+// BuildFuelSurchargeTableRows builds the table of fuel_surcharge_table_rows for ref. Generated relation and alias methods call it.
 func BuildFuelSurchargeTableRows(r *keel.Ref) *FuelSurchargeTableRowsTable {
 	return &FuelSurchargeTableRowsTable{
-		Handle:                 keel.Handle[*fuelsurcharge.FuelSurchargeTableRow]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -970,6 +2048,365 @@ func (t *FuelSurchargeTableRowsTable) As(alias string) *FuelSurchargeTableRowsTa
 // Get returns the fuel_surcharge_table_rows row with the given key, or keel.ErrNotFound.
 func (t *FuelSurchargeTableRowsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fuelsurcharge.FuelSurchargeTableRow, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FuelSurchargeTableRowsQuery is a query over fuelsurcharge.FuelSurchargeTableRow.
+type FuelSurchargeTableRowsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fuelsurcharge.FuelSurchargeTableRow] = (*FuelSurchargeTableRowsTable)(nil)
+
+var _ keel.Query[*fuelsurcharge.FuelSurchargeTableRow] = (*FuelSurchargeTableRowsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FuelSurchargeTableRowsTable) Query() keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return &FuelSurchargeTableRowsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FuelSurchargeTableRowsQuery.Where.
+func (t *FuelSurchargeTableRowsTable) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FuelSurchargeTableRowsQuery.Pick.
+func (t *FuelSurchargeTableRowsTable) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FuelSurchargeTableRowsQuery.Load.
+func (t *FuelSurchargeTableRowsTable) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FuelSurchargeTableRowsQuery.Omit.
+func (t *FuelSurchargeTableRowsTable) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FuelSurchargeTableRowsQuery.Order.
+func (t *FuelSurchargeTableRowsTable) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FuelSurchargeTableRowsQuery.Limit.
+func (t *FuelSurchargeTableRowsTable) Limit(n int) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FuelSurchargeTableRowsQuery.Group.
+func (t *FuelSurchargeTableRowsTable) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FuelSurchargeTableRowsQuery.GroupingSets.
+func (t *FuelSurchargeTableRowsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FuelSurchargeTableRowsQuery.Rollup.
+func (t *FuelSurchargeTableRowsTable) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FuelSurchargeTableRowsQuery.Cube.
+func (t *FuelSurchargeTableRowsTable) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FuelSurchargeTableRowsQuery.AllTenants.
+func (t *FuelSurchargeTableRowsTable) AllTenants() keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FuelSurchargeTableRowsQuery.Join.
+func (t *FuelSurchargeTableRowsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FuelSurchargeTableRowsQuery.LeftJoin.
+func (t *FuelSurchargeTableRowsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FuelSurchargeTableRowsQuery.LeftJoinLateral.
+func (t *FuelSurchargeTableRowsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FuelSurchargeTableRowsQuery.JoinLateral.
+func (t *FuelSurchargeTableRowsTable) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FuelSurchargeTableRowsQuery.Lock.
+func (t *FuelSurchargeTableRowsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FuelSurchargeTableRowsQuery.DistinctOn.
+func (t *FuelSurchargeTableRowsTable) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FuelSurchargeTableRowsQuery.Cache.
+func (t *FuelSurchargeTableRowsTable) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FuelSurchargeTableRowsQuery.LoadStrategy.
+func (t *FuelSurchargeTableRowsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FuelSurchargeTableRowsQuery.With.
+func (t *FuelSurchargeTableRowsTable) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FuelSurchargeTableRowsQuery.Compute.
+func (t *FuelSurchargeTableRowsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FuelSurchargeTableRowsTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FuelSurchargeTableRowsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FuelSurchargeTableRowsTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FuelSurchargeTableRowsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FuelSurchargeTableRowsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FuelSurchargeTableRowsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FuelSurchargeTableRowsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FuelSurchargeTableRowsTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FuelSurchargeTableRowsQuery) Where(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FuelSurchargeTableRowsQuery) Pick(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FuelSurchargeTableRowsQuery) Omit(cols ...keel.Column) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FuelSurchargeTableRowsQuery) Load(ls ...keel.Loader) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FuelSurchargeTableRowsQuery) Order(os ...keel.Order) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FuelSurchargeTableRowsQuery) Distinct() keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FuelSurchargeTableRowsQuery) Group(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FuelSurchargeTableRowsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FuelSurchargeTableRowsQuery) Rollup(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FuelSurchargeTableRowsQuery) Cube(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FuelSurchargeTableRowsQuery) Window(name string, w keel.Window) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FuelSurchargeTableRowsQuery) Having(ps ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FuelSurchargeTableRowsQuery) Limit(n int) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FuelSurchargeTableRowsQuery) Offset(n int) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FuelSurchargeTableRowsQuery) DistinctOn(es ...keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FuelSurchargeTableRowsQuery) AllTenants() keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FuelSurchargeTableRowsQuery) CustomPlan() keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FuelSurchargeTableRowsQuery) Timeout(d time.Duration) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FuelSurchargeTableRowsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FuelSurchargeTableRowsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FuelSurchargeTableRowsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FuelSurchargeTableRowsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FuelSurchargeTableRowsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FuelSurchargeTableRowsQuery) Cache(opts ...keel.CacheOption) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FuelSurchargeTableRowsQuery) With(ctes ...*keel.CTETable) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FuelSurchargeTableRowsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FuelSurchargeTableRowsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FuelSurchargeTableRowsQuery) Clone() keel.Query[*fuelsurcharge.FuelSurchargeTableRow] {
+	return &FuelSurchargeTableRowsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FuelSurchargeTableRowsQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeTableRow, error) {
+	return keel.One[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FuelSurchargeTableRowsQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeTableRow, error) {
+	return keel.First[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FuelSurchargeTableRowsQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeTableRow, error) {
+	return keel.List[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FuelSurchargeTableRowsQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeTableRow, error) {
+	return keel.All[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FuelSurchargeTableRowsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelSurchargeTableRow, error) {
+	return keel.UpdateReturning[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FuelSurchargeTableRowsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelSurchargeTableRow], error) {
+	return keel.PageOf[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FuelSurchargeTableRowsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelSurchargeTableRow) error) error {
+	return keel.Each[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFuelSurchargeTableRow() unsafe.Pointer {

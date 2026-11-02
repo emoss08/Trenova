@@ -414,6 +414,7 @@ func (l *Loader) validateConfig(config *Config) error {
 
 	validators := []func() error{
 		config.Database.Validate,
+		config.Cache.Validate,
 		config.Server.Validate,
 		config.Security.Validate,
 		config.Logging.Validate,
@@ -467,6 +468,7 @@ func (l *Loader) validatePlatformMode(config *Config) error {
 func validateProductionSecurity(config *Config) error {
 	validators := []func() error{
 		config.Database.ValidateProduction,
+		config.Cache.ValidateProduction,
 		config.Security.ValidateProduction,
 		config.Storage.ValidateProduction,
 		config.ContentScan.ValidateProduction,

@@ -72,7 +72,7 @@ func (r *payCodeRepository) ListConnection(
 				&listquery.Request[paycode.PayCode]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*paycode.PayCode]) *keel.Query[*paycode.PayCode] {
+					Shape: func(q keel.Query[*paycode.PayCode]) keel.Query[*paycode.PayCode] {
 						return q.Load(pc.GLAccount())
 					},
 				},

@@ -9,17 +9,22 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -42,6 +47,7 @@ var testSessionPolicy = session.Policy{MaxAge: 12 * time.Hour, IdleTimeout: 30 *
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	ur := tenantportsmock.NewMockUserRepository(t)
+	ur.On("GetSessionEpoch", mock.Anything, mock.Anything).Return(int64(0), nil).Maybe()
 	sr := sessionportsmock.NewMockSessionRepository(t)
 	pr := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	events := &recordingAuthEvents{}
@@ -51,6 +57,8 @@ func setupTest(t *testing.T) *testDeps {
 		portalRepo: pr,
 		rbacRepo:   &rbactest.Repository{},
 		authEvents: events,
+		tokens:     testTokens,
+		rotator:    sessionrotation.New(sessionrotation.Params{Sessions: sr, Tokens: testTokens}),
 		policy:     testSessionPolicy,
 		l:          zap.NewNop(),
 	}
@@ -299,6 +307,7 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	}
 	sess := &session.Session{
 		ID:             sessionID,
+		SecretHash:     "current-secret-hash",
 		UserID:         userID,
 		OrganizationID: orgID,
 		ActiveRoleIDs:  []pulid.ID{},
@@ -306,17 +315,23 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	}
 
 	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(sess, nil)
-	deps.sessionRepo.On("Update", mock.Anything, mock.MatchedBy(func(updated *session.Session) bool {
-		return len(updated.ActiveRoleIDs) == 1 && updated.ActiveRoleIDs[0] == roleID
-	})).
-		Return(nil)
+	stored := *sess
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&stored)).
+		Once()
 
 	result, err := deps.svc.ActivateSessionRoles(ctx, tenantports.ActivateSessionRolesRequest{
-		SessionID: sessionID,
-		RoleIDs:   []pulid.ID{roleID},
+		SessionID:  sessionID,
+		SecretHash: "current-secret-hash",
+		RoleIDs:    []pulid.ID{roleID},
 	})
 
 	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{roleID}, stored.ActiveRoleIDs)
+	_, secret, err := sessiontoken.Parse(result.SessionToken)
+	require.NoError(t, err)
+	assert.True(t, testTokens.Matches(sessionID, userID, secret, stored.SecretHash))
+	assert.Equal(t, sess.ExpiresAt, result.ExpiresAt)
 	assert.Equal(t, []pulid.ID{roleID}, result.ActiveRoleIDs)
 	assert.Equal(t, []pulid.ID{roleID}, result.AuthorizedRoleIDs)
 	require.Len(t, result.ActiveRoles, 1)
@@ -324,6 +339,69 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	assert.Equal(t, "Billing Manager", result.ActiveRoles[0].Name)
 	assert.False(t, result.RequiresRoleActivation)
 	deps.sessionRepo.AssertExpectations(t)
+}
+
+func TestActivateSessionRoles_RefusesASessionThatSwitchedOrganization(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	sessionID := pulid.MustNew("ses_")
+	userID := pulid.MustNew("usr_")
+	roleID := pulid.MustNew("rol_")
+	deps.svc.rbacRepo = &rbactest.Repository{
+		AuthorizedRoles: []*rbac.Role{{ID: roleID, Name: "Billing Manager"}},
+	}
+	sess := &session.Session{
+		ID:             sessionID,
+		UserID:         userID,
+		OrganizationID: pulid.MustNew("org_"),
+		ActiveRoleIDs:  []pulid.ID{},
+		ExpiresAt:      timeutils.NowUnix() + 3600,
+	}
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(sess, nil)
+	switched := *sess
+	switched.OrganizationID = pulid.MustNew("org_")
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&switched)).
+		Once()
+
+	result, err := deps.svc.ActivateSessionRoles(
+		t.Context(),
+		tenantports.ActivateSessionRolesRequest{
+			SessionID: sessionID,
+			RoleIDs:   []pulid.ID{roleID},
+		},
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.True(t, errortypes.IsSessionContextStaleError(err))
+	assert.Empty(t, switched.ActiveRoleIDs)
+}
+
+func TestActivateSessionRoles_ReportsASessionThatEndedAsEnded(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	sessionID := pulid.MustNew("ses_")
+	roleID := pulid.MustNew("rol_")
+	deps.svc.rbacRepo = &rbactest.Repository{
+		AuthorizedRoles: []*rbac.Role{{ID: roleID, Name: "Billing Manager"}},
+	}
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{
+		ID:             sessionID,
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: pulid.MustNew("org_"),
+		ExpiresAt:      timeutils.NowUnix() + 3600,
+	}, nil)
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
+		Return(nil, sessionports.ErrSessionNotFound).
+		Once()
+
+	_, err := deps.svc.ActivateSessionRoles(t.Context(), tenantports.ActivateSessionRolesRequest{
+		SessionID: sessionID,
+		RoleIDs:   []pulid.ID{roleID},
+	})
+
+	require.ErrorIs(t, err, errSessionEnded)
 }
 
 func TestActivateSessionRoles_RejectsUnauthorizedRoleIDs(t *testing.T) {
@@ -358,7 +436,7 @@ func TestActivateSessionRoles_RejectsUnauthorizedRoleIDs(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	deps.sessionRepo.AssertExpectations(t)
-	deps.sessionRepo.AssertNotCalled(t, "Update")
+	deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestValidateSession_NotFound(t *testing.T) {

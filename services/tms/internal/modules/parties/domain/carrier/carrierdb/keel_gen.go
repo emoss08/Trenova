@@ -4,6 +4,7 @@ package carrierdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -105,7 +106,7 @@ var carriersRef = keel.Ref{Table: &carriersTable}
 
 // CarriersTable is the table of carrier.Carrier.
 type CarriersTable struct {
-	keel.Handle[*carrier.Carrier]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -154,7 +155,7 @@ type CarriersTable struct {
 
 // Carriers references the carriers table.
 var Carriers = &CarriersTable{
-	Handle:              keel.Handle[*carrier.Carrier]{Ref: &carriersRef},
+	TableBase:           keel.TableBase{Ref: &carriersRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carriersRef, Index: 2}}},
@@ -201,10 +202,10 @@ var Carriers = &CarriersTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &carriersRef, Index: 43}},
 }
 
-// BuildCarriers builds the handle of carriers for ref. Generated relation and alias methods call it.
+// BuildCarriers builds the table of carriers for ref. Generated relation and alias methods call it.
 func BuildCarriers(r *keel.Ref) *CarriersTable {
 	return &CarriersTable{
-		Handle:              keel.Handle[*carrier.Carrier]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -288,6 +289,365 @@ func (t *CarriersTable) EDIChannels() *CarrierEDIChannelsTable {
 // Get returns the carriers row with the given key, or keel.ErrNotFound.
 func (t *CarriersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrier.Carrier, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarriersQuery is a query over carrier.Carrier.
+type CarriersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrier.Carrier] = (*CarriersTable)(nil)
+
+var _ keel.Query[*carrier.Carrier] = (*CarriersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarriersTable) Query() keel.Query[*carrier.Carrier] {
+	return &CarriersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarriersQuery.Where.
+func (t *CarriersTable) Where(ps ...keel.Pred) keel.Query[*carrier.Carrier] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarriersQuery.Pick.
+func (t *CarriersTable) Pick(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarriersQuery.Load.
+func (t *CarriersTable) Load(ls ...keel.Loader) keel.Query[*carrier.Carrier] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarriersQuery.Omit.
+func (t *CarriersTable) Omit(cols ...keel.Column) keel.Query[*carrier.Carrier] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarriersQuery.Order.
+func (t *CarriersTable) Order(os ...keel.Order) keel.Query[*carrier.Carrier] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarriersQuery.Limit.
+func (t *CarriersTable) Limit(n int) keel.Query[*carrier.Carrier] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarriersQuery.Group.
+func (t *CarriersTable) Group(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarriersQuery.GroupingSets.
+func (t *CarriersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarriersQuery.Rollup.
+func (t *CarriersTable) Rollup(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarriersQuery.Cube.
+func (t *CarriersTable) Cube(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarriersQuery.AllTenants.
+func (t *CarriersTable) AllTenants() keel.Query[*carrier.Carrier] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarriersQuery.Join.
+func (t *CarriersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.Carrier] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarriersQuery.LeftJoin.
+func (t *CarriersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.Carrier] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarriersQuery.LeftJoinLateral.
+func (t *CarriersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.Carrier] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarriersQuery.JoinLateral.
+func (t *CarriersTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.Carrier] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarriersQuery.Lock.
+func (t *CarriersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.Carrier] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarriersQuery.DistinctOn.
+func (t *CarriersTable) DistinctOn(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarriersQuery.Cache.
+func (t *CarriersTable) Cache(opts ...keel.CacheOption) keel.Query[*carrier.Carrier] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarriersQuery.LoadStrategy.
+func (t *CarriersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.Carrier] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarriersQuery.With.
+func (t *CarriersTable) With(ctes ...*keel.CTETable) keel.Query[*carrier.Carrier] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarriersQuery.Compute.
+func (t *CarriersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.Carrier] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarriersTable) Create(ctx context.Context, db *keel.DB, row *carrier.Carrier) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarriersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.Carrier) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarriersTable) Save(ctx context.Context, db *keel.DB, row *carrier.Carrier, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarriersTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.Carrier, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarriersTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.Carrier) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarriersTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.Carrier, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarriersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.Carrier, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarriersTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.Carrier) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarriersQuery) Where(ps ...keel.Pred) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarriersQuery) Pick(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarriersQuery) Omit(cols ...keel.Column) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarriersQuery) Load(ls ...keel.Loader) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarriersQuery) Order(os ...keel.Order) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarriersQuery) Distinct() keel.Query[*carrier.Carrier] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarriersQuery) Group(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarriersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarriersQuery) Rollup(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarriersQuery) Cube(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarriersQuery) Window(name string, w keel.Window) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarriersQuery) Having(ps ...keel.Pred) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarriersQuery) Limit(n int) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarriersQuery) Offset(n int) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarriersQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarriersQuery) AllTenants() keel.Query[*carrier.Carrier] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarriersQuery) CustomPlan() keel.Query[*carrier.Carrier] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarriersQuery) Timeout(d time.Duration) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarriersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarriersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarriersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.Carrier] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarriersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.Carrier] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarriersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.Carrier] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarriersQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarriersQuery) With(ctes ...*keel.CTETable) keel.Query[*carrier.Carrier] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarriersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.Carrier] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarriersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.Carrier] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarriersQuery) Clone() keel.Query[*carrier.Carrier] {
+	return &CarriersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarriersQuery) One(ctx context.Context, db *keel.DB) (*carrier.Carrier, error) {
+	return keel.One[*carrier.Carrier](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarriersQuery) First(ctx context.Context, db *keel.DB) (*carrier.Carrier, error) {
+	return keel.First[*carrier.Carrier](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarriersQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.Carrier, error) {
+	return keel.List[*carrier.Carrier](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarriersQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.Carrier, error) {
+	return keel.All[*carrier.Carrier](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarriersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.Carrier, error) {
+	return keel.UpdateReturning[*carrier.Carrier](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarriersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.Carrier], error) {
+	return keel.PageOf[*carrier.Carrier](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarriersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.Carrier) error) error {
+	return keel.Each[*carrier.Carrier](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrier() unsafe.Pointer { return unsafe.Pointer(new(carrier.Carrier)) }
@@ -627,7 +987,7 @@ var carrierContactsRef = keel.Ref{Table: &carrierContactsTable}
 
 // CarrierContactsTable is the table of carrier.CarrierContact.
 type CarrierContactsTable struct {
-	keel.Handle[*carrier.CarrierContact]
+	keel.TableBase
 	ID                        keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
@@ -645,7 +1005,7 @@ type CarrierContactsTable struct {
 
 // CarrierContacts references the carrier_contacts table.
 var CarrierContacts = &CarrierContactsTable{
-	Handle:                    keel.Handle[*carrier.CarrierContact]{Ref: &carrierContactsRef},
+	TableBase:                 keel.TableBase{Ref: &carrierContactsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 1}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierContactsRef, Index: 2}}},
@@ -661,10 +1021,10 @@ var CarrierContacts = &CarrierContactsTable{
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &carrierContactsRef, Index: 12}},
 }
 
-// BuildCarrierContacts builds the handle of carrier_contacts for ref. Generated relation and alias methods call it.
+// BuildCarrierContacts builds the table of carrier_contacts for ref. Generated relation and alias methods call it.
 func BuildCarrierContacts(r *keel.Ref) *CarrierContactsTable {
 	return &CarrierContactsTable{
-		Handle:                    keel.Handle[*carrier.CarrierContact]{Ref: r},
+		TableBase:                 keel.TableBase{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -695,6 +1055,365 @@ func (t *CarrierContactsTable) Carrier() *CarriersTable { return keel.Path(t.Ref
 // Get returns the carrier_contacts row with the given key, or keel.ErrNotFound.
 func (t *CarrierContactsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrier.CarrierContact, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierContactsQuery is a query over carrier.CarrierContact.
+type CarrierContactsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrier.CarrierContact] = (*CarrierContactsTable)(nil)
+
+var _ keel.Query[*carrier.CarrierContact] = (*CarrierContactsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierContactsTable) Query() keel.Query[*carrier.CarrierContact] {
+	return &CarrierContactsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierContactsQuery.Where.
+func (t *CarrierContactsTable) Where(ps ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierContactsQuery.Pick.
+func (t *CarrierContactsTable) Pick(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierContactsQuery.Load.
+func (t *CarrierContactsTable) Load(ls ...keel.Loader) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierContactsQuery.Omit.
+func (t *CarrierContactsTable) Omit(cols ...keel.Column) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierContactsQuery.Order.
+func (t *CarrierContactsTable) Order(os ...keel.Order) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierContactsQuery.Limit.
+func (t *CarrierContactsTable) Limit(n int) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierContactsQuery.Group.
+func (t *CarrierContactsTable) Group(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierContactsQuery.GroupingSets.
+func (t *CarrierContactsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierContactsQuery.Rollup.
+func (t *CarrierContactsTable) Rollup(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierContactsQuery.Cube.
+func (t *CarrierContactsTable) Cube(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierContactsQuery.AllTenants.
+func (t *CarrierContactsTable) AllTenants() keel.Query[*carrier.CarrierContact] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierContactsQuery.Join.
+func (t *CarrierContactsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierContactsQuery.LeftJoin.
+func (t *CarrierContactsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierContactsQuery.LeftJoinLateral.
+func (t *CarrierContactsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierContact] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierContactsQuery.JoinLateral.
+func (t *CarrierContactsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierContact] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierContactsQuery.Lock.
+func (t *CarrierContactsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierContactsQuery.DistinctOn.
+func (t *CarrierContactsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierContactsQuery.Cache.
+func (t *CarrierContactsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierContactsQuery.LoadStrategy.
+func (t *CarrierContactsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.CarrierContact] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierContactsQuery.With.
+func (t *CarrierContactsTable) With(ctes ...*keel.CTETable) keel.Query[*carrier.CarrierContact] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierContactsQuery.Compute.
+func (t *CarrierContactsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.CarrierContact] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierContactsTable) Create(ctx context.Context, db *keel.DB, row *carrier.CarrierContact) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierContactsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierContactsTable) Save(ctx context.Context, db *keel.DB, row *carrier.CarrierContact, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierContactsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.CarrierContact, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierContactsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.CarrierContact) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierContactsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierContactsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierContactsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.CarrierContact) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierContactsQuery) Where(ps ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierContactsQuery) Pick(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierContactsQuery) Omit(cols ...keel.Column) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierContactsQuery) Load(ls ...keel.Loader) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierContactsQuery) Order(os ...keel.Order) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierContactsQuery) Distinct() keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierContactsQuery) Group(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierContactsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierContactsQuery) Rollup(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierContactsQuery) Cube(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierContactsQuery) Window(name string, w keel.Window) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierContactsQuery) Having(ps ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierContactsQuery) Limit(n int) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierContactsQuery) Offset(n int) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierContactsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierContactsQuery) AllTenants() keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierContactsQuery) CustomPlan() keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierContactsQuery) Timeout(d time.Duration) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierContactsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierContactsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierContactsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierContactsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierContactsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierContactsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierContactsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierContactsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierContactsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.CarrierContact] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierContactsQuery) Clone() keel.Query[*carrier.CarrierContact] {
+	return &CarrierContactsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierContactsQuery) One(ctx context.Context, db *keel.DB) (*carrier.CarrierContact, error) {
+	return keel.One[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierContactsQuery) First(ctx context.Context, db *keel.DB) (*carrier.CarrierContact, error) {
+	return keel.First[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierContactsQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.CarrierContact, error) {
+	return keel.List[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierContactsQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.CarrierContact, error) {
+	return keel.All[*carrier.CarrierContact](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierContactsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.CarrierContact, error) {
+	return keel.UpdateReturning[*carrier.CarrierContact](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierContactsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.CarrierContact], error) {
+	return keel.PageOf[*carrier.CarrierContact](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierContactsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.CarrierContact) error) error {
+	return keel.Each[*carrier.CarrierContact](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierContact() unsafe.Pointer { return unsafe.Pointer(new(carrier.CarrierContact)) }
@@ -835,7 +1554,7 @@ var carrierEDIChannelsRef = keel.Ref{Table: &carrierEDIChannelsTable}
 
 // CarrierEDIChannelsTable is the table of carrier.CarrierEDIChannel.
 type CarrierEDIChannelsTable struct {
-	keel.Handle[*carrier.CarrierEDIChannel]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -851,7 +1570,7 @@ type CarrierEDIChannelsTable struct {
 
 // CarrierEDIChannels references the carrier_edi_channels table.
 var CarrierEDIChannels = &CarrierEDIChannelsTable{
-	Handle:                 keel.Handle[*carrier.CarrierEDIChannel]{Ref: &carrierEDIChannelsRef},
+	TableBase:              keel.TableBase{Ref: &carrierEDIChannelsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 2}}},
@@ -865,10 +1584,10 @@ var CarrierEDIChannels = &CarrierEDIChannelsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 10}},
 }
 
-// BuildCarrierEDIChannels builds the handle of carrier_edi_channels for ref. Generated relation and alias methods call it.
+// BuildCarrierEDIChannels builds the table of carrier_edi_channels for ref. Generated relation and alias methods call it.
 func BuildCarrierEDIChannels(r *keel.Ref) *CarrierEDIChannelsTable {
 	return &CarrierEDIChannelsTable{
-		Handle:                 keel.Handle[*carrier.CarrierEDIChannel]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -902,6 +1621,365 @@ func (t *CarrierEDIChannelsTable) EDIPartner() *edidb.EDIPartnersTable {
 // Get returns the carrier_edi_channels row with the given key, or keel.ErrNotFound.
 func (t *CarrierEDIChannelsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrier.CarrierEDIChannel, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierEDIChannelsQuery is a query over carrier.CarrierEDIChannel.
+type CarrierEDIChannelsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrier.CarrierEDIChannel] = (*CarrierEDIChannelsTable)(nil)
+
+var _ keel.Query[*carrier.CarrierEDIChannel] = (*CarrierEDIChannelsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierEDIChannelsTable) Query() keel.Query[*carrier.CarrierEDIChannel] {
+	return &CarrierEDIChannelsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierEDIChannelsQuery.Where.
+func (t *CarrierEDIChannelsTable) Where(ps ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierEDIChannelsQuery.Pick.
+func (t *CarrierEDIChannelsTable) Pick(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierEDIChannelsQuery.Load.
+func (t *CarrierEDIChannelsTable) Load(ls ...keel.Loader) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierEDIChannelsQuery.Omit.
+func (t *CarrierEDIChannelsTable) Omit(cols ...keel.Column) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierEDIChannelsQuery.Order.
+func (t *CarrierEDIChannelsTable) Order(os ...keel.Order) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierEDIChannelsQuery.Limit.
+func (t *CarrierEDIChannelsTable) Limit(n int) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierEDIChannelsQuery.Group.
+func (t *CarrierEDIChannelsTable) Group(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierEDIChannelsQuery.GroupingSets.
+func (t *CarrierEDIChannelsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierEDIChannelsQuery.Rollup.
+func (t *CarrierEDIChannelsTable) Rollup(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierEDIChannelsQuery.Cube.
+func (t *CarrierEDIChannelsTable) Cube(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierEDIChannelsQuery.AllTenants.
+func (t *CarrierEDIChannelsTable) AllTenants() keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierEDIChannelsQuery.Join.
+func (t *CarrierEDIChannelsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierEDIChannelsQuery.LeftJoin.
+func (t *CarrierEDIChannelsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierEDIChannelsQuery.LeftJoinLateral.
+func (t *CarrierEDIChannelsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierEDIChannelsQuery.JoinLateral.
+func (t *CarrierEDIChannelsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierEDIChannelsQuery.Lock.
+func (t *CarrierEDIChannelsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierEDIChannelsQuery.DistinctOn.
+func (t *CarrierEDIChannelsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierEDIChannelsQuery.Cache.
+func (t *CarrierEDIChannelsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierEDIChannelsQuery.LoadStrategy.
+func (t *CarrierEDIChannelsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierEDIChannelsQuery.With.
+func (t *CarrierEDIChannelsTable) With(ctes ...*keel.CTETable) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierEDIChannelsQuery.Compute.
+func (t *CarrierEDIChannelsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierEDIChannelsTable) Create(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierEDIChannelsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierEDIChannelsTable) Save(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierEDIChannelsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierEDIChannelsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.CarrierEDIChannel) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierEDIChannelsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierEDIChannelsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierEDIChannelsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.CarrierEDIChannel) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierEDIChannelsQuery) Where(ps ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierEDIChannelsQuery) Pick(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierEDIChannelsQuery) Omit(cols ...keel.Column) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierEDIChannelsQuery) Load(ls ...keel.Loader) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierEDIChannelsQuery) Order(os ...keel.Order) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierEDIChannelsQuery) Distinct() keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierEDIChannelsQuery) Group(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierEDIChannelsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierEDIChannelsQuery) Rollup(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierEDIChannelsQuery) Cube(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierEDIChannelsQuery) Window(name string, w keel.Window) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierEDIChannelsQuery) Having(ps ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierEDIChannelsQuery) Limit(n int) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierEDIChannelsQuery) Offset(n int) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierEDIChannelsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierEDIChannelsQuery) AllTenants() keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierEDIChannelsQuery) CustomPlan() keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierEDIChannelsQuery) Timeout(d time.Duration) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierEDIChannelsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierEDIChannelsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierEDIChannelsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierEDIChannelsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierEDIChannelsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierEDIChannelsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierEDIChannelsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierEDIChannelsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierEDIChannelsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.CarrierEDIChannel] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierEDIChannelsQuery) Clone() keel.Query[*carrier.CarrierEDIChannel] {
+	return &CarrierEDIChannelsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierEDIChannelsQuery) One(ctx context.Context, db *keel.DB) (*carrier.CarrierEDIChannel, error) {
+	return keel.One[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierEDIChannelsQuery) First(ctx context.Context, db *keel.DB) (*carrier.CarrierEDIChannel, error) {
+	return keel.First[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierEDIChannelsQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.CarrierEDIChannel, error) {
+	return keel.List[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierEDIChannelsQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.CarrierEDIChannel, error) {
+	return keel.All[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierEDIChannelsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.CarrierEDIChannel, error) {
+	return keel.UpdateReturning[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierEDIChannelsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.CarrierEDIChannel], error) {
+	return keel.PageOf[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierEDIChannelsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.CarrierEDIChannel) error) error {
+	return keel.Each[*carrier.CarrierEDIChannel](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierEDIChannel() unsafe.Pointer { return unsafe.Pointer(new(carrier.CarrierEDIChannel)) }
@@ -1034,7 +2112,7 @@ var carrierInsurancePoliciesRef = keel.Ref{Table: &carrierInsurancePoliciesTable
 
 // CarrierInsurancePoliciesTable is the table of carrier.CarrierInsurancePolicy.
 type CarrierInsurancePoliciesTable struct {
-	keel.Handle[*carrier.CarrierInsurancePolicy]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1053,7 +2131,7 @@ type CarrierInsurancePoliciesTable struct {
 
 // CarrierInsurancePolicies references the carrier_insurance_policies table.
 var CarrierInsurancePolicies = &CarrierInsurancePoliciesTable{
-	Handle:         keel.Handle[*carrier.CarrierInsurancePolicy]{Ref: &carrierInsurancePoliciesRef},
+	TableBase:      keel.TableBase{Ref: &carrierInsurancePoliciesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 2}}},
@@ -1070,10 +2148,10 @@ var CarrierInsurancePolicies = &CarrierInsurancePoliciesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &carrierInsurancePoliciesRef, Index: 13}},
 }
 
-// BuildCarrierInsurancePolicies builds the handle of carrier_insurance_policies for ref. Generated relation and alias methods call it.
+// BuildCarrierInsurancePolicies builds the table of carrier_insurance_policies for ref. Generated relation and alias methods call it.
 func BuildCarrierInsurancePolicies(r *keel.Ref) *CarrierInsurancePoliciesTable {
 	return &CarrierInsurancePoliciesTable{
-		Handle:         keel.Handle[*carrier.CarrierInsurancePolicy]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1107,6 +2185,365 @@ func (t *CarrierInsurancePoliciesTable) Carrier() *CarriersTable {
 // Get returns the carrier_insurance_policies row with the given key, or keel.ErrNotFound.
 func (t *CarrierInsurancePoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrier.CarrierInsurancePolicy, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierInsurancePoliciesQuery is a query over carrier.CarrierInsurancePolicy.
+type CarrierInsurancePoliciesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrier.CarrierInsurancePolicy] = (*CarrierInsurancePoliciesTable)(nil)
+
+var _ keel.Query[*carrier.CarrierInsurancePolicy] = (*CarrierInsurancePoliciesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierInsurancePoliciesTable) Query() keel.Query[*carrier.CarrierInsurancePolicy] {
+	return &CarrierInsurancePoliciesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierInsurancePoliciesQuery.Where.
+func (t *CarrierInsurancePoliciesTable) Where(ps ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierInsurancePoliciesQuery.Pick.
+func (t *CarrierInsurancePoliciesTable) Pick(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierInsurancePoliciesQuery.Load.
+func (t *CarrierInsurancePoliciesTable) Load(ls ...keel.Loader) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierInsurancePoliciesQuery.Omit.
+func (t *CarrierInsurancePoliciesTable) Omit(cols ...keel.Column) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierInsurancePoliciesQuery.Order.
+func (t *CarrierInsurancePoliciesTable) Order(os ...keel.Order) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierInsurancePoliciesQuery.Limit.
+func (t *CarrierInsurancePoliciesTable) Limit(n int) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierInsurancePoliciesQuery.Group.
+func (t *CarrierInsurancePoliciesTable) Group(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierInsurancePoliciesQuery.GroupingSets.
+func (t *CarrierInsurancePoliciesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierInsurancePoliciesQuery.Rollup.
+func (t *CarrierInsurancePoliciesTable) Rollup(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierInsurancePoliciesQuery.Cube.
+func (t *CarrierInsurancePoliciesTable) Cube(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierInsurancePoliciesQuery.AllTenants.
+func (t *CarrierInsurancePoliciesTable) AllTenants() keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierInsurancePoliciesQuery.Join.
+func (t *CarrierInsurancePoliciesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierInsurancePoliciesQuery.LeftJoin.
+func (t *CarrierInsurancePoliciesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierInsurancePoliciesQuery.LeftJoinLateral.
+func (t *CarrierInsurancePoliciesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierInsurancePoliciesQuery.JoinLateral.
+func (t *CarrierInsurancePoliciesTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierInsurancePoliciesQuery.Lock.
+func (t *CarrierInsurancePoliciesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierInsurancePoliciesQuery.DistinctOn.
+func (t *CarrierInsurancePoliciesTable) DistinctOn(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierInsurancePoliciesQuery.Cache.
+func (t *CarrierInsurancePoliciesTable) Cache(opts ...keel.CacheOption) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierInsurancePoliciesQuery.LoadStrategy.
+func (t *CarrierInsurancePoliciesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierInsurancePoliciesQuery.With.
+func (t *CarrierInsurancePoliciesTable) With(ctes ...*keel.CTETable) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierInsurancePoliciesQuery.Compute.
+func (t *CarrierInsurancePoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierInsurancePoliciesTable) Create(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierInsurancePoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierInsurancePoliciesTable) Save(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierInsurancePoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierInsurancePoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrier.CarrierInsurancePolicy) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierInsurancePoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierInsurancePoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierInsurancePoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*carrier.CarrierInsurancePolicy) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierInsurancePoliciesQuery) Where(ps ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierInsurancePoliciesQuery) Pick(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierInsurancePoliciesQuery) Omit(cols ...keel.Column) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierInsurancePoliciesQuery) Load(ls ...keel.Loader) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierInsurancePoliciesQuery) Order(os ...keel.Order) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierInsurancePoliciesQuery) Distinct() keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierInsurancePoliciesQuery) Group(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierInsurancePoliciesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierInsurancePoliciesQuery) Rollup(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierInsurancePoliciesQuery) Cube(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierInsurancePoliciesQuery) Window(name string, w keel.Window) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierInsurancePoliciesQuery) Having(ps ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierInsurancePoliciesQuery) Limit(n int) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierInsurancePoliciesQuery) Offset(n int) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierInsurancePoliciesQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierInsurancePoliciesQuery) AllTenants() keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierInsurancePoliciesQuery) CustomPlan() keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierInsurancePoliciesQuery) Timeout(d time.Duration) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierInsurancePoliciesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierInsurancePoliciesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierInsurancePoliciesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierInsurancePoliciesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierInsurancePoliciesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierInsurancePoliciesQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierInsurancePoliciesQuery) With(ctes ...*keel.CTETable) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierInsurancePoliciesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierInsurancePoliciesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrier.CarrierInsurancePolicy] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierInsurancePoliciesQuery) Clone() keel.Query[*carrier.CarrierInsurancePolicy] {
+	return &CarrierInsurancePoliciesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierInsurancePoliciesQuery) One(ctx context.Context, db *keel.DB) (*carrier.CarrierInsurancePolicy, error) {
+	return keel.One[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierInsurancePoliciesQuery) First(ctx context.Context, db *keel.DB) (*carrier.CarrierInsurancePolicy, error) {
+	return keel.First[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierInsurancePoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*carrier.CarrierInsurancePolicy, error) {
+	return keel.List[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierInsurancePoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*carrier.CarrierInsurancePolicy, error) {
+	return keel.All[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierInsurancePoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrier.CarrierInsurancePolicy, error) {
+	return keel.UpdateReturning[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierInsurancePoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrier.CarrierInsurancePolicy], error) {
+	return keel.PageOf[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierInsurancePoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrier.CarrierInsurancePolicy) error) error {
+	return keel.Each[*carrier.CarrierInsurancePolicy](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierInsurancePolicy() unsafe.Pointer {

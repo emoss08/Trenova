@@ -4,6 +4,7 @@ package edidb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -77,7 +78,7 @@ var eDICommunicationProfilesRef = keel.Ref{Table: &eDICommunicationProfilesTable
 
 // EDICommunicationProfilesTable is the table of edi.EDICommunicationProfile.
 type EDICommunicationProfilesTable struct {
-	keel.Handle[*edi.EDICommunicationProfile]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -101,7 +102,7 @@ type EDICommunicationProfilesTable struct {
 
 // EDICommunicationProfiles references the edi_communication_profiles table.
 var EDICommunicationProfiles = &EDICommunicationProfilesTable{
-	Handle:            keel.Handle[*edi.EDICommunicationProfile]{Ref: &eDICommunicationProfilesRef},
+	TableBase:         keel.TableBase{Ref: &eDICommunicationProfilesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 2}}},
@@ -123,10 +124,10 @@ var EDICommunicationProfiles = &EDICommunicationProfilesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDICommunicationProfilesRef, Index: 18}},
 }
 
-// BuildEDICommunicationProfiles builds the handle of edi_communication_profiles for ref. Generated relation and alias methods call it.
+// BuildEDICommunicationProfiles builds the table of edi_communication_profiles for ref. Generated relation and alias methods call it.
 func BuildEDICommunicationProfiles(r *keel.Ref) *EDICommunicationProfilesTable {
 	return &EDICommunicationProfilesTable{
-		Handle:            keel.Handle[*edi.EDICommunicationProfile]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -170,6 +171,365 @@ func (t *EDICommunicationProfilesTable) Partner() *EDIPartnersTable {
 // Get returns the edi_communication_profiles row with the given key, or keel.ErrNotFound.
 func (t *EDICommunicationProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDICommunicationProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDICommunicationProfilesQuery is a query over edi.EDICommunicationProfile.
+type EDICommunicationProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edi.EDICommunicationProfile] = (*EDICommunicationProfilesTable)(nil)
+
+var _ keel.Query[*edi.EDICommunicationProfile] = (*EDICommunicationProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDICommunicationProfilesTable) Query() keel.Query[*edi.EDICommunicationProfile] {
+	return &EDICommunicationProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDICommunicationProfilesQuery.Where.
+func (t *EDICommunicationProfilesTable) Where(ps ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDICommunicationProfilesQuery.Pick.
+func (t *EDICommunicationProfilesTable) Pick(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDICommunicationProfilesQuery.Load.
+func (t *EDICommunicationProfilesTable) Load(ls ...keel.Loader) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDICommunicationProfilesQuery.Omit.
+func (t *EDICommunicationProfilesTable) Omit(cols ...keel.Column) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDICommunicationProfilesQuery.Order.
+func (t *EDICommunicationProfilesTable) Order(os ...keel.Order) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDICommunicationProfilesQuery.Limit.
+func (t *EDICommunicationProfilesTable) Limit(n int) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDICommunicationProfilesQuery.Group.
+func (t *EDICommunicationProfilesTable) Group(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDICommunicationProfilesQuery.GroupingSets.
+func (t *EDICommunicationProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDICommunicationProfilesQuery.Rollup.
+func (t *EDICommunicationProfilesTable) Rollup(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDICommunicationProfilesQuery.Cube.
+func (t *EDICommunicationProfilesTable) Cube(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDICommunicationProfilesQuery.AllTenants.
+func (t *EDICommunicationProfilesTable) AllTenants() keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDICommunicationProfilesQuery.Join.
+func (t *EDICommunicationProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDICommunicationProfilesQuery.LeftJoin.
+func (t *EDICommunicationProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDICommunicationProfilesQuery.LeftJoinLateral.
+func (t *EDICommunicationProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDICommunicationProfilesQuery.JoinLateral.
+func (t *EDICommunicationProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDICommunicationProfilesQuery.Lock.
+func (t *EDICommunicationProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDICommunicationProfilesQuery.DistinctOn.
+func (t *EDICommunicationProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDICommunicationProfilesQuery.Cache.
+func (t *EDICommunicationProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDICommunicationProfilesQuery.LoadStrategy.
+func (t *EDICommunicationProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDICommunicationProfilesQuery.With.
+func (t *EDICommunicationProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDICommunicationProfilesQuery.Compute.
+func (t *EDICommunicationProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDICommunicationProfilesTable) Create(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDICommunicationProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDICommunicationProfilesTable) Save(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDICommunicationProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDICommunicationProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDICommunicationProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDICommunicationProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDICommunicationProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDICommunicationProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDICommunicationProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDICommunicationProfilesQuery) Where(ps ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDICommunicationProfilesQuery) Pick(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDICommunicationProfilesQuery) Omit(cols ...keel.Column) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDICommunicationProfilesQuery) Load(ls ...keel.Loader) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDICommunicationProfilesQuery) Order(os ...keel.Order) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDICommunicationProfilesQuery) Distinct() keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDICommunicationProfilesQuery) Group(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDICommunicationProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDICommunicationProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDICommunicationProfilesQuery) Cube(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDICommunicationProfilesQuery) Window(name string, w keel.Window) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDICommunicationProfilesQuery) Having(ps ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDICommunicationProfilesQuery) Limit(n int) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDICommunicationProfilesQuery) Offset(n int) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDICommunicationProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDICommunicationProfilesQuery) AllTenants() keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDICommunicationProfilesQuery) CustomPlan() keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDICommunicationProfilesQuery) Timeout(d time.Duration) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDICommunicationProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDICommunicationProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDICommunicationProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDICommunicationProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDICommunicationProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDICommunicationProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDICommunicationProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDICommunicationProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDICommunicationProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDICommunicationProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDICommunicationProfilesQuery) Clone() keel.Query[*edi.EDICommunicationProfile] {
+	return &EDICommunicationProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDICommunicationProfilesQuery) One(ctx context.Context, db *keel.DB) (*edi.EDICommunicationProfile, error) {
+	return keel.One[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDICommunicationProfilesQuery) First(ctx context.Context, db *keel.DB) (*edi.EDICommunicationProfile, error) {
+	return keel.First[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDICommunicationProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDICommunicationProfile, error) {
+	return keel.List[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDICommunicationProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDICommunicationProfile, error) {
+	return keel.All[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDICommunicationProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDICommunicationProfile, error) {
+	return keel.UpdateReturning[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDICommunicationProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDICommunicationProfile], error) {
+	return keel.PageOf[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDICommunicationProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDICommunicationProfile) error) error {
+	return keel.Each[*edi.EDICommunicationProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDICommunicationProfile() unsafe.Pointer {
@@ -384,7 +744,7 @@ var eDIConnectionsRef = keel.Ref{Table: &eDIConnectionsTable}
 
 // EDIConnectionsTable is the table of edi.EDIConnection.
 type EDIConnectionsTable struct {
-	keel.Handle[*edi.EDIConnection]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	SourceOrganizationID keelkinds.PulidIDCol
@@ -414,7 +774,7 @@ type EDIConnectionsTable struct {
 
 // EDIConnections references the edi_connections table.
 var EDIConnections = &EDIConnectionsTable{
-	Handle:               keel.Handle[*edi.EDIConnection]{Ref: &eDIConnectionsRef},
+	TableBase:            keel.TableBase{Ref: &eDIConnectionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 1}}},
 	SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 2}}},
@@ -442,10 +802,10 @@ var EDIConnections = &EDIConnectionsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDIConnectionsRef, Index: 24}},
 }
 
-// BuildEDIConnections builds the handle of edi_connections for ref. Generated relation and alias methods call it.
+// BuildEDIConnections builds the table of edi_connections for ref. Generated relation and alias methods call it.
 func BuildEDIConnections(r *keel.Ref) *EDIConnectionsTable {
 	return &EDIConnectionsTable{
-		Handle:               keel.Handle[*edi.EDIConnection]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -505,6 +865,365 @@ func (t *EDIConnectionsTable) TargetPartner() *EDIPartnersTable {
 // Get returns the edi_connections row with the given key, or keel.ErrNotFound.
 func (t *EDIConnectionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIConnection, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIConnectionsQuery is a query over edi.EDIConnection.
+type EDIConnectionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edi.EDIConnection] = (*EDIConnectionsTable)(nil)
+
+var _ keel.Query[*edi.EDIConnection] = (*EDIConnectionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIConnectionsTable) Query() keel.Query[*edi.EDIConnection] {
+	return &EDIConnectionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIConnectionsQuery.Where.
+func (t *EDIConnectionsTable) Where(ps ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIConnectionsQuery.Pick.
+func (t *EDIConnectionsTable) Pick(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIConnectionsQuery.Load.
+func (t *EDIConnectionsTable) Load(ls ...keel.Loader) keel.Query[*edi.EDIConnection] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIConnectionsQuery.Omit.
+func (t *EDIConnectionsTable) Omit(cols ...keel.Column) keel.Query[*edi.EDIConnection] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIConnectionsQuery.Order.
+func (t *EDIConnectionsTable) Order(os ...keel.Order) keel.Query[*edi.EDIConnection] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIConnectionsQuery.Limit.
+func (t *EDIConnectionsTable) Limit(n int) keel.Query[*edi.EDIConnection] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIConnectionsQuery.Group.
+func (t *EDIConnectionsTable) Group(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIConnectionsQuery.GroupingSets.
+func (t *EDIConnectionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIConnectionsQuery.Rollup.
+func (t *EDIConnectionsTable) Rollup(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIConnectionsQuery.Cube.
+func (t *EDIConnectionsTable) Cube(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIConnectionsQuery.AllTenants.
+func (t *EDIConnectionsTable) AllTenants() keel.Query[*edi.EDIConnection] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIConnectionsQuery.Join.
+func (t *EDIConnectionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIConnectionsQuery.LeftJoin.
+func (t *EDIConnectionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIConnectionsQuery.LeftJoinLateral.
+func (t *EDIConnectionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIConnection] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIConnectionsQuery.JoinLateral.
+func (t *EDIConnectionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIConnection] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIConnectionsQuery.Lock.
+func (t *EDIConnectionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIConnection] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIConnectionsQuery.DistinctOn.
+func (t *EDIConnectionsTable) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIConnectionsQuery.Cache.
+func (t *EDIConnectionsTable) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIConnection] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIConnectionsQuery.LoadStrategy.
+func (t *EDIConnectionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIConnection] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIConnectionsQuery.With.
+func (t *EDIConnectionsTable) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIConnection] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIConnectionsQuery.Compute.
+func (t *EDIConnectionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIConnection] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIConnectionsTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIConnection) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIConnectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIConnectionsTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIConnection, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIConnectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIConnection, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIConnectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIConnection) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIConnectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIConnectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIConnectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIConnection) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIConnectionsQuery) Where(ps ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIConnectionsQuery) Pick(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIConnectionsQuery) Omit(cols ...keel.Column) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIConnectionsQuery) Load(ls ...keel.Loader) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIConnectionsQuery) Order(os ...keel.Order) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIConnectionsQuery) Distinct() keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIConnectionsQuery) Group(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIConnectionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIConnectionsQuery) Rollup(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIConnectionsQuery) Cube(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIConnectionsQuery) Window(name string, w keel.Window) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIConnectionsQuery) Having(ps ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIConnectionsQuery) Limit(n int) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIConnectionsQuery) Offset(n int) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIConnectionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIConnectionsQuery) AllTenants() keel.Query[*edi.EDIConnection] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIConnectionsQuery) CustomPlan() keel.Query[*edi.EDIConnection] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIConnectionsQuery) Timeout(d time.Duration) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIConnectionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIConnectionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIConnectionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIConnectionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIConnectionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIConnectionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIConnectionsQuery) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIConnectionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIConnectionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIConnection] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIConnectionsQuery) Clone() keel.Query[*edi.EDIConnection] {
+	return &EDIConnectionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIConnectionsQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIConnection, error) {
+	return keel.One[*edi.EDIConnection](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIConnectionsQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIConnection, error) {
+	return keel.First[*edi.EDIConnection](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIConnectionsQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIConnection, error) {
+	return keel.List[*edi.EDIConnection](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIConnectionsQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIConnection, error) {
+	return keel.All[*edi.EDIConnection](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIConnectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIConnection, error) {
+	return keel.UpdateReturning[*edi.EDIConnection](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIConnectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIConnection], error) {
+	return keel.PageOf[*edi.EDIConnection](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIConnectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIConnection) error) error {
+	return keel.Each[*edi.EDIConnection](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIConnection() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIConnection)) }
@@ -737,7 +1456,7 @@ var eDIMappingProfilesRef = keel.Ref{Table: &eDIMappingProfilesTable}
 
 // EDIMappingProfilesTable is the table of edi.EDIMappingProfile.
 type EDIMappingProfilesTable struct {
-	keel.Handle[*edi.EDIMappingProfile]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -753,7 +1472,7 @@ type EDIMappingProfilesTable struct {
 
 // EDIMappingProfiles references the edi_mapping_profiles table.
 var EDIMappingProfiles = &EDIMappingProfilesTable{
-	Handle:         keel.Handle[*edi.EDIMappingProfile]{Ref: &eDIMappingProfilesRef},
+	TableBase:      keel.TableBase{Ref: &eDIMappingProfilesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 2}}},
@@ -767,10 +1486,10 @@ var EDIMappingProfiles = &EDIMappingProfilesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDIMappingProfilesRef, Index: 10}},
 }
 
-// BuildEDIMappingProfiles builds the handle of edi_mapping_profiles for ref. Generated relation and alias methods call it.
+// BuildEDIMappingProfiles builds the table of edi_mapping_profiles for ref. Generated relation and alias methods call it.
 func BuildEDIMappingProfiles(r *keel.Ref) *EDIMappingProfilesTable {
 	return &EDIMappingProfilesTable{
-		Handle:         keel.Handle[*edi.EDIMappingProfile]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -806,6 +1525,365 @@ func (t *EDIMappingProfilesTable) Entries() *EDIMappingProfileItemsTable {
 // Get returns the edi_mapping_profiles row with the given key, or keel.ErrNotFound.
 func (t *EDIMappingProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIMappingProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIMappingProfilesQuery is a query over edi.EDIMappingProfile.
+type EDIMappingProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edi.EDIMappingProfile] = (*EDIMappingProfilesTable)(nil)
+
+var _ keel.Query[*edi.EDIMappingProfile] = (*EDIMappingProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIMappingProfilesTable) Query() keel.Query[*edi.EDIMappingProfile] {
+	return &EDIMappingProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIMappingProfilesQuery.Where.
+func (t *EDIMappingProfilesTable) Where(ps ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIMappingProfilesQuery.Pick.
+func (t *EDIMappingProfilesTable) Pick(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIMappingProfilesQuery.Load.
+func (t *EDIMappingProfilesTable) Load(ls ...keel.Loader) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIMappingProfilesQuery.Omit.
+func (t *EDIMappingProfilesTable) Omit(cols ...keel.Column) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIMappingProfilesQuery.Order.
+func (t *EDIMappingProfilesTable) Order(os ...keel.Order) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIMappingProfilesQuery.Limit.
+func (t *EDIMappingProfilesTable) Limit(n int) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIMappingProfilesQuery.Group.
+func (t *EDIMappingProfilesTable) Group(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIMappingProfilesQuery.GroupingSets.
+func (t *EDIMappingProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIMappingProfilesQuery.Rollup.
+func (t *EDIMappingProfilesTable) Rollup(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIMappingProfilesQuery.Cube.
+func (t *EDIMappingProfilesTable) Cube(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIMappingProfilesQuery.AllTenants.
+func (t *EDIMappingProfilesTable) AllTenants() keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIMappingProfilesQuery.Join.
+func (t *EDIMappingProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIMappingProfilesQuery.LeftJoin.
+func (t *EDIMappingProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIMappingProfilesQuery.LeftJoinLateral.
+func (t *EDIMappingProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIMappingProfilesQuery.JoinLateral.
+func (t *EDIMappingProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIMappingProfilesQuery.Lock.
+func (t *EDIMappingProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIMappingProfilesQuery.DistinctOn.
+func (t *EDIMappingProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIMappingProfilesQuery.Cache.
+func (t *EDIMappingProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIMappingProfilesQuery.LoadStrategy.
+func (t *EDIMappingProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIMappingProfilesQuery.With.
+func (t *EDIMappingProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIMappingProfilesQuery.Compute.
+func (t *EDIMappingProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIMappingProfilesTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIMappingProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIMappingProfilesTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIMappingProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIMappingProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIMappingProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIMappingProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIMappingProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIMappingProfilesQuery) Where(ps ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIMappingProfilesQuery) Pick(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIMappingProfilesQuery) Omit(cols ...keel.Column) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIMappingProfilesQuery) Load(ls ...keel.Loader) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIMappingProfilesQuery) Order(os ...keel.Order) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIMappingProfilesQuery) Distinct() keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIMappingProfilesQuery) Group(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIMappingProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIMappingProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIMappingProfilesQuery) Cube(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIMappingProfilesQuery) Window(name string, w keel.Window) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIMappingProfilesQuery) Having(ps ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIMappingProfilesQuery) Limit(n int) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIMappingProfilesQuery) Offset(n int) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIMappingProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIMappingProfilesQuery) AllTenants() keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIMappingProfilesQuery) CustomPlan() keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIMappingProfilesQuery) Timeout(d time.Duration) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIMappingProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIMappingProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIMappingProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIMappingProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIMappingProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIMappingProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIMappingProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIMappingProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIMappingProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIMappingProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIMappingProfilesQuery) Clone() keel.Query[*edi.EDIMappingProfile] {
+	return &EDIMappingProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIMappingProfilesQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfile, error) {
+	return keel.One[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIMappingProfilesQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfile, error) {
+	return keel.First[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIMappingProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfile, error) {
+	return keel.List[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIMappingProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfile, error) {
+	return keel.All[*edi.EDIMappingProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIMappingProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIMappingProfile, error) {
+	return keel.UpdateReturning[*edi.EDIMappingProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIMappingProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIMappingProfile], error) {
+	return keel.PageOf[*edi.EDIMappingProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIMappingProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIMappingProfile) error) error {
+	return keel.Each[*edi.EDIMappingProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIMappingProfile() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIMappingProfile)) }
@@ -937,7 +2015,7 @@ var eDIMappingProfileItemsRef = keel.Ref{Table: &eDIMappingProfileItemsTable}
 
 // EDIMappingProfileItemsTable is the table of edi.EDIMappingProfileItem.
 type EDIMappingProfileItemsTable struct {
-	keel.Handle[*edi.EDIMappingProfileItem]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -957,7 +2035,7 @@ type EDIMappingProfileItemsTable struct {
 
 // EDIMappingProfileItems references the edi_mapping_profile_items table.
 var EDIMappingProfileItems = &EDIMappingProfileItemsTable{
-	Handle:           keel.Handle[*edi.EDIMappingProfileItem]{Ref: &eDIMappingProfileItemsRef},
+	TableBase:        keel.TableBase{Ref: &eDIMappingProfileItemsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 2}}},
@@ -975,10 +2053,10 @@ var EDIMappingProfileItems = &EDIMappingProfileItemsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDIMappingProfileItemsRef, Index: 14}},
 }
 
-// BuildEDIMappingProfileItems builds the handle of edi_mapping_profile_items for ref. Generated relation and alias methods call it.
+// BuildEDIMappingProfileItems builds the table of edi_mapping_profile_items for ref. Generated relation and alias methods call it.
 func BuildEDIMappingProfileItems(r *keel.Ref) *EDIMappingProfileItemsTable {
 	return &EDIMappingProfileItemsTable{
-		Handle:           keel.Handle[*edi.EDIMappingProfileItem]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1018,6 +2096,365 @@ func (t *EDIMappingProfileItemsTable) Profile() *EDIMappingProfilesTable {
 // Get returns the edi_mapping_profile_items row with the given key, or keel.ErrNotFound.
 func (t *EDIMappingProfileItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIMappingProfileItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIMappingProfileItemsQuery is a query over edi.EDIMappingProfileItem.
+type EDIMappingProfileItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edi.EDIMappingProfileItem] = (*EDIMappingProfileItemsTable)(nil)
+
+var _ keel.Query[*edi.EDIMappingProfileItem] = (*EDIMappingProfileItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIMappingProfileItemsTable) Query() keel.Query[*edi.EDIMappingProfileItem] {
+	return &EDIMappingProfileItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIMappingProfileItemsQuery.Where.
+func (t *EDIMappingProfileItemsTable) Where(ps ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIMappingProfileItemsQuery.Pick.
+func (t *EDIMappingProfileItemsTable) Pick(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIMappingProfileItemsQuery.Load.
+func (t *EDIMappingProfileItemsTable) Load(ls ...keel.Loader) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIMappingProfileItemsQuery.Omit.
+func (t *EDIMappingProfileItemsTable) Omit(cols ...keel.Column) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIMappingProfileItemsQuery.Order.
+func (t *EDIMappingProfileItemsTable) Order(os ...keel.Order) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIMappingProfileItemsQuery.Limit.
+func (t *EDIMappingProfileItemsTable) Limit(n int) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIMappingProfileItemsQuery.Group.
+func (t *EDIMappingProfileItemsTable) Group(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIMappingProfileItemsQuery.GroupingSets.
+func (t *EDIMappingProfileItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIMappingProfileItemsQuery.Rollup.
+func (t *EDIMappingProfileItemsTable) Rollup(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIMappingProfileItemsQuery.Cube.
+func (t *EDIMappingProfileItemsTable) Cube(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIMappingProfileItemsQuery.AllTenants.
+func (t *EDIMappingProfileItemsTable) AllTenants() keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIMappingProfileItemsQuery.Join.
+func (t *EDIMappingProfileItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIMappingProfileItemsQuery.LeftJoin.
+func (t *EDIMappingProfileItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIMappingProfileItemsQuery.LeftJoinLateral.
+func (t *EDIMappingProfileItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIMappingProfileItemsQuery.JoinLateral.
+func (t *EDIMappingProfileItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIMappingProfileItemsQuery.Lock.
+func (t *EDIMappingProfileItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIMappingProfileItemsQuery.DistinctOn.
+func (t *EDIMappingProfileItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIMappingProfileItemsQuery.Cache.
+func (t *EDIMappingProfileItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIMappingProfileItemsQuery.LoadStrategy.
+func (t *EDIMappingProfileItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIMappingProfileItemsQuery.With.
+func (t *EDIMappingProfileItemsTable) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIMappingProfileItemsQuery.Compute.
+func (t *EDIMappingProfileItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIMappingProfileItemsTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIMappingProfileItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIMappingProfileItemsTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIMappingProfileItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIMappingProfileItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIMappingProfileItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIMappingProfileItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIMappingProfileItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIMappingProfileItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIMappingProfileItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIMappingProfileItemsQuery) Where(ps ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIMappingProfileItemsQuery) Pick(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIMappingProfileItemsQuery) Omit(cols ...keel.Column) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIMappingProfileItemsQuery) Load(ls ...keel.Loader) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIMappingProfileItemsQuery) Order(os ...keel.Order) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIMappingProfileItemsQuery) Distinct() keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIMappingProfileItemsQuery) Group(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIMappingProfileItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIMappingProfileItemsQuery) Rollup(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIMappingProfileItemsQuery) Cube(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIMappingProfileItemsQuery) Window(name string, w keel.Window) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIMappingProfileItemsQuery) Having(ps ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIMappingProfileItemsQuery) Limit(n int) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIMappingProfileItemsQuery) Offset(n int) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIMappingProfileItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIMappingProfileItemsQuery) AllTenants() keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIMappingProfileItemsQuery) CustomPlan() keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIMappingProfileItemsQuery) Timeout(d time.Duration) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIMappingProfileItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIMappingProfileItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIMappingProfileItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIMappingProfileItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIMappingProfileItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIMappingProfileItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIMappingProfileItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIMappingProfileItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIMappingProfileItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIMappingProfileItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIMappingProfileItemsQuery) Clone() keel.Query[*edi.EDIMappingProfileItem] {
+	return &EDIMappingProfileItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIMappingProfileItemsQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfileItem, error) {
+	return keel.One[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIMappingProfileItemsQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIMappingProfileItem, error) {
+	return keel.First[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIMappingProfileItemsQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfileItem, error) {
+	return keel.List[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIMappingProfileItemsQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIMappingProfileItem, error) {
+	return keel.All[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIMappingProfileItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIMappingProfileItem, error) {
+	return keel.UpdateReturning[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIMappingProfileItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIMappingProfileItem], error) {
+	return keel.PageOf[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIMappingProfileItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIMappingProfileItem) error) error {
+	return keel.Each[*edi.EDIMappingProfileItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIMappingProfileItem() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIMappingProfileItem)) }
@@ -1193,7 +2630,7 @@ var eDIPartnersRef = keel.Ref{Table: &eDIPartnersTable}
 
 // EDIPartnersTable is the table of edi.EDIPartner.
 type EDIPartnersTable struct {
-	keel.Handle[*edi.EDIPartner]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -1224,7 +2661,7 @@ type EDIPartnersTable struct {
 
 // EDIPartners references the edi_partners table.
 var EDIPartners = &EDIPartnersTable{
-	Handle:                  keel.Handle[*edi.EDIPartner]{Ref: &eDIPartnersRef},
+	TableBase:               keel.TableBase{Ref: &eDIPartnersRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnersRef, Index: 2}}},
@@ -1253,10 +2690,10 @@ var EDIPartners = &EDIPartnersTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &eDIPartnersRef, Index: 25}},
 }
 
-// BuildEDIPartners builds the handle of edi_partners for ref. Generated relation and alias methods call it.
+// BuildEDIPartners builds the table of edi_partners for ref. Generated relation and alias methods call it.
 func BuildEDIPartners(r *keel.Ref) *EDIPartnersTable {
 	return &EDIPartnersTable{
-		Handle:                  keel.Handle[*edi.EDIPartner]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1327,6 +2764,365 @@ func (t *EDIPartnersTable) MappingEntries() *EDIMappingProfileItemsTable {
 // Get returns the edi_partners row with the given key, or keel.ErrNotFound.
 func (t *EDIPartnersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIPartner, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIPartnersQuery is a query over edi.EDIPartner.
+type EDIPartnersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edi.EDIPartner] = (*EDIPartnersTable)(nil)
+
+var _ keel.Query[*edi.EDIPartner] = (*EDIPartnersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIPartnersTable) Query() keel.Query[*edi.EDIPartner] {
+	return &EDIPartnersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIPartnersQuery.Where.
+func (t *EDIPartnersTable) Where(ps ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIPartnersQuery.Pick.
+func (t *EDIPartnersTable) Pick(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIPartnersQuery.Load.
+func (t *EDIPartnersTable) Load(ls ...keel.Loader) keel.Query[*edi.EDIPartner] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIPartnersQuery.Omit.
+func (t *EDIPartnersTable) Omit(cols ...keel.Column) keel.Query[*edi.EDIPartner] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIPartnersQuery.Order.
+func (t *EDIPartnersTable) Order(os ...keel.Order) keel.Query[*edi.EDIPartner] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIPartnersQuery.Limit.
+func (t *EDIPartnersTable) Limit(n int) keel.Query[*edi.EDIPartner] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIPartnersQuery.Group.
+func (t *EDIPartnersTable) Group(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIPartnersQuery.GroupingSets.
+func (t *EDIPartnersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIPartnersQuery.Rollup.
+func (t *EDIPartnersTable) Rollup(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIPartnersQuery.Cube.
+func (t *EDIPartnersTable) Cube(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIPartnersQuery.AllTenants.
+func (t *EDIPartnersTable) AllTenants() keel.Query[*edi.EDIPartner] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIPartnersQuery.Join.
+func (t *EDIPartnersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIPartnersQuery.LeftJoin.
+func (t *EDIPartnersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIPartnersQuery.LeftJoinLateral.
+func (t *EDIPartnersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIPartner] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIPartnersQuery.JoinLateral.
+func (t *EDIPartnersTable) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIPartner] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIPartnersQuery.Lock.
+func (t *EDIPartnersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIPartner] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIPartnersQuery.DistinctOn.
+func (t *EDIPartnersTable) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIPartnersQuery.Cache.
+func (t *EDIPartnersTable) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIPartner] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIPartnersQuery.LoadStrategy.
+func (t *EDIPartnersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIPartner] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIPartnersQuery.With.
+func (t *EDIPartnersTable) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIPartner] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIPartnersQuery.Compute.
+func (t *EDIPartnersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIPartner] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIPartnersTable) Create(ctx context.Context, db *keel.DB, row *edi.EDIPartner) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIPartnersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIPartnersTable) Save(ctx context.Context, db *keel.DB, row *edi.EDIPartner, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIPartnersTable) SaveExcept(ctx context.Context, db *keel.DB, row *edi.EDIPartner, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIPartnersTable) DeleteRow(ctx context.Context, db *keel.DB, row *edi.EDIPartner) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIPartnersTable) Upsert(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIPartnersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIPartnersTable) Copy(ctx context.Context, db *keel.DB, rows []*edi.EDIPartner) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIPartnersQuery) Where(ps ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIPartnersQuery) Pick(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIPartnersQuery) Omit(cols ...keel.Column) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIPartnersQuery) Load(ls ...keel.Loader) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIPartnersQuery) Order(os ...keel.Order) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIPartnersQuery) Distinct() keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIPartnersQuery) Group(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIPartnersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIPartnersQuery) Rollup(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIPartnersQuery) Cube(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIPartnersQuery) Window(name string, w keel.Window) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIPartnersQuery) Having(ps ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIPartnersQuery) Limit(n int) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIPartnersQuery) Offset(n int) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIPartnersQuery) DistinctOn(es ...keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIPartnersQuery) AllTenants() keel.Query[*edi.EDIPartner] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIPartnersQuery) CustomPlan() keel.Query[*edi.EDIPartner] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIPartnersQuery) Timeout(d time.Duration) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIPartnersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIPartnersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIPartnersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIPartnersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIPartnersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIPartnersQuery) Cache(opts ...keel.CacheOption) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIPartnersQuery) With(ctes ...*keel.CTETable) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIPartnersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIPartnersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edi.EDIPartner] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIPartnersQuery) Clone() keel.Query[*edi.EDIPartner] {
+	return &EDIPartnersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIPartnersQuery) One(ctx context.Context, db *keel.DB) (*edi.EDIPartner, error) {
+	return keel.One[*edi.EDIPartner](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIPartnersQuery) First(ctx context.Context, db *keel.DB) (*edi.EDIPartner, error) {
+	return keel.First[*edi.EDIPartner](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIPartnersQuery) List(ctx context.Context, db *keel.DB) ([]*edi.EDIPartner, error) {
+	return keel.List[*edi.EDIPartner](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIPartnersQuery) All(ctx context.Context, db *keel.DB) ([]*edi.EDIPartner, error) {
+	return keel.All[*edi.EDIPartner](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIPartnersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edi.EDIPartner, error) {
+	return keel.UpdateReturning[*edi.EDIPartner](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIPartnersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edi.EDIPartner], error) {
+	return keel.PageOf[*edi.EDIPartner](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIPartnersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edi.EDIPartner) error) error {
+	return keel.Each[*edi.EDIPartner](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIPartner() unsafe.Pointer { return unsafe.Pointer(new(edi.EDIPartner)) }

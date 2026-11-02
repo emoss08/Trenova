@@ -4,6 +4,7 @@ package trackingprofiledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of trackingprofile.Profile.
 type ProfilesTable struct {
-	keel.Handle[*trackingprofile.Profile]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -85,7 +86,7 @@ type ProfilesTable struct {
 
 // Profiles references the customer_tracking_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:                 keel.Handle[*trackingprofile.Profile]{Ref: &profilesRef},
+	TableBase:              keel.TableBase{Ref: &profilesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -105,10 +106,10 @@ var Profiles = &ProfilesTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 16}},
 }
 
-// BuildProfiles builds the handle of customer_tracking_profiles for ref. Generated relation and alias methods call it.
+// BuildProfiles builds the table of customer_tracking_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:                 keel.Handle[*trackingprofile.Profile]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -140,6 +141,365 @@ func (t *ProfilesTable) As(alias string) *ProfilesTable {
 // Get returns the customer_tracking_profiles row with the given key, or keel.ErrNotFound.
 func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*trackingprofile.Profile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProfilesQuery is a query over trackingprofile.Profile.
+type ProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*trackingprofile.Profile] = (*ProfilesTable)(nil)
+
+var _ keel.Query[*trackingprofile.Profile] = (*ProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProfilesTable) Query() keel.Query[*trackingprofile.Profile] {
+	return &ProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProfilesQuery.Where.
+func (t *ProfilesTable) Where(ps ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProfilesQuery.Pick.
+func (t *ProfilesTable) Pick(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProfilesQuery.Load.
+func (t *ProfilesTable) Load(ls ...keel.Loader) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProfilesQuery.Omit.
+func (t *ProfilesTable) Omit(cols ...keel.Column) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProfilesQuery.Order.
+func (t *ProfilesTable) Order(os ...keel.Order) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProfilesQuery.Limit.
+func (t *ProfilesTable) Limit(n int) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProfilesQuery.Group.
+func (t *ProfilesTable) Group(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProfilesQuery.GroupingSets.
+func (t *ProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProfilesQuery.Rollup.
+func (t *ProfilesTable) Rollup(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProfilesQuery.Cube.
+func (t *ProfilesTable) Cube(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProfilesQuery.AllTenants.
+func (t *ProfilesTable) AllTenants() keel.Query[*trackingprofile.Profile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProfilesQuery.Join.
+func (t *ProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProfilesQuery.LeftJoin.
+func (t *ProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProfilesQuery.LeftJoinLateral.
+func (t *ProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*trackingprofile.Profile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProfilesQuery.JoinLateral.
+func (t *ProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*trackingprofile.Profile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProfilesQuery.Lock.
+func (t *ProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProfilesQuery.DistinctOn.
+func (t *ProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProfilesQuery.Cache.
+func (t *ProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProfilesQuery.LoadStrategy.
+func (t *ProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*trackingprofile.Profile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProfilesQuery.With.
+func (t *ProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*trackingprofile.Profile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProfilesQuery.Compute.
+func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*trackingprofile.Profile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *trackingprofile.Profile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*trackingprofile.Profile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *trackingprofile.Profile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *trackingprofile.Profile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *trackingprofile.Profile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*trackingprofile.Profile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*trackingprofile.Profile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*trackingprofile.Profile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProfilesQuery) Where(ps ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProfilesQuery) Pick(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProfilesQuery) Omit(cols ...keel.Column) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProfilesQuery) Load(ls ...keel.Loader) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProfilesQuery) Order(os ...keel.Order) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProfilesQuery) Distinct() keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProfilesQuery) Group(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProfilesQuery) Cube(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProfilesQuery) Window(name string, w keel.Window) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProfilesQuery) Having(ps ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProfilesQuery) Limit(n int) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProfilesQuery) Offset(n int) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProfilesQuery) AllTenants() keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProfilesQuery) CustomPlan() keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProfilesQuery) Timeout(d time.Duration) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*trackingprofile.Profile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProfilesQuery) Clone() keel.Query[*trackingprofile.Profile] {
+	return &ProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*trackingprofile.Profile, error) {
+	return keel.One[*trackingprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*trackingprofile.Profile, error) {
+	return keel.First[*trackingprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*trackingprofile.Profile, error) {
+	return keel.List[*trackingprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*trackingprofile.Profile, error) {
+	return keel.All[*trackingprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*trackingprofile.Profile, error) {
+	return keel.UpdateReturning[*trackingprofile.Profile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*trackingprofile.Profile], error) {
+	return keel.PageOf[*trackingprofile.Profile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*trackingprofile.Profile) error) error {
+	return keel.Each[*trackingprofile.Profile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(trackingprofile.Profile)) }

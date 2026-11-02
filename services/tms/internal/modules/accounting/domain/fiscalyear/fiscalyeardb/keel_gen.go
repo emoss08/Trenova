@@ -4,6 +4,7 @@ package fiscalyeardb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -83,7 +84,7 @@ var fiscalYearsRef = keel.Ref{Table: &fiscalYearsTable}
 
 // FiscalYearsTable is the table of fiscalyear.FiscalYear.
 type FiscalYearsTable struct {
-	keel.Handle[*fiscalyear.FiscalYear]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -112,7 +113,7 @@ type FiscalYearsTable struct {
 
 // FiscalYears references the fiscal_years table.
 var FiscalYears = &FiscalYearsTable{
-	Handle:                keel.Handle[*fiscalyear.FiscalYear]{Ref: &fiscalYearsRef},
+	TableBase:             keel.TableBase{Ref: &fiscalYearsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 2}}},
@@ -139,10 +140,10 @@ var FiscalYears = &FiscalYearsTable{
 	Rank:                  keel.StringCol{Col: keel.Col{Ref: &fiscalYearsRef, Index: 23}},
 }
 
-// BuildFiscalYears builds the handle of fiscal_years for ref. Generated relation and alias methods call it.
+// BuildFiscalYears builds the table of fiscal_years for ref. Generated relation and alias methods call it.
 func BuildFiscalYears(r *keel.Ref) *FiscalYearsTable {
 	return &FiscalYearsTable{
-		Handle:                keel.Handle[*fiscalyear.FiscalYear]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -201,6 +202,365 @@ func (t *FiscalYearsTable) Periods() *fiscalperioddb.FiscalPeriodsTable {
 // Get returns the fiscal_years row with the given key, or keel.ErrNotFound.
 func (t *FiscalYearsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fiscalyear.FiscalYear, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FiscalYearsQuery is a query over fiscalyear.FiscalYear.
+type FiscalYearsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fiscalyear.FiscalYear] = (*FiscalYearsTable)(nil)
+
+var _ keel.Query[*fiscalyear.FiscalYear] = (*FiscalYearsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FiscalYearsTable) Query() keel.Query[*fiscalyear.FiscalYear] {
+	return &FiscalYearsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FiscalYearsQuery.Where.
+func (t *FiscalYearsTable) Where(ps ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FiscalYearsQuery.Pick.
+func (t *FiscalYearsTable) Pick(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FiscalYearsQuery.Load.
+func (t *FiscalYearsTable) Load(ls ...keel.Loader) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FiscalYearsQuery.Omit.
+func (t *FiscalYearsTable) Omit(cols ...keel.Column) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FiscalYearsQuery.Order.
+func (t *FiscalYearsTable) Order(os ...keel.Order) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FiscalYearsQuery.Limit.
+func (t *FiscalYearsTable) Limit(n int) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FiscalYearsQuery.Group.
+func (t *FiscalYearsTable) Group(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FiscalYearsQuery.GroupingSets.
+func (t *FiscalYearsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FiscalYearsQuery.Rollup.
+func (t *FiscalYearsTable) Rollup(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FiscalYearsQuery.Cube.
+func (t *FiscalYearsTable) Cube(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FiscalYearsQuery.AllTenants.
+func (t *FiscalYearsTable) AllTenants() keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FiscalYearsQuery.Join.
+func (t *FiscalYearsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FiscalYearsQuery.LeftJoin.
+func (t *FiscalYearsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FiscalYearsQuery.LeftJoinLateral.
+func (t *FiscalYearsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FiscalYearsQuery.JoinLateral.
+func (t *FiscalYearsTable) JoinLateral(sub keel.LateralSource) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FiscalYearsQuery.Lock.
+func (t *FiscalYearsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FiscalYearsQuery.DistinctOn.
+func (t *FiscalYearsTable) DistinctOn(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FiscalYearsQuery.Cache.
+func (t *FiscalYearsTable) Cache(opts ...keel.CacheOption) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FiscalYearsQuery.LoadStrategy.
+func (t *FiscalYearsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FiscalYearsQuery.With.
+func (t *FiscalYearsTable) With(ctes ...*keel.CTETable) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FiscalYearsQuery.Compute.
+func (t *FiscalYearsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FiscalYearsTable) Create(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FiscalYearsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FiscalYearsTable) Save(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FiscalYearsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FiscalYearsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fiscalyear.FiscalYear) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FiscalYearsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FiscalYearsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FiscalYearsTable) Copy(ctx context.Context, db *keel.DB, rows []*fiscalyear.FiscalYear) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FiscalYearsQuery) Where(ps ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FiscalYearsQuery) Pick(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FiscalYearsQuery) Omit(cols ...keel.Column) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FiscalYearsQuery) Load(ls ...keel.Loader) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FiscalYearsQuery) Order(os ...keel.Order) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FiscalYearsQuery) Distinct() keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FiscalYearsQuery) Group(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FiscalYearsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FiscalYearsQuery) Rollup(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FiscalYearsQuery) Cube(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FiscalYearsQuery) Window(name string, w keel.Window) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FiscalYearsQuery) Having(ps ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FiscalYearsQuery) Limit(n int) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FiscalYearsQuery) Offset(n int) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FiscalYearsQuery) DistinctOn(es ...keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FiscalYearsQuery) AllTenants() keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FiscalYearsQuery) CustomPlan() keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FiscalYearsQuery) Timeout(d time.Duration) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FiscalYearsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FiscalYearsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FiscalYearsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FiscalYearsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FiscalYearsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FiscalYearsQuery) Cache(opts ...keel.CacheOption) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FiscalYearsQuery) With(ctes ...*keel.CTETable) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FiscalYearsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FiscalYearsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fiscalyear.FiscalYear] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FiscalYearsQuery) Clone() keel.Query[*fiscalyear.FiscalYear] {
+	return &FiscalYearsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FiscalYearsQuery) One(ctx context.Context, db *keel.DB) (*fiscalyear.FiscalYear, error) {
+	return keel.One[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FiscalYearsQuery) First(ctx context.Context, db *keel.DB) (*fiscalyear.FiscalYear, error) {
+	return keel.First[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FiscalYearsQuery) List(ctx context.Context, db *keel.DB) ([]*fiscalyear.FiscalYear, error) {
+	return keel.List[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FiscalYearsQuery) All(ctx context.Context, db *keel.DB) ([]*fiscalyear.FiscalYear, error) {
+	return keel.All[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FiscalYearsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fiscalyear.FiscalYear, error) {
+	return keel.UpdateReturning[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FiscalYearsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fiscalyear.FiscalYear], error) {
+	return keel.PageOf[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FiscalYearsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fiscalyear.FiscalYear) error) error {
+	return keel.Each[*fiscalyear.FiscalYear](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFiscalYear() unsafe.Pointer { return unsafe.Pointer(new(fiscalyear.FiscalYear)) }

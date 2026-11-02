@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/sessionwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
@@ -35,6 +36,7 @@ type Params struct {
 	Budgets              agentbudgetports.AgentBudgetService
 	Workflows            kernelports.WorkflowStarter
 	Streams              assistantstreamports.TurnStreamReader
+	Sessions             *sessionwatch.Watch
 	Logger               *zap.Logger
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -46,11 +48,13 @@ type Handler struct {
 	budgets   agentbudgetports.AgentBudgetService
 	workflows kernelports.WorkflowStarter
 	streams   assistantstreamports.TurnStreamReader
+	sessions  *sessionwatch.Watch
 	logger    *zap.Logger
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 }
 
+//nolint:gocritic // fx passes params by value
 func New(p Params) *Handler {
 	return &Handler{
 		service:   p.Service,
@@ -58,6 +62,7 @@ func New(p Params) *Handler {
 		budgets:   p.Budgets,
 		workflows: p.Workflows,
 		streams:   p.Streams,
+		sessions:  p.Sessions,
 		logger:    p.Logger.Named("handler.agentdefinition"),
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,

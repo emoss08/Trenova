@@ -103,7 +103,7 @@ func (r *repository) ListConnection(
 	)
 }
 
-func zoneQuery(req *ratezoneports.GetRateZoneByIDRequest) *keel.Query[*ratezone.RateZone] {
+func zoneQuery(req *ratezoneports.GetRateZoneByIDRequest) keel.Query[*ratezone.RateZone] {
 	rz := ratezonedb.RateZones
 	q := rz.Where(rz.ID.Eq(req.RateZoneID))
 	if req.IncludeMembers {
@@ -160,7 +160,7 @@ type laneZoneRow struct {
 	MatchKey string
 }
 
-func laneZonesQuery(keys []string) *keel.Query[*ratezone.RateZoneMember] {
+func laneZonesQuery(keys []string) keel.Query[*ratezone.RateZoneMember] {
 	m := ratezonedb.RateZoneMembers
 	rz := ratezonedb.RateZones
 
@@ -352,7 +352,7 @@ func (r *repository) Delete(
 	})
 }
 
-func selectOptionsQuery() *keel.Query[*ratezone.RateZone] {
+func selectOptionsQuery() keel.Query[*ratezone.RateZone] {
 	rz := ratezonedb.RateZones
 
 	return rz.Pick(rz.ID, rz.Code, rz.Name, rz.Description, rz.Kind, rz.Status).

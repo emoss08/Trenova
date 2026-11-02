@@ -100,7 +100,7 @@ func (r *repository) NextSequence(
 
 func listQuery(
 	req *agentruntimeports.ListAgentRunEventsRequest,
-) *keel.Query[*agentrunevent.AgentRunEvent] {
+) keel.Query[*agentrunevent.AgentRunEvent] {
 	e := agentruneventdb.AgentRunEvents
 
 	return e.Where(

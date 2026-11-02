@@ -41,7 +41,7 @@ func New(p Params) assistantchapterports.ChapterRepository {
 	}
 }
 
-func chaptersQuery(threadID pulid.ID) *keel.Query[*conversationchapter.Chapter] {
+func chaptersQuery(threadID pulid.ID) keel.Query[*conversationchapter.Chapter] {
 	c := conversationchapterdb.Chapters
 	tr := conversationturndb.AssistantTurns.As("ctr")
 	m := conversationdb.Messages.As("cfm")

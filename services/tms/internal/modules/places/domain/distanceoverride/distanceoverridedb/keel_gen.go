@@ -4,6 +4,7 @@ package distanceoverridedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var distanceOverridesRef = keel.Ref{Table: &distanceOverridesTable}
 
 // DistanceOverridesTable is the table of distanceoverride.DistanceOverride.
 type DistanceOverridesTable struct {
-	keel.Handle[*distanceoverride.DistanceOverride]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -86,7 +87,7 @@ type DistanceOverridesTable struct {
 
 // DistanceOverrides references the distance_overrides table.
 var DistanceOverrides = &DistanceOverridesTable{
-	Handle:                keel.Handle[*distanceoverride.DistanceOverride]{Ref: &distanceOverridesRef},
+	TableBase:             keel.TableBase{Ref: &distanceOverridesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 2}}},
@@ -101,10 +102,10 @@ var DistanceOverrides = &DistanceOverridesTable{
 	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &distanceOverridesRef, Index: 11}},
 }
 
-// BuildDistanceOverrides builds the handle of distance_overrides for ref. Generated relation and alias methods call it.
+// BuildDistanceOverrides builds the table of distance_overrides for ref. Generated relation and alias methods call it.
 func BuildDistanceOverrides(r *keel.Ref) *DistanceOverridesTable {
 	return &DistanceOverridesTable{
-		Handle:                keel.Handle[*distanceoverride.DistanceOverride]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -151,6 +152,365 @@ func (t *DistanceOverridesTable) IntermediateStops() *DistanceOverrideStopsTable
 // Get returns the distance_overrides row with the given key, or keel.ErrNotFound.
 func (t *DistanceOverridesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*distanceoverride.DistanceOverride, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DistanceOverridesQuery is a query over distanceoverride.DistanceOverride.
+type DistanceOverridesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*distanceoverride.DistanceOverride] = (*DistanceOverridesTable)(nil)
+
+var _ keel.Query[*distanceoverride.DistanceOverride] = (*DistanceOverridesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DistanceOverridesTable) Query() keel.Query[*distanceoverride.DistanceOverride] {
+	return &DistanceOverridesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DistanceOverridesQuery.Where.
+func (t *DistanceOverridesTable) Where(ps ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DistanceOverridesQuery.Pick.
+func (t *DistanceOverridesTable) Pick(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DistanceOverridesQuery.Load.
+func (t *DistanceOverridesTable) Load(ls ...keel.Loader) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DistanceOverridesQuery.Omit.
+func (t *DistanceOverridesTable) Omit(cols ...keel.Column) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DistanceOverridesQuery.Order.
+func (t *DistanceOverridesTable) Order(os ...keel.Order) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DistanceOverridesQuery.Limit.
+func (t *DistanceOverridesTable) Limit(n int) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DistanceOverridesQuery.Group.
+func (t *DistanceOverridesTable) Group(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DistanceOverridesQuery.GroupingSets.
+func (t *DistanceOverridesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DistanceOverridesQuery.Rollup.
+func (t *DistanceOverridesTable) Rollup(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DistanceOverridesQuery.Cube.
+func (t *DistanceOverridesTable) Cube(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DistanceOverridesQuery.AllTenants.
+func (t *DistanceOverridesTable) AllTenants() keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DistanceOverridesQuery.Join.
+func (t *DistanceOverridesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DistanceOverridesQuery.LeftJoin.
+func (t *DistanceOverridesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DistanceOverridesQuery.LeftJoinLateral.
+func (t *DistanceOverridesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DistanceOverridesQuery.JoinLateral.
+func (t *DistanceOverridesTable) JoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DistanceOverridesQuery.Lock.
+func (t *DistanceOverridesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DistanceOverridesQuery.DistinctOn.
+func (t *DistanceOverridesTable) DistinctOn(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DistanceOverridesQuery.Cache.
+func (t *DistanceOverridesTable) Cache(opts ...keel.CacheOption) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DistanceOverridesQuery.LoadStrategy.
+func (t *DistanceOverridesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DistanceOverridesQuery.With.
+func (t *DistanceOverridesTable) With(ctes ...*keel.CTETable) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DistanceOverridesQuery.Compute.
+func (t *DistanceOverridesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DistanceOverridesTable) Create(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DistanceOverridesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DistanceOverridesTable) Save(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DistanceOverridesTable) SaveExcept(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DistanceOverridesTable) DeleteRow(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverride) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DistanceOverridesTable) Upsert(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DistanceOverridesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DistanceOverridesTable) Copy(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverride) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DistanceOverridesQuery) Where(ps ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DistanceOverridesQuery) Pick(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DistanceOverridesQuery) Omit(cols ...keel.Column) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DistanceOverridesQuery) Load(ls ...keel.Loader) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DistanceOverridesQuery) Order(os ...keel.Order) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DistanceOverridesQuery) Distinct() keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DistanceOverridesQuery) Group(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DistanceOverridesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DistanceOverridesQuery) Rollup(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DistanceOverridesQuery) Cube(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DistanceOverridesQuery) Window(name string, w keel.Window) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DistanceOverridesQuery) Having(ps ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DistanceOverridesQuery) Limit(n int) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DistanceOverridesQuery) Offset(n int) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DistanceOverridesQuery) DistinctOn(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DistanceOverridesQuery) AllTenants() keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DistanceOverridesQuery) CustomPlan() keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DistanceOverridesQuery) Timeout(d time.Duration) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DistanceOverridesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DistanceOverridesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DistanceOverridesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DistanceOverridesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DistanceOverridesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DistanceOverridesQuery) Cache(opts ...keel.CacheOption) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DistanceOverridesQuery) With(ctes ...*keel.CTETable) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DistanceOverridesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DistanceOverridesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*distanceoverride.DistanceOverride] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DistanceOverridesQuery) Clone() keel.Query[*distanceoverride.DistanceOverride] {
+	return &DistanceOverridesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DistanceOverridesQuery) One(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverride, error) {
+	return keel.One[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DistanceOverridesQuery) First(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverride, error) {
+	return keel.First[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DistanceOverridesQuery) List(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverride, error) {
+	return keel.List[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DistanceOverridesQuery) All(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverride, error) {
+	return keel.All[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DistanceOverridesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distanceoverride.DistanceOverride, error) {
+	return keel.UpdateReturning[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DistanceOverridesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distanceoverride.DistanceOverride], error) {
+	return keel.PageOf[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DistanceOverridesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distanceoverride.DistanceOverride) error) error {
+	return keel.Each[*distanceoverride.DistanceOverride](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDistanceOverride() unsafe.Pointer {
@@ -282,7 +642,7 @@ var distanceOverrideStopsRef = keel.Ref{Table: &distanceOverrideStopsTable}
 
 // DistanceOverrideStopsTable is the table of distanceoverride.DistanceOverrideStop.
 type DistanceOverrideStopsTable struct {
-	keel.Handle[*distanceoverride.DistanceOverrideStop]
+	keel.TableBase
 	DistanceOverrideID keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -292,7 +652,7 @@ type DistanceOverrideStopsTable struct {
 
 // DistanceOverrideStops references the distance_override_stops table.
 var DistanceOverrideStops = &DistanceOverrideStopsTable{
-	Handle:             keel.Handle[*distanceoverride.DistanceOverrideStop]{Ref: &distanceOverrideStopsRef},
+	TableBase:          keel.TableBase{Ref: &distanceOverrideStopsRef},
 	DistanceOverrideID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 2}}},
@@ -300,10 +660,10 @@ var DistanceOverrideStops = &DistanceOverrideStopsTable{
 	LocationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceOverrideStopsRef, Index: 4}}},
 }
 
-// BuildDistanceOverrideStops builds the handle of distance_override_stops for ref. Generated relation and alias methods call it.
+// BuildDistanceOverrideStops builds the table of distance_override_stops for ref. Generated relation and alias methods call it.
 func BuildDistanceOverrideStops(r *keel.Ref) *DistanceOverrideStopsTable {
 	return &DistanceOverrideStopsTable{
-		Handle:             keel.Handle[*distanceoverride.DistanceOverrideStop]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		DistanceOverrideID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -323,6 +683,365 @@ func (t *DistanceOverrideStopsTable) As(alias string) *DistanceOverrideStopsTabl
 // Location is the belongs relation.
 func (t *DistanceOverrideStopsTable) Location() *locationdb.LocationsTable {
 	return keel.Path(t.Ref, 0, locationdb.BuildLocations)
+}
+
+// DistanceOverrideStopsQuery is a query over distanceoverride.DistanceOverrideStop.
+type DistanceOverrideStopsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*distanceoverride.DistanceOverrideStop] = (*DistanceOverrideStopsTable)(nil)
+
+var _ keel.Query[*distanceoverride.DistanceOverrideStop] = (*DistanceOverrideStopsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DistanceOverrideStopsTable) Query() keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return &DistanceOverrideStopsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DistanceOverrideStopsQuery.Where.
+func (t *DistanceOverrideStopsTable) Where(ps ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DistanceOverrideStopsQuery.Pick.
+func (t *DistanceOverrideStopsTable) Pick(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DistanceOverrideStopsQuery.Load.
+func (t *DistanceOverrideStopsTable) Load(ls ...keel.Loader) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DistanceOverrideStopsQuery.Omit.
+func (t *DistanceOverrideStopsTable) Omit(cols ...keel.Column) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DistanceOverrideStopsQuery.Order.
+func (t *DistanceOverrideStopsTable) Order(os ...keel.Order) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DistanceOverrideStopsQuery.Limit.
+func (t *DistanceOverrideStopsTable) Limit(n int) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DistanceOverrideStopsQuery.Group.
+func (t *DistanceOverrideStopsTable) Group(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DistanceOverrideStopsQuery.GroupingSets.
+func (t *DistanceOverrideStopsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DistanceOverrideStopsQuery.Rollup.
+func (t *DistanceOverrideStopsTable) Rollup(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DistanceOverrideStopsQuery.Cube.
+func (t *DistanceOverrideStopsTable) Cube(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DistanceOverrideStopsQuery.AllTenants.
+func (t *DistanceOverrideStopsTable) AllTenants() keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DistanceOverrideStopsQuery.Join.
+func (t *DistanceOverrideStopsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DistanceOverrideStopsQuery.LeftJoin.
+func (t *DistanceOverrideStopsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DistanceOverrideStopsQuery.LeftJoinLateral.
+func (t *DistanceOverrideStopsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DistanceOverrideStopsQuery.JoinLateral.
+func (t *DistanceOverrideStopsTable) JoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DistanceOverrideStopsQuery.Lock.
+func (t *DistanceOverrideStopsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DistanceOverrideStopsQuery.DistinctOn.
+func (t *DistanceOverrideStopsTable) DistinctOn(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DistanceOverrideStopsQuery.Cache.
+func (t *DistanceOverrideStopsTable) Cache(opts ...keel.CacheOption) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DistanceOverrideStopsQuery.LoadStrategy.
+func (t *DistanceOverrideStopsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DistanceOverrideStopsQuery.With.
+func (t *DistanceOverrideStopsTable) With(ctes ...*keel.CTETable) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DistanceOverrideStopsQuery.Compute.
+func (t *DistanceOverrideStopsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DistanceOverrideStopsTable) Create(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DistanceOverrideStopsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DistanceOverrideStopsTable) Save(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DistanceOverrideStopsTable) SaveExcept(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DistanceOverrideStopsTable) DeleteRow(ctx context.Context, db *keel.DB, row *distanceoverride.DistanceOverrideStop) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DistanceOverrideStopsTable) Upsert(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DistanceOverrideStopsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DistanceOverrideStopsTable) Copy(ctx context.Context, db *keel.DB, rows []*distanceoverride.DistanceOverrideStop) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DistanceOverrideStopsQuery) Where(ps ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DistanceOverrideStopsQuery) Pick(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DistanceOverrideStopsQuery) Omit(cols ...keel.Column) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DistanceOverrideStopsQuery) Load(ls ...keel.Loader) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DistanceOverrideStopsQuery) Order(os ...keel.Order) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DistanceOverrideStopsQuery) Distinct() keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DistanceOverrideStopsQuery) Group(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DistanceOverrideStopsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DistanceOverrideStopsQuery) Rollup(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DistanceOverrideStopsQuery) Cube(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DistanceOverrideStopsQuery) Window(name string, w keel.Window) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DistanceOverrideStopsQuery) Having(ps ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DistanceOverrideStopsQuery) Limit(n int) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DistanceOverrideStopsQuery) Offset(n int) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DistanceOverrideStopsQuery) DistinctOn(es ...keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DistanceOverrideStopsQuery) AllTenants() keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DistanceOverrideStopsQuery) CustomPlan() keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DistanceOverrideStopsQuery) Timeout(d time.Duration) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DistanceOverrideStopsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DistanceOverrideStopsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DistanceOverrideStopsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DistanceOverrideStopsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DistanceOverrideStopsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DistanceOverrideStopsQuery) Cache(opts ...keel.CacheOption) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DistanceOverrideStopsQuery) With(ctes ...*keel.CTETable) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DistanceOverrideStopsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DistanceOverrideStopsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*distanceoverride.DistanceOverrideStop] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DistanceOverrideStopsQuery) Clone() keel.Query[*distanceoverride.DistanceOverrideStop] {
+	return &DistanceOverrideStopsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DistanceOverrideStopsQuery) One(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverrideStop, error) {
+	return keel.One[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DistanceOverrideStopsQuery) First(ctx context.Context, db *keel.DB) (*distanceoverride.DistanceOverrideStop, error) {
+	return keel.First[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DistanceOverrideStopsQuery) List(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverrideStop, error) {
+	return keel.List[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DistanceOverrideStopsQuery) All(ctx context.Context, db *keel.DB) ([]*distanceoverride.DistanceOverrideStop, error) {
+	return keel.All[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DistanceOverrideStopsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distanceoverride.DistanceOverrideStop, error) {
+	return keel.UpdateReturning[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DistanceOverrideStopsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distanceoverride.DistanceOverrideStop], error) {
+	return keel.PageOf[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DistanceOverrideStopsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distanceoverride.DistanceOverrideStop) error) error {
+	return keel.Each[*distanceoverride.DistanceOverrideStop](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDistanceOverrideStop() unsafe.Pointer {

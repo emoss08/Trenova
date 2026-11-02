@@ -42,7 +42,7 @@ func New(p Params) permissionports.RoleAgentGrantRepository {
 func grantedAgentIDsQuery(
 	ctx context.Context,
 	req permissionports.ListGrantedAgentIDsRequest,
-) *keel.Query[*rbac.RoleAgentGrant] {
+) keel.Query[*rbac.RoleAgentGrant] {
 	rag := rbacdb.RoleAgentGrants
 	q := rag.Group(rag.AgentDefinitionID).Pick(rag.AgentDefinitionID)
 	if dbscope.IsSystem(ctx) {
@@ -52,25 +52,25 @@ func grantedAgentIDsQuery(
 	return q.Where(rag.OrganizationID.Eq(req.OrganizationID), rag.RoleID.In(req.RoleIDs...))
 }
 
-func grantsQuery(key keelkinds.PulidIDCol, ids []pulid.ID) *keel.Query[*rbac.RoleAgentGrant] {
+func grantsQuery(key keelkinds.PulidIDCol, ids []pulid.ID) keel.Query[*rbac.RoleAgentGrant] {
 	rag := rbacdb.RoleAgentGrants
 
 	return rag.Where(key.In(ids...)).Order(rag.GrantedAt.Asc())
 }
 
-func rolesQuery(ids []pulid.ID) *keel.Query[*rbac.Role] {
+func rolesQuery(ids []pulid.ID) keel.Query[*rbac.Role] {
 	ro := rbacdb.Roles
 
 	return ro.Where(keel.When(len(ids) > 0, ro.ID.In(ids...))).Order(ro.Name.Asc())
 }
 
-func definitionsQuery(ids []pulid.ID) *keel.Query[*agentdefinition.Definition] {
+func definitionsQuery(ids []pulid.ID) keel.Query[*agentdefinition.Definition] {
 	d := agentdefinitiondb.Definitions
 
 	return d.Where(d.ID.In(ids...)).Order(d.Name.Asc())
 }
 
-func currentGrantsQuery(p *replaceParams) *keel.Query[*rbac.RoleAgentGrant] {
+func currentGrantsQuery(p *replaceParams) keel.Query[*rbac.RoleAgentGrant] {
 	rag := rbacdb.RoleAgentGrants
 
 	return rag.Pick(p.varying).Where(p.fixed.Eq(p.fixedID)).Lock(keel.ForUpdate)

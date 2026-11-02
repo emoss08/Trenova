@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
+	"github.com/emoss08/trenova/internal/api/sessioncookie"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -31,29 +33,33 @@ type Params struct {
 	PasswordReset        *passwordresetservice.Service
 	PermissionEngine     permissionports.PermissionEngine
 	MFA                  sessionports.MFAService
+	SecurityConfig       *securityconfig.Config
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service       *userservice.Service
-	roleService   *roleservice.Service
-	passwordReset *passwordresetservice.Service
-	permEngine    permissionports.PermissionEngine
-	mfa           sessionports.MFAService
-	eh            *helpers.ErrorHandler
-	pm            *middleware.PermissionMiddleware
+	service        *userservice.Service
+	roleService    *roleservice.Service
+	passwordReset  *passwordresetservice.Service
+	permEngine     permissionports.PermissionEngine
+	mfa            sessionports.MFAService
+	securityConfig *securityconfig.Config
+	eh             *helpers.ErrorHandler
+	pm             *middleware.PermissionMiddleware
 }
 
+//nolint:gocritic // fx passes params by value
 func New(p Params) *Handler {
 	return &Handler{
-		service:       p.Service,
-		roleService:   p.RoleService,
-		passwordReset: p.PasswordReset,
-		permEngine:    p.PermissionEngine,
-		mfa:           p.MFA,
-		eh:            p.ErrorHandler,
-		pm:            p.PermissionMiddleware,
+		service:        p.Service,
+		roleService:    p.RoleService,
+		passwordReset:  p.PasswordReset,
+		permEngine:     p.PermissionEngine,
+		mfa:            p.MFA,
+		securityConfig: p.SecurityConfig,
+		eh:             p.ErrorHandler,
+		pm:             p.PermissionMiddleware,
 	}
 }
 
@@ -493,13 +499,9 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 		return
 	}
 
-	updated, err := h.service.ChangeMyPassword(
+	result, err := h.service.ChangeMyPassword(
 		c.Request.Context(),
-		pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
-		},
+		sessionScope(c),
 		userservice.ChangeMyPasswordRequest{
 			CurrentPassword: req.CurrentPassword,
 			NewPassword:     req.NewPassword,
@@ -511,7 +513,13 @@ func (h *Handler) changeMyPassword(c *gin.Context) {
 		return
 	}
 
-	respondWithSelf(c, updated)
+	if result.SessionToken != "" {
+		sessioncookie.Set(c, &h.securityConfig.Session, result.SessionToken, result.ExpiresAt)
+	} else if !authCtx.SessionID.IsNil() {
+		sessioncookie.Clear(c, &h.securityConfig.Session)
+	}
+
+	respondWithSelf(c, result.User)
 }
 
 func validateMySettingsFields(raw map[string]any) error {
@@ -661,6 +669,7 @@ func (h *Handler) switchOrganization(c *gin.Context) {
 		c.Request.Context(),
 		tenantports.SwitchOrganizationRequest{
 			SessionID:      sessionID,
+			SecretHash:     authctx.GetSessionSecretHash(c),
 			OrganizationID: orgID,
 		},
 	)
@@ -669,5 +678,6 @@ func (h *Handler) switchOrganization(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, resp)
+	sessioncookie.Set(c, &h.securityConfig.Session, resp.SessionToken, resp.ExpiresAt)
+	helpers.JSON(c, http.StatusOK, resp.User)
 }

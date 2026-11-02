@@ -2,6 +2,7 @@ package mfaservice
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -13,12 +14,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/totputils"
 	"github.com/stretchr/testify/assert"
@@ -205,6 +209,7 @@ func newHarness(t *testing.T) *harness {
 		Repository: repo,
 		Users:      users,
 		Sessions:   sessions,
+		Rotator:    sessiontest.Rotator(sessions),
 		Encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 		),
@@ -317,11 +322,15 @@ func TestConfirmTurnsTheFactorOnAndRaisesTheSession(t *testing.T) {
 	h := newHarness(t)
 
 	sessionID := pulid.MustNew("ses_")
-	sess := &session.Session{ID: sessionID, UserID: h.user.ID, AuthenticatorAAL: 1}
-	h.sessions.On("Get", mock.Anything, sessionID).Return(sess, nil)
-	h.sessions.On("Update", mock.Anything, mock.MatchedBy(func(s *session.Session) bool {
-		return s.AuthenticatorAAL == 2 && s.MFAAuthenticatedAt == h.clock.Unix()
-	})).Return(nil)
+	sess := &session.Session{
+		ID:               sessionID,
+		UserID:           h.user.ID,
+		SecretHash:       "enrollment-secret-hash",
+		AuthenticatorAAL: 1,
+	}
+	h.sessions.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(sess)).
+		Once()
 
 	enrollment, err := h.svc.BeginTOTPEnrollment(
 		t.Context(),
@@ -335,13 +344,19 @@ func TestConfirmTurnsTheFactorOnAndRaisesTheSession(t *testing.T) {
 	resp, err := h.svc.ConfirmTOTPEnrollment(
 		t.Context(),
 		&sessionports.ConfirmTOTPEnrollmentRequest{
-			TenantInfo: h.tenant,
-			SessionID:  sessionID,
-			Code:       h.codeAt(t, enrollment.Secret, 0),
+			TenantInfo:        h.tenant,
+			SessionID:         sessionID,
+			SessionSecretHash: "enrollment-secret-hash",
+			Code:              h.codeAt(t, enrollment.Secret, 0),
 		},
 	)
 	require.NoError(t, err)
 	assert.Len(t, resp.RecoveryCodes, totputils.RecoveryCodeCount)
+	rotatedID, secret, err := sessiontoken.Parse(resp.SessionToken)
+	require.NoError(t, err)
+	assert.Equal(t, sessionID, rotatedID)
+	assert.True(t, sessiontest.Tokens().Matches(sessionID, h.user.ID, secret, sess.SecretHash))
+	assert.Equal(t, "enrollment-secret-hash", sess.PreviousSecretHash)
 
 	status, err := h.svc.Status(t.Context(), h.tenant, 2)
 	require.NoError(t, err)
@@ -349,7 +364,8 @@ func TestConfirmTurnsTheFactorOnAndRaisesTheSession(t *testing.T) {
 	assert.True(t, status.SessionVerified)
 	assert.Equal(t, totputils.RecoveryCodeCount, status.RecoveryCodesRemaining)
 	require.Len(t, h.auditor.changes, 1)
-	h.sessions.AssertExpectations(t)
+	assert.Equal(t, 2, sess.AuthenticatorAAL)
+	assert.Equal(t, h.clock.Unix(), sess.MFAAuthenticatedAt)
 }
 
 func TestVerifySecondFactorRefusesAReplayedCode(t *testing.T) {
@@ -473,4 +489,86 @@ func TestRegenerateRecoveryCodesReplacesTheSet(t *testing.T) {
 		RecoveryCode: original[0],
 	})
 	require.ErrorIs(t, err, errInvalidRecoveryCode)
+}
+
+func (h *harness) expectResetTarget() *sessionports.ResetUserMFARequest {
+	req := &sessionports.ResetUserMFARequest{
+		TenantInfo:   pagination.TenantInfo{OrgID: h.tenant.OrgID, BuID: h.tenant.BuID},
+		TargetUserID: h.user.ID,
+	}
+	h.users.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
+		TenantInfo:   req.TenantInfo,
+		LookupUserID: h.user.ID,
+	}).Return(h.user, nil).Once()
+	return req
+}
+
+func TestResetUserMFAEndsEverySessionOfTheUser(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.enroll(t)
+	events := &recordingAuthEvents{}
+	h.svc.authEvents = events
+	req := h.expectResetTarget()
+	h.users.EXPECT().AdvanceSessionEpoch(mock.Anything, h.user.ID).Return(nil).Twice()
+	h.sessions.EXPECT().DeleteAllForUser(mock.Anything, h.user.ID).Return(nil).Once()
+
+	require.NoError(t, h.svc.ResetUserMFA(t.Context(), req))
+
+	active, err := h.svc.HasActiveFactor(t.Context(), h.user.ID)
+	require.NoError(t, err)
+	assert.False(t, active)
+	recorded := events.snapshot()
+	require.Len(t, recorded, 1)
+	assert.Equal(t, iamports.AuthEventProviderSessionRevoked, recorded[0].Provider)
+	assert.Equal(t, h.user.ID, recorded[0].UserID)
+	assert.Equal(t, iamports.SessionRevocationAll, recorded[0].MFAState)
+}
+
+func TestResetUserMFAKeepsTheFactorWhenSessionsCannotBeEnded(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.enroll(t)
+	req := h.expectResetTarget()
+	h.users.EXPECT().AdvanceSessionEpoch(mock.Anything, h.user.ID).Return(nil).Once()
+	h.sessions.EXPECT().DeleteAllForUser(mock.Anything, h.user.ID).
+		Return(errors.New("redis unavailable")).
+		Once()
+
+	require.Error(t, h.svc.ResetUserMFA(t.Context(), req))
+
+	active, err := h.svc.HasActiveFactor(t.Context(), h.user.ID)
+	require.NoError(t, err)
+	assert.True(t, active)
+}
+
+func TestResetUserMFALeavesSessionsAloneWhenThereIsNoFactor(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	events := &recordingAuthEvents{}
+	h.svc.authEvents = events
+	req := h.expectResetTarget()
+
+	err := h.svc.ResetUserMFA(t.Context(), req)
+
+	require.ErrorIs(t, err, errNoActiveFactor)
+	h.sessions.AssertNotCalled(t, "DeleteAllForUser", mock.Anything, mock.Anything)
+	assert.Empty(t, events.snapshot())
+}
+
+func TestResetUserMFAKeepsEverythingWhenTheEpochCannotAdvance(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.enroll(t)
+	req := h.expectResetTarget()
+	h.users.EXPECT().AdvanceSessionEpoch(mock.Anything, h.user.ID).
+		Return(errors.New("database unavailable")).
+		Once()
+
+	require.Error(t, h.svc.ResetUserMFA(t.Context(), req))
+
+	h.sessions.AssertNotCalled(t, "DeleteAllForUser", mock.Anything, mock.Anything)
+	active, err := h.svc.HasActiveFactor(t.Context(), h.user.ID)
+	require.NoError(t, err)
+	assert.True(t, active)
 }

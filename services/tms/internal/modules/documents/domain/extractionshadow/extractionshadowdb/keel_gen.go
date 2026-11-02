@@ -4,6 +4,7 @@ package extractionshadowdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -87,7 +88,7 @@ var shadowResultsRef = keel.Ref{Table: &shadowResultsTable}
 
 // ShadowResultsTable is the table of extractionshadow.ShadowResult.
 type ShadowResultsTable struct {
-	keel.Handle[*extractionshadow.ShadowResult]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -133,7 +134,7 @@ type ShadowResultsTable struct {
 
 // ShadowResults references the extraction_shadow_results table.
 var ShadowResults = &ShadowResultsTable{
-	Handle:                 keel.Handle[*extractionshadow.ShadowResult]{Ref: &shadowResultsRef},
+	TableBase:              keel.TableBase{Ref: &shadowResultsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowResultsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowResultsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowResultsRef, Index: 2}}},
@@ -177,10 +178,10 @@ var ShadowResults = &ShadowResultsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &shadowResultsRef, Index: 40}},
 }
 
-// BuildShadowResults builds the handle of extraction_shadow_results for ref. Generated relation and alias methods call it.
+// BuildShadowResults builds the table of extraction_shadow_results for ref. Generated relation and alias methods call it.
 func BuildShadowResults(r *keel.Ref) *ShadowResultsTable {
 	return &ShadowResultsTable{
-		Handle:                 keel.Handle[*extractionshadow.ShadowResult]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -236,6 +237,365 @@ func (t *ShadowResultsTable) As(alias string) *ShadowResultsTable {
 // Get returns the extraction_shadow_results row with the given key, or keel.ErrNotFound.
 func (t *ShadowResultsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractionshadow.ShadowResult, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ShadowResultsQuery is a query over extractionshadow.ShadowResult.
+type ShadowResultsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractionshadow.ShadowResult] = (*ShadowResultsTable)(nil)
+
+var _ keel.Query[*extractionshadow.ShadowResult] = (*ShadowResultsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ShadowResultsTable) Query() keel.Query[*extractionshadow.ShadowResult] {
+	return &ShadowResultsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ShadowResultsQuery.Where.
+func (t *ShadowResultsTable) Where(ps ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ShadowResultsQuery.Pick.
+func (t *ShadowResultsTable) Pick(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ShadowResultsQuery.Load.
+func (t *ShadowResultsTable) Load(ls ...keel.Loader) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ShadowResultsQuery.Omit.
+func (t *ShadowResultsTable) Omit(cols ...keel.Column) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ShadowResultsQuery.Order.
+func (t *ShadowResultsTable) Order(os ...keel.Order) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ShadowResultsQuery.Limit.
+func (t *ShadowResultsTable) Limit(n int) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ShadowResultsQuery.Group.
+func (t *ShadowResultsTable) Group(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ShadowResultsQuery.GroupingSets.
+func (t *ShadowResultsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ShadowResultsQuery.Rollup.
+func (t *ShadowResultsTable) Rollup(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ShadowResultsQuery.Cube.
+func (t *ShadowResultsTable) Cube(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ShadowResultsQuery.AllTenants.
+func (t *ShadowResultsTable) AllTenants() keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ShadowResultsQuery.Join.
+func (t *ShadowResultsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ShadowResultsQuery.LeftJoin.
+func (t *ShadowResultsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ShadowResultsQuery.LeftJoinLateral.
+func (t *ShadowResultsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ShadowResultsQuery.JoinLateral.
+func (t *ShadowResultsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ShadowResultsQuery.Lock.
+func (t *ShadowResultsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ShadowResultsQuery.DistinctOn.
+func (t *ShadowResultsTable) DistinctOn(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ShadowResultsQuery.Cache.
+func (t *ShadowResultsTable) Cache(opts ...keel.CacheOption) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ShadowResultsQuery.LoadStrategy.
+func (t *ShadowResultsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ShadowResultsQuery.With.
+func (t *ShadowResultsTable) With(ctes ...*keel.CTETable) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ShadowResultsQuery.Compute.
+func (t *ShadowResultsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ShadowResultsTable) Create(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowResult) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ShadowResultsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowResult) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ShadowResultsTable) Save(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowResult, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ShadowResultsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowResult, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ShadowResultsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowResult) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ShadowResultsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowResult, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ShadowResultsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowResult, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ShadowResultsTable) Copy(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowResult) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ShadowResultsQuery) Where(ps ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ShadowResultsQuery) Pick(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ShadowResultsQuery) Omit(cols ...keel.Column) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ShadowResultsQuery) Load(ls ...keel.Loader) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ShadowResultsQuery) Order(os ...keel.Order) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ShadowResultsQuery) Distinct() keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ShadowResultsQuery) Group(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ShadowResultsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ShadowResultsQuery) Rollup(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ShadowResultsQuery) Cube(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ShadowResultsQuery) Window(name string, w keel.Window) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ShadowResultsQuery) Having(ps ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ShadowResultsQuery) Limit(n int) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ShadowResultsQuery) Offset(n int) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ShadowResultsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ShadowResultsQuery) AllTenants() keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ShadowResultsQuery) CustomPlan() keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ShadowResultsQuery) Timeout(d time.Duration) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ShadowResultsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ShadowResultsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ShadowResultsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ShadowResultsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ShadowResultsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ShadowResultsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ShadowResultsQuery) With(ctes ...*keel.CTETable) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ShadowResultsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ShadowResultsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionshadow.ShadowResult] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ShadowResultsQuery) Clone() keel.Query[*extractionshadow.ShadowResult] {
+	return &ShadowResultsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ShadowResultsQuery) One(ctx context.Context, db *keel.DB) (*extractionshadow.ShadowResult, error) {
+	return keel.One[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ShadowResultsQuery) First(ctx context.Context, db *keel.DB) (*extractionshadow.ShadowResult, error) {
+	return keel.First[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ShadowResultsQuery) List(ctx context.Context, db *keel.DB) ([]*extractionshadow.ShadowResult, error) {
+	return keel.List[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ShadowResultsQuery) All(ctx context.Context, db *keel.DB) ([]*extractionshadow.ShadowResult, error) {
+	return keel.All[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ShadowResultsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractionshadow.ShadowResult, error) {
+	return keel.UpdateReturning[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ShadowResultsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractionshadow.ShadowResult], error) {
+	return keel.PageOf[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ShadowResultsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractionshadow.ShadowResult) error) error {
+	return keel.Each[*extractionshadow.ShadowResult](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newShadowResult() unsafe.Pointer { return unsafe.Pointer(new(extractionshadow.ShadowResult)) }
@@ -515,7 +875,7 @@ var shadowSettingsesRef = keel.Ref{Table: &shadowSettingsesTable}
 
 // ShadowSettingsesTable is the table of extractionshadow.ShadowSettings.
 type ShadowSettingsesTable struct {
-	keel.Handle[*extractionshadow.ShadowSettings]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -531,7 +891,7 @@ type ShadowSettingsesTable struct {
 
 // ShadowSettingses references the extraction_shadow_settings table.
 var ShadowSettingses = &ShadowSettingsesTable{
-	Handle:         keel.Handle[*extractionshadow.ShadowSettings]{Ref: &shadowSettingsesRef},
+	TableBase:      keel.TableBase{Ref: &shadowSettingsesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 2}}},
@@ -545,10 +905,10 @@ var ShadowSettingses = &ShadowSettingsesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &shadowSettingsesRef, Index: 10}},
 }
 
-// BuildShadowSettingses builds the handle of extraction_shadow_settings for ref. Generated relation and alias methods call it.
+// BuildShadowSettingses builds the table of extraction_shadow_settings for ref. Generated relation and alias methods call it.
 func BuildShadowSettingses(r *keel.Ref) *ShadowSettingsesTable {
 	return &ShadowSettingsesTable{
-		Handle:         keel.Handle[*extractionshadow.ShadowSettings]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -574,6 +934,365 @@ func (t *ShadowSettingsesTable) As(alias string) *ShadowSettingsesTable {
 // Get returns the extraction_shadow_settings row with the given key, or keel.ErrNotFound.
 func (t *ShadowSettingsesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractionshadow.ShadowSettings, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ShadowSettingsesQuery is a query over extractionshadow.ShadowSettings.
+type ShadowSettingsesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractionshadow.ShadowSettings] = (*ShadowSettingsesTable)(nil)
+
+var _ keel.Query[*extractionshadow.ShadowSettings] = (*ShadowSettingsesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ShadowSettingsesTable) Query() keel.Query[*extractionshadow.ShadowSettings] {
+	return &ShadowSettingsesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ShadowSettingsesQuery.Where.
+func (t *ShadowSettingsesTable) Where(ps ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ShadowSettingsesQuery.Pick.
+func (t *ShadowSettingsesTable) Pick(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ShadowSettingsesQuery.Load.
+func (t *ShadowSettingsesTable) Load(ls ...keel.Loader) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ShadowSettingsesQuery.Omit.
+func (t *ShadowSettingsesTable) Omit(cols ...keel.Column) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ShadowSettingsesQuery.Order.
+func (t *ShadowSettingsesTable) Order(os ...keel.Order) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ShadowSettingsesQuery.Limit.
+func (t *ShadowSettingsesTable) Limit(n int) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ShadowSettingsesQuery.Group.
+func (t *ShadowSettingsesTable) Group(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ShadowSettingsesQuery.GroupingSets.
+func (t *ShadowSettingsesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ShadowSettingsesQuery.Rollup.
+func (t *ShadowSettingsesTable) Rollup(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ShadowSettingsesQuery.Cube.
+func (t *ShadowSettingsesTable) Cube(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ShadowSettingsesQuery.AllTenants.
+func (t *ShadowSettingsesTable) AllTenants() keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ShadowSettingsesQuery.Join.
+func (t *ShadowSettingsesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ShadowSettingsesQuery.LeftJoin.
+func (t *ShadowSettingsesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ShadowSettingsesQuery.LeftJoinLateral.
+func (t *ShadowSettingsesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ShadowSettingsesQuery.JoinLateral.
+func (t *ShadowSettingsesTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ShadowSettingsesQuery.Lock.
+func (t *ShadowSettingsesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ShadowSettingsesQuery.DistinctOn.
+func (t *ShadowSettingsesTable) DistinctOn(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ShadowSettingsesQuery.Cache.
+func (t *ShadowSettingsesTable) Cache(opts ...keel.CacheOption) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ShadowSettingsesQuery.LoadStrategy.
+func (t *ShadowSettingsesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ShadowSettingsesQuery.With.
+func (t *ShadowSettingsesTable) With(ctes ...*keel.CTETable) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ShadowSettingsesQuery.Compute.
+func (t *ShadowSettingsesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ShadowSettingsesTable) Create(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowSettings) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ShadowSettingsesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowSettings) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ShadowSettingsesTable) Save(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowSettings, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ShadowSettingsesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowSettings, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ShadowSettingsesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractionshadow.ShadowSettings) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ShadowSettingsesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowSettings, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ShadowSettingsesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowSettings, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ShadowSettingsesTable) Copy(ctx context.Context, db *keel.DB, rows []*extractionshadow.ShadowSettings) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ShadowSettingsesQuery) Where(ps ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ShadowSettingsesQuery) Pick(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ShadowSettingsesQuery) Omit(cols ...keel.Column) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ShadowSettingsesQuery) Load(ls ...keel.Loader) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ShadowSettingsesQuery) Order(os ...keel.Order) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ShadowSettingsesQuery) Distinct() keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ShadowSettingsesQuery) Group(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ShadowSettingsesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ShadowSettingsesQuery) Rollup(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ShadowSettingsesQuery) Cube(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ShadowSettingsesQuery) Window(name string, w keel.Window) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ShadowSettingsesQuery) Having(ps ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ShadowSettingsesQuery) Limit(n int) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ShadowSettingsesQuery) Offset(n int) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ShadowSettingsesQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ShadowSettingsesQuery) AllTenants() keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ShadowSettingsesQuery) CustomPlan() keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ShadowSettingsesQuery) Timeout(d time.Duration) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ShadowSettingsesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ShadowSettingsesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ShadowSettingsesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ShadowSettingsesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ShadowSettingsesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ShadowSettingsesQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ShadowSettingsesQuery) With(ctes ...*keel.CTETable) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ShadowSettingsesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ShadowSettingsesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractionshadow.ShadowSettings] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ShadowSettingsesQuery) Clone() keel.Query[*extractionshadow.ShadowSettings] {
+	return &ShadowSettingsesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ShadowSettingsesQuery) One(ctx context.Context, db *keel.DB) (*extractionshadow.ShadowSettings, error) {
+	return keel.One[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ShadowSettingsesQuery) First(ctx context.Context, db *keel.DB) (*extractionshadow.ShadowSettings, error) {
+	return keel.First[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ShadowSettingsesQuery) List(ctx context.Context, db *keel.DB) ([]*extractionshadow.ShadowSettings, error) {
+	return keel.List[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ShadowSettingsesQuery) All(ctx context.Context, db *keel.DB) ([]*extractionshadow.ShadowSettings, error) {
+	return keel.All[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ShadowSettingsesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractionshadow.ShadowSettings, error) {
+	return keel.UpdateReturning[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ShadowSettingsesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractionshadow.ShadowSettings], error) {
+	return keel.PageOf[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ShadowSettingsesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractionshadow.ShadowSettings) error) error {
+	return keel.Each[*extractionshadow.ShadowSettings](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newShadowSettings() unsafe.Pointer { return unsafe.Pointer(new(extractionshadow.ShadowSettings)) }

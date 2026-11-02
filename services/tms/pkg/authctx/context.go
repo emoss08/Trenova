@@ -21,6 +21,7 @@ const (
 	ActorKey                  = Key("principalId")
 	APIKeyID                  = Key("apiKeyId")
 	SessionID                 = Key("sessionId")
+	SessionSecretHashKey      = Key("sessionSecretHash")
 	ActiveRoleIDsKey          = Key("activeRoleIds")
 	RequiresRoleActivationKey = Key("requiresRoleActivation")
 	AuthProviderKey           = Key("authProvider")
@@ -125,6 +126,7 @@ func bindDBScope(c *gin.Context, userID, buID, orgID pulid.ID) {
 
 type SessionAuthContextParams struct {
 	SessionID              pulid.ID
+	SessionSecretHash      string
 	UserID                 pulid.ID
 	BusinessUnitID         pulid.ID
 	OrganizationID         pulid.ID
@@ -148,6 +150,7 @@ type SessionAuthContextParams struct {
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	SetAuthContext(c, p.UserID, p.BusinessUnitID, p.OrganizationID)
 	c.Set(string(SessionID), p.SessionID)
+	c.Set(string(SessionSecretHashKey), p.SessionSecretHash)
 	c.Set(string(ActiveRoleIDsKey), p.ActiveRoleIDs)
 	c.Set(string(RequiresRoleActivationKey), p.RequiresRoleActivation)
 	c.Set(string(AuthProviderKey), p.AuthProvider)
@@ -170,6 +173,10 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 		p.ActiveRoleIDs,
 		p.RequiresRoleActivation,
 	))
+}
+
+func GetSessionSecretHash(c *gin.Context) string {
+	return helpers.ContextValueOr[string](c, string(SessionSecretHashKey), "")
 }
 
 func SetAPIKeyContext(
@@ -384,6 +391,17 @@ type sessionRoleActivationContextKey struct{}
 type SessionRoleActivation struct {
 	ActiveRoleIDs      []pulid.ID
 	RequiresActivation bool
+}
+
+type supersededSessionSecretContextKey struct{}
+
+func WithSupersededSessionSecret(ctx context.Context) context.Context {
+	return context.WithValue(ctx, supersededSessionSecretContextKey{}, true)
+}
+
+func UsesSupersededSessionSecret(ctx context.Context) bool {
+	superseded, _ := ctx.Value(supersededSessionSecretContextKey{}).(bool)
+	return superseded
 }
 
 func WithSessionRoleActivation(

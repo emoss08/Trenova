@@ -4,6 +4,7 @@ package inboundmessagedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var inboundAttachmentsRef = keel.Ref{Table: &inboundAttachmentsTable}
 
 // InboundAttachmentsTable is the table of inboundmessage.InboundAttachment.
 type InboundAttachmentsTable struct {
-	keel.Handle[*inboundmessage.InboundAttachment]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -96,7 +97,7 @@ type InboundAttachmentsTable struct {
 
 // InboundAttachments references the inbound_message_attachments table.
 var InboundAttachments = &InboundAttachmentsTable{
-	Handle:               keel.Handle[*inboundmessage.InboundAttachment]{Ref: &inboundAttachmentsRef},
+	TableBase:            keel.TableBase{Ref: &inboundAttachmentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 2}}},
@@ -121,10 +122,10 @@ var InboundAttachments = &InboundAttachmentsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 21}},
 }
 
-// BuildInboundAttachments builds the handle of inbound_message_attachments for ref. Generated relation and alias methods call it.
+// BuildInboundAttachments builds the table of inbound_message_attachments for ref. Generated relation and alias methods call it.
 func BuildInboundAttachments(r *keel.Ref) *InboundAttachmentsTable {
 	return &InboundAttachmentsTable{
-		Handle:               keel.Handle[*inboundmessage.InboundAttachment]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -161,6 +162,365 @@ func (t *InboundAttachmentsTable) As(alias string) *InboundAttachmentsTable {
 // Get returns the inbound_message_attachments row with the given key, or keel.ErrNotFound.
 func (t *InboundAttachmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*inboundmessage.InboundAttachment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InboundAttachmentsQuery is a query over inboundmessage.InboundAttachment.
+type InboundAttachmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*inboundmessage.InboundAttachment] = (*InboundAttachmentsTable)(nil)
+
+var _ keel.Query[*inboundmessage.InboundAttachment] = (*InboundAttachmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InboundAttachmentsTable) Query() keel.Query[*inboundmessage.InboundAttachment] {
+	return &InboundAttachmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InboundAttachmentsQuery.Where.
+func (t *InboundAttachmentsTable) Where(ps ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InboundAttachmentsQuery.Pick.
+func (t *InboundAttachmentsTable) Pick(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InboundAttachmentsQuery.Load.
+func (t *InboundAttachmentsTable) Load(ls ...keel.Loader) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InboundAttachmentsQuery.Omit.
+func (t *InboundAttachmentsTable) Omit(cols ...keel.Column) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InboundAttachmentsQuery.Order.
+func (t *InboundAttachmentsTable) Order(os ...keel.Order) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InboundAttachmentsQuery.Limit.
+func (t *InboundAttachmentsTable) Limit(n int) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InboundAttachmentsQuery.Group.
+func (t *InboundAttachmentsTable) Group(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InboundAttachmentsQuery.GroupingSets.
+func (t *InboundAttachmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InboundAttachmentsQuery.Rollup.
+func (t *InboundAttachmentsTable) Rollup(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InboundAttachmentsQuery.Cube.
+func (t *InboundAttachmentsTable) Cube(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InboundAttachmentsQuery.AllTenants.
+func (t *InboundAttachmentsTable) AllTenants() keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InboundAttachmentsQuery.Join.
+func (t *InboundAttachmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InboundAttachmentsQuery.LeftJoin.
+func (t *InboundAttachmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InboundAttachmentsQuery.LeftJoinLateral.
+func (t *InboundAttachmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InboundAttachmentsQuery.JoinLateral.
+func (t *InboundAttachmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InboundAttachmentsQuery.Lock.
+func (t *InboundAttachmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InboundAttachmentsQuery.DistinctOn.
+func (t *InboundAttachmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InboundAttachmentsQuery.Cache.
+func (t *InboundAttachmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InboundAttachmentsQuery.LoadStrategy.
+func (t *InboundAttachmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InboundAttachmentsQuery.With.
+func (t *InboundAttachmentsTable) With(ctes ...*keel.CTETable) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InboundAttachmentsQuery.Compute.
+func (t *InboundAttachmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InboundAttachmentsTable) Create(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InboundAttachmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InboundAttachmentsTable) Save(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InboundAttachmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InboundAttachmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InboundAttachmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InboundAttachmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InboundAttachmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InboundAttachmentsQuery) Where(ps ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InboundAttachmentsQuery) Pick(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InboundAttachmentsQuery) Omit(cols ...keel.Column) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InboundAttachmentsQuery) Load(ls ...keel.Loader) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InboundAttachmentsQuery) Order(os ...keel.Order) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InboundAttachmentsQuery) Distinct() keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InboundAttachmentsQuery) Group(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InboundAttachmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InboundAttachmentsQuery) Rollup(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InboundAttachmentsQuery) Cube(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InboundAttachmentsQuery) Window(name string, w keel.Window) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InboundAttachmentsQuery) Having(ps ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InboundAttachmentsQuery) Limit(n int) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InboundAttachmentsQuery) Offset(n int) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InboundAttachmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InboundAttachmentsQuery) AllTenants() keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InboundAttachmentsQuery) CustomPlan() keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InboundAttachmentsQuery) Timeout(d time.Duration) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InboundAttachmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InboundAttachmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InboundAttachmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InboundAttachmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InboundAttachmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InboundAttachmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InboundAttachmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InboundAttachmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InboundAttachmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*inboundmessage.InboundAttachment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InboundAttachmentsQuery) Clone() keel.Query[*inboundmessage.InboundAttachment] {
+	return &InboundAttachmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InboundAttachmentsQuery) One(ctx context.Context, db *keel.DB) (*inboundmessage.InboundAttachment, error) {
+	return keel.One[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InboundAttachmentsQuery) First(ctx context.Context, db *keel.DB) (*inboundmessage.InboundAttachment, error) {
+	return keel.First[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InboundAttachmentsQuery) List(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundAttachment, error) {
+	return keel.List[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InboundAttachmentsQuery) All(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundAttachment, error) {
+	return keel.All[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InboundAttachmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*inboundmessage.InboundAttachment, error) {
+	return keel.UpdateReturning[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InboundAttachmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*inboundmessage.InboundAttachment], error) {
+	return keel.PageOf[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InboundAttachmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*inboundmessage.InboundAttachment) error) error {
+	return keel.Each[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInboundAttachment() unsafe.Pointer {
@@ -412,7 +772,7 @@ var inboundMessagesRef = keel.Ref{Table: &inboundMessagesTable}
 
 // InboundMessagesTable is the table of inboundmessage.InboundMessage.
 type InboundMessagesTable struct {
-	keel.Handle[*inboundmessage.InboundMessage]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -473,7 +833,7 @@ type InboundMessagesTable struct {
 
 // InboundMessages references the inbound_messages table.
 var InboundMessages = &InboundMessagesTable{
-	Handle:                  keel.Handle[*inboundmessage.InboundMessage]{Ref: &inboundMessagesRef},
+	TableBase:               keel.TableBase{Ref: &inboundMessagesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 2}}},
@@ -532,10 +892,10 @@ var InboundMessages = &InboundMessagesTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 55}},
 }
 
-// BuildInboundMessages builds the handle of inbound_messages for ref. Generated relation and alias methods call it.
+// BuildInboundMessages builds the table of inbound_messages for ref. Generated relation and alias methods call it.
 func BuildInboundMessages(r *keel.Ref) *InboundMessagesTable {
 	return &InboundMessagesTable{
-		Handle:                  keel.Handle[*inboundmessage.InboundMessage]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -614,6 +974,365 @@ func (t *InboundMessagesTable) Attachments() *InboundAttachmentsTable {
 // Get returns the inbound_messages row with the given key, or keel.ErrNotFound.
 func (t *InboundMessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*inboundmessage.InboundMessage, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InboundMessagesQuery is a query over inboundmessage.InboundMessage.
+type InboundMessagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*inboundmessage.InboundMessage] = (*InboundMessagesTable)(nil)
+
+var _ keel.Query[*inboundmessage.InboundMessage] = (*InboundMessagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InboundMessagesTable) Query() keel.Query[*inboundmessage.InboundMessage] {
+	return &InboundMessagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InboundMessagesQuery.Where.
+func (t *InboundMessagesTable) Where(ps ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InboundMessagesQuery.Pick.
+func (t *InboundMessagesTable) Pick(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InboundMessagesQuery.Load.
+func (t *InboundMessagesTable) Load(ls ...keel.Loader) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InboundMessagesQuery.Omit.
+func (t *InboundMessagesTable) Omit(cols ...keel.Column) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InboundMessagesQuery.Order.
+func (t *InboundMessagesTable) Order(os ...keel.Order) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InboundMessagesQuery.Limit.
+func (t *InboundMessagesTable) Limit(n int) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InboundMessagesQuery.Group.
+func (t *InboundMessagesTable) Group(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InboundMessagesQuery.GroupingSets.
+func (t *InboundMessagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InboundMessagesQuery.Rollup.
+func (t *InboundMessagesTable) Rollup(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InboundMessagesQuery.Cube.
+func (t *InboundMessagesTable) Cube(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InboundMessagesQuery.AllTenants.
+func (t *InboundMessagesTable) AllTenants() keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InboundMessagesQuery.Join.
+func (t *InboundMessagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InboundMessagesQuery.LeftJoin.
+func (t *InboundMessagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InboundMessagesQuery.LeftJoinLateral.
+func (t *InboundMessagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InboundMessagesQuery.JoinLateral.
+func (t *InboundMessagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InboundMessagesQuery.Lock.
+func (t *InboundMessagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InboundMessagesQuery.DistinctOn.
+func (t *InboundMessagesTable) DistinctOn(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InboundMessagesQuery.Cache.
+func (t *InboundMessagesTable) Cache(opts ...keel.CacheOption) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InboundMessagesQuery.LoadStrategy.
+func (t *InboundMessagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InboundMessagesQuery.With.
+func (t *InboundMessagesTable) With(ctes ...*keel.CTETable) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InboundMessagesQuery.Compute.
+func (t *InboundMessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InboundMessagesTable) Create(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InboundMessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InboundMessagesTable) Save(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InboundMessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InboundMessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InboundMessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InboundMessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InboundMessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InboundMessagesQuery) Where(ps ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InboundMessagesQuery) Pick(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InboundMessagesQuery) Omit(cols ...keel.Column) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InboundMessagesQuery) Load(ls ...keel.Loader) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InboundMessagesQuery) Order(os ...keel.Order) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InboundMessagesQuery) Distinct() keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InboundMessagesQuery) Group(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InboundMessagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InboundMessagesQuery) Rollup(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InboundMessagesQuery) Cube(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InboundMessagesQuery) Window(name string, w keel.Window) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InboundMessagesQuery) Having(ps ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InboundMessagesQuery) Limit(n int) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InboundMessagesQuery) Offset(n int) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InboundMessagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InboundMessagesQuery) AllTenants() keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InboundMessagesQuery) CustomPlan() keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InboundMessagesQuery) Timeout(d time.Duration) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InboundMessagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InboundMessagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InboundMessagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InboundMessagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InboundMessagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InboundMessagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InboundMessagesQuery) With(ctes ...*keel.CTETable) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InboundMessagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InboundMessagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*inboundmessage.InboundMessage] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InboundMessagesQuery) Clone() keel.Query[*inboundmessage.InboundMessage] {
+	return &InboundMessagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InboundMessagesQuery) One(ctx context.Context, db *keel.DB) (*inboundmessage.InboundMessage, error) {
+	return keel.One[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InboundMessagesQuery) First(ctx context.Context, db *keel.DB) (*inboundmessage.InboundMessage, error) {
+	return keel.First[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InboundMessagesQuery) List(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundMessage, error) {
+	return keel.List[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InboundMessagesQuery) All(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundMessage, error) {
+	return keel.All[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InboundMessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*inboundmessage.InboundMessage, error) {
+	return keel.UpdateReturning[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InboundMessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*inboundmessage.InboundMessage], error) {
+	return keel.PageOf[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InboundMessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*inboundmessage.InboundMessage) error) error {
+	return keel.Each[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInboundMessage() unsafe.Pointer { return unsafe.Pointer(new(inboundmessage.InboundMessage)) }
@@ -1050,7 +1769,7 @@ var mailboxesRef = keel.Ref{Table: &mailboxesTable}
 
 // MailboxesTable is the table of inboundmessage.Mailbox.
 type MailboxesTable struct {
-	keel.Handle[*inboundmessage.Mailbox]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1076,7 +1795,7 @@ type MailboxesTable struct {
 
 // Mailboxes references the inbound_mailboxes table.
 var Mailboxes = &MailboxesTable{
-	Handle:         keel.Handle[*inboundmessage.Mailbox]{Ref: &mailboxesRef},
+	TableBase:      keel.TableBase{Ref: &mailboxesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 2}}},
@@ -1100,10 +1819,10 @@ var Mailboxes = &MailboxesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &mailboxesRef, Index: 20}},
 }
 
-// BuildMailboxes builds the handle of inbound_mailboxes for ref. Generated relation and alias methods call it.
+// BuildMailboxes builds the table of inbound_mailboxes for ref. Generated relation and alias methods call it.
 func BuildMailboxes(r *keel.Ref) *MailboxesTable {
 	return &MailboxesTable{
-		Handle:         keel.Handle[*inboundmessage.Mailbox]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1139,6 +1858,365 @@ func (t *MailboxesTable) As(alias string) *MailboxesTable {
 // Get returns the inbound_mailboxes row with the given key, or keel.ErrNotFound.
 func (t *MailboxesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*inboundmessage.Mailbox, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MailboxesQuery is a query over inboundmessage.Mailbox.
+type MailboxesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*inboundmessage.Mailbox] = (*MailboxesTable)(nil)
+
+var _ keel.Query[*inboundmessage.Mailbox] = (*MailboxesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MailboxesTable) Query() keel.Query[*inboundmessage.Mailbox] {
+	return &MailboxesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MailboxesQuery.Where.
+func (t *MailboxesTable) Where(ps ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MailboxesQuery.Pick.
+func (t *MailboxesTable) Pick(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MailboxesQuery.Load.
+func (t *MailboxesTable) Load(ls ...keel.Loader) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MailboxesQuery.Omit.
+func (t *MailboxesTable) Omit(cols ...keel.Column) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MailboxesQuery.Order.
+func (t *MailboxesTable) Order(os ...keel.Order) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MailboxesQuery.Limit.
+func (t *MailboxesTable) Limit(n int) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MailboxesQuery.Group.
+func (t *MailboxesTable) Group(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MailboxesQuery.GroupingSets.
+func (t *MailboxesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MailboxesQuery.Rollup.
+func (t *MailboxesTable) Rollup(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MailboxesQuery.Cube.
+func (t *MailboxesTable) Cube(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MailboxesQuery.AllTenants.
+func (t *MailboxesTable) AllTenants() keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MailboxesQuery.Join.
+func (t *MailboxesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MailboxesQuery.LeftJoin.
+func (t *MailboxesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MailboxesQuery.LeftJoinLateral.
+func (t *MailboxesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MailboxesQuery.JoinLateral.
+func (t *MailboxesTable) JoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MailboxesQuery.Lock.
+func (t *MailboxesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MailboxesQuery.DistinctOn.
+func (t *MailboxesTable) DistinctOn(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MailboxesQuery.Cache.
+func (t *MailboxesTable) Cache(opts ...keel.CacheOption) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MailboxesQuery.LoadStrategy.
+func (t *MailboxesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MailboxesQuery.With.
+func (t *MailboxesTable) With(ctes ...*keel.CTETable) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MailboxesQuery.Compute.
+func (t *MailboxesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MailboxesTable) Create(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MailboxesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MailboxesTable) Save(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MailboxesTable) SaveExcept(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MailboxesTable) DeleteRow(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MailboxesTable) Upsert(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MailboxesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MailboxesTable) Copy(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MailboxesQuery) Where(ps ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MailboxesQuery) Pick(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MailboxesQuery) Omit(cols ...keel.Column) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MailboxesQuery) Load(ls ...keel.Loader) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MailboxesQuery) Order(os ...keel.Order) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MailboxesQuery) Distinct() keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MailboxesQuery) Group(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MailboxesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MailboxesQuery) Rollup(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MailboxesQuery) Cube(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MailboxesQuery) Window(name string, w keel.Window) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MailboxesQuery) Having(ps ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MailboxesQuery) Limit(n int) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MailboxesQuery) Offset(n int) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MailboxesQuery) DistinctOn(es ...keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MailboxesQuery) AllTenants() keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MailboxesQuery) CustomPlan() keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MailboxesQuery) Timeout(d time.Duration) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MailboxesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MailboxesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MailboxesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MailboxesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MailboxesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MailboxesQuery) Cache(opts ...keel.CacheOption) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MailboxesQuery) With(ctes ...*keel.CTETable) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MailboxesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MailboxesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*inboundmessage.Mailbox] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MailboxesQuery) Clone() keel.Query[*inboundmessage.Mailbox] {
+	return &MailboxesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MailboxesQuery) One(ctx context.Context, db *keel.DB) (*inboundmessage.Mailbox, error) {
+	return keel.One[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MailboxesQuery) First(ctx context.Context, db *keel.DB) (*inboundmessage.Mailbox, error) {
+	return keel.First[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MailboxesQuery) List(ctx context.Context, db *keel.DB) ([]*inboundmessage.Mailbox, error) {
+	return keel.List[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MailboxesQuery) All(ctx context.Context, db *keel.DB) ([]*inboundmessage.Mailbox, error) {
+	return keel.All[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MailboxesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*inboundmessage.Mailbox, error) {
+	return keel.UpdateReturning[*inboundmessage.Mailbox](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MailboxesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*inboundmessage.Mailbox], error) {
+	return keel.PageOf[*inboundmessage.Mailbox](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MailboxesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*inboundmessage.Mailbox) error) error {
+	return keel.Each[*inboundmessage.Mailbox](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMailbox() unsafe.Pointer { return unsafe.Pointer(new(inboundmessage.Mailbox)) }

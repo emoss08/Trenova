@@ -4,6 +4,7 @@ package jurisdictionruledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -61,7 +62,7 @@ var escortThresholdsRef = keel.Ref{Table: &escortThresholdsTable}
 
 // EscortThresholdsTable is the table of jurisdictionrule.EscortThreshold.
 type EscortThresholdsTable struct {
-	keel.Handle[*jurisdictionrule.EscortThreshold]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	JurisdictionRuleID keelkinds.PulidIDCol
 	Role               EscortRoleCol
@@ -75,7 +76,7 @@ type EscortThresholdsTable struct {
 
 // EscortThresholds references the jurisdiction_escort_thresholds table.
 var EscortThresholds = &EscortThresholdsTable{
-	Handle:             keel.Handle[*jurisdictionrule.EscortThreshold]{Ref: &escortThresholdsRef},
+	TableBase:          keel.TableBase{Ref: &escortThresholdsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 0}}},
 	JurisdictionRuleID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 1}}},
 	Role:               EscortRoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &escortThresholdsRef, Index: 2}}},
@@ -87,10 +88,10 @@ var EscortThresholds = &EscortThresholdsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &escortThresholdsRef, Index: 8}},
 }
 
-// BuildEscortThresholds builds the handle of jurisdiction_escort_thresholds for ref. Generated relation and alias methods call it.
+// BuildEscortThresholds builds the table of jurisdiction_escort_thresholds for ref. Generated relation and alias methods call it.
 func BuildEscortThresholds(r *keel.Ref) *EscortThresholdsTable {
 	return &EscortThresholdsTable{
-		Handle:             keel.Handle[*jurisdictionrule.EscortThreshold]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		JurisdictionRuleID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Role:               EscortRoleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -119,6 +120,365 @@ func (t *EscortThresholdsTable) JurisdictionRule() *JurisdictionRulesTable {
 // Get returns the jurisdiction_escort_thresholds row with the given key, or keel.ErrNotFound.
 func (t *EscortThresholdsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*jurisdictionrule.EscortThreshold, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EscortThresholdsQuery is a query over jurisdictionrule.EscortThreshold.
+type EscortThresholdsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*jurisdictionrule.EscortThreshold] = (*EscortThresholdsTable)(nil)
+
+var _ keel.Query[*jurisdictionrule.EscortThreshold] = (*EscortThresholdsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EscortThresholdsTable) Query() keel.Query[*jurisdictionrule.EscortThreshold] {
+	return &EscortThresholdsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EscortThresholdsQuery.Where.
+func (t *EscortThresholdsTable) Where(ps ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EscortThresholdsQuery.Pick.
+func (t *EscortThresholdsTable) Pick(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EscortThresholdsQuery.Load.
+func (t *EscortThresholdsTable) Load(ls ...keel.Loader) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EscortThresholdsQuery.Omit.
+func (t *EscortThresholdsTable) Omit(cols ...keel.Column) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EscortThresholdsQuery.Order.
+func (t *EscortThresholdsTable) Order(os ...keel.Order) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EscortThresholdsQuery.Limit.
+func (t *EscortThresholdsTable) Limit(n int) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EscortThresholdsQuery.Group.
+func (t *EscortThresholdsTable) Group(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EscortThresholdsQuery.GroupingSets.
+func (t *EscortThresholdsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EscortThresholdsQuery.Rollup.
+func (t *EscortThresholdsTable) Rollup(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EscortThresholdsQuery.Cube.
+func (t *EscortThresholdsTable) Cube(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EscortThresholdsQuery.AllTenants.
+func (t *EscortThresholdsTable) AllTenants() keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EscortThresholdsQuery.Join.
+func (t *EscortThresholdsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EscortThresholdsQuery.LeftJoin.
+func (t *EscortThresholdsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EscortThresholdsQuery.LeftJoinLateral.
+func (t *EscortThresholdsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EscortThresholdsQuery.JoinLateral.
+func (t *EscortThresholdsTable) JoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EscortThresholdsQuery.Lock.
+func (t *EscortThresholdsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EscortThresholdsQuery.DistinctOn.
+func (t *EscortThresholdsTable) DistinctOn(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EscortThresholdsQuery.Cache.
+func (t *EscortThresholdsTable) Cache(opts ...keel.CacheOption) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EscortThresholdsQuery.LoadStrategy.
+func (t *EscortThresholdsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EscortThresholdsQuery.With.
+func (t *EscortThresholdsTable) With(ctes ...*keel.CTETable) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EscortThresholdsQuery.Compute.
+func (t *EscortThresholdsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EscortThresholdsTable) Create(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EscortThresholdsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EscortThresholdsTable) Save(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EscortThresholdsTable) SaveExcept(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EscortThresholdsTable) DeleteRow(ctx context.Context, db *keel.DB, row *jurisdictionrule.EscortThreshold) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EscortThresholdsTable) Upsert(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EscortThresholdsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EscortThresholdsTable) Copy(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.EscortThreshold) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EscortThresholdsQuery) Where(ps ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EscortThresholdsQuery) Pick(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EscortThresholdsQuery) Omit(cols ...keel.Column) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EscortThresholdsQuery) Load(ls ...keel.Loader) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EscortThresholdsQuery) Order(os ...keel.Order) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EscortThresholdsQuery) Distinct() keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EscortThresholdsQuery) Group(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EscortThresholdsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EscortThresholdsQuery) Rollup(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EscortThresholdsQuery) Cube(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EscortThresholdsQuery) Window(name string, w keel.Window) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EscortThresholdsQuery) Having(ps ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EscortThresholdsQuery) Limit(n int) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EscortThresholdsQuery) Offset(n int) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EscortThresholdsQuery) DistinctOn(es ...keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EscortThresholdsQuery) AllTenants() keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EscortThresholdsQuery) CustomPlan() keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EscortThresholdsQuery) Timeout(d time.Duration) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EscortThresholdsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EscortThresholdsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EscortThresholdsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EscortThresholdsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EscortThresholdsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EscortThresholdsQuery) Cache(opts ...keel.CacheOption) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EscortThresholdsQuery) With(ctes ...*keel.CTETable) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EscortThresholdsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EscortThresholdsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*jurisdictionrule.EscortThreshold] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EscortThresholdsQuery) Clone() keel.Query[*jurisdictionrule.EscortThreshold] {
+	return &EscortThresholdsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EscortThresholdsQuery) One(ctx context.Context, db *keel.DB) (*jurisdictionrule.EscortThreshold, error) {
+	return keel.One[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EscortThresholdsQuery) First(ctx context.Context, db *keel.DB) (*jurisdictionrule.EscortThreshold, error) {
+	return keel.First[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EscortThresholdsQuery) List(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.EscortThreshold, error) {
+	return keel.List[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EscortThresholdsQuery) All(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.EscortThreshold, error) {
+	return keel.All[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EscortThresholdsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*jurisdictionrule.EscortThreshold, error) {
+	return keel.UpdateReturning[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EscortThresholdsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*jurisdictionrule.EscortThreshold], error) {
+	return keel.PageOf[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EscortThresholdsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*jurisdictionrule.EscortThreshold) error) error {
+	return keel.Each[*jurisdictionrule.EscortThreshold](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEscortThreshold() unsafe.Pointer {
@@ -256,7 +616,7 @@ var jurisdictionRulesRef = keel.Ref{Table: &jurisdictionRulesTable}
 
 // JurisdictionRulesTable is the table of jurisdictionrule.JurisdictionRule.
 type JurisdictionRulesTable struct {
-	keel.Handle[*jurisdictionrule.JurisdictionRule]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	StateID               keelkinds.PulidIDCol
 	Status                StatusCol
@@ -287,7 +647,7 @@ type JurisdictionRulesTable struct {
 
 // JurisdictionRules references the jurisdiction_rules table.
 var JurisdictionRules = &JurisdictionRulesTable{
-	Handle:                keel.Handle[*jurisdictionrule.JurisdictionRule]{Ref: &jurisdictionRulesRef},
+	TableBase:             keel.TableBase{Ref: &jurisdictionRulesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 0}}},
 	StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 1}}},
 	Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 2}}},
@@ -316,10 +676,10 @@ var JurisdictionRules = &JurisdictionRulesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &jurisdictionRulesRef, Index: 25}},
 }
 
-// BuildJurisdictionRules builds the handle of jurisdiction_rules for ref. Generated relation and alias methods call it.
+// BuildJurisdictionRules builds the table of jurisdiction_rules for ref. Generated relation and alias methods call it.
 func BuildJurisdictionRules(r *keel.Ref) *JurisdictionRulesTable {
 	return &JurisdictionRulesTable{
-		Handle:                keel.Handle[*jurisdictionrule.JurisdictionRule]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		StateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Status:                StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -370,6 +730,365 @@ func (t *JurisdictionRulesTable) EscortThresholds() *EscortThresholdsTable {
 // Get returns the jurisdiction_rules row with the given key, or keel.ErrNotFound.
 func (t *JurisdictionRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*jurisdictionrule.JurisdictionRule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// JurisdictionRulesQuery is a query over jurisdictionrule.JurisdictionRule.
+type JurisdictionRulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*jurisdictionrule.JurisdictionRule] = (*JurisdictionRulesTable)(nil)
+
+var _ keel.Query[*jurisdictionrule.JurisdictionRule] = (*JurisdictionRulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *JurisdictionRulesTable) Query() keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return &JurisdictionRulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see JurisdictionRulesQuery.Where.
+func (t *JurisdictionRulesTable) Where(ps ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see JurisdictionRulesQuery.Pick.
+func (t *JurisdictionRulesTable) Pick(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see JurisdictionRulesQuery.Load.
+func (t *JurisdictionRulesTable) Load(ls ...keel.Loader) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see JurisdictionRulesQuery.Omit.
+func (t *JurisdictionRulesTable) Omit(cols ...keel.Column) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see JurisdictionRulesQuery.Order.
+func (t *JurisdictionRulesTable) Order(os ...keel.Order) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see JurisdictionRulesQuery.Limit.
+func (t *JurisdictionRulesTable) Limit(n int) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see JurisdictionRulesQuery.Group.
+func (t *JurisdictionRulesTable) Group(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see JurisdictionRulesQuery.GroupingSets.
+func (t *JurisdictionRulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see JurisdictionRulesQuery.Rollup.
+func (t *JurisdictionRulesTable) Rollup(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see JurisdictionRulesQuery.Cube.
+func (t *JurisdictionRulesTable) Cube(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see JurisdictionRulesQuery.AllTenants.
+func (t *JurisdictionRulesTable) AllTenants() keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see JurisdictionRulesQuery.Join.
+func (t *JurisdictionRulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see JurisdictionRulesQuery.LeftJoin.
+func (t *JurisdictionRulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see JurisdictionRulesQuery.LeftJoinLateral.
+func (t *JurisdictionRulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see JurisdictionRulesQuery.JoinLateral.
+func (t *JurisdictionRulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see JurisdictionRulesQuery.Lock.
+func (t *JurisdictionRulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see JurisdictionRulesQuery.DistinctOn.
+func (t *JurisdictionRulesTable) DistinctOn(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see JurisdictionRulesQuery.Cache.
+func (t *JurisdictionRulesTable) Cache(opts ...keel.CacheOption) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see JurisdictionRulesQuery.LoadStrategy.
+func (t *JurisdictionRulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see JurisdictionRulesQuery.With.
+func (t *JurisdictionRulesTable) With(ctes ...*keel.CTETable) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see JurisdictionRulesQuery.Compute.
+func (t *JurisdictionRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *JurisdictionRulesTable) Create(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *JurisdictionRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *JurisdictionRulesTable) Save(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *JurisdictionRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *JurisdictionRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *jurisdictionrule.JurisdictionRule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *JurisdictionRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *JurisdictionRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *JurisdictionRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.JurisdictionRule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *JurisdictionRulesQuery) Where(ps ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *JurisdictionRulesQuery) Pick(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *JurisdictionRulesQuery) Omit(cols ...keel.Column) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *JurisdictionRulesQuery) Load(ls ...keel.Loader) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *JurisdictionRulesQuery) Order(os ...keel.Order) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *JurisdictionRulesQuery) Distinct() keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *JurisdictionRulesQuery) Group(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *JurisdictionRulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *JurisdictionRulesQuery) Rollup(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *JurisdictionRulesQuery) Cube(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *JurisdictionRulesQuery) Window(name string, w keel.Window) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *JurisdictionRulesQuery) Having(ps ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *JurisdictionRulesQuery) Limit(n int) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *JurisdictionRulesQuery) Offset(n int) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *JurisdictionRulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *JurisdictionRulesQuery) AllTenants() keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *JurisdictionRulesQuery) CustomPlan() keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *JurisdictionRulesQuery) Timeout(d time.Duration) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *JurisdictionRulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *JurisdictionRulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *JurisdictionRulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *JurisdictionRulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *JurisdictionRulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *JurisdictionRulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *JurisdictionRulesQuery) With(ctes ...*keel.CTETable) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *JurisdictionRulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *JurisdictionRulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*jurisdictionrule.JurisdictionRule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *JurisdictionRulesQuery) Clone() keel.Query[*jurisdictionrule.JurisdictionRule] {
+	return &JurisdictionRulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *JurisdictionRulesQuery) One(ctx context.Context, db *keel.DB) (*jurisdictionrule.JurisdictionRule, error) {
+	return keel.One[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *JurisdictionRulesQuery) First(ctx context.Context, db *keel.DB) (*jurisdictionrule.JurisdictionRule, error) {
+	return keel.First[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *JurisdictionRulesQuery) List(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.JurisdictionRule, error) {
+	return keel.List[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *JurisdictionRulesQuery) All(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.JurisdictionRule, error) {
+	return keel.All[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *JurisdictionRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*jurisdictionrule.JurisdictionRule, error) {
+	return keel.UpdateReturning[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *JurisdictionRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*jurisdictionrule.JurisdictionRule], error) {
+	return keel.PageOf[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *JurisdictionRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*jurisdictionrule.JurisdictionRule) error) error {
+	return keel.Each[*jurisdictionrule.JurisdictionRule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newJurisdictionRule() unsafe.Pointer {
@@ -590,7 +1309,7 @@ var overridesRef = keel.Ref{Table: &overridesTable}
 
 // OverridesTable is the table of jurisdictionrule.Override.
 type OverridesTable struct {
-	keel.Handle[*jurisdictionrule.Override]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -610,7 +1329,7 @@ type OverridesTable struct {
 
 // Overrides references the jurisdiction_rule_overrides table.
 var Overrides = &OverridesTable{
-	Handle:             keel.Handle[*jurisdictionrule.Override]{Ref: &overridesRef},
+	TableBase:          keel.TableBase{Ref: &overridesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &overridesRef, Index: 2}}},
@@ -628,10 +1347,10 @@ var Overrides = &OverridesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &overridesRef, Index: 14}},
 }
 
-// BuildOverrides builds the handle of jurisdiction_rule_overrides for ref. Generated relation and alias methods call it.
+// BuildOverrides builds the table of jurisdiction_rule_overrides for ref. Generated relation and alias methods call it.
 func BuildOverrides(r *keel.Ref) *OverridesTable {
 	return &OverridesTable{
-		Handle:             keel.Handle[*jurisdictionrule.Override]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -666,6 +1385,365 @@ func (t *OverridesTable) State() *usstatedb.UsStatesTable {
 // Get returns the jurisdiction_rule_overrides row with the given key, or keel.ErrNotFound.
 func (t *OverridesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*jurisdictionrule.Override, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// OverridesQuery is a query over jurisdictionrule.Override.
+type OverridesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*jurisdictionrule.Override] = (*OverridesTable)(nil)
+
+var _ keel.Query[*jurisdictionrule.Override] = (*OverridesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *OverridesTable) Query() keel.Query[*jurisdictionrule.Override] {
+	return &OverridesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see OverridesQuery.Where.
+func (t *OverridesTable) Where(ps ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see OverridesQuery.Pick.
+func (t *OverridesTable) Pick(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see OverridesQuery.Load.
+func (t *OverridesTable) Load(ls ...keel.Loader) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see OverridesQuery.Omit.
+func (t *OverridesTable) Omit(cols ...keel.Column) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see OverridesQuery.Order.
+func (t *OverridesTable) Order(os ...keel.Order) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see OverridesQuery.Limit.
+func (t *OverridesTable) Limit(n int) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see OverridesQuery.Group.
+func (t *OverridesTable) Group(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see OverridesQuery.GroupingSets.
+func (t *OverridesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see OverridesQuery.Rollup.
+func (t *OverridesTable) Rollup(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see OverridesQuery.Cube.
+func (t *OverridesTable) Cube(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see OverridesQuery.AllTenants.
+func (t *OverridesTable) AllTenants() keel.Query[*jurisdictionrule.Override] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see OverridesQuery.Join.
+func (t *OverridesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see OverridesQuery.LeftJoin.
+func (t *OverridesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see OverridesQuery.LeftJoinLateral.
+func (t *OverridesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see OverridesQuery.JoinLateral.
+func (t *OverridesTable) JoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see OverridesQuery.Lock.
+func (t *OverridesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see OverridesQuery.DistinctOn.
+func (t *OverridesTable) DistinctOn(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see OverridesQuery.Cache.
+func (t *OverridesTable) Cache(opts ...keel.CacheOption) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see OverridesQuery.LoadStrategy.
+func (t *OverridesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see OverridesQuery.With.
+func (t *OverridesTable) With(ctes ...*keel.CTETable) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see OverridesQuery.Compute.
+func (t *OverridesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *OverridesTable) Create(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *OverridesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *OverridesTable) Save(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *OverridesTable) SaveExcept(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *OverridesTable) DeleteRow(ctx context.Context, db *keel.DB, row *jurisdictionrule.Override) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *OverridesTable) Upsert(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *OverridesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *OverridesTable) Copy(ctx context.Context, db *keel.DB, rows []*jurisdictionrule.Override) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *OverridesQuery) Where(ps ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *OverridesQuery) Pick(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *OverridesQuery) Omit(cols ...keel.Column) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *OverridesQuery) Load(ls ...keel.Loader) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *OverridesQuery) Order(os ...keel.Order) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *OverridesQuery) Distinct() keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *OverridesQuery) Group(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *OverridesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *OverridesQuery) Rollup(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *OverridesQuery) Cube(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *OverridesQuery) Window(name string, w keel.Window) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *OverridesQuery) Having(ps ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *OverridesQuery) Limit(n int) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *OverridesQuery) Offset(n int) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *OverridesQuery) DistinctOn(es ...keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *OverridesQuery) AllTenants() keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *OverridesQuery) CustomPlan() keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *OverridesQuery) Timeout(d time.Duration) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *OverridesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *OverridesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *OverridesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *OverridesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *OverridesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *OverridesQuery) Cache(opts ...keel.CacheOption) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *OverridesQuery) With(ctes ...*keel.CTETable) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *OverridesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *OverridesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*jurisdictionrule.Override] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *OverridesQuery) Clone() keel.Query[*jurisdictionrule.Override] {
+	return &OverridesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *OverridesQuery) One(ctx context.Context, db *keel.DB) (*jurisdictionrule.Override, error) {
+	return keel.One[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *OverridesQuery) First(ctx context.Context, db *keel.DB) (*jurisdictionrule.Override, error) {
+	return keel.First[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *OverridesQuery) List(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.Override, error) {
+	return keel.List[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *OverridesQuery) All(ctx context.Context, db *keel.DB) ([]*jurisdictionrule.Override, error) {
+	return keel.All[*jurisdictionrule.Override](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *OverridesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*jurisdictionrule.Override, error) {
+	return keel.UpdateReturning[*jurisdictionrule.Override](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *OverridesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*jurisdictionrule.Override], error) {
+	return keel.PageOf[*jurisdictionrule.Override](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *OverridesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*jurisdictionrule.Override) error) error {
+	return keel.Each[*jurisdictionrule.Override](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newOverride() unsafe.Pointer { return unsafe.Pointer(new(jurisdictionrule.Override)) }

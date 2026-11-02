@@ -49,7 +49,7 @@ func eventLoads(includeDocument, includeActors bool) []keel.Loader {
 
 func listQuery(
 	req *workeremploymentports.ListWorkerEmploymentEventsRequest,
-) *keel.Query[*employment.WorkerEmploymentEvent] {
+) keel.Query[*employment.WorkerEmploymentEvent] {
 	e := employmentdb.WorkerEmploymentEvents
 	limit := req.Limit
 	if limit <= 0 {

@@ -26,7 +26,7 @@ var (
 		"production and staging require a GCP KMS crypto key resource",
 	)
 	ErrProductionSessionCookieRequired = errors.New(
-		"production and staging require secure, httpOnly, sameSite=strict session cookies",
+		"production and staging require a __Host- prefixed, secure, httpOnly, sameSite=strict session cookie",
 	)
 )
 

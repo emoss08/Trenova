@@ -2428,31 +2428,31 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 		{
 			shpTableOrders,
 			len(batch.orders),
-			func() error { return volumegen.InsertRows(ctx, tx, orderdb.Orders.Handle, batch.orders) },
+			func() error { return volumegen.InsertRows(ctx, tx, orderdb.Orders, batch.orders) },
 		},
 		{
 			shpTableShipments,
 			len(batch.shipments),
-			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.Shipments.Handle, batch.shipments) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.Shipments, batch.shipments) },
 		},
 		{
 			shpTableMoves,
 			len(batch.moves),
-			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentMoves.Handle, batch.moves) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentMoves, batch.moves) },
 		},
 		{
 			shpTableStops,
 			len(batch.stops),
-			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.Stops.Handle, batch.stops) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.Stops, batch.stops) },
 		},
 		{shpTableAssignments, len(batch.assignments), func() error {
-			return volumegen.InsertRows(ctx, tx, shipmentdb.Assignments.Handle, batch.assignments)
+			return volumegen.InsertRows(ctx, tx, shipmentdb.Assignments, batch.assignments)
 		}},
 		{shpTableCarrierAssignments, len(batch.carrierAssignments), func() error {
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				shipmentdb.CarrierAssignments.Handle,
+				shipmentdb.CarrierAssignments,
 				batch.carrierAssignments,
 			)
 		}},
@@ -2460,25 +2460,25 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				shipmentdb.ShipmentCommodities.Handle,
+				shipmentdb.ShipmentCommodities,
 				batch.commodities,
 			)
 		}},
 		{
 			shpTableCharges,
 			len(batch.charges),
-			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.AdditionalCharges.Handle, batch.charges) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.AdditionalCharges, batch.charges) },
 		},
 		{
 			shpTableComments,
 			len(batch.comments),
-			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentComments.Handle, batch.comments) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentComments, batch.comments) },
 		},
 		{"shipment_comment_mentions", len(batch.mentions), func() error {
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				shipmentdb.ShipmentCommentMentions.Handle,
+				shipmentdb.ShipmentCommentMentions,
 				batch.mentions,
 			)
 		}},
@@ -2486,17 +2486,17 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				shipmentdb.ShipmentCommentAcknowledgments.Handle,
+				shipmentdb.ShipmentCommentAcknowledgments,
 				batch.acks,
 			)
 		}},
 		{
 			shpTableHolds,
 			len(batch.holds),
-			func() error { return volumegen.InsertRows(ctx, tx, shipmentholddb.ShipmentHolds.Handle, batch.holds) },
+			func() error { return volumegen.InsertRows(ctx, tx, shipmentholddb.ShipmentHolds, batch.holds) },
 		},
 		{"check_calls", len(batch.checkCalls), func() error {
-			return volumegen.InsertRows(ctx, tx, checkcalldb.CheckCalls.Handle, batch.checkCalls)
+			return volumegen.InsertRows(ctx, tx, checkcalldb.CheckCalls, batch.checkCalls)
 		}},
 	}
 	for _, step := range steps {
@@ -2552,7 +2552,7 @@ func (b *shpBuilder) releaseHolds(ctx context.Context, tx *keel.DB, releases []s
 		tx,
 		sh.ReleasedAt.ToExpr(d.Col("released_at")),
 		sh.ReleasedByID.ToExpr(d.Col("released_by_id")),
-		volumegen.KeepUpdated(sh.Handle),
+		volumegen.KeepUpdated(sh),
 	); err != nil {
 		return fmt.Errorf("release shipment holds: %w", err)
 	}

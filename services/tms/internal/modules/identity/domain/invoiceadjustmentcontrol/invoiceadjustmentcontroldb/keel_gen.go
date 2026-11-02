@@ -4,6 +4,7 @@ package invoiceadjustmentcontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -68,7 +69,7 @@ var invoiceAdjustmentControlsRef = keel.Ref{Table: &invoiceAdjustmentControlsTab
 
 // InvoiceAdjustmentControlsTable is the table of invoiceadjustmentcontrol.InvoiceAdjustmentControl.
 type InvoiceAdjustmentControlsTable struct {
-	keel.Handle[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]
+	keel.TableBase
 	ID                                   keelkinds.PulidIDCol
 	BusinessUnitID                       keelkinds.PulidIDCol
 	OrganizationID                       keelkinds.PulidIDCol
@@ -95,7 +96,7 @@ type InvoiceAdjustmentControlsTable struct {
 
 // InvoiceAdjustmentControls references the invoice_adjustment_controls table.
 var InvoiceAdjustmentControls = &InvoiceAdjustmentControlsTable{
-	Handle:                               keel.Handle[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]{Ref: &invoiceAdjustmentControlsRef},
+	TableBase:                            keel.TableBase{Ref: &invoiceAdjustmentControlsRef},
 	ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 0}}},
 	BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 1}}},
 	OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 2}}},
@@ -120,10 +121,10 @@ var InvoiceAdjustmentControls = &InvoiceAdjustmentControlsTable{
 	UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 21}},
 }
 
-// BuildInvoiceAdjustmentControls builds the handle of invoice_adjustment_controls for ref. Generated relation and alias methods call it.
+// BuildInvoiceAdjustmentControls builds the table of invoice_adjustment_controls for ref. Generated relation and alias methods call it.
 func BuildInvoiceAdjustmentControls(r *keel.Ref) *InvoiceAdjustmentControlsTable {
 	return &InvoiceAdjustmentControlsTable{
-		Handle:                               keel.Handle[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]{Ref: r},
+		TableBase:                            keel.TableBase{Ref: r},
 		ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -160,6 +161,365 @@ func (t *InvoiceAdjustmentControlsTable) As(alias string) *InvoiceAdjustmentCont
 // Get returns the invoice_adjustment_controls row with the given key, or keel.ErrNotFound.
 func (t *InvoiceAdjustmentControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InvoiceAdjustmentControlsQuery is a query over invoiceadjustmentcontrol.InvoiceAdjustmentControl.
+type InvoiceAdjustmentControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] = (*InvoiceAdjustmentControlsTable)(nil)
+
+var _ keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] = (*InvoiceAdjustmentControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceAdjustmentControlsTable) Query() keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return &InvoiceAdjustmentControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceAdjustmentControlsQuery.Where.
+func (t *InvoiceAdjustmentControlsTable) Where(ps ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceAdjustmentControlsQuery.Pick.
+func (t *InvoiceAdjustmentControlsTable) Pick(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceAdjustmentControlsQuery.Load.
+func (t *InvoiceAdjustmentControlsTable) Load(ls ...keel.Loader) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceAdjustmentControlsQuery.Omit.
+func (t *InvoiceAdjustmentControlsTable) Omit(cols ...keel.Column) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceAdjustmentControlsQuery.Order.
+func (t *InvoiceAdjustmentControlsTable) Order(os ...keel.Order) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceAdjustmentControlsQuery.Limit.
+func (t *InvoiceAdjustmentControlsTable) Limit(n int) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceAdjustmentControlsQuery.Group.
+func (t *InvoiceAdjustmentControlsTable) Group(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceAdjustmentControlsQuery.GroupingSets.
+func (t *InvoiceAdjustmentControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceAdjustmentControlsQuery.Rollup.
+func (t *InvoiceAdjustmentControlsTable) Rollup(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceAdjustmentControlsQuery.Cube.
+func (t *InvoiceAdjustmentControlsTable) Cube(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceAdjustmentControlsQuery.AllTenants.
+func (t *InvoiceAdjustmentControlsTable) AllTenants() keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceAdjustmentControlsQuery.Join.
+func (t *InvoiceAdjustmentControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceAdjustmentControlsQuery.LeftJoin.
+func (t *InvoiceAdjustmentControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceAdjustmentControlsQuery.LeftJoinLateral.
+func (t *InvoiceAdjustmentControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceAdjustmentControlsQuery.JoinLateral.
+func (t *InvoiceAdjustmentControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceAdjustmentControlsQuery.Lock.
+func (t *InvoiceAdjustmentControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceAdjustmentControlsQuery.DistinctOn.
+func (t *InvoiceAdjustmentControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceAdjustmentControlsQuery.Cache.
+func (t *InvoiceAdjustmentControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceAdjustmentControlsQuery.LoadStrategy.
+func (t *InvoiceAdjustmentControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceAdjustmentControlsQuery.With.
+func (t *InvoiceAdjustmentControlsTable) With(ctes ...*keel.CTETable) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceAdjustmentControlsQuery.Compute.
+func (t *InvoiceAdjustmentControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceAdjustmentControlsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceAdjustmentControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceAdjustmentControlsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceAdjustmentControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceAdjustmentControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceAdjustmentControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceAdjustmentControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceAdjustmentControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceAdjustmentControlsQuery) Where(ps ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceAdjustmentControlsQuery) Pick(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceAdjustmentControlsQuery) Omit(cols ...keel.Column) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceAdjustmentControlsQuery) Load(ls ...keel.Loader) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceAdjustmentControlsQuery) Order(os ...keel.Order) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceAdjustmentControlsQuery) Distinct() keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceAdjustmentControlsQuery) Group(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceAdjustmentControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceAdjustmentControlsQuery) Rollup(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceAdjustmentControlsQuery) Cube(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceAdjustmentControlsQuery) Window(name string, w keel.Window) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceAdjustmentControlsQuery) Having(ps ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceAdjustmentControlsQuery) Limit(n int) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceAdjustmentControlsQuery) Offset(n int) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceAdjustmentControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceAdjustmentControlsQuery) AllTenants() keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceAdjustmentControlsQuery) CustomPlan() keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceAdjustmentControlsQuery) Timeout(d time.Duration) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceAdjustmentControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceAdjustmentControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceAdjustmentControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceAdjustmentControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceAdjustmentControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceAdjustmentControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceAdjustmentControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceAdjustmentControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceAdjustmentControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceAdjustmentControlsQuery) Clone() keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return &InvoiceAdjustmentControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceAdjustmentControlsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+	return keel.One[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceAdjustmentControlsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+	return keel.First[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceAdjustmentControlsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+	return keel.List[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceAdjustmentControlsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+	return keel.All[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceAdjustmentControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+	return keel.UpdateReturning[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceAdjustmentControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustmentcontrol.InvoiceAdjustmentControl], error) {
+	return keel.PageOf[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceAdjustmentControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustmentcontrol.InvoiceAdjustmentControl) error) error {
+	return keel.Each[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoiceAdjustmentControl() unsafe.Pointer {

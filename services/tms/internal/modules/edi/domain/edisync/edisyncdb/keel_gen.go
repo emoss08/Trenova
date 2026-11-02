@@ -4,6 +4,7 @@ package edisyncdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -62,7 +63,7 @@ var shipmentLinksRef = keel.Ref{Table: &shipmentLinksTable}
 
 // ShipmentLinksTable is the table of edisync.ShipmentLink.
 type ShipmentLinksTable struct {
-	keel.Handle[*edisync.ShipmentLink]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	SourceOrganizationID keelkinds.PulidIDCol
@@ -81,7 +82,7 @@ type ShipmentLinksTable struct {
 
 // ShipmentLinks references the edi_shipment_links table.
 var ShipmentLinks = &ShipmentLinksTable{
-	Handle:               keel.Handle[*edisync.ShipmentLink]{Ref: &shipmentLinksRef},
+	TableBase:            keel.TableBase{Ref: &shipmentLinksRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 1}}},
 	SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 2}}},
@@ -98,10 +99,10 @@ var ShipmentLinks = &ShipmentLinksTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &shipmentLinksRef, Index: 13}},
 }
 
-// BuildShipmentLinks builds the handle of edi_shipment_links for ref. Generated relation and alias methods call it.
+// BuildShipmentLinks builds the table of edi_shipment_links for ref. Generated relation and alias methods call it.
 func BuildShipmentLinks(r *keel.Ref) *ShipmentLinksTable {
 	return &ShipmentLinksTable{
-		Handle:               keel.Handle[*edisync.ShipmentLink]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -130,6 +131,365 @@ func (t *ShipmentLinksTable) As(alias string) *ShipmentLinksTable {
 // Get returns the edi_shipment_links row with the given key, or keel.ErrNotFound.
 func (t *ShipmentLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edisync.ShipmentLink, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ShipmentLinksQuery is a query over edisync.ShipmentLink.
+type ShipmentLinksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edisync.ShipmentLink] = (*ShipmentLinksTable)(nil)
+
+var _ keel.Query[*edisync.ShipmentLink] = (*ShipmentLinksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ShipmentLinksTable) Query() keel.Query[*edisync.ShipmentLink] {
+	return &ShipmentLinksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ShipmentLinksQuery.Where.
+func (t *ShipmentLinksTable) Where(ps ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ShipmentLinksQuery.Pick.
+func (t *ShipmentLinksTable) Pick(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ShipmentLinksQuery.Load.
+func (t *ShipmentLinksTable) Load(ls ...keel.Loader) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ShipmentLinksQuery.Omit.
+func (t *ShipmentLinksTable) Omit(cols ...keel.Column) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ShipmentLinksQuery.Order.
+func (t *ShipmentLinksTable) Order(os ...keel.Order) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ShipmentLinksQuery.Limit.
+func (t *ShipmentLinksTable) Limit(n int) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ShipmentLinksQuery.Group.
+func (t *ShipmentLinksTable) Group(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ShipmentLinksQuery.GroupingSets.
+func (t *ShipmentLinksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ShipmentLinksQuery.Rollup.
+func (t *ShipmentLinksTable) Rollup(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ShipmentLinksQuery.Cube.
+func (t *ShipmentLinksTable) Cube(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ShipmentLinksQuery.AllTenants.
+func (t *ShipmentLinksTable) AllTenants() keel.Query[*edisync.ShipmentLink] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ShipmentLinksQuery.Join.
+func (t *ShipmentLinksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ShipmentLinksQuery.LeftJoin.
+func (t *ShipmentLinksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ShipmentLinksQuery.LeftJoinLateral.
+func (t *ShipmentLinksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ShipmentLinksQuery.JoinLateral.
+func (t *ShipmentLinksTable) JoinLateral(sub keel.LateralSource) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ShipmentLinksQuery.Lock.
+func (t *ShipmentLinksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ShipmentLinksQuery.DistinctOn.
+func (t *ShipmentLinksTable) DistinctOn(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ShipmentLinksQuery.Cache.
+func (t *ShipmentLinksTable) Cache(opts ...keel.CacheOption) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ShipmentLinksQuery.LoadStrategy.
+func (t *ShipmentLinksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ShipmentLinksQuery.With.
+func (t *ShipmentLinksTable) With(ctes ...*keel.CTETable) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ShipmentLinksQuery.Compute.
+func (t *ShipmentLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ShipmentLinksTable) Create(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ShipmentLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ShipmentLinksTable) Save(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ShipmentLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ShipmentLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ShipmentLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ShipmentLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ShipmentLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ShipmentLinksQuery) Where(ps ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ShipmentLinksQuery) Pick(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ShipmentLinksQuery) Omit(cols ...keel.Column) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ShipmentLinksQuery) Load(ls ...keel.Loader) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ShipmentLinksQuery) Order(os ...keel.Order) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ShipmentLinksQuery) Distinct() keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ShipmentLinksQuery) Group(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ShipmentLinksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ShipmentLinksQuery) Rollup(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ShipmentLinksQuery) Cube(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ShipmentLinksQuery) Window(name string, w keel.Window) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ShipmentLinksQuery) Having(ps ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ShipmentLinksQuery) Limit(n int) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ShipmentLinksQuery) Offset(n int) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ShipmentLinksQuery) DistinctOn(es ...keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ShipmentLinksQuery) AllTenants() keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ShipmentLinksQuery) CustomPlan() keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ShipmentLinksQuery) Timeout(d time.Duration) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ShipmentLinksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ShipmentLinksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ShipmentLinksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ShipmentLinksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ShipmentLinksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ShipmentLinksQuery) Cache(opts ...keel.CacheOption) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ShipmentLinksQuery) With(ctes ...*keel.CTETable) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ShipmentLinksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ShipmentLinksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edisync.ShipmentLink] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ShipmentLinksQuery) Clone() keel.Query[*edisync.ShipmentLink] {
+	return &ShipmentLinksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ShipmentLinksQuery) One(ctx context.Context, db *keel.DB) (*edisync.ShipmentLink, error) {
+	return keel.One[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ShipmentLinksQuery) First(ctx context.Context, db *keel.DB) (*edisync.ShipmentLink, error) {
+	return keel.First[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ShipmentLinksQuery) List(ctx context.Context, db *keel.DB) ([]*edisync.ShipmentLink, error) {
+	return keel.List[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ShipmentLinksQuery) All(ctx context.Context, db *keel.DB) ([]*edisync.ShipmentLink, error) {
+	return keel.All[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ShipmentLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edisync.ShipmentLink, error) {
+	return keel.UpdateReturning[*edisync.ShipmentLink](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ShipmentLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edisync.ShipmentLink], error) {
+	return keel.PageOf[*edisync.ShipmentLink](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ShipmentLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edisync.ShipmentLink) error) error {
+	return keel.Each[*edisync.ShipmentLink](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newShipmentLink() unsafe.Pointer { return unsafe.Pointer(new(edisync.ShipmentLink)) }
@@ -284,7 +644,7 @@ var transferChangesRef = keel.Ref{Table: &transferChangesTable}
 
 // TransferChangesTable is the table of edisync.TransferChange.
 type TransferChangesTable struct {
-	keel.Handle[*edisync.TransferChange]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	ShipmentLinkID        keelkinds.PulidIDCol
@@ -312,7 +672,7 @@ type TransferChangesTable struct {
 
 // TransferChanges references the edi_transfer_changes table.
 var TransferChanges = &TransferChangesTable{
-	Handle:                keel.Handle[*edisync.TransferChange]{Ref: &transferChangesRef},
+	TableBase:             keel.TableBase{Ref: &transferChangesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 1}}},
 	ShipmentLinkID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 2}}},
@@ -338,10 +698,10 @@ var TransferChanges = &TransferChangesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &transferChangesRef, Index: 22}},
 }
 
-// BuildTransferChanges builds the handle of edi_transfer_changes for ref. Generated relation and alias methods call it.
+// BuildTransferChanges builds the table of edi_transfer_changes for ref. Generated relation and alias methods call it.
 func BuildTransferChanges(r *keel.Ref) *TransferChangesTable {
 	return &TransferChangesTable{
-		Handle:                keel.Handle[*edisync.TransferChange]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ShipmentLinkID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -379,6 +739,365 @@ func (t *TransferChangesTable) As(alias string) *TransferChangesTable {
 // Get returns the edi_transfer_changes row with the given key, or keel.ErrNotFound.
 func (t *TransferChangesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edisync.TransferChange, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TransferChangesQuery is a query over edisync.TransferChange.
+type TransferChangesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edisync.TransferChange] = (*TransferChangesTable)(nil)
+
+var _ keel.Query[*edisync.TransferChange] = (*TransferChangesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TransferChangesTable) Query() keel.Query[*edisync.TransferChange] {
+	return &TransferChangesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TransferChangesQuery.Where.
+func (t *TransferChangesTable) Where(ps ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TransferChangesQuery.Pick.
+func (t *TransferChangesTable) Pick(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TransferChangesQuery.Load.
+func (t *TransferChangesTable) Load(ls ...keel.Loader) keel.Query[*edisync.TransferChange] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TransferChangesQuery.Omit.
+func (t *TransferChangesTable) Omit(cols ...keel.Column) keel.Query[*edisync.TransferChange] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TransferChangesQuery.Order.
+func (t *TransferChangesTable) Order(os ...keel.Order) keel.Query[*edisync.TransferChange] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TransferChangesQuery.Limit.
+func (t *TransferChangesTable) Limit(n int) keel.Query[*edisync.TransferChange] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TransferChangesQuery.Group.
+func (t *TransferChangesTable) Group(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TransferChangesQuery.GroupingSets.
+func (t *TransferChangesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TransferChangesQuery.Rollup.
+func (t *TransferChangesTable) Rollup(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TransferChangesQuery.Cube.
+func (t *TransferChangesTable) Cube(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TransferChangesQuery.AllTenants.
+func (t *TransferChangesTable) AllTenants() keel.Query[*edisync.TransferChange] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TransferChangesQuery.Join.
+func (t *TransferChangesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TransferChangesQuery.LeftJoin.
+func (t *TransferChangesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TransferChangesQuery.LeftJoinLateral.
+func (t *TransferChangesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edisync.TransferChange] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TransferChangesQuery.JoinLateral.
+func (t *TransferChangesTable) JoinLateral(sub keel.LateralSource) keel.Query[*edisync.TransferChange] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TransferChangesQuery.Lock.
+func (t *TransferChangesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edisync.TransferChange] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TransferChangesQuery.DistinctOn.
+func (t *TransferChangesTable) DistinctOn(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TransferChangesQuery.Cache.
+func (t *TransferChangesTable) Cache(opts ...keel.CacheOption) keel.Query[*edisync.TransferChange] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TransferChangesQuery.LoadStrategy.
+func (t *TransferChangesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edisync.TransferChange] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TransferChangesQuery.With.
+func (t *TransferChangesTable) With(ctes ...*keel.CTETable) keel.Query[*edisync.TransferChange] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TransferChangesQuery.Compute.
+func (t *TransferChangesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edisync.TransferChange] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TransferChangesTable) Create(ctx context.Context, db *keel.DB, row *edisync.TransferChange) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TransferChangesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TransferChangesTable) Save(ctx context.Context, db *keel.DB, row *edisync.TransferChange, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TransferChangesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edisync.TransferChange, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TransferChangesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edisync.TransferChange) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TransferChangesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TransferChangesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TransferChangesTable) Copy(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TransferChangesQuery) Where(ps ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TransferChangesQuery) Pick(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TransferChangesQuery) Omit(cols ...keel.Column) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TransferChangesQuery) Load(ls ...keel.Loader) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TransferChangesQuery) Order(os ...keel.Order) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TransferChangesQuery) Distinct() keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TransferChangesQuery) Group(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TransferChangesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TransferChangesQuery) Rollup(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TransferChangesQuery) Cube(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TransferChangesQuery) Window(name string, w keel.Window) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TransferChangesQuery) Having(ps ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TransferChangesQuery) Limit(n int) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TransferChangesQuery) Offset(n int) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TransferChangesQuery) DistinctOn(es ...keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TransferChangesQuery) AllTenants() keel.Query[*edisync.TransferChange] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TransferChangesQuery) CustomPlan() keel.Query[*edisync.TransferChange] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TransferChangesQuery) Timeout(d time.Duration) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TransferChangesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TransferChangesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TransferChangesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TransferChangesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TransferChangesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TransferChangesQuery) Cache(opts ...keel.CacheOption) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TransferChangesQuery) With(ctes ...*keel.CTETable) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TransferChangesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TransferChangesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edisync.TransferChange] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TransferChangesQuery) Clone() keel.Query[*edisync.TransferChange] {
+	return &TransferChangesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TransferChangesQuery) One(ctx context.Context, db *keel.DB) (*edisync.TransferChange, error) {
+	return keel.One[*edisync.TransferChange](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TransferChangesQuery) First(ctx context.Context, db *keel.DB) (*edisync.TransferChange, error) {
+	return keel.First[*edisync.TransferChange](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TransferChangesQuery) List(ctx context.Context, db *keel.DB) ([]*edisync.TransferChange, error) {
+	return keel.List[*edisync.TransferChange](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TransferChangesQuery) All(ctx context.Context, db *keel.DB) ([]*edisync.TransferChange, error) {
+	return keel.All[*edisync.TransferChange](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TransferChangesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edisync.TransferChange, error) {
+	return keel.UpdateReturning[*edisync.TransferChange](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TransferChangesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edisync.TransferChange], error) {
+	return keel.PageOf[*edisync.TransferChange](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TransferChangesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edisync.TransferChange) error) error {
+	return keel.Each[*edisync.TransferChange](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTransferChange() unsafe.Pointer { return unsafe.Pointer(new(edisync.TransferChange)) }

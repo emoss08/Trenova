@@ -139,8 +139,9 @@ type AuthenticatedPrincipal struct {
 }
 
 type ActivateSessionRolesRequest struct {
-	SessionID pulid.ID   `json:"-"`
-	RoleIDs   []pulid.ID `json:"roleIds"`
+	SessionID  pulid.ID   `json:"-"`
+	SecretHash string     `json:"-"`
+	RoleIDs    []pulid.ID `json:"roleIds"`
 }
 
 type ActivateSessionRolesResponse struct {
@@ -149,6 +150,8 @@ type ActivateSessionRolesResponse struct {
 	ActiveRoles            []permissionports.RoleSummary `json:"activeRoles"`
 	AuthorizedRoles        []permissionports.RoleSummary `json:"authorizedRoles"`
 	RequiresRoleActivation bool                          `json:"requiresRoleActivation"`
+	SessionToken           string                        `json:"-"`
+	ExpiresAt              int64                         `json:"-"`
 }
 
 type AuthorizedSessionRolesResponse struct {
@@ -187,7 +190,7 @@ type AuthService interface {
 		ipAddress, userAgent string,
 	) (*AuthenticatedPrincipal, error)
 	VerifyMFAChallenge(ctx context.Context, req VerifyMFAChallengeRequest) (*LoginResponse, error)
-	Logout(ctx context.Context, sessionID pulid.ID) error
+	SignOut(ctx context.Context, token string) error
 	CreateSessionForUser(
 		ctx context.Context,
 		req *CreateSessionForUserRequest,

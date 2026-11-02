@@ -4,6 +4,7 @@ package equipmenttypedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -74,7 +75,7 @@ var equipmentTypesRef = keel.Ref{Table: &equipmentTypesTable}
 
 // EquipmentTypesTable is the table of equipmenttype.EquipmentType.
 type EquipmentTypesTable struct {
-	keel.Handle[*equipmenttype.EquipmentType]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -97,7 +98,7 @@ type EquipmentTypesTable struct {
 
 // EquipmentTypes references the equipment_types table.
 var EquipmentTypes = &EquipmentTypesTable{
-	Handle:           keel.Handle[*equipmenttype.EquipmentType]{Ref: &equipmentTypesRef},
+	TableBase:        keel.TableBase{Ref: &equipmentTypesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentTypesRef, Index: 2}}},
@@ -118,10 +119,10 @@ var EquipmentTypes = &EquipmentTypesTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &equipmentTypesRef, Index: 17}},
 }
 
-// BuildEquipmentTypes builds the handle of equipment_types for ref. Generated relation and alias methods call it.
+// BuildEquipmentTypes builds the table of equipment_types for ref. Generated relation and alias methods call it.
 func BuildEquipmentTypes(r *keel.Ref) *EquipmentTypesTable {
 	return &EquipmentTypesTable{
-		Handle:           keel.Handle[*equipmenttype.EquipmentType]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -164,6 +165,365 @@ func (t *EquipmentTypesTable) Organization() *tenantdb.OrganizationsTable {
 // Get returns the equipment_types row with the given key, or keel.ErrNotFound.
 func (t *EquipmentTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*equipmenttype.EquipmentType, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EquipmentTypesQuery is a query over equipmenttype.EquipmentType.
+type EquipmentTypesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*equipmenttype.EquipmentType] = (*EquipmentTypesTable)(nil)
+
+var _ keel.Query[*equipmenttype.EquipmentType] = (*EquipmentTypesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EquipmentTypesTable) Query() keel.Query[*equipmenttype.EquipmentType] {
+	return &EquipmentTypesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EquipmentTypesQuery.Where.
+func (t *EquipmentTypesTable) Where(ps ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EquipmentTypesQuery.Pick.
+func (t *EquipmentTypesTable) Pick(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EquipmentTypesQuery.Load.
+func (t *EquipmentTypesTable) Load(ls ...keel.Loader) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EquipmentTypesQuery.Omit.
+func (t *EquipmentTypesTable) Omit(cols ...keel.Column) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EquipmentTypesQuery.Order.
+func (t *EquipmentTypesTable) Order(os ...keel.Order) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EquipmentTypesQuery.Limit.
+func (t *EquipmentTypesTable) Limit(n int) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EquipmentTypesQuery.Group.
+func (t *EquipmentTypesTable) Group(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EquipmentTypesQuery.GroupingSets.
+func (t *EquipmentTypesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EquipmentTypesQuery.Rollup.
+func (t *EquipmentTypesTable) Rollup(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EquipmentTypesQuery.Cube.
+func (t *EquipmentTypesTable) Cube(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EquipmentTypesQuery.AllTenants.
+func (t *EquipmentTypesTable) AllTenants() keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EquipmentTypesQuery.Join.
+func (t *EquipmentTypesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EquipmentTypesQuery.LeftJoin.
+func (t *EquipmentTypesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EquipmentTypesQuery.LeftJoinLateral.
+func (t *EquipmentTypesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EquipmentTypesQuery.JoinLateral.
+func (t *EquipmentTypesTable) JoinLateral(sub keel.LateralSource) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EquipmentTypesQuery.Lock.
+func (t *EquipmentTypesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EquipmentTypesQuery.DistinctOn.
+func (t *EquipmentTypesTable) DistinctOn(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EquipmentTypesQuery.Cache.
+func (t *EquipmentTypesTable) Cache(opts ...keel.CacheOption) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EquipmentTypesQuery.LoadStrategy.
+func (t *EquipmentTypesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EquipmentTypesQuery.With.
+func (t *EquipmentTypesTable) With(ctes ...*keel.CTETable) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EquipmentTypesQuery.Compute.
+func (t *EquipmentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EquipmentTypesTable) Create(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EquipmentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EquipmentTypesTable) Save(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EquipmentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EquipmentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *equipmenttype.EquipmentType) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EquipmentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EquipmentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EquipmentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*equipmenttype.EquipmentType) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EquipmentTypesQuery) Where(ps ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EquipmentTypesQuery) Pick(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EquipmentTypesQuery) Omit(cols ...keel.Column) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EquipmentTypesQuery) Load(ls ...keel.Loader) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EquipmentTypesQuery) Order(os ...keel.Order) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EquipmentTypesQuery) Distinct() keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EquipmentTypesQuery) Group(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EquipmentTypesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EquipmentTypesQuery) Rollup(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EquipmentTypesQuery) Cube(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EquipmentTypesQuery) Window(name string, w keel.Window) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EquipmentTypesQuery) Having(ps ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EquipmentTypesQuery) Limit(n int) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EquipmentTypesQuery) Offset(n int) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EquipmentTypesQuery) DistinctOn(es ...keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EquipmentTypesQuery) AllTenants() keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EquipmentTypesQuery) CustomPlan() keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EquipmentTypesQuery) Timeout(d time.Duration) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EquipmentTypesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EquipmentTypesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EquipmentTypesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EquipmentTypesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EquipmentTypesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EquipmentTypesQuery) Cache(opts ...keel.CacheOption) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EquipmentTypesQuery) With(ctes ...*keel.CTETable) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EquipmentTypesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EquipmentTypesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*equipmenttype.EquipmentType] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EquipmentTypesQuery) Clone() keel.Query[*equipmenttype.EquipmentType] {
+	return &EquipmentTypesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EquipmentTypesQuery) One(ctx context.Context, db *keel.DB) (*equipmenttype.EquipmentType, error) {
+	return keel.One[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EquipmentTypesQuery) First(ctx context.Context, db *keel.DB) (*equipmenttype.EquipmentType, error) {
+	return keel.First[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EquipmentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*equipmenttype.EquipmentType, error) {
+	return keel.List[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EquipmentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*equipmenttype.EquipmentType, error) {
+	return keel.All[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EquipmentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*equipmenttype.EquipmentType, error) {
+	return keel.UpdateReturning[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EquipmentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*equipmenttype.EquipmentType], error) {
+	return keel.PageOf[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EquipmentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*equipmenttype.EquipmentType) error) error {
+	return keel.Each[*equipmenttype.EquipmentType](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEquipmentType() unsafe.Pointer { return unsafe.Pointer(new(equipmenttype.EquipmentType)) }

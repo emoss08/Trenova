@@ -3,6 +3,8 @@
 package workersyncdriftdb
 
 import (
+	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -51,7 +53,7 @@ var workerSyncDriftsRef = keel.Ref{Table: &workerSyncDriftsTable}
 
 // WorkerSyncDriftsTable is the table of workersyncdrift.WorkerSyncDrift.
 type WorkerSyncDriftsTable struct {
-	keel.Handle[*workersyncdrift.WorkerSyncDrift]
+	keel.TableBase
 	OrganizationID  keel.StringCol
 	BusinessUnitID  keel.StringCol
 	WorkerID        keel.StringCol
@@ -65,7 +67,7 @@ type WorkerSyncDriftsTable struct {
 
 // WorkerSyncDrifts references the samsara_worker_sync_drifts table.
 var WorkerSyncDrifts = &WorkerSyncDriftsTable{
-	Handle:          keel.Handle[*workersyncdrift.WorkerSyncDrift]{Ref: &workerSyncDriftsRef},
+	TableBase:       keel.TableBase{Ref: &workerSyncDriftsRef},
 	OrganizationID:  keel.StringCol{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 0}},
 	BusinessUnitID:  keel.StringCol{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 1}},
 	WorkerID:        keel.StringCol{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 2}},
@@ -77,10 +79,10 @@ var WorkerSyncDrifts = &WorkerSyncDriftsTable{
 	DetectedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerSyncDriftsRef, Index: 8}},
 }
 
-// BuildWorkerSyncDrifts builds the handle of samsara_worker_sync_drifts for ref. Generated relation and alias methods call it.
+// BuildWorkerSyncDrifts builds the table of samsara_worker_sync_drifts for ref. Generated relation and alias methods call it.
 func BuildWorkerSyncDrifts(r *keel.Ref) *WorkerSyncDriftsTable {
 	return &WorkerSyncDriftsTable{
-		Handle:          keel.Handle[*workersyncdrift.WorkerSyncDrift]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		OrganizationID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		BusinessUnitID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		WorkerID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -99,6 +101,365 @@ func WorkerSyncDriftsSchema() *schema.Table { return &workerSyncDriftsTable }
 // As returns a handle that references samsara_worker_sync_drifts under its own alias.
 func (t *WorkerSyncDriftsTable) As(alias string) *WorkerSyncDriftsTable {
 	return keel.Alias(t.Ref, alias, BuildWorkerSyncDrifts)
+}
+
+// WorkerSyncDriftsQuery is a query over workersyncdrift.WorkerSyncDrift.
+type WorkerSyncDriftsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workersyncdrift.WorkerSyncDrift] = (*WorkerSyncDriftsTable)(nil)
+
+var _ keel.Query[*workersyncdrift.WorkerSyncDrift] = (*WorkerSyncDriftsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerSyncDriftsTable) Query() keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return &WorkerSyncDriftsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerSyncDriftsQuery.Where.
+func (t *WorkerSyncDriftsTable) Where(ps ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerSyncDriftsQuery.Pick.
+func (t *WorkerSyncDriftsTable) Pick(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerSyncDriftsQuery.Load.
+func (t *WorkerSyncDriftsTable) Load(ls ...keel.Loader) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerSyncDriftsQuery.Omit.
+func (t *WorkerSyncDriftsTable) Omit(cols ...keel.Column) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerSyncDriftsQuery.Order.
+func (t *WorkerSyncDriftsTable) Order(os ...keel.Order) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerSyncDriftsQuery.Limit.
+func (t *WorkerSyncDriftsTable) Limit(n int) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerSyncDriftsQuery.Group.
+func (t *WorkerSyncDriftsTable) Group(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerSyncDriftsQuery.GroupingSets.
+func (t *WorkerSyncDriftsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerSyncDriftsQuery.Rollup.
+func (t *WorkerSyncDriftsTable) Rollup(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerSyncDriftsQuery.Cube.
+func (t *WorkerSyncDriftsTable) Cube(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerSyncDriftsQuery.AllTenants.
+func (t *WorkerSyncDriftsTable) AllTenants() keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerSyncDriftsQuery.Join.
+func (t *WorkerSyncDriftsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerSyncDriftsQuery.LeftJoin.
+func (t *WorkerSyncDriftsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerSyncDriftsQuery.LeftJoinLateral.
+func (t *WorkerSyncDriftsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerSyncDriftsQuery.JoinLateral.
+func (t *WorkerSyncDriftsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerSyncDriftsQuery.Lock.
+func (t *WorkerSyncDriftsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerSyncDriftsQuery.DistinctOn.
+func (t *WorkerSyncDriftsTable) DistinctOn(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerSyncDriftsQuery.Cache.
+func (t *WorkerSyncDriftsTable) Cache(opts ...keel.CacheOption) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerSyncDriftsQuery.LoadStrategy.
+func (t *WorkerSyncDriftsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerSyncDriftsQuery.With.
+func (t *WorkerSyncDriftsTable) With(ctes ...*keel.CTETable) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerSyncDriftsQuery.Compute.
+func (t *WorkerSyncDriftsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerSyncDriftsTable) Create(ctx context.Context, db *keel.DB, row *workersyncdrift.WorkerSyncDrift) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerSyncDriftsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workersyncdrift.WorkerSyncDrift) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerSyncDriftsTable) Save(ctx context.Context, db *keel.DB, row *workersyncdrift.WorkerSyncDrift, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerSyncDriftsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workersyncdrift.WorkerSyncDrift, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerSyncDriftsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workersyncdrift.WorkerSyncDrift) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerSyncDriftsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workersyncdrift.WorkerSyncDrift, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerSyncDriftsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workersyncdrift.WorkerSyncDrift, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerSyncDriftsTable) Copy(ctx context.Context, db *keel.DB, rows []*workersyncdrift.WorkerSyncDrift) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerSyncDriftsQuery) Where(ps ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerSyncDriftsQuery) Pick(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerSyncDriftsQuery) Omit(cols ...keel.Column) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerSyncDriftsQuery) Load(ls ...keel.Loader) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerSyncDriftsQuery) Order(os ...keel.Order) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerSyncDriftsQuery) Distinct() keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerSyncDriftsQuery) Group(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerSyncDriftsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerSyncDriftsQuery) Rollup(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerSyncDriftsQuery) Cube(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerSyncDriftsQuery) Window(name string, w keel.Window) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerSyncDriftsQuery) Having(ps ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerSyncDriftsQuery) Limit(n int) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerSyncDriftsQuery) Offset(n int) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerSyncDriftsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerSyncDriftsQuery) AllTenants() keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerSyncDriftsQuery) CustomPlan() keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerSyncDriftsQuery) Timeout(d time.Duration) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerSyncDriftsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerSyncDriftsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerSyncDriftsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerSyncDriftsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerSyncDriftsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerSyncDriftsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerSyncDriftsQuery) With(ctes ...*keel.CTETable) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerSyncDriftsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerSyncDriftsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerSyncDriftsQuery) Clone() keel.Query[*workersyncdrift.WorkerSyncDrift] {
+	return &WorkerSyncDriftsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerSyncDriftsQuery) One(ctx context.Context, db *keel.DB) (*workersyncdrift.WorkerSyncDrift, error) {
+	return keel.One[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerSyncDriftsQuery) First(ctx context.Context, db *keel.DB) (*workersyncdrift.WorkerSyncDrift, error) {
+	return keel.First[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerSyncDriftsQuery) List(ctx context.Context, db *keel.DB) ([]*workersyncdrift.WorkerSyncDrift, error) {
+	return keel.List[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerSyncDriftsQuery) All(ctx context.Context, db *keel.DB) ([]*workersyncdrift.WorkerSyncDrift, error) {
+	return keel.All[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerSyncDriftsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workersyncdrift.WorkerSyncDrift, error) {
+	return keel.UpdateReturning[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerSyncDriftsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workersyncdrift.WorkerSyncDrift], error) {
+	return keel.PageOf[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerSyncDriftsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workersyncdrift.WorkerSyncDrift) error) error {
+	return keel.Each[*workersyncdrift.WorkerSyncDrift](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerSyncDrift() unsafe.Pointer { return unsafe.Pointer(new(workersyncdrift.WorkerSyncDrift)) }

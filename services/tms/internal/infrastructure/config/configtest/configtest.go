@@ -53,6 +53,7 @@ monitoring:
 cache:
   host: localhost
   port: 6379
+  password: "5c8e1a7f3b9d2e4a6c0f8b1d3e5a7c92"
 temporal:
   hostPort: "localhost:7233"
   security:

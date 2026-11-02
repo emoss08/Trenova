@@ -4,6 +4,7 @@ package billingtransferdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -83,7 +84,7 @@ var billingTransferRunsRef = keel.Ref{Table: &billingTransferRunsTable}
 
 // BillingTransferRunsTable is the table of billingtransfer.BillingTransferRun.
 type BillingTransferRunsTable struct {
-	keel.Handle[*billingtransfer.BillingTransferRun]
+	keel.TableBase
 	ID                          keelkinds.PulidIDCol
 	BusinessUnitID              keelkinds.PulidIDCol
 	OrganizationID              keelkinds.PulidIDCol
@@ -118,7 +119,7 @@ type BillingTransferRunsTable struct {
 
 // BillingTransferRuns references the billing_transfer_runs table.
 var BillingTransferRuns = &BillingTransferRunsTable{
-	Handle:                      keel.Handle[*billingtransfer.BillingTransferRun]{Ref: &billingTransferRunsRef},
+	TableBase:                   keel.TableBase{Ref: &billingTransferRunsRef},
 	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 0}}},
 	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 1}}},
 	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 2}}},
@@ -151,10 +152,10 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 	UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 29}},
 }
 
-// BuildBillingTransferRuns builds the handle of billing_transfer_runs for ref. Generated relation and alias methods call it.
+// BuildBillingTransferRuns builds the table of billing_transfer_runs for ref. Generated relation and alias methods call it.
 func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 	return &BillingTransferRunsTable{
-		Handle:                      keel.Handle[*billingtransfer.BillingTransferRun]{Ref: r},
+		TableBase:                   keel.TableBase{Ref: r},
 		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -204,6 +205,365 @@ func (t *BillingTransferRunsTable) RequestedBy() *tenantdb.UsersTable {
 // Get returns the billing_transfer_runs row with the given key, or keel.ErrNotFound.
 func (t *BillingTransferRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingtransfer.BillingTransferRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BillingTransferRunsQuery is a query over billingtransfer.BillingTransferRun.
+type BillingTransferRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingtransfer.BillingTransferRun] = (*BillingTransferRunsTable)(nil)
+
+var _ keel.Query[*billingtransfer.BillingTransferRun] = (*BillingTransferRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BillingTransferRunsTable) Query() keel.Query[*billingtransfer.BillingTransferRun] {
+	return &BillingTransferRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BillingTransferRunsQuery.Where.
+func (t *BillingTransferRunsTable) Where(ps ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BillingTransferRunsQuery.Pick.
+func (t *BillingTransferRunsTable) Pick(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BillingTransferRunsQuery.Load.
+func (t *BillingTransferRunsTable) Load(ls ...keel.Loader) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BillingTransferRunsQuery.Omit.
+func (t *BillingTransferRunsTable) Omit(cols ...keel.Column) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BillingTransferRunsQuery.Order.
+func (t *BillingTransferRunsTable) Order(os ...keel.Order) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BillingTransferRunsQuery.Limit.
+func (t *BillingTransferRunsTable) Limit(n int) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BillingTransferRunsQuery.Group.
+func (t *BillingTransferRunsTable) Group(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BillingTransferRunsQuery.GroupingSets.
+func (t *BillingTransferRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BillingTransferRunsQuery.Rollup.
+func (t *BillingTransferRunsTable) Rollup(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BillingTransferRunsQuery.Cube.
+func (t *BillingTransferRunsTable) Cube(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BillingTransferRunsQuery.AllTenants.
+func (t *BillingTransferRunsTable) AllTenants() keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BillingTransferRunsQuery.Join.
+func (t *BillingTransferRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BillingTransferRunsQuery.LeftJoin.
+func (t *BillingTransferRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BillingTransferRunsQuery.LeftJoinLateral.
+func (t *BillingTransferRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BillingTransferRunsQuery.JoinLateral.
+func (t *BillingTransferRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BillingTransferRunsQuery.Lock.
+func (t *BillingTransferRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BillingTransferRunsQuery.DistinctOn.
+func (t *BillingTransferRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BillingTransferRunsQuery.Cache.
+func (t *BillingTransferRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BillingTransferRunsQuery.LoadStrategy.
+func (t *BillingTransferRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BillingTransferRunsQuery.With.
+func (t *BillingTransferRunsTable) With(ctes ...*keel.CTETable) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BillingTransferRunsQuery.Compute.
+func (t *BillingTransferRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BillingTransferRunsTable) Create(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BillingTransferRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BillingTransferRunsTable) Save(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BillingTransferRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BillingTransferRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BillingTransferRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BillingTransferRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BillingTransferRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BillingTransferRunsQuery) Where(ps ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BillingTransferRunsQuery) Pick(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BillingTransferRunsQuery) Omit(cols ...keel.Column) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BillingTransferRunsQuery) Load(ls ...keel.Loader) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BillingTransferRunsQuery) Order(os ...keel.Order) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BillingTransferRunsQuery) Distinct() keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BillingTransferRunsQuery) Group(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BillingTransferRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BillingTransferRunsQuery) Rollup(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BillingTransferRunsQuery) Cube(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BillingTransferRunsQuery) Window(name string, w keel.Window) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BillingTransferRunsQuery) Having(ps ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BillingTransferRunsQuery) Limit(n int) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BillingTransferRunsQuery) Offset(n int) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BillingTransferRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BillingTransferRunsQuery) AllTenants() keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BillingTransferRunsQuery) CustomPlan() keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BillingTransferRunsQuery) Timeout(d time.Duration) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BillingTransferRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BillingTransferRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BillingTransferRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BillingTransferRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BillingTransferRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BillingTransferRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BillingTransferRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BillingTransferRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BillingTransferRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingtransfer.BillingTransferRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BillingTransferRunsQuery) Clone() keel.Query[*billingtransfer.BillingTransferRun] {
+	return &BillingTransferRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BillingTransferRunsQuery) One(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRun, error) {
+	return keel.One[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BillingTransferRunsQuery) First(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRun, error) {
+	return keel.First[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BillingTransferRunsQuery) List(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRun, error) {
+	return keel.List[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BillingTransferRunsQuery) All(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRun, error) {
+	return keel.All[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BillingTransferRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingtransfer.BillingTransferRun, error) {
+	return keel.UpdateReturning[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BillingTransferRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingtransfer.BillingTransferRun], error) {
+	return keel.PageOf[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BillingTransferRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingtransfer.BillingTransferRun) error) error {
+	return keel.Each[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBillingTransferRun() unsafe.Pointer {
@@ -442,7 +802,7 @@ var billingTransferRunItemsRef = keel.Ref{Table: &billingTransferRunItemsTable}
 
 // BillingTransferRunItemsTable is the table of billingtransfer.BillingTransferRunItem.
 type BillingTransferRunItemsTable struct {
-	keel.Handle[*billingtransfer.BillingTransferRunItem]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -466,7 +826,7 @@ type BillingTransferRunItemsTable struct {
 
 // BillingTransferRunItems references the billing_transfer_run_items table.
 var BillingTransferRunItems = &BillingTransferRunItemsTable{
-	Handle:               keel.Handle[*billingtransfer.BillingTransferRunItem]{Ref: &billingTransferRunItemsRef},
+	TableBase:            keel.TableBase{Ref: &billingTransferRunItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 2}}},
@@ -488,10 +848,10 @@ var BillingTransferRunItems = &BillingTransferRunItemsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 18}},
 }
 
-// BuildBillingTransferRunItems builds the handle of billing_transfer_run_items for ref. Generated relation and alias methods call it.
+// BuildBillingTransferRunItems builds the table of billing_transfer_run_items for ref. Generated relation and alias methods call it.
 func BuildBillingTransferRunItems(r *keel.Ref) *BillingTransferRunItemsTable {
 	return &BillingTransferRunItemsTable{
-		Handle:               keel.Handle[*billingtransfer.BillingTransferRunItem]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -525,6 +885,365 @@ func (t *BillingTransferRunItemsTable) As(alias string) *BillingTransferRunItems
 // Get returns the billing_transfer_run_items row with the given key, or keel.ErrNotFound.
 func (t *BillingTransferRunItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingtransfer.BillingTransferRunItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BillingTransferRunItemsQuery is a query over billingtransfer.BillingTransferRunItem.
+type BillingTransferRunItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingtransfer.BillingTransferRunItem] = (*BillingTransferRunItemsTable)(nil)
+
+var _ keel.Query[*billingtransfer.BillingTransferRunItem] = (*BillingTransferRunItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BillingTransferRunItemsTable) Query() keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return &BillingTransferRunItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BillingTransferRunItemsQuery.Where.
+func (t *BillingTransferRunItemsTable) Where(ps ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BillingTransferRunItemsQuery.Pick.
+func (t *BillingTransferRunItemsTable) Pick(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BillingTransferRunItemsQuery.Load.
+func (t *BillingTransferRunItemsTable) Load(ls ...keel.Loader) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BillingTransferRunItemsQuery.Omit.
+func (t *BillingTransferRunItemsTable) Omit(cols ...keel.Column) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BillingTransferRunItemsQuery.Order.
+func (t *BillingTransferRunItemsTable) Order(os ...keel.Order) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BillingTransferRunItemsQuery.Limit.
+func (t *BillingTransferRunItemsTable) Limit(n int) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BillingTransferRunItemsQuery.Group.
+func (t *BillingTransferRunItemsTable) Group(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BillingTransferRunItemsQuery.GroupingSets.
+func (t *BillingTransferRunItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BillingTransferRunItemsQuery.Rollup.
+func (t *BillingTransferRunItemsTable) Rollup(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BillingTransferRunItemsQuery.Cube.
+func (t *BillingTransferRunItemsTable) Cube(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BillingTransferRunItemsQuery.AllTenants.
+func (t *BillingTransferRunItemsTable) AllTenants() keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BillingTransferRunItemsQuery.Join.
+func (t *BillingTransferRunItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BillingTransferRunItemsQuery.LeftJoin.
+func (t *BillingTransferRunItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BillingTransferRunItemsQuery.LeftJoinLateral.
+func (t *BillingTransferRunItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BillingTransferRunItemsQuery.JoinLateral.
+func (t *BillingTransferRunItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BillingTransferRunItemsQuery.Lock.
+func (t *BillingTransferRunItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BillingTransferRunItemsQuery.DistinctOn.
+func (t *BillingTransferRunItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BillingTransferRunItemsQuery.Cache.
+func (t *BillingTransferRunItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BillingTransferRunItemsQuery.LoadStrategy.
+func (t *BillingTransferRunItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BillingTransferRunItemsQuery.With.
+func (t *BillingTransferRunItemsTable) With(ctes ...*keel.CTETable) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BillingTransferRunItemsQuery.Compute.
+func (t *BillingTransferRunItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BillingTransferRunItemsTable) Create(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BillingTransferRunItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BillingTransferRunItemsTable) Save(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BillingTransferRunItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BillingTransferRunItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BillingTransferRunItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BillingTransferRunItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BillingTransferRunItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BillingTransferRunItemsQuery) Where(ps ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BillingTransferRunItemsQuery) Pick(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BillingTransferRunItemsQuery) Omit(cols ...keel.Column) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BillingTransferRunItemsQuery) Load(ls ...keel.Loader) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BillingTransferRunItemsQuery) Order(os ...keel.Order) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BillingTransferRunItemsQuery) Distinct() keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BillingTransferRunItemsQuery) Group(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BillingTransferRunItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BillingTransferRunItemsQuery) Rollup(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BillingTransferRunItemsQuery) Cube(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BillingTransferRunItemsQuery) Window(name string, w keel.Window) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BillingTransferRunItemsQuery) Having(ps ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BillingTransferRunItemsQuery) Limit(n int) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BillingTransferRunItemsQuery) Offset(n int) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BillingTransferRunItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BillingTransferRunItemsQuery) AllTenants() keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BillingTransferRunItemsQuery) CustomPlan() keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BillingTransferRunItemsQuery) Timeout(d time.Duration) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BillingTransferRunItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BillingTransferRunItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BillingTransferRunItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BillingTransferRunItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BillingTransferRunItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BillingTransferRunItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BillingTransferRunItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BillingTransferRunItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BillingTransferRunItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BillingTransferRunItemsQuery) Clone() keel.Query[*billingtransfer.BillingTransferRunItem] {
+	return &BillingTransferRunItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BillingTransferRunItemsQuery) One(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRunItem, error) {
+	return keel.One[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BillingTransferRunItemsQuery) First(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRunItem, error) {
+	return keel.First[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BillingTransferRunItemsQuery) List(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRunItem, error) {
+	return keel.List[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BillingTransferRunItemsQuery) All(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRunItem, error) {
+	return keel.All[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BillingTransferRunItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingtransfer.BillingTransferRunItem, error) {
+	return keel.UpdateReturning[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BillingTransferRunItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingtransfer.BillingTransferRunItem], error) {
+	return keel.PageOf[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BillingTransferRunItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingtransfer.BillingTransferRunItem) error) error {
+	return keel.Each[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBillingTransferRunItem() unsafe.Pointer {

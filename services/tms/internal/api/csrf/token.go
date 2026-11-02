@@ -5,11 +5,16 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"io"
+
+	"github.com/emoss08/trenova/shared/hashutils"
 )
 
+const keyDerivationLabel = "trenova csrf token key v1"
+
 func Token(sessionID, secret string) string {
-	mac := hmac.New(sha256.New, []byte(secret))
-	_, _ = mac.Write([]byte(sessionID))
+	mac := hmac.New(sha256.New, hashutils.DeriveKey(secret, keyDerivationLabel))
+	_, _ = io.WriteString(mac, sessionID)
 	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 }
 

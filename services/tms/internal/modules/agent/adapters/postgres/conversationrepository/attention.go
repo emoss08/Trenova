@@ -31,7 +31,7 @@ type pendingProposalRunRow struct {
 
 func threadAttentionQuery(
 	req *conversationports.ListThreadAttentionRequest,
-) *keel.Query[*conversation.Thread] {
+) keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
 	pl := agentplandb.AgentPlans
 	run := agentdb.AgentRuns
@@ -53,7 +53,7 @@ func threadAttentionQuery(
 		Where(th.UserID.Eq(req.UserID), th.ID.In(req.ThreadIDs...))
 }
 
-func pendingProposalRunsQuery(threadIDs []pulid.ID) *keel.Query[*agent.AgentProposal] {
+func pendingProposalRunsQuery(threadIDs []pulid.ID) keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 	run := agentdb.AgentRuns
 

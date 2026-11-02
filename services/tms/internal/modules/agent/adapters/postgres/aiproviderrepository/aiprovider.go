@@ -111,7 +111,7 @@ func (r *repository) GetByID(
 	})
 }
 
-func providersByIDs(ids []pulid.ID) *keel.Query[*aiprovider.Provider] {
+func providersByIDs(ids []pulid.ID) keel.Query[*aiprovider.Provider] {
 	p := aiproviderdb.Providers
 
 	return p.Where(p.ID.In(ids...)).Limit(len(ids))
@@ -215,7 +215,7 @@ func (r *repository) SelectOptions(
 	)
 }
 
-func selectOptionsQuery(task aitask.Task) *keel.Query[*aiprovider.Provider] {
+func selectOptionsQuery(task aitask.Task) keel.Query[*aiprovider.Provider] {
 	p := aiproviderdb.Providers
 	q := p.Pick(p.ID, p.Name, p.Model, p.Kind, p.Enabled, p.Tasks, p.Priority, p.CreatedAt).
 		Where(p.Enabled.IsTrue())
@@ -226,7 +226,7 @@ func selectOptionsQuery(task aitask.Task) *keel.Query[*aiprovider.Provider] {
 	return q.Order(p.Priority.Asc(), p.Name.Asc(), p.ID.Asc())
 }
 
-func providersForTaskQuery(task aitask.Task) *keel.Query[*aiprovider.Provider] {
+func providersForTaskQuery(task aitask.Task) keel.Query[*aiprovider.Provider] {
 	p := aiproviderdb.Providers
 
 	return p.Where(p.Enabled.IsTrue(), p.Tasks.ContainsAll(string(task))).

@@ -61,7 +61,7 @@ func (r *repository) VisibleIDs(
 		records, err := keel.Into[visibleRecord](
 			ctx,
 			r.db.Keel(ctx),
-			keel.Handle[*keel.Row]{Ref: id.Ref}.Pick(id).Where(id.In(req.IDs...)),
+			keel.RowsOf(id.Ref).Pick(id).Where(id.In(req.IDs...)),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("check which %s records are visible: %w", req.Kind, err)

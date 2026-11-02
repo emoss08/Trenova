@@ -2,6 +2,7 @@ package authstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/v9"
@@ -21,6 +23,7 @@ const (
 	sessionKeyPrefix   = "session"
 	userSessionsPrefix = "user_sessions"
 	maxSessionsPerUser = 5
+	maxUpdateAttempts  = 3
 )
 
 type SessionRepositoryParams struct {
@@ -32,9 +35,10 @@ type SessionRepositoryParams struct {
 }
 
 type sessionRepository struct {
-	client *redis.Client
-	policy session.Policy
-	l      *zap.Logger
+	client  *redis.Client
+	policy  session.Policy
+	sealKey []byte
+	l       *zap.Logger
 }
 
 func NewSessionRepository(p SessionRepositoryParams) sessionports.SessionRepository {
@@ -52,7 +56,8 @@ func newSessionRepository(p SessionRepositoryParams) *sessionRepository {
 			MaxAge:      p.SecurityConfig.Session.MaxAge,
 			IdleTimeout: p.SecurityConfig.Session.IdleTimeout,
 		},
-		l: p.Logger.Named("redis.session-repository"),
+		sealKey: hashutils.DeriveKey(p.SecurityConfig.Session.Secret, sealKeyLabel),
+		l:       p.Logger.Named("redis.session-repository"),
 	}
 }
 
@@ -69,6 +74,9 @@ func (r *sessionRepository) Get(ctx context.Context, sessionID pulid.ID) (*sessi
 		}
 		log.Error("failed to get session from cache", zap.Error(err))
 		return nil, err
+	}
+	if !r.sealHolds(ctx, sess) {
+		return nil, sessionports.ErrSessionNotFound
 	}
 
 	sess.Bound(r.policy)
@@ -107,14 +115,17 @@ func (r *sessionRepository) Create(ctx context.Context, sess *session.Session) e
 
 	userSessionsKey := r.getUserSessionsKey(sess.UserID)
 
-	// NOTE: there is a small race window between eviction check and session creation.
-	// concurrent logins may briefly exceed maxSessionsPerUser; the next login will clean up.
 	if err := r.evictOldestSessions(ctx, userSessionsKey, maxSessionsPerUser); err != nil {
 		log.Error("failed to evict old sessions", zap.Error(err))
 		return err
 	}
 
-	pipe := r.client.Pipeline()
+	if err := r.seal(sess); err != nil {
+		log.Error("failed to seal session", zap.Error(err))
+		return err
+	}
+
+	pipe := r.client.TxPipeline()
 
 	sessionKey := sessionKey(sess.ID)
 	if err := redishelpers.PipelineSetJSON(
@@ -142,32 +153,106 @@ func (r *sessionRepository) Create(ctx context.Context, sess *session.Session) e
 	return nil
 }
 
-func (r *sessionRepository) Update(ctx context.Context, sess *session.Session) error {
-	log := r.l.With(
-		zap.String("operation", "UpdateSession"),
-		zap.String("sessionID", sess.ID.String()),
+func (r *sessionRepository) Update(
+	ctx context.Context,
+	sessionID pulid.ID,
+	mutate func(*session.Session) error,
+) (*session.Session, error) {
+	key := sessionKey(sessionID)
+	for range maxUpdateAttempts {
+		var updated *session.Session
+		err := r.client.Watch(ctx, func(tx *redis.Tx) error {
+			sess, err := r.readLive(ctx, tx, key)
+			if err != nil {
+				return err
+			}
+			identity := sessionIdentityOf(sess)
+			if err = mutate(sess); err != nil {
+				return err
+			}
+			if sessionIdentityOf(sess) != identity {
+				return errIdentityChanged
+			}
+
+			now := timeutils.NowUnix()
+			sess.LastAccessedAt = now
+			sess.UpdatedAt = now
+			if err = r.seal(sess); err != nil {
+				return err
+			}
+			data, err := sonic.MarshalString(sess)
+			if err != nil {
+				return err
+			}
+
+			if _, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+				pipe.JSONSet(ctx, key, ".", data)
+				pipe.ExpireAt(ctx, key, time.Unix(sess.ExpiresAt, 0))
+				return nil
+			}); err != nil {
+				return err
+			}
+
+			updated = sess
+			return nil
+		}, key)
+		if errors.Is(err, redis.TxFailedErr) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		return updated, nil
+	}
+
+	r.l.Warn(
+		"gave up updating a session that kept changing",
+		zap.String("sessionID", sessionID.String()),
 	)
+	return nil, fmt.Errorf("update session %s: %w", sessionID, redis.TxFailedErr)
+}
 
-	remainingTTL := time.Duration(sess.ExpiresAt-timeutils.NowUnix()) * time.Second
-	if remainingTTL <= 0 {
-		log.Warn("session has expired, cannot update")
-		return nil
+var errIdentityChanged = errors.New("a session update may not change who or when the session is")
+
+type sessionIdentity struct {
+	id        pulid.ID
+	userID    pulid.ID
+	createdAt int64
+}
+
+func sessionIdentityOf(sess *session.Session) sessionIdentity {
+	return sessionIdentity{id: sess.ID, userID: sess.UserID, createdAt: sess.CreatedAt}
+}
+
+func (r *sessionRepository) readLive(
+	ctx context.Context,
+	tx *redis.Tx,
+	key string,
+) (*session.Session, error) {
+	raw, err := tx.JSONGet(ctx, key, ".").Result()
+	if redishelpers.IsRedisNil(err) || (err == nil && raw == "") {
+		return nil, sessionports.ErrSessionNotFound
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	sess.LastAccessedAt = timeutils.NowUnix()
-
-	if err := redishelpers.SetJSON(
-		ctx,
-		r.client,
-		sessionKey(sess.ID),
-		sess,
-		remainingTTL,
-	); err != nil {
-		log.Error("failed to update session in redis", zap.Error(err))
-		return err
+	sess := new(session.Session)
+	if err = sonic.UnmarshalString(raw, sess); err != nil {
+		return nil, err
+	}
+	if !r.sealHolds(ctx, sess) {
+		return nil, sessionports.ErrSessionNotFound
 	}
 
-	return nil
+	sess.Bound(r.policy)
+	if sess.IsExpiredAt(r.policy, timeutils.NowUnix()) {
+		r.discard(ctx, sess)
+		return nil, sessionports.ErrSessionNotFound
+	}
+
+	return sess, nil
 }
 
 func (r *sessionRepository) Delete(ctx context.Context, sessionID pulid.ID) error {
@@ -178,6 +263,9 @@ func (r *sessionRepository) Delete(ctx context.Context, sessionID pulid.ID) erro
 
 	sess := new(session.Session)
 	if err := redishelpers.GetJSON(ctx, r.client, sessionKey(sessionID), sess); err != nil {
+		if redishelpers.IsRedisNil(err) {
+			return nil
+		}
 		log.Error("failed to get session", zap.Error(err))
 		return err
 	}
@@ -211,9 +299,6 @@ func (r *sessionRepository) DeleteAllForUser(ctx context.Context, userID pulid.I
 	for _, member := range members {
 		sessionID, parseErr := pulid.Parse(member)
 		if parseErr != nil {
-			// A member that will not parse cannot be turned into a session key, but it
-			// also cannot authenticate anything. Drop it with the set below rather than
-			// abandoning the sessions that follow it.
 			log.Warn("skipping unparseable session id", zap.String("member", member))
 			continue
 		}
@@ -283,6 +368,10 @@ func (r *sessionRepository) ListForUser(
 			log.Warn("skipping undecodable session", zap.String("member", ids[index]))
 			continue
 		}
+		if !r.sealHolds(ctx, sess) {
+			stale = append(stale, ids[index])
+			continue
+		}
 		sess.Bound(r.policy)
 		if sess.UserID != userID || sess.IsExpiredAt(r.policy, now) {
 			stale = append(stale, ids[index])
@@ -298,6 +387,27 @@ func (r *sessionRepository) ListForUser(
 	}
 
 	return sessions, nil
+}
+
+func (r *sessionRepository) ConfirmAccess(
+	ctx context.Context,
+	sessionID pulid.ID,
+	at int64,
+) error {
+	key := sessionKey(sessionID)
+	pipe := r.client.TxPipeline()
+	pipe.JSONSet(ctx, key, lastAccessedAtPath, at)
+	pipe.JSONSet(ctx, key, accessConfirmedAtPath, at)
+	if _, err := pipe.Exec(ctx); err != nil && !redishelpers.IsRedisNil(err) {
+		r.l.Warn(
+			"failed to record a session's confirmed access",
+			zap.String("sessionID", sessionID.String()),
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
 }
 
 func (r *sessionRepository) Touch(ctx context.Context, sessionID pulid.ID, at int64) error {

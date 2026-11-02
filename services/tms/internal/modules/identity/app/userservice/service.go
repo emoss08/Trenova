@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -39,6 +41,7 @@ type Params struct {
 	Repo              tenantports.UserRepository
 	RoleRepository    permissionports.RoleRepository
 	SessionRepository sessionports.SessionRepository
+	Rotator           *sessionrotation.Rotator
 	AuditService      auditports.AuditService
 	Auditor           permissionports.SecurityAuditor
 	Realtime          realtimeports.RealtimeService
@@ -59,6 +62,7 @@ type Service struct {
 	repo         tenantports.UserRepository
 	roleRepo     permissionports.RoleRepository
 	sr           sessionports.SessionRepository
+	rotator      *sessionrotation.Rotator
 	auditService auditports.AuditService
 	auditor      permissionports.SecurityAuditor
 	realtime     realtimeports.RealtimeService
@@ -78,6 +82,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	return &Service{
 		l:            p.Logger.Named("service.user"),
 		sr:           p.SessionRepository,
+		rotator:      p.Rotator,
 		repo:         p.Repo,
 		roleRepo:     p.RoleRepository,
 		auditService: p.AuditService,
@@ -272,7 +277,7 @@ func (s *Service) GetOrganizations(
 func (s *Service) SwitchOrganization(
 	ctx context.Context,
 	req tenantports.SwitchOrganizationRequest,
-) (*tenant.User, error) {
+) (*SessionChangeResult, error) {
 	log := s.l.With(
 		zap.String("operation", "SwitchOrganization"),
 		zap.Any("request", req),
@@ -323,15 +328,6 @@ func (s *Service) SwitchOrganization(
 		return nil, err
 	}
 
-	sess.OrganizationID = req.OrganizationID
-	sess.BusinessUnitID = targetBusinessUnitID
-	sess.ActiveRoleIDs = nil
-
-	if err = s.sr.Update(ctx, sess); err != nil {
-		log.Error("failed to update session", zap.Error(err))
-		return nil, err
-	}
-
 	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: sess.UserID,
@@ -345,11 +341,35 @@ func (s *Service) SwitchOrganization(
 		return nil, err
 	}
 
+	rotated, err := s.rotator.Rotate(ctx, sessionrotation.Request{
+		SessionID:         req.SessionID,
+		UserID:            sess.UserID,
+		CurrentSecretHash: req.SecretHash,
+		Grace:             session.RotationGrace,
+		Change: func(current *session.Session) error {
+			current.OrganizationID = req.OrganizationID
+			current.BusinessUnitID = targetBusinessUnitID
+			current.ActiveRoleIDs = nil
+			return nil
+		},
+	})
+	if err != nil {
+		if errors.Is(err, sessionports.ErrSessionNotFound) {
+			return nil, errortypes.NewAuthenticationError("Invalid session")
+		}
+		log.Error("failed to update session", zap.Error(err))
+		return nil, err
+	}
+
 	log.Info("user switched organization successfully",
 		zap.String("newOrgID", req.OrganizationID.String()),
 	)
 
-	return user, nil
+	return &SessionChangeResult{
+		User:         user,
+		SessionToken: rotated.Token,
+		ExpiresAt:    rotated.Session.ExpiresAt,
+	}, nil
 }
 
 func organizationStateName(org *tenant.Organization) string {
@@ -617,6 +637,8 @@ func (s *Service) UpdateMySettings(
 	return updated, nil
 }
 
+var errLocaleUnchanged = errors.New("session locale unchanged")
+
 func (s *Service) refreshSessionLocale(
 	ctx context.Context,
 	sessionID, userID pulid.ID,
@@ -631,29 +653,27 @@ func (s *Service) refreshSessionLocale(
 		zap.String("sessionID", sessionID.String()),
 	)
 
-	sess, err := s.sr.Get(ctx, sessionID)
-	if err != nil {
-		log.Warn("failed to load session for locale refresh", zap.Error(err))
-		return
-	}
-	if sess.UserID != userID || sess.Locale == locale {
-		return
-	}
-
-	sess.Locale = locale
-	if err = s.sr.Update(ctx, sess); err != nil {
+	_, err := s.sr.Update(ctx, sessionID, func(sess *session.Session) error {
+		if sess.UserID != userID || sess.Locale == locale {
+			return errLocaleUnchanged
+		}
+		sess.Locale = locale
+		return nil
+	})
+	if err != nil && !errors.Is(err, errLocaleUnchanged) {
 		log.Warn("failed to refresh session locale", zap.Error(err))
 	}
 }
 
 func (s *Service) ChangeMyPassword(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	scope *SessionScope,
 	req ChangeMyPasswordRequest,
-) (*tenant.User, error) {
+) (*SessionChangeResult, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
 	}
+	tenantInfo := scope.TenantInfo
 
 	user, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo: tenantInfo,
@@ -680,47 +700,28 @@ func (s *Service) ChangeMyPassword(
 	}
 
 	original := *user
-	if err = s.repo.UpdatePassword(ctx, tenantports.UpdateUserPasswordRequest{
+	sessionEpoch, err := s.repo.UpdatePassword(ctx, tenantports.UpdateUserPasswordRequest{
 		UserID:             tenantInfo.UserID,
 		OrganizationID:     tenantInfo.OrgID,
 		BusinessUnitID:     tenantInfo.BuID,
 		Password:           hashedPassword,
 		MustChangePassword: false,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
 
 	user.Password = hashedPassword
+	user.SessionEpoch = sessionEpoch
 	user.MustChangePassword = false
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
-		Resource:       permission.ResourceUser,
-		ResourceID:     user.ID.String(),
-		Operation:      permission.OpUpdate,
-		UserID:         tenantInfo.UserID,
-		CurrentState:   jsonutils.MustToJSON(user),
-		PreviousState:  jsonutils.MustToJSON(&original),
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		Critical:       true,
-	},
-		auditservice.WithComment("User password updated"),
-		auditservice.WithCategory(audit.CategoryUser),
-		auditservice.WithRequest(ctx),
-	); err != nil {
-		s.l.Error("failed to log audit action", zap.Error(err))
-		return nil, err
-	}
+	signedOut, sessionErr := s.endOtherSessionsAfterPasswordChange(ctx, scope)
 
-	if err = realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ActorUserID:    tenantInfo.UserID,
-		Resource:       "users",
-		Action:         "password_updated",
-		RecordID:       tenantInfo.UserID,
-	}); err != nil {
-		s.l.Warn("failed to publish user invalidation", zap.Error(err))
+	if err = s.recordPasswordChange(ctx, tenantInfo, user, &original); err != nil {
+		return nil, errors.Join(sessionErr, err)
+	}
+	if sessionErr != nil {
+		return nil, sessionErr
 	}
 
 	updatedUser, err := s.repo.GetByID(ctx, tenantports.GetUserByIDRequest{
@@ -731,7 +732,53 @@ func (s *Service) ChangeMyPassword(
 		return nil, err
 	}
 
-	return updatedUser, nil
+	result := &SessionChangeResult{User: updatedUser}
+	if signedOut {
+		return result, nil
+	}
+	if err = s.rotateAfterPasswordChange(ctx, scope, sessionEpoch, result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Service) recordPasswordChange(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	user, original *tenant.User,
+) error {
+	if err := s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceUser,
+		ResourceID:     user.ID.String(),
+		Operation:      permission.OpUpdate,
+		UserID:         tenantInfo.UserID,
+		CurrentState:   jsonutils.MustToJSON(user),
+		PreviousState:  jsonutils.MustToJSON(original),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Critical:       true,
+	},
+		auditservice.WithComment("User password updated"),
+		auditservice.WithCategory(audit.CategoryUser),
+		auditservice.WithRequest(ctx),
+	); err != nil {
+		s.l.Error("failed to log audit action", zap.Error(err))
+		return err
+	}
+
+	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ActorUserID:    tenantInfo.UserID,
+		Resource:       "users",
+		Action:         "password_updated",
+		RecordID:       tenantInfo.UserID,
+	}); err != nil {
+		s.l.Warn("failed to publish user invalidation", zap.Error(err))
+	}
+
+	return nil
 }
 
 func (s *Service) ListOrganizationMemberships(

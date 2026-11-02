@@ -4,6 +4,7 @@ package agentextensiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var extensionsRef = keel.Ref{Table: &extensionsTable}
 
 // ExtensionsTable is the table of agentextension.Extension.
 type ExtensionsTable struct {
-	keel.Handle[*agentextension.Extension]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -80,7 +81,7 @@ type ExtensionsTable struct {
 
 // Extensions references the agent_extensions table.
 var Extensions = &ExtensionsTable{
-	Handle:         keel.Handle[*agentextension.Extension]{Ref: &extensionsRef},
+	TableBase:      keel.TableBase{Ref: &extensionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionsRef, Index: 2}}},
@@ -95,10 +96,10 @@ var Extensions = &ExtensionsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extensionsRef, Index: 11}},
 }
 
-// BuildExtensions builds the handle of agent_extensions for ref. Generated relation and alias methods call it.
+// BuildExtensions builds the table of agent_extensions for ref. Generated relation and alias methods call it.
 func BuildExtensions(r *keel.Ref) *ExtensionsTable {
 	return &ExtensionsTable{
-		Handle:         keel.Handle[*agentextension.Extension]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -130,6 +131,365 @@ func (t *ExtensionsTable) EnabledBy() *tenantdb.UsersTable {
 // Get returns the agent_extensions row with the given key, or keel.ErrNotFound.
 func (t *ExtensionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentextension.Extension, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExtensionsQuery is a query over agentextension.Extension.
+type ExtensionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentextension.Extension] = (*ExtensionsTable)(nil)
+
+var _ keel.Query[*agentextension.Extension] = (*ExtensionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtensionsTable) Query() keel.Query[*agentextension.Extension] {
+	return &ExtensionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtensionsQuery.Where.
+func (t *ExtensionsTable) Where(ps ...keel.Pred) keel.Query[*agentextension.Extension] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtensionsQuery.Pick.
+func (t *ExtensionsTable) Pick(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtensionsQuery.Load.
+func (t *ExtensionsTable) Load(ls ...keel.Loader) keel.Query[*agentextension.Extension] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtensionsQuery.Omit.
+func (t *ExtensionsTable) Omit(cols ...keel.Column) keel.Query[*agentextension.Extension] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtensionsQuery.Order.
+func (t *ExtensionsTable) Order(os ...keel.Order) keel.Query[*agentextension.Extension] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtensionsQuery.Limit.
+func (t *ExtensionsTable) Limit(n int) keel.Query[*agentextension.Extension] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtensionsQuery.Group.
+func (t *ExtensionsTable) Group(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtensionsQuery.GroupingSets.
+func (t *ExtensionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtensionsQuery.Rollup.
+func (t *ExtensionsTable) Rollup(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtensionsQuery.Cube.
+func (t *ExtensionsTable) Cube(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtensionsQuery.AllTenants.
+func (t *ExtensionsTable) AllTenants() keel.Query[*agentextension.Extension] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtensionsQuery.Join.
+func (t *ExtensionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.Extension] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtensionsQuery.LeftJoin.
+func (t *ExtensionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.Extension] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtensionsQuery.LeftJoinLateral.
+func (t *ExtensionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentextension.Extension] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtensionsQuery.JoinLateral.
+func (t *ExtensionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentextension.Extension] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtensionsQuery.Lock.
+func (t *ExtensionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentextension.Extension] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtensionsQuery.DistinctOn.
+func (t *ExtensionsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtensionsQuery.Cache.
+func (t *ExtensionsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentextension.Extension] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtensionsQuery.LoadStrategy.
+func (t *ExtensionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentextension.Extension] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtensionsQuery.With.
+func (t *ExtensionsTable) With(ctes ...*keel.CTETable) keel.Query[*agentextension.Extension] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtensionsQuery.Compute.
+func (t *ExtensionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentextension.Extension] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtensionsTable) Create(ctx context.Context, db *keel.DB, row *agentextension.Extension) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtensionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentextension.Extension) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtensionsTable) Save(ctx context.Context, db *keel.DB, row *agentextension.Extension, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtensionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentextension.Extension, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtensionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentextension.Extension) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtensionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentextension.Extension, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtensionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentextension.Extension, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtensionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentextension.Extension) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtensionsQuery) Where(ps ...keel.Pred) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtensionsQuery) Pick(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtensionsQuery) Omit(cols ...keel.Column) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtensionsQuery) Load(ls ...keel.Loader) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtensionsQuery) Order(os ...keel.Order) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtensionsQuery) Distinct() keel.Query[*agentextension.Extension] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtensionsQuery) Group(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtensionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtensionsQuery) Rollup(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtensionsQuery) Cube(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtensionsQuery) Window(name string, w keel.Window) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtensionsQuery) Having(ps ...keel.Pred) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtensionsQuery) Limit(n int) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtensionsQuery) Offset(n int) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtensionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtensionsQuery) AllTenants() keel.Query[*agentextension.Extension] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtensionsQuery) CustomPlan() keel.Query[*agentextension.Extension] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtensionsQuery) Timeout(d time.Duration) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtensionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtensionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtensionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.Extension] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtensionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentextension.Extension] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtensionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentextension.Extension] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtensionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtensionsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentextension.Extension] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtensionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentextension.Extension] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtensionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentextension.Extension] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtensionsQuery) Clone() keel.Query[*agentextension.Extension] {
+	return &ExtensionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtensionsQuery) One(ctx context.Context, db *keel.DB) (*agentextension.Extension, error) {
+	return keel.One[*agentextension.Extension](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtensionsQuery) First(ctx context.Context, db *keel.DB) (*agentextension.Extension, error) {
+	return keel.First[*agentextension.Extension](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtensionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentextension.Extension, error) {
+	return keel.List[*agentextension.Extension](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtensionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentextension.Extension, error) {
+	return keel.All[*agentextension.Extension](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtensionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentextension.Extension, error) {
+	return keel.UpdateReturning[*agentextension.Extension](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtensionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentextension.Extension], error) {
+	return keel.PageOf[*agentextension.Extension](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtensionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentextension.Extension) error) error {
+	return keel.Each[*agentextension.Extension](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtension() unsafe.Pointer { return unsafe.Pointer(new(agentextension.Extension)) }
@@ -257,7 +617,7 @@ var extensionUsageDailiesRef = keel.Ref{Table: &extensionUsageDailiesTable}
 
 // ExtensionUsageDailiesTable is the table of agentextension.ExtensionUsageDaily.
 type ExtensionUsageDailiesTable struct {
-	keel.Handle[*agentextension.ExtensionUsageDaily]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	ExtensionType  TypeCol
@@ -270,7 +630,7 @@ type ExtensionUsageDailiesTable struct {
 
 // ExtensionUsageDailies references the agent_extension_usage_daily table.
 var ExtensionUsageDailies = &ExtensionUsageDailiesTable{
-	Handle:         keel.Handle[*agentextension.ExtensionUsageDaily]{Ref: &extensionUsageDailiesRef},
+	TableBase:      keel.TableBase{Ref: &extensionUsageDailiesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 1}}},
 	ExtensionType:  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 2}}},
@@ -281,10 +641,10 @@ var ExtensionUsageDailies = &ExtensionUsageDailiesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &extensionUsageDailiesRef, Index: 7}},
 }
 
-// BuildExtensionUsageDailies builds the handle of agent_extension_usage_daily for ref. Generated relation and alias methods call it.
+// BuildExtensionUsageDailies builds the table of agent_extension_usage_daily for ref. Generated relation and alias methods call it.
 func BuildExtensionUsageDailies(r *keel.Ref) *ExtensionUsageDailiesTable {
 	return &ExtensionUsageDailiesTable{
-		Handle:         keel.Handle[*agentextension.ExtensionUsageDaily]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ExtensionType:  TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -302,6 +662,365 @@ func ExtensionUsageDailiesSchema() *schema.Table { return &extensionUsageDailies
 // As returns a handle that references agent_extension_usage_daily under its own alias.
 func (t *ExtensionUsageDailiesTable) As(alias string) *ExtensionUsageDailiesTable {
 	return keel.Alias(t.Ref, alias, BuildExtensionUsageDailies)
+}
+
+// ExtensionUsageDailiesQuery is a query over agentextension.ExtensionUsageDaily.
+type ExtensionUsageDailiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentextension.ExtensionUsageDaily] = (*ExtensionUsageDailiesTable)(nil)
+
+var _ keel.Query[*agentextension.ExtensionUsageDaily] = (*ExtensionUsageDailiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtensionUsageDailiesTable) Query() keel.Query[*agentextension.ExtensionUsageDaily] {
+	return &ExtensionUsageDailiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtensionUsageDailiesQuery.Where.
+func (t *ExtensionUsageDailiesTable) Where(ps ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtensionUsageDailiesQuery.Pick.
+func (t *ExtensionUsageDailiesTable) Pick(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtensionUsageDailiesQuery.Load.
+func (t *ExtensionUsageDailiesTable) Load(ls ...keel.Loader) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtensionUsageDailiesQuery.Omit.
+func (t *ExtensionUsageDailiesTable) Omit(cols ...keel.Column) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtensionUsageDailiesQuery.Order.
+func (t *ExtensionUsageDailiesTable) Order(os ...keel.Order) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtensionUsageDailiesQuery.Limit.
+func (t *ExtensionUsageDailiesTable) Limit(n int) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtensionUsageDailiesQuery.Group.
+func (t *ExtensionUsageDailiesTable) Group(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtensionUsageDailiesQuery.GroupingSets.
+func (t *ExtensionUsageDailiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtensionUsageDailiesQuery.Rollup.
+func (t *ExtensionUsageDailiesTable) Rollup(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtensionUsageDailiesQuery.Cube.
+func (t *ExtensionUsageDailiesTable) Cube(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtensionUsageDailiesQuery.AllTenants.
+func (t *ExtensionUsageDailiesTable) AllTenants() keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtensionUsageDailiesQuery.Join.
+func (t *ExtensionUsageDailiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtensionUsageDailiesQuery.LeftJoin.
+func (t *ExtensionUsageDailiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtensionUsageDailiesQuery.LeftJoinLateral.
+func (t *ExtensionUsageDailiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtensionUsageDailiesQuery.JoinLateral.
+func (t *ExtensionUsageDailiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtensionUsageDailiesQuery.Lock.
+func (t *ExtensionUsageDailiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtensionUsageDailiesQuery.DistinctOn.
+func (t *ExtensionUsageDailiesTable) DistinctOn(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtensionUsageDailiesQuery.Cache.
+func (t *ExtensionUsageDailiesTable) Cache(opts ...keel.CacheOption) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtensionUsageDailiesQuery.LoadStrategy.
+func (t *ExtensionUsageDailiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtensionUsageDailiesQuery.With.
+func (t *ExtensionUsageDailiesTable) With(ctes ...*keel.CTETable) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtensionUsageDailiesQuery.Compute.
+func (t *ExtensionUsageDailiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtensionUsageDailiesTable) Create(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtensionUsageDailiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtensionUsageDailiesTable) Save(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtensionUsageDailiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtensionUsageDailiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentextension.ExtensionUsageDaily) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtensionUsageDailiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtensionUsageDailiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtensionUsageDailiesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentextension.ExtensionUsageDaily) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtensionUsageDailiesQuery) Where(ps ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtensionUsageDailiesQuery) Pick(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtensionUsageDailiesQuery) Omit(cols ...keel.Column) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtensionUsageDailiesQuery) Load(ls ...keel.Loader) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtensionUsageDailiesQuery) Order(os ...keel.Order) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtensionUsageDailiesQuery) Distinct() keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtensionUsageDailiesQuery) Group(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtensionUsageDailiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtensionUsageDailiesQuery) Rollup(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtensionUsageDailiesQuery) Cube(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtensionUsageDailiesQuery) Window(name string, w keel.Window) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtensionUsageDailiesQuery) Having(ps ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtensionUsageDailiesQuery) Limit(n int) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtensionUsageDailiesQuery) Offset(n int) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtensionUsageDailiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtensionUsageDailiesQuery) AllTenants() keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtensionUsageDailiesQuery) CustomPlan() keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtensionUsageDailiesQuery) Timeout(d time.Duration) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtensionUsageDailiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtensionUsageDailiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtensionUsageDailiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtensionUsageDailiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtensionUsageDailiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtensionUsageDailiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtensionUsageDailiesQuery) With(ctes ...*keel.CTETable) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtensionUsageDailiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtensionUsageDailiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentextension.ExtensionUsageDaily] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtensionUsageDailiesQuery) Clone() keel.Query[*agentextension.ExtensionUsageDaily] {
+	return &ExtensionUsageDailiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtensionUsageDailiesQuery) One(ctx context.Context, db *keel.DB) (*agentextension.ExtensionUsageDaily, error) {
+	return keel.One[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtensionUsageDailiesQuery) First(ctx context.Context, db *keel.DB) (*agentextension.ExtensionUsageDaily, error) {
+	return keel.First[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtensionUsageDailiesQuery) List(ctx context.Context, db *keel.DB) ([]*agentextension.ExtensionUsageDaily, error) {
+	return keel.List[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtensionUsageDailiesQuery) All(ctx context.Context, db *keel.DB) ([]*agentextension.ExtensionUsageDaily, error) {
+	return keel.All[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtensionUsageDailiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentextension.ExtensionUsageDaily, error) {
+	return keel.UpdateReturning[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtensionUsageDailiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentextension.ExtensionUsageDaily], error) {
+	return keel.PageOf[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtensionUsageDailiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentextension.ExtensionUsageDaily) error) error {
+	return keel.Each[*agentextension.ExtensionUsageDaily](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtensionUsageDaily() unsafe.Pointer {

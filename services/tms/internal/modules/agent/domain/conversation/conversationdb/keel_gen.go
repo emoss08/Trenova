@@ -4,6 +4,7 @@ package conversationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -101,7 +102,7 @@ var messagesRef = keel.Ref{Table: &messagesTable}
 
 // MessagesTable is the table of conversation.Message.
 type MessagesTable struct {
-	keel.Handle[*conversation.Message]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -152,7 +153,7 @@ type MessagesTable struct {
 
 // Messages references the assistant_messages table.
 var Messages = &MessagesTable{
-	Handle:            keel.Handle[*conversation.Message]{Ref: &messagesRef},
+	TableBase:         keel.TableBase{Ref: &messagesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
@@ -201,10 +202,10 @@ var Messages = &MessagesTable{
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 45}},
 }
 
-// BuildMessages builds the handle of assistant_messages for ref. Generated relation and alias methods call it.
+// BuildMessages builds the table of assistant_messages for ref. Generated relation and alias methods call it.
 func BuildMessages(r *keel.Ref) *MessagesTable {
 	return &MessagesTable{
-		Handle:            keel.Handle[*conversation.Message]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -268,6 +269,365 @@ func (t *MessagesTable) Thread() *ThreadsTable { return keel.Path(t.Ref, 0, Buil
 // Get returns the assistant_messages row with the given key, or keel.ErrNotFound.
 func (t *MessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversation.Message, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MessagesQuery is a query over conversation.Message.
+type MessagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*conversation.Message] = (*MessagesTable)(nil)
+
+var _ keel.Query[*conversation.Message] = (*MessagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MessagesTable) Query() keel.Query[*conversation.Message] {
+	return &MessagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MessagesQuery.Where.
+func (t *MessagesTable) Where(ps ...keel.Pred) keel.Query[*conversation.Message] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MessagesQuery.Pick.
+func (t *MessagesTable) Pick(es ...keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MessagesQuery.Load.
+func (t *MessagesTable) Load(ls ...keel.Loader) keel.Query[*conversation.Message] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MessagesQuery.Omit.
+func (t *MessagesTable) Omit(cols ...keel.Column) keel.Query[*conversation.Message] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MessagesQuery.Order.
+func (t *MessagesTable) Order(os ...keel.Order) keel.Query[*conversation.Message] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MessagesQuery.Limit.
+func (t *MessagesTable) Limit(n int) keel.Query[*conversation.Message] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MessagesQuery.Group.
+func (t *MessagesTable) Group(es ...keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MessagesQuery.GroupingSets.
+func (t *MessagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MessagesQuery.Rollup.
+func (t *MessagesTable) Rollup(es ...keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MessagesQuery.Cube.
+func (t *MessagesTable) Cube(es ...keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MessagesQuery.AllTenants.
+func (t *MessagesTable) AllTenants() keel.Query[*conversation.Message] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MessagesQuery.Join.
+func (t *MessagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Message] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MessagesQuery.LeftJoin.
+func (t *MessagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Message] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MessagesQuery.LeftJoinLateral.
+func (t *MessagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversation.Message] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MessagesQuery.JoinLateral.
+func (t *MessagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*conversation.Message] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MessagesQuery.Lock.
+func (t *MessagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversation.Message] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MessagesQuery.DistinctOn.
+func (t *MessagesTable) DistinctOn(es ...keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MessagesQuery.Cache.
+func (t *MessagesTable) Cache(opts ...keel.CacheOption) keel.Query[*conversation.Message] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MessagesQuery.LoadStrategy.
+func (t *MessagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversation.Message] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MessagesQuery.With.
+func (t *MessagesTable) With(ctes ...*keel.CTETable) keel.Query[*conversation.Message] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MessagesQuery.Compute.
+func (t *MessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conversation.Message] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MessagesTable) Create(ctx context.Context, db *keel.DB, row *conversation.Message) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversation.Message) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MessagesTable) Save(ctx context.Context, db *keel.DB, row *conversation.Message, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversation.Message, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversation.Message) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversation.Message, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversation.Message, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*conversation.Message) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MessagesQuery) Where(ps ...keel.Pred) keel.Query[*conversation.Message] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MessagesQuery) Pick(es ...keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MessagesQuery) Omit(cols ...keel.Column) keel.Query[*conversation.Message] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MessagesQuery) Load(ls ...keel.Loader) keel.Query[*conversation.Message] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MessagesQuery) Order(os ...keel.Order) keel.Query[*conversation.Message] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MessagesQuery) Distinct() keel.Query[*conversation.Message] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MessagesQuery) Group(es ...keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MessagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MessagesQuery) Rollup(es ...keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MessagesQuery) Cube(es ...keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MessagesQuery) Window(name string, w keel.Window) keel.Query[*conversation.Message] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MessagesQuery) Having(ps ...keel.Pred) keel.Query[*conversation.Message] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MessagesQuery) Limit(n int) keel.Query[*conversation.Message] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MessagesQuery) Offset(n int) keel.Query[*conversation.Message] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MessagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MessagesQuery) AllTenants() keel.Query[*conversation.Message] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MessagesQuery) CustomPlan() keel.Query[*conversation.Message] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MessagesQuery) Timeout(d time.Duration) keel.Query[*conversation.Message] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MessagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversation.Message] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MessagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Message] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MessagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Message] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MessagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversation.Message] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MessagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*conversation.Message] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MessagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*conversation.Message] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MessagesQuery) With(ctes ...*keel.CTETable) keel.Query[*conversation.Message] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MessagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*conversation.Message] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MessagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversation.Message] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MessagesQuery) Clone() keel.Query[*conversation.Message] {
+	return &MessagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MessagesQuery) One(ctx context.Context, db *keel.DB) (*conversation.Message, error) {
+	return keel.One[*conversation.Message](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MessagesQuery) First(ctx context.Context, db *keel.DB) (*conversation.Message, error) {
+	return keel.First[*conversation.Message](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MessagesQuery) List(ctx context.Context, db *keel.DB) ([]*conversation.Message, error) {
+	return keel.List[*conversation.Message](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MessagesQuery) All(ctx context.Context, db *keel.DB) ([]*conversation.Message, error) {
+	return keel.All[*conversation.Message](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversation.Message, error) {
+	return keel.UpdateReturning[*conversation.Message](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversation.Message], error) {
+	return keel.PageOf[*conversation.Message](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversation.Message) error) error {
+	return keel.Each[*conversation.Message](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMessage() unsafe.Pointer { return unsafe.Pointer(new(conversation.Message)) }
@@ -650,7 +1010,7 @@ var threadsRef = keel.Ref{Table: &threadsTable}
 
 // ThreadsTable is the table of conversation.Thread.
 type ThreadsTable struct {
-	keel.Handle[*conversation.Thread]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -682,7 +1042,7 @@ type ThreadsTable struct {
 
 // Threads references the assistant_threads table.
 var Threads = &ThreadsTable{
-	Handle:              keel.Handle[*conversation.Thread]{Ref: &threadsRef},
+	TableBase:           keel.TableBase{Ref: &threadsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 2}}},
@@ -712,10 +1072,10 @@ var Threads = &ThreadsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 26}},
 }
 
-// BuildThreads builds the handle of assistant_threads for ref. Generated relation and alias methods call it.
+// BuildThreads builds the table of assistant_threads for ref. Generated relation and alias methods call it.
 func BuildThreads(r *keel.Ref) *ThreadsTable {
 	return &ThreadsTable{
-		Handle:              keel.Handle[*conversation.Thread]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -758,6 +1118,365 @@ func (t *ThreadsTable) User() *tenantdb.UsersTable { return keel.Path(t.Ref, 0, 
 // Get returns the assistant_threads row with the given key, or keel.ErrNotFound.
 func (t *ThreadsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversation.Thread, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ThreadsQuery is a query over conversation.Thread.
+type ThreadsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*conversation.Thread] = (*ThreadsTable)(nil)
+
+var _ keel.Query[*conversation.Thread] = (*ThreadsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ThreadsTable) Query() keel.Query[*conversation.Thread] {
+	return &ThreadsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ThreadsQuery.Where.
+func (t *ThreadsTable) Where(ps ...keel.Pred) keel.Query[*conversation.Thread] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ThreadsQuery.Pick.
+func (t *ThreadsTable) Pick(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ThreadsQuery.Load.
+func (t *ThreadsTable) Load(ls ...keel.Loader) keel.Query[*conversation.Thread] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ThreadsQuery.Omit.
+func (t *ThreadsTable) Omit(cols ...keel.Column) keel.Query[*conversation.Thread] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ThreadsQuery.Order.
+func (t *ThreadsTable) Order(os ...keel.Order) keel.Query[*conversation.Thread] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ThreadsQuery.Limit.
+func (t *ThreadsTable) Limit(n int) keel.Query[*conversation.Thread] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ThreadsQuery.Group.
+func (t *ThreadsTable) Group(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ThreadsQuery.GroupingSets.
+func (t *ThreadsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ThreadsQuery.Rollup.
+func (t *ThreadsTable) Rollup(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ThreadsQuery.Cube.
+func (t *ThreadsTable) Cube(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ThreadsQuery.AllTenants.
+func (t *ThreadsTable) AllTenants() keel.Query[*conversation.Thread] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ThreadsQuery.Join.
+func (t *ThreadsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Thread] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ThreadsQuery.LeftJoin.
+func (t *ThreadsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Thread] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ThreadsQuery.LeftJoinLateral.
+func (t *ThreadsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversation.Thread] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ThreadsQuery.JoinLateral.
+func (t *ThreadsTable) JoinLateral(sub keel.LateralSource) keel.Query[*conversation.Thread] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ThreadsQuery.Lock.
+func (t *ThreadsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversation.Thread] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ThreadsQuery.DistinctOn.
+func (t *ThreadsTable) DistinctOn(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ThreadsQuery.Cache.
+func (t *ThreadsTable) Cache(opts ...keel.CacheOption) keel.Query[*conversation.Thread] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ThreadsQuery.LoadStrategy.
+func (t *ThreadsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversation.Thread] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ThreadsQuery.With.
+func (t *ThreadsTable) With(ctes ...*keel.CTETable) keel.Query[*conversation.Thread] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ThreadsQuery.Compute.
+func (t *ThreadsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conversation.Thread] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ThreadsTable) Create(ctx context.Context, db *keel.DB, row *conversation.Thread) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ThreadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversation.Thread) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ThreadsTable) Save(ctx context.Context, db *keel.DB, row *conversation.Thread, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ThreadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversation.Thread, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ThreadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversation.Thread) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ThreadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversation.Thread, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ThreadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversation.Thread, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ThreadsTable) Copy(ctx context.Context, db *keel.DB, rows []*conversation.Thread) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ThreadsQuery) Where(ps ...keel.Pred) keel.Query[*conversation.Thread] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ThreadsQuery) Pick(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ThreadsQuery) Omit(cols ...keel.Column) keel.Query[*conversation.Thread] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ThreadsQuery) Load(ls ...keel.Loader) keel.Query[*conversation.Thread] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ThreadsQuery) Order(os ...keel.Order) keel.Query[*conversation.Thread] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ThreadsQuery) Distinct() keel.Query[*conversation.Thread] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ThreadsQuery) Group(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ThreadsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ThreadsQuery) Rollup(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ThreadsQuery) Cube(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ThreadsQuery) Window(name string, w keel.Window) keel.Query[*conversation.Thread] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ThreadsQuery) Having(ps ...keel.Pred) keel.Query[*conversation.Thread] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ThreadsQuery) Limit(n int) keel.Query[*conversation.Thread] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ThreadsQuery) Offset(n int) keel.Query[*conversation.Thread] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ThreadsQuery) DistinctOn(es ...keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ThreadsQuery) AllTenants() keel.Query[*conversation.Thread] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ThreadsQuery) CustomPlan() keel.Query[*conversation.Thread] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ThreadsQuery) Timeout(d time.Duration) keel.Query[*conversation.Thread] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ThreadsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversation.Thread] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ThreadsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Thread] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ThreadsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversation.Thread] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ThreadsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversation.Thread] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ThreadsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*conversation.Thread] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ThreadsQuery) Cache(opts ...keel.CacheOption) keel.Query[*conversation.Thread] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ThreadsQuery) With(ctes ...*keel.CTETable) keel.Query[*conversation.Thread] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ThreadsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*conversation.Thread] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ThreadsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversation.Thread] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ThreadsQuery) Clone() keel.Query[*conversation.Thread] {
+	return &ThreadsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ThreadsQuery) One(ctx context.Context, db *keel.DB) (*conversation.Thread, error) {
+	return keel.One[*conversation.Thread](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ThreadsQuery) First(ctx context.Context, db *keel.DB) (*conversation.Thread, error) {
+	return keel.First[*conversation.Thread](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ThreadsQuery) List(ctx context.Context, db *keel.DB) ([]*conversation.Thread, error) {
+	return keel.List[*conversation.Thread](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ThreadsQuery) All(ctx context.Context, db *keel.DB) ([]*conversation.Thread, error) {
+	return keel.All[*conversation.Thread](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ThreadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversation.Thread, error) {
+	return keel.UpdateReturning[*conversation.Thread](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ThreadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversation.Thread], error) {
+	return keel.PageOf[*conversation.Thread](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ThreadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversation.Thread) error) error {
+	return keel.Each[*conversation.Thread](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newThread() unsafe.Pointer { return unsafe.Pointer(new(conversation.Thread)) }

@@ -78,8 +78,11 @@ func (h *Handler) dryRun(c *gin.Context) {
 	}
 	defer stream.Close()
 
+	watched, stopWatching := h.sessions.SessionContext(ctx, authctx.GetAuthContext(c).SessionID)
+	defer stopWatching()
+
 	sawTerminal := false
-	err = h.streams.Read(ctx, &assistantstreamports.ReadTurnStreamRequest{
+	err = h.streams.Read(watched, &assistantstreamports.ReadTurnStreamRequest{
 		Ref: assistantstreamports.TurnStreamRef{
 			TenantInfo: tenant,
 			TurnID:     runID,
@@ -93,7 +96,7 @@ func (h *Handler) dryRun(c *gin.Context) {
 			return nil
 		},
 	})
-	if ctx.Err() != nil && !sawTerminal {
+	if watched.Err() != nil && !sawTerminal {
 		// The person left. What is left of the run would be paid for and read
 		// by nobody.
 		if cancelErr := h.workflows.CancelWorkflow(

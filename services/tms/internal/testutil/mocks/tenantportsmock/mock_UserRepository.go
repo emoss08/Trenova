@@ -1203,20 +1203,29 @@ func (_c *MockUserRepository_UpdateLastLoginAt_Call) RunAndReturn(run func(ctx c
 }
 
 // UpdatePassword provides a mock function for the type MockUserRepository
-func (_mock *MockUserRepository) UpdatePassword(ctx context.Context, req tenantports.UpdateUserPasswordRequest) error {
+func (_mock *MockUserRepository) UpdatePassword(ctx context.Context, req tenantports.UpdateUserPasswordRequest) (int64, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdatePassword")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.UpdateUserPasswordRequest) error); ok {
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.UpdateUserPasswordRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.UpdateUserPasswordRequest) int64); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.UpdateUserPasswordRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockUserRepository_UpdatePassword_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePassword'
@@ -1226,7 +1235,7 @@ type MockUserRepository_UpdatePassword_Call struct {
 
 // UpdatePassword is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.UpdateUserPasswordRequest
+//   - req tenantports.UpdateUserPasswordRequest
 func (_e *MockUserRepository_Expecter) UpdatePassword(ctx any, req any) *MockUserRepository_UpdatePassword_Call {
 	return &MockUserRepository_UpdatePassword_Call{Call: _e.mock.On("UpdatePassword", ctx, req)}
 }
@@ -1249,12 +1258,135 @@ func (_c *MockUserRepository_UpdatePassword_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockUserRepository_UpdatePassword_Call) Return(err error) *MockUserRepository_UpdatePassword_Call {
+func (_c *MockUserRepository_UpdatePassword_Call) Return(n int64, err error) *MockUserRepository_UpdatePassword_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockUserRepository_UpdatePassword_Call) RunAndReturn(run func(ctx context.Context, req tenantports.UpdateUserPasswordRequest) (int64, error)) *MockUserRepository_UpdatePassword_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSessionEpoch provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) GetSessionEpoch(ctx context.Context, userID pulid.ID) (int64, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSessionEpoch")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (int64, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) int64); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockUserRepository_GetSessionEpoch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessionEpoch'
+type MockUserRepository_GetSessionEpoch_Call struct {
+	*mock.Call
+}
+
+// GetSessionEpoch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+func (_e *MockUserRepository_Expecter) GetSessionEpoch(ctx any, userID any) *MockUserRepository_GetSessionEpoch_Call {
+	return &MockUserRepository_GetSessionEpoch_Call{Call: _e.mock.On("GetSessionEpoch", ctx, userID)}
+}
+
+func (_c *MockUserRepository_GetSessionEpoch_Call) Run(run func(ctx context.Context, userID pulid.ID)) *MockUserRepository_GetSessionEpoch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_GetSessionEpoch_Call) Return(n int64, err error) *MockUserRepository_GetSessionEpoch_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockUserRepository_GetSessionEpoch_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID) (int64, error)) *MockUserRepository_GetSessionEpoch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AdvanceSessionEpoch provides a mock function for the type MockUserRepository
+func (_mock *MockUserRepository) AdvanceSessionEpoch(ctx context.Context, userID pulid.ID) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AdvanceSessionEpoch")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockUserRepository_AdvanceSessionEpoch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AdvanceSessionEpoch'
+type MockUserRepository_AdvanceSessionEpoch_Call struct {
+	*mock.Call
+}
+
+// AdvanceSessionEpoch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+func (_e *MockUserRepository_Expecter) AdvanceSessionEpoch(ctx any, userID any) *MockUserRepository_AdvanceSessionEpoch_Call {
+	return &MockUserRepository_AdvanceSessionEpoch_Call{Call: _e.mock.On("AdvanceSessionEpoch", ctx, userID)}
+}
+
+func (_c *MockUserRepository_AdvanceSessionEpoch_Call) Run(run func(ctx context.Context, userID pulid.ID)) *MockUserRepository_AdvanceSessionEpoch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_AdvanceSessionEpoch_Call) Return(err error) *MockUserRepository_AdvanceSessionEpoch_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockUserRepository_UpdatePassword_Call) RunAndReturn(run func(ctx context.Context, req tenantports.UpdateUserPasswordRequest) error) *MockUserRepository_UpdatePassword_Call {
+func (_c *MockUserRepository_AdvanceSessionEpoch_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID) error) *MockUserRepository_AdvanceSessionEpoch_Call {
 	_c.Call.Return(run)
 	return _c
 }

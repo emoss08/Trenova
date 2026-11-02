@@ -4,6 +4,7 @@ package agentruneventdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -62,7 +63,7 @@ var agentRunEventsRef = keel.Ref{Table: &agentRunEventsTable}
 
 // AgentRunEventsTable is the table of agentrunevent.AgentRunEvent.
 type AgentRunEventsTable struct {
-	keel.Handle[*agentrunevent.AgentRunEvent]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -82,7 +83,7 @@ type AgentRunEventsTable struct {
 
 // AgentRunEvents references the agent_run_events table.
 var AgentRunEvents = &AgentRunEventsTable{
-	Handle:         keel.Handle[*agentrunevent.AgentRunEvent]{Ref: &agentRunEventsRef},
+	TableBase:      keel.TableBase{Ref: &agentRunEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunEventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunEventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentRunEventsRef, Index: 2}}},
@@ -100,10 +101,10 @@ var AgentRunEvents = &AgentRunEventsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &agentRunEventsRef, Index: 14}},
 }
 
-// BuildAgentRunEvents builds the handle of agent_run_events for ref. Generated relation and alias methods call it.
+// BuildAgentRunEvents builds the table of agent_run_events for ref. Generated relation and alias methods call it.
 func BuildAgentRunEvents(r *keel.Ref) *AgentRunEventsTable {
 	return &AgentRunEventsTable{
-		Handle:         keel.Handle[*agentrunevent.AgentRunEvent]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -133,6 +134,365 @@ func (t *AgentRunEventsTable) As(alias string) *AgentRunEventsTable {
 // Get returns the agent_run_events row with the given key, or keel.ErrNotFound.
 func (t *AgentRunEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentrunevent.AgentRunEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AgentRunEventsQuery is a query over agentrunevent.AgentRunEvent.
+type AgentRunEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentrunevent.AgentRunEvent] = (*AgentRunEventsTable)(nil)
+
+var _ keel.Query[*agentrunevent.AgentRunEvent] = (*AgentRunEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AgentRunEventsTable) Query() keel.Query[*agentrunevent.AgentRunEvent] {
+	return &AgentRunEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AgentRunEventsQuery.Where.
+func (t *AgentRunEventsTable) Where(ps ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AgentRunEventsQuery.Pick.
+func (t *AgentRunEventsTable) Pick(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AgentRunEventsQuery.Load.
+func (t *AgentRunEventsTable) Load(ls ...keel.Loader) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AgentRunEventsQuery.Omit.
+func (t *AgentRunEventsTable) Omit(cols ...keel.Column) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AgentRunEventsQuery.Order.
+func (t *AgentRunEventsTable) Order(os ...keel.Order) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AgentRunEventsQuery.Limit.
+func (t *AgentRunEventsTable) Limit(n int) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AgentRunEventsQuery.Group.
+func (t *AgentRunEventsTable) Group(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AgentRunEventsQuery.GroupingSets.
+func (t *AgentRunEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AgentRunEventsQuery.Rollup.
+func (t *AgentRunEventsTable) Rollup(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AgentRunEventsQuery.Cube.
+func (t *AgentRunEventsTable) Cube(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AgentRunEventsQuery.AllTenants.
+func (t *AgentRunEventsTable) AllTenants() keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AgentRunEventsQuery.Join.
+func (t *AgentRunEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AgentRunEventsQuery.LeftJoin.
+func (t *AgentRunEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AgentRunEventsQuery.LeftJoinLateral.
+func (t *AgentRunEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AgentRunEventsQuery.JoinLateral.
+func (t *AgentRunEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AgentRunEventsQuery.Lock.
+func (t *AgentRunEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AgentRunEventsQuery.DistinctOn.
+func (t *AgentRunEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AgentRunEventsQuery.Cache.
+func (t *AgentRunEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AgentRunEventsQuery.LoadStrategy.
+func (t *AgentRunEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AgentRunEventsQuery.With.
+func (t *AgentRunEventsTable) With(ctes ...*keel.CTETable) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AgentRunEventsQuery.Compute.
+func (t *AgentRunEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AgentRunEventsTable) Create(ctx context.Context, db *keel.DB, row *agentrunevent.AgentRunEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AgentRunEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentrunevent.AgentRunEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AgentRunEventsTable) Save(ctx context.Context, db *keel.DB, row *agentrunevent.AgentRunEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AgentRunEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentrunevent.AgentRunEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AgentRunEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentrunevent.AgentRunEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AgentRunEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentrunevent.AgentRunEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AgentRunEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentrunevent.AgentRunEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AgentRunEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentrunevent.AgentRunEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AgentRunEventsQuery) Where(ps ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AgentRunEventsQuery) Pick(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AgentRunEventsQuery) Omit(cols ...keel.Column) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AgentRunEventsQuery) Load(ls ...keel.Loader) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AgentRunEventsQuery) Order(os ...keel.Order) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AgentRunEventsQuery) Distinct() keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AgentRunEventsQuery) Group(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AgentRunEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AgentRunEventsQuery) Rollup(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AgentRunEventsQuery) Cube(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AgentRunEventsQuery) Window(name string, w keel.Window) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AgentRunEventsQuery) Having(ps ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AgentRunEventsQuery) Limit(n int) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AgentRunEventsQuery) Offset(n int) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AgentRunEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AgentRunEventsQuery) AllTenants() keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AgentRunEventsQuery) CustomPlan() keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AgentRunEventsQuery) Timeout(d time.Duration) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AgentRunEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AgentRunEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AgentRunEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AgentRunEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AgentRunEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AgentRunEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AgentRunEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AgentRunEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AgentRunEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentrunevent.AgentRunEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AgentRunEventsQuery) Clone() keel.Query[*agentrunevent.AgentRunEvent] {
+	return &AgentRunEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AgentRunEventsQuery) One(ctx context.Context, db *keel.DB) (*agentrunevent.AgentRunEvent, error) {
+	return keel.One[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AgentRunEventsQuery) First(ctx context.Context, db *keel.DB) (*agentrunevent.AgentRunEvent, error) {
+	return keel.First[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AgentRunEventsQuery) List(ctx context.Context, db *keel.DB) ([]*agentrunevent.AgentRunEvent, error) {
+	return keel.List[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AgentRunEventsQuery) All(ctx context.Context, db *keel.DB) ([]*agentrunevent.AgentRunEvent, error) {
+	return keel.All[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AgentRunEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentrunevent.AgentRunEvent, error) {
+	return keel.UpdateReturning[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AgentRunEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentrunevent.AgentRunEvent], error) {
+	return keel.PageOf[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AgentRunEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentrunevent.AgentRunEvent) error) error {
+	return keel.Each[*agentrunevent.AgentRunEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAgentRunEvent() unsafe.Pointer { return unsafe.Pointer(new(agentrunevent.AgentRunEvent)) }

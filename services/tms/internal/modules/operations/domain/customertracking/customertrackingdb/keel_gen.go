@@ -4,6 +4,7 @@ package customertrackingdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -61,7 +62,7 @@ var linksRef = keel.Ref{Table: &linksTable}
 
 // LinksTable is the table of customertracking.Link.
 type LinksTable struct {
-	keel.Handle[*customertracking.Link]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -81,7 +82,7 @@ type LinksTable struct {
 
 // Links references the customer_tracking_links table.
 var Links = &LinksTable{
-	Handle:         keel.Handle[*customertracking.Link]{Ref: &linksRef},
+	TableBase:      keel.TableBase{Ref: &linksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &linksRef, Index: 2}}},
@@ -99,10 +100,10 @@ var Links = &LinksTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &linksRef, Index: 14}},
 }
 
-// BuildLinks builds the handle of customer_tracking_links for ref. Generated relation and alias methods call it.
+// BuildLinks builds the table of customer_tracking_links for ref. Generated relation and alias methods call it.
 func BuildLinks(r *keel.Ref) *LinksTable {
 	return &LinksTable{
-		Handle:         keel.Handle[*customertracking.Link]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -130,6 +131,365 @@ func (t *LinksTable) As(alias string) *LinksTable { return keel.Alias(t.Ref, ali
 // Get returns the customer_tracking_links row with the given key, or keel.ErrNotFound.
 func (t *LinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customertracking.Link, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// LinksQuery is a query over customertracking.Link.
+type LinksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customertracking.Link] = (*LinksTable)(nil)
+
+var _ keel.Query[*customertracking.Link] = (*LinksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *LinksTable) Query() keel.Query[*customertracking.Link] {
+	return &LinksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see LinksQuery.Where.
+func (t *LinksTable) Where(ps ...keel.Pred) keel.Query[*customertracking.Link] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see LinksQuery.Pick.
+func (t *LinksTable) Pick(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see LinksQuery.Load.
+func (t *LinksTable) Load(ls ...keel.Loader) keel.Query[*customertracking.Link] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see LinksQuery.Omit.
+func (t *LinksTable) Omit(cols ...keel.Column) keel.Query[*customertracking.Link] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see LinksQuery.Order.
+func (t *LinksTable) Order(os ...keel.Order) keel.Query[*customertracking.Link] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see LinksQuery.Limit.
+func (t *LinksTable) Limit(n int) keel.Query[*customertracking.Link] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see LinksQuery.Group.
+func (t *LinksTable) Group(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see LinksQuery.GroupingSets.
+func (t *LinksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see LinksQuery.Rollup.
+func (t *LinksTable) Rollup(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see LinksQuery.Cube.
+func (t *LinksTable) Cube(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see LinksQuery.AllTenants.
+func (t *LinksTable) AllTenants() keel.Query[*customertracking.Link] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see LinksQuery.Join.
+func (t *LinksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Link] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see LinksQuery.LeftJoin.
+func (t *LinksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Link] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see LinksQuery.LeftJoinLateral.
+func (t *LinksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Link] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see LinksQuery.JoinLateral.
+func (t *LinksTable) JoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Link] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see LinksQuery.Lock.
+func (t *LinksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customertracking.Link] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see LinksQuery.DistinctOn.
+func (t *LinksTable) DistinctOn(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see LinksQuery.Cache.
+func (t *LinksTable) Cache(opts ...keel.CacheOption) keel.Query[*customertracking.Link] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see LinksQuery.LoadStrategy.
+func (t *LinksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customertracking.Link] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see LinksQuery.With.
+func (t *LinksTable) With(ctes ...*keel.CTETable) keel.Query[*customertracking.Link] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see LinksQuery.Compute.
+func (t *LinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customertracking.Link] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *LinksTable) Create(ctx context.Context, db *keel.DB, row *customertracking.Link) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *LinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customertracking.Link) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *LinksTable) Save(ctx context.Context, db *keel.DB, row *customertracking.Link, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *LinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *customertracking.Link, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *LinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *customertracking.Link) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *LinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*customertracking.Link, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *LinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customertracking.Link, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *LinksTable) Copy(ctx context.Context, db *keel.DB, rows []*customertracking.Link) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *LinksQuery) Where(ps ...keel.Pred) keel.Query[*customertracking.Link] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *LinksQuery) Pick(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *LinksQuery) Omit(cols ...keel.Column) keel.Query[*customertracking.Link] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *LinksQuery) Load(ls ...keel.Loader) keel.Query[*customertracking.Link] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *LinksQuery) Order(os ...keel.Order) keel.Query[*customertracking.Link] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *LinksQuery) Distinct() keel.Query[*customertracking.Link] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *LinksQuery) Group(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *LinksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *LinksQuery) Rollup(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *LinksQuery) Cube(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *LinksQuery) Window(name string, w keel.Window) keel.Query[*customertracking.Link] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *LinksQuery) Having(ps ...keel.Pred) keel.Query[*customertracking.Link] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *LinksQuery) Limit(n int) keel.Query[*customertracking.Link] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *LinksQuery) Offset(n int) keel.Query[*customertracking.Link] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *LinksQuery) DistinctOn(es ...keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *LinksQuery) AllTenants() keel.Query[*customertracking.Link] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *LinksQuery) CustomPlan() keel.Query[*customertracking.Link] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *LinksQuery) Timeout(d time.Duration) keel.Query[*customertracking.Link] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *LinksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customertracking.Link] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *LinksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Link] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *LinksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Link] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *LinksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Link] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *LinksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Link] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *LinksQuery) Cache(opts ...keel.CacheOption) keel.Query[*customertracking.Link] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *LinksQuery) With(ctes ...*keel.CTETable) keel.Query[*customertracking.Link] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *LinksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customertracking.Link] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *LinksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customertracking.Link] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *LinksQuery) Clone() keel.Query[*customertracking.Link] {
+	return &LinksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *LinksQuery) One(ctx context.Context, db *keel.DB) (*customertracking.Link, error) {
+	return keel.One[*customertracking.Link](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *LinksQuery) First(ctx context.Context, db *keel.DB) (*customertracking.Link, error) {
+	return keel.First[*customertracking.Link](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *LinksQuery) List(ctx context.Context, db *keel.DB) ([]*customertracking.Link, error) {
+	return keel.List[*customertracking.Link](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *LinksQuery) All(ctx context.Context, db *keel.DB) ([]*customertracking.Link, error) {
+	return keel.All[*customertracking.Link](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *LinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customertracking.Link, error) {
+	return keel.UpdateReturning[*customertracking.Link](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *LinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customertracking.Link], error) {
+	return keel.PageOf[*customertracking.Link](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *LinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customertracking.Link) error) error {
+	return keel.Each[*customertracking.Link](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newLink() unsafe.Pointer { return unsafe.Pointer(new(customertracking.Link)) }
@@ -279,7 +639,7 @@ var notificationsRef = keel.Ref{Table: &notificationsTable}
 
 // NotificationsTable is the table of customertracking.Notification.
 type NotificationsTable struct {
-	keel.Handle[*customertracking.Notification]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -305,7 +665,7 @@ type NotificationsTable struct {
 
 // Notifications references the customer_status_notifications table.
 var Notifications = &NotificationsTable{
-	Handle:         keel.Handle[*customertracking.Notification]{Ref: &notificationsRef},
+	TableBase:      keel.TableBase{Ref: &notificationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 2}}},
@@ -329,10 +689,10 @@ var Notifications = &NotificationsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 20}},
 }
 
-// BuildNotifications builds the handle of customer_status_notifications for ref. Generated relation and alias methods call it.
+// BuildNotifications builds the table of customer_status_notifications for ref. Generated relation and alias methods call it.
 func BuildNotifications(r *keel.Ref) *NotificationsTable {
 	return &NotificationsTable{
-		Handle:         keel.Handle[*customertracking.Notification]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -368,6 +728,365 @@ func (t *NotificationsTable) As(alias string) *NotificationsTable {
 // Get returns the customer_status_notifications row with the given key, or keel.ErrNotFound.
 func (t *NotificationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customertracking.Notification, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// NotificationsQuery is a query over customertracking.Notification.
+type NotificationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customertracking.Notification] = (*NotificationsTable)(nil)
+
+var _ keel.Query[*customertracking.Notification] = (*NotificationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *NotificationsTable) Query() keel.Query[*customertracking.Notification] {
+	return &NotificationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see NotificationsQuery.Where.
+func (t *NotificationsTable) Where(ps ...keel.Pred) keel.Query[*customertracking.Notification] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see NotificationsQuery.Pick.
+func (t *NotificationsTable) Pick(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see NotificationsQuery.Load.
+func (t *NotificationsTable) Load(ls ...keel.Loader) keel.Query[*customertracking.Notification] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see NotificationsQuery.Omit.
+func (t *NotificationsTable) Omit(cols ...keel.Column) keel.Query[*customertracking.Notification] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see NotificationsQuery.Order.
+func (t *NotificationsTable) Order(os ...keel.Order) keel.Query[*customertracking.Notification] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see NotificationsQuery.Limit.
+func (t *NotificationsTable) Limit(n int) keel.Query[*customertracking.Notification] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see NotificationsQuery.Group.
+func (t *NotificationsTable) Group(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see NotificationsQuery.GroupingSets.
+func (t *NotificationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see NotificationsQuery.Rollup.
+func (t *NotificationsTable) Rollup(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see NotificationsQuery.Cube.
+func (t *NotificationsTable) Cube(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see NotificationsQuery.AllTenants.
+func (t *NotificationsTable) AllTenants() keel.Query[*customertracking.Notification] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see NotificationsQuery.Join.
+func (t *NotificationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Notification] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see NotificationsQuery.LeftJoin.
+func (t *NotificationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Notification] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see NotificationsQuery.LeftJoinLateral.
+func (t *NotificationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Notification] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see NotificationsQuery.JoinLateral.
+func (t *NotificationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Notification] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see NotificationsQuery.Lock.
+func (t *NotificationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customertracking.Notification] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see NotificationsQuery.DistinctOn.
+func (t *NotificationsTable) DistinctOn(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see NotificationsQuery.Cache.
+func (t *NotificationsTable) Cache(opts ...keel.CacheOption) keel.Query[*customertracking.Notification] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see NotificationsQuery.LoadStrategy.
+func (t *NotificationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customertracking.Notification] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see NotificationsQuery.With.
+func (t *NotificationsTable) With(ctes ...*keel.CTETable) keel.Query[*customertracking.Notification] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see NotificationsQuery.Compute.
+func (t *NotificationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customertracking.Notification] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *NotificationsTable) Create(ctx context.Context, db *keel.DB, row *customertracking.Notification) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *NotificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customertracking.Notification) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *NotificationsTable) Save(ctx context.Context, db *keel.DB, row *customertracking.Notification, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *NotificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customertracking.Notification, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *NotificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customertracking.Notification) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *NotificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customertracking.Notification, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *NotificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customertracking.Notification, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *NotificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*customertracking.Notification) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *NotificationsQuery) Where(ps ...keel.Pred) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *NotificationsQuery) Pick(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *NotificationsQuery) Omit(cols ...keel.Column) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *NotificationsQuery) Load(ls ...keel.Loader) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *NotificationsQuery) Order(os ...keel.Order) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *NotificationsQuery) Distinct() keel.Query[*customertracking.Notification] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *NotificationsQuery) Group(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *NotificationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *NotificationsQuery) Rollup(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *NotificationsQuery) Cube(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *NotificationsQuery) Window(name string, w keel.Window) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *NotificationsQuery) Having(ps ...keel.Pred) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *NotificationsQuery) Limit(n int) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *NotificationsQuery) Offset(n int) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *NotificationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *NotificationsQuery) AllTenants() keel.Query[*customertracking.Notification] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *NotificationsQuery) CustomPlan() keel.Query[*customertracking.Notification] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *NotificationsQuery) Timeout(d time.Duration) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *NotificationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *NotificationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *NotificationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customertracking.Notification] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *NotificationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Notification] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *NotificationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customertracking.Notification] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *NotificationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *NotificationsQuery) With(ctes ...*keel.CTETable) keel.Query[*customertracking.Notification] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *NotificationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customertracking.Notification] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *NotificationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customertracking.Notification] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *NotificationsQuery) Clone() keel.Query[*customertracking.Notification] {
+	return &NotificationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *NotificationsQuery) One(ctx context.Context, db *keel.DB) (*customertracking.Notification, error) {
+	return keel.One[*customertracking.Notification](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *NotificationsQuery) First(ctx context.Context, db *keel.DB) (*customertracking.Notification, error) {
+	return keel.First[*customertracking.Notification](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *NotificationsQuery) List(ctx context.Context, db *keel.DB) ([]*customertracking.Notification, error) {
+	return keel.List[*customertracking.Notification](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *NotificationsQuery) All(ctx context.Context, db *keel.DB) ([]*customertracking.Notification, error) {
+	return keel.All[*customertracking.Notification](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *NotificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customertracking.Notification, error) {
+	return keel.UpdateReturning[*customertracking.Notification](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *NotificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customertracking.Notification], error) {
+	return keel.PageOf[*customertracking.Notification](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *NotificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customertracking.Notification) error) error {
+	return keel.Each[*customertracking.Notification](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newNotification() unsafe.Pointer { return unsafe.Pointer(new(customertracking.Notification)) }

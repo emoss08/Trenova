@@ -52,21 +52,21 @@ func New(p Params) assignmentports.AssignmentRepository {
 
 type assignmentQuery = keel.Query[*shipment.Assignment]
 
-func liveAssignments() *assignmentQuery {
+func liveAssignments() assignmentQuery {
 	a := shipmentdb.Assignments
 	return a.Where(a.ArchivedAt.IsNull())
 }
 
-func liveOnMove(moveID pulid.ID) *assignmentQuery {
+func liveOnMove(moveID pulid.ID) assignmentQuery {
 	return liveAssignments().Where(shipmentdb.Assignments.ShipmentMoveID.Eq(moveID))
 }
 
-func unassignable(entity *shipment.Assignment) *assignmentQuery {
+func unassignable(entity *shipment.Assignment) assignmentQuery {
 	a := shipmentdb.Assignments
 	return liveAssignments().Where(a.ID.Eq(entity.ID), a.Version.Eq(entity.Version))
 }
 
-func withResources(q *assignmentQuery) *assignmentQuery {
+func withResources(q assignmentQuery) assignmentQuery {
 	a := shipmentdb.Assignments
 	return q.Load(
 		a.ShipmentMove(),
@@ -388,7 +388,7 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 	stopEvents := func(
 		at func(*shipmentdb.StopsTable) keel.Int64Col,
 		kind assignmentports.ActualTimelineEventType,
-	) *keel.Query[*shipment.Assignment] {
+	) keel.Query[*shipment.Assignment] {
 		a := shipmentdb.Assignments
 		sm := shipmentdb.ShipmentMoves
 		st := shipmentdb.Stops

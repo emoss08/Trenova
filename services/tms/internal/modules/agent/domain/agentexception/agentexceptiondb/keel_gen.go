@@ -4,6 +4,7 @@ package agentexceptiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -68,7 +69,7 @@ var agentExceptionsRef = keel.Ref{Table: &agentExceptionsTable}
 
 // AgentExceptionsTable is the table of agentexception.AgentException.
 type AgentExceptionsTable struct {
-	keel.Handle[*agentexception.AgentException]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -89,7 +90,7 @@ type AgentExceptionsTable struct {
 
 // AgentExceptions references the agent_exceptions table.
 var AgentExceptions = &AgentExceptionsTable{
-	Handle:          keel.Handle[*agentexception.AgentException]{Ref: &agentExceptionsRef},
+	TableBase:       keel.TableBase{Ref: &agentExceptionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 2}}},
@@ -108,10 +109,10 @@ var AgentExceptions = &AgentExceptionsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &agentExceptionsRef, Index: 15}},
 }
 
-// BuildAgentExceptions builds the handle of agent_exceptions for ref. Generated relation and alias methods call it.
+// BuildAgentExceptions builds the table of agent_exceptions for ref. Generated relation and alias methods call it.
 func BuildAgentExceptions(r *keel.Ref) *AgentExceptionsTable {
 	return &AgentExceptionsTable{
-		Handle:          keel.Handle[*agentexception.AgentException]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -147,6 +148,365 @@ func (t *AgentExceptionsTable) Run() *agentdb.AgentRunsTable {
 // Get returns the agent_exceptions row with the given key, or keel.ErrNotFound.
 func (t *AgentExceptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentexception.AgentException, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AgentExceptionsQuery is a query over agentexception.AgentException.
+type AgentExceptionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentexception.AgentException] = (*AgentExceptionsTable)(nil)
+
+var _ keel.Query[*agentexception.AgentException] = (*AgentExceptionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AgentExceptionsTable) Query() keel.Query[*agentexception.AgentException] {
+	return &AgentExceptionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AgentExceptionsQuery.Where.
+func (t *AgentExceptionsTable) Where(ps ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AgentExceptionsQuery.Pick.
+func (t *AgentExceptionsTable) Pick(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AgentExceptionsQuery.Load.
+func (t *AgentExceptionsTable) Load(ls ...keel.Loader) keel.Query[*agentexception.AgentException] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AgentExceptionsQuery.Omit.
+func (t *AgentExceptionsTable) Omit(cols ...keel.Column) keel.Query[*agentexception.AgentException] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AgentExceptionsQuery.Order.
+func (t *AgentExceptionsTable) Order(os ...keel.Order) keel.Query[*agentexception.AgentException] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AgentExceptionsQuery.Limit.
+func (t *AgentExceptionsTable) Limit(n int) keel.Query[*agentexception.AgentException] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AgentExceptionsQuery.Group.
+func (t *AgentExceptionsTable) Group(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AgentExceptionsQuery.GroupingSets.
+func (t *AgentExceptionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AgentExceptionsQuery.Rollup.
+func (t *AgentExceptionsTable) Rollup(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AgentExceptionsQuery.Cube.
+func (t *AgentExceptionsTable) Cube(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AgentExceptionsQuery.AllTenants.
+func (t *AgentExceptionsTable) AllTenants() keel.Query[*agentexception.AgentException] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AgentExceptionsQuery.Join.
+func (t *AgentExceptionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AgentExceptionsQuery.LeftJoin.
+func (t *AgentExceptionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AgentExceptionsQuery.LeftJoinLateral.
+func (t *AgentExceptionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentexception.AgentException] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AgentExceptionsQuery.JoinLateral.
+func (t *AgentExceptionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentexception.AgentException] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AgentExceptionsQuery.Lock.
+func (t *AgentExceptionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentexception.AgentException] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AgentExceptionsQuery.DistinctOn.
+func (t *AgentExceptionsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AgentExceptionsQuery.Cache.
+func (t *AgentExceptionsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentexception.AgentException] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AgentExceptionsQuery.LoadStrategy.
+func (t *AgentExceptionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentexception.AgentException] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AgentExceptionsQuery.With.
+func (t *AgentExceptionsTable) With(ctes ...*keel.CTETable) keel.Query[*agentexception.AgentException] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AgentExceptionsQuery.Compute.
+func (t *AgentExceptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentexception.AgentException] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AgentExceptionsTable) Create(ctx context.Context, db *keel.DB, row *agentexception.AgentException) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AgentExceptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AgentExceptionsTable) Save(ctx context.Context, db *keel.DB, row *agentexception.AgentException, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AgentExceptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentexception.AgentException, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AgentExceptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentexception.AgentException) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AgentExceptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AgentExceptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AgentExceptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AgentExceptionsQuery) Where(ps ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AgentExceptionsQuery) Pick(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AgentExceptionsQuery) Omit(cols ...keel.Column) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AgentExceptionsQuery) Load(ls ...keel.Loader) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AgentExceptionsQuery) Order(os ...keel.Order) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AgentExceptionsQuery) Distinct() keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AgentExceptionsQuery) Group(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AgentExceptionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AgentExceptionsQuery) Rollup(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AgentExceptionsQuery) Cube(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AgentExceptionsQuery) Window(name string, w keel.Window) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AgentExceptionsQuery) Having(ps ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AgentExceptionsQuery) Limit(n int) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AgentExceptionsQuery) Offset(n int) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AgentExceptionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AgentExceptionsQuery) AllTenants() keel.Query[*agentexception.AgentException] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AgentExceptionsQuery) CustomPlan() keel.Query[*agentexception.AgentException] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AgentExceptionsQuery) Timeout(d time.Duration) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AgentExceptionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AgentExceptionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AgentExceptionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AgentExceptionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AgentExceptionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AgentExceptionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AgentExceptionsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AgentExceptionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AgentExceptionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentexception.AgentException] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AgentExceptionsQuery) Clone() keel.Query[*agentexception.AgentException] {
+	return &AgentExceptionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AgentExceptionsQuery) One(ctx context.Context, db *keel.DB) (*agentexception.AgentException, error) {
+	return keel.One[*agentexception.AgentException](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AgentExceptionsQuery) First(ctx context.Context, db *keel.DB) (*agentexception.AgentException, error) {
+	return keel.First[*agentexception.AgentException](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AgentExceptionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentexception.AgentException, error) {
+	return keel.List[*agentexception.AgentException](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AgentExceptionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentexception.AgentException, error) {
+	return keel.All[*agentexception.AgentException](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AgentExceptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentexception.AgentException, error) {
+	return keel.UpdateReturning[*agentexception.AgentException](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AgentExceptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentexception.AgentException], error) {
+	return keel.PageOf[*agentexception.AgentException](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AgentExceptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentexception.AgentException) error) error {
+	return keel.Each[*agentexception.AgentException](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAgentException() unsafe.Pointer { return unsafe.Pointer(new(agentexception.AgentException)) }

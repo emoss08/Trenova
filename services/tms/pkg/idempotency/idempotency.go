@@ -6,8 +6,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"hash"
-	"io"
 
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -34,14 +34,12 @@ type Hasher struct {
 }
 
 func NewHasher(secret string) Hasher {
-	mac := hmac.New(sha256.New, []byte(secret))
-	_, _ = io.WriteString(mac, keyDerivationLabel)
-	return Hasher{key: mac.Sum(nil)}
+	return Hasher{key: hashutils.DeriveKey(secret, keyDerivationLabel)}
 }
 
 func (h Hasher) ScopedKey(scope Scope, clientKey string) string {
 	mac := h.mac()
-	writeParts(
+	hashutils.WriteParts(
 		mac,
 		scope.OrganizationID.String(),
 		scope.BusinessUnitID.String(),
@@ -54,7 +52,7 @@ func (h Hasher) ScopedKey(scope Scope, clientKey string) string {
 
 func (h Hasher) Fingerprint(method, target string, body []byte) string {
 	mac := h.mac()
-	writeParts(mac, method, target)
+	hashutils.WriteParts(mac, method, target)
 	_, _ = mac.Write(separator)
 	_, _ = mac.Write(body)
 	return hex.EncodeToString(mac.Sum(nil))
@@ -92,12 +90,3 @@ func ValidClientKey(key string) bool {
 }
 
 var separator = []byte{0}
-
-func writeParts(w io.Writer, parts ...string) {
-	for i, part := range parts {
-		if i > 0 {
-			_, _ = w.Write(separator)
-		}
-		_, _ = io.WriteString(w, part)
-	}
-}

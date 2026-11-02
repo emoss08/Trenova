@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -18,9 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -61,6 +65,7 @@ func setupTest(t *testing.T) *testDeps {
 		repo:         repo,
 		roleRepo:     roleRepo,
 		sr:           sessionRepo,
+		rotator:      sessiontest.Rotator(sessionRepo),
 		auditService: auditSvc,
 		realtime:     &mocks.NoopRealtimeService{},
 		storage:      storageClient,
@@ -379,6 +384,7 @@ func TestSwitchOrganization_Success(t *testing.T) {
 
 	req := tenantports.SwitchOrganizationRequest{
 		SessionID:      sessionID,
+		SecretHash:     "old-secret-hash",
 		OrganizationID: targetOrgID,
 	}
 
@@ -400,7 +406,12 @@ func TestSwitchOrganization_Success(t *testing.T) {
 	deps.repo.On("GetOrganizations", mock.Anything, userID).Return(memberships, nil)
 	deps.repo.On("UpdateCurrentOrganization", mock.Anything, userID, targetOrgID, targetBuID).
 		Return(nil)
-	deps.sessionRepo.On("Update", mock.Anything, mock.Anything).Return(nil)
+	stored := *sess
+	stored.SecretHash = "old-secret-hash"
+	stored.ActiveRoleIDs = []pulid.ID{pulid.MustNew("rol_")}
+	deps.sessionRepo.EXPECT().Update(mock.Anything, sessionID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&stored)).
+		Once()
 	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
 		TenantInfo: pagination.TenantInfo{
 			UserID: userID,
@@ -413,8 +424,15 @@ func TestSwitchOrganization_Success(t *testing.T) {
 	result, err := deps.svc.SwitchOrganization(ctx, req)
 
 	require.NoError(t, err)
-	assert.Equal(t, userID, result.ID)
-	assert.Equal(t, targetOrgID, result.CurrentOrganizationID)
+	assert.Equal(t, userID, result.User.ID)
+	assert.Equal(t, targetOrgID, result.User.CurrentOrganizationID)
+	_, secret, err := sessiontoken.Parse(result.SessionToken)
+	require.NoError(t, err)
+	assert.True(t, sessiontest.Tokens().Matches(sessionID, userID, secret, stored.SecretHash))
+	assert.Equal(t, "old-secret-hash", stored.PreviousSecretHash)
+	assert.Equal(t, targetOrgID, stored.OrganizationID)
+	assert.Equal(t, targetBuID, stored.BusinessUnitID)
+	assert.Empty(t, stored.ActiveRoleIDs)
 	deps.sessionRepo.AssertExpectations(t)
 	deps.repo.AssertExpectations(t)
 }
@@ -542,12 +560,18 @@ func TestUpdateMySettings_Success(t *testing.T) {
 	deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
 }
 
-func TestChangeMyPassword_Success(t *testing.T) {
-	t.Parallel()
+type passwordChangeFixture struct {
+	deps       *testDeps
+	user       *tenant.User
+	tenantInfo pagination.TenantInfo
+	current    *session.Session
+	other      *session.Session
+}
+
+func setupPasswordChange(t *testing.T) *passwordChangeFixture {
+	t.Helper()
 
 	deps := setupTest(t)
-	deps.expectAuditLog()
-	ctx := t.Context()
 	user := newTestUserWithPassword(t, "current-password")
 	user.MustChangePassword = true
 	tenantInfo := pagination.TenantInfo{
@@ -567,24 +591,206 @@ func TestChangeMyPassword_Success(t *testing.T) {
 			req.Password != "" &&
 			req.Password != "new-password"
 	})).
-		Return(nil).
+		Return(int64(4), nil).
 		Once()
-	deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
-		TenantInfo:         tenantInfo,
-		IncludeMemberships: true,
-	}).Return(user, nil).Once()
 
-	result, err := deps.svc.ChangeMyPassword(ctx, tenantInfo, ChangeMyPasswordRequest{
+	return &passwordChangeFixture{
+		deps:       deps,
+		user:       user,
+		tenantInfo: tenantInfo,
+		current: &session.Session{
+			ID:                 pulid.MustNew("ses_"),
+			UserID:             user.ID,
+			SecretHash:         "old-secret-hash",
+			MustChangePassword: true,
+			ExpiresAt:          1_900_000_000,
+		},
+		other: &session.Session{ID: pulid.MustNew("ses_"), UserID: user.ID},
+	}
+}
+
+func (f *passwordChangeFixture) expectCompletion() {
+	f.deps.expectAuditLog()
+	f.deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
+		TenantInfo:         f.tenantInfo,
+		IncludeMemberships: true,
+	}).Return(f.user, nil).Once()
+}
+
+func (f *passwordChangeFixture) change(
+	t *testing.T,
+	currentSessionID pulid.ID,
+) (*SessionChangeResult, error) {
+	t.Helper()
+
+	return f.deps.svc.ChangeMyPassword(t.Context(), &SessionScope{
+		TenantInfo:        f.tenantInfo,
+		CurrentSessionID:  currentSessionID,
+		CurrentSecretHash: f.current.SecretHash,
+	}, ChangeMyPasswordRequest{
 		CurrentPassword: "current-password",
 		NewPassword:     "new-password",
 		ConfirmPassword: "new-password",
 	})
+}
+
+func TestChangeMyPassword_EndsOtherSessionsAndRotatesTheCurrentOne(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.expectCompletion()
+	events := &recordedEvents{}
+	f.deps.svc.authEvents = events
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{f.current, f.other}, nil).
+		Once()
+	f.deps.sessionRepo.EXPECT().Delete(mock.Anything, f.other.ID).Return(nil).Once()
+	stored := *f.current
+	f.deps.sessionRepo.EXPECT().Update(mock.Anything, f.current.ID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&stored)).
+		Once()
+
+	result, err := f.change(t, f.current.ID)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, user.ID, result.ID)
-	deps.repo.AssertExpectations(t)
-	deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	assert.Equal(t, f.user.ID, result.User.ID)
+	assert.Equal(t, f.current.ExpiresAt, result.ExpiresAt)
+	sessionID, secret, err := sessiontoken.Parse(result.SessionToken)
+	require.NoError(t, err)
+	assert.Equal(t, f.current.ID, sessionID)
+	assert.True(t, sessiontest.Tokens().Matches(f.current.ID, f.user.ID, secret, stored.SecretHash))
+	assert.NotEqual(t, f.current.SecretHash, stored.SecretHash)
+	assert.False(t, stored.MustChangePassword)
+	assert.Equal(t, int64(4), stored.SessionEpoch)
+	f.deps.sessionRepo.AssertNotCalled(t, "Delete", mock.Anything, f.current.ID)
+	require.Len(t, events.records, 1)
+	assert.Equal(t, iamports.AuthEventProviderSessionRevoked, events.records[0].Provider)
+	assert.Equal(t, iamports.SessionRevocationPasswordChange, events.records[0].MFAState)
+}
+
+func TestChangeMyPassword_RefusesSessionsOfAnotherUser(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{f.current}, nil).
+		Once()
+	foreign := *f.current
+	foreign.UserID = pulid.MustNew("usr_")
+	f.deps.sessionRepo.EXPECT().Update(mock.Anything, f.current.ID, mock.Anything).
+		RunAndReturn(sessiontest.UpdateStored(&foreign)).
+		Once()
+	f.expectCompletion()
+
+	result, err := f.change(t, f.current.ID)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.SessionToken)
+	assert.Equal(t, "old-secret-hash", foreign.SecretHash)
+}
+
+func TestChangeMyPassword_EndsEverySessionWhenAnotherCannotBeEnded(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.expectCompletion()
+	events := &recordedEvents{}
+	f.deps.svc.authEvents = events
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{f.current, f.other}, nil).
+		Once()
+	f.deps.sessionRepo.EXPECT().Delete(mock.Anything, f.other.ID).
+		Return(errors.New("redis unavailable")).
+		Once()
+	f.deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, f.user.ID).Return(nil).Once()
+
+	result, err := f.change(t, f.current.ID)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.SessionToken)
+	f.deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+	f.deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	require.Len(t, events.records, 1)
+	assert.Equal(t, iamports.SessionRevocationPasswordChange, events.records[0].MFAState)
+}
+
+func TestChangeMyPassword_EndsEverySessionWhenTheRotationFails(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.expectCompletion()
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{f.current}, nil).
+		Once()
+	f.deps.sessionRepo.EXPECT().Update(mock.Anything, f.current.ID, mock.Anything).
+		Return(nil, errors.New("redis unavailable")).
+		Once()
+	f.deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, f.user.ID).Return(nil).Once()
+
+	result, err := f.change(t, f.current.ID)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.SessionToken)
+}
+
+func TestChangeMyPassword_AuditsTheChangeEvenWhenNoSessionCanBeEnded(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.deps.expectAuditLog()
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return(nil, errors.New("redis unavailable")).
+		Once()
+	f.deps.sessionRepo.EXPECT().DeleteAllForUser(mock.Anything, f.user.ID).
+		Return(errors.New("redis unavailable")).
+		Once()
+
+	result, err := f.change(t, f.current.ID)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	f.deps.audit.AssertCalled(t, "LogAction", mock.Anything, mock.Anything)
+	f.deps.repo.AssertNotCalled(t, "GetByID", mock.Anything, tenantports.GetUserByIDRequest{
+		TenantInfo:         f.tenantInfo,
+		IncludeMemberships: true,
+	})
+}
+
+func TestChangeMyPassword_WithoutASessionEndsEverySessionAndIssuesNoToken(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.expectCompletion()
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{f.current, f.other}, nil).
+		Once()
+	f.deps.sessionRepo.EXPECT().Delete(mock.Anything, f.current.ID).Return(nil).Once()
+	f.deps.sessionRepo.EXPECT().Delete(mock.Anything, f.other.ID).Return(nil).Once()
+
+	result, err := f.change(t, pulid.Nil)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.SessionToken)
+	f.deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestChangeMyPassword_IssuesNoTokenWhenTheCurrentSessionHasEnded(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.expectCompletion()
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{}, nil).
+		Once()
+	f.deps.sessionRepo.EXPECT().Update(mock.Anything, f.current.ID, mock.Anything).
+		Return(nil, sessionports.ErrSessionNotFound).
+		Once()
+
+	result, err := f.change(t, f.current.ID)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.SessionToken)
 }
 
 func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
@@ -603,11 +809,15 @@ func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
 		TenantInfo: tenantInfo,
 	}).Return(user, nil).Once()
 
-	result, err := deps.svc.ChangeMyPassword(ctx, tenantInfo, ChangeMyPasswordRequest{
-		CurrentPassword: "wrong-password",
-		NewPassword:     "new-password",
-		ConfirmPassword: "new-password",
-	})
+	result, err := deps.svc.ChangeMyPassword(
+		ctx,
+		&SessionScope{TenantInfo: tenantInfo},
+		ChangeMyPasswordRequest{
+			CurrentPassword: "wrong-password",
+			NewPassword:     "new-password",
+			ConfirmPassword: "new-password",
+		},
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
@@ -622,7 +832,7 @@ func TestChangeMyPassword_ValidationFailure(t *testing.T) {
 
 	result, err := deps.svc.ChangeMyPassword(
 		t.Context(),
-		pagination.TenantInfo{},
+		&SessionScope{},
 		ChangeMyPasswordRequest{
 			CurrentPassword: "same-password",
 			NewPassword:     "same-password",
@@ -700,7 +910,7 @@ func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {
 
 			result, err := deps.svc.ChangeMyPassword(
 				t.Context(),
-				tenantInfo,
+				&SessionScope{TenantInfo: tenantInfo},
 				ChangeMyPasswordRequest{
 					CurrentPassword: "current-password",
 					NewPassword:     newPassword,
@@ -716,4 +926,22 @@ func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {
 			deps.repo.AssertNotCalled(t, "UpdatePassword", mock.Anything, mock.Anything)
 		})
 	}
+}
+
+func TestChangeMyPassword_KeepsTheCurrentCookieWorkingWhenTheAuditFails(t *testing.T) {
+	t.Parallel()
+
+	f := setupPasswordChange(t)
+	f.deps.audit.On("LogAction", mock.Anything, mock.Anything).
+		Return(errors.New("audit unavailable"))
+	f.deps.sessionRepo.EXPECT().ListForUser(mock.Anything, f.user.ID).
+		Return([]*session.Session{f.current, f.other}, nil).
+		Once()
+	f.deps.sessionRepo.EXPECT().Delete(mock.Anything, f.other.ID).Return(nil).Once()
+
+	result, err := f.change(t, f.current.ID)
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	f.deps.sessionRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
 }

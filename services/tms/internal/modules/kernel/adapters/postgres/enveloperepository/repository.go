@@ -52,7 +52,7 @@ type envelopeRecord struct {
 
 type source struct {
 	name       string
-	table      keel.Handle[*keel.Row]
+	table      keel.TableBase
 	id         keel.StringCol
 	org        keel.Col
 	bu         *keel.Col
@@ -100,7 +100,7 @@ func (r *repository) Present(
 			return false, err
 		}
 
-		present, err := src.table.Where(src.matches(row)...).Exists(ctx, r.db.Keel(ctx))
+		present, err := keel.RowsOf(src.table.Ref).Where(src.matches(row)...).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check %s: %w", src.name, err)
 		}
@@ -121,7 +121,7 @@ func (r *repository) Swap(ctx context.Context, req *kernelports.SwapEnvelopeRequ
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{src.value.ToExpr(replacement)})
-		affected, err := src.table.Where(src.matches(req.Row)...).
+		affected, err := keel.RowsOf(src.table.Ref).Where(src.matches(req.Row)...).
 			Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return false, fmt.Errorf("rewrap %s: %w", src.name, err)
@@ -155,7 +155,7 @@ func (r *repository) SwapVersion(
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{set})
-		if _, err = src.table.Where(slices.Concat(src.matches(req.Row), []keel.Pred{expected})...).
+		if _, err = keel.RowsOf(src.table.Ref).Where(slices.Concat(src.matches(req.Row), []keel.Pred{expected})...).
 			Update(ctx, r.db.Keel(ctx), sets...); err != nil {
 			return fmt.Errorf("record the rewrapped version of %s: %w", src.name, err)
 		}
@@ -175,7 +175,7 @@ func resolve(col *kernelports.EnvelopeColumn) (*source, error) {
 	ref := &keel.Ref{Table: table}
 	src := &source{
 		name:  col.Name,
-		table: keel.Handle[*keel.Row]{Ref: ref},
+		table: keel.TableBase{Ref: ref},
 		value: keel.Col{Ref: ref, Index: valueIndex},
 	}
 
@@ -238,13 +238,13 @@ func (s *source) column(e keel.Expr) (keel.Col, error) {
 	return keel.Col{Ref: s.table.Ref, Index: index}, nil
 }
 
-func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query[*keel.Row] {
+func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) keel.Query[*keel.Row] {
 	bu := keel.Text(req.Tenant.BuID.String())
 	if s.bu != nil {
 		bu = keel.CastText(*s.bu)
 	}
 
-	return s.table.Pick(
+	return keel.RowsOf(s.table.Ref).Pick(
 		keel.CastText(s.id),
 		keel.CastText(s.org),
 		bu,

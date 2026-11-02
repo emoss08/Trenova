@@ -4,6 +4,7 @@ package ratematrixcelldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -78,7 +79,7 @@ var rateMatrixCellsRef = keel.Ref{Table: &rateMatrixCellsTable}
 
 // RateMatrixCellsTable is the table of ratematrixcell.RateMatrixCell.
 type RateMatrixCellsTable struct {
-	keel.Handle[*ratematrixcell.RateMatrixCell]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -109,7 +110,7 @@ type RateMatrixCellsTable struct {
 
 // RateMatrixCells references the rate_matrix_cells table.
 var RateMatrixCells = &RateMatrixCellsTable{
-	Handle:          keel.Handle[*ratematrixcell.RateMatrixCell]{Ref: &rateMatrixCellsRef},
+	TableBase:       keel.TableBase{Ref: &rateMatrixCellsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 2}}},
@@ -138,10 +139,10 @@ var RateMatrixCells = &RateMatrixCellsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateMatrixCellsRef, Index: 25}},
 }
 
-// BuildRateMatrixCells builds the handle of rate_matrix_cells for ref. Generated relation and alias methods call it.
+// BuildRateMatrixCells builds the table of rate_matrix_cells for ref. Generated relation and alias methods call it.
 func BuildRateMatrixCells(r *keel.Ref) *RateMatrixCellsTable {
 	return &RateMatrixCellsTable{
-		Handle:          keel.Handle[*ratematrixcell.RateMatrixCell]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -187,6 +188,365 @@ func (t *RateMatrixCellsTable) RateMatrix() *ratematrixdb.RateMatrixesTable {
 // Get returns the rate_matrix_cells row with the given key, or keel.ErrNotFound.
 func (t *RateMatrixCellsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratematrixcell.RateMatrixCell, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateMatrixCellsQuery is a query over ratematrixcell.RateMatrixCell.
+type RateMatrixCellsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratematrixcell.RateMatrixCell] = (*RateMatrixCellsTable)(nil)
+
+var _ keel.Query[*ratematrixcell.RateMatrixCell] = (*RateMatrixCellsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateMatrixCellsTable) Query() keel.Query[*ratematrixcell.RateMatrixCell] {
+	return &RateMatrixCellsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateMatrixCellsQuery.Where.
+func (t *RateMatrixCellsTable) Where(ps ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateMatrixCellsQuery.Pick.
+func (t *RateMatrixCellsTable) Pick(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateMatrixCellsQuery.Load.
+func (t *RateMatrixCellsTable) Load(ls ...keel.Loader) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateMatrixCellsQuery.Omit.
+func (t *RateMatrixCellsTable) Omit(cols ...keel.Column) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateMatrixCellsQuery.Order.
+func (t *RateMatrixCellsTable) Order(os ...keel.Order) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateMatrixCellsQuery.Limit.
+func (t *RateMatrixCellsTable) Limit(n int) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateMatrixCellsQuery.Group.
+func (t *RateMatrixCellsTable) Group(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateMatrixCellsQuery.GroupingSets.
+func (t *RateMatrixCellsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateMatrixCellsQuery.Rollup.
+func (t *RateMatrixCellsTable) Rollup(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateMatrixCellsQuery.Cube.
+func (t *RateMatrixCellsTable) Cube(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateMatrixCellsQuery.AllTenants.
+func (t *RateMatrixCellsTable) AllTenants() keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateMatrixCellsQuery.Join.
+func (t *RateMatrixCellsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateMatrixCellsQuery.LeftJoin.
+func (t *RateMatrixCellsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateMatrixCellsQuery.LeftJoinLateral.
+func (t *RateMatrixCellsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateMatrixCellsQuery.JoinLateral.
+func (t *RateMatrixCellsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateMatrixCellsQuery.Lock.
+func (t *RateMatrixCellsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateMatrixCellsQuery.DistinctOn.
+func (t *RateMatrixCellsTable) DistinctOn(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateMatrixCellsQuery.Cache.
+func (t *RateMatrixCellsTable) Cache(opts ...keel.CacheOption) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateMatrixCellsQuery.LoadStrategy.
+func (t *RateMatrixCellsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateMatrixCellsQuery.With.
+func (t *RateMatrixCellsTable) With(ctes ...*keel.CTETable) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateMatrixCellsQuery.Compute.
+func (t *RateMatrixCellsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateMatrixCellsTable) Create(ctx context.Context, db *keel.DB, row *ratematrixcell.RateMatrixCell) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateMatrixCellsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrixcell.RateMatrixCell) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateMatrixCellsTable) Save(ctx context.Context, db *keel.DB, row *ratematrixcell.RateMatrixCell, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateMatrixCellsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrixcell.RateMatrixCell, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateMatrixCellsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrixcell.RateMatrixCell) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateMatrixCellsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrixcell.RateMatrixCell, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateMatrixCellsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrixcell.RateMatrixCell, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateMatrixCellsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrixcell.RateMatrixCell) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateMatrixCellsQuery) Where(ps ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateMatrixCellsQuery) Pick(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateMatrixCellsQuery) Omit(cols ...keel.Column) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateMatrixCellsQuery) Load(ls ...keel.Loader) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateMatrixCellsQuery) Order(os ...keel.Order) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateMatrixCellsQuery) Distinct() keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateMatrixCellsQuery) Group(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateMatrixCellsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateMatrixCellsQuery) Rollup(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateMatrixCellsQuery) Cube(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateMatrixCellsQuery) Window(name string, w keel.Window) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateMatrixCellsQuery) Having(ps ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateMatrixCellsQuery) Limit(n int) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateMatrixCellsQuery) Offset(n int) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateMatrixCellsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateMatrixCellsQuery) AllTenants() keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateMatrixCellsQuery) CustomPlan() keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateMatrixCellsQuery) Timeout(d time.Duration) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateMatrixCellsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateMatrixCellsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateMatrixCellsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateMatrixCellsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateMatrixCellsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateMatrixCellsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateMatrixCellsQuery) With(ctes ...*keel.CTETable) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateMatrixCellsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateMatrixCellsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratematrixcell.RateMatrixCell] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateMatrixCellsQuery) Clone() keel.Query[*ratematrixcell.RateMatrixCell] {
+	return &RateMatrixCellsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateMatrixCellsQuery) One(ctx context.Context, db *keel.DB) (*ratematrixcell.RateMatrixCell, error) {
+	return keel.One[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateMatrixCellsQuery) First(ctx context.Context, db *keel.DB) (*ratematrixcell.RateMatrixCell, error) {
+	return keel.First[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateMatrixCellsQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrixcell.RateMatrixCell, error) {
+	return keel.List[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateMatrixCellsQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrixcell.RateMatrixCell, error) {
+	return keel.All[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateMatrixCellsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrixcell.RateMatrixCell, error) {
+	return keel.UpdateReturning[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateMatrixCellsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrixcell.RateMatrixCell], error) {
+	return keel.PageOf[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateMatrixCellsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrixcell.RateMatrixCell) error) error {
+	return keel.Each[*ratematrixcell.RateMatrixCell](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateMatrixCell() unsafe.Pointer { return unsafe.Pointer(new(ratematrixcell.RateMatrixCell)) }

@@ -52,8 +52,8 @@ func rankedEntries() keel.Loader {
 	return e.Order(e.Rank.Asc()).Load(e.Carrier())
 }
 
-func withOptions(opts tenderports.RoutingGuideFilterOptions) func(*guideQuery) *guideQuery {
-	return func(q *guideQuery) *guideQuery {
+func withOptions(opts tenderports.RoutingGuideFilterOptions) func(guideQuery) guideQuery {
+	return func(q guideQuery) guideQuery {
 		if opts.IncludeEntries {
 			return q.Load(rankedEntries())
 		}

@@ -68,6 +68,7 @@ func (s *Service) issueMFAChallenge(
 	challenge := &iamports.MFAChallenge{
 		UserID:       usr.ID,
 		EmailAddress: usr.EmailAddress,
+		SessionEpoch: usr.SessionEpoch,
 		IssuedAt:     now,
 		ExpiresAt:    now + int64(mfaChallengeTTL.Seconds()),
 		Federation:   federation,
@@ -117,7 +118,7 @@ func (s *Service) VerifyMFAChallenge(
 	}
 
 	usr, err := s.ur.FindByIDForLogin(ctx, challenge.UserID)
-	if err != nil {
+	if err != nil || usr.SessionEpoch != challenge.SessionEpoch {
 		attempt.fail(authErrorMFAChallenge)
 		return nil, errMFAChallengeExpired
 	}

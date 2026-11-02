@@ -67,7 +67,7 @@ func (r *repository) GetByID(
 
 func simulationsQuery(
 	req *ratesimulationports.ListRateSimulationsRequest,
-) *keel.Query[*ratesimulation.RateSimulation] {
+) keel.Query[*ratesimulation.RateSimulation] {
 	rs := ratesimulationdb.RateSimulations
 	if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
 		return rs.Where(rs.RateAgreementID.Eq(*req.RateAgreementID))
@@ -110,7 +110,7 @@ func (r *repository) List(
 
 func resultsQuery(
 	req *ratesimulationports.ListRateSimulationResultsRequest,
-) *keel.Query[*ratesimulation.RateSimulationResult] {
+) keel.Query[*ratesimulation.RateSimulationResult] {
 	res := ratesimulationdb.RateSimulationResults
 
 	return res.Where(
@@ -214,7 +214,7 @@ func (r *repository) AppendResults(
 
 func simulationShipmentsQuery(
 	req *ratesimulationports.ListSimulationShipmentsRequest,
-) *keel.Query[*shipment.Shipment] {
+) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	shipDate := sp.ActualShipDate.Coalesce(sp.CreatedAt)
 

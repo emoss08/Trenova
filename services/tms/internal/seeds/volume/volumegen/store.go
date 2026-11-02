@@ -37,7 +37,7 @@ func InsertRows[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T], rows
 		return nil
 	}
 	if _, err := h.Copy(ctx, db, rows); err != nil {
-		return fmt.Errorf("copy into %s: %w", h.Ref.Table.Name, err)
+		return fmt.Errorf("copy into %s: %w", h.TableRef().Table.Name, err)
 	}
 
 	return nil
@@ -66,12 +66,12 @@ func BackdateColumns[T any](
 	if len(stamps) == 0 {
 		return nil
 	}
-	t := h.Ref.Table
+	t := h.TableRef().Table
 	if err := analyze(ctx, db, h); err != nil {
 		return err
 	}
 
-	id := keel.Col{Ref: h.Ref, Index: t.PK[0]}
+	id := keel.Col{Ref: h.TableRef(), Index: t.PK[0]}
 	for begin := 0; begin < len(stamps); begin += BackdateChunk {
 		chunk := stamps[begin:min(begin+BackdateChunk, len(stamps))]
 		ids := make([]string, len(chunk))
@@ -88,20 +88,20 @@ func BackdateColumns[T any](
 		if t.AutoCreate >= 0 {
 			sets = append(
 				sets,
-				keel.Col{Ref: h.Ref, Index: t.AutoCreate}.ToExpr(d.Col("created_at")),
+				keel.Col{Ref: h.TableRef(), Index: t.AutoCreate}.ToExpr(d.Col("created_at")),
 			)
 		}
 		if !createdOnly && t.AutoUpdate >= 0 {
 			sets = append(
 				sets,
-				keel.Col{Ref: h.Ref, Index: t.AutoUpdate}.ToExpr(d.Col("updated_at")),
+				keel.Col{Ref: h.TableRef(), Index: t.AutoUpdate}.ToExpr(d.Col("updated_at")),
 			)
 		}
 		if len(sets) == 0 {
 			return nil
 		}
 		if t.Version >= 0 {
-			version := keel.Col{Ref: h.Ref, Index: t.Version}
+			version := keel.Col{Ref: h.TableRef(), Index: t.Version}
 			sets = append(sets, version.ToExpr(version))
 		}
 		if _, err := h.Query().With(d).
@@ -116,8 +116,8 @@ func BackdateColumns[T any](
 }
 
 func analyze[T any](ctx context.Context, db *keel.DB, h keel.Handle[*T]) error {
-	if _, err := keel.Exec(ctx, db, "ANALYZE "+h.Ref.Table.Quoted); err != nil {
-		return fmt.Errorf("analyze %s: %w", h.Ref.Table.Name, err)
+	if _, err := keel.Exec(ctx, db, "ANALYZE "+h.TableRef().Table.Quoted); err != nil {
+		return fmt.Errorf("analyze %s: %w", h.TableRef().Table.Name, err)
 	}
 
 	return nil
@@ -141,7 +141,7 @@ func Ptr[T any](v T) *T {
 	return &v
 }
 
-func FirstOrNil[T any](ctx context.Context, db *keel.DB, q *keel.Query[*T]) (*T, error) {
+func FirstOrNil[T any](ctx context.Context, db *keel.DB, q keel.Query[*T]) (*T, error) {
 	row, err := q.First(ctx, db)
 	if errors.Is(err, keel.ErrNotFound) {
 		return nil, nil
@@ -369,11 +369,11 @@ func RollBackBalances(
 }
 
 func KeepUpdated[T any](h keel.Handle[*T]) keel.Assignment {
-	index := h.Ref.Table.AutoUpdate
+	index := h.TableRef().Table.AutoUpdate
 	if index < 0 {
-		index = h.Ref.Table.PK[0]
+		index = h.TableRef().Table.PK[0]
 	}
-	col := keel.Col{Ref: h.Ref, Index: index}
+	col := keel.Col{Ref: h.TableRef(), Index: index}
 	return col.ToExpr(col)
 }
 

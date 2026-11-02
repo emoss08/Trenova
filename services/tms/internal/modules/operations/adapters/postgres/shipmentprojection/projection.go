@@ -28,7 +28,7 @@ const (
 	everyTenant  tenancy = true
 )
 
-func scoped[T any](q *keel.Query[*T], t tenancy) *keel.Query[*T] {
+func scoped[T any](q keel.Query[*T], t tenancy) keel.Query[*T] {
 	if t == everyTenant {
 		return q.AllTenants()
 	}
@@ -82,7 +82,7 @@ func RefreshTenant(ctx context.Context, db *keel.DB) error {
 	}
 }
 
-func tenantPage(after pulid.ID) *keel.Query[*shipment.Shipment] {
+func tenantPage(after pulid.ID) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	return sp.Pick(sp.ID).
@@ -91,7 +91,7 @@ func tenantPage(after pulid.ID) *keel.Query[*shipment.Shipment] {
 		Limit(tenantRefreshBatch)
 }
 
-func shipmentsOfMoves(moveIDs []pulid.ID) *keel.Query[*shipment.ShipmentMove] {
+func shipmentsOfMoves(moveIDs []pulid.ID) keel.Query[*shipment.ShipmentMove] {
 	sm := shipmentdb.ShipmentMoves.As(touchedMoveAlias)
 
 	return sm.Pick(sm.ShipmentID).Where(sm.ID.In(moveIDs...))
@@ -105,7 +105,7 @@ func refresh(ctx context.Context, db *keel.DB, target keel.Pred, t tenancy) erro
 	return nil
 }
 
-func refreshQuery(target keel.Pred, t tenancy) *keel.Query[*shipment.Shipment] {
+func refreshQuery(target keel.Pred, t tenancy) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	return scoped(sp.Where(

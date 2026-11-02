@@ -4,6 +4,7 @@ package carrierintelenrollmentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -58,7 +59,7 @@ var carrierIntelFeedStatesRef = keel.Ref{Table: &carrierIntelFeedStatesTable}
 
 // CarrierIntelFeedStatesTable is the table of carrierintelenrollment.CarrierIntelFeedState.
 type CarrierIntelFeedStatesTable struct {
-	keel.Handle[*carrierintelenrollment.CarrierIntelFeedState]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	Provider       integrationdb.TypeCol
@@ -75,7 +76,7 @@ type CarrierIntelFeedStatesTable struct {
 
 // CarrierIntelFeedStates references the carrier_intel_feed_states table.
 var CarrierIntelFeedStates = &CarrierIntelFeedStatesTable{
-	Handle:         keel.Handle[*carrierintelenrollment.CarrierIntelFeedState]{Ref: &carrierIntelFeedStatesRef},
+	TableBase:      keel.TableBase{Ref: &carrierIntelFeedStatesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelFeedStatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelFeedStatesRef, Index: 1}}},
 	Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelFeedStatesRef, Index: 2}}},
@@ -90,10 +91,10 @@ var CarrierIntelFeedStates = &CarrierIntelFeedStatesTable{
 	LastError:      keel.StringCol{Col: keel.Col{Ref: &carrierIntelFeedStatesRef, Index: 11}},
 }
 
-// BuildCarrierIntelFeedStates builds the handle of carrier_intel_feed_states for ref. Generated relation and alias methods call it.
+// BuildCarrierIntelFeedStates builds the table of carrier_intel_feed_states for ref. Generated relation and alias methods call it.
 func BuildCarrierIntelFeedStates(r *keel.Ref) *CarrierIntelFeedStatesTable {
 	return &CarrierIntelFeedStatesTable{
-		Handle:         keel.Handle[*carrierintelenrollment.CarrierIntelFeedState]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Provider:       integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -115,6 +116,365 @@ func CarrierIntelFeedStatesSchema() *schema.Table { return &carrierIntelFeedStat
 // As returns a handle that references carrier_intel_feed_states under its own alias.
 func (t *CarrierIntelFeedStatesTable) As(alias string) *CarrierIntelFeedStatesTable {
 	return keel.Alias(t.Ref, alias, BuildCarrierIntelFeedStates)
+}
+
+// CarrierIntelFeedStatesQuery is a query over carrierintelenrollment.CarrierIntelFeedState.
+type CarrierIntelFeedStatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelenrollment.CarrierIntelFeedState] = (*CarrierIntelFeedStatesTable)(nil)
+
+var _ keel.Query[*carrierintelenrollment.CarrierIntelFeedState] = (*CarrierIntelFeedStatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierIntelFeedStatesTable) Query() keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return &CarrierIntelFeedStatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierIntelFeedStatesQuery.Where.
+func (t *CarrierIntelFeedStatesTable) Where(ps ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierIntelFeedStatesQuery.Pick.
+func (t *CarrierIntelFeedStatesTable) Pick(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierIntelFeedStatesQuery.Load.
+func (t *CarrierIntelFeedStatesTable) Load(ls ...keel.Loader) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierIntelFeedStatesQuery.Omit.
+func (t *CarrierIntelFeedStatesTable) Omit(cols ...keel.Column) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierIntelFeedStatesQuery.Order.
+func (t *CarrierIntelFeedStatesTable) Order(os ...keel.Order) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierIntelFeedStatesQuery.Limit.
+func (t *CarrierIntelFeedStatesTable) Limit(n int) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierIntelFeedStatesQuery.Group.
+func (t *CarrierIntelFeedStatesTable) Group(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierIntelFeedStatesQuery.GroupingSets.
+func (t *CarrierIntelFeedStatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierIntelFeedStatesQuery.Rollup.
+func (t *CarrierIntelFeedStatesTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierIntelFeedStatesQuery.Cube.
+func (t *CarrierIntelFeedStatesTable) Cube(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierIntelFeedStatesQuery.AllTenants.
+func (t *CarrierIntelFeedStatesTable) AllTenants() keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierIntelFeedStatesQuery.Join.
+func (t *CarrierIntelFeedStatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierIntelFeedStatesQuery.LeftJoin.
+func (t *CarrierIntelFeedStatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierIntelFeedStatesQuery.LeftJoinLateral.
+func (t *CarrierIntelFeedStatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierIntelFeedStatesQuery.JoinLateral.
+func (t *CarrierIntelFeedStatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierIntelFeedStatesQuery.Lock.
+func (t *CarrierIntelFeedStatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierIntelFeedStatesQuery.DistinctOn.
+func (t *CarrierIntelFeedStatesTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierIntelFeedStatesQuery.Cache.
+func (t *CarrierIntelFeedStatesTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierIntelFeedStatesQuery.LoadStrategy.
+func (t *CarrierIntelFeedStatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierIntelFeedStatesQuery.With.
+func (t *CarrierIntelFeedStatesTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierIntelFeedStatesQuery.Compute.
+func (t *CarrierIntelFeedStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierIntelFeedStatesTable) Create(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierIntelFeedState) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierIntelFeedStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierIntelFeedState) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierIntelFeedStatesTable) Save(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierIntelFeedState, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierIntelFeedStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierIntelFeedState, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierIntelFeedStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierIntelFeedState) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierIntelFeedStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierIntelFeedState, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierIntelFeedStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierIntelFeedState, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierIntelFeedStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierIntelFeedState) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierIntelFeedStatesQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierIntelFeedStatesQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierIntelFeedStatesQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierIntelFeedStatesQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierIntelFeedStatesQuery) Order(os ...keel.Order) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierIntelFeedStatesQuery) Distinct() keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierIntelFeedStatesQuery) Group(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierIntelFeedStatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierIntelFeedStatesQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierIntelFeedStatesQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierIntelFeedStatesQuery) Window(name string, w keel.Window) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierIntelFeedStatesQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierIntelFeedStatesQuery) Limit(n int) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierIntelFeedStatesQuery) Offset(n int) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierIntelFeedStatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierIntelFeedStatesQuery) AllTenants() keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierIntelFeedStatesQuery) CustomPlan() keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierIntelFeedStatesQuery) Timeout(d time.Duration) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierIntelFeedStatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierIntelFeedStatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierIntelFeedStatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierIntelFeedStatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierIntelFeedStatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierIntelFeedStatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierIntelFeedStatesQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierIntelFeedStatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierIntelFeedStatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierIntelFeedStatesQuery) Clone() keel.Query[*carrierintelenrollment.CarrierIntelFeedState] {
+	return &CarrierIntelFeedStatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierIntelFeedStatesQuery) One(ctx context.Context, db *keel.DB) (*carrierintelenrollment.CarrierIntelFeedState, error) {
+	return keel.One[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierIntelFeedStatesQuery) First(ctx context.Context, db *keel.DB) (*carrierintelenrollment.CarrierIntelFeedState, error) {
+	return keel.First[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierIntelFeedStatesQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelenrollment.CarrierIntelFeedState, error) {
+	return keel.List[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierIntelFeedStatesQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelenrollment.CarrierIntelFeedState, error) {
+	return keel.All[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierIntelFeedStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelenrollment.CarrierIntelFeedState, error) {
+	return keel.UpdateReturning[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierIntelFeedStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelenrollment.CarrierIntelFeedState], error) {
+	return keel.PageOf[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierIntelFeedStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelenrollment.CarrierIntelFeedState) error) error {
+	return keel.Each[*carrierintelenrollment.CarrierIntelFeedState](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierIntelFeedState() unsafe.Pointer {
@@ -264,7 +624,7 @@ var carrierMonitoringEnrollmentsRef = keel.Ref{Table: &carrierMonitoringEnrollme
 
 // CarrierMonitoringEnrollmentsTable is the table of carrierintelenrollment.CarrierMonitoringEnrollment.
 type CarrierMonitoringEnrollmentsTable struct {
-	keel.Handle[*carrierintelenrollment.CarrierMonitoringEnrollment]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -295,7 +655,7 @@ type CarrierMonitoringEnrollmentsTable struct {
 
 // CarrierMonitoringEnrollments references the carrier_monitoring_enrollments table.
 var CarrierMonitoringEnrollments = &CarrierMonitoringEnrollmentsTable{
-	Handle:          keel.Handle[*carrierintelenrollment.CarrierMonitoringEnrollment]{Ref: &carrierMonitoringEnrollmentsRef},
+	TableBase:       keel.TableBase{Ref: &carrierMonitoringEnrollmentsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierMonitoringEnrollmentsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierMonitoringEnrollmentsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierMonitoringEnrollmentsRef, Index: 2}}},
@@ -324,10 +684,10 @@ var CarrierMonitoringEnrollments = &CarrierMonitoringEnrollmentsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &carrierMonitoringEnrollmentsRef, Index: 25}},
 }
 
-// BuildCarrierMonitoringEnrollments builds the handle of carrier_monitoring_enrollments for ref. Generated relation and alias methods call it.
+// BuildCarrierMonitoringEnrollments builds the table of carrier_monitoring_enrollments for ref. Generated relation and alias methods call it.
 func BuildCarrierMonitoringEnrollments(r *keel.Ref) *CarrierMonitoringEnrollmentsTable {
 	return &CarrierMonitoringEnrollmentsTable{
-		Handle:          keel.Handle[*carrierintelenrollment.CarrierMonitoringEnrollment]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -368,6 +728,365 @@ func (t *CarrierMonitoringEnrollmentsTable) As(alias string) *CarrierMonitoringE
 // Get returns the carrier_monitoring_enrollments row with the given key, or keel.ErrNotFound.
 func (t *CarrierMonitoringEnrollmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierMonitoringEnrollmentsQuery is a query over carrierintelenrollment.CarrierMonitoringEnrollment.
+type CarrierMonitoringEnrollmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelenrollment.CarrierMonitoringEnrollment] = (*CarrierMonitoringEnrollmentsTable)(nil)
+
+var _ keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] = (*CarrierMonitoringEnrollmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierMonitoringEnrollmentsTable) Query() keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return &CarrierMonitoringEnrollmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierMonitoringEnrollmentsQuery.Where.
+func (t *CarrierMonitoringEnrollmentsTable) Where(ps ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierMonitoringEnrollmentsQuery.Pick.
+func (t *CarrierMonitoringEnrollmentsTable) Pick(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierMonitoringEnrollmentsQuery.Load.
+func (t *CarrierMonitoringEnrollmentsTable) Load(ls ...keel.Loader) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierMonitoringEnrollmentsQuery.Omit.
+func (t *CarrierMonitoringEnrollmentsTable) Omit(cols ...keel.Column) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierMonitoringEnrollmentsQuery.Order.
+func (t *CarrierMonitoringEnrollmentsTable) Order(os ...keel.Order) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierMonitoringEnrollmentsQuery.Limit.
+func (t *CarrierMonitoringEnrollmentsTable) Limit(n int) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierMonitoringEnrollmentsQuery.Group.
+func (t *CarrierMonitoringEnrollmentsTable) Group(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierMonitoringEnrollmentsQuery.GroupingSets.
+func (t *CarrierMonitoringEnrollmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierMonitoringEnrollmentsQuery.Rollup.
+func (t *CarrierMonitoringEnrollmentsTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierMonitoringEnrollmentsQuery.Cube.
+func (t *CarrierMonitoringEnrollmentsTable) Cube(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierMonitoringEnrollmentsQuery.AllTenants.
+func (t *CarrierMonitoringEnrollmentsTable) AllTenants() keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierMonitoringEnrollmentsQuery.Join.
+func (t *CarrierMonitoringEnrollmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierMonitoringEnrollmentsQuery.LeftJoin.
+func (t *CarrierMonitoringEnrollmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierMonitoringEnrollmentsQuery.LeftJoinLateral.
+func (t *CarrierMonitoringEnrollmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierMonitoringEnrollmentsQuery.JoinLateral.
+func (t *CarrierMonitoringEnrollmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierMonitoringEnrollmentsQuery.Lock.
+func (t *CarrierMonitoringEnrollmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierMonitoringEnrollmentsQuery.DistinctOn.
+func (t *CarrierMonitoringEnrollmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierMonitoringEnrollmentsQuery.Cache.
+func (t *CarrierMonitoringEnrollmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierMonitoringEnrollmentsQuery.LoadStrategy.
+func (t *CarrierMonitoringEnrollmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierMonitoringEnrollmentsQuery.With.
+func (t *CarrierMonitoringEnrollmentsTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierMonitoringEnrollmentsQuery.Compute.
+func (t *CarrierMonitoringEnrollmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierMonitoringEnrollmentsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierMonitoringEnrollment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierMonitoringEnrollmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierMonitoringEnrollment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierMonitoringEnrollmentsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierMonitoringEnrollment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierMonitoringEnrollmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierMonitoringEnrollment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierMonitoringEnrollmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelenrollment.CarrierMonitoringEnrollment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierMonitoringEnrollmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierMonitoringEnrollment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierMonitoringEnrollmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierMonitoringEnrollment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierMonitoringEnrollmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelenrollment.CarrierMonitoringEnrollment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierMonitoringEnrollmentsQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierMonitoringEnrollmentsQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierMonitoringEnrollmentsQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierMonitoringEnrollmentsQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierMonitoringEnrollmentsQuery) Order(os ...keel.Order) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierMonitoringEnrollmentsQuery) Distinct() keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierMonitoringEnrollmentsQuery) Group(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierMonitoringEnrollmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierMonitoringEnrollmentsQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierMonitoringEnrollmentsQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierMonitoringEnrollmentsQuery) Window(name string, w keel.Window) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierMonitoringEnrollmentsQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierMonitoringEnrollmentsQuery) Limit(n int) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierMonitoringEnrollmentsQuery) Offset(n int) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierMonitoringEnrollmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierMonitoringEnrollmentsQuery) AllTenants() keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierMonitoringEnrollmentsQuery) CustomPlan() keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierMonitoringEnrollmentsQuery) Timeout(d time.Duration) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierMonitoringEnrollmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierMonitoringEnrollmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierMonitoringEnrollmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierMonitoringEnrollmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierMonitoringEnrollmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierMonitoringEnrollmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierMonitoringEnrollmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierMonitoringEnrollmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierMonitoringEnrollmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierMonitoringEnrollmentsQuery) Clone() keel.Query[*carrierintelenrollment.CarrierMonitoringEnrollment] {
+	return &CarrierMonitoringEnrollmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierMonitoringEnrollmentsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+	return keel.One[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierMonitoringEnrollmentsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+	return keel.First[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierMonitoringEnrollmentsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+	return keel.List[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierMonitoringEnrollmentsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+	return keel.All[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierMonitoringEnrollmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+	return keel.UpdateReturning[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierMonitoringEnrollmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelenrollment.CarrierMonitoringEnrollment], error) {
+	return keel.PageOf[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierMonitoringEnrollmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelenrollment.CarrierMonitoringEnrollment) error) error {
+	return keel.Each[*carrierintelenrollment.CarrierMonitoringEnrollment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierMonitoringEnrollment() unsafe.Pointer {

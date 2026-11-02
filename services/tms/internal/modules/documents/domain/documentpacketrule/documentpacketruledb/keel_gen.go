@@ -4,6 +4,7 @@ package documentpacketruledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -60,7 +61,7 @@ var documentPacketRulesRef = keel.Ref{Table: &documentPacketRulesTable}
 
 // DocumentPacketRulesTable is the table of documentpacketrule.DocumentPacketRule.
 type DocumentPacketRulesTable struct {
-	keel.Handle[*documentpacketrule.DocumentPacketRule]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
@@ -78,7 +79,7 @@ type DocumentPacketRulesTable struct {
 
 // DocumentPacketRules references the document_packet_rules table.
 var DocumentPacketRules = &DocumentPacketRulesTable{
-	Handle:                keel.Handle[*documentpacketrule.DocumentPacketRule]{Ref: &documentPacketRulesRef},
+	TableBase:             keel.TableBase{Ref: &documentPacketRulesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 0}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 1}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 2}}},
@@ -94,10 +95,10 @@ var DocumentPacketRules = &DocumentPacketRulesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &documentPacketRulesRef, Index: 12}},
 }
 
-// BuildDocumentPacketRules builds the handle of document_packet_rules for ref. Generated relation and alias methods call it.
+// BuildDocumentPacketRules builds the table of document_packet_rules for ref. Generated relation and alias methods call it.
 func BuildDocumentPacketRules(r *keel.Ref) *DocumentPacketRulesTable {
 	return &DocumentPacketRulesTable{
-		Handle:                keel.Handle[*documentpacketrule.DocumentPacketRule]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -125,6 +126,365 @@ func (t *DocumentPacketRulesTable) As(alias string) *DocumentPacketRulesTable {
 // Get returns the document_packet_rules row with the given key, or keel.ErrNotFound.
 func (t *DocumentPacketRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documentpacketrule.DocumentPacketRule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DocumentPacketRulesQuery is a query over documentpacketrule.DocumentPacketRule.
+type DocumentPacketRulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*documentpacketrule.DocumentPacketRule] = (*DocumentPacketRulesTable)(nil)
+
+var _ keel.Query[*documentpacketrule.DocumentPacketRule] = (*DocumentPacketRulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DocumentPacketRulesTable) Query() keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return &DocumentPacketRulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DocumentPacketRulesQuery.Where.
+func (t *DocumentPacketRulesTable) Where(ps ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DocumentPacketRulesQuery.Pick.
+func (t *DocumentPacketRulesTable) Pick(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DocumentPacketRulesQuery.Load.
+func (t *DocumentPacketRulesTable) Load(ls ...keel.Loader) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DocumentPacketRulesQuery.Omit.
+func (t *DocumentPacketRulesTable) Omit(cols ...keel.Column) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DocumentPacketRulesQuery.Order.
+func (t *DocumentPacketRulesTable) Order(os ...keel.Order) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DocumentPacketRulesQuery.Limit.
+func (t *DocumentPacketRulesTable) Limit(n int) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DocumentPacketRulesQuery.Group.
+func (t *DocumentPacketRulesTable) Group(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DocumentPacketRulesQuery.GroupingSets.
+func (t *DocumentPacketRulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DocumentPacketRulesQuery.Rollup.
+func (t *DocumentPacketRulesTable) Rollup(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DocumentPacketRulesQuery.Cube.
+func (t *DocumentPacketRulesTable) Cube(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DocumentPacketRulesQuery.AllTenants.
+func (t *DocumentPacketRulesTable) AllTenants() keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DocumentPacketRulesQuery.Join.
+func (t *DocumentPacketRulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DocumentPacketRulesQuery.LeftJoin.
+func (t *DocumentPacketRulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DocumentPacketRulesQuery.LeftJoinLateral.
+func (t *DocumentPacketRulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DocumentPacketRulesQuery.JoinLateral.
+func (t *DocumentPacketRulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DocumentPacketRulesQuery.Lock.
+func (t *DocumentPacketRulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DocumentPacketRulesQuery.DistinctOn.
+func (t *DocumentPacketRulesTable) DistinctOn(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DocumentPacketRulesQuery.Cache.
+func (t *DocumentPacketRulesTable) Cache(opts ...keel.CacheOption) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DocumentPacketRulesQuery.LoadStrategy.
+func (t *DocumentPacketRulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DocumentPacketRulesQuery.With.
+func (t *DocumentPacketRulesTable) With(ctes ...*keel.CTETable) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DocumentPacketRulesQuery.Compute.
+func (t *DocumentPacketRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DocumentPacketRulesTable) Create(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DocumentPacketRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DocumentPacketRulesTable) Save(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DocumentPacketRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DocumentPacketRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentpacketrule.DocumentPacketRule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DocumentPacketRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DocumentPacketRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DocumentPacketRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*documentpacketrule.DocumentPacketRule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DocumentPacketRulesQuery) Where(ps ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DocumentPacketRulesQuery) Pick(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DocumentPacketRulesQuery) Omit(cols ...keel.Column) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DocumentPacketRulesQuery) Load(ls ...keel.Loader) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DocumentPacketRulesQuery) Order(os ...keel.Order) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DocumentPacketRulesQuery) Distinct() keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DocumentPacketRulesQuery) Group(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DocumentPacketRulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DocumentPacketRulesQuery) Rollup(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DocumentPacketRulesQuery) Cube(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DocumentPacketRulesQuery) Window(name string, w keel.Window) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DocumentPacketRulesQuery) Having(ps ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DocumentPacketRulesQuery) Limit(n int) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DocumentPacketRulesQuery) Offset(n int) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DocumentPacketRulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DocumentPacketRulesQuery) AllTenants() keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DocumentPacketRulesQuery) CustomPlan() keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DocumentPacketRulesQuery) Timeout(d time.Duration) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DocumentPacketRulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DocumentPacketRulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DocumentPacketRulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DocumentPacketRulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DocumentPacketRulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DocumentPacketRulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DocumentPacketRulesQuery) With(ctes ...*keel.CTETable) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DocumentPacketRulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DocumentPacketRulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentpacketrule.DocumentPacketRule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DocumentPacketRulesQuery) Clone() keel.Query[*documentpacketrule.DocumentPacketRule] {
+	return &DocumentPacketRulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DocumentPacketRulesQuery) One(ctx context.Context, db *keel.DB) (*documentpacketrule.DocumentPacketRule, error) {
+	return keel.One[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DocumentPacketRulesQuery) First(ctx context.Context, db *keel.DB) (*documentpacketrule.DocumentPacketRule, error) {
+	return keel.First[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DocumentPacketRulesQuery) List(ctx context.Context, db *keel.DB) ([]*documentpacketrule.DocumentPacketRule, error) {
+	return keel.List[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DocumentPacketRulesQuery) All(ctx context.Context, db *keel.DB) ([]*documentpacketrule.DocumentPacketRule, error) {
+	return keel.All[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DocumentPacketRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentpacketrule.DocumentPacketRule, error) {
+	return keel.UpdateReturning[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DocumentPacketRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentpacketrule.DocumentPacketRule], error) {
+	return keel.PageOf[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DocumentPacketRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentpacketrule.DocumentPacketRule) error) error {
+	return keel.Each[*documentpacketrule.DocumentPacketRule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDocumentPacketRule() unsafe.Pointer {

@@ -21,6 +21,8 @@ var (
 	TestBuID   = pulid.MustNew("bu")
 )
 
+const TestSessionSecretHash = "test-session-secret-hash"
+
 type GinTestContext struct {
 	Context  *gin.Context
 	Recorder *httptest.ResponseRecorder
@@ -115,10 +117,11 @@ func (g *GinTestContext) WithDefaultAuthContext() *GinTestContext {
 
 func (g *GinTestContext) WithDefaultSessionAuthContext(sessionID pulid.ID) *GinTestContext {
 	params := authctx.SessionAuthContextParams{
-		SessionID:      sessionID,
-		UserID:         TestUserID,
-		BusinessUnitID: TestBuID,
-		OrganizationID: TestOrgID,
+		SessionID:         sessionID,
+		SessionSecretHash: TestSessionSecretHash,
+		UserID:            TestUserID,
+		BusinessUnitID:    TestBuID,
+		OrganizationID:    TestOrgID,
 	}
 	authctx.SetSessionAuthContext(g.Context, params)
 	g.Engine.Use(func(c *gin.Context) {

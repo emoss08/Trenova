@@ -350,7 +350,8 @@ func (c *Config) Validate() error {
 }
 
 func (c *Config) ValidateProduction() error {
-	if !c.Session.Secure ||
+	if !strings.HasPrefix(c.Session.Name, "__Host-") ||
+		!c.Session.Secure ||
 		!c.Session.HTTPOnly ||
 		!strings.EqualFold(c.Session.SameSite, "strict") {
 		return ErrProductionSessionCookieRequired

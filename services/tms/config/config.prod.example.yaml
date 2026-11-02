@@ -75,6 +75,8 @@ database:
 cache:
   poolSize: 50
   minIdleConns: 10
+  # password: set TRENOVA_CACHE_PASSWORD; production refuses to start without one.
+  # tls: turn on when Redis serves TLS (enabled, serverName, caFile, certFile, keyFile).
 
 security:
   session:

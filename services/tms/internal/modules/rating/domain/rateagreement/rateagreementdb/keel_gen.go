@@ -4,6 +4,7 @@ package rateagreementdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -106,7 +107,7 @@ var rateAgreementsRef = keel.Ref{Table: &rateAgreementsTable}
 
 // RateAgreementsTable is the table of rateagreement.RateAgreement.
 type RateAgreementsTable struct {
-	keel.Handle[*rateagreement.RateAgreement]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -145,7 +146,7 @@ type RateAgreementsTable struct {
 
 // RateAgreements references the rate_agreements table.
 var RateAgreements = &RateAgreementsTable{
-	Handle:               keel.Handle[*rateagreement.RateAgreement]{Ref: &rateAgreementsRef},
+	TableBase:            keel.TableBase{Ref: &rateAgreementsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 2}}},
@@ -182,10 +183,10 @@ var RateAgreements = &RateAgreementsTable{
 	Rank:                 keel.StringCol{Col: keel.Col{Ref: &rateAgreementsRef, Index: 33}},
 }
 
-// BuildRateAgreements builds the handle of rate_agreements for ref. Generated relation and alias methods call it.
+// BuildRateAgreements builds the table of rate_agreements for ref. Generated relation and alias methods call it.
 func BuildRateAgreements(r *keel.Ref) *RateAgreementsTable {
 	return &RateAgreementsTable{
-		Handle:               keel.Handle[*rateagreement.RateAgreement]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -269,6 +270,365 @@ func (t *RateAgreementsTable) CurrentVersion() *RateAgreementVersionsTable {
 // Get returns the rate_agreements row with the given key, or keel.ErrNotFound.
 func (t *RateAgreementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateagreement.RateAgreement, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateAgreementsQuery is a query over rateagreement.RateAgreement.
+type RateAgreementsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateagreement.RateAgreement] = (*RateAgreementsTable)(nil)
+
+var _ keel.Query[*rateagreement.RateAgreement] = (*RateAgreementsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateAgreementsTable) Query() keel.Query[*rateagreement.RateAgreement] {
+	return &RateAgreementsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateAgreementsQuery.Where.
+func (t *RateAgreementsTable) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateAgreementsQuery.Pick.
+func (t *RateAgreementsTable) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateAgreementsQuery.Load.
+func (t *RateAgreementsTable) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateAgreementsQuery.Omit.
+func (t *RateAgreementsTable) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateAgreementsQuery.Order.
+func (t *RateAgreementsTable) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateAgreementsQuery.Limit.
+func (t *RateAgreementsTable) Limit(n int) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateAgreementsQuery.Group.
+func (t *RateAgreementsTable) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateAgreementsQuery.GroupingSets.
+func (t *RateAgreementsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateAgreementsQuery.Rollup.
+func (t *RateAgreementsTable) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateAgreementsQuery.Cube.
+func (t *RateAgreementsTable) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateAgreementsQuery.AllTenants.
+func (t *RateAgreementsTable) AllTenants() keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateAgreementsQuery.Join.
+func (t *RateAgreementsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateAgreementsQuery.LeftJoin.
+func (t *RateAgreementsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateAgreementsQuery.LeftJoinLateral.
+func (t *RateAgreementsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateAgreementsQuery.JoinLateral.
+func (t *RateAgreementsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateAgreementsQuery.Lock.
+func (t *RateAgreementsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateAgreementsQuery.DistinctOn.
+func (t *RateAgreementsTable) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateAgreementsQuery.Cache.
+func (t *RateAgreementsTable) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateAgreementsQuery.LoadStrategy.
+func (t *RateAgreementsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateAgreementsQuery.With.
+func (t *RateAgreementsTable) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateAgreementsQuery.Compute.
+func (t *RateAgreementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateAgreementsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateAgreementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateAgreementsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateAgreementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateAgreementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreement) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateAgreementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateAgreementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateAgreementsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreement) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateAgreementsQuery) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateAgreementsQuery) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateAgreementsQuery) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateAgreementsQuery) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateAgreementsQuery) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateAgreementsQuery) Distinct() keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateAgreementsQuery) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateAgreementsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateAgreementsQuery) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateAgreementsQuery) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateAgreementsQuery) Window(name string, w keel.Window) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateAgreementsQuery) Having(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateAgreementsQuery) Limit(n int) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateAgreementsQuery) Offset(n int) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateAgreementsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateAgreementsQuery) AllTenants() keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateAgreementsQuery) CustomPlan() keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateAgreementsQuery) Timeout(d time.Duration) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateAgreementsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateAgreementsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateAgreementsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateAgreementsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateAgreementsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateAgreementsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateAgreementsQuery) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateAgreementsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateAgreementsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreement] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateAgreementsQuery) Clone() keel.Query[*rateagreement.RateAgreement] {
+	return &RateAgreementsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateAgreementsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreement, error) {
+	return keel.One[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateAgreementsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreement, error) {
+	return keel.First[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateAgreementsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreement, error) {
+	return keel.List[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateAgreementsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreement, error) {
+	return keel.All[*rateagreement.RateAgreement](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateAgreementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreement, error) {
+	return keel.UpdateReturning[*rateagreement.RateAgreement](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateAgreementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreement], error) {
+	return keel.PageOf[*rateagreement.RateAgreement](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateAgreementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreement) error) error {
+	return keel.Each[*rateagreement.RateAgreement](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateAgreement() unsafe.Pointer { return unsafe.Pointer(new(rateagreement.RateAgreement)) }
@@ -560,7 +920,7 @@ var rateAgreementAccessorialsRef = keel.Ref{Table: &rateAgreementAccessorialsTab
 
 // RateAgreementAccessorialsTable is the table of rateagreement.RateAgreementAccessorial.
 type RateAgreementAccessorialsTable struct {
-	keel.Handle[*rateagreement.RateAgreementAccessorial]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -585,7 +945,7 @@ type RateAgreementAccessorialsTable struct {
 
 // RateAgreementAccessorials references the rate_agreement_accessorials table.
 var RateAgreementAccessorials = &RateAgreementAccessorialsTable{
-	Handle:              keel.Handle[*rateagreement.RateAgreementAccessorial]{Ref: &rateAgreementAccessorialsRef},
+	TableBase:           keel.TableBase{Ref: &rateAgreementAccessorialsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 2}}},
@@ -608,10 +968,10 @@ var RateAgreementAccessorials = &RateAgreementAccessorialsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &rateAgreementAccessorialsRef, Index: 19}},
 }
 
-// BuildRateAgreementAccessorials builds the handle of rate_agreement_accessorials for ref. Generated relation and alias methods call it.
+// BuildRateAgreementAccessorials builds the table of rate_agreement_accessorials for ref. Generated relation and alias methods call it.
 func BuildRateAgreementAccessorials(r *keel.Ref) *RateAgreementAccessorialsTable {
 	return &RateAgreementAccessorialsTable{
-		Handle:              keel.Handle[*rateagreement.RateAgreementAccessorial]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -656,6 +1016,365 @@ func (t *RateAgreementAccessorialsTable) AccessorialCharge() *accessorialcharged
 // Get returns the rate_agreement_accessorials row with the given key, or keel.ErrNotFound.
 func (t *RateAgreementAccessorialsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateagreement.RateAgreementAccessorial, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateAgreementAccessorialsQuery is a query over rateagreement.RateAgreementAccessorial.
+type RateAgreementAccessorialsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateagreement.RateAgreementAccessorial] = (*RateAgreementAccessorialsTable)(nil)
+
+var _ keel.Query[*rateagreement.RateAgreementAccessorial] = (*RateAgreementAccessorialsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateAgreementAccessorialsTable) Query() keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return &RateAgreementAccessorialsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateAgreementAccessorialsQuery.Where.
+func (t *RateAgreementAccessorialsTable) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateAgreementAccessorialsQuery.Pick.
+func (t *RateAgreementAccessorialsTable) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateAgreementAccessorialsQuery.Load.
+func (t *RateAgreementAccessorialsTable) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateAgreementAccessorialsQuery.Omit.
+func (t *RateAgreementAccessorialsTable) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateAgreementAccessorialsQuery.Order.
+func (t *RateAgreementAccessorialsTable) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateAgreementAccessorialsQuery.Limit.
+func (t *RateAgreementAccessorialsTable) Limit(n int) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateAgreementAccessorialsQuery.Group.
+func (t *RateAgreementAccessorialsTable) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateAgreementAccessorialsQuery.GroupingSets.
+func (t *RateAgreementAccessorialsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateAgreementAccessorialsQuery.Rollup.
+func (t *RateAgreementAccessorialsTable) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateAgreementAccessorialsQuery.Cube.
+func (t *RateAgreementAccessorialsTable) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateAgreementAccessorialsQuery.AllTenants.
+func (t *RateAgreementAccessorialsTable) AllTenants() keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateAgreementAccessorialsQuery.Join.
+func (t *RateAgreementAccessorialsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateAgreementAccessorialsQuery.LeftJoin.
+func (t *RateAgreementAccessorialsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateAgreementAccessorialsQuery.LeftJoinLateral.
+func (t *RateAgreementAccessorialsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateAgreementAccessorialsQuery.JoinLateral.
+func (t *RateAgreementAccessorialsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateAgreementAccessorialsQuery.Lock.
+func (t *RateAgreementAccessorialsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateAgreementAccessorialsQuery.DistinctOn.
+func (t *RateAgreementAccessorialsTable) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateAgreementAccessorialsQuery.Cache.
+func (t *RateAgreementAccessorialsTable) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateAgreementAccessorialsQuery.LoadStrategy.
+func (t *RateAgreementAccessorialsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateAgreementAccessorialsQuery.With.
+func (t *RateAgreementAccessorialsTable) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateAgreementAccessorialsQuery.Compute.
+func (t *RateAgreementAccessorialsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateAgreementAccessorialsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateAgreementAccessorialsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateAgreementAccessorialsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateAgreementAccessorialsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateAgreementAccessorialsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementAccessorial) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateAgreementAccessorialsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateAgreementAccessorialsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateAgreementAccessorialsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementAccessorial) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateAgreementAccessorialsQuery) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateAgreementAccessorialsQuery) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateAgreementAccessorialsQuery) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateAgreementAccessorialsQuery) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateAgreementAccessorialsQuery) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateAgreementAccessorialsQuery) Distinct() keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateAgreementAccessorialsQuery) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateAgreementAccessorialsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateAgreementAccessorialsQuery) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateAgreementAccessorialsQuery) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateAgreementAccessorialsQuery) Window(name string, w keel.Window) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateAgreementAccessorialsQuery) Having(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateAgreementAccessorialsQuery) Limit(n int) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateAgreementAccessorialsQuery) Offset(n int) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateAgreementAccessorialsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateAgreementAccessorialsQuery) AllTenants() keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateAgreementAccessorialsQuery) CustomPlan() keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateAgreementAccessorialsQuery) Timeout(d time.Duration) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateAgreementAccessorialsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateAgreementAccessorialsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateAgreementAccessorialsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateAgreementAccessorialsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateAgreementAccessorialsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateAgreementAccessorialsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateAgreementAccessorialsQuery) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateAgreementAccessorialsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateAgreementAccessorialsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementAccessorial] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateAgreementAccessorialsQuery) Clone() keel.Query[*rateagreement.RateAgreementAccessorial] {
+	return &RateAgreementAccessorialsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateAgreementAccessorialsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementAccessorial, error) {
+	return keel.One[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateAgreementAccessorialsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementAccessorial, error) {
+	return keel.First[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateAgreementAccessorialsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementAccessorial, error) {
+	return keel.List[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateAgreementAccessorialsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementAccessorial, error) {
+	return keel.All[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateAgreementAccessorialsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementAccessorial, error) {
+	return keel.UpdateReturning[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateAgreementAccessorialsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementAccessorial], error) {
+	return keel.PageOf[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateAgreementAccessorialsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementAccessorial) error) error {
+	return keel.Each[*rateagreement.RateAgreementAccessorial](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateAgreementAccessorial() unsafe.Pointer {
@@ -850,7 +1569,7 @@ var rateAgreementFuelBindingsRef = keel.Ref{Table: &rateAgreementFuelBindingsTab
 
 // RateAgreementFuelBindingsTable is the table of rateagreement.RateAgreementFuelBinding.
 type RateAgreementFuelBindingsTable struct {
-	keel.Handle[*rateagreement.RateAgreementFuelBinding]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -867,7 +1586,7 @@ type RateAgreementFuelBindingsTable struct {
 
 // RateAgreementFuelBindings references the rate_agreement_fuel_bindings table.
 var RateAgreementFuelBindings = &RateAgreementFuelBindingsTable{
-	Handle:                 keel.Handle[*rateagreement.RateAgreementFuelBinding]{Ref: &rateAgreementFuelBindingsRef},
+	TableBase:              keel.TableBase{Ref: &rateAgreementFuelBindingsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 2}}},
@@ -882,10 +1601,10 @@ var RateAgreementFuelBindings = &RateAgreementFuelBindingsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &rateAgreementFuelBindingsRef, Index: 11}},
 }
 
-// BuildRateAgreementFuelBindings builds the handle of rate_agreement_fuel_bindings for ref. Generated relation and alias methods call it.
+// BuildRateAgreementFuelBindings builds the table of rate_agreement_fuel_bindings for ref. Generated relation and alias methods call it.
 func BuildRateAgreementFuelBindings(r *keel.Ref) *RateAgreementFuelBindingsTable {
 	return &RateAgreementFuelBindingsTable{
-		Handle:                 keel.Handle[*rateagreement.RateAgreementFuelBinding]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -922,6 +1641,365 @@ func (t *RateAgreementFuelBindingsTable) Program() *fuelsurchargedb.FuelSurcharg
 // Get returns the rate_agreement_fuel_bindings row with the given key, or keel.ErrNotFound.
 func (t *RateAgreementFuelBindingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateagreement.RateAgreementFuelBinding, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateAgreementFuelBindingsQuery is a query over rateagreement.RateAgreementFuelBinding.
+type RateAgreementFuelBindingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateagreement.RateAgreementFuelBinding] = (*RateAgreementFuelBindingsTable)(nil)
+
+var _ keel.Query[*rateagreement.RateAgreementFuelBinding] = (*RateAgreementFuelBindingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateAgreementFuelBindingsTable) Query() keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return &RateAgreementFuelBindingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateAgreementFuelBindingsQuery.Where.
+func (t *RateAgreementFuelBindingsTable) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateAgreementFuelBindingsQuery.Pick.
+func (t *RateAgreementFuelBindingsTable) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateAgreementFuelBindingsQuery.Load.
+func (t *RateAgreementFuelBindingsTable) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateAgreementFuelBindingsQuery.Omit.
+func (t *RateAgreementFuelBindingsTable) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateAgreementFuelBindingsQuery.Order.
+func (t *RateAgreementFuelBindingsTable) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateAgreementFuelBindingsQuery.Limit.
+func (t *RateAgreementFuelBindingsTable) Limit(n int) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateAgreementFuelBindingsQuery.Group.
+func (t *RateAgreementFuelBindingsTable) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateAgreementFuelBindingsQuery.GroupingSets.
+func (t *RateAgreementFuelBindingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateAgreementFuelBindingsQuery.Rollup.
+func (t *RateAgreementFuelBindingsTable) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateAgreementFuelBindingsQuery.Cube.
+func (t *RateAgreementFuelBindingsTable) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateAgreementFuelBindingsQuery.AllTenants.
+func (t *RateAgreementFuelBindingsTable) AllTenants() keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateAgreementFuelBindingsQuery.Join.
+func (t *RateAgreementFuelBindingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateAgreementFuelBindingsQuery.LeftJoin.
+func (t *RateAgreementFuelBindingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateAgreementFuelBindingsQuery.LeftJoinLateral.
+func (t *RateAgreementFuelBindingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateAgreementFuelBindingsQuery.JoinLateral.
+func (t *RateAgreementFuelBindingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateAgreementFuelBindingsQuery.Lock.
+func (t *RateAgreementFuelBindingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateAgreementFuelBindingsQuery.DistinctOn.
+func (t *RateAgreementFuelBindingsTable) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateAgreementFuelBindingsQuery.Cache.
+func (t *RateAgreementFuelBindingsTable) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateAgreementFuelBindingsQuery.LoadStrategy.
+func (t *RateAgreementFuelBindingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateAgreementFuelBindingsQuery.With.
+func (t *RateAgreementFuelBindingsTable) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateAgreementFuelBindingsQuery.Compute.
+func (t *RateAgreementFuelBindingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateAgreementFuelBindingsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateAgreementFuelBindingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateAgreementFuelBindingsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateAgreementFuelBindingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateAgreementFuelBindingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementFuelBinding) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateAgreementFuelBindingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateAgreementFuelBindingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateAgreementFuelBindingsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementFuelBinding) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateAgreementFuelBindingsQuery) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateAgreementFuelBindingsQuery) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateAgreementFuelBindingsQuery) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateAgreementFuelBindingsQuery) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateAgreementFuelBindingsQuery) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateAgreementFuelBindingsQuery) Distinct() keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateAgreementFuelBindingsQuery) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateAgreementFuelBindingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateAgreementFuelBindingsQuery) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateAgreementFuelBindingsQuery) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateAgreementFuelBindingsQuery) Window(name string, w keel.Window) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateAgreementFuelBindingsQuery) Having(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateAgreementFuelBindingsQuery) Limit(n int) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateAgreementFuelBindingsQuery) Offset(n int) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateAgreementFuelBindingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateAgreementFuelBindingsQuery) AllTenants() keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateAgreementFuelBindingsQuery) CustomPlan() keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateAgreementFuelBindingsQuery) Timeout(d time.Duration) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateAgreementFuelBindingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateAgreementFuelBindingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateAgreementFuelBindingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateAgreementFuelBindingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateAgreementFuelBindingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateAgreementFuelBindingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateAgreementFuelBindingsQuery) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateAgreementFuelBindingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateAgreementFuelBindingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateAgreementFuelBindingsQuery) Clone() keel.Query[*rateagreement.RateAgreementFuelBinding] {
+	return &RateAgreementFuelBindingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateAgreementFuelBindingsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementFuelBinding, error) {
+	return keel.One[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateAgreementFuelBindingsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementFuelBinding, error) {
+	return keel.First[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateAgreementFuelBindingsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementFuelBinding, error) {
+	return keel.List[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateAgreementFuelBindingsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementFuelBinding, error) {
+	return keel.All[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateAgreementFuelBindingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementFuelBinding, error) {
+	return keel.UpdateReturning[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateAgreementFuelBindingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementFuelBinding], error) {
+	return keel.PageOf[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateAgreementFuelBindingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementFuelBinding) error) error {
+	return keel.Each[*rateagreement.RateAgreementFuelBinding](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateAgreementFuelBinding() unsafe.Pointer {
@@ -1097,7 +2175,7 @@ var rateAgreementRulesRef = keel.Ref{Table: &rateAgreementRulesTable}
 
 // RateAgreementRulesTable is the table of rateagreement.RateAgreementRule.
 type RateAgreementRulesTable struct {
-	keel.Handle[*rateagreement.RateAgreementRule]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -1155,7 +2233,7 @@ type RateAgreementRulesTable struct {
 
 // RateAgreementRules references the rate_agreement_rules table.
 var RateAgreementRules = &RateAgreementRulesTable{
-	Handle:                  keel.Handle[*rateagreement.RateAgreementRule]{Ref: &rateAgreementRulesRef},
+	TableBase:               keel.TableBase{Ref: &rateAgreementRulesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 2}}},
@@ -1211,10 +2289,10 @@ var RateAgreementRules = &RateAgreementRulesTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &rateAgreementRulesRef, Index: 52}},
 }
 
-// BuildRateAgreementRules builds the handle of rate_agreement_rules for ref. Generated relation and alias methods call it.
+// BuildRateAgreementRules builds the table of rate_agreement_rules for ref. Generated relation and alias methods call it.
 func BuildRateAgreementRules(r *keel.Ref) *RateAgreementRulesTable {
 	return &RateAgreementRulesTable{
-		Handle:                  keel.Handle[*rateagreement.RateAgreementRule]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1287,6 +2365,365 @@ func (t *RateAgreementRulesTable) Agreement() *RateAgreementsTable {
 // Get returns the rate_agreement_rules row with the given key, or keel.ErrNotFound.
 func (t *RateAgreementRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateagreement.RateAgreementRule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateAgreementRulesQuery is a query over rateagreement.RateAgreementRule.
+type RateAgreementRulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateagreement.RateAgreementRule] = (*RateAgreementRulesTable)(nil)
+
+var _ keel.Query[*rateagreement.RateAgreementRule] = (*RateAgreementRulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateAgreementRulesTable) Query() keel.Query[*rateagreement.RateAgreementRule] {
+	return &RateAgreementRulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateAgreementRulesQuery.Where.
+func (t *RateAgreementRulesTable) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateAgreementRulesQuery.Pick.
+func (t *RateAgreementRulesTable) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateAgreementRulesQuery.Load.
+func (t *RateAgreementRulesTable) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateAgreementRulesQuery.Omit.
+func (t *RateAgreementRulesTable) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateAgreementRulesQuery.Order.
+func (t *RateAgreementRulesTable) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateAgreementRulesQuery.Limit.
+func (t *RateAgreementRulesTable) Limit(n int) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateAgreementRulesQuery.Group.
+func (t *RateAgreementRulesTable) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateAgreementRulesQuery.GroupingSets.
+func (t *RateAgreementRulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateAgreementRulesQuery.Rollup.
+func (t *RateAgreementRulesTable) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateAgreementRulesQuery.Cube.
+func (t *RateAgreementRulesTable) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateAgreementRulesQuery.AllTenants.
+func (t *RateAgreementRulesTable) AllTenants() keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateAgreementRulesQuery.Join.
+func (t *RateAgreementRulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateAgreementRulesQuery.LeftJoin.
+func (t *RateAgreementRulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateAgreementRulesQuery.LeftJoinLateral.
+func (t *RateAgreementRulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateAgreementRulesQuery.JoinLateral.
+func (t *RateAgreementRulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateAgreementRulesQuery.Lock.
+func (t *RateAgreementRulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateAgreementRulesQuery.DistinctOn.
+func (t *RateAgreementRulesTable) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateAgreementRulesQuery.Cache.
+func (t *RateAgreementRulesTable) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateAgreementRulesQuery.LoadStrategy.
+func (t *RateAgreementRulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateAgreementRulesQuery.With.
+func (t *RateAgreementRulesTable) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateAgreementRulesQuery.Compute.
+func (t *RateAgreementRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateAgreementRulesTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateAgreementRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateAgreementRulesTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateAgreementRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateAgreementRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementRule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateAgreementRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateAgreementRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateAgreementRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementRule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateAgreementRulesQuery) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateAgreementRulesQuery) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateAgreementRulesQuery) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateAgreementRulesQuery) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateAgreementRulesQuery) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateAgreementRulesQuery) Distinct() keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateAgreementRulesQuery) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateAgreementRulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateAgreementRulesQuery) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateAgreementRulesQuery) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateAgreementRulesQuery) Window(name string, w keel.Window) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateAgreementRulesQuery) Having(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateAgreementRulesQuery) Limit(n int) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateAgreementRulesQuery) Offset(n int) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateAgreementRulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateAgreementRulesQuery) AllTenants() keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateAgreementRulesQuery) CustomPlan() keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateAgreementRulesQuery) Timeout(d time.Duration) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateAgreementRulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateAgreementRulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateAgreementRulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateAgreementRulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateAgreementRulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateAgreementRulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateAgreementRulesQuery) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateAgreementRulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateAgreementRulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementRule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateAgreementRulesQuery) Clone() keel.Query[*rateagreement.RateAgreementRule] {
+	return &RateAgreementRulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateAgreementRulesQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementRule, error) {
+	return keel.One[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateAgreementRulesQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementRule, error) {
+	return keel.First[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateAgreementRulesQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementRule, error) {
+	return keel.List[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateAgreementRulesQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementRule, error) {
+	return keel.All[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateAgreementRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementRule, error) {
+	return keel.UpdateReturning[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateAgreementRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementRule], error) {
+	return keel.PageOf[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateAgreementRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementRule) error) error {
+	return keel.Each[*rateagreement.RateAgreementRule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateAgreementRule() unsafe.Pointer {
@@ -1698,7 +3135,7 @@ var rateAgreementVersionsRef = keel.Ref{Table: &rateAgreementVersionsTable}
 
 // RateAgreementVersionsTable is the table of rateagreement.RateAgreementVersion.
 type RateAgreementVersionsTable struct {
-	keel.Handle[*rateagreement.RateAgreementVersion]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -1736,7 +3173,7 @@ type RateAgreementVersionsTable struct {
 
 // RateAgreementVersions references the rate_agreement_versions table.
 var RateAgreementVersions = &RateAgreementVersionsTable{
-	Handle:                 keel.Handle[*rateagreement.RateAgreementVersion]{Ref: &rateAgreementVersionsRef},
+	TableBase:              keel.TableBase{Ref: &rateAgreementVersionsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 2}}},
@@ -1772,10 +3209,10 @@ var RateAgreementVersions = &RateAgreementVersionsTable{
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &rateAgreementVersionsRef, Index: 32}},
 }
 
-// BuildRateAgreementVersions builds the handle of rate_agreement_versions for ref. Generated relation and alias methods call it.
+// BuildRateAgreementVersions builds the table of rate_agreement_versions for ref. Generated relation and alias methods call it.
 func BuildRateAgreementVersions(r *keel.Ref) *RateAgreementVersionsTable {
 	return &RateAgreementVersionsTable{
-		Handle:                 keel.Handle[*rateagreement.RateAgreementVersion]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1833,6 +3270,365 @@ func (t *RateAgreementVersionsTable) CreatedBy() *tenantdb.UsersTable {
 // Get returns the rate_agreement_versions row with the given key, or keel.ErrNotFound.
 func (t *RateAgreementVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateagreement.RateAgreementVersion, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateAgreementVersionsQuery is a query over rateagreement.RateAgreementVersion.
+type RateAgreementVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateagreement.RateAgreementVersion] = (*RateAgreementVersionsTable)(nil)
+
+var _ keel.Query[*rateagreement.RateAgreementVersion] = (*RateAgreementVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateAgreementVersionsTable) Query() keel.Query[*rateagreement.RateAgreementVersion] {
+	return &RateAgreementVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateAgreementVersionsQuery.Where.
+func (t *RateAgreementVersionsTable) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateAgreementVersionsQuery.Pick.
+func (t *RateAgreementVersionsTable) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateAgreementVersionsQuery.Load.
+func (t *RateAgreementVersionsTable) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateAgreementVersionsQuery.Omit.
+func (t *RateAgreementVersionsTable) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateAgreementVersionsQuery.Order.
+func (t *RateAgreementVersionsTable) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateAgreementVersionsQuery.Limit.
+func (t *RateAgreementVersionsTable) Limit(n int) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateAgreementVersionsQuery.Group.
+func (t *RateAgreementVersionsTable) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateAgreementVersionsQuery.GroupingSets.
+func (t *RateAgreementVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateAgreementVersionsQuery.Rollup.
+func (t *RateAgreementVersionsTable) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateAgreementVersionsQuery.Cube.
+func (t *RateAgreementVersionsTable) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateAgreementVersionsQuery.AllTenants.
+func (t *RateAgreementVersionsTable) AllTenants() keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateAgreementVersionsQuery.Join.
+func (t *RateAgreementVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateAgreementVersionsQuery.LeftJoin.
+func (t *RateAgreementVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateAgreementVersionsQuery.LeftJoinLateral.
+func (t *RateAgreementVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateAgreementVersionsQuery.JoinLateral.
+func (t *RateAgreementVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateAgreementVersionsQuery.Lock.
+func (t *RateAgreementVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateAgreementVersionsQuery.DistinctOn.
+func (t *RateAgreementVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateAgreementVersionsQuery.Cache.
+func (t *RateAgreementVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateAgreementVersionsQuery.LoadStrategy.
+func (t *RateAgreementVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateAgreementVersionsQuery.With.
+func (t *RateAgreementVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateAgreementVersionsQuery.Compute.
+func (t *RateAgreementVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateAgreementVersionsTable) Create(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateAgreementVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateAgreementVersionsTable) Save(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateAgreementVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateAgreementVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateagreement.RateAgreementVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateAgreementVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateAgreementVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateAgreementVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateagreement.RateAgreementVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateAgreementVersionsQuery) Where(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateAgreementVersionsQuery) Pick(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateAgreementVersionsQuery) Omit(cols ...keel.Column) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateAgreementVersionsQuery) Load(ls ...keel.Loader) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateAgreementVersionsQuery) Order(os ...keel.Order) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateAgreementVersionsQuery) Distinct() keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateAgreementVersionsQuery) Group(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateAgreementVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateAgreementVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateAgreementVersionsQuery) Cube(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateAgreementVersionsQuery) Window(name string, w keel.Window) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateAgreementVersionsQuery) Having(ps ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateAgreementVersionsQuery) Limit(n int) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateAgreementVersionsQuery) Offset(n int) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateAgreementVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateAgreementVersionsQuery) AllTenants() keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateAgreementVersionsQuery) CustomPlan() keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateAgreementVersionsQuery) Timeout(d time.Duration) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateAgreementVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateAgreementVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateAgreementVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateAgreementVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateAgreementVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateAgreementVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateAgreementVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateAgreementVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateAgreementVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateagreement.RateAgreementVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateAgreementVersionsQuery) Clone() keel.Query[*rateagreement.RateAgreementVersion] {
+	return &RateAgreementVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateAgreementVersionsQuery) One(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementVersion, error) {
+	return keel.One[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateAgreementVersionsQuery) First(ctx context.Context, db *keel.DB) (*rateagreement.RateAgreementVersion, error) {
+	return keel.First[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateAgreementVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementVersion, error) {
+	return keel.List[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateAgreementVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*rateagreement.RateAgreementVersion, error) {
+	return keel.All[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateAgreementVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateagreement.RateAgreementVersion, error) {
+	return keel.UpdateReturning[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateAgreementVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateagreement.RateAgreementVersion], error) {
+	return keel.PageOf[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateAgreementVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateagreement.RateAgreementVersion) error) error {
+	return keel.Each[*rateagreement.RateAgreementVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateAgreementVersion() unsafe.Pointer {

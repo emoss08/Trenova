@@ -4,6 +4,7 @@ package approvaldelegationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var approvalDelegationsRef = keel.Ref{Table: &approvalDelegationsTable}
 
 // ApprovalDelegationsTable is the table of approvaldelegation.ApprovalDelegation.
 type ApprovalDelegationsTable struct {
-	keel.Handle[*approvaldelegation.ApprovalDelegation]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -89,7 +90,7 @@ type ApprovalDelegationsTable struct {
 
 // ApprovalDelegations references the approval_delegations table.
 var ApprovalDelegations = &ApprovalDelegationsTable{
-	Handle:         keel.Handle[*approvaldelegation.ApprovalDelegation]{Ref: &approvalDelegationsRef},
+	TableBase:      keel.TableBase{Ref: &approvalDelegationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 2}}},
@@ -107,10 +108,10 @@ var ApprovalDelegations = &ApprovalDelegationsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 14}},
 }
 
-// BuildApprovalDelegations builds the handle of approval_delegations for ref. Generated relation and alias methods call it.
+// BuildApprovalDelegations builds the table of approval_delegations for ref. Generated relation and alias methods call it.
 func BuildApprovalDelegations(r *keel.Ref) *ApprovalDelegationsTable {
 	return &ApprovalDelegationsTable{
-		Handle:         keel.Handle[*approvaldelegation.ApprovalDelegation]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -150,6 +151,365 @@ func (t *ApprovalDelegationsTable) Delegate() *tenantdb.UsersTable {
 // Get returns the approval_delegations row with the given key, or keel.ErrNotFound.
 func (t *ApprovalDelegationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*approvaldelegation.ApprovalDelegation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ApprovalDelegationsQuery is a query over approvaldelegation.ApprovalDelegation.
+type ApprovalDelegationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*approvaldelegation.ApprovalDelegation] = (*ApprovalDelegationsTable)(nil)
+
+var _ keel.Query[*approvaldelegation.ApprovalDelegation] = (*ApprovalDelegationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ApprovalDelegationsTable) Query() keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return &ApprovalDelegationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ApprovalDelegationsQuery.Where.
+func (t *ApprovalDelegationsTable) Where(ps ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ApprovalDelegationsQuery.Pick.
+func (t *ApprovalDelegationsTable) Pick(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ApprovalDelegationsQuery.Load.
+func (t *ApprovalDelegationsTable) Load(ls ...keel.Loader) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ApprovalDelegationsQuery.Omit.
+func (t *ApprovalDelegationsTable) Omit(cols ...keel.Column) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ApprovalDelegationsQuery.Order.
+func (t *ApprovalDelegationsTable) Order(os ...keel.Order) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ApprovalDelegationsQuery.Limit.
+func (t *ApprovalDelegationsTable) Limit(n int) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ApprovalDelegationsQuery.Group.
+func (t *ApprovalDelegationsTable) Group(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ApprovalDelegationsQuery.GroupingSets.
+func (t *ApprovalDelegationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ApprovalDelegationsQuery.Rollup.
+func (t *ApprovalDelegationsTable) Rollup(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ApprovalDelegationsQuery.Cube.
+func (t *ApprovalDelegationsTable) Cube(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ApprovalDelegationsQuery.AllTenants.
+func (t *ApprovalDelegationsTable) AllTenants() keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ApprovalDelegationsQuery.Join.
+func (t *ApprovalDelegationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ApprovalDelegationsQuery.LeftJoin.
+func (t *ApprovalDelegationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ApprovalDelegationsQuery.LeftJoinLateral.
+func (t *ApprovalDelegationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ApprovalDelegationsQuery.JoinLateral.
+func (t *ApprovalDelegationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ApprovalDelegationsQuery.Lock.
+func (t *ApprovalDelegationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ApprovalDelegationsQuery.DistinctOn.
+func (t *ApprovalDelegationsTable) DistinctOn(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ApprovalDelegationsQuery.Cache.
+func (t *ApprovalDelegationsTable) Cache(opts ...keel.CacheOption) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ApprovalDelegationsQuery.LoadStrategy.
+func (t *ApprovalDelegationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ApprovalDelegationsQuery.With.
+func (t *ApprovalDelegationsTable) With(ctes ...*keel.CTETable) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ApprovalDelegationsQuery.Compute.
+func (t *ApprovalDelegationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ApprovalDelegationsTable) Create(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ApprovalDelegationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ApprovalDelegationsTable) Save(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ApprovalDelegationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ApprovalDelegationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ApprovalDelegationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ApprovalDelegationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ApprovalDelegationsTable) Copy(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ApprovalDelegationsQuery) Where(ps ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ApprovalDelegationsQuery) Pick(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ApprovalDelegationsQuery) Omit(cols ...keel.Column) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ApprovalDelegationsQuery) Load(ls ...keel.Loader) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ApprovalDelegationsQuery) Order(os ...keel.Order) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ApprovalDelegationsQuery) Distinct() keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ApprovalDelegationsQuery) Group(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ApprovalDelegationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ApprovalDelegationsQuery) Rollup(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ApprovalDelegationsQuery) Cube(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ApprovalDelegationsQuery) Window(name string, w keel.Window) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ApprovalDelegationsQuery) Having(ps ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ApprovalDelegationsQuery) Limit(n int) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ApprovalDelegationsQuery) Offset(n int) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ApprovalDelegationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ApprovalDelegationsQuery) AllTenants() keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ApprovalDelegationsQuery) CustomPlan() keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ApprovalDelegationsQuery) Timeout(d time.Duration) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ApprovalDelegationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ApprovalDelegationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ApprovalDelegationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ApprovalDelegationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ApprovalDelegationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ApprovalDelegationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ApprovalDelegationsQuery) With(ctes ...*keel.CTETable) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ApprovalDelegationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ApprovalDelegationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*approvaldelegation.ApprovalDelegation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ApprovalDelegationsQuery) Clone() keel.Query[*approvaldelegation.ApprovalDelegation] {
+	return &ApprovalDelegationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ApprovalDelegationsQuery) One(ctx context.Context, db *keel.DB) (*approvaldelegation.ApprovalDelegation, error) {
+	return keel.One[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ApprovalDelegationsQuery) First(ctx context.Context, db *keel.DB) (*approvaldelegation.ApprovalDelegation, error) {
+	return keel.First[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ApprovalDelegationsQuery) List(ctx context.Context, db *keel.DB) ([]*approvaldelegation.ApprovalDelegation, error) {
+	return keel.List[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ApprovalDelegationsQuery) All(ctx context.Context, db *keel.DB) ([]*approvaldelegation.ApprovalDelegation, error) {
+	return keel.All[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ApprovalDelegationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*approvaldelegation.ApprovalDelegation, error) {
+	return keel.UpdateReturning[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ApprovalDelegationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*approvaldelegation.ApprovalDelegation], error) {
+	return keel.PageOf[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ApprovalDelegationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*approvaldelegation.ApprovalDelegation) error) error {
+	return keel.Each[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newApprovalDelegation() unsafe.Pointer {

@@ -4,6 +4,7 @@ package factoringremittancedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -88,7 +89,7 @@ var remittancesRef = keel.Ref{Table: &remittancesTable}
 
 // RemittancesTable is the table of factoringremittance.Remittance.
 type RemittancesTable struct {
-	keel.Handle[*factoringremittance.Remittance]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -124,7 +125,7 @@ type RemittancesTable struct {
 
 // Remittances references the factoring_remittances table.
 var Remittances = &RemittancesTable{
-	Handle:             keel.Handle[*factoringremittance.Remittance]{Ref: &remittancesRef},
+	TableBase:          keel.TableBase{Ref: &remittancesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittancesRef, Index: 2}}},
@@ -158,10 +159,10 @@ var Remittances = &RemittancesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &remittancesRef, Index: 30}},
 }
 
-// BuildRemittances builds the handle of factoring_remittances for ref. Generated relation and alias methods call it.
+// BuildRemittances builds the table of factoring_remittances for ref. Generated relation and alias methods call it.
 func BuildRemittances(r *keel.Ref) *RemittancesTable {
 	return &RemittancesTable{
-		Handle:             keel.Handle[*factoringremittance.Remittance]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -217,6 +218,365 @@ func (t *RemittancesTable) Lines() *RemittanceLinesTable {
 // Get returns the factoring_remittances row with the given key, or keel.ErrNotFound.
 func (t *RemittancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringremittance.Remittance, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RemittancesQuery is a query over factoringremittance.Remittance.
+type RemittancesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringremittance.Remittance] = (*RemittancesTable)(nil)
+
+var _ keel.Query[*factoringremittance.Remittance] = (*RemittancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RemittancesTable) Query() keel.Query[*factoringremittance.Remittance] {
+	return &RemittancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RemittancesQuery.Where.
+func (t *RemittancesTable) Where(ps ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RemittancesQuery.Pick.
+func (t *RemittancesTable) Pick(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RemittancesQuery.Load.
+func (t *RemittancesTable) Load(ls ...keel.Loader) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RemittancesQuery.Omit.
+func (t *RemittancesTable) Omit(cols ...keel.Column) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RemittancesQuery.Order.
+func (t *RemittancesTable) Order(os ...keel.Order) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RemittancesQuery.Limit.
+func (t *RemittancesTable) Limit(n int) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RemittancesQuery.Group.
+func (t *RemittancesTable) Group(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RemittancesQuery.GroupingSets.
+func (t *RemittancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RemittancesQuery.Rollup.
+func (t *RemittancesTable) Rollup(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RemittancesQuery.Cube.
+func (t *RemittancesTable) Cube(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RemittancesQuery.AllTenants.
+func (t *RemittancesTable) AllTenants() keel.Query[*factoringremittance.Remittance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RemittancesQuery.Join.
+func (t *RemittancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RemittancesQuery.LeftJoin.
+func (t *RemittancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RemittancesQuery.LeftJoinLateral.
+func (t *RemittancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RemittancesQuery.JoinLateral.
+func (t *RemittancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RemittancesQuery.Lock.
+func (t *RemittancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RemittancesQuery.DistinctOn.
+func (t *RemittancesTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RemittancesQuery.Cache.
+func (t *RemittancesTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RemittancesQuery.LoadStrategy.
+func (t *RemittancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RemittancesQuery.With.
+func (t *RemittancesTable) With(ctes ...*keel.CTETable) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RemittancesQuery.Compute.
+func (t *RemittancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RemittancesTable) Create(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RemittancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RemittancesTable) Save(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RemittancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RemittancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringremittance.Remittance) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RemittancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RemittancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RemittancesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringremittance.Remittance) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RemittancesQuery) Where(ps ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RemittancesQuery) Pick(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RemittancesQuery) Omit(cols ...keel.Column) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RemittancesQuery) Load(ls ...keel.Loader) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RemittancesQuery) Order(os ...keel.Order) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RemittancesQuery) Distinct() keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RemittancesQuery) Group(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RemittancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RemittancesQuery) Rollup(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RemittancesQuery) Cube(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RemittancesQuery) Window(name string, w keel.Window) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RemittancesQuery) Having(ps ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RemittancesQuery) Limit(n int) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RemittancesQuery) Offset(n int) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RemittancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RemittancesQuery) AllTenants() keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RemittancesQuery) CustomPlan() keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RemittancesQuery) Timeout(d time.Duration) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RemittancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RemittancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RemittancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RemittancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RemittancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RemittancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RemittancesQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RemittancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RemittancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringremittance.Remittance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RemittancesQuery) Clone() keel.Query[*factoringremittance.Remittance] {
+	return &RemittancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RemittancesQuery) One(ctx context.Context, db *keel.DB) (*factoringremittance.Remittance, error) {
+	return keel.One[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RemittancesQuery) First(ctx context.Context, db *keel.DB) (*factoringremittance.Remittance, error) {
+	return keel.First[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RemittancesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringremittance.Remittance, error) {
+	return keel.List[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RemittancesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringremittance.Remittance, error) {
+	return keel.All[*factoringremittance.Remittance](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RemittancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringremittance.Remittance, error) {
+	return keel.UpdateReturning[*factoringremittance.Remittance](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RemittancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringremittance.Remittance], error) {
+	return keel.PageOf[*factoringremittance.Remittance](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RemittancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringremittance.Remittance) error) error {
+	return keel.Each[*factoringremittance.Remittance](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRemittance() unsafe.Pointer { return unsafe.Pointer(new(factoringremittance.Remittance)) }
@@ -492,7 +852,7 @@ var remittanceLinesRef = keel.Ref{Table: &remittanceLinesTable}
 
 // RemittanceLinesTable is the table of factoringremittance.RemittanceLine.
 type RemittanceLinesTable struct {
-	keel.Handle[*factoringremittance.RemittanceLine]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -527,7 +887,7 @@ type RemittanceLinesTable struct {
 
 // RemittanceLines references the factoring_remittance_lines table.
 var RemittanceLines = &RemittanceLinesTable{
-	Handle:            keel.Handle[*factoringremittance.RemittanceLine]{Ref: &remittanceLinesRef},
+	TableBase:         keel.TableBase{Ref: &remittanceLinesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceLinesRef, Index: 2}}},
@@ -560,10 +920,10 @@ var RemittanceLines = &RemittanceLinesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &remittanceLinesRef, Index: 29}},
 }
 
-// BuildRemittanceLines builds the handle of factoring_remittance_lines for ref. Generated relation and alias methods call it.
+// BuildRemittanceLines builds the table of factoring_remittance_lines for ref. Generated relation and alias methods call it.
 func BuildRemittanceLines(r *keel.Ref) *RemittanceLinesTable {
 	return &RemittanceLinesTable{
-		Handle:            keel.Handle[*factoringremittance.RemittanceLine]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -613,6 +973,365 @@ func (t *RemittanceLinesTable) SubmissionItem() *factoringsubmissiondb.Submissio
 // Get returns the factoring_remittance_lines row with the given key, or keel.ErrNotFound.
 func (t *RemittanceLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringremittance.RemittanceLine, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RemittanceLinesQuery is a query over factoringremittance.RemittanceLine.
+type RemittanceLinesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringremittance.RemittanceLine] = (*RemittanceLinesTable)(nil)
+
+var _ keel.Query[*factoringremittance.RemittanceLine] = (*RemittanceLinesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RemittanceLinesTable) Query() keel.Query[*factoringremittance.RemittanceLine] {
+	return &RemittanceLinesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RemittanceLinesQuery.Where.
+func (t *RemittanceLinesTable) Where(ps ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RemittanceLinesQuery.Pick.
+func (t *RemittanceLinesTable) Pick(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RemittanceLinesQuery.Load.
+func (t *RemittanceLinesTable) Load(ls ...keel.Loader) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RemittanceLinesQuery.Omit.
+func (t *RemittanceLinesTable) Omit(cols ...keel.Column) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RemittanceLinesQuery.Order.
+func (t *RemittanceLinesTable) Order(os ...keel.Order) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RemittanceLinesQuery.Limit.
+func (t *RemittanceLinesTable) Limit(n int) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RemittanceLinesQuery.Group.
+func (t *RemittanceLinesTable) Group(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RemittanceLinesQuery.GroupingSets.
+func (t *RemittanceLinesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RemittanceLinesQuery.Rollup.
+func (t *RemittanceLinesTable) Rollup(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RemittanceLinesQuery.Cube.
+func (t *RemittanceLinesTable) Cube(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RemittanceLinesQuery.AllTenants.
+func (t *RemittanceLinesTable) AllTenants() keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RemittanceLinesQuery.Join.
+func (t *RemittanceLinesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RemittanceLinesQuery.LeftJoin.
+func (t *RemittanceLinesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RemittanceLinesQuery.LeftJoinLateral.
+func (t *RemittanceLinesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RemittanceLinesQuery.JoinLateral.
+func (t *RemittanceLinesTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RemittanceLinesQuery.Lock.
+func (t *RemittanceLinesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RemittanceLinesQuery.DistinctOn.
+func (t *RemittanceLinesTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RemittanceLinesQuery.Cache.
+func (t *RemittanceLinesTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RemittanceLinesQuery.LoadStrategy.
+func (t *RemittanceLinesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RemittanceLinesQuery.With.
+func (t *RemittanceLinesTable) With(ctes ...*keel.CTETable) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RemittanceLinesQuery.Compute.
+func (t *RemittanceLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RemittanceLinesTable) Create(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RemittanceLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RemittanceLinesTable) Save(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RemittanceLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RemittanceLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceLine) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RemittanceLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RemittanceLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RemittanceLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceLine) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RemittanceLinesQuery) Where(ps ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RemittanceLinesQuery) Pick(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RemittanceLinesQuery) Omit(cols ...keel.Column) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RemittanceLinesQuery) Load(ls ...keel.Loader) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RemittanceLinesQuery) Order(os ...keel.Order) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RemittanceLinesQuery) Distinct() keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RemittanceLinesQuery) Group(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RemittanceLinesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RemittanceLinesQuery) Rollup(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RemittanceLinesQuery) Cube(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RemittanceLinesQuery) Window(name string, w keel.Window) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RemittanceLinesQuery) Having(ps ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RemittanceLinesQuery) Limit(n int) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RemittanceLinesQuery) Offset(n int) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RemittanceLinesQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RemittanceLinesQuery) AllTenants() keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RemittanceLinesQuery) CustomPlan() keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RemittanceLinesQuery) Timeout(d time.Duration) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RemittanceLinesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RemittanceLinesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RemittanceLinesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RemittanceLinesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RemittanceLinesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RemittanceLinesQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RemittanceLinesQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RemittanceLinesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RemittanceLinesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringremittance.RemittanceLine] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RemittanceLinesQuery) Clone() keel.Query[*factoringremittance.RemittanceLine] {
+	return &RemittanceLinesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RemittanceLinesQuery) One(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceLine, error) {
+	return keel.One[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RemittanceLinesQuery) First(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceLine, error) {
+	return keel.First[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RemittanceLinesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceLine, error) {
+	return keel.List[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RemittanceLinesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceLine, error) {
+	return keel.All[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RemittanceLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringremittance.RemittanceLine, error) {
+	return keel.UpdateReturning[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RemittanceLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringremittance.RemittanceLine], error) {
+	return keel.PageOf[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RemittanceLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringremittance.RemittanceLine) error) error {
+	return keel.Each[*factoringremittance.RemittanceLine](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRemittanceLine() unsafe.Pointer {
@@ -869,7 +1588,7 @@ var remittanceProfilesRef = keel.Ref{Table: &remittanceProfilesTable}
 
 // RemittanceProfilesTable is the table of factoringremittance.RemittanceProfile.
 type RemittanceProfilesTable struct {
-	keel.Handle[*factoringremittance.RemittanceProfile]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -883,7 +1602,7 @@ type RemittanceProfilesTable struct {
 
 // RemittanceProfiles references the factoring_remittance_profiles table.
 var RemittanceProfiles = &RemittanceProfilesTable{
-	Handle:             keel.Handle[*factoringremittance.RemittanceProfile]{Ref: &remittanceProfilesRef},
+	TableBase:          keel.TableBase{Ref: &remittanceProfilesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 2}}},
@@ -895,10 +1614,10 @@ var RemittanceProfiles = &RemittanceProfilesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &remittanceProfilesRef, Index: 8}},
 }
 
-// BuildRemittanceProfiles builds the handle of factoring_remittance_profiles for ref. Generated relation and alias methods call it.
+// BuildRemittanceProfiles builds the table of factoring_remittance_profiles for ref. Generated relation and alias methods call it.
 func BuildRemittanceProfiles(r *keel.Ref) *RemittanceProfilesTable {
 	return &RemittanceProfilesTable{
-		Handle:             keel.Handle[*factoringremittance.RemittanceProfile]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -922,6 +1641,365 @@ func (t *RemittanceProfilesTable) As(alias string) *RemittanceProfilesTable {
 // Get returns the factoring_remittance_profiles row with the given key, or keel.ErrNotFound.
 func (t *RemittanceProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringremittance.RemittanceProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RemittanceProfilesQuery is a query over factoringremittance.RemittanceProfile.
+type RemittanceProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringremittance.RemittanceProfile] = (*RemittanceProfilesTable)(nil)
+
+var _ keel.Query[*factoringremittance.RemittanceProfile] = (*RemittanceProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RemittanceProfilesTable) Query() keel.Query[*factoringremittance.RemittanceProfile] {
+	return &RemittanceProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RemittanceProfilesQuery.Where.
+func (t *RemittanceProfilesTable) Where(ps ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RemittanceProfilesQuery.Pick.
+func (t *RemittanceProfilesTable) Pick(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RemittanceProfilesQuery.Load.
+func (t *RemittanceProfilesTable) Load(ls ...keel.Loader) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RemittanceProfilesQuery.Omit.
+func (t *RemittanceProfilesTable) Omit(cols ...keel.Column) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RemittanceProfilesQuery.Order.
+func (t *RemittanceProfilesTable) Order(os ...keel.Order) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RemittanceProfilesQuery.Limit.
+func (t *RemittanceProfilesTable) Limit(n int) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RemittanceProfilesQuery.Group.
+func (t *RemittanceProfilesTable) Group(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RemittanceProfilesQuery.GroupingSets.
+func (t *RemittanceProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RemittanceProfilesQuery.Rollup.
+func (t *RemittanceProfilesTable) Rollup(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RemittanceProfilesQuery.Cube.
+func (t *RemittanceProfilesTable) Cube(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RemittanceProfilesQuery.AllTenants.
+func (t *RemittanceProfilesTable) AllTenants() keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RemittanceProfilesQuery.Join.
+func (t *RemittanceProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RemittanceProfilesQuery.LeftJoin.
+func (t *RemittanceProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RemittanceProfilesQuery.LeftJoinLateral.
+func (t *RemittanceProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RemittanceProfilesQuery.JoinLateral.
+func (t *RemittanceProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RemittanceProfilesQuery.Lock.
+func (t *RemittanceProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RemittanceProfilesQuery.DistinctOn.
+func (t *RemittanceProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RemittanceProfilesQuery.Cache.
+func (t *RemittanceProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RemittanceProfilesQuery.LoadStrategy.
+func (t *RemittanceProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RemittanceProfilesQuery.With.
+func (t *RemittanceProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RemittanceProfilesQuery.Compute.
+func (t *RemittanceProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RemittanceProfilesTable) Create(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RemittanceProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RemittanceProfilesTable) Save(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RemittanceProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RemittanceProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringremittance.RemittanceProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RemittanceProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RemittanceProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RemittanceProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringremittance.RemittanceProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RemittanceProfilesQuery) Where(ps ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RemittanceProfilesQuery) Pick(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RemittanceProfilesQuery) Omit(cols ...keel.Column) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RemittanceProfilesQuery) Load(ls ...keel.Loader) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RemittanceProfilesQuery) Order(os ...keel.Order) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RemittanceProfilesQuery) Distinct() keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RemittanceProfilesQuery) Group(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RemittanceProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RemittanceProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RemittanceProfilesQuery) Cube(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RemittanceProfilesQuery) Window(name string, w keel.Window) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RemittanceProfilesQuery) Having(ps ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RemittanceProfilesQuery) Limit(n int) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RemittanceProfilesQuery) Offset(n int) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RemittanceProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RemittanceProfilesQuery) AllTenants() keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RemittanceProfilesQuery) CustomPlan() keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RemittanceProfilesQuery) Timeout(d time.Duration) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RemittanceProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RemittanceProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RemittanceProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RemittanceProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RemittanceProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RemittanceProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RemittanceProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RemittanceProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RemittanceProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringremittance.RemittanceProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RemittanceProfilesQuery) Clone() keel.Query[*factoringremittance.RemittanceProfile] {
+	return &RemittanceProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RemittanceProfilesQuery) One(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceProfile, error) {
+	return keel.One[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RemittanceProfilesQuery) First(ctx context.Context, db *keel.DB) (*factoringremittance.RemittanceProfile, error) {
+	return keel.First[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RemittanceProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceProfile, error) {
+	return keel.List[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RemittanceProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringremittance.RemittanceProfile, error) {
+	return keel.All[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RemittanceProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringremittance.RemittanceProfile, error) {
+	return keel.UpdateReturning[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RemittanceProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringremittance.RemittanceProfile], error) {
+	return keel.PageOf[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RemittanceProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringremittance.RemittanceProfile) error) error {
+	return keel.Each[*factoringremittance.RemittanceProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRemittanceProfile() unsafe.Pointer {

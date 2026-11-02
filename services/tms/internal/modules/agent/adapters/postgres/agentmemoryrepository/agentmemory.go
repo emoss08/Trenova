@@ -293,7 +293,7 @@ func (r *repository) Search(
 func searchQuery(
 	req *agentmemoryports.SearchAgentMemoriesRequest,
 	match *textMatch,
-) *keel.Query[*agentmemory.Memory] {
+) keel.Query[*agentmemory.Memory] {
 	m := agentmemorydb.Memories
 	var subject keel.Pred
 	if req.Subject != nil {

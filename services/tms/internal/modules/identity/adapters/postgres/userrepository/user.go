@@ -63,7 +63,7 @@ func New(p Params) tenantports.UserRepository {
 	}
 }
 
-func tenantUsers(orgID pulid.ID) *keel.Query[*tenant.User] {
+func tenantUsers(orgID pulid.ID) keel.Query[*tenant.User] {
 	u := tenantdb.Users
 	return u.Where(
 		u.CurrentOrganizationID.Eq(orgID),
@@ -76,7 +76,7 @@ func keepVersion() keel.Assignment {
 	return u.Version.ToExpr(u.Version)
 }
 
-func allTenantsWhenSystem[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
+func allTenantsWhenSystem[T any](ctx context.Context, q keel.Query[*T]) keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		return q.AllTenants()
 	}
@@ -170,7 +170,7 @@ func (ur *repository) List(
 				tenantUsers(req.Filter.TenantInfo.OrgID),
 				&listquery.Request[tenant.User]{
 					Filter: req.Filter,
-					Shape: func(q *keel.Query[*tenant.User]) *keel.Query[*tenant.User] {
+					Shape: func(q keel.Query[*tenant.User]) keel.Query[*tenant.User] {
 						return q.Load(u.Assignments().Role())
 					},
 				},
@@ -634,18 +634,19 @@ func (ur *repository) GetUserOrganizationSummaries(
 func (ur *repository) UpdatePassword(
 	ctx context.Context,
 	req tenantports.UpdateUserPasswordRequest,
-) error {
-	return dbtx.WriteErr(ctx, ur.db, func(ctx context.Context) error {
+) (int64, error) {
+	return dbtx.Write(ctx, ur.db, func(ctx context.Context) (int64, error) {
 		u := tenantdb.Users
-		_, err := u.Where(
+		rows, err := u.Where(
 			u.ID.Eq(req.UserID),
 			u.CurrentOrganizationID.Eq(req.OrganizationID),
-		).Update(
+		).UpdateReturning(
 			ctx,
 			ur.db.Keel(ctx),
 			u.Password.To(req.Password),
 			u.MustChangePassword.To(req.MustChangePassword),
 			u.PasswordChangedAt.To(timeutils.NowUnix()),
+			u.SessionEpoch.Increment(1),
 		)
 		if err != nil {
 			ur.l.Error(
@@ -653,7 +654,45 @@ func (ur *repository) UpdatePassword(
 				zap.String("userID", req.UserID.String()),
 				zap.Error(err),
 			)
+			return 0, err
+		}
+		if len(rows) == 0 {
+			return 0, errortypes.NewNotFoundError("User not found")
+		}
+
+		return rows[0].SessionEpoch, nil
+	})
+}
+
+func (ur *repository) GetSessionEpoch(ctx context.Context, userID pulid.ID) (int64, error) {
+	user, err := ur.FindByIDForLogin(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+
+	return user.SessionEpoch, nil
+}
+
+func (ur *repository) AdvanceSessionEpoch(ctx context.Context, userID pulid.ID) error {
+	return dbtx.WriteErr(ctx, ur.db, func(ctx context.Context) error {
+		u := tenantdb.Users
+		affected, err := u.Where(u.ID.Eq(userID)).Update(
+			ctx,
+			ur.db.Keel(ctx),
+			u.SessionEpoch.Increment(1),
+			keepVersion(),
+		)
+		if err != nil {
+			ur.l.Error(
+				"failed to advance the user's session epoch",
+				zap.String("userID", userID.String()),
+				zap.Error(err),
+			)
 			return err
+		}
+
+		if affected == 0 {
+			return errortypes.NewNotFoundError("User not found")
 		}
 
 		return nil

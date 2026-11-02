@@ -30124,7 +30124,7 @@ type Shipment {
   temperatureMax: Int
   temperatureMin: Int
   tenderStatus: ShipmentTenderStatus
-  totalChargeAmount: Decimal!
+  totalChargeAmount: Decimal
   tractorTypeId: ID
   trailerTypeId: ID
   transferredToBillingAt: Timestamp

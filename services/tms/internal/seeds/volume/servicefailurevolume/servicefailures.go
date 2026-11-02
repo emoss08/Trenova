@@ -105,7 +105,7 @@ func (g *sfPhase) seed(ctx context.Context) error {
 		end := min(begin+sfChunk, total)
 		rows, stamps := b.rows[begin:end], b.stamps[begin:end]
 		if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-			h := servicefailuredb.ServiceFailures.Handle
+			h := servicefailuredb.ServiceFailures
 			if err := volumegen.InsertRows(ctx, tx, h, rows); err != nil {
 				return err
 			}

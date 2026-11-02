@@ -107,7 +107,7 @@ func TestUpdatePasswordUpdatesOnlyScopedUser(t *testing.T) {
 	updatedHash, err := user.GeneratePassword("new-password-123")
 	require.NoError(t, err)
 
-	err = f.repo.UpdatePassword(f.ctx, tenantports.UpdateUserPasswordRequest{
+	epoch, err := f.repo.UpdatePassword(f.ctx, tenantports.UpdateUserPasswordRequest{
 		UserID:             f.data.User.ID,
 		OrganizationID:     f.data.Organization.ID,
 		BusinessUnitID:     f.data.BusinessUnit.ID,
@@ -116,12 +116,17 @@ func TestUpdatePasswordUpdatesOnlyScopedUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	updatedUser, err := f.repo.GetByID(f.ctx, tenantports.GetUserByIDRequest{TenantInfo: f.data.Info()})
+	updatedUser, err := f.repo.GetByID(
+		f.ctx,
+		tenantports.GetUserByIDRequest{TenantInfo: f.data.Info()},
+	)
 	require.NoError(t, err)
 	assert.NotEqual(t, originalHash, updatedUser.Password)
 	assert.Equal(t, updatedHash, updatedUser.Password)
 	assert.False(t, updatedUser.MustChangePassword)
 	require.NotNil(t, updatedUser.PasswordChangedAt)
+	assert.Equal(t, user.SessionEpoch+1, epoch)
+	assert.Equal(t, epoch, updatedUser.SessionEpoch)
 
 	untouched, err := f.repo.GetByID(f.ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   f.data.Info(),
@@ -129,6 +134,35 @@ func TestUpdatePasswordUpdatesOnlyScopedUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, other.Password, untouched.Password)
+}
+
+func TestAdvanceSessionEpochCountsUpForThatUserOnly(t *testing.T) {
+	f := newUserFixture(t)
+	other := f.addUser(t, "epochother")
+
+	require.NoError(t, f.repo.AdvanceSessionEpoch(f.ctx, f.data.User.ID))
+	require.NoError(t, f.repo.AdvanceSessionEpoch(f.ctx, f.data.User.ID))
+
+	advanced, err := f.repo.GetByID(
+		f.ctx,
+		tenantports.GetUserByIDRequest{TenantInfo: f.data.Info()},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), advanced.SessionEpoch)
+	untouched, err := f.repo.GetByID(f.ctx, tenantports.GetUserByIDRequest{
+		TenantInfo:   f.data.Info(),
+		LookupUserID: other.ID,
+	})
+	require.NoError(t, err)
+	assert.Zero(t, untouched.SessionEpoch)
+}
+
+func TestAdvanceSessionEpochReportsAMissingUser(t *testing.T) {
+	f := newUserFixture(t)
+
+	err := f.repo.AdvanceSessionEpoch(f.ctx, pulid.MustNew("usr_"))
+
+	assert.True(t, errortypes.IsNotFoundError(err))
 }
 
 func TestGetByIDIsLimitedToTheTenant(t *testing.T) {
@@ -270,7 +304,11 @@ func TestReplaceOrganizationMembershipsRefusesASeatPastTheQuota(t *testing.T) {
 	require.Nil(t, memberships)
 	require.True(t, errortypes.IsQuotaExceededError(err))
 
-	remaining, err := f.repo.ListOrganizationMemberships(f.ctx, f.data.User.ID, f.data.BusinessUnit.ID)
+	remaining, err := f.repo.ListOrganizationMemberships(
+		f.ctx,
+		f.data.User.ID,
+		f.data.BusinessUnit.ID,
+	)
 	require.NoError(t, err)
 	require.Len(t, remaining, 1)
 	assert.Equal(t, f.data.Organization.ID, remaining[0].OrganizationID)

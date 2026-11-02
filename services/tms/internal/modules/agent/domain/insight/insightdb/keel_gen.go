@@ -4,6 +4,7 @@ package insightdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -73,7 +74,7 @@ var insightsRef = keel.Ref{Table: &insightsTable}
 
 // InsightsTable is the table of insight.Insight.
 type InsightsTable struct {
-	keel.Handle[*insight.Insight]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -105,7 +106,7 @@ type InsightsTable struct {
 
 // Insights references the insights table.
 var Insights = &InsightsTable{
-	Handle:          keel.Handle[*insight.Insight]{Ref: &insightsRef},
+	TableBase:       keel.TableBase{Ref: &insightsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &insightsRef, Index: 2}}},
@@ -135,10 +136,10 @@ var Insights = &InsightsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &insightsRef, Index: 26}},
 }
 
-// BuildInsights builds the handle of insights for ref. Generated relation and alias methods call it.
+// BuildInsights builds the table of insights for ref. Generated relation and alias methods call it.
 func BuildInsights(r *keel.Ref) *InsightsTable {
 	return &InsightsTable{
-		Handle:          keel.Handle[*insight.Insight]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -180,6 +181,365 @@ func (t *InsightsTable) As(alias string) *InsightsTable {
 // Get returns the insights row with the given key, or keel.ErrNotFound.
 func (t *InsightsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*insight.Insight, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InsightsQuery is a query over insight.Insight.
+type InsightsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*insight.Insight] = (*InsightsTable)(nil)
+
+var _ keel.Query[*insight.Insight] = (*InsightsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InsightsTable) Query() keel.Query[*insight.Insight] {
+	return &InsightsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InsightsQuery.Where.
+func (t *InsightsTable) Where(ps ...keel.Pred) keel.Query[*insight.Insight] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InsightsQuery.Pick.
+func (t *InsightsTable) Pick(es ...keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InsightsQuery.Load.
+func (t *InsightsTable) Load(ls ...keel.Loader) keel.Query[*insight.Insight] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InsightsQuery.Omit.
+func (t *InsightsTable) Omit(cols ...keel.Column) keel.Query[*insight.Insight] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InsightsQuery.Order.
+func (t *InsightsTable) Order(os ...keel.Order) keel.Query[*insight.Insight] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InsightsQuery.Limit.
+func (t *InsightsTable) Limit(n int) keel.Query[*insight.Insight] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InsightsQuery.Group.
+func (t *InsightsTable) Group(es ...keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InsightsQuery.GroupingSets.
+func (t *InsightsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InsightsQuery.Rollup.
+func (t *InsightsTable) Rollup(es ...keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InsightsQuery.Cube.
+func (t *InsightsTable) Cube(es ...keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InsightsQuery.AllTenants.
+func (t *InsightsTable) AllTenants() keel.Query[*insight.Insight] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InsightsQuery.Join.
+func (t *InsightsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*insight.Insight] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InsightsQuery.LeftJoin.
+func (t *InsightsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*insight.Insight] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InsightsQuery.LeftJoinLateral.
+func (t *InsightsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*insight.Insight] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InsightsQuery.JoinLateral.
+func (t *InsightsTable) JoinLateral(sub keel.LateralSource) keel.Query[*insight.Insight] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InsightsQuery.Lock.
+func (t *InsightsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*insight.Insight] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InsightsQuery.DistinctOn.
+func (t *InsightsTable) DistinctOn(es ...keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InsightsQuery.Cache.
+func (t *InsightsTable) Cache(opts ...keel.CacheOption) keel.Query[*insight.Insight] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InsightsQuery.LoadStrategy.
+func (t *InsightsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*insight.Insight] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InsightsQuery.With.
+func (t *InsightsTable) With(ctes ...*keel.CTETable) keel.Query[*insight.Insight] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InsightsQuery.Compute.
+func (t *InsightsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*insight.Insight] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InsightsTable) Create(ctx context.Context, db *keel.DB, row *insight.Insight) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InsightsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*insight.Insight) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InsightsTable) Save(ctx context.Context, db *keel.DB, row *insight.Insight, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InsightsTable) SaveExcept(ctx context.Context, db *keel.DB, row *insight.Insight, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InsightsTable) DeleteRow(ctx context.Context, db *keel.DB, row *insight.Insight) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InsightsTable) Upsert(ctx context.Context, db *keel.DB, rows []*insight.Insight, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InsightsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*insight.Insight, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InsightsTable) Copy(ctx context.Context, db *keel.DB, rows []*insight.Insight) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InsightsQuery) Where(ps ...keel.Pred) keel.Query[*insight.Insight] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InsightsQuery) Pick(es ...keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InsightsQuery) Omit(cols ...keel.Column) keel.Query[*insight.Insight] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InsightsQuery) Load(ls ...keel.Loader) keel.Query[*insight.Insight] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InsightsQuery) Order(os ...keel.Order) keel.Query[*insight.Insight] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InsightsQuery) Distinct() keel.Query[*insight.Insight] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InsightsQuery) Group(es ...keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InsightsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InsightsQuery) Rollup(es ...keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InsightsQuery) Cube(es ...keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InsightsQuery) Window(name string, w keel.Window) keel.Query[*insight.Insight] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InsightsQuery) Having(ps ...keel.Pred) keel.Query[*insight.Insight] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InsightsQuery) Limit(n int) keel.Query[*insight.Insight] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InsightsQuery) Offset(n int) keel.Query[*insight.Insight] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InsightsQuery) DistinctOn(es ...keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InsightsQuery) AllTenants() keel.Query[*insight.Insight] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InsightsQuery) CustomPlan() keel.Query[*insight.Insight] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InsightsQuery) Timeout(d time.Duration) keel.Query[*insight.Insight] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InsightsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*insight.Insight] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InsightsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*insight.Insight] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InsightsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*insight.Insight] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InsightsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*insight.Insight] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InsightsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*insight.Insight] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InsightsQuery) Cache(opts ...keel.CacheOption) keel.Query[*insight.Insight] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InsightsQuery) With(ctes ...*keel.CTETable) keel.Query[*insight.Insight] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InsightsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*insight.Insight] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InsightsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*insight.Insight] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InsightsQuery) Clone() keel.Query[*insight.Insight] {
+	return &InsightsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InsightsQuery) One(ctx context.Context, db *keel.DB) (*insight.Insight, error) {
+	return keel.One[*insight.Insight](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InsightsQuery) First(ctx context.Context, db *keel.DB) (*insight.Insight, error) {
+	return keel.First[*insight.Insight](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InsightsQuery) List(ctx context.Context, db *keel.DB) ([]*insight.Insight, error) {
+	return keel.List[*insight.Insight](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InsightsQuery) All(ctx context.Context, db *keel.DB) ([]*insight.Insight, error) {
+	return keel.All[*insight.Insight](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InsightsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*insight.Insight, error) {
+	return keel.UpdateReturning[*insight.Insight](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InsightsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*insight.Insight], error) {
+	return keel.PageOf[*insight.Insight](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InsightsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*insight.Insight) error) error {
+	return keel.Each[*insight.Insight](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInsight() unsafe.Pointer { return unsafe.Pointer(new(insight.Insight)) }

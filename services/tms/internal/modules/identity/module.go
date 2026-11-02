@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/agentcontrolrepository"
@@ -61,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/securitybriefingservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sequenceconfigservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
@@ -74,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"go.uber.org/fx"
 )
 
@@ -124,6 +127,8 @@ func SharedOptions() fx.Option {
 			documentcontrolservice.NewValidator,
 			organizationservice.New,
 			iamservice.New,
+			newSessionTokenIssuer,
+			sessionrotation.New,
 			userservice.New,
 			authservice.New,
 			mfaservice.New,
@@ -189,4 +194,8 @@ func SharedOptions() fx.Option {
 
 func APIOptions() fx.Option {
 	return fx.Options()
+}
+
+func newSessionTokenIssuer(cfg *securityconfig.Config) *sessiontoken.Issuer {
+	return sessiontoken.NewIssuer(cfg.Session.Secret)
 }

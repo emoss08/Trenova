@@ -4,6 +4,7 @@ package billingapprovalrundb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -73,7 +74,7 @@ var approvalRunsRef = keel.Ref{Table: &approvalRunsTable}
 
 // ApprovalRunsTable is the table of billingapprovalrun.ApprovalRun.
 type ApprovalRunsTable struct {
-	keel.Handle[*billingapprovalrun.ApprovalRun]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -101,7 +102,7 @@ type ApprovalRunsTable struct {
 
 // ApprovalRuns references the billingqueue_approval_runs table.
 var ApprovalRuns = &ApprovalRunsTable{
-	Handle:              keel.Handle[*billingapprovalrun.ApprovalRun]{Ref: &approvalRunsRef},
+	TableBase:           keel.TableBase{Ref: &approvalRunsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 2}}},
@@ -127,10 +128,10 @@ var ApprovalRuns = &ApprovalRunsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 22}},
 }
 
-// BuildApprovalRuns builds the handle of billingqueue_approval_runs for ref. Generated relation and alias methods call it.
+// BuildApprovalRuns builds the table of billingqueue_approval_runs for ref. Generated relation and alias methods call it.
 func BuildApprovalRuns(r *keel.Ref) *ApprovalRunsTable {
 	return &ApprovalRunsTable{
-		Handle:              keel.Handle[*billingapprovalrun.ApprovalRun]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -173,6 +174,365 @@ func (t *ApprovalRunsTable) Items() *ApprovalRunItemsTable {
 // Get returns the billingqueue_approval_runs row with the given key, or keel.ErrNotFound.
 func (t *ApprovalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingapprovalrun.ApprovalRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ApprovalRunsQuery is a query over billingapprovalrun.ApprovalRun.
+type ApprovalRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingapprovalrun.ApprovalRun] = (*ApprovalRunsTable)(nil)
+
+var _ keel.Query[*billingapprovalrun.ApprovalRun] = (*ApprovalRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ApprovalRunsTable) Query() keel.Query[*billingapprovalrun.ApprovalRun] {
+	return &ApprovalRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ApprovalRunsQuery.Where.
+func (t *ApprovalRunsTable) Where(ps ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ApprovalRunsQuery.Pick.
+func (t *ApprovalRunsTable) Pick(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ApprovalRunsQuery.Load.
+func (t *ApprovalRunsTable) Load(ls ...keel.Loader) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ApprovalRunsQuery.Omit.
+func (t *ApprovalRunsTable) Omit(cols ...keel.Column) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ApprovalRunsQuery.Order.
+func (t *ApprovalRunsTable) Order(os ...keel.Order) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ApprovalRunsQuery.Limit.
+func (t *ApprovalRunsTable) Limit(n int) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ApprovalRunsQuery.Group.
+func (t *ApprovalRunsTable) Group(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ApprovalRunsQuery.GroupingSets.
+func (t *ApprovalRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ApprovalRunsQuery.Rollup.
+func (t *ApprovalRunsTable) Rollup(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ApprovalRunsQuery.Cube.
+func (t *ApprovalRunsTable) Cube(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ApprovalRunsQuery.AllTenants.
+func (t *ApprovalRunsTable) AllTenants() keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ApprovalRunsQuery.Join.
+func (t *ApprovalRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ApprovalRunsQuery.LeftJoin.
+func (t *ApprovalRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ApprovalRunsQuery.LeftJoinLateral.
+func (t *ApprovalRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ApprovalRunsQuery.JoinLateral.
+func (t *ApprovalRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ApprovalRunsQuery.Lock.
+func (t *ApprovalRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ApprovalRunsQuery.DistinctOn.
+func (t *ApprovalRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ApprovalRunsQuery.Cache.
+func (t *ApprovalRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ApprovalRunsQuery.LoadStrategy.
+func (t *ApprovalRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ApprovalRunsQuery.With.
+func (t *ApprovalRunsTable) With(ctes ...*keel.CTETable) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ApprovalRunsQuery.Compute.
+func (t *ApprovalRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ApprovalRunsTable) Create(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ApprovalRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ApprovalRunsTable) Save(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ApprovalRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ApprovalRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ApprovalRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ApprovalRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ApprovalRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ApprovalRunsQuery) Where(ps ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ApprovalRunsQuery) Pick(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ApprovalRunsQuery) Omit(cols ...keel.Column) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ApprovalRunsQuery) Load(ls ...keel.Loader) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ApprovalRunsQuery) Order(os ...keel.Order) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ApprovalRunsQuery) Distinct() keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ApprovalRunsQuery) Group(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ApprovalRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ApprovalRunsQuery) Rollup(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ApprovalRunsQuery) Cube(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ApprovalRunsQuery) Window(name string, w keel.Window) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ApprovalRunsQuery) Having(ps ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ApprovalRunsQuery) Limit(n int) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ApprovalRunsQuery) Offset(n int) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ApprovalRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ApprovalRunsQuery) AllTenants() keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ApprovalRunsQuery) CustomPlan() keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ApprovalRunsQuery) Timeout(d time.Duration) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ApprovalRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ApprovalRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ApprovalRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ApprovalRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ApprovalRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ApprovalRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ApprovalRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ApprovalRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ApprovalRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingapprovalrun.ApprovalRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ApprovalRunsQuery) Clone() keel.Query[*billingapprovalrun.ApprovalRun] {
+	return &ApprovalRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ApprovalRunsQuery) One(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRun, error) {
+	return keel.One[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ApprovalRunsQuery) First(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRun, error) {
+	return keel.First[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ApprovalRunsQuery) List(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRun, error) {
+	return keel.List[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ApprovalRunsQuery) All(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRun, error) {
+	return keel.All[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ApprovalRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingapprovalrun.ApprovalRun, error) {
+	return keel.UpdateReturning[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ApprovalRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingapprovalrun.ApprovalRun], error) {
+	return keel.PageOf[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ApprovalRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingapprovalrun.ApprovalRun) error) error {
+	return keel.Each[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newApprovalRun() unsafe.Pointer { return unsafe.Pointer(new(billingapprovalrun.ApprovalRun)) }
@@ -363,7 +723,7 @@ var approvalRunItemsRef = keel.Ref{Table: &approvalRunItemsTable}
 
 // ApprovalRunItemsTable is the table of billingapprovalrun.ApprovalRunItem.
 type ApprovalRunItemsTable struct {
-	keel.Handle[*billingapprovalrun.ApprovalRunItem]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -382,7 +742,7 @@ type ApprovalRunItemsTable struct {
 
 // ApprovalRunItems references the billingqueue_approval_run_items table.
 var ApprovalRunItems = &ApprovalRunItemsTable{
-	Handle:         keel.Handle[*billingapprovalrun.ApprovalRunItem]{Ref: &approvalRunItemsRef},
+	TableBase:      keel.TableBase{Ref: &approvalRunItemsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 2}}},
@@ -399,10 +759,10 @@ var ApprovalRunItems = &ApprovalRunItemsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 13}},
 }
 
-// BuildApprovalRunItems builds the handle of billingqueue_approval_run_items for ref. Generated relation and alias methods call it.
+// BuildApprovalRunItems builds the table of billingqueue_approval_run_items for ref. Generated relation and alias methods call it.
 func BuildApprovalRunItems(r *keel.Ref) *ApprovalRunItemsTable {
 	return &ApprovalRunItemsTable{
-		Handle:         keel.Handle[*billingapprovalrun.ApprovalRunItem]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -431,6 +791,365 @@ func (t *ApprovalRunItemsTable) As(alias string) *ApprovalRunItemsTable {
 // Get returns the billingqueue_approval_run_items row with the given key, or keel.ErrNotFound.
 func (t *ApprovalRunItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingapprovalrun.ApprovalRunItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ApprovalRunItemsQuery is a query over billingapprovalrun.ApprovalRunItem.
+type ApprovalRunItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingapprovalrun.ApprovalRunItem] = (*ApprovalRunItemsTable)(nil)
+
+var _ keel.Query[*billingapprovalrun.ApprovalRunItem] = (*ApprovalRunItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ApprovalRunItemsTable) Query() keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return &ApprovalRunItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ApprovalRunItemsQuery.Where.
+func (t *ApprovalRunItemsTable) Where(ps ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ApprovalRunItemsQuery.Pick.
+func (t *ApprovalRunItemsTable) Pick(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ApprovalRunItemsQuery.Load.
+func (t *ApprovalRunItemsTable) Load(ls ...keel.Loader) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ApprovalRunItemsQuery.Omit.
+func (t *ApprovalRunItemsTable) Omit(cols ...keel.Column) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ApprovalRunItemsQuery.Order.
+func (t *ApprovalRunItemsTable) Order(os ...keel.Order) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ApprovalRunItemsQuery.Limit.
+func (t *ApprovalRunItemsTable) Limit(n int) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ApprovalRunItemsQuery.Group.
+func (t *ApprovalRunItemsTable) Group(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ApprovalRunItemsQuery.GroupingSets.
+func (t *ApprovalRunItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ApprovalRunItemsQuery.Rollup.
+func (t *ApprovalRunItemsTable) Rollup(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ApprovalRunItemsQuery.Cube.
+func (t *ApprovalRunItemsTable) Cube(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ApprovalRunItemsQuery.AllTenants.
+func (t *ApprovalRunItemsTable) AllTenants() keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ApprovalRunItemsQuery.Join.
+func (t *ApprovalRunItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ApprovalRunItemsQuery.LeftJoin.
+func (t *ApprovalRunItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ApprovalRunItemsQuery.LeftJoinLateral.
+func (t *ApprovalRunItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ApprovalRunItemsQuery.JoinLateral.
+func (t *ApprovalRunItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ApprovalRunItemsQuery.Lock.
+func (t *ApprovalRunItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ApprovalRunItemsQuery.DistinctOn.
+func (t *ApprovalRunItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ApprovalRunItemsQuery.Cache.
+func (t *ApprovalRunItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ApprovalRunItemsQuery.LoadStrategy.
+func (t *ApprovalRunItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ApprovalRunItemsQuery.With.
+func (t *ApprovalRunItemsTable) With(ctes ...*keel.CTETable) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ApprovalRunItemsQuery.Compute.
+func (t *ApprovalRunItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ApprovalRunItemsTable) Create(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ApprovalRunItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ApprovalRunItemsTable) Save(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ApprovalRunItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ApprovalRunItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ApprovalRunItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ApprovalRunItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ApprovalRunItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ApprovalRunItemsQuery) Where(ps ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ApprovalRunItemsQuery) Pick(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ApprovalRunItemsQuery) Omit(cols ...keel.Column) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ApprovalRunItemsQuery) Load(ls ...keel.Loader) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ApprovalRunItemsQuery) Order(os ...keel.Order) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ApprovalRunItemsQuery) Distinct() keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ApprovalRunItemsQuery) Group(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ApprovalRunItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ApprovalRunItemsQuery) Rollup(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ApprovalRunItemsQuery) Cube(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ApprovalRunItemsQuery) Window(name string, w keel.Window) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ApprovalRunItemsQuery) Having(ps ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ApprovalRunItemsQuery) Limit(n int) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ApprovalRunItemsQuery) Offset(n int) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ApprovalRunItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ApprovalRunItemsQuery) AllTenants() keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ApprovalRunItemsQuery) CustomPlan() keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ApprovalRunItemsQuery) Timeout(d time.Duration) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ApprovalRunItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ApprovalRunItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ApprovalRunItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ApprovalRunItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ApprovalRunItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ApprovalRunItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ApprovalRunItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ApprovalRunItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ApprovalRunItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ApprovalRunItemsQuery) Clone() keel.Query[*billingapprovalrun.ApprovalRunItem] {
+	return &ApprovalRunItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ApprovalRunItemsQuery) One(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRunItem, error) {
+	return keel.One[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ApprovalRunItemsQuery) First(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRunItem, error) {
+	return keel.First[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ApprovalRunItemsQuery) List(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRunItem, error) {
+	return keel.List[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ApprovalRunItemsQuery) All(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRunItem, error) {
+	return keel.All[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ApprovalRunItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingapprovalrun.ApprovalRunItem, error) {
+	return keel.UpdateReturning[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ApprovalRunItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingapprovalrun.ApprovalRunItem], error) {
+	return keel.PageOf[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ApprovalRunItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingapprovalrun.ApprovalRunItem) error) error {
+	return keel.Each[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newApprovalRunItem() unsafe.Pointer {

@@ -70,7 +70,7 @@ type shipmentRecordRow struct {
 	CarrierIDs        []string
 }
 
-func shipmentRecordsQuery(ids []pulid.ID) *keel.Query[*shipment.Shipment] {
+func shipmentRecordsQuery(ids []pulid.ID) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	casn := shipmentdb.CarrierAssignments
 	smv := shipmentdb.ShipmentMoves
@@ -286,7 +286,7 @@ type rateConRow struct {
 
 func shipmentFactsQuery(
 	req *deskcaseports.GetShipmentCaseFactsRequest,
-) *keel.Query[*shipment.Shipment] {
+) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	doc := documentdb.Documents
 	dt := documenttypedb.DocumentTypes
@@ -479,14 +479,14 @@ func (r *repository) Parties(
 	})
 }
 
-func invoiceRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.Invoice] {
+func invoiceRecordsQuery(ids []pulid.ID) keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 
 	return inv.Pick(inv.ID, inv.Number, inv.Status, inv.SettlementStatus, inv.CustomerID).
 		Where(inv.ID.In(ids...))
 }
 
-func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoicedispute.InvoiceDispute] {
+func disputeRecordsQuery(ids []pulid.ID) keel.Query[*invoicedispute.InvoiceDispute] {
 	d := invoicedisputedb.InvoiceDisputes
 
 	return d.Pick(
@@ -499,14 +499,14 @@ func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoicedispute.InvoiceDisp
 	).Where(d.ID.In(ids...))
 }
 
-func invoiceFactsQuery(id pulid.ID) *keel.Query[*invoice.Invoice] {
+func invoiceFactsQuery(id pulid.ID) keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 
 	return inv.Pick(inv.Status, inv.SendStatus, inv.DisputeStatus, inv.SettlementStatus, inv.DueDate).
 		Where(inv.ID.Eq(id))
 }
 
-func carriersQuery(ids []pulid.ID) *keel.Query[*carrier.Carrier] {
+func carriersQuery(ids []pulid.ID) keel.Query[*carrier.Carrier] {
 	ca := carrierdb.Carriers
 
 	return ca.Pick(ca.ID, ca.Name).Where(ca.ID.In(ids...)).Order(ca.Name.Asc())

@@ -83,7 +83,7 @@ func (r *reserveEntryRepository) ListConnection(
 func reserveScope(
 	req *factoringledgerports.ListReserveEntryConnectionRequest,
 	term string,
-) *keel.Query[*factoringledger.ReserveEntry] {
+) keel.Query[*factoringledger.ReserveEntry] {
 	re := factoringledgerdb.ReserveEntries
 	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
 	return re.Where(
@@ -166,7 +166,7 @@ func (r *reserveEntryRepository) GetBalance(
 
 func reserveBalance(
 	req *factoringledgerports.GetReserveBalanceRequest,
-) *keel.Query[*factoringledger.ReserveEntry] {
+) keel.Query[*factoringledger.ReserveEntry] {
 	re := factoringledgerdb.ReserveEntries
 	cash := func(kinds ...factoringledger.ReserveEntryKind) keel.Agg {
 		return re.CashMinor.Sum().Filter(re.Kind.In(kinds...))

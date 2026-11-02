@@ -4,6 +4,7 @@ package conversationchapterdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -57,7 +58,7 @@ var chaptersRef = keel.Ref{Table: &chaptersTable}
 
 // ChaptersTable is the table of conversationchapter.Chapter.
 type ChaptersTable struct {
-	keel.Handle[*conversationchapter.Chapter]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -74,7 +75,7 @@ type ChaptersTable struct {
 
 // Chapters references the assistant_thread_chapters table.
 var Chapters = &ChaptersTable{
-	Handle:         keel.Handle[*conversationchapter.Chapter]{Ref: &chaptersRef},
+	TableBase:      keel.TableBase{Ref: &chaptersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &chaptersRef, Index: 2}}},
@@ -89,10 +90,10 @@ var Chapters = &ChaptersTable{
 	StartedAt:      keel.Int64Col{Col: keel.Col{Ref: &chaptersRef, Index: 11}},
 }
 
-// BuildChapters builds the handle of assistant_thread_chapters for ref. Generated relation and alias methods call it.
+// BuildChapters builds the table of assistant_thread_chapters for ref. Generated relation and alias methods call it.
 func BuildChapters(r *keel.Ref) *ChaptersTable {
 	return &ChaptersTable{
-		Handle:         keel.Handle[*conversationchapter.Chapter]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -119,6 +120,365 @@ func (t *ChaptersTable) As(alias string) *ChaptersTable {
 // Get returns the assistant_thread_chapters row with the given key, or keel.ErrNotFound.
 func (t *ChaptersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationchapter.Chapter, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ChaptersQuery is a query over conversationchapter.Chapter.
+type ChaptersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*conversationchapter.Chapter] = (*ChaptersTable)(nil)
+
+var _ keel.Query[*conversationchapter.Chapter] = (*ChaptersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ChaptersTable) Query() keel.Query[*conversationchapter.Chapter] {
+	return &ChaptersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ChaptersQuery.Where.
+func (t *ChaptersTable) Where(ps ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ChaptersQuery.Pick.
+func (t *ChaptersTable) Pick(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ChaptersQuery.Load.
+func (t *ChaptersTable) Load(ls ...keel.Loader) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ChaptersQuery.Omit.
+func (t *ChaptersTable) Omit(cols ...keel.Column) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ChaptersQuery.Order.
+func (t *ChaptersTable) Order(os ...keel.Order) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ChaptersQuery.Limit.
+func (t *ChaptersTable) Limit(n int) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ChaptersQuery.Group.
+func (t *ChaptersTable) Group(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ChaptersQuery.GroupingSets.
+func (t *ChaptersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ChaptersQuery.Rollup.
+func (t *ChaptersTable) Rollup(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ChaptersQuery.Cube.
+func (t *ChaptersTable) Cube(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ChaptersQuery.AllTenants.
+func (t *ChaptersTable) AllTenants() keel.Query[*conversationchapter.Chapter] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ChaptersQuery.Join.
+func (t *ChaptersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ChaptersQuery.LeftJoin.
+func (t *ChaptersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ChaptersQuery.LeftJoinLateral.
+func (t *ChaptersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ChaptersQuery.JoinLateral.
+func (t *ChaptersTable) JoinLateral(sub keel.LateralSource) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ChaptersQuery.Lock.
+func (t *ChaptersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ChaptersQuery.DistinctOn.
+func (t *ChaptersTable) DistinctOn(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ChaptersQuery.Cache.
+func (t *ChaptersTable) Cache(opts ...keel.CacheOption) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ChaptersQuery.LoadStrategy.
+func (t *ChaptersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ChaptersQuery.With.
+func (t *ChaptersTable) With(ctes ...*keel.CTETable) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ChaptersQuery.Compute.
+func (t *ChaptersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ChaptersTable) Create(ctx context.Context, db *keel.DB, row *conversationchapter.Chapter) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ChaptersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversationchapter.Chapter) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ChaptersTable) Save(ctx context.Context, db *keel.DB, row *conversationchapter.Chapter, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ChaptersTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversationchapter.Chapter, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ChaptersTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversationchapter.Chapter) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ChaptersTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversationchapter.Chapter, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ChaptersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversationchapter.Chapter, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ChaptersTable) Copy(ctx context.Context, db *keel.DB, rows []*conversationchapter.Chapter) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ChaptersQuery) Where(ps ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ChaptersQuery) Pick(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ChaptersQuery) Omit(cols ...keel.Column) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ChaptersQuery) Load(ls ...keel.Loader) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ChaptersQuery) Order(os ...keel.Order) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ChaptersQuery) Distinct() keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ChaptersQuery) Group(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ChaptersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ChaptersQuery) Rollup(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ChaptersQuery) Cube(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ChaptersQuery) Window(name string, w keel.Window) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ChaptersQuery) Having(ps ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ChaptersQuery) Limit(n int) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ChaptersQuery) Offset(n int) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ChaptersQuery) DistinctOn(es ...keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ChaptersQuery) AllTenants() keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ChaptersQuery) CustomPlan() keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ChaptersQuery) Timeout(d time.Duration) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ChaptersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ChaptersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ChaptersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ChaptersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ChaptersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ChaptersQuery) Cache(opts ...keel.CacheOption) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ChaptersQuery) With(ctes ...*keel.CTETable) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ChaptersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ChaptersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationchapter.Chapter] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ChaptersQuery) Clone() keel.Query[*conversationchapter.Chapter] {
+	return &ChaptersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ChaptersQuery) One(ctx context.Context, db *keel.DB) (*conversationchapter.Chapter, error) {
+	return keel.One[*conversationchapter.Chapter](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ChaptersQuery) First(ctx context.Context, db *keel.DB) (*conversationchapter.Chapter, error) {
+	return keel.First[*conversationchapter.Chapter](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ChaptersQuery) List(ctx context.Context, db *keel.DB) ([]*conversationchapter.Chapter, error) {
+	return keel.List[*conversationchapter.Chapter](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ChaptersQuery) All(ctx context.Context, db *keel.DB) ([]*conversationchapter.Chapter, error) {
+	return keel.All[*conversationchapter.Chapter](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ChaptersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversationchapter.Chapter, error) {
+	return keel.UpdateReturning[*conversationchapter.Chapter](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ChaptersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversationchapter.Chapter], error) {
+	return keel.PageOf[*conversationchapter.Chapter](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ChaptersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversationchapter.Chapter) error) error {
+	return keel.Each[*conversationchapter.Chapter](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newChapter() unsafe.Pointer { return unsafe.Pointer(new(conversationchapter.Chapter)) }
