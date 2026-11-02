@@ -351,6 +351,7 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier.CarrierInsurancePolicy":                             "an insurance policy of the carrier that carries it",
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer.CustomerBillingProfile":                            "the billing settings of the customer that carries it",
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer.CustomerEmailProfile":                              "the email settings of the customer that carries it",
+	"github.com/emoss08/trenova/internal/modules/parties/domain/trackingprofile.Profile":                                    "the shipment tracking settings of the customer that carries it",
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride.DistanceOverrideStop":                       "a stop of the distance override that carries it",
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule.EscortThreshold":                            "a threshold of the jurisdiction rule that carries it",
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.FormulaTemplateVersion":                      "a version of the formula template that carries it",
