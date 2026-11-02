@@ -426,6 +426,16 @@ name no generic type. A package holding a `*redis.Client` now compiles 114 funct
 66 ms instead of 1,722 in about 690 ms. The core module, `extra/redisotel` and `extra/rediscmd`
 are replaced at one commit, and a new fork commit moves all three `replace` lines together.
 
+The linker keeps every exported method of every type a binary can reach when any reachable
+function calls `reflect.Value.Method`, `MethodByName` or their `reflect.Type` forms with a name
+it cannot see at compile time. `go build -ldflags=-dumpdep` marks those functions
+`<ReflectMethod>`. `cmd/api` has four: `html/template` (notification emails), Temporal's
+`RegisterActivity` of an activity struct, go-playground/validator's `validateFn` check (gin's
+binding) and `tiendc/go-deepcopy`. Removing all four would shrink the stripped binary from 321 MB
+to 237 MB, but the link only from 7.7 s to 7.0 s, because the linker spends most of its time
+loading every package's object file (3.9 s of 7.6 s for 4,000 packages), not writing the
+output. It is not worth forking those packages for.
+
 These measurements come from probe packages: a package that imports one dependency and mentions
 one of its types in a function signature, compiled on its own. A probe that compiles thousands of
 functions for a type it only passes along is a dependency worth looking into.
