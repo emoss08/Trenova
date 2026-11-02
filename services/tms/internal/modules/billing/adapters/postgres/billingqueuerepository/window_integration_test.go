@@ -173,7 +173,7 @@ func TestConnection_ADeliveryWindowPagesInQueueOrderUnderAndOverItsCap(t *testin
 			if !result.HasNextPage {
 				return ids
 			}
-			last, ok := result.EdgeCursorAt(len(result.Items) - 1)
+			last, ok := result.EdgeCursors.EdgeCursorAt(len(result.Items) - 1)
 			require.True(t, ok)
 			after = last
 		}
