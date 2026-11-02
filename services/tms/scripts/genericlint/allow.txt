@@ -8,11 +8,6 @@
 * * charm.land/huh/v2/internal/selector.Selector # TUI form library in the CLI
 * * github.com/99designs/gqlgen/graphql.ExecutionContextState # gqlgen's generated executor
 * * github.com/99designs/gqlgen/graphql.Omittable # gqlgen's optional input type in generated GraphQL models
-* * github.com/jackc/puddle/v2.Pool # pgxpool's connection pool, reached through *keel.DB and *pgxpool.Pool; about 35 functions per package that holds a database handle
-* * github.com/jackc/puddle/v2.Resource # part of puddle.Pool (see that entry)
-* * github.com/jackc/puddle/v2.resList # part of puddle.Pool (see that entry)
-* * github.com/jackc/puddle/v2/internal/genstack.GenStack # part of puddle.Pool (see that entry)
-* * github.com/jackc/puddle/v2/internal/genstack.stack # part of puddle.Pool (see that entry)
 * * github.com/meilisearch/meilisearch-go.Opt # meilisearch client options, search adapter only
 * * github.com/meilisearch/meilisearch-go.Stream # meilisearch client options, search adapter only
 * * github.com/minio/minio-go/v7/pkg/kvcache.Cache # inside minio.Client (shared/testutil only)

@@ -5,6 +5,7 @@ package billingtransferrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
@@ -38,15 +39,15 @@ func TestRecordItemOutcomesWritesEveryOutcomeOfAFlush(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	var orgID, buID, userID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&orgID, &buID))
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2
 		ORDER BY id LIMIT 1`,
 		orgID, buID,
 	).Scan(&userID))
-	shipmentRows, err := db.Pool().Query(ctx,
+	shipmentRows, err := keel.Pool(db).Query(ctx,
 		`SELECT id FROM shipments WHERE organization_id = $1 AND business_unit_id = $2
 		ORDER BY id LIMIT 3`,
 		orgID, buID,
@@ -119,7 +120,7 @@ func TestRecordItemOutcomesWritesEveryOutcomeOfAFlush(t *testing.T) {
 	assert.Equal(t, 2, progress.TransferredCount)
 	assert.Equal(t, 1, progress.NotTransferredCount)
 
-	rows, err := db.Pool().Query(ctx,
+	rows, err := keel.Pool(db).Query(ctx,
 		`SELECT shipment_id, sequence, status, failure_code, error_message,
 			billing_queue_item_id, billing_queue_number, billing_queue_status::text, processed_at
 		FROM billing_transfer_run_items

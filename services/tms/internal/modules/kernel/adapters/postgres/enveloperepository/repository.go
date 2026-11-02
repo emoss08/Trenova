@@ -100,7 +100,9 @@ func (r *repository) Present(
 			return false, err
 		}
 
-		present, err := keel.RowsOf(src.table.Ref).Where(src.matches(row)...).Exists(ctx, r.db.Keel(ctx))
+		present, err := keel.RowsOf(src.table.Ref).
+			Where(src.matches(row)...).
+			Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check %s: %w", src.name, err)
 		}
@@ -155,7 +157,8 @@ func (r *repository) SwapVersion(
 		}
 
 		sets := slices.Concat(src.untouched, []keel.Assignment{set})
-		if _, err = keel.RowsOf(src.table.Ref).Where(slices.Concat(src.matches(req.Row), []keel.Pred{expected})...).
+		if _, err = keel.RowsOf(src.table.Ref).
+			Where(slices.Concat(src.matches(req.Row), []keel.Pred{expected})...).
 			Update(ctx, r.db.Keel(ctx), sets...); err != nil {
 			return fmt.Errorf("record the rewrapped version of %s: %w", src.name, err)
 		}

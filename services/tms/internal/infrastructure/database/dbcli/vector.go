@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/keelcli"
 	"github.com/emoss08/trenova/pkg/pgvector"
 	"github.com/emoss08/trenova/schema/migrations"
@@ -44,7 +45,7 @@ func runEnableVector(ctx context.Context, env *keelcli.Env, args []string) error
 	if err != nil {
 		return err
 	}
-	conn, err := db.Pool().Acquire(ctx)
+	conn, err := keel.Pool(db).Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("connect: %w", err)
 	}

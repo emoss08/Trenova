@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/jackc/pgx/v5"
@@ -35,13 +36,13 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	var orgID, buID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&orgID, &buID))
 	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	rows, err := db.Pool().Query(ctx,
+	rows, err := keel.Pool(db).Query(ctx,
 		`SELECT id, COALESCE(bill_to_customer_id, customer_id) FROM shipments
 		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY created_at ASC LIMIT 4`,
 		orgID, buID,
@@ -69,7 +70,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 			Number:           fmt.Sprintf("BQ-NB-%d", i),
 		}
 		require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, item))
-		_, err = db.Pool().Exec(ctx,
+		_, err = keel.Pool(db).Exec(ctx,
 			"UPDATE billing_queue_items SET created_at = $1 WHERE id = $2",
 			4_000_000_000+int64(i)*60, item.ID)
 		require.NoError(t, err)

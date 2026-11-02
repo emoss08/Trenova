@@ -63,7 +63,7 @@ func (f suggestionFixture) suggest(
 		Outcome:          outcome,
 	}
 	s := agentsuggestiondb.Suggestions
-	insert(f.ctx, t, f.db, s.Handle, row)
+	insert(f.ctx, t, f.db, s, row)
 	_, err := s.Where(s.ID.Eq(row.ID)).
 		Update(f.ctx, f.db, s.CreatedAt.To(createdAt), s.UpdatedAt.To(createdAt))
 	require.NoError(t, err)

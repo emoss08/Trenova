@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -347,7 +348,7 @@ func TestDevelopmentSeed_TheEDIPartnerHasAcknowledgmentsInEveryState(t *testing.
 	ctx, db := seededDevelopmentDB(t)
 
 	var partnerID, orgID, buID string
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, organization_id, business_unit_id FROM edi_partners WHERE code = $1",
 		"ACMEMFG",
 	).Scan(&partnerID, &orgID, &buID))

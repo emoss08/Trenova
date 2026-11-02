@@ -89,7 +89,7 @@ func runPartialOrderScenario(
 
 	// The charge was stamped to the first invoice inside the same transaction.
 	var stampedInvoiceID pulid.ID
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT invoice_id FROM order_charges WHERE order_id = $1", ord.ID,
 	).Scan(&stampedInvoiceID))
 	assert.Equal(
@@ -101,10 +101,10 @@ func runPartialOrderScenario(
 
 	// The late leg delivers; the ready leg was settled by billing (simulated here since
 	// the first invoice is left in Draft).
-	_, err = db.Pool().Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
+	_, err = keel.Pool(db).Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
 		string(shipmentvocab.StatusInvoiced), p.readyLeg.ID)
 	require.NoError(t, err)
-	_, err = db.Pool().Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
+	_, err = keel.Pool(db).Exec(ctx, "UPDATE shipments SET status = $1 WHERE id = $2",
 		string(shipmentvocab.StatusReadyToInvoice), p.lateLeg.ID)
 	require.NoError(t, err)
 
@@ -139,7 +139,7 @@ func setLeg(
 ) {
 	t.Helper()
 
-	_, err := db.Pool().Exec(ctx,
+	_, err := keel.Pool(db).Exec(ctx,
 		`UPDATE shipments SET order_id = $1, customer_id = $2, status = $3,
 			freight_charge_amount = $4, total_charge_amount = $4, other_charge_amount = 0
 		WHERE id = $5`,
