@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: semver-library-api
+expected_outcome: |
+  A dependency-free src/lib.rs with a Version type that parses semver 2.0 strings
+  (including prerelease and build metadata), orders by semver precedence, and
+  prints back out. The public API follows Rust conventions: FromStr and Display
+  impls rather than ad-hoc methods, a dedicated error type that implements
+  std::error::Error and Display, common traits derived, private fields, rustdoc
+  on public items with an Errors section and an example that uses ?, and unit
+  tests covering precedence rules.

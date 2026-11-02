@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: log-summary-cli
+expected_outcome: |
+  A Cargo.toml and src/main.rs for a practical internal CLI. Errors are handled
+  the application way: main returns a Result, failures carry context (which file,
+  which line) rather than panicking, and no unwrap or expect sits on a path that
+  bad input can reach. Paths are taken as Path or impl AsRef<Path>, not String.
+  The per-level counting uses iterators or a map cleanly, output is sorted by
+  count descending, and the skipped-line count is reported. Dependencies are
+  pinned with sensible version ranges.

@@ -1,0 +1,13 @@
+schema_version: "1.1"
+name: refactor-inventory-module
+context:
+  scaffold_script: place-files.sh
+expected_outcome: |
+  A refactored inventory.rs that keeps the public behavior but fixes the
+  idiom problems in the original: the crate-level deny(warnings), Rc<RefCell>
+  leaking through the public API, &String and &Vec parameters, unwrap on
+  fallible paths (file read, parse, map lookup), the get_ prefix on a getter
+  that clones, the bool parameter on report, string concatenation with +,
+  check-then-unwrap, an error enum without Display or std::error::Error, and
+  nondeterministic HashMap iteration in report. CHANGES.md lists the changes
+  with a one-line reason each.
