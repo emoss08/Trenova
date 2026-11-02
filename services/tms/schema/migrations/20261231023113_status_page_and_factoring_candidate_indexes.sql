@@ -12,7 +12,7 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_driver_pay_events_status_created" O
 
 --keel:split
 -- The factoring candidate sweep's second branch pages the invoice states that are not excluded
--- by invoice id, as the open factored invoice branch pages idx_invoices_factored_open_customer.
+-- by invoice id, as the open factored invoice branch pages idx_invoices_factored_open.
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "idx_factoring_invoice_states_candidates" ON "factoring_invoice_states"("organization_id", "business_unit_id", "invoice_id")
 WHERE
     "verdict" <> 'Excluded';
