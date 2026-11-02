@@ -538,10 +538,16 @@ A new column, relation or table needs `task keel-gen` in the same change, and
 - **Order and edits.** A migration older than the newest applied one is refused, and so is an
   applied migration whose file changed; CI's base-branch check (`migrate check -base-dir`) fails
   both on the pull request. Give the migration a newer version, or write a new one.
-- **Lint.** `task db-lint` runs keel's rules and Trenova's (`schema/migrations/lint.go`:
+- **Lint.** `task db-lint` runs keel's rules (`index-concurrently`, `not-null-default`,
+  `notx-mixed`, `lock-heavy`, `table-rewrite`) and Trenova's (`schema/migrations/lint.go`:
   `reconcile-automatic`, `notx-idempotent`, `tenant-rls`) over pending migrations;
   `TestMigrationsSinceTheMoveToKeelPassLint` fails CI on an error finding in a new migration.
-  `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR.
+  `--keel:lint_ignore rule` at the top of a file skips a rule, with the reason in the PR. Together
+  they cover the lock and rewrite rules of Squawk, which was measured against these migrations and
+  not adopted: its other findings are its timeout rules (keel sets `lock_timeout` and retries
+  itself), drop and rename rules that pre-launch reshaping makes noise, and type preferences the
+  schema does not follow. A missing Postgres safety rule goes in keel's built-in rules, a
+  Trenova-only one in `lint.go`; never a second linter.
 - **Editions** add migration sources through `edition.Edition.Migrations`, merged into one version
   line; the db binaries read them, the server binaries never link them
   ([editions.md](../editions.md)).
