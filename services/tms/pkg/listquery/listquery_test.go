@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/keel"
@@ -861,4 +862,29 @@ func TestResult_CarriesWhetherTheTotalWasCounted(t *testing.T) {
 			assert.Equal(t, tc.total.Exact, result.TotalExact)
 		})
 	}
+}
+
+func TestPageOrders_AnOffsetPageAlwaysHasADeterministicOrder(t *testing.T) {
+	t.Parallel()
+
+	ordered := func(sorts []domaintypes.SortField, then []keel.Order, ranked bool) string {
+		t.Helper()
+		q := testTrucks.Query()
+		p := newPlan(q, nil)
+		q.Order(p.pageOrders(sorts, then, ranked)...).Limit(3).Offset(2)
+		sql, _ := render(t, q)
+		_, order, found := strings.Cut(sql, "ORDER BY ")
+		require.True(t, found, sql)
+		return order
+	}
+
+	assert.Equal(t, `t."created_at" DESC, t."id" DESC LIMIT 3 OFFSET 2`, ordered(nil, nil, false),
+		"no sort asked for pages newest first, as the keyset lists do")
+	assert.Equal(t, `t."code" ASC, t."id" DESC LIMIT 3 OFFSET 2`, ordered(
+		[]domaintypes.SortField{{Field: "code", Direction: dbtype.SortDirectionAsc}}, nil, false),
+		"a sort on a column that repeats ends with the id")
+	assert.Equal(t, `t."id" ASC LIMIT 3 OFFSET 2`, ordered(
+		[]domaintypes.SortField{{Field: "id", Direction: dbtype.SortDirectionAsc}}, nil, false))
+	assert.Equal(t, `t."id" DESC LIMIT 3 OFFSET 2`, ordered(nil, nil, true),
+		"a ranked search breaks its ties by id")
 }

@@ -202,8 +202,7 @@ func listRows[T any](
 	if rank != nil {
 		rows.Order(keel.Desc(rank).NullsLast())
 	}
-	rows.Order(p.orders(sortsOf(req.Filter))...)
-	rows.Order(req.Then...)
+	rows.Order(p.pageOrders(sortsOf(req.Filter), req.Then, rank != nil)...)
 
 	info := paginationOf(req.Filter)
 	rows.Limit(info.SafeLimit()).Offset(info.SafeOffset())
