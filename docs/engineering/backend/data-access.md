@@ -445,9 +445,9 @@ volume generator, not the query: give the table the rows and status mix producti
   queued first) has no index that gives both. Name the window's fields in
   `listquery.Request.Window` with a cap: a capped count of the window decides the read. A window
   that fits pages the rows `id IN (<the window> LIMIT cap+1)` returns, a sort the plan guard
-  bounds by that `Limit`; a larger one pages in the list's own order with `CustomPlan`, its end
-  written as `NOT (col >= $to)` so the generic plan does not price the window as the 0.5% a
-  closed range reads as, and walks the order's index instead (`billingqueuerepository.shipmentWindow`).
+  bounds by that `Limit`, as it bounds the key lookups the page's loads make from it; a larger
+  one pages in the list's own order with `CustomPlan`, planned for the window's real width,
+  which the guard explains without checking (`billingqueuerepository.shipmentWindow`).
 - **A read scoped to explicit ids** is bounded by them: drop the `LIMIT` when the ids fit in the
   page (`dispatchconsolerepository.boundedByMoveIDs`), or truncate in Go when a row per id is not
   guaranteed, rather than sorting a handful of rows under a `LIMIT` over a large table.

@@ -37,32 +37,28 @@ func bindWindow[T any](
 	ctx context.Context,
 	db *keel.DB,
 	p *plan,
-	base, q keel.Query[*T],
-	read *fuzzyRead[T],
+	q keel.Query[*T],
 	req *Request[T],
-) (keel.Query[*T], *fuzzyRead[T], error) {
+) error {
 	if !req.Window.appliesTo(req.Filter) {
-		return q, read, nil
+		return nil
 	}
 	id, ok := p.idColumn()
 	if !ok {
-		return q, read, nil
+		return nil
 	}
 
 	matched, err := q.Clone().CountUpTo(ctx, db, int64(req.Window.Cap)+1)
 	if err != nil {
-		return nil, nil, err
+		return err
 	}
 	if matched <= int64(req.Window.Cap) {
 		q.Where(id.InQuery(q.Clone().Pick(id).Limit(req.Window.Cap + 1)))
-		return q, read, nil
+		return nil
 	}
+	q.CustomPlan()
 
-	p.wide = req.Window.Fields
-	read = narrow(p, base, req)
-	base.CustomPlan()
-
-	return base, read, nil
+	return nil
 }
 
 func (p *plan) idColumn() (keel.Col, bool) {

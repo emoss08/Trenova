@@ -38,10 +38,8 @@ func Connection[T any](
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
 	p := newPlan(q, req.Computed).withCopies(req.Copies)
-	base := q.Clone()
 	read := narrow(p, q, req)
-	q, read, err := bindWindow(ctx, db, p, base, q, read, req)
-	if err != nil {
+	if err := bindWindow(ctx, db, p, q, req); err != nil {
 		return nil, err
 	}
 
@@ -168,10 +166,8 @@ func List[T any](
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
 	p := newPlan(q, req.Computed).withCopies(req.Copies)
-	base := q.Clone()
 	read := narrow(p, q, req)
-	q, read, err := bindWindow(ctx, db, p, base, q, read, req)
-	if err != nil {
+	if err := bindWindow(ctx, db, p, q, req); err != nil {
 		return nil, err
 	}
 

@@ -13,7 +13,6 @@ type plan struct {
 	ref      *keel.Ref
 	computed map[string]keel.Expr
 	copies   map[string]keel.Expr
-	wide     []string
 }
 
 type field struct {
