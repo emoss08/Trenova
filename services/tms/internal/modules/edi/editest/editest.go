@@ -22,7 +22,7 @@ func FirstTenant(t *testing.T, ctx context.Context, db *keel.DB) Tenant {
 	t.Helper()
 
 	var orgID, buID string
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&orgID, &buID))
 
@@ -36,6 +36,6 @@ func TenantOf(ctx context.Context, info pagination.TenantInfo) Tenant {
 func Exec(t *testing.T, ctx context.Context, db *keel.DB, sql string, args ...any) {
 	t.Helper()
 
-	_, err := db.Pool().Exec(ctx, sql, args...)
+	_, err := keel.Pool(db).Exec(ctx, sql, args...)
 	require.NoError(t, err)
 }

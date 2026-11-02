@@ -48,7 +48,7 @@ func newSeededTenant(t *testing.T) *seededTenant {
 func seededRows[T any](t *testing.T, s *seededTenant, sql string, args ...any) []T {
 	t.Helper()
 
-	rows, err := s.kdb.Pool().Query(s.ctx, sql, args...)
+	rows, err := keel.Pool(s.kdb).Query(s.ctx, sql, args...)
 	require.NoError(t, err)
 	out, err := pgx.CollectRows(rows, pgx.RowToStructByPos[T])
 	require.NoError(t, err)

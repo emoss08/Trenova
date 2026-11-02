@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -49,7 +50,7 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 	ctx, db := seededDevelopmentDB(t)
 
 	var shipmentID, customerID, orgID, buID string
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, customer_id, organization_id, business_unit_id FROM shipments ORDER BY id LIMIT 1",
 	).
 		Scan(&shipmentID, &customerID, &orgID, &buID))

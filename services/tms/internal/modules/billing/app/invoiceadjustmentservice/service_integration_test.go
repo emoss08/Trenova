@@ -609,7 +609,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Contains(t, approved.Metadata, "writeOffJournalEntryId")
 
 		var entry journalEntryRow
-		require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 			`SELECT id, status, total_debit, total_credit FROM journal_entries
 			WHERE organization_id = $1 AND business_unit_id = $2 AND reference_id = $3 LIMIT 1`,
 			h.orgID, h.buID, approved.ID.String(),
@@ -629,7 +629,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			SourceEventType string
 			Status          string
 		}
-		require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 			`SELECT source_event_type, status FROM journal_sources
 			WHERE organization_id = $1 AND business_unit_id = $2 AND source_object_id = $3 LIMIT 1`,
 			h.orgID, h.buID, approved.ID.String(),
@@ -641,7 +641,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			PeriodDebitMinor  int64
 			PeriodCreditMinor int64
 		}
-		require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+		require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 			`SELECT period_debit_minor, period_credit_minor FROM gl_account_balances_by_period
 			WHERE organization_id = $1 AND business_unit_id = $2 AND gl_account_id = $3 LIMIT 1`,
 			h.orgID, h.buID, h.lookupGLAccount(t, "6940"),
@@ -1079,17 +1079,17 @@ func newIntegrationHarness(
 	documentRepo := documentrepository.New(documentrepository.Params{DB: conn, Logger: logger})
 
 	var org seededOrg
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
 	).Scan(&org.ID, &org.BusinessUnitID))
 	var user seededUser
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2
 		ORDER BY id LIMIT 1`,
 		org.ID, org.BusinessUnitID,
 	).Scan(&user.ID))
 	var customer seededCustomer
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT id, name, code, address_line_1, city, postal_code FROM customers
 		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1`,
 		org.ID, org.BusinessUnitID,
@@ -1102,7 +1102,7 @@ func newIntegrationHarness(
 		&customer.PostalCode,
 	))
 	var shp seededShipment
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT id, COALESCE(pro_number, ''), COALESCE(bol, '') FROM shipments
 		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1`,
 		org.ID, org.BusinessUnitID,
@@ -1355,7 +1355,7 @@ func (h *integrationHarness) creditMemoJournal(
 
 	var row creditMemoJournalRow
 	var journalEntryID pulid.ID
-	err := h.db.Pool().QueryRow(h.ctx,
+	err := keel.Pool(h.db).QueryRow(h.ctx,
 		`SELECT source_event_type, status, journal_entry_id FROM journal_sources
 		WHERE organization_id = $1 AND business_unit_id = $2
 			AND source_object_type = 'Invoice' AND source_object_id = $3`,
@@ -1376,7 +1376,7 @@ func (h *integrationHarness) journalEntryLines(
 ) []journalEntryLineRow {
 	t.Helper()
 
-	rows, err := h.db.Pool().Query(h.ctx,
+	rows, err := keel.Pool(h.db).Query(h.ctx,
 		`SELECT gl_account_id, debit_amount, credit_amount FROM journal_entry_lines
 		WHERE organization_id = $1 AND business_unit_id = $2 AND journal_entry_id = $3
 		ORDER BY line_number ASC`,
@@ -1400,7 +1400,7 @@ func (h *integrationHarness) customerLedgerLines(
 ) []customerLedgerRow {
 	t.Helper()
 
-	rows, err := h.db.Pool().Query(h.ctx,
+	rows, err := keel.Pool(h.db).Query(h.ctx,
 		`SELECT amount_minor, source_event_type, related_invoice_id FROM customer_ledger_entries
 		WHERE organization_id = $1 AND business_unit_id = $2 AND source_object_id = $3`,
 		h.orgID, h.buID, invoiceID.String(),
@@ -1415,7 +1415,7 @@ func (h *integrationHarness) lookupGLAccount(t *testing.T, code string) pulid.ID
 	t.Helper()
 
 	var id pulid.ID
-	require.NoError(t, h.db.Pool().QueryRow(h.ctx,
+	require.NoError(t, keel.Pool(h.db).QueryRow(h.ctx,
 		`SELECT id FROM gl_accounts
 		WHERE organization_id = $1 AND business_unit_id = $2 AND account_code = $3 LIMIT 1`,
 		h.orgID, h.buID, code,
@@ -1583,14 +1583,14 @@ func TestInvoiceAdjustmentSchemaAndSeeds(t *testing.T) {
 		"invoice_reconciliation_exceptions",
 	} {
 		var name string
-		require.NoError(t, db.Pool().QueryRow(ctx,
+		require.NoError(t, keel.Pool(db).QueryRow(ctx,
 			"SELECT to_regclass($1)::text", tableName,
 		).Scan(&name))
 		assert.Equal(t, tableName, name)
 	}
 
 	var isNullable, columnDefault string
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT is_nullable, COALESCE(column_default, '') FROM information_schema.columns
 		WHERE table_name = $1 AND column_name = $2`,
 		"billing_queue_items", "rerate_variance_percent",
@@ -1598,7 +1598,7 @@ func TestInvoiceAdjustmentSchemaAndSeeds(t *testing.T) {
 	assert.Equal(t, "NO", isNullable)
 	assert.Contains(t, columnDefault, "0")
 
-	labelRows, err := db.Pool().Query(ctx,
+	labelRows, err := keel.Pool(db).Query(ctx,
 		`SELECT e.enumlabel::text FROM pg_enum e JOIN pg_type t ON t.oid = e.enumtypid
 		WHERE t.typname = $1 ORDER BY e.enumsortorder ASC`,
 		"write_off_approval_policy_enum",
@@ -1613,7 +1613,7 @@ func TestInvoiceAdjustmentSchemaAndSeeds(t *testing.T) {
 	}, labels)
 
 	var adjustmentControls, accountingControls, writeOffConfigured, arConfigured int
-	require.NoError(t, db.Pool().QueryRow(ctx,
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
 		`SELECT
 			(SELECT COUNT(*) FROM invoice_adjustment_controls),
 			(SELECT COUNT(*) FROM accounting_controls),

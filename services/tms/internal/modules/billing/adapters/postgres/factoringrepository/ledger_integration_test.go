@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -54,7 +55,7 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 	p := Params{DB: conn, Logger: logger}
 
 	var userID pulid.ID
-	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+	require.NoError(t, keel.Pool(e.db).QueryRow(e.ctx,
 		"SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
 		e.tenantInfo.OrgID, e.tenantInfo.BuID,
 	).
@@ -62,7 +63,7 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 
 	account := func(code string) pulid.ID {
 		var id pulid.ID
-		require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+		require.NoError(t, keel.Pool(e.db).QueryRow(e.ctx,
 			"SELECT id FROM gl_accounts WHERE organization_id = $1 AND business_unit_id = $2 AND account_code = $3 LIMIT 1",
 			e.tenantInfo.OrgID, e.tenantInfo.BuID, code,
 		).
@@ -136,7 +137,7 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 func (e *ledgerEnv) glBalance(t *testing.T, accountID pulid.ID) int64 {
 	t.Helper()
 	var total int64
-	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+	require.NoError(t, keel.Pool(e.db).QueryRow(e.ctx,
 		`SELECT COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0)::bigint
 		FROM journal_entry_lines AS jel
 		WHERE jel.organization_id = $1 AND jel.business_unit_id = $2 AND jel.gl_account_id = $3
@@ -151,7 +152,7 @@ func (e *ledgerEnv) glBalance(t *testing.T, accountID pulid.ID) int64 {
 func (e *ledgerEnv) unbalancedEntries(t *testing.T) int {
 	t.Helper()
 	var count int
-	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+	require.NoError(t, keel.Pool(e.db).QueryRow(e.ctx,
 		`SELECT COUNT(*) FROM (SELECT jel.journal_entry_id
 			FROM journal_entry_lines AS jel
 			JOIN factoring_reserve_entries AS facres
@@ -179,7 +180,7 @@ func (e *ledgerEnv) invoice(t *testing.T, id pulid.ID) *invoice.Invoice {
 func (e *ledgerEnv) ledgerBalance(t *testing.T, invoiceID pulid.ID) int64 {
 	t.Helper()
 	var total int64
-	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+	require.NoError(t, keel.Pool(e.db).QueryRow(e.ctx,
 		`SELECT COALESCE(SUM(cle.amount_minor), 0)::bigint FROM customer_ledger_entries AS cle
 		WHERE cle.organization_id = $1 AND cle.business_unit_id = $2
 			AND cle.related_invoice_id = $3 AND cle.source_object_type = $4`,
@@ -437,7 +438,7 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = e.db.Pool().Exec(e.ctx,
+	_, err = keel.Pool(e.db).Exec(e.ctx,
 		"UPDATE factoring_reserve_entries SET memo = 'edited' WHERE organization_id = $1",
 		e.tenantInfo.OrgID)
 	require.Error(t, err, "reserve entries are append-only")
