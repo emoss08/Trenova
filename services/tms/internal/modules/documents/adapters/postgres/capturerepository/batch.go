@@ -158,7 +158,7 @@ func (r *batchRepository) ListCursor(
 				&listquery.Request[capture.CaptureBatch]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*capture.CaptureBatch]) *keel.Query[*capture.CaptureBatch] {
+					Shape: func(q keel.Query[*capture.CaptureBatch]) keel.Query[*capture.CaptureBatch] {
 						q = q.Load(b.CaptureDevice())
 						if req.IncludeItems {
 							q = q.Load(orderedItems(b))

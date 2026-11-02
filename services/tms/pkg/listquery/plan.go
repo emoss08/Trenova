@@ -22,7 +22,7 @@ type field struct {
 	index  int32
 }
 
-func newPlan[T any](q *keel.Query[*T], computed map[string]keel.Expr) *plan {
+func newPlan[T any](q keel.Query[*T], computed map[string]keel.Expr) *plan {
 	ref := q.TableRef()
 	return &plan{cat: listcatalog.For[T](ref.Table), ref: ref, computed: computed}
 }

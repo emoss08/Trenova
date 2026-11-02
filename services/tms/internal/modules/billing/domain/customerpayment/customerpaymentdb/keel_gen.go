@@ -4,6 +4,7 @@ package customerpaymentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var applicationsRef = keel.Ref{Table: &applicationsTable}
 
 // ApplicationsTable is the table of customerpayment.Application.
 type ApplicationsTable struct {
-	keel.Handle[*customerpayment.Application]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -81,7 +82,7 @@ type ApplicationsTable struct {
 
 // Applications references the customer_payment_applications table.
 var Applications = &ApplicationsTable{
-	Handle:              keel.Handle[*customerpayment.Application]{Ref: &applicationsRef},
+	TableBase:           keel.TableBase{Ref: &applicationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 2}}},
@@ -94,10 +95,10 @@ var Applications = &ApplicationsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &applicationsRef, Index: 9}},
 }
 
-// BuildApplications builds the handle of customer_payment_applications for ref. Generated relation and alias methods call it.
+// BuildApplications builds the table of customer_payment_applications for ref. Generated relation and alias methods call it.
 func BuildApplications(r *keel.Ref) *ApplicationsTable {
 	return &ApplicationsTable{
-		Handle:              keel.Handle[*customerpayment.Application]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -130,6 +131,365 @@ func (t *ApplicationsTable) Invoice() *invoicedb.InvoicesTable {
 // Get returns the customer_payment_applications row with the given key, or keel.ErrNotFound.
 func (t *ApplicationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customerpayment.Application, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ApplicationsQuery is a query over customerpayment.Application.
+type ApplicationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customerpayment.Application] = (*ApplicationsTable)(nil)
+
+var _ keel.Query[*customerpayment.Application] = (*ApplicationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ApplicationsTable) Query() keel.Query[*customerpayment.Application] {
+	return &ApplicationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ApplicationsQuery.Where.
+func (t *ApplicationsTable) Where(ps ...keel.Pred) keel.Query[*customerpayment.Application] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ApplicationsQuery.Pick.
+func (t *ApplicationsTable) Pick(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ApplicationsQuery.Load.
+func (t *ApplicationsTable) Load(ls ...keel.Loader) keel.Query[*customerpayment.Application] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ApplicationsQuery.Omit.
+func (t *ApplicationsTable) Omit(cols ...keel.Column) keel.Query[*customerpayment.Application] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ApplicationsQuery.Order.
+func (t *ApplicationsTable) Order(os ...keel.Order) keel.Query[*customerpayment.Application] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ApplicationsQuery.Limit.
+func (t *ApplicationsTable) Limit(n int) keel.Query[*customerpayment.Application] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ApplicationsQuery.Group.
+func (t *ApplicationsTable) Group(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ApplicationsQuery.GroupingSets.
+func (t *ApplicationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ApplicationsQuery.Rollup.
+func (t *ApplicationsTable) Rollup(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ApplicationsQuery.Cube.
+func (t *ApplicationsTable) Cube(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ApplicationsQuery.AllTenants.
+func (t *ApplicationsTable) AllTenants() keel.Query[*customerpayment.Application] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ApplicationsQuery.Join.
+func (t *ApplicationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Application] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ApplicationsQuery.LeftJoin.
+func (t *ApplicationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Application] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ApplicationsQuery.LeftJoinLateral.
+func (t *ApplicationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Application] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ApplicationsQuery.JoinLateral.
+func (t *ApplicationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Application] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ApplicationsQuery.Lock.
+func (t *ApplicationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerpayment.Application] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ApplicationsQuery.DistinctOn.
+func (t *ApplicationsTable) DistinctOn(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ApplicationsQuery.Cache.
+func (t *ApplicationsTable) Cache(opts ...keel.CacheOption) keel.Query[*customerpayment.Application] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ApplicationsQuery.LoadStrategy.
+func (t *ApplicationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerpayment.Application] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ApplicationsQuery.With.
+func (t *ApplicationsTable) With(ctes ...*keel.CTETable) keel.Query[*customerpayment.Application] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ApplicationsQuery.Compute.
+func (t *ApplicationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customerpayment.Application] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ApplicationsTable) Create(ctx context.Context, db *keel.DB, row *customerpayment.Application) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ApplicationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerpayment.Application) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ApplicationsTable) Save(ctx context.Context, db *keel.DB, row *customerpayment.Application, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ApplicationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerpayment.Application, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ApplicationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerpayment.Application) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ApplicationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerpayment.Application, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ApplicationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerpayment.Application, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ApplicationsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerpayment.Application) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ApplicationsQuery) Where(ps ...keel.Pred) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ApplicationsQuery) Pick(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ApplicationsQuery) Omit(cols ...keel.Column) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ApplicationsQuery) Load(ls ...keel.Loader) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ApplicationsQuery) Order(os ...keel.Order) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ApplicationsQuery) Distinct() keel.Query[*customerpayment.Application] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ApplicationsQuery) Group(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ApplicationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ApplicationsQuery) Rollup(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ApplicationsQuery) Cube(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ApplicationsQuery) Window(name string, w keel.Window) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ApplicationsQuery) Having(ps ...keel.Pred) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ApplicationsQuery) Limit(n int) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ApplicationsQuery) Offset(n int) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ApplicationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ApplicationsQuery) AllTenants() keel.Query[*customerpayment.Application] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ApplicationsQuery) CustomPlan() keel.Query[*customerpayment.Application] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ApplicationsQuery) Timeout(d time.Duration) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ApplicationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ApplicationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ApplicationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Application] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ApplicationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Application] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ApplicationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Application] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ApplicationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ApplicationsQuery) With(ctes ...*keel.CTETable) keel.Query[*customerpayment.Application] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ApplicationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customerpayment.Application] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ApplicationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerpayment.Application] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ApplicationsQuery) Clone() keel.Query[*customerpayment.Application] {
+	return &ApplicationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ApplicationsQuery) One(ctx context.Context, db *keel.DB) (*customerpayment.Application, error) {
+	return keel.One[*customerpayment.Application](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ApplicationsQuery) First(ctx context.Context, db *keel.DB) (*customerpayment.Application, error) {
+	return keel.First[*customerpayment.Application](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ApplicationsQuery) List(ctx context.Context, db *keel.DB) ([]*customerpayment.Application, error) {
+	return keel.List[*customerpayment.Application](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ApplicationsQuery) All(ctx context.Context, db *keel.DB) ([]*customerpayment.Application, error) {
+	return keel.All[*customerpayment.Application](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ApplicationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerpayment.Application, error) {
+	return keel.UpdateReturning[*customerpayment.Application](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ApplicationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerpayment.Application], error) {
+	return keel.PageOf[*customerpayment.Application](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ApplicationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerpayment.Application) error) error {
+	return keel.Each[*customerpayment.Application](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newApplication() unsafe.Pointer { return unsafe.Pointer(new(customerpayment.Application)) }
@@ -256,7 +616,7 @@ var creditMemoApplicationsRef = keel.Ref{Table: &creditMemoApplicationsTable}
 
 // CreditMemoApplicationsTable is the table of customerpayment.CreditMemoApplication.
 type CreditMemoApplicationsTable struct {
-	keel.Handle[*customerpayment.CreditMemoApplication]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -276,7 +636,7 @@ type CreditMemoApplicationsTable struct {
 
 // CreditMemoApplications references the credit_memo_applications table.
 var CreditMemoApplications = &CreditMemoApplicationsTable{
-	Handle:              keel.Handle[*customerpayment.CreditMemoApplication]{Ref: &creditMemoApplicationsRef},
+	TableBase:           keel.TableBase{Ref: &creditMemoApplicationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 2}}},
@@ -294,10 +654,10 @@ var CreditMemoApplications = &CreditMemoApplicationsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 14}},
 }
 
-// BuildCreditMemoApplications builds the handle of credit_memo_applications for ref. Generated relation and alias methods call it.
+// BuildCreditMemoApplications builds the table of credit_memo_applications for ref. Generated relation and alias methods call it.
 func BuildCreditMemoApplications(r *keel.Ref) *CreditMemoApplicationsTable {
 	return &CreditMemoApplicationsTable{
-		Handle:              keel.Handle[*customerpayment.CreditMemoApplication]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -337,6 +697,365 @@ func (t *CreditMemoApplicationsTable) Invoice() *invoicedb.InvoicesTable {
 // Get returns the credit_memo_applications row with the given key, or keel.ErrNotFound.
 func (t *CreditMemoApplicationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customerpayment.CreditMemoApplication, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CreditMemoApplicationsQuery is a query over customerpayment.CreditMemoApplication.
+type CreditMemoApplicationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customerpayment.CreditMemoApplication] = (*CreditMemoApplicationsTable)(nil)
+
+var _ keel.Query[*customerpayment.CreditMemoApplication] = (*CreditMemoApplicationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CreditMemoApplicationsTable) Query() keel.Query[*customerpayment.CreditMemoApplication] {
+	return &CreditMemoApplicationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CreditMemoApplicationsQuery.Where.
+func (t *CreditMemoApplicationsTable) Where(ps ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CreditMemoApplicationsQuery.Pick.
+func (t *CreditMemoApplicationsTable) Pick(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CreditMemoApplicationsQuery.Load.
+func (t *CreditMemoApplicationsTable) Load(ls ...keel.Loader) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CreditMemoApplicationsQuery.Omit.
+func (t *CreditMemoApplicationsTable) Omit(cols ...keel.Column) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CreditMemoApplicationsQuery.Order.
+func (t *CreditMemoApplicationsTable) Order(os ...keel.Order) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CreditMemoApplicationsQuery.Limit.
+func (t *CreditMemoApplicationsTable) Limit(n int) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CreditMemoApplicationsQuery.Group.
+func (t *CreditMemoApplicationsTable) Group(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CreditMemoApplicationsQuery.GroupingSets.
+func (t *CreditMemoApplicationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CreditMemoApplicationsQuery.Rollup.
+func (t *CreditMemoApplicationsTable) Rollup(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CreditMemoApplicationsQuery.Cube.
+func (t *CreditMemoApplicationsTable) Cube(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CreditMemoApplicationsQuery.AllTenants.
+func (t *CreditMemoApplicationsTable) AllTenants() keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CreditMemoApplicationsQuery.Join.
+func (t *CreditMemoApplicationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CreditMemoApplicationsQuery.LeftJoin.
+func (t *CreditMemoApplicationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CreditMemoApplicationsQuery.LeftJoinLateral.
+func (t *CreditMemoApplicationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CreditMemoApplicationsQuery.JoinLateral.
+func (t *CreditMemoApplicationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CreditMemoApplicationsQuery.Lock.
+func (t *CreditMemoApplicationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CreditMemoApplicationsQuery.DistinctOn.
+func (t *CreditMemoApplicationsTable) DistinctOn(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CreditMemoApplicationsQuery.Cache.
+func (t *CreditMemoApplicationsTable) Cache(opts ...keel.CacheOption) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CreditMemoApplicationsQuery.LoadStrategy.
+func (t *CreditMemoApplicationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CreditMemoApplicationsQuery.With.
+func (t *CreditMemoApplicationsTable) With(ctes ...*keel.CTETable) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CreditMemoApplicationsQuery.Compute.
+func (t *CreditMemoApplicationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CreditMemoApplicationsTable) Create(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CreditMemoApplicationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CreditMemoApplicationsTable) Save(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CreditMemoApplicationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CreditMemoApplicationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CreditMemoApplicationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CreditMemoApplicationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CreditMemoApplicationsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CreditMemoApplicationsQuery) Where(ps ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CreditMemoApplicationsQuery) Pick(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CreditMemoApplicationsQuery) Omit(cols ...keel.Column) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CreditMemoApplicationsQuery) Load(ls ...keel.Loader) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CreditMemoApplicationsQuery) Order(os ...keel.Order) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CreditMemoApplicationsQuery) Distinct() keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CreditMemoApplicationsQuery) Group(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CreditMemoApplicationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CreditMemoApplicationsQuery) Rollup(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CreditMemoApplicationsQuery) Cube(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CreditMemoApplicationsQuery) Window(name string, w keel.Window) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CreditMemoApplicationsQuery) Having(ps ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CreditMemoApplicationsQuery) Limit(n int) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CreditMemoApplicationsQuery) Offset(n int) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CreditMemoApplicationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CreditMemoApplicationsQuery) AllTenants() keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CreditMemoApplicationsQuery) CustomPlan() keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CreditMemoApplicationsQuery) Timeout(d time.Duration) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CreditMemoApplicationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CreditMemoApplicationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CreditMemoApplicationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CreditMemoApplicationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CreditMemoApplicationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CreditMemoApplicationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CreditMemoApplicationsQuery) With(ctes ...*keel.CTETable) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CreditMemoApplicationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CreditMemoApplicationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerpayment.CreditMemoApplication] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CreditMemoApplicationsQuery) Clone() keel.Query[*customerpayment.CreditMemoApplication] {
+	return &CreditMemoApplicationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CreditMemoApplicationsQuery) One(ctx context.Context, db *keel.DB) (*customerpayment.CreditMemoApplication, error) {
+	return keel.One[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CreditMemoApplicationsQuery) First(ctx context.Context, db *keel.DB) (*customerpayment.CreditMemoApplication, error) {
+	return keel.First[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CreditMemoApplicationsQuery) List(ctx context.Context, db *keel.DB) ([]*customerpayment.CreditMemoApplication, error) {
+	return keel.List[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CreditMemoApplicationsQuery) All(ctx context.Context, db *keel.DB) ([]*customerpayment.CreditMemoApplication, error) {
+	return keel.All[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CreditMemoApplicationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerpayment.CreditMemoApplication, error) {
+	return keel.UpdateReturning[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CreditMemoApplicationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerpayment.CreditMemoApplication], error) {
+	return keel.PageOf[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CreditMemoApplicationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerpayment.CreditMemoApplication) error) error {
+	return keel.Each[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCreditMemoApplication() unsafe.Pointer {
@@ -510,7 +1229,7 @@ var paymentsRef = keel.Ref{Table: &paymentsTable}
 
 // PaymentsTable is the table of customerpayment.Payment.
 type PaymentsTable struct {
-	keel.Handle[*customerpayment.Payment]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -541,7 +1260,7 @@ type PaymentsTable struct {
 
 // Payments references the customer_payments table.
 var Payments = &PaymentsTable{
-	Handle:               keel.Handle[*customerpayment.Payment]{Ref: &paymentsRef},
+	TableBase:            keel.TableBase{Ref: &paymentsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 2}}},
@@ -570,10 +1289,10 @@ var Payments = &PaymentsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 25}},
 }
 
-// BuildPayments builds the handle of customer_payments for ref. Generated relation and alias methods call it.
+// BuildPayments builds the table of customer_payments for ref. Generated relation and alias methods call it.
 func BuildPayments(r *keel.Ref) *PaymentsTable {
 	return &PaymentsTable{
-		Handle:               keel.Handle[*customerpayment.Payment]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -624,6 +1343,365 @@ func (t *PaymentsTable) Customer() *customerdb.CustomersTable {
 // Get returns the customer_payments row with the given key, or keel.ErrNotFound.
 func (t *PaymentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*customerpayment.Payment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PaymentsQuery is a query over customerpayment.Payment.
+type PaymentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*customerpayment.Payment] = (*PaymentsTable)(nil)
+
+var _ keel.Query[*customerpayment.Payment] = (*PaymentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PaymentsTable) Query() keel.Query[*customerpayment.Payment] {
+	return &PaymentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PaymentsQuery.Where.
+func (t *PaymentsTable) Where(ps ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PaymentsQuery.Pick.
+func (t *PaymentsTable) Pick(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PaymentsQuery.Load.
+func (t *PaymentsTable) Load(ls ...keel.Loader) keel.Query[*customerpayment.Payment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PaymentsQuery.Omit.
+func (t *PaymentsTable) Omit(cols ...keel.Column) keel.Query[*customerpayment.Payment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PaymentsQuery.Order.
+func (t *PaymentsTable) Order(os ...keel.Order) keel.Query[*customerpayment.Payment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PaymentsQuery.Limit.
+func (t *PaymentsTable) Limit(n int) keel.Query[*customerpayment.Payment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PaymentsQuery.Group.
+func (t *PaymentsTable) Group(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PaymentsQuery.GroupingSets.
+func (t *PaymentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PaymentsQuery.Rollup.
+func (t *PaymentsTable) Rollup(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PaymentsQuery.Cube.
+func (t *PaymentsTable) Cube(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PaymentsQuery.AllTenants.
+func (t *PaymentsTable) AllTenants() keel.Query[*customerpayment.Payment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PaymentsQuery.Join.
+func (t *PaymentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PaymentsQuery.LeftJoin.
+func (t *PaymentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PaymentsQuery.LeftJoinLateral.
+func (t *PaymentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Payment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PaymentsQuery.JoinLateral.
+func (t *PaymentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Payment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PaymentsQuery.Lock.
+func (t *PaymentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerpayment.Payment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PaymentsQuery.DistinctOn.
+func (t *PaymentsTable) DistinctOn(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PaymentsQuery.Cache.
+func (t *PaymentsTable) Cache(opts ...keel.CacheOption) keel.Query[*customerpayment.Payment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PaymentsQuery.LoadStrategy.
+func (t *PaymentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerpayment.Payment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PaymentsQuery.With.
+func (t *PaymentsTable) With(ctes ...*keel.CTETable) keel.Query[*customerpayment.Payment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PaymentsQuery.Compute.
+func (t *PaymentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*customerpayment.Payment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PaymentsTable) Create(ctx context.Context, db *keel.DB, row *customerpayment.Payment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PaymentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PaymentsTable) Save(ctx context.Context, db *keel.DB, row *customerpayment.Payment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PaymentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerpayment.Payment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PaymentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerpayment.Payment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PaymentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PaymentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PaymentsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PaymentsQuery) Where(ps ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PaymentsQuery) Pick(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PaymentsQuery) Omit(cols ...keel.Column) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PaymentsQuery) Load(ls ...keel.Loader) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PaymentsQuery) Order(os ...keel.Order) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PaymentsQuery) Distinct() keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PaymentsQuery) Group(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PaymentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PaymentsQuery) Rollup(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PaymentsQuery) Cube(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PaymentsQuery) Window(name string, w keel.Window) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PaymentsQuery) Having(ps ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PaymentsQuery) Limit(n int) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PaymentsQuery) Offset(n int) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PaymentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PaymentsQuery) AllTenants() keel.Query[*customerpayment.Payment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PaymentsQuery) CustomPlan() keel.Query[*customerpayment.Payment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PaymentsQuery) Timeout(d time.Duration) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PaymentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PaymentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PaymentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PaymentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PaymentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PaymentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PaymentsQuery) With(ctes ...*keel.CTETable) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PaymentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PaymentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*customerpayment.Payment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PaymentsQuery) Clone() keel.Query[*customerpayment.Payment] {
+	return &PaymentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PaymentsQuery) One(ctx context.Context, db *keel.DB) (*customerpayment.Payment, error) {
+	return keel.One[*customerpayment.Payment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PaymentsQuery) First(ctx context.Context, db *keel.DB) (*customerpayment.Payment, error) {
+	return keel.First[*customerpayment.Payment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PaymentsQuery) List(ctx context.Context, db *keel.DB) ([]*customerpayment.Payment, error) {
+	return keel.List[*customerpayment.Payment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PaymentsQuery) All(ctx context.Context, db *keel.DB) ([]*customerpayment.Payment, error) {
+	return keel.All[*customerpayment.Payment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PaymentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerpayment.Payment, error) {
+	return keel.UpdateReturning[*customerpayment.Payment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PaymentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerpayment.Payment], error) {
+	return keel.PageOf[*customerpayment.Payment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PaymentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerpayment.Payment) error) error {
+	return keel.Each[*customerpayment.Payment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayment() unsafe.Pointer { return unsafe.Pointer(new(customerpayment.Payment)) }

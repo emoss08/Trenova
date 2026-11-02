@@ -4,6 +4,7 @@ package extractionevaldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -58,7 +59,7 @@ var casePagesesRef = keel.Ref{Table: &casePagesesTable}
 
 // CasePagesesTable is the table of extractioneval.CasePages.
 type CasePagesesTable struct {
-	keel.Handle[*extractioneval.CasePages]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -75,7 +76,7 @@ type CasePagesesTable struct {
 
 // CasePageses references the extraction_eval_case_pages table.
 var CasePageses = &CasePagesesTable{
-	Handle:           keel.Handle[*extractioneval.CasePages]{Ref: &casePagesesRef},
+	TableBase:        keel.TableBase{Ref: &casePagesesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &casePagesesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &casePagesesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &casePagesesRef, Index: 2}}},
@@ -90,10 +91,10 @@ var CasePageses = &CasePagesesTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &casePagesesRef, Index: 11}},
 }
 
-// BuildCasePageses builds the handle of extraction_eval_case_pages for ref. Generated relation and alias methods call it.
+// BuildCasePageses builds the table of extraction_eval_case_pages for ref. Generated relation and alias methods call it.
 func BuildCasePageses(r *keel.Ref) *CasePagesesTable {
 	return &CasePagesesTable{
-		Handle:           keel.Handle[*extractioneval.CasePages]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -120,6 +121,365 @@ func (t *CasePagesesTable) As(alias string) *CasePagesesTable {
 // Get returns the extraction_eval_case_pages row with the given key, or keel.ErrNotFound.
 func (t *CasePagesesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractioneval.CasePages, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CasePagesesQuery is a query over extractioneval.CasePages.
+type CasePagesesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractioneval.CasePages] = (*CasePagesesTable)(nil)
+
+var _ keel.Query[*extractioneval.CasePages] = (*CasePagesesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CasePagesesTable) Query() keel.Query[*extractioneval.CasePages] {
+	return &CasePagesesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CasePagesesQuery.Where.
+func (t *CasePagesesTable) Where(ps ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CasePagesesQuery.Pick.
+func (t *CasePagesesTable) Pick(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CasePagesesQuery.Load.
+func (t *CasePagesesTable) Load(ls ...keel.Loader) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CasePagesesQuery.Omit.
+func (t *CasePagesesTable) Omit(cols ...keel.Column) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CasePagesesQuery.Order.
+func (t *CasePagesesTable) Order(os ...keel.Order) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CasePagesesQuery.Limit.
+func (t *CasePagesesTable) Limit(n int) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CasePagesesQuery.Group.
+func (t *CasePagesesTable) Group(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CasePagesesQuery.GroupingSets.
+func (t *CasePagesesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CasePagesesQuery.Rollup.
+func (t *CasePagesesTable) Rollup(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CasePagesesQuery.Cube.
+func (t *CasePagesesTable) Cube(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CasePagesesQuery.AllTenants.
+func (t *CasePagesesTable) AllTenants() keel.Query[*extractioneval.CasePages] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CasePagesesQuery.Join.
+func (t *CasePagesesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CasePagesesQuery.LeftJoin.
+func (t *CasePagesesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CasePagesesQuery.LeftJoinLateral.
+func (t *CasePagesesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.CasePages] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CasePagesesQuery.JoinLateral.
+func (t *CasePagesesTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.CasePages] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CasePagesesQuery.Lock.
+func (t *CasePagesesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CasePagesesQuery.DistinctOn.
+func (t *CasePagesesTable) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CasePagesesQuery.Cache.
+func (t *CasePagesesTable) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CasePagesesQuery.LoadStrategy.
+func (t *CasePagesesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.CasePages] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CasePagesesQuery.With.
+func (t *CasePagesesTable) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.CasePages] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CasePagesesQuery.Compute.
+func (t *CasePagesesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.CasePages] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CasePagesesTable) Create(ctx context.Context, db *keel.DB, row *extractioneval.CasePages) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CasePagesesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractioneval.CasePages) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CasePagesesTable) Save(ctx context.Context, db *keel.DB, row *extractioneval.CasePages, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CasePagesesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractioneval.CasePages, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CasePagesesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractioneval.CasePages) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CasePagesesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractioneval.CasePages, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CasePagesesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractioneval.CasePages, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CasePagesesTable) Copy(ctx context.Context, db *keel.DB, rows []*extractioneval.CasePages) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CasePagesesQuery) Where(ps ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CasePagesesQuery) Pick(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CasePagesesQuery) Omit(cols ...keel.Column) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CasePagesesQuery) Load(ls ...keel.Loader) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CasePagesesQuery) Order(os ...keel.Order) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CasePagesesQuery) Distinct() keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CasePagesesQuery) Group(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CasePagesesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CasePagesesQuery) Rollup(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CasePagesesQuery) Cube(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CasePagesesQuery) Window(name string, w keel.Window) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CasePagesesQuery) Having(ps ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CasePagesesQuery) Limit(n int) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CasePagesesQuery) Offset(n int) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CasePagesesQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CasePagesesQuery) AllTenants() keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CasePagesesQuery) CustomPlan() keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CasePagesesQuery) Timeout(d time.Duration) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CasePagesesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CasePagesesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CasePagesesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CasePagesesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CasePagesesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CasePagesesQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CasePagesesQuery) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CasePagesesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CasePagesesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.CasePages] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CasePagesesQuery) Clone() keel.Query[*extractioneval.CasePages] {
+	return &CasePagesesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CasePagesesQuery) One(ctx context.Context, db *keel.DB) (*extractioneval.CasePages, error) {
+	return keel.One[*extractioneval.CasePages](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CasePagesesQuery) First(ctx context.Context, db *keel.DB) (*extractioneval.CasePages, error) {
+	return keel.First[*extractioneval.CasePages](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CasePagesesQuery) List(ctx context.Context, db *keel.DB) ([]*extractioneval.CasePages, error) {
+	return keel.List[*extractioneval.CasePages](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CasePagesesQuery) All(ctx context.Context, db *keel.DB) ([]*extractioneval.CasePages, error) {
+	return keel.All[*extractioneval.CasePages](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CasePagesesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractioneval.CasePages, error) {
+	return keel.UpdateReturning[*extractioneval.CasePages](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CasePagesesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractioneval.CasePages], error) {
+	return keel.PageOf[*extractioneval.CasePages](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CasePagesesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractioneval.CasePages) error) error {
+	return keel.Each[*extractioneval.CasePages](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCasePages() unsafe.Pointer { return unsafe.Pointer(new(extractioneval.CasePages)) }
@@ -250,7 +610,7 @@ var extractionCasesRef = keel.Ref{Table: &extractionCasesTable}
 
 // ExtractionCasesTable is the table of extractioneval.ExtractionCase.
 type ExtractionCasesTable struct {
-	keel.Handle[*extractioneval.ExtractionCase]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -276,7 +636,7 @@ type ExtractionCasesTable struct {
 
 // ExtractionCases references the extraction_eval_cases table.
 var ExtractionCases = &ExtractionCasesTable{
-	Handle:              keel.Handle[*extractioneval.ExtractionCase]{Ref: &extractionCasesRef},
+	TableBase:           keel.TableBase{Ref: &extractionCasesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionCasesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionCasesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionCasesRef, Index: 2}}},
@@ -300,10 +660,10 @@ var ExtractionCases = &ExtractionCasesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &extractionCasesRef, Index: 20}},
 }
 
-// BuildExtractionCases builds the handle of extraction_eval_cases for ref. Generated relation and alias methods call it.
+// BuildExtractionCases builds the table of extraction_eval_cases for ref. Generated relation and alias methods call it.
 func BuildExtractionCases(r *keel.Ref) *ExtractionCasesTable {
 	return &ExtractionCasesTable{
-		Handle:              keel.Handle[*extractioneval.ExtractionCase]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -339,6 +699,365 @@ func (t *ExtractionCasesTable) As(alias string) *ExtractionCasesTable {
 // Get returns the extraction_eval_cases row with the given key, or keel.ErrNotFound.
 func (t *ExtractionCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractioneval.ExtractionCase, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExtractionCasesQuery is a query over extractioneval.ExtractionCase.
+type ExtractionCasesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractioneval.ExtractionCase] = (*ExtractionCasesTable)(nil)
+
+var _ keel.Query[*extractioneval.ExtractionCase] = (*ExtractionCasesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtractionCasesTable) Query() keel.Query[*extractioneval.ExtractionCase] {
+	return &ExtractionCasesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtractionCasesQuery.Where.
+func (t *ExtractionCasesTable) Where(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtractionCasesQuery.Pick.
+func (t *ExtractionCasesTable) Pick(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtractionCasesQuery.Load.
+func (t *ExtractionCasesTable) Load(ls ...keel.Loader) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtractionCasesQuery.Omit.
+func (t *ExtractionCasesTable) Omit(cols ...keel.Column) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtractionCasesQuery.Order.
+func (t *ExtractionCasesTable) Order(os ...keel.Order) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtractionCasesQuery.Limit.
+func (t *ExtractionCasesTable) Limit(n int) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtractionCasesQuery.Group.
+func (t *ExtractionCasesTable) Group(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtractionCasesQuery.GroupingSets.
+func (t *ExtractionCasesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtractionCasesQuery.Rollup.
+func (t *ExtractionCasesTable) Rollup(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtractionCasesQuery.Cube.
+func (t *ExtractionCasesTable) Cube(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtractionCasesQuery.AllTenants.
+func (t *ExtractionCasesTable) AllTenants() keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtractionCasesQuery.Join.
+func (t *ExtractionCasesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtractionCasesQuery.LeftJoin.
+func (t *ExtractionCasesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtractionCasesQuery.LeftJoinLateral.
+func (t *ExtractionCasesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtractionCasesQuery.JoinLateral.
+func (t *ExtractionCasesTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtractionCasesQuery.Lock.
+func (t *ExtractionCasesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtractionCasesQuery.DistinctOn.
+func (t *ExtractionCasesTable) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtractionCasesQuery.Cache.
+func (t *ExtractionCasesTable) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtractionCasesQuery.LoadStrategy.
+func (t *ExtractionCasesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtractionCasesQuery.With.
+func (t *ExtractionCasesTable) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtractionCasesQuery.Compute.
+func (t *ExtractionCasesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtractionCasesTable) Create(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionCase) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtractionCasesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionCase) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtractionCasesTable) Save(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionCase, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtractionCasesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionCase, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtractionCasesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionCase) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtractionCasesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionCase, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtractionCasesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionCase, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtractionCasesTable) Copy(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionCase) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtractionCasesQuery) Where(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtractionCasesQuery) Pick(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtractionCasesQuery) Omit(cols ...keel.Column) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtractionCasesQuery) Load(ls ...keel.Loader) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtractionCasesQuery) Order(os ...keel.Order) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtractionCasesQuery) Distinct() keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtractionCasesQuery) Group(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtractionCasesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtractionCasesQuery) Rollup(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtractionCasesQuery) Cube(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtractionCasesQuery) Window(name string, w keel.Window) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtractionCasesQuery) Having(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtractionCasesQuery) Limit(n int) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtractionCasesQuery) Offset(n int) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtractionCasesQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtractionCasesQuery) AllTenants() keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtractionCasesQuery) CustomPlan() keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtractionCasesQuery) Timeout(d time.Duration) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtractionCasesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtractionCasesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtractionCasesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtractionCasesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtractionCasesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtractionCasesQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtractionCasesQuery) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtractionCasesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtractionCasesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.ExtractionCase] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtractionCasesQuery) Clone() keel.Query[*extractioneval.ExtractionCase] {
+	return &ExtractionCasesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtractionCasesQuery) One(ctx context.Context, db *keel.DB) (*extractioneval.ExtractionCase, error) {
+	return keel.One[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtractionCasesQuery) First(ctx context.Context, db *keel.DB) (*extractioneval.ExtractionCase, error) {
+	return keel.First[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtractionCasesQuery) List(ctx context.Context, db *keel.DB) ([]*extractioneval.ExtractionCase, error) {
+	return keel.List[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtractionCasesQuery) All(ctx context.Context, db *keel.DB) ([]*extractioneval.ExtractionCase, error) {
+	return keel.All[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtractionCasesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractioneval.ExtractionCase, error) {
+	return keel.UpdateReturning[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtractionCasesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractioneval.ExtractionCase], error) {
+	return keel.PageOf[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtractionCasesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractioneval.ExtractionCase) error) error {
+	return keel.Each[*extractioneval.ExtractionCase](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtractionCase() unsafe.Pointer { return unsafe.Pointer(new(extractioneval.ExtractionCase)) }
@@ -535,7 +1254,7 @@ var extractionResultsRef = keel.Ref{Table: &extractionResultsTable}
 
 // ExtractionResultsTable is the table of extractioneval.ExtractionResult.
 type ExtractionResultsTable struct {
-	keel.Handle[*extractioneval.ExtractionResult]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -569,7 +1288,7 @@ type ExtractionResultsTable struct {
 
 // ExtractionResults references the extraction_eval_results table.
 var ExtractionResults = &ExtractionResultsTable{
-	Handle:           keel.Handle[*extractioneval.ExtractionResult]{Ref: &extractionResultsRef},
+	TableBase:        keel.TableBase{Ref: &extractionResultsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionResultsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionResultsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionResultsRef, Index: 2}}},
@@ -601,10 +1320,10 @@ var ExtractionResults = &ExtractionResultsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &extractionResultsRef, Index: 28}},
 }
 
-// BuildExtractionResults builds the handle of extraction_eval_results for ref. Generated relation and alias methods call it.
+// BuildExtractionResults builds the table of extraction_eval_results for ref. Generated relation and alias methods call it.
 func BuildExtractionResults(r *keel.Ref) *ExtractionResultsTable {
 	return &ExtractionResultsTable{
-		Handle:           keel.Handle[*extractioneval.ExtractionResult]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -648,6 +1367,365 @@ func (t *ExtractionResultsTable) As(alias string) *ExtractionResultsTable {
 // Get returns the extraction_eval_results row with the given key, or keel.ErrNotFound.
 func (t *ExtractionResultsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractioneval.ExtractionResult, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExtractionResultsQuery is a query over extractioneval.ExtractionResult.
+type ExtractionResultsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractioneval.ExtractionResult] = (*ExtractionResultsTable)(nil)
+
+var _ keel.Query[*extractioneval.ExtractionResult] = (*ExtractionResultsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtractionResultsTable) Query() keel.Query[*extractioneval.ExtractionResult] {
+	return &ExtractionResultsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtractionResultsQuery.Where.
+func (t *ExtractionResultsTable) Where(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtractionResultsQuery.Pick.
+func (t *ExtractionResultsTable) Pick(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtractionResultsQuery.Load.
+func (t *ExtractionResultsTable) Load(ls ...keel.Loader) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtractionResultsQuery.Omit.
+func (t *ExtractionResultsTable) Omit(cols ...keel.Column) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtractionResultsQuery.Order.
+func (t *ExtractionResultsTable) Order(os ...keel.Order) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtractionResultsQuery.Limit.
+func (t *ExtractionResultsTable) Limit(n int) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtractionResultsQuery.Group.
+func (t *ExtractionResultsTable) Group(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtractionResultsQuery.GroupingSets.
+func (t *ExtractionResultsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtractionResultsQuery.Rollup.
+func (t *ExtractionResultsTable) Rollup(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtractionResultsQuery.Cube.
+func (t *ExtractionResultsTable) Cube(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtractionResultsQuery.AllTenants.
+func (t *ExtractionResultsTable) AllTenants() keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtractionResultsQuery.Join.
+func (t *ExtractionResultsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtractionResultsQuery.LeftJoin.
+func (t *ExtractionResultsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtractionResultsQuery.LeftJoinLateral.
+func (t *ExtractionResultsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtractionResultsQuery.JoinLateral.
+func (t *ExtractionResultsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtractionResultsQuery.Lock.
+func (t *ExtractionResultsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtractionResultsQuery.DistinctOn.
+func (t *ExtractionResultsTable) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtractionResultsQuery.Cache.
+func (t *ExtractionResultsTable) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtractionResultsQuery.LoadStrategy.
+func (t *ExtractionResultsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtractionResultsQuery.With.
+func (t *ExtractionResultsTable) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtractionResultsQuery.Compute.
+func (t *ExtractionResultsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtractionResultsTable) Create(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionResult) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtractionResultsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionResult) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtractionResultsTable) Save(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionResult, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtractionResultsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionResult, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtractionResultsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionResult) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtractionResultsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionResult, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtractionResultsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionResult, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtractionResultsTable) Copy(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionResult) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtractionResultsQuery) Where(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtractionResultsQuery) Pick(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtractionResultsQuery) Omit(cols ...keel.Column) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtractionResultsQuery) Load(ls ...keel.Loader) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtractionResultsQuery) Order(os ...keel.Order) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtractionResultsQuery) Distinct() keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtractionResultsQuery) Group(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtractionResultsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtractionResultsQuery) Rollup(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtractionResultsQuery) Cube(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtractionResultsQuery) Window(name string, w keel.Window) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtractionResultsQuery) Having(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtractionResultsQuery) Limit(n int) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtractionResultsQuery) Offset(n int) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtractionResultsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtractionResultsQuery) AllTenants() keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtractionResultsQuery) CustomPlan() keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtractionResultsQuery) Timeout(d time.Duration) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtractionResultsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtractionResultsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtractionResultsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtractionResultsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtractionResultsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtractionResultsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtractionResultsQuery) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtractionResultsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtractionResultsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.ExtractionResult] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtractionResultsQuery) Clone() keel.Query[*extractioneval.ExtractionResult] {
+	return &ExtractionResultsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtractionResultsQuery) One(ctx context.Context, db *keel.DB) (*extractioneval.ExtractionResult, error) {
+	return keel.One[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtractionResultsQuery) First(ctx context.Context, db *keel.DB) (*extractioneval.ExtractionResult, error) {
+	return keel.First[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtractionResultsQuery) List(ctx context.Context, db *keel.DB) ([]*extractioneval.ExtractionResult, error) {
+	return keel.List[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtractionResultsQuery) All(ctx context.Context, db *keel.DB) ([]*extractioneval.ExtractionResult, error) {
+	return keel.All[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtractionResultsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractioneval.ExtractionResult, error) {
+	return keel.UpdateReturning[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtractionResultsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractioneval.ExtractionResult], error) {
+	return keel.PageOf[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtractionResultsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractioneval.ExtractionResult) error) error {
+	return keel.Each[*extractioneval.ExtractionResult](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtractionResult() unsafe.Pointer {
@@ -881,7 +1959,7 @@ var extractionRunsRef = keel.Ref{Table: &extractionRunsTable}
 
 // ExtractionRunsTable is the table of extractioneval.ExtractionRun.
 type ExtractionRunsTable struct {
-	keel.Handle[*extractioneval.ExtractionRun]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -921,7 +1999,7 @@ type ExtractionRunsTable struct {
 
 // ExtractionRuns references the extraction_eval_runs table.
 var ExtractionRuns = &ExtractionRunsTable{
-	Handle:           keel.Handle[*extractioneval.ExtractionRun]{Ref: &extractionRunsRef},
+	TableBase:        keel.TableBase{Ref: &extractionRunsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRunsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRunsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &extractionRunsRef, Index: 2}}},
@@ -959,10 +2037,10 @@ var ExtractionRuns = &ExtractionRunsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &extractionRunsRef, Index: 34}},
 }
 
-// BuildExtractionRuns builds the handle of extraction_eval_runs for ref. Generated relation and alias methods call it.
+// BuildExtractionRuns builds the table of extraction_eval_runs for ref. Generated relation and alias methods call it.
 func BuildExtractionRuns(r *keel.Ref) *ExtractionRunsTable {
 	return &ExtractionRunsTable{
-		Handle:           keel.Handle[*extractioneval.ExtractionRun]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1012,6 +2090,365 @@ func (t *ExtractionRunsTable) As(alias string) *ExtractionRunsTable {
 // Get returns the extraction_eval_runs row with the given key, or keel.ErrNotFound.
 func (t *ExtractionRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extractioneval.ExtractionRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExtractionRunsQuery is a query over extractioneval.ExtractionRun.
+type ExtractionRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extractioneval.ExtractionRun] = (*ExtractionRunsTable)(nil)
+
+var _ keel.Query[*extractioneval.ExtractionRun] = (*ExtractionRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExtractionRunsTable) Query() keel.Query[*extractioneval.ExtractionRun] {
+	return &ExtractionRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExtractionRunsQuery.Where.
+func (t *ExtractionRunsTable) Where(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExtractionRunsQuery.Pick.
+func (t *ExtractionRunsTable) Pick(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExtractionRunsQuery.Load.
+func (t *ExtractionRunsTable) Load(ls ...keel.Loader) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExtractionRunsQuery.Omit.
+func (t *ExtractionRunsTable) Omit(cols ...keel.Column) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExtractionRunsQuery.Order.
+func (t *ExtractionRunsTable) Order(os ...keel.Order) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExtractionRunsQuery.Limit.
+func (t *ExtractionRunsTable) Limit(n int) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExtractionRunsQuery.Group.
+func (t *ExtractionRunsTable) Group(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExtractionRunsQuery.GroupingSets.
+func (t *ExtractionRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExtractionRunsQuery.Rollup.
+func (t *ExtractionRunsTable) Rollup(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExtractionRunsQuery.Cube.
+func (t *ExtractionRunsTable) Cube(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExtractionRunsQuery.AllTenants.
+func (t *ExtractionRunsTable) AllTenants() keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExtractionRunsQuery.Join.
+func (t *ExtractionRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExtractionRunsQuery.LeftJoin.
+func (t *ExtractionRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExtractionRunsQuery.LeftJoinLateral.
+func (t *ExtractionRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExtractionRunsQuery.JoinLateral.
+func (t *ExtractionRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExtractionRunsQuery.Lock.
+func (t *ExtractionRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExtractionRunsQuery.DistinctOn.
+func (t *ExtractionRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExtractionRunsQuery.Cache.
+func (t *ExtractionRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExtractionRunsQuery.LoadStrategy.
+func (t *ExtractionRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExtractionRunsQuery.With.
+func (t *ExtractionRunsTable) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExtractionRunsQuery.Compute.
+func (t *ExtractionRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExtractionRunsTable) Create(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExtractionRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExtractionRunsTable) Save(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExtractionRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExtractionRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extractioneval.ExtractionRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExtractionRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExtractionRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExtractionRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*extractioneval.ExtractionRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExtractionRunsQuery) Where(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExtractionRunsQuery) Pick(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExtractionRunsQuery) Omit(cols ...keel.Column) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExtractionRunsQuery) Load(ls ...keel.Loader) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExtractionRunsQuery) Order(os ...keel.Order) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExtractionRunsQuery) Distinct() keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExtractionRunsQuery) Group(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExtractionRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExtractionRunsQuery) Rollup(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExtractionRunsQuery) Cube(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExtractionRunsQuery) Window(name string, w keel.Window) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExtractionRunsQuery) Having(ps ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExtractionRunsQuery) Limit(n int) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExtractionRunsQuery) Offset(n int) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExtractionRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExtractionRunsQuery) AllTenants() keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExtractionRunsQuery) CustomPlan() keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExtractionRunsQuery) Timeout(d time.Duration) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExtractionRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExtractionRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExtractionRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExtractionRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExtractionRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExtractionRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExtractionRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExtractionRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExtractionRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extractioneval.ExtractionRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExtractionRunsQuery) Clone() keel.Query[*extractioneval.ExtractionRun] {
+	return &ExtractionRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExtractionRunsQuery) One(ctx context.Context, db *keel.DB) (*extractioneval.ExtractionRun, error) {
+	return keel.One[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExtractionRunsQuery) First(ctx context.Context, db *keel.DB) (*extractioneval.ExtractionRun, error) {
+	return keel.First[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExtractionRunsQuery) List(ctx context.Context, db *keel.DB) ([]*extractioneval.ExtractionRun, error) {
+	return keel.List[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExtractionRunsQuery) All(ctx context.Context, db *keel.DB) ([]*extractioneval.ExtractionRun, error) {
+	return keel.All[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExtractionRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extractioneval.ExtractionRun, error) {
+	return keel.UpdateReturning[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExtractionRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extractioneval.ExtractionRun], error) {
+	return keel.PageOf[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExtractionRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extractioneval.ExtractionRun) error) error {
+	return keel.Each[*extractioneval.ExtractionRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExtractionRun() unsafe.Pointer { return unsafe.Pointer(new(extractioneval.ExtractionRun)) }

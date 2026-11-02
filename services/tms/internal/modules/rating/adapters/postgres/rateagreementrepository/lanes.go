@@ -187,7 +187,7 @@ func firstLanes(
 	agreementIDs []pulid.ID,
 	now int64,
 	first int,
-) *keel.Query[*rateagreement.RateAgreementRule] {
+) keel.Query[*rateagreement.RateAgreementRule] {
 	ra := rateagreementdb.RateAgreements
 	rr := rateagreementdb.RateAgreementRules
 	lane := rr.As("lane")
@@ -213,7 +213,7 @@ func cappedLaneCounts(
 	agreementIDs []pulid.ID,
 	now int64,
 	exactUpTo int64,
-) *keel.Query[*rateagreement.RateAgreement] {
+) keel.Query[*rateagreement.RateAgreement] {
 	ra := rateagreementdb.RateAgreements
 	lane := rateagreementdb.RateAgreementRules.As("lane")
 
@@ -226,7 +226,7 @@ func cappedLaneCounts(
 		Pick(ra.ID, keel.CountOf(lane.ID))
 }
 
-func liveLanesOf(agreementID pulid.ID, now int64) *keel.Query[*rateagreement.RateAgreementRule] {
+func liveLanesOf(agreementID pulid.ID, now int64) keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return rr.Where(rr.RateAgreementID.Eq(agreementID), liveLanes(rr, now))
@@ -234,7 +234,7 @@ func liveLanesOf(agreementID pulid.ID, now int64) *keel.Query[*rateagreement.Rat
 
 func agreementRules(
 	req *rateagreementports.ListRateAgreementLanesRequest,
-) *keel.Query[*rateagreement.RateAgreementRule] {
+) keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return rr.Where(rr.RateAgreementID.Eq(req.RateAgreementID))
@@ -243,7 +243,7 @@ func agreementRules(
 func liveLaneQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[*rateagreement.RateAgreementRule] {
+) keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return agreementRules(req).Where(liveLanes(rr, now))
@@ -252,7 +252,7 @@ func liveLaneQuery(
 func retiredLaneQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[*rateagreement.RateAgreementRule] {
+) keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return agreementRules(req).Where(keel.Not(liveLanes(rr, now)))
@@ -261,7 +261,7 @@ func retiredLaneQuery(
 func lanePageQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[*rateagreement.RateAgreementRule] {
+) keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
 	return agreementRules(req).
@@ -274,7 +274,7 @@ func lanePageQuery(
 func laneSummaryQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
-) *keel.Query[*rateagreement.RateAgreementRule] {
+) keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ft := formulatemplatedb.FormulaTemplates
 	rate := keel.CaseNumeric().

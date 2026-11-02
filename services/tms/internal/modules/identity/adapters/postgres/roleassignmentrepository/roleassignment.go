@@ -38,9 +38,9 @@ func New(p Params) permissionports.RoleAssignmentRepository {
 }
 
 func withRole(
-	q *keel.Query[*rbac.UserRoleAssignment],
+	q keel.Query[*rbac.UserRoleAssignment],
 	expand bool,
-) *keel.Query[*rbac.UserRoleAssignment] {
+) keel.Query[*rbac.UserRoleAssignment] {
 	if !expand {
 		return q
 	}

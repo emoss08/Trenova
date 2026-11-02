@@ -102,7 +102,7 @@ func (r *repository) List(
 							tractordb.Tractors.ID,
 						),
 					},
-					Shape: func(q *keel.Query[*tractor.Tractor]) *keel.Query[*tractor.Tractor] {
+					Shape: func(q keel.Query[*tractor.Tractor]) keel.Query[*tractor.Tractor] {
 						return r.withInProgressMove(
 							r.withLastKnownLocation(q.Load(loads...), &req.TractorRelationIncludes),
 							&req.TractorRelationIncludes,
@@ -257,7 +257,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) tractorQuery(
 	includes *tractorports.TractorRelationIncludes,
-) (*keel.Query[*tractor.Tractor], error) {
+) (keel.Query[*tractor.Tractor], error) {
 	loads, err := tractorLoads(includes)
 	if err != nil {
 		return nil, err
@@ -352,9 +352,9 @@ const (
 )
 
 func (r *repository) withInProgressMove(
-	q *keel.Query[*tractor.Tractor],
+	q keel.Query[*tractor.Tractor],
 	includes *tractorports.TractorRelationIncludes,
-) *keel.Query[*tractor.Tractor] {
+) keel.Query[*tractor.Tractor] {
 	if !includes.IncludeInProgressMove {
 		return q
 	}
@@ -369,9 +369,9 @@ func (r *repository) withInProgressMove(
 }
 
 func (r *repository) withLastKnownLocation(
-	q *keel.Query[*tractor.Tractor],
+	q keel.Query[*tractor.Tractor],
 	includes *tractorports.TractorRelationIncludes,
-) *keel.Query[*tractor.Tractor] {
+) keel.Query[*tractor.Tractor] {
 	if !includes.IncludeLastKnownLocation {
 		return q
 	}

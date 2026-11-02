@@ -4,6 +4,7 @@ package equipmentcontinuitydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -61,7 +62,7 @@ var equipmentContinuitiesRef = keel.Ref{Table: &equipmentContinuitiesTable}
 
 // EquipmentContinuitiesTable is the table of equipmentcontinuity.EquipmentContinuity.
 type EquipmentContinuitiesTable struct {
-	keel.Handle[*equipmentcontinuity.EquipmentContinuity]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -82,7 +83,7 @@ type EquipmentContinuitiesTable struct {
 
 // EquipmentContinuities references the equipment_continuity table.
 var EquipmentContinuities = &EquipmentContinuitiesTable{
-	Handle:               keel.Handle[*equipmentcontinuity.EquipmentContinuity]{Ref: &equipmentContinuitiesRef},
+	TableBase:            keel.TableBase{Ref: &equipmentContinuitiesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 2}}},
@@ -101,10 +102,10 @@ var EquipmentContinuities = &EquipmentContinuitiesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &equipmentContinuitiesRef, Index: 15}},
 }
 
-// BuildEquipmentContinuities builds the handle of equipment_continuity for ref. Generated relation and alias methods call it.
+// BuildEquipmentContinuities builds the table of equipment_continuity for ref. Generated relation and alias methods call it.
 func BuildEquipmentContinuities(r *keel.Ref) *EquipmentContinuitiesTable {
 	return &EquipmentContinuitiesTable{
-		Handle:               keel.Handle[*equipmentcontinuity.EquipmentContinuity]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -135,6 +136,365 @@ func (t *EquipmentContinuitiesTable) As(alias string) *EquipmentContinuitiesTabl
 // Get returns the equipment_continuity row with the given key, or keel.ErrNotFound.
 func (t *EquipmentContinuitiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*equipmentcontinuity.EquipmentContinuity, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EquipmentContinuitiesQuery is a query over equipmentcontinuity.EquipmentContinuity.
+type EquipmentContinuitiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*equipmentcontinuity.EquipmentContinuity] = (*EquipmentContinuitiesTable)(nil)
+
+var _ keel.Query[*equipmentcontinuity.EquipmentContinuity] = (*EquipmentContinuitiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EquipmentContinuitiesTable) Query() keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return &EquipmentContinuitiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EquipmentContinuitiesQuery.Where.
+func (t *EquipmentContinuitiesTable) Where(ps ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EquipmentContinuitiesQuery.Pick.
+func (t *EquipmentContinuitiesTable) Pick(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EquipmentContinuitiesQuery.Load.
+func (t *EquipmentContinuitiesTable) Load(ls ...keel.Loader) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EquipmentContinuitiesQuery.Omit.
+func (t *EquipmentContinuitiesTable) Omit(cols ...keel.Column) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EquipmentContinuitiesQuery.Order.
+func (t *EquipmentContinuitiesTable) Order(os ...keel.Order) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EquipmentContinuitiesQuery.Limit.
+func (t *EquipmentContinuitiesTable) Limit(n int) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EquipmentContinuitiesQuery.Group.
+func (t *EquipmentContinuitiesTable) Group(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EquipmentContinuitiesQuery.GroupingSets.
+func (t *EquipmentContinuitiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EquipmentContinuitiesQuery.Rollup.
+func (t *EquipmentContinuitiesTable) Rollup(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EquipmentContinuitiesQuery.Cube.
+func (t *EquipmentContinuitiesTable) Cube(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EquipmentContinuitiesQuery.AllTenants.
+func (t *EquipmentContinuitiesTable) AllTenants() keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EquipmentContinuitiesQuery.Join.
+func (t *EquipmentContinuitiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EquipmentContinuitiesQuery.LeftJoin.
+func (t *EquipmentContinuitiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EquipmentContinuitiesQuery.LeftJoinLateral.
+func (t *EquipmentContinuitiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EquipmentContinuitiesQuery.JoinLateral.
+func (t *EquipmentContinuitiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EquipmentContinuitiesQuery.Lock.
+func (t *EquipmentContinuitiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EquipmentContinuitiesQuery.DistinctOn.
+func (t *EquipmentContinuitiesTable) DistinctOn(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EquipmentContinuitiesQuery.Cache.
+func (t *EquipmentContinuitiesTable) Cache(opts ...keel.CacheOption) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EquipmentContinuitiesQuery.LoadStrategy.
+func (t *EquipmentContinuitiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EquipmentContinuitiesQuery.With.
+func (t *EquipmentContinuitiesTable) With(ctes ...*keel.CTETable) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EquipmentContinuitiesQuery.Compute.
+func (t *EquipmentContinuitiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EquipmentContinuitiesTable) Create(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EquipmentContinuitiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EquipmentContinuitiesTable) Save(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EquipmentContinuitiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EquipmentContinuitiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *equipmentcontinuity.EquipmentContinuity) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EquipmentContinuitiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EquipmentContinuitiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EquipmentContinuitiesTable) Copy(ctx context.Context, db *keel.DB, rows []*equipmentcontinuity.EquipmentContinuity) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EquipmentContinuitiesQuery) Where(ps ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EquipmentContinuitiesQuery) Pick(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EquipmentContinuitiesQuery) Omit(cols ...keel.Column) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EquipmentContinuitiesQuery) Load(ls ...keel.Loader) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EquipmentContinuitiesQuery) Order(os ...keel.Order) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EquipmentContinuitiesQuery) Distinct() keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EquipmentContinuitiesQuery) Group(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EquipmentContinuitiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EquipmentContinuitiesQuery) Rollup(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EquipmentContinuitiesQuery) Cube(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EquipmentContinuitiesQuery) Window(name string, w keel.Window) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EquipmentContinuitiesQuery) Having(ps ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EquipmentContinuitiesQuery) Limit(n int) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EquipmentContinuitiesQuery) Offset(n int) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EquipmentContinuitiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EquipmentContinuitiesQuery) AllTenants() keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EquipmentContinuitiesQuery) CustomPlan() keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EquipmentContinuitiesQuery) Timeout(d time.Duration) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EquipmentContinuitiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EquipmentContinuitiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EquipmentContinuitiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EquipmentContinuitiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EquipmentContinuitiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EquipmentContinuitiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EquipmentContinuitiesQuery) With(ctes ...*keel.CTETable) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EquipmentContinuitiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EquipmentContinuitiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EquipmentContinuitiesQuery) Clone() keel.Query[*equipmentcontinuity.EquipmentContinuity] {
+	return &EquipmentContinuitiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EquipmentContinuitiesQuery) One(ctx context.Context, db *keel.DB) (*equipmentcontinuity.EquipmentContinuity, error) {
+	return keel.One[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EquipmentContinuitiesQuery) First(ctx context.Context, db *keel.DB) (*equipmentcontinuity.EquipmentContinuity, error) {
+	return keel.First[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EquipmentContinuitiesQuery) List(ctx context.Context, db *keel.DB) ([]*equipmentcontinuity.EquipmentContinuity, error) {
+	return keel.List[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EquipmentContinuitiesQuery) All(ctx context.Context, db *keel.DB) ([]*equipmentcontinuity.EquipmentContinuity, error) {
+	return keel.All[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EquipmentContinuitiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*equipmentcontinuity.EquipmentContinuity, error) {
+	return keel.UpdateReturning[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EquipmentContinuitiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*equipmentcontinuity.EquipmentContinuity], error) {
+	return keel.PageOf[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EquipmentContinuitiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*equipmentcontinuity.EquipmentContinuity) error) error {
+	return keel.Each[*equipmentcontinuity.EquipmentContinuity](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEquipmentContinuity() unsafe.Pointer {

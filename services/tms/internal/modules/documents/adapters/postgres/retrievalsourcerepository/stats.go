@@ -91,7 +91,7 @@ func charCount(c keel.StringValue) keel.Int32Expr {
 	return keel.StringOf(c).Coalesce("").Length()
 }
 
-func charsSample[T any](q *keel.Query[*T]) *keel.CTETable {
+func charsSample[T any](q keel.Query[*T]) *keel.CTETable {
 	return keel.CTE(charsSampleCTE, []string{"chars"}, q)
 }
 

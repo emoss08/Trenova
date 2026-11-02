@@ -4,6 +4,7 @@ package watchtowerdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -52,7 +53,7 @@ var cursorsRef = keel.Ref{Table: &cursorsTable}
 
 // CursorsTable is the table of watchtower.Cursor.
 type CursorsTable struct {
-	keel.Handle[*watchtower.Cursor]
+	keel.TableBase
 	UserID         keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -62,7 +63,7 @@ type CursorsTable struct {
 
 // Cursors references the watchtower_cursors table.
 var Cursors = &CursorsTable{
-	Handle:         keel.Handle[*watchtower.Cursor]{Ref: &cursorsRef},
+	TableBase:      keel.TableBase{Ref: &cursorsRef},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &cursorsRef, Index: 2}}},
@@ -70,10 +71,10 @@ var Cursors = &CursorsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &cursorsRef, Index: 4}},
 }
 
-// BuildCursors builds the handle of watchtower_cursors for ref. Generated relation and alias methods call it.
+// BuildCursors builds the table of watchtower_cursors for ref. Generated relation and alias methods call it.
 func BuildCursors(r *keel.Ref) *CursorsTable {
 	return &CursorsTable{
-		Handle:         keel.Handle[*watchtower.Cursor]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -91,6 +92,365 @@ func (t *CursorsTable) As(alias string) *CursorsTable { return keel.Alias(t.Ref,
 // Get returns the watchtower_cursors row with the given key, or keel.ErrNotFound.
 func (t *CursorsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watchtower.Cursor, error) {
 	return t.Where(t.UserID.Eq(key)).One(ctx, db)
+}
+
+// CursorsQuery is a query over watchtower.Cursor.
+type CursorsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*watchtower.Cursor] = (*CursorsTable)(nil)
+
+var _ keel.Query[*watchtower.Cursor] = (*CursorsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CursorsTable) Query() keel.Query[*watchtower.Cursor] {
+	return &CursorsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CursorsQuery.Where.
+func (t *CursorsTable) Where(ps ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CursorsQuery.Pick.
+func (t *CursorsTable) Pick(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CursorsQuery.Load.
+func (t *CursorsTable) Load(ls ...keel.Loader) keel.Query[*watchtower.Cursor] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CursorsQuery.Omit.
+func (t *CursorsTable) Omit(cols ...keel.Column) keel.Query[*watchtower.Cursor] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CursorsQuery.Order.
+func (t *CursorsTable) Order(os ...keel.Order) keel.Query[*watchtower.Cursor] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CursorsQuery.Limit.
+func (t *CursorsTable) Limit(n int) keel.Query[*watchtower.Cursor] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CursorsQuery.Group.
+func (t *CursorsTable) Group(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CursorsQuery.GroupingSets.
+func (t *CursorsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CursorsQuery.Rollup.
+func (t *CursorsTable) Rollup(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CursorsQuery.Cube.
+func (t *CursorsTable) Cube(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CursorsQuery.AllTenants.
+func (t *CursorsTable) AllTenants() keel.Query[*watchtower.Cursor] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CursorsQuery.Join.
+func (t *CursorsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CursorsQuery.LeftJoin.
+func (t *CursorsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CursorsQuery.LeftJoinLateral.
+func (t *CursorsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Cursor] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CursorsQuery.JoinLateral.
+func (t *CursorsTable) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Cursor] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CursorsQuery.Lock.
+func (t *CursorsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Cursor] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CursorsQuery.DistinctOn.
+func (t *CursorsTable) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CursorsQuery.Cache.
+func (t *CursorsTable) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Cursor] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CursorsQuery.LoadStrategy.
+func (t *CursorsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Cursor] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CursorsQuery.With.
+func (t *CursorsTable) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Cursor] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CursorsQuery.Compute.
+func (t *CursorsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Cursor] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CursorsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Cursor) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CursorsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CursorsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Cursor, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CursorsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Cursor, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CursorsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Cursor) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CursorsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CursorsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CursorsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Cursor) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CursorsQuery) Where(ps ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CursorsQuery) Pick(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CursorsQuery) Omit(cols ...keel.Column) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CursorsQuery) Load(ls ...keel.Loader) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CursorsQuery) Order(os ...keel.Order) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CursorsQuery) Distinct() keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CursorsQuery) Group(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CursorsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CursorsQuery) Rollup(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CursorsQuery) Cube(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CursorsQuery) Window(name string, w keel.Window) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CursorsQuery) Having(ps ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CursorsQuery) Limit(n int) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CursorsQuery) Offset(n int) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CursorsQuery) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CursorsQuery) AllTenants() keel.Query[*watchtower.Cursor] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CursorsQuery) CustomPlan() keel.Query[*watchtower.Cursor] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CursorsQuery) Timeout(d time.Duration) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CursorsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CursorsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CursorsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CursorsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CursorsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CursorsQuery) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CursorsQuery) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CursorsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CursorsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Cursor] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CursorsQuery) Clone() keel.Query[*watchtower.Cursor] {
+	return &CursorsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CursorsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Cursor, error) {
+	return keel.One[*watchtower.Cursor](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CursorsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Cursor, error) {
+	return keel.First[*watchtower.Cursor](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CursorsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Cursor, error) {
+	return keel.List[*watchtower.Cursor](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CursorsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Cursor, error) {
+	return keel.All[*watchtower.Cursor](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CursorsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Cursor, error) {
+	return keel.UpdateReturning[*watchtower.Cursor](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CursorsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Cursor], error) {
+	return keel.PageOf[*watchtower.Cursor](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CursorsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Cursor) error) error {
+	return keel.Each[*watchtower.Cursor](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCursor() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Cursor)) }
@@ -175,7 +535,7 @@ var eventsRef = keel.Ref{Table: &eventsTable}
 
 // EventsTable is the table of watchtower.Event.
 type EventsTable struct {
-	keel.Handle[*watchtower.Event]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -190,7 +550,7 @@ type EventsTable struct {
 
 // Events references the watchtower_item_events table.
 var Events = &EventsTable{
-	Handle:         keel.Handle[*watchtower.Event]{Ref: &eventsRef},
+	TableBase:      keel.TableBase{Ref: &eventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
@@ -203,10 +563,10 @@ var Events = &EventsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eventsRef, Index: 9}},
 }
 
-// BuildEvents builds the handle of watchtower_item_events for ref. Generated relation and alias methods call it.
+// BuildEvents builds the table of watchtower_item_events for ref. Generated relation and alias methods call it.
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
-		Handle:         keel.Handle[*watchtower.Event]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -229,6 +589,365 @@ func (t *EventsTable) As(alias string) *EventsTable { return keel.Alias(t.Ref, a
 // Get returns the watchtower_item_events row with the given key, or keel.ErrNotFound.
 func (t *EventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watchtower.Event, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EventsQuery is a query over watchtower.Event.
+type EventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*watchtower.Event] = (*EventsTable)(nil)
+
+var _ keel.Query[*watchtower.Event] = (*EventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EventsTable) Query() keel.Query[*watchtower.Event] {
+	return &EventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EventsQuery.Where.
+func (t *EventsTable) Where(ps ...keel.Pred) keel.Query[*watchtower.Event] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EventsQuery.Pick.
+func (t *EventsTable) Pick(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EventsQuery.Load.
+func (t *EventsTable) Load(ls ...keel.Loader) keel.Query[*watchtower.Event] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EventsQuery.Omit.
+func (t *EventsTable) Omit(cols ...keel.Column) keel.Query[*watchtower.Event] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EventsQuery.Order.
+func (t *EventsTable) Order(os ...keel.Order) keel.Query[*watchtower.Event] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EventsQuery.Limit.
+func (t *EventsTable) Limit(n int) keel.Query[*watchtower.Event] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EventsQuery.Group.
+func (t *EventsTable) Group(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EventsQuery.GroupingSets.
+func (t *EventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EventsQuery.Rollup.
+func (t *EventsTable) Rollup(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EventsQuery.Cube.
+func (t *EventsTable) Cube(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EventsQuery.AllTenants.
+func (t *EventsTable) AllTenants() keel.Query[*watchtower.Event] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EventsQuery.Join.
+func (t *EventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Event] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EventsQuery.LeftJoin.
+func (t *EventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Event] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EventsQuery.LeftJoinLateral.
+func (t *EventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Event] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EventsQuery.JoinLateral.
+func (t *EventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Event] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EventsQuery.Lock.
+func (t *EventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Event] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EventsQuery.DistinctOn.
+func (t *EventsTable) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EventsQuery.Cache.
+func (t *EventsTable) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Event] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EventsQuery.LoadStrategy.
+func (t *EventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Event] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EventsQuery.With.
+func (t *EventsTable) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Event] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EventsQuery.Compute.
+func (t *EventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Event] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EventsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Event) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Event) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EventsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Event, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Event, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Event) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Event, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Event, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EventsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Event) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EventsQuery) Where(ps ...keel.Pred) keel.Query[*watchtower.Event] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EventsQuery) Pick(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EventsQuery) Omit(cols ...keel.Column) keel.Query[*watchtower.Event] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EventsQuery) Load(ls ...keel.Loader) keel.Query[*watchtower.Event] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EventsQuery) Order(os ...keel.Order) keel.Query[*watchtower.Event] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EventsQuery) Distinct() keel.Query[*watchtower.Event] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EventsQuery) Group(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EventsQuery) Rollup(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EventsQuery) Cube(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EventsQuery) Window(name string, w keel.Window) keel.Query[*watchtower.Event] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EventsQuery) Having(ps ...keel.Pred) keel.Query[*watchtower.Event] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EventsQuery) Limit(n int) keel.Query[*watchtower.Event] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EventsQuery) Offset(n int) keel.Query[*watchtower.Event] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EventsQuery) AllTenants() keel.Query[*watchtower.Event] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EventsQuery) CustomPlan() keel.Query[*watchtower.Event] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EventsQuery) Timeout(d time.Duration) keel.Query[*watchtower.Event] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Event] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Event] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Event] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Event] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Event] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Event] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EventsQuery) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Event] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Event] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Event] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EventsQuery) Clone() keel.Query[*watchtower.Event] {
+	return &EventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EventsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Event, error) {
+	return keel.One[*watchtower.Event](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EventsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Event, error) {
+	return keel.First[*watchtower.Event](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EventsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Event, error) {
+	return keel.List[*watchtower.Event](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EventsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Event, error) {
+	return keel.All[*watchtower.Event](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Event, error) {
+	return keel.UpdateReturning[*watchtower.Event](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Event], error) {
+	return keel.PageOf[*watchtower.Event](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Event) error) error {
+	return keel.Each[*watchtower.Event](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEvent() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Event)) }
@@ -378,7 +1097,7 @@ var itemsRef = keel.Ref{Table: &itemsTable}
 
 // ItemsTable is the table of watchtower.Item.
 type ItemsTable struct {
-	keel.Handle[*watchtower.Item]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -424,7 +1143,7 @@ type ItemsTable struct {
 
 // Items references the watchtower_items table.
 var Items = &ItemsTable{
-	Handle:            keel.Handle[*watchtower.Item]{Ref: &itemsRef},
+	TableBase:         keel.TableBase{Ref: &itemsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 2}}},
@@ -468,10 +1187,10 @@ var Items = &ItemsTable{
 	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 40}},
 }
 
-// BuildItems builds the handle of watchtower_items for ref. Generated relation and alias methods call it.
+// BuildItems builds the table of watchtower_items for ref. Generated relation and alias methods call it.
 func BuildItems(r *keel.Ref) *ItemsTable {
 	return &ItemsTable{
-		Handle:            keel.Handle[*watchtower.Item]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -525,6 +1244,365 @@ func (t *ItemsTable) As(alias string) *ItemsTable { return keel.Alias(t.Ref, ali
 // Get returns the watchtower_items row with the given key, or keel.ErrNotFound.
 func (t *ItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*watchtower.Item, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ItemsQuery is a query over watchtower.Item.
+type ItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*watchtower.Item] = (*ItemsTable)(nil)
+
+var _ keel.Query[*watchtower.Item] = (*ItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ItemsTable) Query() keel.Query[*watchtower.Item] {
+	return &ItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ItemsQuery.Where.
+func (t *ItemsTable) Where(ps ...keel.Pred) keel.Query[*watchtower.Item] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ItemsQuery.Pick.
+func (t *ItemsTable) Pick(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ItemsQuery.Load.
+func (t *ItemsTable) Load(ls ...keel.Loader) keel.Query[*watchtower.Item] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ItemsQuery.Omit.
+func (t *ItemsTable) Omit(cols ...keel.Column) keel.Query[*watchtower.Item] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ItemsQuery.Order.
+func (t *ItemsTable) Order(os ...keel.Order) keel.Query[*watchtower.Item] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ItemsQuery.Limit.
+func (t *ItemsTable) Limit(n int) keel.Query[*watchtower.Item] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ItemsQuery.Group.
+func (t *ItemsTable) Group(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ItemsQuery.GroupingSets.
+func (t *ItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ItemsQuery.Rollup.
+func (t *ItemsTable) Rollup(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ItemsQuery.Cube.
+func (t *ItemsTable) Cube(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ItemsQuery.AllTenants.
+func (t *ItemsTable) AllTenants() keel.Query[*watchtower.Item] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ItemsQuery.Join.
+func (t *ItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Item] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ItemsQuery.LeftJoin.
+func (t *ItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Item] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ItemsQuery.LeftJoinLateral.
+func (t *ItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Item] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ItemsQuery.JoinLateral.
+func (t *ItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Item] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ItemsQuery.Lock.
+func (t *ItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Item] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ItemsQuery.DistinctOn.
+func (t *ItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ItemsQuery.Cache.
+func (t *ItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Item] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ItemsQuery.LoadStrategy.
+func (t *ItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Item] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ItemsQuery.With.
+func (t *ItemsTable) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Item] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ItemsQuery.Compute.
+func (t *ItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Item] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ItemsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Item) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Item) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ItemsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Item, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Item, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Item) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Item, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Item, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Item) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ItemsQuery) Where(ps ...keel.Pred) keel.Query[*watchtower.Item] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ItemsQuery) Pick(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ItemsQuery) Omit(cols ...keel.Column) keel.Query[*watchtower.Item] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ItemsQuery) Load(ls ...keel.Loader) keel.Query[*watchtower.Item] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ItemsQuery) Order(os ...keel.Order) keel.Query[*watchtower.Item] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ItemsQuery) Distinct() keel.Query[*watchtower.Item] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ItemsQuery) Group(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ItemsQuery) Rollup(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ItemsQuery) Cube(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ItemsQuery) Window(name string, w keel.Window) keel.Query[*watchtower.Item] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ItemsQuery) Having(ps ...keel.Pred) keel.Query[*watchtower.Item] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ItemsQuery) Limit(n int) keel.Query[*watchtower.Item] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ItemsQuery) Offset(n int) keel.Query[*watchtower.Item] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ItemsQuery) AllTenants() keel.Query[*watchtower.Item] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ItemsQuery) CustomPlan() keel.Query[*watchtower.Item] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ItemsQuery) Timeout(d time.Duration) keel.Query[*watchtower.Item] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Item] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Item] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Item] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Item] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Item] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Item] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Item] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Item] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Item] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ItemsQuery) Clone() keel.Query[*watchtower.Item] {
+	return &ItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ItemsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Item, error) {
+	return keel.One[*watchtower.Item](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ItemsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Item, error) {
+	return keel.First[*watchtower.Item](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ItemsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Item, error) {
+	return keel.List[*watchtower.Item](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ItemsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Item, error) {
+	return keel.All[*watchtower.Item](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Item, error) {
+	return keel.UpdateReturning[*watchtower.Item](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Item], error) {
+	return keel.PageOf[*watchtower.Item](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Item) error) error {
+	return keel.Each[*watchtower.Item](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newItem() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Item)) }
@@ -830,7 +1908,7 @@ var readsRef = keel.Ref{Table: &readsTable}
 
 // ReadsTable is the table of watchtower.Read.
 type ReadsTable struct {
-	keel.Handle[*watchtower.Read]
+	keel.TableBase
 	ItemID         keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -840,7 +1918,7 @@ type ReadsTable struct {
 
 // Reads references the watchtower_item_reads table.
 var Reads = &ReadsTable{
-	Handle:         keel.Handle[*watchtower.Read]{Ref: &readsRef},
+	TableBase:      keel.TableBase{Ref: &readsRef},
 	ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &readsRef, Index: 2}}},
@@ -848,10 +1926,10 @@ var Reads = &ReadsTable{
 	SeenAt:         keel.Int64Col{Col: keel.Col{Ref: &readsRef, Index: 4}},
 }
 
-// BuildReads builds the handle of watchtower_item_reads for ref. Generated relation and alias methods call it.
+// BuildReads builds the table of watchtower_item_reads for ref. Generated relation and alias methods call it.
 func BuildReads(r *keel.Ref) *ReadsTable {
 	return &ReadsTable{
-		Handle:         keel.Handle[*watchtower.Read]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -865,6 +1943,365 @@ func ReadsSchema() *schema.Table { return &readsTable }
 
 // As returns a handle that references watchtower_item_reads under its own alias.
 func (t *ReadsTable) As(alias string) *ReadsTable { return keel.Alias(t.Ref, alias, BuildReads) }
+
+// ReadsQuery is a query over watchtower.Read.
+type ReadsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*watchtower.Read] = (*ReadsTable)(nil)
+
+var _ keel.Query[*watchtower.Read] = (*ReadsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReadsTable) Query() keel.Query[*watchtower.Read] {
+	return &ReadsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReadsQuery.Where.
+func (t *ReadsTable) Where(ps ...keel.Pred) keel.Query[*watchtower.Read] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReadsQuery.Pick.
+func (t *ReadsTable) Pick(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReadsQuery.Load.
+func (t *ReadsTable) Load(ls ...keel.Loader) keel.Query[*watchtower.Read] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReadsQuery.Omit.
+func (t *ReadsTable) Omit(cols ...keel.Column) keel.Query[*watchtower.Read] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReadsQuery.Order.
+func (t *ReadsTable) Order(os ...keel.Order) keel.Query[*watchtower.Read] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReadsQuery.Limit.
+func (t *ReadsTable) Limit(n int) keel.Query[*watchtower.Read] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReadsQuery.Group.
+func (t *ReadsTable) Group(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReadsQuery.GroupingSets.
+func (t *ReadsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReadsQuery.Rollup.
+func (t *ReadsTable) Rollup(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReadsQuery.Cube.
+func (t *ReadsTable) Cube(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReadsQuery.AllTenants.
+func (t *ReadsTable) AllTenants() keel.Query[*watchtower.Read] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReadsQuery.Join.
+func (t *ReadsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Read] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReadsQuery.LeftJoin.
+func (t *ReadsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Read] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReadsQuery.LeftJoinLateral.
+func (t *ReadsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Read] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReadsQuery.JoinLateral.
+func (t *ReadsTable) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Read] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReadsQuery.Lock.
+func (t *ReadsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Read] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReadsQuery.DistinctOn.
+func (t *ReadsTable) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReadsQuery.Cache.
+func (t *ReadsTable) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Read] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReadsQuery.LoadStrategy.
+func (t *ReadsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Read] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReadsQuery.With.
+func (t *ReadsTable) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Read] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReadsQuery.Compute.
+func (t *ReadsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Read] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReadsTable) Create(ctx context.Context, db *keel.DB, row *watchtower.Read) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*watchtower.Read) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReadsTable) Save(ctx context.Context, db *keel.DB, row *watchtower.Read, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *watchtower.Read, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *watchtower.Read) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*watchtower.Read, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*watchtower.Read, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReadsTable) Copy(ctx context.Context, db *keel.DB, rows []*watchtower.Read) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReadsQuery) Where(ps ...keel.Pred) keel.Query[*watchtower.Read] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReadsQuery) Pick(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReadsQuery) Omit(cols ...keel.Column) keel.Query[*watchtower.Read] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReadsQuery) Load(ls ...keel.Loader) keel.Query[*watchtower.Read] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReadsQuery) Order(os ...keel.Order) keel.Query[*watchtower.Read] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReadsQuery) Distinct() keel.Query[*watchtower.Read] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReadsQuery) Group(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReadsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReadsQuery) Rollup(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReadsQuery) Cube(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReadsQuery) Window(name string, w keel.Window) keel.Query[*watchtower.Read] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReadsQuery) Having(ps ...keel.Pred) keel.Query[*watchtower.Read] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReadsQuery) Limit(n int) keel.Query[*watchtower.Read] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReadsQuery) Offset(n int) keel.Query[*watchtower.Read] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReadsQuery) DistinctOn(es ...keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReadsQuery) AllTenants() keel.Query[*watchtower.Read] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReadsQuery) CustomPlan() keel.Query[*watchtower.Read] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReadsQuery) Timeout(d time.Duration) keel.Query[*watchtower.Read] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReadsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*watchtower.Read] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReadsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Read] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReadsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*watchtower.Read] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReadsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Read] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReadsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*watchtower.Read] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReadsQuery) Cache(opts ...keel.CacheOption) keel.Query[*watchtower.Read] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReadsQuery) With(ctes ...*keel.CTETable) keel.Query[*watchtower.Read] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReadsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*watchtower.Read] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReadsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*watchtower.Read] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReadsQuery) Clone() keel.Query[*watchtower.Read] {
+	return &ReadsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReadsQuery) One(ctx context.Context, db *keel.DB) (*watchtower.Read, error) {
+	return keel.One[*watchtower.Read](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReadsQuery) First(ctx context.Context, db *keel.DB) (*watchtower.Read, error) {
+	return keel.First[*watchtower.Read](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReadsQuery) List(ctx context.Context, db *keel.DB) ([]*watchtower.Read, error) {
+	return keel.List[*watchtower.Read](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReadsQuery) All(ctx context.Context, db *keel.DB) ([]*watchtower.Read, error) {
+	return keel.All[*watchtower.Read](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*watchtower.Read, error) {
+	return keel.UpdateReturning[*watchtower.Read](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*watchtower.Read], error) {
+	return keel.PageOf[*watchtower.Read](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*watchtower.Read) error) error {
+	return keel.Each[*watchtower.Read](ctx, db, &q.QueryCore, size, fn)
+}
 
 func newRead() unsafe.Pointer { return unsafe.Pointer(new(watchtower.Read)) }
 

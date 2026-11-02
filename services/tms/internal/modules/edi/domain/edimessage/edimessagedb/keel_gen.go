@@ -4,6 +4,7 @@ package edimessagedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -107,7 +108,7 @@ var eDIMessagesRef = keel.Ref{Table: &eDIMessagesTable}
 
 // EDIMessagesTable is the table of edimessage.EDIMessage.
 type EDIMessagesTable struct {
-	keel.Handle[*edimessage.EDIMessage]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -158,7 +159,7 @@ type EDIMessagesTable struct {
 
 // EDIMessages references the edi_messages table.
 var EDIMessages = &EDIMessagesTable{
-	Handle:                   keel.Handle[*edimessage.EDIMessage]{Ref: &eDIMessagesRef},
+	TableBase:                keel.TableBase{Ref: &eDIMessagesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 2}}},
@@ -207,10 +208,10 @@ var EDIMessages = &EDIMessagesTable{
 	DiagnosticCount:          keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 45}},
 }
 
-// BuildEDIMessages builds the handle of edi_messages for ref. Generated relation and alias methods call it.
+// BuildEDIMessages builds the table of edi_messages for ref. Generated relation and alias methods call it.
 func BuildEDIMessages(r *keel.Ref) *EDIMessagesTable {
 	return &EDIMessagesTable{
-		Handle:                   keel.Handle[*edimessage.EDIMessage]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -291,6 +292,365 @@ func (t *EDIMessagesTable) ValidationErrors() *EDIMessageValidationErrorsTable {
 // Get returns the edi_messages row with the given key, or keel.ErrNotFound.
 func (t *EDIMessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edimessage.EDIMessage, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIMessagesQuery is a query over edimessage.EDIMessage.
+type EDIMessagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edimessage.EDIMessage] = (*EDIMessagesTable)(nil)
+
+var _ keel.Query[*edimessage.EDIMessage] = (*EDIMessagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIMessagesTable) Query() keel.Query[*edimessage.EDIMessage] {
+	return &EDIMessagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIMessagesQuery.Where.
+func (t *EDIMessagesTable) Where(ps ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIMessagesQuery.Pick.
+func (t *EDIMessagesTable) Pick(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIMessagesQuery.Load.
+func (t *EDIMessagesTable) Load(ls ...keel.Loader) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIMessagesQuery.Omit.
+func (t *EDIMessagesTable) Omit(cols ...keel.Column) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIMessagesQuery.Order.
+func (t *EDIMessagesTable) Order(os ...keel.Order) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIMessagesQuery.Limit.
+func (t *EDIMessagesTable) Limit(n int) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIMessagesQuery.Group.
+func (t *EDIMessagesTable) Group(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIMessagesQuery.GroupingSets.
+func (t *EDIMessagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIMessagesQuery.Rollup.
+func (t *EDIMessagesTable) Rollup(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIMessagesQuery.Cube.
+func (t *EDIMessagesTable) Cube(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIMessagesQuery.AllTenants.
+func (t *EDIMessagesTable) AllTenants() keel.Query[*edimessage.EDIMessage] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIMessagesQuery.Join.
+func (t *EDIMessagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIMessagesQuery.LeftJoin.
+func (t *EDIMessagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIMessagesQuery.LeftJoinLateral.
+func (t *EDIMessagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIMessagesQuery.JoinLateral.
+func (t *EDIMessagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIMessagesQuery.Lock.
+func (t *EDIMessagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIMessagesQuery.DistinctOn.
+func (t *EDIMessagesTable) DistinctOn(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIMessagesQuery.Cache.
+func (t *EDIMessagesTable) Cache(opts ...keel.CacheOption) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIMessagesQuery.LoadStrategy.
+func (t *EDIMessagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIMessagesQuery.With.
+func (t *EDIMessagesTable) With(ctes ...*keel.CTETable) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIMessagesQuery.Compute.
+func (t *EDIMessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIMessagesTable) Create(ctx context.Context, db *keel.DB, row *edimessage.EDIMessage) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIMessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessage) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIMessagesTable) Save(ctx context.Context, db *keel.DB, row *edimessage.EDIMessage, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIMessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edimessage.EDIMessage, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIMessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edimessage.EDIMessage) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIMessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessage, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIMessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessage, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIMessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessage) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIMessagesQuery) Where(ps ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIMessagesQuery) Pick(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIMessagesQuery) Omit(cols ...keel.Column) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIMessagesQuery) Load(ls ...keel.Loader) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIMessagesQuery) Order(os ...keel.Order) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIMessagesQuery) Distinct() keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIMessagesQuery) Group(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIMessagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIMessagesQuery) Rollup(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIMessagesQuery) Cube(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIMessagesQuery) Window(name string, w keel.Window) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIMessagesQuery) Having(ps ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIMessagesQuery) Limit(n int) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIMessagesQuery) Offset(n int) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIMessagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIMessagesQuery) AllTenants() keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIMessagesQuery) CustomPlan() keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIMessagesQuery) Timeout(d time.Duration) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIMessagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIMessagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIMessagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIMessagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIMessagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIMessagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIMessagesQuery) With(ctes ...*keel.CTETable) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIMessagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIMessagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edimessage.EDIMessage] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIMessagesQuery) Clone() keel.Query[*edimessage.EDIMessage] {
+	return &EDIMessagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIMessagesQuery) One(ctx context.Context, db *keel.DB) (*edimessage.EDIMessage, error) {
+	return keel.One[*edimessage.EDIMessage](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIMessagesQuery) First(ctx context.Context, db *keel.DB) (*edimessage.EDIMessage, error) {
+	return keel.First[*edimessage.EDIMessage](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIMessagesQuery) List(ctx context.Context, db *keel.DB) ([]*edimessage.EDIMessage, error) {
+	return keel.List[*edimessage.EDIMessage](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIMessagesQuery) All(ctx context.Context, db *keel.DB) ([]*edimessage.EDIMessage, error) {
+	return keel.All[*edimessage.EDIMessage](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIMessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edimessage.EDIMessage, error) {
+	return keel.UpdateReturning[*edimessage.EDIMessage](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIMessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edimessage.EDIMessage], error) {
+	return keel.PageOf[*edimessage.EDIMessage](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIMessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edimessage.EDIMessage) error) error {
+	return keel.Each[*edimessage.EDIMessage](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIMessage() unsafe.Pointer { return unsafe.Pointer(new(edimessage.EDIMessage)) }
@@ -639,7 +999,7 @@ var eDIMessageValidationErrorsRef = keel.Ref{Table: &eDIMessageValidationErrorsT
 
 // EDIMessageValidationErrorsTable is the table of edimessage.EDIMessageValidationError.
 type EDIMessageValidationErrorsTable struct {
-	keel.Handle[*edimessage.EDIMessageValidationError]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -656,7 +1016,7 @@ type EDIMessageValidationErrorsTable struct {
 
 // EDIMessageValidationErrors references the edi_message_validation_errors table.
 var EDIMessageValidationErrors = &EDIMessageValidationErrorsTable{
-	Handle:          keel.Handle[*edimessage.EDIMessageValidationError]{Ref: &eDIMessageValidationErrorsRef},
+	TableBase:       keel.TableBase{Ref: &eDIMessageValidationErrorsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 2}}},
@@ -671,10 +1031,10 @@ var EDIMessageValidationErrors = &EDIMessageValidationErrorsTable{
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &eDIMessageValidationErrorsRef, Index: 11}},
 }
 
-// BuildEDIMessageValidationErrors builds the handle of edi_message_validation_errors for ref. Generated relation and alias methods call it.
+// BuildEDIMessageValidationErrors builds the table of edi_message_validation_errors for ref. Generated relation and alias methods call it.
 func BuildEDIMessageValidationErrors(r *keel.Ref) *EDIMessageValidationErrorsTable {
 	return &EDIMessageValidationErrorsTable{
-		Handle:          keel.Handle[*edimessage.EDIMessageValidationError]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -701,6 +1061,365 @@ func (t *EDIMessageValidationErrorsTable) As(alias string) *EDIMessageValidation
 // Get returns the edi_message_validation_errors row with the given key, or keel.ErrNotFound.
 func (t *EDIMessageValidationErrorsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edimessage.EDIMessageValidationError, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EDIMessageValidationErrorsQuery is a query over edimessage.EDIMessageValidationError.
+type EDIMessageValidationErrorsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*edimessage.EDIMessageValidationError] = (*EDIMessageValidationErrorsTable)(nil)
+
+var _ keel.Query[*edimessage.EDIMessageValidationError] = (*EDIMessageValidationErrorsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EDIMessageValidationErrorsTable) Query() keel.Query[*edimessage.EDIMessageValidationError] {
+	return &EDIMessageValidationErrorsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EDIMessageValidationErrorsQuery.Where.
+func (t *EDIMessageValidationErrorsTable) Where(ps ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EDIMessageValidationErrorsQuery.Pick.
+func (t *EDIMessageValidationErrorsTable) Pick(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EDIMessageValidationErrorsQuery.Load.
+func (t *EDIMessageValidationErrorsTable) Load(ls ...keel.Loader) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EDIMessageValidationErrorsQuery.Omit.
+func (t *EDIMessageValidationErrorsTable) Omit(cols ...keel.Column) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EDIMessageValidationErrorsQuery.Order.
+func (t *EDIMessageValidationErrorsTable) Order(os ...keel.Order) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EDIMessageValidationErrorsQuery.Limit.
+func (t *EDIMessageValidationErrorsTable) Limit(n int) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EDIMessageValidationErrorsQuery.Group.
+func (t *EDIMessageValidationErrorsTable) Group(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EDIMessageValidationErrorsQuery.GroupingSets.
+func (t *EDIMessageValidationErrorsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EDIMessageValidationErrorsQuery.Rollup.
+func (t *EDIMessageValidationErrorsTable) Rollup(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EDIMessageValidationErrorsQuery.Cube.
+func (t *EDIMessageValidationErrorsTable) Cube(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EDIMessageValidationErrorsQuery.AllTenants.
+func (t *EDIMessageValidationErrorsTable) AllTenants() keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EDIMessageValidationErrorsQuery.Join.
+func (t *EDIMessageValidationErrorsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EDIMessageValidationErrorsQuery.LeftJoin.
+func (t *EDIMessageValidationErrorsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EDIMessageValidationErrorsQuery.LeftJoinLateral.
+func (t *EDIMessageValidationErrorsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EDIMessageValidationErrorsQuery.JoinLateral.
+func (t *EDIMessageValidationErrorsTable) JoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EDIMessageValidationErrorsQuery.Lock.
+func (t *EDIMessageValidationErrorsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EDIMessageValidationErrorsQuery.DistinctOn.
+func (t *EDIMessageValidationErrorsTable) DistinctOn(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EDIMessageValidationErrorsQuery.Cache.
+func (t *EDIMessageValidationErrorsTable) Cache(opts ...keel.CacheOption) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EDIMessageValidationErrorsQuery.LoadStrategy.
+func (t *EDIMessageValidationErrorsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EDIMessageValidationErrorsQuery.With.
+func (t *EDIMessageValidationErrorsTable) With(ctes ...*keel.CTETable) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EDIMessageValidationErrorsQuery.Compute.
+func (t *EDIMessageValidationErrorsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EDIMessageValidationErrorsTable) Create(ctx context.Context, db *keel.DB, row *edimessage.EDIMessageValidationError) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EDIMessageValidationErrorsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessageValidationError) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EDIMessageValidationErrorsTable) Save(ctx context.Context, db *keel.DB, row *edimessage.EDIMessageValidationError, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EDIMessageValidationErrorsTable) SaveExcept(ctx context.Context, db *keel.DB, row *edimessage.EDIMessageValidationError, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EDIMessageValidationErrorsTable) DeleteRow(ctx context.Context, db *keel.DB, row *edimessage.EDIMessageValidationError) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EDIMessageValidationErrorsTable) Upsert(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessageValidationError, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EDIMessageValidationErrorsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessageValidationError, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EDIMessageValidationErrorsTable) Copy(ctx context.Context, db *keel.DB, rows []*edimessage.EDIMessageValidationError) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EDIMessageValidationErrorsQuery) Where(ps ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EDIMessageValidationErrorsQuery) Pick(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EDIMessageValidationErrorsQuery) Omit(cols ...keel.Column) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EDIMessageValidationErrorsQuery) Load(ls ...keel.Loader) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EDIMessageValidationErrorsQuery) Order(os ...keel.Order) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EDIMessageValidationErrorsQuery) Distinct() keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EDIMessageValidationErrorsQuery) Group(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EDIMessageValidationErrorsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EDIMessageValidationErrorsQuery) Rollup(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EDIMessageValidationErrorsQuery) Cube(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EDIMessageValidationErrorsQuery) Window(name string, w keel.Window) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EDIMessageValidationErrorsQuery) Having(ps ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EDIMessageValidationErrorsQuery) Limit(n int) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EDIMessageValidationErrorsQuery) Offset(n int) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EDIMessageValidationErrorsQuery) DistinctOn(es ...keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EDIMessageValidationErrorsQuery) AllTenants() keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EDIMessageValidationErrorsQuery) CustomPlan() keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EDIMessageValidationErrorsQuery) Timeout(d time.Duration) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EDIMessageValidationErrorsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EDIMessageValidationErrorsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EDIMessageValidationErrorsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EDIMessageValidationErrorsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EDIMessageValidationErrorsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EDIMessageValidationErrorsQuery) Cache(opts ...keel.CacheOption) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EDIMessageValidationErrorsQuery) With(ctes ...*keel.CTETable) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EDIMessageValidationErrorsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EDIMessageValidationErrorsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*edimessage.EDIMessageValidationError] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EDIMessageValidationErrorsQuery) Clone() keel.Query[*edimessage.EDIMessageValidationError] {
+	return &EDIMessageValidationErrorsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EDIMessageValidationErrorsQuery) One(ctx context.Context, db *keel.DB) (*edimessage.EDIMessageValidationError, error) {
+	return keel.One[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EDIMessageValidationErrorsQuery) First(ctx context.Context, db *keel.DB) (*edimessage.EDIMessageValidationError, error) {
+	return keel.First[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EDIMessageValidationErrorsQuery) List(ctx context.Context, db *keel.DB) ([]*edimessage.EDIMessageValidationError, error) {
+	return keel.List[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EDIMessageValidationErrorsQuery) All(ctx context.Context, db *keel.DB) ([]*edimessage.EDIMessageValidationError, error) {
+	return keel.All[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EDIMessageValidationErrorsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edimessage.EDIMessageValidationError, error) {
+	return keel.UpdateReturning[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EDIMessageValidationErrorsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edimessage.EDIMessageValidationError], error) {
+	return keel.PageOf[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EDIMessageValidationErrorsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edimessage.EDIMessageValidationError) error) error {
+	return keel.Each[*edimessage.EDIMessageValidationError](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEDIMessageValidationError() unsafe.Pointer {

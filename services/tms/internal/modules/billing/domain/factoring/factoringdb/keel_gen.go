@@ -4,6 +4,7 @@ package factoringdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -86,7 +87,7 @@ var agreementsRef = keel.Ref{Table: &agreementsTable}
 
 // AgreementsTable is the table of factoring.Agreement.
 type AgreementsTable struct {
-	keel.Handle[*factoring.Agreement]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -116,7 +117,7 @@ type AgreementsTable struct {
 
 // Agreements references the factoring_agreements table.
 var Agreements = &AgreementsTable{
-	Handle:                 keel.Handle[*factoring.Agreement]{Ref: &agreementsRef},
+	TableBase:              keel.TableBase{Ref: &agreementsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementsRef, Index: 2}}},
@@ -144,10 +145,10 @@ var Agreements = &AgreementsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &agreementsRef, Index: 24}},
 }
 
-// BuildAgreements builds the handle of factoring_agreements for ref. Generated relation and alias methods call it.
+// BuildAgreements builds the table of factoring_agreements for ref. Generated relation and alias methods call it.
 func BuildAgreements(r *keel.Ref) *AgreementsTable {
 	return &AgreementsTable{
-		Handle:                 keel.Handle[*factoring.Agreement]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -200,6 +201,365 @@ func (t *AgreementsTable) DocumentTypes() *documenttypedb.DocumentTypesTable {
 // Get returns the factoring_agreements row with the given key, or keel.ErrNotFound.
 func (t *AgreementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.Agreement, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AgreementsQuery is a query over factoring.Agreement.
+type AgreementsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoring.Agreement] = (*AgreementsTable)(nil)
+
+var _ keel.Query[*factoring.Agreement] = (*AgreementsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AgreementsTable) Query() keel.Query[*factoring.Agreement] {
+	return &AgreementsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AgreementsQuery.Where.
+func (t *AgreementsTable) Where(ps ...keel.Pred) keel.Query[*factoring.Agreement] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AgreementsQuery.Pick.
+func (t *AgreementsTable) Pick(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AgreementsQuery.Load.
+func (t *AgreementsTable) Load(ls ...keel.Loader) keel.Query[*factoring.Agreement] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AgreementsQuery.Omit.
+func (t *AgreementsTable) Omit(cols ...keel.Column) keel.Query[*factoring.Agreement] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AgreementsQuery.Order.
+func (t *AgreementsTable) Order(os ...keel.Order) keel.Query[*factoring.Agreement] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AgreementsQuery.Limit.
+func (t *AgreementsTable) Limit(n int) keel.Query[*factoring.Agreement] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AgreementsQuery.Group.
+func (t *AgreementsTable) Group(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AgreementsQuery.GroupingSets.
+func (t *AgreementsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AgreementsQuery.Rollup.
+func (t *AgreementsTable) Rollup(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AgreementsQuery.Cube.
+func (t *AgreementsTable) Cube(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AgreementsQuery.AllTenants.
+func (t *AgreementsTable) AllTenants() keel.Query[*factoring.Agreement] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AgreementsQuery.Join.
+func (t *AgreementsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Agreement] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AgreementsQuery.LeftJoin.
+func (t *AgreementsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Agreement] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AgreementsQuery.LeftJoinLateral.
+func (t *AgreementsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.Agreement] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AgreementsQuery.JoinLateral.
+func (t *AgreementsTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.Agreement] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AgreementsQuery.Lock.
+func (t *AgreementsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.Agreement] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AgreementsQuery.DistinctOn.
+func (t *AgreementsTable) DistinctOn(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AgreementsQuery.Cache.
+func (t *AgreementsTable) Cache(opts ...keel.CacheOption) keel.Query[*factoring.Agreement] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AgreementsQuery.LoadStrategy.
+func (t *AgreementsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.Agreement] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AgreementsQuery.With.
+func (t *AgreementsTable) With(ctes ...*keel.CTETable) keel.Query[*factoring.Agreement] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AgreementsQuery.Compute.
+func (t *AgreementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.Agreement] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AgreementsTable) Create(ctx context.Context, db *keel.DB, row *factoring.Agreement) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AgreementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.Agreement) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AgreementsTable) Save(ctx context.Context, db *keel.DB, row *factoring.Agreement, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AgreementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.Agreement, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AgreementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.Agreement) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AgreementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.Agreement, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AgreementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.Agreement, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AgreementsTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.Agreement) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AgreementsQuery) Where(ps ...keel.Pred) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AgreementsQuery) Pick(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AgreementsQuery) Omit(cols ...keel.Column) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AgreementsQuery) Load(ls ...keel.Loader) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AgreementsQuery) Order(os ...keel.Order) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AgreementsQuery) Distinct() keel.Query[*factoring.Agreement] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AgreementsQuery) Group(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AgreementsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AgreementsQuery) Rollup(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AgreementsQuery) Cube(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AgreementsQuery) Window(name string, w keel.Window) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AgreementsQuery) Having(ps ...keel.Pred) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AgreementsQuery) Limit(n int) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AgreementsQuery) Offset(n int) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AgreementsQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AgreementsQuery) AllTenants() keel.Query[*factoring.Agreement] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AgreementsQuery) CustomPlan() keel.Query[*factoring.Agreement] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AgreementsQuery) Timeout(d time.Duration) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AgreementsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AgreementsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AgreementsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Agreement] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AgreementsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.Agreement] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AgreementsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.Agreement] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AgreementsQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AgreementsQuery) With(ctes ...*keel.CTETable) keel.Query[*factoring.Agreement] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AgreementsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.Agreement] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AgreementsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.Agreement] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AgreementsQuery) Clone() keel.Query[*factoring.Agreement] {
+	return &AgreementsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AgreementsQuery) One(ctx context.Context, db *keel.DB) (*factoring.Agreement, error) {
+	return keel.One[*factoring.Agreement](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AgreementsQuery) First(ctx context.Context, db *keel.DB) (*factoring.Agreement, error) {
+	return keel.First[*factoring.Agreement](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AgreementsQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.Agreement, error) {
+	return keel.List[*factoring.Agreement](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AgreementsQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.Agreement, error) {
+	return keel.All[*factoring.Agreement](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AgreementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.Agreement, error) {
+	return keel.UpdateReturning[*factoring.Agreement](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AgreementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.Agreement], error) {
+	return keel.PageOf[*factoring.Agreement](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AgreementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.Agreement) error) error {
+	return keel.Each[*factoring.Agreement](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAgreement() unsafe.Pointer { return unsafe.Pointer(new(factoring.Agreement)) }
@@ -403,7 +763,7 @@ var agreementDocumentTypesRef = keel.Ref{Table: &agreementDocumentTypesTable}
 
 // AgreementDocumentTypesTable is the table of factoring.AgreementDocumentType.
 type AgreementDocumentTypesTable struct {
-	keel.Handle[*factoring.AgreementDocumentType]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	AgreementID    keelkinds.PulidIDCol
@@ -412,17 +772,17 @@ type AgreementDocumentTypesTable struct {
 
 // AgreementDocumentTypes references the factoring_agreement_document_types table.
 var AgreementDocumentTypes = &AgreementDocumentTypesTable{
-	Handle:         keel.Handle[*factoring.AgreementDocumentType]{Ref: &agreementDocumentTypesRef},
+	TableBase:      keel.TableBase{Ref: &agreementDocumentTypesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 1}}},
 	AgreementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 2}}},
 	DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agreementDocumentTypesRef, Index: 3}}},
 }
 
-// BuildAgreementDocumentTypes builds the handle of factoring_agreement_document_types for ref. Generated relation and alias methods call it.
+// BuildAgreementDocumentTypes builds the table of factoring_agreement_document_types for ref. Generated relation and alias methods call it.
 func BuildAgreementDocumentTypes(r *keel.Ref) *AgreementDocumentTypesTable {
 	return &AgreementDocumentTypesTable{
-		Handle:         keel.Handle[*factoring.AgreementDocumentType]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		AgreementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -446,6 +806,365 @@ func (t *AgreementDocumentTypesTable) Agreement() *AgreementsTable {
 // DocumentType is the belongs relation.
 func (t *AgreementDocumentTypesTable) DocumentType() *documenttypedb.DocumentTypesTable {
 	return keel.Path(t.Ref, 1, documenttypedb.BuildDocumentTypes)
+}
+
+// AgreementDocumentTypesQuery is a query over factoring.AgreementDocumentType.
+type AgreementDocumentTypesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoring.AgreementDocumentType] = (*AgreementDocumentTypesTable)(nil)
+
+var _ keel.Query[*factoring.AgreementDocumentType] = (*AgreementDocumentTypesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AgreementDocumentTypesTable) Query() keel.Query[*factoring.AgreementDocumentType] {
+	return &AgreementDocumentTypesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AgreementDocumentTypesQuery.Where.
+func (t *AgreementDocumentTypesTable) Where(ps ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AgreementDocumentTypesQuery.Pick.
+func (t *AgreementDocumentTypesTable) Pick(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AgreementDocumentTypesQuery.Load.
+func (t *AgreementDocumentTypesTable) Load(ls ...keel.Loader) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AgreementDocumentTypesQuery.Omit.
+func (t *AgreementDocumentTypesTable) Omit(cols ...keel.Column) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AgreementDocumentTypesQuery.Order.
+func (t *AgreementDocumentTypesTable) Order(os ...keel.Order) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AgreementDocumentTypesQuery.Limit.
+func (t *AgreementDocumentTypesTable) Limit(n int) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AgreementDocumentTypesQuery.Group.
+func (t *AgreementDocumentTypesTable) Group(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AgreementDocumentTypesQuery.GroupingSets.
+func (t *AgreementDocumentTypesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AgreementDocumentTypesQuery.Rollup.
+func (t *AgreementDocumentTypesTable) Rollup(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AgreementDocumentTypesQuery.Cube.
+func (t *AgreementDocumentTypesTable) Cube(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AgreementDocumentTypesQuery.AllTenants.
+func (t *AgreementDocumentTypesTable) AllTenants() keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AgreementDocumentTypesQuery.Join.
+func (t *AgreementDocumentTypesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AgreementDocumentTypesQuery.LeftJoin.
+func (t *AgreementDocumentTypesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AgreementDocumentTypesQuery.LeftJoinLateral.
+func (t *AgreementDocumentTypesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AgreementDocumentTypesQuery.JoinLateral.
+func (t *AgreementDocumentTypesTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AgreementDocumentTypesQuery.Lock.
+func (t *AgreementDocumentTypesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AgreementDocumentTypesQuery.DistinctOn.
+func (t *AgreementDocumentTypesTable) DistinctOn(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AgreementDocumentTypesQuery.Cache.
+func (t *AgreementDocumentTypesTable) Cache(opts ...keel.CacheOption) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AgreementDocumentTypesQuery.LoadStrategy.
+func (t *AgreementDocumentTypesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AgreementDocumentTypesQuery.With.
+func (t *AgreementDocumentTypesTable) With(ctes ...*keel.CTETable) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AgreementDocumentTypesQuery.Compute.
+func (t *AgreementDocumentTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AgreementDocumentTypesTable) Create(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AgreementDocumentTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AgreementDocumentTypesTable) Save(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AgreementDocumentTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AgreementDocumentTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.AgreementDocumentType) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AgreementDocumentTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AgreementDocumentTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AgreementDocumentTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.AgreementDocumentType) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AgreementDocumentTypesQuery) Where(ps ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AgreementDocumentTypesQuery) Pick(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AgreementDocumentTypesQuery) Omit(cols ...keel.Column) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AgreementDocumentTypesQuery) Load(ls ...keel.Loader) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AgreementDocumentTypesQuery) Order(os ...keel.Order) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AgreementDocumentTypesQuery) Distinct() keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AgreementDocumentTypesQuery) Group(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AgreementDocumentTypesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AgreementDocumentTypesQuery) Rollup(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AgreementDocumentTypesQuery) Cube(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AgreementDocumentTypesQuery) Window(name string, w keel.Window) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AgreementDocumentTypesQuery) Having(ps ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AgreementDocumentTypesQuery) Limit(n int) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AgreementDocumentTypesQuery) Offset(n int) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AgreementDocumentTypesQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AgreementDocumentTypesQuery) AllTenants() keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AgreementDocumentTypesQuery) CustomPlan() keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AgreementDocumentTypesQuery) Timeout(d time.Duration) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AgreementDocumentTypesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AgreementDocumentTypesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AgreementDocumentTypesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AgreementDocumentTypesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AgreementDocumentTypesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AgreementDocumentTypesQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AgreementDocumentTypesQuery) With(ctes ...*keel.CTETable) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AgreementDocumentTypesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AgreementDocumentTypesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.AgreementDocumentType] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AgreementDocumentTypesQuery) Clone() keel.Query[*factoring.AgreementDocumentType] {
+	return &AgreementDocumentTypesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AgreementDocumentTypesQuery) One(ctx context.Context, db *keel.DB) (*factoring.AgreementDocumentType, error) {
+	return keel.One[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AgreementDocumentTypesQuery) First(ctx context.Context, db *keel.DB) (*factoring.AgreementDocumentType, error) {
+	return keel.First[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AgreementDocumentTypesQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.AgreementDocumentType, error) {
+	return keel.List[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AgreementDocumentTypesQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.AgreementDocumentType, error) {
+	return keel.All[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AgreementDocumentTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.AgreementDocumentType, error) {
+	return keel.UpdateReturning[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AgreementDocumentTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.AgreementDocumentType], error) {
+	return keel.PageOf[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AgreementDocumentTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.AgreementDocumentType) error) error {
+	return keel.Each[*factoring.AgreementDocumentType](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAgreementDocumentType() unsafe.Pointer {
@@ -536,7 +1255,7 @@ var feeTiersRef = keel.Ref{Table: &feeTiersTable}
 
 // FeeTiersTable is the table of factoring.FeeTier.
 type FeeTiersTable struct {
-	keel.Handle[*factoring.FeeTier]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -549,7 +1268,7 @@ type FeeTiersTable struct {
 
 // FeeTiers references the factoring_fee_tiers table.
 var FeeTiers = &FeeTiersTable{
-	Handle:         keel.Handle[*factoring.FeeTier]{Ref: &feeTiersRef},
+	TableBase:      keel.TableBase{Ref: &feeTiersRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feeTiersRef, Index: 2}}},
@@ -560,10 +1279,10 @@ var FeeTiers = &FeeTiersTable{
 	FlatMinor:      keel.Int64Col{Col: keel.Col{Ref: &feeTiersRef, Index: 7}},
 }
 
-// BuildFeeTiers builds the handle of factoring_fee_tiers for ref. Generated relation and alias methods call it.
+// BuildFeeTiers builds the table of factoring_fee_tiers for ref. Generated relation and alias methods call it.
 func BuildFeeTiers(r *keel.Ref) *FeeTiersTable {
 	return &FeeTiersTable{
-		Handle:         keel.Handle[*factoring.FeeTier]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -586,6 +1305,365 @@ func (t *FeeTiersTable) As(alias string) *FeeTiersTable {
 // Get returns the factoring_fee_tiers row with the given key, or keel.ErrNotFound.
 func (t *FeeTiersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.FeeTier, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FeeTiersQuery is a query over factoring.FeeTier.
+type FeeTiersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoring.FeeTier] = (*FeeTiersTable)(nil)
+
+var _ keel.Query[*factoring.FeeTier] = (*FeeTiersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FeeTiersTable) Query() keel.Query[*factoring.FeeTier] {
+	return &FeeTiersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FeeTiersQuery.Where.
+func (t *FeeTiersTable) Where(ps ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FeeTiersQuery.Pick.
+func (t *FeeTiersTable) Pick(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FeeTiersQuery.Load.
+func (t *FeeTiersTable) Load(ls ...keel.Loader) keel.Query[*factoring.FeeTier] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FeeTiersQuery.Omit.
+func (t *FeeTiersTable) Omit(cols ...keel.Column) keel.Query[*factoring.FeeTier] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FeeTiersQuery.Order.
+func (t *FeeTiersTable) Order(os ...keel.Order) keel.Query[*factoring.FeeTier] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FeeTiersQuery.Limit.
+func (t *FeeTiersTable) Limit(n int) keel.Query[*factoring.FeeTier] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FeeTiersQuery.Group.
+func (t *FeeTiersTable) Group(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FeeTiersQuery.GroupingSets.
+func (t *FeeTiersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FeeTiersQuery.Rollup.
+func (t *FeeTiersTable) Rollup(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FeeTiersQuery.Cube.
+func (t *FeeTiersTable) Cube(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FeeTiersQuery.AllTenants.
+func (t *FeeTiersTable) AllTenants() keel.Query[*factoring.FeeTier] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FeeTiersQuery.Join.
+func (t *FeeTiersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FeeTiersQuery.LeftJoin.
+func (t *FeeTiersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FeeTiersQuery.LeftJoinLateral.
+func (t *FeeTiersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.FeeTier] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FeeTiersQuery.JoinLateral.
+func (t *FeeTiersTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.FeeTier] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FeeTiersQuery.Lock.
+func (t *FeeTiersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.FeeTier] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FeeTiersQuery.DistinctOn.
+func (t *FeeTiersTable) DistinctOn(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FeeTiersQuery.Cache.
+func (t *FeeTiersTable) Cache(opts ...keel.CacheOption) keel.Query[*factoring.FeeTier] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FeeTiersQuery.LoadStrategy.
+func (t *FeeTiersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.FeeTier] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FeeTiersQuery.With.
+func (t *FeeTiersTable) With(ctes ...*keel.CTETable) keel.Query[*factoring.FeeTier] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FeeTiersQuery.Compute.
+func (t *FeeTiersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.FeeTier] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FeeTiersTable) Create(ctx context.Context, db *keel.DB, row *factoring.FeeTier) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FeeTiersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FeeTiersTable) Save(ctx context.Context, db *keel.DB, row *factoring.FeeTier, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FeeTiersTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.FeeTier, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FeeTiersTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.FeeTier) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FeeTiersTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FeeTiersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FeeTiersTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.FeeTier) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FeeTiersQuery) Where(ps ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FeeTiersQuery) Pick(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FeeTiersQuery) Omit(cols ...keel.Column) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FeeTiersQuery) Load(ls ...keel.Loader) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FeeTiersQuery) Order(os ...keel.Order) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FeeTiersQuery) Distinct() keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FeeTiersQuery) Group(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FeeTiersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FeeTiersQuery) Rollup(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FeeTiersQuery) Cube(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FeeTiersQuery) Window(name string, w keel.Window) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FeeTiersQuery) Having(ps ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FeeTiersQuery) Limit(n int) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FeeTiersQuery) Offset(n int) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FeeTiersQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FeeTiersQuery) AllTenants() keel.Query[*factoring.FeeTier] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FeeTiersQuery) CustomPlan() keel.Query[*factoring.FeeTier] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FeeTiersQuery) Timeout(d time.Duration) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FeeTiersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FeeTiersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FeeTiersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FeeTiersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FeeTiersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FeeTiersQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FeeTiersQuery) With(ctes ...*keel.CTETable) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FeeTiersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FeeTiersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.FeeTier] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FeeTiersQuery) Clone() keel.Query[*factoring.FeeTier] {
+	return &FeeTiersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FeeTiersQuery) One(ctx context.Context, db *keel.DB) (*factoring.FeeTier, error) {
+	return keel.One[*factoring.FeeTier](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FeeTiersQuery) First(ctx context.Context, db *keel.DB) (*factoring.FeeTier, error) {
+	return keel.First[*factoring.FeeTier](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FeeTiersQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.FeeTier, error) {
+	return keel.List[*factoring.FeeTier](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FeeTiersQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.FeeTier, error) {
+	return keel.All[*factoring.FeeTier](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FeeTiersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.FeeTier, error) {
+	return keel.UpdateReturning[*factoring.FeeTier](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FeeTiersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.FeeTier], error) {
+	return keel.PageOf[*factoring.FeeTier](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FeeTiersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.FeeTier) error) error {
+	return keel.Each[*factoring.FeeTier](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFeeTier() unsafe.Pointer { return unsafe.Pointer(new(factoring.FeeTier)) }
@@ -702,7 +1780,7 @@ var noasRef = keel.Ref{Table: &noasTable}
 
 // NoasTable is the table of factoring.Noa.
 type NoasTable struct {
-	keel.Handle[*factoring.Noa]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
@@ -725,7 +1803,7 @@ type NoasTable struct {
 
 // Noas references the factoring_noas table.
 var Noas = &NoasTable{
-	Handle:             keel.Handle[*factoring.Noa]{Ref: &noasRef},
+	TableBase:          keel.TableBase{Ref: &noasRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 0}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 1}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &noasRef, Index: 2}}},
@@ -746,10 +1824,10 @@ var Noas = &NoasTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &noasRef, Index: 17}},
 }
 
-// BuildNoas builds the handle of factoring_noas for ref. Generated relation and alias methods call it.
+// BuildNoas builds the table of factoring_noas for ref. Generated relation and alias methods call it.
 func BuildNoas(r *keel.Ref) *NoasTable {
 	return &NoasTable{
-		Handle:             keel.Handle[*factoring.Noa]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -790,6 +1868,365 @@ func (t *NoasTable) FactoringCompany() *factoringcompanydb.FactoringCompaniesTab
 // Get returns the factoring_noas row with the given key, or keel.ErrNotFound.
 func (t *NoasTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoring.Noa, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// NoasQuery is a query over factoring.Noa.
+type NoasQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoring.Noa] = (*NoasTable)(nil)
+
+var _ keel.Query[*factoring.Noa] = (*NoasQuery)(nil)
+
+// Query starts a query over the table.
+func (t *NoasTable) Query() keel.Query[*factoring.Noa] {
+	return &NoasQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see NoasQuery.Where.
+func (t *NoasTable) Where(ps ...keel.Pred) keel.Query[*factoring.Noa] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see NoasQuery.Pick.
+func (t *NoasTable) Pick(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see NoasQuery.Load.
+func (t *NoasTable) Load(ls ...keel.Loader) keel.Query[*factoring.Noa] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see NoasQuery.Omit.
+func (t *NoasTable) Omit(cols ...keel.Column) keel.Query[*factoring.Noa] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see NoasQuery.Order.
+func (t *NoasTable) Order(os ...keel.Order) keel.Query[*factoring.Noa] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see NoasQuery.Limit.
+func (t *NoasTable) Limit(n int) keel.Query[*factoring.Noa] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see NoasQuery.Group.
+func (t *NoasTable) Group(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see NoasQuery.GroupingSets.
+func (t *NoasTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see NoasQuery.Rollup.
+func (t *NoasTable) Rollup(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see NoasQuery.Cube.
+func (t *NoasTable) Cube(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see NoasQuery.AllTenants.
+func (t *NoasTable) AllTenants() keel.Query[*factoring.Noa] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see NoasQuery.Join.
+func (t *NoasTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Noa] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see NoasQuery.LeftJoin.
+func (t *NoasTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Noa] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see NoasQuery.LeftJoinLateral.
+func (t *NoasTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.Noa] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see NoasQuery.JoinLateral.
+func (t *NoasTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.Noa] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see NoasQuery.Lock.
+func (t *NoasTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.Noa] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see NoasQuery.DistinctOn.
+func (t *NoasTable) DistinctOn(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see NoasQuery.Cache.
+func (t *NoasTable) Cache(opts ...keel.CacheOption) keel.Query[*factoring.Noa] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see NoasQuery.LoadStrategy.
+func (t *NoasTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.Noa] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see NoasQuery.With.
+func (t *NoasTable) With(ctes ...*keel.CTETable) keel.Query[*factoring.Noa] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see NoasQuery.Compute.
+func (t *NoasTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.Noa] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *NoasTable) Create(ctx context.Context, db *keel.DB, row *factoring.Noa) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *NoasTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoring.Noa) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *NoasTable) Save(ctx context.Context, db *keel.DB, row *factoring.Noa, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *NoasTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoring.Noa, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *NoasTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoring.Noa) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *NoasTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoring.Noa, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *NoasTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoring.Noa, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *NoasTable) Copy(ctx context.Context, db *keel.DB, rows []*factoring.Noa) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *NoasQuery) Where(ps ...keel.Pred) keel.Query[*factoring.Noa] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *NoasQuery) Pick(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *NoasQuery) Omit(cols ...keel.Column) keel.Query[*factoring.Noa] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *NoasQuery) Load(ls ...keel.Loader) keel.Query[*factoring.Noa] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *NoasQuery) Order(os ...keel.Order) keel.Query[*factoring.Noa] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *NoasQuery) Distinct() keel.Query[*factoring.Noa] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *NoasQuery) Group(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *NoasQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *NoasQuery) Rollup(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *NoasQuery) Cube(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *NoasQuery) Window(name string, w keel.Window) keel.Query[*factoring.Noa] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *NoasQuery) Having(ps ...keel.Pred) keel.Query[*factoring.Noa] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *NoasQuery) Limit(n int) keel.Query[*factoring.Noa] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *NoasQuery) Offset(n int) keel.Query[*factoring.Noa] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *NoasQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *NoasQuery) AllTenants() keel.Query[*factoring.Noa] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *NoasQuery) CustomPlan() keel.Query[*factoring.Noa] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *NoasQuery) Timeout(d time.Duration) keel.Query[*factoring.Noa] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *NoasQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoring.Noa] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *NoasQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Noa] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *NoasQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoring.Noa] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *NoasQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoring.Noa] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *NoasQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoring.Noa] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *NoasQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoring.Noa] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *NoasQuery) With(ctes ...*keel.CTETable) keel.Query[*factoring.Noa] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *NoasQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoring.Noa] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *NoasQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoring.Noa] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *NoasQuery) Clone() keel.Query[*factoring.Noa] {
+	return &NoasQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *NoasQuery) One(ctx context.Context, db *keel.DB) (*factoring.Noa, error) {
+	return keel.One[*factoring.Noa](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *NoasQuery) First(ctx context.Context, db *keel.DB) (*factoring.Noa, error) {
+	return keel.First[*factoring.Noa](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *NoasQuery) List(ctx context.Context, db *keel.DB) ([]*factoring.Noa, error) {
+	return keel.List[*factoring.Noa](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *NoasQuery) All(ctx context.Context, db *keel.DB) ([]*factoring.Noa, error) {
+	return keel.All[*factoring.Noa](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *NoasQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoring.Noa, error) {
+	return keel.UpdateReturning[*factoring.Noa](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *NoasQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoring.Noa], error) {
+	return keel.PageOf[*factoring.Noa](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *NoasQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoring.Noa) error) error {
+	return keel.Each[*factoring.Noa](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newNoa() unsafe.Pointer { return unsafe.Pointer(new(factoring.Noa)) }

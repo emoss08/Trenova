@@ -4,6 +4,7 @@ package aianalyticsdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -56,7 +57,7 @@ var providerHoursRef = keel.Ref{Table: &providerHoursTable}
 
 // ProviderHoursTable is the table of aianalytics.ProviderHour.
 type ProviderHoursTable struct {
-	keel.Handle[*aianalytics.ProviderHour]
+	keel.TableBase
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	Hour              keel.Int64Col
@@ -73,7 +74,7 @@ type ProviderHoursTable struct {
 
 // ProviderHours references the ai_provider_hourly_stats table.
 var ProviderHours = &ProviderHoursTable{
-	Handle:            keel.Handle[*aianalytics.ProviderHour]{Ref: &providerHoursRef},
+	TableBase:         keel.TableBase{Ref: &providerHoursRef},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 1}}},
 	Hour:              keel.Int64Col{Col: keel.Col{Ref: &providerHoursRef, Index: 2}},
@@ -88,10 +89,10 @@ var ProviderHours = &ProviderHoursTable{
 	FirstTokenHist:    keel.AnyCol{Col: keel.Col{Ref: &providerHoursRef, Index: 11}},
 }
 
-// BuildProviderHours builds the handle of ai_provider_hourly_stats for ref. Generated relation and alias methods call it.
+// BuildProviderHours builds the table of ai_provider_hourly_stats for ref. Generated relation and alias methods call it.
 func BuildProviderHours(r *keel.Ref) *ProviderHoursTable {
 	return &ProviderHoursTable{
-		Handle:            keel.Handle[*aianalytics.ProviderHour]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Hour:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -113,6 +114,365 @@ func ProviderHoursSchema() *schema.Table { return &providerHoursTable }
 // As returns a handle that references ai_provider_hourly_stats under its own alias.
 func (t *ProviderHoursTable) As(alias string) *ProviderHoursTable {
 	return keel.Alias(t.Ref, alias, BuildProviderHours)
+}
+
+// ProviderHoursQuery is a query over aianalytics.ProviderHour.
+type ProviderHoursQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aianalytics.ProviderHour] = (*ProviderHoursTable)(nil)
+
+var _ keel.Query[*aianalytics.ProviderHour] = (*ProviderHoursQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProviderHoursTable) Query() keel.Query[*aianalytics.ProviderHour] {
+	return &ProviderHoursQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProviderHoursQuery.Where.
+func (t *ProviderHoursTable) Where(ps ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProviderHoursQuery.Pick.
+func (t *ProviderHoursTable) Pick(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProviderHoursQuery.Load.
+func (t *ProviderHoursTable) Load(ls ...keel.Loader) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProviderHoursQuery.Omit.
+func (t *ProviderHoursTable) Omit(cols ...keel.Column) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProviderHoursQuery.Order.
+func (t *ProviderHoursTable) Order(os ...keel.Order) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProviderHoursQuery.Limit.
+func (t *ProviderHoursTable) Limit(n int) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProviderHoursQuery.Group.
+func (t *ProviderHoursTable) Group(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProviderHoursQuery.GroupingSets.
+func (t *ProviderHoursTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProviderHoursQuery.Rollup.
+func (t *ProviderHoursTable) Rollup(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProviderHoursQuery.Cube.
+func (t *ProviderHoursTable) Cube(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProviderHoursQuery.AllTenants.
+func (t *ProviderHoursTable) AllTenants() keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProviderHoursQuery.Join.
+func (t *ProviderHoursTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProviderHoursQuery.LeftJoin.
+func (t *ProviderHoursTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProviderHoursQuery.LeftJoinLateral.
+func (t *ProviderHoursTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProviderHoursQuery.JoinLateral.
+func (t *ProviderHoursTable) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProviderHoursQuery.Lock.
+func (t *ProviderHoursTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProviderHoursQuery.DistinctOn.
+func (t *ProviderHoursTable) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProviderHoursQuery.Cache.
+func (t *ProviderHoursTable) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProviderHoursQuery.LoadStrategy.
+func (t *ProviderHoursTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProviderHoursQuery.With.
+func (t *ProviderHoursTable) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProviderHoursQuery.Compute.
+func (t *ProviderHoursTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProviderHoursTable) Create(ctx context.Context, db *keel.DB, row *aianalytics.ProviderHour) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProviderHoursTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aianalytics.ProviderHour) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProviderHoursTable) Save(ctx context.Context, db *keel.DB, row *aianalytics.ProviderHour, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProviderHoursTable) SaveExcept(ctx context.Context, db *keel.DB, row *aianalytics.ProviderHour, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProviderHoursTable) DeleteRow(ctx context.Context, db *keel.DB, row *aianalytics.ProviderHour) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProviderHoursTable) Upsert(ctx context.Context, db *keel.DB, rows []*aianalytics.ProviderHour, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProviderHoursTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aianalytics.ProviderHour, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProviderHoursTable) Copy(ctx context.Context, db *keel.DB, rows []*aianalytics.ProviderHour) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProviderHoursQuery) Where(ps ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProviderHoursQuery) Pick(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProviderHoursQuery) Omit(cols ...keel.Column) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProviderHoursQuery) Load(ls ...keel.Loader) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProviderHoursQuery) Order(os ...keel.Order) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProviderHoursQuery) Distinct() keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProviderHoursQuery) Group(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProviderHoursQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProviderHoursQuery) Rollup(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProviderHoursQuery) Cube(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProviderHoursQuery) Window(name string, w keel.Window) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProviderHoursQuery) Having(ps ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProviderHoursQuery) Limit(n int) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProviderHoursQuery) Offset(n int) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProviderHoursQuery) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProviderHoursQuery) AllTenants() keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProviderHoursQuery) CustomPlan() keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProviderHoursQuery) Timeout(d time.Duration) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProviderHoursQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProviderHoursQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProviderHoursQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProviderHoursQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProviderHoursQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProviderHoursQuery) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProviderHoursQuery) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProviderHoursQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProviderHoursQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.ProviderHour] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProviderHoursQuery) Clone() keel.Query[*aianalytics.ProviderHour] {
+	return &ProviderHoursQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProviderHoursQuery) One(ctx context.Context, db *keel.DB) (*aianalytics.ProviderHour, error) {
+	return keel.One[*aianalytics.ProviderHour](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProviderHoursQuery) First(ctx context.Context, db *keel.DB) (*aianalytics.ProviderHour, error) {
+	return keel.First[*aianalytics.ProviderHour](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProviderHoursQuery) List(ctx context.Context, db *keel.DB) ([]*aianalytics.ProviderHour, error) {
+	return keel.List[*aianalytics.ProviderHour](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProviderHoursQuery) All(ctx context.Context, db *keel.DB) ([]*aianalytics.ProviderHour, error) {
+	return keel.All[*aianalytics.ProviderHour](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProviderHoursQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aianalytics.ProviderHour, error) {
+	return keel.UpdateReturning[*aianalytics.ProviderHour](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProviderHoursQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aianalytics.ProviderHour], error) {
+	return keel.PageOf[*aianalytics.ProviderHour](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProviderHoursQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aianalytics.ProviderHour) error) error {
+	return keel.Each[*aianalytics.ProviderHour](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProviderHour() unsafe.Pointer { return unsafe.Pointer(new(aianalytics.ProviderHour)) }
@@ -222,7 +582,7 @@ var refreshStatesRef = keel.Ref{Table: &refreshStatesTable}
 
 // RefreshStatesTable is the table of aianalytics.RefreshState.
 type RefreshStatesTable struct {
-	keel.Handle[*aianalytics.RefreshState]
+	keel.TableBase
 	OrganizationID   keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	RefreshedThrough keel.Int64Col
@@ -231,17 +591,17 @@ type RefreshStatesTable struct {
 
 // RefreshStates references the ai_analytics_refresh_state table.
 var RefreshStates = &RefreshStatesTable{
-	Handle:           keel.Handle[*aianalytics.RefreshState]{Ref: &refreshStatesRef},
+	TableBase:        keel.TableBase{Ref: &refreshStatesRef},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &refreshStatesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &refreshStatesRef, Index: 1}}},
 	RefreshedThrough: keel.Int64Col{Col: keel.Col{Ref: &refreshStatesRef, Index: 2}},
 	RefreshedAt:      keel.Int64Col{Col: keel.Col{Ref: &refreshStatesRef, Index: 3}},
 }
 
-// BuildRefreshStates builds the handle of ai_analytics_refresh_state for ref. Generated relation and alias methods call it.
+// BuildRefreshStates builds the table of ai_analytics_refresh_state for ref. Generated relation and alias methods call it.
 func BuildRefreshStates(r *keel.Ref) *RefreshStatesTable {
 	return &RefreshStatesTable{
-		Handle:           keel.Handle[*aianalytics.RefreshState]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RefreshedThrough: keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -255,6 +615,365 @@ func RefreshStatesSchema() *schema.Table { return &refreshStatesTable }
 // As returns a handle that references ai_analytics_refresh_state under its own alias.
 func (t *RefreshStatesTable) As(alias string) *RefreshStatesTable {
 	return keel.Alias(t.Ref, alias, BuildRefreshStates)
+}
+
+// RefreshStatesQuery is a query over aianalytics.RefreshState.
+type RefreshStatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aianalytics.RefreshState] = (*RefreshStatesTable)(nil)
+
+var _ keel.Query[*aianalytics.RefreshState] = (*RefreshStatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RefreshStatesTable) Query() keel.Query[*aianalytics.RefreshState] {
+	return &RefreshStatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RefreshStatesQuery.Where.
+func (t *RefreshStatesTable) Where(ps ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RefreshStatesQuery.Pick.
+func (t *RefreshStatesTable) Pick(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RefreshStatesQuery.Load.
+func (t *RefreshStatesTable) Load(ls ...keel.Loader) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RefreshStatesQuery.Omit.
+func (t *RefreshStatesTable) Omit(cols ...keel.Column) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RefreshStatesQuery.Order.
+func (t *RefreshStatesTable) Order(os ...keel.Order) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RefreshStatesQuery.Limit.
+func (t *RefreshStatesTable) Limit(n int) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RefreshStatesQuery.Group.
+func (t *RefreshStatesTable) Group(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RefreshStatesQuery.GroupingSets.
+func (t *RefreshStatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RefreshStatesQuery.Rollup.
+func (t *RefreshStatesTable) Rollup(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RefreshStatesQuery.Cube.
+func (t *RefreshStatesTable) Cube(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RefreshStatesQuery.AllTenants.
+func (t *RefreshStatesTable) AllTenants() keel.Query[*aianalytics.RefreshState] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RefreshStatesQuery.Join.
+func (t *RefreshStatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RefreshStatesQuery.LeftJoin.
+func (t *RefreshStatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RefreshStatesQuery.LeftJoinLateral.
+func (t *RefreshStatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RefreshStatesQuery.JoinLateral.
+func (t *RefreshStatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RefreshStatesQuery.Lock.
+func (t *RefreshStatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RefreshStatesQuery.DistinctOn.
+func (t *RefreshStatesTable) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RefreshStatesQuery.Cache.
+func (t *RefreshStatesTable) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RefreshStatesQuery.LoadStrategy.
+func (t *RefreshStatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RefreshStatesQuery.With.
+func (t *RefreshStatesTable) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RefreshStatesQuery.Compute.
+func (t *RefreshStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RefreshStatesTable) Create(ctx context.Context, db *keel.DB, row *aianalytics.RefreshState) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RefreshStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aianalytics.RefreshState) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RefreshStatesTable) Save(ctx context.Context, db *keel.DB, row *aianalytics.RefreshState, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RefreshStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *aianalytics.RefreshState, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RefreshStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *aianalytics.RefreshState) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RefreshStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*aianalytics.RefreshState, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RefreshStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aianalytics.RefreshState, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RefreshStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*aianalytics.RefreshState) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RefreshStatesQuery) Where(ps ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RefreshStatesQuery) Pick(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RefreshStatesQuery) Omit(cols ...keel.Column) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RefreshStatesQuery) Load(ls ...keel.Loader) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RefreshStatesQuery) Order(os ...keel.Order) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RefreshStatesQuery) Distinct() keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RefreshStatesQuery) Group(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RefreshStatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RefreshStatesQuery) Rollup(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RefreshStatesQuery) Cube(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RefreshStatesQuery) Window(name string, w keel.Window) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RefreshStatesQuery) Having(ps ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RefreshStatesQuery) Limit(n int) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RefreshStatesQuery) Offset(n int) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RefreshStatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RefreshStatesQuery) AllTenants() keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RefreshStatesQuery) CustomPlan() keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RefreshStatesQuery) Timeout(d time.Duration) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RefreshStatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RefreshStatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RefreshStatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RefreshStatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RefreshStatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RefreshStatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RefreshStatesQuery) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RefreshStatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RefreshStatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.RefreshState] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RefreshStatesQuery) Clone() keel.Query[*aianalytics.RefreshState] {
+	return &RefreshStatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RefreshStatesQuery) One(ctx context.Context, db *keel.DB) (*aianalytics.RefreshState, error) {
+	return keel.One[*aianalytics.RefreshState](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RefreshStatesQuery) First(ctx context.Context, db *keel.DB) (*aianalytics.RefreshState, error) {
+	return keel.First[*aianalytics.RefreshState](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RefreshStatesQuery) List(ctx context.Context, db *keel.DB) ([]*aianalytics.RefreshState, error) {
+	return keel.List[*aianalytics.RefreshState](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RefreshStatesQuery) All(ctx context.Context, db *keel.DB) ([]*aianalytics.RefreshState, error) {
+	return keel.All[*aianalytics.RefreshState](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RefreshStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aianalytics.RefreshState, error) {
+	return keel.UpdateReturning[*aianalytics.RefreshState](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RefreshStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aianalytics.RefreshState], error) {
+	return keel.PageOf[*aianalytics.RefreshState](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RefreshStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aianalytics.RefreshState) error) error {
+	return keel.Each[*aianalytics.RefreshState](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRefreshState() unsafe.Pointer { return unsafe.Pointer(new(aianalytics.RefreshState)) }
@@ -336,7 +1055,7 @@ var unitToolsRef = keel.Ref{Table: &unitToolsTable}
 
 // UnitToolsTable is the table of aianalytics.UnitTool.
 type UnitToolsTable struct {
-	keel.Handle[*aianalytics.UnitTool]
+	keel.TableBase
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	UnitID            keel.StringCol
@@ -352,7 +1071,7 @@ type UnitToolsTable struct {
 
 // UnitTools references the ai_work_unit_tools table.
 var UnitTools = &UnitToolsTable{
-	Handle:            keel.Handle[*aianalytics.UnitTool]{Ref: &unitToolsRef},
+	TableBase:         keel.TableBase{Ref: &unitToolsRef},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 1}}},
 	UnitID:            keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 2}},
@@ -366,10 +1085,10 @@ var UnitTools = &UnitToolsTable{
 	Calls:             keel.Int64Col{Col: keel.Col{Ref: &unitToolsRef, Index: 10}},
 }
 
-// BuildUnitTools builds the handle of ai_work_unit_tools for ref. Generated relation and alias methods call it.
+// BuildUnitTools builds the table of ai_work_unit_tools for ref. Generated relation and alias methods call it.
 func BuildUnitTools(r *keel.Ref) *UnitToolsTable {
 	return &UnitToolsTable{
-		Handle:            keel.Handle[*aianalytics.UnitTool]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		UnitID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -390,6 +1109,365 @@ func UnitToolsSchema() *schema.Table { return &unitToolsTable }
 // As returns a handle that references ai_work_unit_tools under its own alias.
 func (t *UnitToolsTable) As(alias string) *UnitToolsTable {
 	return keel.Alias(t.Ref, alias, BuildUnitTools)
+}
+
+// UnitToolsQuery is a query over aianalytics.UnitTool.
+type UnitToolsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aianalytics.UnitTool] = (*UnitToolsTable)(nil)
+
+var _ keel.Query[*aianalytics.UnitTool] = (*UnitToolsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *UnitToolsTable) Query() keel.Query[*aianalytics.UnitTool] {
+	return &UnitToolsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see UnitToolsQuery.Where.
+func (t *UnitToolsTable) Where(ps ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see UnitToolsQuery.Pick.
+func (t *UnitToolsTable) Pick(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see UnitToolsQuery.Load.
+func (t *UnitToolsTable) Load(ls ...keel.Loader) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see UnitToolsQuery.Omit.
+func (t *UnitToolsTable) Omit(cols ...keel.Column) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see UnitToolsQuery.Order.
+func (t *UnitToolsTable) Order(os ...keel.Order) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see UnitToolsQuery.Limit.
+func (t *UnitToolsTable) Limit(n int) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see UnitToolsQuery.Group.
+func (t *UnitToolsTable) Group(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see UnitToolsQuery.GroupingSets.
+func (t *UnitToolsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see UnitToolsQuery.Rollup.
+func (t *UnitToolsTable) Rollup(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see UnitToolsQuery.Cube.
+func (t *UnitToolsTable) Cube(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see UnitToolsQuery.AllTenants.
+func (t *UnitToolsTable) AllTenants() keel.Query[*aianalytics.UnitTool] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see UnitToolsQuery.Join.
+func (t *UnitToolsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see UnitToolsQuery.LeftJoin.
+func (t *UnitToolsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see UnitToolsQuery.LeftJoinLateral.
+func (t *UnitToolsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see UnitToolsQuery.JoinLateral.
+func (t *UnitToolsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see UnitToolsQuery.Lock.
+func (t *UnitToolsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see UnitToolsQuery.DistinctOn.
+func (t *UnitToolsTable) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see UnitToolsQuery.Cache.
+func (t *UnitToolsTable) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see UnitToolsQuery.LoadStrategy.
+func (t *UnitToolsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see UnitToolsQuery.With.
+func (t *UnitToolsTable) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see UnitToolsQuery.Compute.
+func (t *UnitToolsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *UnitToolsTable) Create(ctx context.Context, db *keel.DB, row *aianalytics.UnitTool) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *UnitToolsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aianalytics.UnitTool) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *UnitToolsTable) Save(ctx context.Context, db *keel.DB, row *aianalytics.UnitTool, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *UnitToolsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aianalytics.UnitTool, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *UnitToolsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aianalytics.UnitTool) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *UnitToolsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aianalytics.UnitTool, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *UnitToolsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aianalytics.UnitTool, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *UnitToolsTable) Copy(ctx context.Context, db *keel.DB, rows []*aianalytics.UnitTool) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *UnitToolsQuery) Where(ps ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *UnitToolsQuery) Pick(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *UnitToolsQuery) Omit(cols ...keel.Column) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *UnitToolsQuery) Load(ls ...keel.Loader) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *UnitToolsQuery) Order(os ...keel.Order) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *UnitToolsQuery) Distinct() keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *UnitToolsQuery) Group(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *UnitToolsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *UnitToolsQuery) Rollup(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *UnitToolsQuery) Cube(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *UnitToolsQuery) Window(name string, w keel.Window) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *UnitToolsQuery) Having(ps ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *UnitToolsQuery) Limit(n int) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *UnitToolsQuery) Offset(n int) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *UnitToolsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *UnitToolsQuery) AllTenants() keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *UnitToolsQuery) CustomPlan() keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *UnitToolsQuery) Timeout(d time.Duration) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *UnitToolsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *UnitToolsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *UnitToolsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *UnitToolsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *UnitToolsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *UnitToolsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *UnitToolsQuery) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *UnitToolsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *UnitToolsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.UnitTool] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *UnitToolsQuery) Clone() keel.Query[*aianalytics.UnitTool] {
+	return &UnitToolsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *UnitToolsQuery) One(ctx context.Context, db *keel.DB) (*aianalytics.UnitTool, error) {
+	return keel.One[*aianalytics.UnitTool](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *UnitToolsQuery) First(ctx context.Context, db *keel.DB) (*aianalytics.UnitTool, error) {
+	return keel.First[*aianalytics.UnitTool](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *UnitToolsQuery) List(ctx context.Context, db *keel.DB) ([]*aianalytics.UnitTool, error) {
+	return keel.List[*aianalytics.UnitTool](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *UnitToolsQuery) All(ctx context.Context, db *keel.DB) ([]*aianalytics.UnitTool, error) {
+	return keel.All[*aianalytics.UnitTool](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *UnitToolsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aianalytics.UnitTool, error) {
+	return keel.UpdateReturning[*aianalytics.UnitTool](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *UnitToolsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aianalytics.UnitTool], error) {
+	return keel.PageOf[*aianalytics.UnitTool](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *UnitToolsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aianalytics.UnitTool) error) error {
+	return keel.Each[*aianalytics.UnitTool](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newUnitTool() unsafe.Pointer { return unsafe.Pointer(new(aianalytics.UnitTool)) }
@@ -519,7 +1597,7 @@ var workUnitsRef = keel.Ref{Table: &workUnitsTable}
 
 // WorkUnitsTable is the table of aianalytics.WorkUnit.
 type WorkUnitsTable struct {
-	keel.Handle[*aianalytics.WorkUnit]
+	keel.TableBase
 	ID                  keel.StringCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -555,7 +1633,7 @@ type WorkUnitsTable struct {
 
 // WorkUnits references the ai_work_units table.
 var WorkUnits = &WorkUnitsTable{
-	Handle:              keel.Handle[*aianalytics.WorkUnit]{Ref: &workUnitsRef},
+	TableBase:           keel.TableBase{Ref: &workUnitsRef},
 	ID:                  keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 0}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 2}}},
@@ -589,10 +1667,10 @@ var WorkUnits = &WorkUnitsTable{
 	RefreshStamp:        keel.Int64Col{Col: keel.Col{Ref: &workUnitsRef, Index: 30}},
 }
 
-// BuildWorkUnits builds the handle of ai_work_units for ref. Generated relation and alias methods call it.
+// BuildWorkUnits builds the table of ai_work_units for ref. Generated relation and alias methods call it.
 func BuildWorkUnits(r *keel.Ref) *WorkUnitsTable {
 	return &WorkUnitsTable{
-		Handle:              keel.Handle[*aianalytics.WorkUnit]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -638,6 +1716,365 @@ func (t *WorkUnitsTable) As(alias string) *WorkUnitsTable {
 // Get returns the ai_work_units row with the given key, or keel.ErrNotFound.
 func (t *WorkUnitsTable) Get(ctx context.Context, db *keel.DB, key string) (*aianalytics.WorkUnit, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkUnitsQuery is a query over aianalytics.WorkUnit.
+type WorkUnitsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aianalytics.WorkUnit] = (*WorkUnitsTable)(nil)
+
+var _ keel.Query[*aianalytics.WorkUnit] = (*WorkUnitsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkUnitsTable) Query() keel.Query[*aianalytics.WorkUnit] {
+	return &WorkUnitsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkUnitsQuery.Where.
+func (t *WorkUnitsTable) Where(ps ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkUnitsQuery.Pick.
+func (t *WorkUnitsTable) Pick(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkUnitsQuery.Load.
+func (t *WorkUnitsTable) Load(ls ...keel.Loader) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkUnitsQuery.Omit.
+func (t *WorkUnitsTable) Omit(cols ...keel.Column) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkUnitsQuery.Order.
+func (t *WorkUnitsTable) Order(os ...keel.Order) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkUnitsQuery.Limit.
+func (t *WorkUnitsTable) Limit(n int) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkUnitsQuery.Group.
+func (t *WorkUnitsTable) Group(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkUnitsQuery.GroupingSets.
+func (t *WorkUnitsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkUnitsQuery.Rollup.
+func (t *WorkUnitsTable) Rollup(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkUnitsQuery.Cube.
+func (t *WorkUnitsTable) Cube(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkUnitsQuery.AllTenants.
+func (t *WorkUnitsTable) AllTenants() keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkUnitsQuery.Join.
+func (t *WorkUnitsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkUnitsQuery.LeftJoin.
+func (t *WorkUnitsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkUnitsQuery.LeftJoinLateral.
+func (t *WorkUnitsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkUnitsQuery.JoinLateral.
+func (t *WorkUnitsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkUnitsQuery.Lock.
+func (t *WorkUnitsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkUnitsQuery.DistinctOn.
+func (t *WorkUnitsTable) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkUnitsQuery.Cache.
+func (t *WorkUnitsTable) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkUnitsQuery.LoadStrategy.
+func (t *WorkUnitsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkUnitsQuery.With.
+func (t *WorkUnitsTable) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkUnitsQuery.Compute.
+func (t *WorkUnitsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkUnitsTable) Create(ctx context.Context, db *keel.DB, row *aianalytics.WorkUnit) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkUnitsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aianalytics.WorkUnit) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkUnitsTable) Save(ctx context.Context, db *keel.DB, row *aianalytics.WorkUnit, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkUnitsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aianalytics.WorkUnit, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkUnitsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aianalytics.WorkUnit) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkUnitsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aianalytics.WorkUnit, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkUnitsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aianalytics.WorkUnit, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkUnitsTable) Copy(ctx context.Context, db *keel.DB, rows []*aianalytics.WorkUnit) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkUnitsQuery) Where(ps ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkUnitsQuery) Pick(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkUnitsQuery) Omit(cols ...keel.Column) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkUnitsQuery) Load(ls ...keel.Loader) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkUnitsQuery) Order(os ...keel.Order) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkUnitsQuery) Distinct() keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkUnitsQuery) Group(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkUnitsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkUnitsQuery) Rollup(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkUnitsQuery) Cube(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkUnitsQuery) Window(name string, w keel.Window) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkUnitsQuery) Having(ps ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkUnitsQuery) Limit(n int) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkUnitsQuery) Offset(n int) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkUnitsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkUnitsQuery) AllTenants() keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkUnitsQuery) CustomPlan() keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkUnitsQuery) Timeout(d time.Duration) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkUnitsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkUnitsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkUnitsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkUnitsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkUnitsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkUnitsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkUnitsQuery) With(ctes ...*keel.CTETable) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkUnitsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkUnitsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aianalytics.WorkUnit] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkUnitsQuery) Clone() keel.Query[*aianalytics.WorkUnit] {
+	return &WorkUnitsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkUnitsQuery) One(ctx context.Context, db *keel.DB) (*aianalytics.WorkUnit, error) {
+	return keel.One[*aianalytics.WorkUnit](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkUnitsQuery) First(ctx context.Context, db *keel.DB) (*aianalytics.WorkUnit, error) {
+	return keel.First[*aianalytics.WorkUnit](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkUnitsQuery) List(ctx context.Context, db *keel.DB) ([]*aianalytics.WorkUnit, error) {
+	return keel.List[*aianalytics.WorkUnit](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkUnitsQuery) All(ctx context.Context, db *keel.DB) ([]*aianalytics.WorkUnit, error) {
+	return keel.All[*aianalytics.WorkUnit](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkUnitsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aianalytics.WorkUnit, error) {
+	return keel.UpdateReturning[*aianalytics.WorkUnit](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkUnitsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aianalytics.WorkUnit], error) {
+	return keel.PageOf[*aianalytics.WorkUnit](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkUnitsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aianalytics.WorkUnit) error) error {
+	return keel.Each[*aianalytics.WorkUnit](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkUnit() unsafe.Pointer { return unsafe.Pointer(new(aianalytics.WorkUnit)) }

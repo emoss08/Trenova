@@ -39,7 +39,7 @@ func New(p Params) rateimportports.RateImportRepository {
 
 func batchQuery(
 	req *rateimportports.GetRateImportBatchByIDRequest,
-) *keel.Query[*rateimport.RateImportBatch] {
+) keel.Query[*rateimport.RateImportBatch] {
 	b := rateimportdb.RateImportBatches
 	q := b.Where(b.ID.Eq(req.RateImportBatchID))
 	if req.IncludeRows {
@@ -67,7 +67,7 @@ func (r *repository) GetByID(
 
 func batchesQuery(
 	req *rateimportports.ListRateImportBatchesRequest,
-) *keel.Query[*rateimport.RateImportBatch] {
+) keel.Query[*rateimport.RateImportBatch] {
 	b := rateimportdb.RateImportBatches
 	if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
 		return b.Where(b.RateAgreementID.Eq(*req.RateAgreementID))
@@ -110,7 +110,7 @@ func (r *repository) List(
 
 func importRowsQuery(
 	req *rateimportports.ListRateImportRowsRequest,
-) *keel.Query[*rateimport.RateImportRow] {
+) keel.Query[*rateimport.RateImportRow] {
 	row := rateimportdb.RateImportRows
 
 	return row.Where(

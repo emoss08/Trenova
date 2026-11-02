@@ -1273,28 +1273,28 @@ func (fs *fuelSeeder) finishRuns() *fuelImport {
 }
 
 func (fs *fuelSeeder) writeFuel(ctx context.Context, tx *keel.DB, imp *fuelImport) error {
-	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cards); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.FuelCards, fs.cards); err != nil {
 		return fmt.Errorf("insert fuel cards: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.FuelCards.Handle, fs.cardStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.FuelCards, fs.cardStamps); err != nil {
 		return err
 	}
 
-	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batches); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.ImportBatches, imp.batches); err != nil {
 		return fmt.Errorf("insert fuel feed runs: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.ImportBatches.Handle, imp.batchStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.ImportBatches, imp.batchStamps); err != nil {
 		return err
 	}
 
-	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchases); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.FuelPurchases, fs.purchases); err != nil {
 		return fmt.Errorf("insert fuel purchases: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.FuelPurchases.Handle, fs.purchaseStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, fuelpurchasedb.FuelPurchases, fs.purchaseStamps); err != nil {
 		return err
 	}
 
-	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.ImportRows.Handle, imp.rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, fuelpurchasedb.ImportRows, imp.rows); err != nil {
 		return fmt.Errorf("insert fuel import rows: %w", err)
 	}
 	if err := volumegen.BackdateTableCreated(ctx, tx, "fuel_purchase_import_rows", imp.rowStamps); err != nil {
@@ -1351,16 +1351,16 @@ func (fs *fuelSeeder) writeFeedStates(
 }
 
 func (fs *fuelSeeder) writeMiles(ctx context.Context, tx *keel.DB) error {
-	if err := volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeMiles); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles, fs.routeMiles); err != nil {
 		return fmt.Errorf("insert move jurisdiction miles: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles.Handle, fs.routeStamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, shipmentdb.ShipmentMoveJurisdictionMiles, fs.routeStamps); err != nil {
 		return err
 	}
-	if err := volumegen.InsertRows(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entries); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, iftadb.JurisdictionMileageEntries, fs.entries); err != nil {
 		return fmt.Errorf("insert jurisdiction mileage entries: %w", err)
 	}
-	return volumegen.Backdate(ctx, tx, iftadb.JurisdictionMileageEntries.Handle, fs.entryStamps)
+	return volumegen.Backdate(ctx, tx, iftadb.JurisdictionMileageEntries, fs.entryStamps)
 }
 
 func (fs *fuelSeeder) rateFor(
@@ -1901,16 +1901,16 @@ func (fs *fuelSeeder) seedReturns(ctx context.Context) error {
 	}
 
 	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if err := volumegen.InsertRows(ctx, tx, iftadb.Returns.Handle, returns); err != nil {
+		if err := volumegen.InsertRows(ctx, tx, iftadb.Returns, returns); err != nil {
 			return fmt.Errorf("insert ifta returns: %w", err)
 		}
-		if err := volumegen.InsertRows(ctx, tx, iftadb.ReturnLines.Handle, lines); err != nil {
+		if err := volumegen.InsertRows(ctx, tx, iftadb.ReturnLines, lines); err != nil {
 			return fmt.Errorf("insert ifta return lines: %w", err)
 		}
-		if err := volumegen.Backdate(ctx, tx, iftadb.Returns.Handle, returnStamps); err != nil {
+		if err := volumegen.Backdate(ctx, tx, iftadb.Returns, returnStamps); err != nil {
 			return err
 		}
-		return volumegen.Backdate(ctx, tx, iftadb.ReturnLines.Handle, lineStamps)
+		return volumegen.Backdate(ctx, tx, iftadb.ReturnLines, lineStamps)
 	}); err != nil {
 		return err
 	}

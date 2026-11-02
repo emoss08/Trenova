@@ -211,12 +211,18 @@ func newTrucksTable(name, alias string, owners *schema.Table) *schema.Table {
 	return t
 }
 
+type testTable[T any] struct {
+	Ref *keel.Ref
+}
+
+func (t testTable[T]) Query() keel.Query[T] { return keel.QueryOf[T](t.Ref) }
+
 var (
 	testOwners = newOwnersTable()
-	testTrucks = keel.Handle[*testTruck]{
+	testTrucks = testTable[*testTruck]{
 		Ref: &keel.Ref{Table: newTrucksTable("test_trucks", "t", testOwners)},
 	}
-	testPlainTrucks = keel.Handle[*testPlainTruck]{
+	testPlainTrucks = testTable[*testPlainTruck]{
 		Ref: &keel.Ref{Table: newTrucksTable("test_plain_trucks", "pt", testOwners)},
 	}
 )

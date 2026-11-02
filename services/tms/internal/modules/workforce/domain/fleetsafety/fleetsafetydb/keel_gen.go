@@ -4,6 +4,7 @@ package fleetsafetydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -67,7 +68,7 @@ var workerSafetyViolationsRef = keel.Ref{Table: &workerSafetyViolationsTable}
 
 // WorkerSafetyViolationsTable is the table of fleetsafety.WorkerSafetyViolation.
 type WorkerSafetyViolationsTable struct {
-	keel.Handle[*fleetsafety.WorkerSafetyViolation]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -85,7 +86,7 @@ type WorkerSafetyViolationsTable struct {
 
 // WorkerSafetyViolations references the worker_safety_violations table.
 var WorkerSafetyViolations = &WorkerSafetyViolationsTable{
-	Handle:         keel.Handle[*fleetsafety.WorkerSafetyViolation]{Ref: &workerSafetyViolationsRef},
+	TableBase:      keel.TableBase{Ref: &workerSafetyViolationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 2}}},
@@ -101,10 +102,10 @@ var WorkerSafetyViolations = &WorkerSafetyViolationsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerSafetyViolationsRef, Index: 12}},
 }
 
-// BuildWorkerSafetyViolations builds the handle of worker_safety_violations for ref. Generated relation and alias methods call it.
+// BuildWorkerSafetyViolations builds the table of worker_safety_violations for ref. Generated relation and alias methods call it.
 func BuildWorkerSafetyViolations(r *keel.Ref) *WorkerSafetyViolationsTable {
 	return &WorkerSafetyViolationsTable{
-		Handle:         keel.Handle[*fleetsafety.WorkerSafetyViolation]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -137,6 +138,365 @@ func (t *WorkerSafetyViolationsTable) SafetyEvent() *workersafetydb.WorkerSafety
 // Get returns the worker_safety_violations row with the given key, or keel.ErrNotFound.
 func (t *WorkerSafetyViolationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fleetsafety.WorkerSafetyViolation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerSafetyViolationsQuery is a query over fleetsafety.WorkerSafetyViolation.
+type WorkerSafetyViolationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fleetsafety.WorkerSafetyViolation] = (*WorkerSafetyViolationsTable)(nil)
+
+var _ keel.Query[*fleetsafety.WorkerSafetyViolation] = (*WorkerSafetyViolationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerSafetyViolationsTable) Query() keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return &WorkerSafetyViolationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerSafetyViolationsQuery.Where.
+func (t *WorkerSafetyViolationsTable) Where(ps ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerSafetyViolationsQuery.Pick.
+func (t *WorkerSafetyViolationsTable) Pick(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerSafetyViolationsQuery.Load.
+func (t *WorkerSafetyViolationsTable) Load(ls ...keel.Loader) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerSafetyViolationsQuery.Omit.
+func (t *WorkerSafetyViolationsTable) Omit(cols ...keel.Column) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerSafetyViolationsQuery.Order.
+func (t *WorkerSafetyViolationsTable) Order(os ...keel.Order) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerSafetyViolationsQuery.Limit.
+func (t *WorkerSafetyViolationsTable) Limit(n int) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerSafetyViolationsQuery.Group.
+func (t *WorkerSafetyViolationsTable) Group(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerSafetyViolationsQuery.GroupingSets.
+func (t *WorkerSafetyViolationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerSafetyViolationsQuery.Rollup.
+func (t *WorkerSafetyViolationsTable) Rollup(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerSafetyViolationsQuery.Cube.
+func (t *WorkerSafetyViolationsTable) Cube(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerSafetyViolationsQuery.AllTenants.
+func (t *WorkerSafetyViolationsTable) AllTenants() keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerSafetyViolationsQuery.Join.
+func (t *WorkerSafetyViolationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerSafetyViolationsQuery.LeftJoin.
+func (t *WorkerSafetyViolationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerSafetyViolationsQuery.LeftJoinLateral.
+func (t *WorkerSafetyViolationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerSafetyViolationsQuery.JoinLateral.
+func (t *WorkerSafetyViolationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerSafetyViolationsQuery.Lock.
+func (t *WorkerSafetyViolationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerSafetyViolationsQuery.DistinctOn.
+func (t *WorkerSafetyViolationsTable) DistinctOn(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerSafetyViolationsQuery.Cache.
+func (t *WorkerSafetyViolationsTable) Cache(opts ...keel.CacheOption) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerSafetyViolationsQuery.LoadStrategy.
+func (t *WorkerSafetyViolationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerSafetyViolationsQuery.With.
+func (t *WorkerSafetyViolationsTable) With(ctes ...*keel.CTETable) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerSafetyViolationsQuery.Compute.
+func (t *WorkerSafetyViolationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerSafetyViolationsTable) Create(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerSafetyViolationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerSafetyViolationsTable) Save(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerSafetyViolationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerSafetyViolationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fleetsafety.WorkerSafetyViolation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerSafetyViolationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerSafetyViolationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerSafetyViolationsTable) Copy(ctx context.Context, db *keel.DB, rows []*fleetsafety.WorkerSafetyViolation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerSafetyViolationsQuery) Where(ps ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerSafetyViolationsQuery) Pick(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerSafetyViolationsQuery) Omit(cols ...keel.Column) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerSafetyViolationsQuery) Load(ls ...keel.Loader) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerSafetyViolationsQuery) Order(os ...keel.Order) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerSafetyViolationsQuery) Distinct() keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerSafetyViolationsQuery) Group(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerSafetyViolationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerSafetyViolationsQuery) Rollup(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerSafetyViolationsQuery) Cube(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerSafetyViolationsQuery) Window(name string, w keel.Window) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerSafetyViolationsQuery) Having(ps ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerSafetyViolationsQuery) Limit(n int) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerSafetyViolationsQuery) Offset(n int) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerSafetyViolationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerSafetyViolationsQuery) AllTenants() keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerSafetyViolationsQuery) CustomPlan() keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerSafetyViolationsQuery) Timeout(d time.Duration) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerSafetyViolationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerSafetyViolationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerSafetyViolationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerSafetyViolationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerSafetyViolationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerSafetyViolationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerSafetyViolationsQuery) With(ctes ...*keel.CTETable) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerSafetyViolationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerSafetyViolationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerSafetyViolationsQuery) Clone() keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	return &WorkerSafetyViolationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerSafetyViolationsQuery) One(ctx context.Context, db *keel.DB) (*fleetsafety.WorkerSafetyViolation, error) {
+	return keel.One[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerSafetyViolationsQuery) First(ctx context.Context, db *keel.DB) (*fleetsafety.WorkerSafetyViolation, error) {
+	return keel.First[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerSafetyViolationsQuery) List(ctx context.Context, db *keel.DB) ([]*fleetsafety.WorkerSafetyViolation, error) {
+	return keel.List[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerSafetyViolationsQuery) All(ctx context.Context, db *keel.DB) ([]*fleetsafety.WorkerSafetyViolation, error) {
+	return keel.All[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerSafetyViolationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fleetsafety.WorkerSafetyViolation, error) {
+	return keel.UpdateReturning[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerSafetyViolationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fleetsafety.WorkerSafetyViolation], error) {
+	return keel.PageOf[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerSafetyViolationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fleetsafety.WorkerSafetyViolation) error) error {
+	return keel.Each[*fleetsafety.WorkerSafetyViolation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerSafetyViolation() unsafe.Pointer {

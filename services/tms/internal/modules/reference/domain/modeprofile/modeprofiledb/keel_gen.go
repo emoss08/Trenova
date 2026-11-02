@@ -4,6 +4,7 @@ package modeprofiledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -68,7 +69,7 @@ var capabilityRulesRef = keel.Ref{Table: &capabilityRulesTable}
 
 // CapabilityRulesTable is the table of modeprofile.CapabilityRule.
 type CapabilityRulesTable struct {
-	keel.Handle[*modeprofile.CapabilityRule]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -86,7 +87,7 @@ type CapabilityRulesTable struct {
 
 // CapabilityRules references the mode_profile_capability_rules table.
 var CapabilityRules = &CapabilityRulesTable{
-	Handle:         keel.Handle[*modeprofile.CapabilityRule]{Ref: &capabilityRulesRef},
+	TableBase:      keel.TableBase{Ref: &capabilityRulesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capabilityRulesRef, Index: 2}}},
@@ -102,10 +103,10 @@ var CapabilityRules = &CapabilityRulesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &capabilityRulesRef, Index: 12}},
 }
 
-// BuildCapabilityRules builds the handle of mode_profile_capability_rules for ref. Generated relation and alias methods call it.
+// BuildCapabilityRules builds the table of mode_profile_capability_rules for ref. Generated relation and alias methods call it.
 func BuildCapabilityRules(r *keel.Ref) *CapabilityRulesTable {
 	return &CapabilityRulesTable{
-		Handle:         keel.Handle[*modeprofile.CapabilityRule]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -136,6 +137,365 @@ func (t *CapabilityRulesTable) Profile() *ProfilesTable { return keel.Path(t.Ref
 // Get returns the mode_profile_capability_rules row with the given key, or keel.ErrNotFound.
 func (t *CapabilityRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*modeprofile.CapabilityRule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CapabilityRulesQuery is a query over modeprofile.CapabilityRule.
+type CapabilityRulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*modeprofile.CapabilityRule] = (*CapabilityRulesTable)(nil)
+
+var _ keel.Query[*modeprofile.CapabilityRule] = (*CapabilityRulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CapabilityRulesTable) Query() keel.Query[*modeprofile.CapabilityRule] {
+	return &CapabilityRulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CapabilityRulesQuery.Where.
+func (t *CapabilityRulesTable) Where(ps ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CapabilityRulesQuery.Pick.
+func (t *CapabilityRulesTable) Pick(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CapabilityRulesQuery.Load.
+func (t *CapabilityRulesTable) Load(ls ...keel.Loader) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CapabilityRulesQuery.Omit.
+func (t *CapabilityRulesTable) Omit(cols ...keel.Column) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CapabilityRulesQuery.Order.
+func (t *CapabilityRulesTable) Order(os ...keel.Order) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CapabilityRulesQuery.Limit.
+func (t *CapabilityRulesTable) Limit(n int) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CapabilityRulesQuery.Group.
+func (t *CapabilityRulesTable) Group(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CapabilityRulesQuery.GroupingSets.
+func (t *CapabilityRulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CapabilityRulesQuery.Rollup.
+func (t *CapabilityRulesTable) Rollup(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CapabilityRulesQuery.Cube.
+func (t *CapabilityRulesTable) Cube(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CapabilityRulesQuery.AllTenants.
+func (t *CapabilityRulesTable) AllTenants() keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CapabilityRulesQuery.Join.
+func (t *CapabilityRulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CapabilityRulesQuery.LeftJoin.
+func (t *CapabilityRulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CapabilityRulesQuery.LeftJoinLateral.
+func (t *CapabilityRulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CapabilityRulesQuery.JoinLateral.
+func (t *CapabilityRulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CapabilityRulesQuery.Lock.
+func (t *CapabilityRulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CapabilityRulesQuery.DistinctOn.
+func (t *CapabilityRulesTable) DistinctOn(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CapabilityRulesQuery.Cache.
+func (t *CapabilityRulesTable) Cache(opts ...keel.CacheOption) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CapabilityRulesQuery.LoadStrategy.
+func (t *CapabilityRulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CapabilityRulesQuery.With.
+func (t *CapabilityRulesTable) With(ctes ...*keel.CTETable) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CapabilityRulesQuery.Compute.
+func (t *CapabilityRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CapabilityRulesTable) Create(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CapabilityRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CapabilityRulesTable) Save(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CapabilityRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CapabilityRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *modeprofile.CapabilityRule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CapabilityRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CapabilityRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CapabilityRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*modeprofile.CapabilityRule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CapabilityRulesQuery) Where(ps ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CapabilityRulesQuery) Pick(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CapabilityRulesQuery) Omit(cols ...keel.Column) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CapabilityRulesQuery) Load(ls ...keel.Loader) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CapabilityRulesQuery) Order(os ...keel.Order) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CapabilityRulesQuery) Distinct() keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CapabilityRulesQuery) Group(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CapabilityRulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CapabilityRulesQuery) Rollup(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CapabilityRulesQuery) Cube(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CapabilityRulesQuery) Window(name string, w keel.Window) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CapabilityRulesQuery) Having(ps ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CapabilityRulesQuery) Limit(n int) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CapabilityRulesQuery) Offset(n int) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CapabilityRulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CapabilityRulesQuery) AllTenants() keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CapabilityRulesQuery) CustomPlan() keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CapabilityRulesQuery) Timeout(d time.Duration) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CapabilityRulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CapabilityRulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CapabilityRulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CapabilityRulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CapabilityRulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CapabilityRulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CapabilityRulesQuery) With(ctes ...*keel.CTETable) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CapabilityRulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CapabilityRulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*modeprofile.CapabilityRule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CapabilityRulesQuery) Clone() keel.Query[*modeprofile.CapabilityRule] {
+	return &CapabilityRulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CapabilityRulesQuery) One(ctx context.Context, db *keel.DB) (*modeprofile.CapabilityRule, error) {
+	return keel.One[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CapabilityRulesQuery) First(ctx context.Context, db *keel.DB) (*modeprofile.CapabilityRule, error) {
+	return keel.First[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CapabilityRulesQuery) List(ctx context.Context, db *keel.DB) ([]*modeprofile.CapabilityRule, error) {
+	return keel.List[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CapabilityRulesQuery) All(ctx context.Context, db *keel.DB) ([]*modeprofile.CapabilityRule, error) {
+	return keel.All[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CapabilityRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*modeprofile.CapabilityRule, error) {
+	return keel.UpdateReturning[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CapabilityRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*modeprofile.CapabilityRule], error) {
+	return keel.PageOf[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CapabilityRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*modeprofile.CapabilityRule) error) error {
+	return keel.Each[*modeprofile.CapabilityRule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCapabilityRule() unsafe.Pointer { return unsafe.Pointer(new(modeprofile.CapabilityRule)) }
@@ -300,7 +660,7 @@ var deviationsRef = keel.Ref{Table: &deviationsTable}
 
 // DeviationsTable is the table of modeprofile.Deviation.
 type DeviationsTable struct {
-	keel.Handle[*modeprofile.Deviation]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -328,7 +688,7 @@ type DeviationsTable struct {
 
 // Deviations references the mode_profile_deviations table.
 var Deviations = &DeviationsTable{
-	Handle:                keel.Handle[*modeprofile.Deviation]{Ref: &deviationsRef},
+	TableBase:             keel.TableBase{Ref: &deviationsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 2}}},
@@ -354,10 +714,10 @@ var Deviations = &DeviationsTable{
 	Rank:                  keel.StringCol{Col: keel.Col{Ref: &deviationsRef, Index: 22}},
 }
 
-// BuildDeviations builds the handle of mode_profile_deviations for ref. Generated relation and alias methods call it.
+// BuildDeviations builds the table of mode_profile_deviations for ref. Generated relation and alias methods call it.
 func BuildDeviations(r *keel.Ref) *DeviationsTable {
 	return &DeviationsTable{
-		Handle:                keel.Handle[*modeprofile.Deviation]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -403,6 +763,365 @@ func (t *DeviationsTable) AcknowledgedBy() *tenantdb.UsersTable {
 // Get returns the mode_profile_deviations row with the given key, or keel.ErrNotFound.
 func (t *DeviationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*modeprofile.Deviation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DeviationsQuery is a query over modeprofile.Deviation.
+type DeviationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*modeprofile.Deviation] = (*DeviationsTable)(nil)
+
+var _ keel.Query[*modeprofile.Deviation] = (*DeviationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DeviationsTable) Query() keel.Query[*modeprofile.Deviation] {
+	return &DeviationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DeviationsQuery.Where.
+func (t *DeviationsTable) Where(ps ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DeviationsQuery.Pick.
+func (t *DeviationsTable) Pick(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DeviationsQuery.Load.
+func (t *DeviationsTable) Load(ls ...keel.Loader) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DeviationsQuery.Omit.
+func (t *DeviationsTable) Omit(cols ...keel.Column) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DeviationsQuery.Order.
+func (t *DeviationsTable) Order(os ...keel.Order) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DeviationsQuery.Limit.
+func (t *DeviationsTable) Limit(n int) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DeviationsQuery.Group.
+func (t *DeviationsTable) Group(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DeviationsQuery.GroupingSets.
+func (t *DeviationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DeviationsQuery.Rollup.
+func (t *DeviationsTable) Rollup(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DeviationsQuery.Cube.
+func (t *DeviationsTable) Cube(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DeviationsQuery.AllTenants.
+func (t *DeviationsTable) AllTenants() keel.Query[*modeprofile.Deviation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DeviationsQuery.Join.
+func (t *DeviationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DeviationsQuery.LeftJoin.
+func (t *DeviationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DeviationsQuery.LeftJoinLateral.
+func (t *DeviationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Deviation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DeviationsQuery.JoinLateral.
+func (t *DeviationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Deviation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DeviationsQuery.Lock.
+func (t *DeviationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DeviationsQuery.DistinctOn.
+func (t *DeviationsTable) DistinctOn(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DeviationsQuery.Cache.
+func (t *DeviationsTable) Cache(opts ...keel.CacheOption) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DeviationsQuery.LoadStrategy.
+func (t *DeviationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*modeprofile.Deviation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DeviationsQuery.With.
+func (t *DeviationsTable) With(ctes ...*keel.CTETable) keel.Query[*modeprofile.Deviation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DeviationsQuery.Compute.
+func (t *DeviationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*modeprofile.Deviation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DeviationsTable) Create(ctx context.Context, db *keel.DB, row *modeprofile.Deviation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DeviationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DeviationsTable) Save(ctx context.Context, db *keel.DB, row *modeprofile.Deviation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DeviationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *modeprofile.Deviation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DeviationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *modeprofile.Deviation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DeviationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DeviationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DeviationsTable) Copy(ctx context.Context, db *keel.DB, rows []*modeprofile.Deviation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DeviationsQuery) Where(ps ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DeviationsQuery) Pick(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DeviationsQuery) Omit(cols ...keel.Column) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DeviationsQuery) Load(ls ...keel.Loader) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DeviationsQuery) Order(os ...keel.Order) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DeviationsQuery) Distinct() keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DeviationsQuery) Group(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DeviationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DeviationsQuery) Rollup(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DeviationsQuery) Cube(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DeviationsQuery) Window(name string, w keel.Window) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DeviationsQuery) Having(ps ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DeviationsQuery) Limit(n int) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DeviationsQuery) Offset(n int) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DeviationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DeviationsQuery) AllTenants() keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DeviationsQuery) CustomPlan() keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DeviationsQuery) Timeout(d time.Duration) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DeviationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DeviationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DeviationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DeviationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DeviationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DeviationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DeviationsQuery) With(ctes ...*keel.CTETable) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DeviationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DeviationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*modeprofile.Deviation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DeviationsQuery) Clone() keel.Query[*modeprofile.Deviation] {
+	return &DeviationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DeviationsQuery) One(ctx context.Context, db *keel.DB) (*modeprofile.Deviation, error) {
+	return keel.One[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DeviationsQuery) First(ctx context.Context, db *keel.DB) (*modeprofile.Deviation, error) {
+	return keel.First[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DeviationsQuery) List(ctx context.Context, db *keel.DB) ([]*modeprofile.Deviation, error) {
+	return keel.List[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DeviationsQuery) All(ctx context.Context, db *keel.DB) ([]*modeprofile.Deviation, error) {
+	return keel.All[*modeprofile.Deviation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DeviationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*modeprofile.Deviation, error) {
+	return keel.UpdateReturning[*modeprofile.Deviation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DeviationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*modeprofile.Deviation], error) {
+	return keel.PageOf[*modeprofile.Deviation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DeviationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*modeprofile.Deviation) error) error {
+	return keel.Each[*modeprofile.Deviation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDeviation() unsafe.Pointer { return unsafe.Pointer(new(modeprofile.Deviation)) }
@@ -622,7 +1341,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of modeprofile.Profile.
 type ProfilesTable struct {
-	keel.Handle[*modeprofile.Profile]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -652,7 +1371,7 @@ type ProfilesTable struct {
 
 // Profiles references the mode_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:             keel.Handle[*modeprofile.Profile]{Ref: &profilesRef},
+	TableBase:          keel.TableBase{Ref: &profilesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -680,10 +1399,10 @@ var Profiles = &ProfilesTable{
 	Rank:               keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 24}},
 }
 
-// BuildProfiles builds the handle of mode_profiles for ref. Generated relation and alias methods call it.
+// BuildProfiles builds the table of mode_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:             keel.Handle[*modeprofile.Profile]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -728,6 +1447,365 @@ func (t *ProfilesTable) Rules() *CapabilityRulesTable {
 // Get returns the mode_profiles row with the given key, or keel.ErrNotFound.
 func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*modeprofile.Profile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProfilesQuery is a query over modeprofile.Profile.
+type ProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*modeprofile.Profile] = (*ProfilesTable)(nil)
+
+var _ keel.Query[*modeprofile.Profile] = (*ProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProfilesTable) Query() keel.Query[*modeprofile.Profile] {
+	return &ProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProfilesQuery.Where.
+func (t *ProfilesTable) Where(ps ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProfilesQuery.Pick.
+func (t *ProfilesTable) Pick(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProfilesQuery.Load.
+func (t *ProfilesTable) Load(ls ...keel.Loader) keel.Query[*modeprofile.Profile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProfilesQuery.Omit.
+func (t *ProfilesTable) Omit(cols ...keel.Column) keel.Query[*modeprofile.Profile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProfilesQuery.Order.
+func (t *ProfilesTable) Order(os ...keel.Order) keel.Query[*modeprofile.Profile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProfilesQuery.Limit.
+func (t *ProfilesTable) Limit(n int) keel.Query[*modeprofile.Profile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProfilesQuery.Group.
+func (t *ProfilesTable) Group(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProfilesQuery.GroupingSets.
+func (t *ProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProfilesQuery.Rollup.
+func (t *ProfilesTable) Rollup(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProfilesQuery.Cube.
+func (t *ProfilesTable) Cube(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProfilesQuery.AllTenants.
+func (t *ProfilesTable) AllTenants() keel.Query[*modeprofile.Profile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProfilesQuery.Join.
+func (t *ProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProfilesQuery.LeftJoin.
+func (t *ProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProfilesQuery.LeftJoinLateral.
+func (t *ProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Profile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProfilesQuery.JoinLateral.
+func (t *ProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Profile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProfilesQuery.Lock.
+func (t *ProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*modeprofile.Profile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProfilesQuery.DistinctOn.
+func (t *ProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProfilesQuery.Cache.
+func (t *ProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*modeprofile.Profile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProfilesQuery.LoadStrategy.
+func (t *ProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*modeprofile.Profile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProfilesQuery.With.
+func (t *ProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*modeprofile.Profile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProfilesQuery.Compute.
+func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*modeprofile.Profile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *modeprofile.Profile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *modeprofile.Profile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *modeprofile.Profile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *modeprofile.Profile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*modeprofile.Profile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProfilesQuery) Where(ps ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProfilesQuery) Pick(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProfilesQuery) Omit(cols ...keel.Column) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProfilesQuery) Load(ls ...keel.Loader) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProfilesQuery) Order(os ...keel.Order) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProfilesQuery) Distinct() keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProfilesQuery) Group(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProfilesQuery) Cube(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProfilesQuery) Window(name string, w keel.Window) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProfilesQuery) Having(ps ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProfilesQuery) Limit(n int) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProfilesQuery) Offset(n int) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProfilesQuery) AllTenants() keel.Query[*modeprofile.Profile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProfilesQuery) CustomPlan() keel.Query[*modeprofile.Profile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProfilesQuery) Timeout(d time.Duration) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*modeprofile.Profile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProfilesQuery) Clone() keel.Query[*modeprofile.Profile] {
+	return &ProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*modeprofile.Profile, error) {
+	return keel.One[*modeprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*modeprofile.Profile, error) {
+	return keel.First[*modeprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*modeprofile.Profile, error) {
+	return keel.List[*modeprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*modeprofile.Profile, error) {
+	return keel.All[*modeprofile.Profile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*modeprofile.Profile, error) {
+	return keel.UpdateReturning[*modeprofile.Profile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*modeprofile.Profile], error) {
+	return keel.PageOf[*modeprofile.Profile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*modeprofile.Profile) error) error {
+	return keel.Each[*modeprofile.Profile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(modeprofile.Profile)) }

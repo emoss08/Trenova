@@ -110,7 +110,7 @@ func (r *factRepository) ListCandidateShipments(
 	})
 }
 
-func candidateShipmentsQuery(since int64, limit int) *keel.Query[*keel.Row] {
+func candidateShipmentsQuery(since int64, limit int) keel.Query[*keel.Row] {
 	sp := shipmentdb.Shipments
 	d := documentdb.Documents
 
@@ -140,7 +140,7 @@ func candidateShipmentsQuery(since int64, limit int) *keel.Query[*keel.Row] {
 		Limit(limit)
 }
 
-func notifyingShipments(match ...keel.Pred) *keel.Query[*shipment.Shipment] {
+func notifyingShipments(match ...keel.Pred) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	pc := trackingprofiledb.Profiles
 

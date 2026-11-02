@@ -243,7 +243,7 @@ type balancePointRecord struct {
 	BilledMinor    int64
 }
 
-func balanceSeriesQuery(req customerledgerports.ListARSeriesRequest) *keel.Query[*keel.Row] {
+func balanceSeriesQuery(req customerledgerports.ListARSeriesRequest) keel.Query[*keel.Row] {
 	at := seriesWindow(req).build()
 	items := at.items
 	points := at.points
@@ -307,7 +307,7 @@ type agingTrendRecord struct {
 	TotalOpenMinor  int64
 }
 
-func agingTrendQuery(req customerledgerports.ListARSeriesRequest) *keel.Query[*keel.Row] {
+func agingTrendQuery(req customerledgerports.ListARSeriesRequest) keel.Query[*keel.Row] {
 	at := seriesWindow(req).build()
 	items := at.items
 	points := at.points
@@ -403,7 +403,7 @@ func (r *repository) ListCashFlow(
 	)
 }
 
-func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*keel.Row] {
+func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) keel.Query[*keel.Row] {
 	weeks := keel.CTE("weeks", []string{"week_start"}, keel.Rows(
 		"week",
 		[]string{"week_start"},
@@ -492,7 +492,7 @@ type collectionTotalsRecord struct {
 	PostedInvoiceCount       int
 }
 
-func collectionTotalsQuery(periodStart, periodEnd int64) *keel.Query[*keel.Row] {
+func collectionTotalsQuery(periodStart, periodEnd int64) keel.Query[*keel.Row] {
 	at := instantWindow(periodStart).build()
 	items := at.items
 	bounds := keel.CTE("bounds", []string{"period_start", colPeriodEnd}, keel.Rows(
@@ -676,7 +676,7 @@ var worklistColumns = []string{
 
 func worklistQuery(
 	req customerledgerports.ListARCollectionsWorklistRequest,
-) *keel.Query[*keel.Row] {
+) keel.Query[*keel.Row] {
 	inv := invoicedb.Invoices
 	od := invoicedisputedb.InvoiceDisputes.As("od")
 	items := keel.CTE("items", worklistColumns, inv.
@@ -774,7 +774,7 @@ type monthlyCollectionRecord struct {
 
 func customerSnapshotQuery(
 	req customerledgerports.GetARCustomerSnapshotRequest,
-) *keel.Query[*customer.Customer] {
+) keel.Query[*customer.Customer] {
 	cus := customerdb.Customers
 	cbp := customerdb.CustomerBillingProfiles.As("cbp")
 	cp := customerpaymentdb.Payments.As("cp")
@@ -785,7 +785,7 @@ func customerSnapshotQuery(
 	profile := func(e keel.Expr) keel.Expr {
 		return keel.Scalar(cbp.Pick(e).Where(cbp.CustomerID.EqCol(cus.ID)))
 	}
-	payments := func() *keel.Query[*customerpayment.Payment] {
+	payments := func() keel.Query[*customerpayment.Payment] {
 		return cp.Where(cp.CustomerID.EqCol(cus.ID), cp.Status.Eq(customerpayment.StatusPosted))
 	}
 	openInvoices := func(e keel.Expr) keel.Expr {
@@ -823,7 +823,7 @@ func customerSnapshotQuery(
 
 func customerMonthlyCollectionsQuery(
 	req customerledgerports.GetARCustomerSnapshotRequest,
-) *keel.Query[*customerpayment.Payment] {
+) keel.Query[*customerpayment.Payment] {
 	cp := customerpaymentdb.Payments
 	month := keel.Epoch(keel.DateTrunc("month", keel.ToTimestamp(cp.PaymentDate)))
 	return cp.

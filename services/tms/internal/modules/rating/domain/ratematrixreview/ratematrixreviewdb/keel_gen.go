@@ -4,6 +4,7 @@ package ratematrixreviewdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -65,7 +66,7 @@ var rateMatrixReviewsRef = keel.Ref{Table: &rateMatrixReviewsTable}
 
 // RateMatrixReviewsTable is the table of ratematrixreview.RateMatrixReview.
 type RateMatrixReviewsTable struct {
-	keel.Handle[*ratematrixreview.RateMatrixReview]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -82,7 +83,7 @@ type RateMatrixReviewsTable struct {
 
 // RateMatrixReviews references the rate_matrix_reviews table.
 var RateMatrixReviews = &RateMatrixReviewsTable{
-	Handle:              keel.Handle[*ratematrixreview.RateMatrixReview]{Ref: &rateMatrixReviewsRef},
+	TableBase:           keel.TableBase{Ref: &rateMatrixReviewsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 2}}},
@@ -97,10 +98,10 @@ var RateMatrixReviews = &RateMatrixReviewsTable{
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 11}},
 }
 
-// BuildRateMatrixReviews builds the handle of rate_matrix_reviews for ref. Generated relation and alias methods call it.
+// BuildRateMatrixReviews builds the table of rate_matrix_reviews for ref. Generated relation and alias methods call it.
 func BuildRateMatrixReviews(r *keel.Ref) *RateMatrixReviewsTable {
 	return &RateMatrixReviewsTable{
-		Handle:              keel.Handle[*ratematrixreview.RateMatrixReview]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -137,6 +138,365 @@ func (t *RateMatrixReviewsTable) RequestedReviewer() *tenantdb.UsersTable {
 // Get returns the rate_matrix_reviews row with the given key, or keel.ErrNotFound.
 func (t *RateMatrixReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ratematrixreview.RateMatrixReview, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateMatrixReviewsQuery is a query over ratematrixreview.RateMatrixReview.
+type RateMatrixReviewsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*ratematrixreview.RateMatrixReview] = (*RateMatrixReviewsTable)(nil)
+
+var _ keel.Query[*ratematrixreview.RateMatrixReview] = (*RateMatrixReviewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateMatrixReviewsTable) Query() keel.Query[*ratematrixreview.RateMatrixReview] {
+	return &RateMatrixReviewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateMatrixReviewsQuery.Where.
+func (t *RateMatrixReviewsTable) Where(ps ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateMatrixReviewsQuery.Pick.
+func (t *RateMatrixReviewsTable) Pick(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateMatrixReviewsQuery.Load.
+func (t *RateMatrixReviewsTable) Load(ls ...keel.Loader) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateMatrixReviewsQuery.Omit.
+func (t *RateMatrixReviewsTable) Omit(cols ...keel.Column) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateMatrixReviewsQuery.Order.
+func (t *RateMatrixReviewsTable) Order(os ...keel.Order) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateMatrixReviewsQuery.Limit.
+func (t *RateMatrixReviewsTable) Limit(n int) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateMatrixReviewsQuery.Group.
+func (t *RateMatrixReviewsTable) Group(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateMatrixReviewsQuery.GroupingSets.
+func (t *RateMatrixReviewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateMatrixReviewsQuery.Rollup.
+func (t *RateMatrixReviewsTable) Rollup(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateMatrixReviewsQuery.Cube.
+func (t *RateMatrixReviewsTable) Cube(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateMatrixReviewsQuery.AllTenants.
+func (t *RateMatrixReviewsTable) AllTenants() keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateMatrixReviewsQuery.Join.
+func (t *RateMatrixReviewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateMatrixReviewsQuery.LeftJoin.
+func (t *RateMatrixReviewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateMatrixReviewsQuery.LeftJoinLateral.
+func (t *RateMatrixReviewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateMatrixReviewsQuery.JoinLateral.
+func (t *RateMatrixReviewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateMatrixReviewsQuery.Lock.
+func (t *RateMatrixReviewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateMatrixReviewsQuery.DistinctOn.
+func (t *RateMatrixReviewsTable) DistinctOn(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateMatrixReviewsQuery.Cache.
+func (t *RateMatrixReviewsTable) Cache(opts ...keel.CacheOption) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateMatrixReviewsQuery.LoadStrategy.
+func (t *RateMatrixReviewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateMatrixReviewsQuery.With.
+func (t *RateMatrixReviewsTable) With(ctes ...*keel.CTETable) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateMatrixReviewsQuery.Compute.
+func (t *RateMatrixReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateMatrixReviewsTable) Create(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateMatrixReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateMatrixReviewsTable) Save(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateMatrixReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateMatrixReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateMatrixReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateMatrixReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateMatrixReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateMatrixReviewsQuery) Where(ps ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateMatrixReviewsQuery) Pick(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateMatrixReviewsQuery) Omit(cols ...keel.Column) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateMatrixReviewsQuery) Load(ls ...keel.Loader) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateMatrixReviewsQuery) Order(os ...keel.Order) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateMatrixReviewsQuery) Distinct() keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateMatrixReviewsQuery) Group(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateMatrixReviewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateMatrixReviewsQuery) Rollup(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateMatrixReviewsQuery) Cube(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateMatrixReviewsQuery) Window(name string, w keel.Window) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateMatrixReviewsQuery) Having(ps ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateMatrixReviewsQuery) Limit(n int) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateMatrixReviewsQuery) Offset(n int) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateMatrixReviewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateMatrixReviewsQuery) AllTenants() keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateMatrixReviewsQuery) CustomPlan() keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateMatrixReviewsQuery) Timeout(d time.Duration) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateMatrixReviewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateMatrixReviewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateMatrixReviewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateMatrixReviewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateMatrixReviewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateMatrixReviewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateMatrixReviewsQuery) With(ctes ...*keel.CTETable) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateMatrixReviewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateMatrixReviewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*ratematrixreview.RateMatrixReview] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateMatrixReviewsQuery) Clone() keel.Query[*ratematrixreview.RateMatrixReview] {
+	return &RateMatrixReviewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateMatrixReviewsQuery) One(ctx context.Context, db *keel.DB) (*ratematrixreview.RateMatrixReview, error) {
+	return keel.One[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateMatrixReviewsQuery) First(ctx context.Context, db *keel.DB) (*ratematrixreview.RateMatrixReview, error) {
+	return keel.First[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateMatrixReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrixreview.RateMatrixReview, error) {
+	return keel.List[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateMatrixReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrixreview.RateMatrixReview, error) {
+	return keel.All[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateMatrixReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrixreview.RateMatrixReview, error) {
+	return keel.UpdateReturning[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateMatrixReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrixreview.RateMatrixReview], error) {
+	return keel.PageOf[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateMatrixReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrixreview.RateMatrixReview) error) error {
+	return keel.Each[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateMatrixReview() unsafe.Pointer {

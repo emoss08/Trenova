@@ -4,6 +4,7 @@ package emaildb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -55,7 +56,7 @@ var attachmentsRef = keel.Ref{Table: &attachmentsTable}
 
 // AttachmentsTable is the table of email.Attachment.
 type AttachmentsTable struct {
-	keel.Handle[*email.Attachment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -70,7 +71,7 @@ type AttachmentsTable struct {
 
 // Attachments references the email_message_attachments table.
 var Attachments = &AttachmentsTable{
-	Handle:         keel.Handle[*email.Attachment]{Ref: &attachmentsRef},
+	TableBase:      keel.TableBase{Ref: &attachmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 2}}},
@@ -83,10 +84,10 @@ var Attachments = &AttachmentsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 9}},
 }
 
-// BuildAttachments builds the handle of email_message_attachments for ref. Generated relation and alias methods call it.
+// BuildAttachments builds the table of email_message_attachments for ref. Generated relation and alias methods call it.
 func BuildAttachments(r *keel.Ref) *AttachmentsTable {
 	return &AttachmentsTable{
-		Handle:         keel.Handle[*email.Attachment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -111,6 +112,365 @@ func (t *AttachmentsTable) As(alias string) *AttachmentsTable {
 // Get returns the email_message_attachments row with the given key, or keel.ErrNotFound.
 func (t *AttachmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*email.Attachment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AttachmentsQuery is a query over email.Attachment.
+type AttachmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*email.Attachment] = (*AttachmentsTable)(nil)
+
+var _ keel.Query[*email.Attachment] = (*AttachmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AttachmentsTable) Query() keel.Query[*email.Attachment] {
+	return &AttachmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AttachmentsQuery.Where.
+func (t *AttachmentsTable) Where(ps ...keel.Pred) keel.Query[*email.Attachment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AttachmentsQuery.Pick.
+func (t *AttachmentsTable) Pick(es ...keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AttachmentsQuery.Load.
+func (t *AttachmentsTable) Load(ls ...keel.Loader) keel.Query[*email.Attachment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AttachmentsQuery.Omit.
+func (t *AttachmentsTable) Omit(cols ...keel.Column) keel.Query[*email.Attachment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AttachmentsQuery.Order.
+func (t *AttachmentsTable) Order(os ...keel.Order) keel.Query[*email.Attachment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AttachmentsQuery.Limit.
+func (t *AttachmentsTable) Limit(n int) keel.Query[*email.Attachment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AttachmentsQuery.Group.
+func (t *AttachmentsTable) Group(es ...keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AttachmentsQuery.GroupingSets.
+func (t *AttachmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AttachmentsQuery.Rollup.
+func (t *AttachmentsTable) Rollup(es ...keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AttachmentsQuery.Cube.
+func (t *AttachmentsTable) Cube(es ...keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AttachmentsQuery.AllTenants.
+func (t *AttachmentsTable) AllTenants() keel.Query[*email.Attachment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AttachmentsQuery.Join.
+func (t *AttachmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Attachment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AttachmentsQuery.LeftJoin.
+func (t *AttachmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Attachment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AttachmentsQuery.LeftJoinLateral.
+func (t *AttachmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Attachment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AttachmentsQuery.JoinLateral.
+func (t *AttachmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*email.Attachment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AttachmentsQuery.Lock.
+func (t *AttachmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Attachment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AttachmentsQuery.DistinctOn.
+func (t *AttachmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AttachmentsQuery.Cache.
+func (t *AttachmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*email.Attachment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AttachmentsQuery.LoadStrategy.
+func (t *AttachmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Attachment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AttachmentsQuery.With.
+func (t *AttachmentsTable) With(ctes ...*keel.CTETable) keel.Query[*email.Attachment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AttachmentsQuery.Compute.
+func (t *AttachmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Attachment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AttachmentsTable) Create(ctx context.Context, db *keel.DB, row *email.Attachment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AttachmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Attachment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AttachmentsTable) Save(ctx context.Context, db *keel.DB, row *email.Attachment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AttachmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Attachment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AttachmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Attachment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AttachmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Attachment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AttachmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Attachment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AttachmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Attachment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AttachmentsQuery) Where(ps ...keel.Pred) keel.Query[*email.Attachment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AttachmentsQuery) Pick(es ...keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AttachmentsQuery) Omit(cols ...keel.Column) keel.Query[*email.Attachment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AttachmentsQuery) Load(ls ...keel.Loader) keel.Query[*email.Attachment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AttachmentsQuery) Order(os ...keel.Order) keel.Query[*email.Attachment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AttachmentsQuery) Distinct() keel.Query[*email.Attachment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AttachmentsQuery) Group(es ...keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AttachmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AttachmentsQuery) Rollup(es ...keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AttachmentsQuery) Cube(es ...keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AttachmentsQuery) Window(name string, w keel.Window) keel.Query[*email.Attachment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AttachmentsQuery) Having(ps ...keel.Pred) keel.Query[*email.Attachment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AttachmentsQuery) Limit(n int) keel.Query[*email.Attachment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AttachmentsQuery) Offset(n int) keel.Query[*email.Attachment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AttachmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AttachmentsQuery) AllTenants() keel.Query[*email.Attachment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AttachmentsQuery) CustomPlan() keel.Query[*email.Attachment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AttachmentsQuery) Timeout(d time.Duration) keel.Query[*email.Attachment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AttachmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Attachment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AttachmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Attachment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AttachmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Attachment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AttachmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Attachment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AttachmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*email.Attachment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AttachmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*email.Attachment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AttachmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*email.Attachment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AttachmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Attachment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AttachmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Attachment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AttachmentsQuery) Clone() keel.Query[*email.Attachment] {
+	return &AttachmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AttachmentsQuery) One(ctx context.Context, db *keel.DB) (*email.Attachment, error) {
+	return keel.One[*email.Attachment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AttachmentsQuery) First(ctx context.Context, db *keel.DB) (*email.Attachment, error) {
+	return keel.First[*email.Attachment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AttachmentsQuery) List(ctx context.Context, db *keel.DB) ([]*email.Attachment, error) {
+	return keel.List[*email.Attachment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AttachmentsQuery) All(ctx context.Context, db *keel.DB) ([]*email.Attachment, error) {
+	return keel.All[*email.Attachment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AttachmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Attachment, error) {
+	return keel.UpdateReturning[*email.Attachment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AttachmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Attachment], error) {
+	return keel.PageOf[*email.Attachment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AttachmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Attachment) error) error {
+	return keel.Each[*email.Attachment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAttachment() unsafe.Pointer { return unsafe.Pointer(new(email.Attachment)) }
@@ -219,7 +579,7 @@ var eventsRef = keel.Ref{Table: &eventsTable}
 
 // EventsTable is the table of email.Event.
 type EventsTable struct {
-	keel.Handle[*email.Event]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -235,7 +595,7 @@ type EventsTable struct {
 
 // Events references the email_events table.
 var Events = &EventsTable{
-	Handle:          keel.Handle[*email.Event]{Ref: &eventsRef},
+	TableBase:       keel.TableBase{Ref: &eventsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
@@ -249,10 +609,10 @@ var Events = &EventsTable{
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &eventsRef, Index: 10}},
 }
 
-// BuildEvents builds the handle of email_events for ref. Generated relation and alias methods call it.
+// BuildEvents builds the table of email_events for ref. Generated relation and alias methods call it.
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
-		Handle:          keel.Handle[*email.Event]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -276,6 +636,365 @@ func (t *EventsTable) As(alias string) *EventsTable { return keel.Alias(t.Ref, a
 // Get returns the email_events row with the given key, or keel.ErrNotFound.
 func (t *EventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*email.Event, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EventsQuery is a query over email.Event.
+type EventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*email.Event] = (*EventsTable)(nil)
+
+var _ keel.Query[*email.Event] = (*EventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EventsTable) Query() keel.Query[*email.Event] {
+	return &EventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EventsQuery.Where.
+func (t *EventsTable) Where(ps ...keel.Pred) keel.Query[*email.Event] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EventsQuery.Pick.
+func (t *EventsTable) Pick(es ...keel.Expr) keel.Query[*email.Event] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EventsQuery.Load.
+func (t *EventsTable) Load(ls ...keel.Loader) keel.Query[*email.Event] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EventsQuery.Omit.
+func (t *EventsTable) Omit(cols ...keel.Column) keel.Query[*email.Event] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EventsQuery.Order.
+func (t *EventsTable) Order(os ...keel.Order) keel.Query[*email.Event] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EventsQuery.Limit.
+func (t *EventsTable) Limit(n int) keel.Query[*email.Event] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EventsQuery.Group.
+func (t *EventsTable) Group(es ...keel.Expr) keel.Query[*email.Event] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EventsQuery.GroupingSets.
+func (t *EventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Event] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EventsQuery.Rollup.
+func (t *EventsTable) Rollup(es ...keel.Expr) keel.Query[*email.Event] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EventsQuery.Cube.
+func (t *EventsTable) Cube(es ...keel.Expr) keel.Query[*email.Event] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EventsQuery.AllTenants.
+func (t *EventsTable) AllTenants() keel.Query[*email.Event] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EventsQuery.Join.
+func (t *EventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Event] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EventsQuery.LeftJoin.
+func (t *EventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Event] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EventsQuery.LeftJoinLateral.
+func (t *EventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Event] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EventsQuery.JoinLateral.
+func (t *EventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*email.Event] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EventsQuery.Lock.
+func (t *EventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Event] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EventsQuery.DistinctOn.
+func (t *EventsTable) DistinctOn(es ...keel.Expr) keel.Query[*email.Event] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EventsQuery.Cache.
+func (t *EventsTable) Cache(opts ...keel.CacheOption) keel.Query[*email.Event] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EventsQuery.LoadStrategy.
+func (t *EventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Event] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EventsQuery.With.
+func (t *EventsTable) With(ctes ...*keel.CTETable) keel.Query[*email.Event] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EventsQuery.Compute.
+func (t *EventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Event] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EventsTable) Create(ctx context.Context, db *keel.DB, row *email.Event) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Event) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EventsTable) Save(ctx context.Context, db *keel.DB, row *email.Event, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Event, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Event) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Event, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Event, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EventsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Event) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EventsQuery) Where(ps ...keel.Pred) keel.Query[*email.Event] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EventsQuery) Pick(es ...keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EventsQuery) Omit(cols ...keel.Column) keel.Query[*email.Event] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EventsQuery) Load(ls ...keel.Loader) keel.Query[*email.Event] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EventsQuery) Order(os ...keel.Order) keel.Query[*email.Event] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EventsQuery) Distinct() keel.Query[*email.Event] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EventsQuery) Group(es ...keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EventsQuery) Rollup(es ...keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EventsQuery) Cube(es ...keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EventsQuery) Window(name string, w keel.Window) keel.Query[*email.Event] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EventsQuery) Having(ps ...keel.Pred) keel.Query[*email.Event] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EventsQuery) Limit(n int) keel.Query[*email.Event] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EventsQuery) Offset(n int) keel.Query[*email.Event] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EventsQuery) AllTenants() keel.Query[*email.Event] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EventsQuery) CustomPlan() keel.Query[*email.Event] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EventsQuery) Timeout(d time.Duration) keel.Query[*email.Event] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Event] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Event] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Event] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Event] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*email.Event] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*email.Event] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EventsQuery) With(ctes ...*keel.CTETable) keel.Query[*email.Event] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Event] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Event] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EventsQuery) Clone() keel.Query[*email.Event] {
+	return &EventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EventsQuery) One(ctx context.Context, db *keel.DB) (*email.Event, error) {
+	return keel.One[*email.Event](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EventsQuery) First(ctx context.Context, db *keel.DB) (*email.Event, error) {
+	return keel.First[*email.Event](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EventsQuery) List(ctx context.Context, db *keel.DB) ([]*email.Event, error) {
+	return keel.List[*email.Event](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EventsQuery) All(ctx context.Context, db *keel.DB) ([]*email.Event, error) {
+	return keel.All[*email.Event](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Event, error) {
+	return keel.UpdateReturning[*email.Event](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Event], error) {
+	return keel.PageOf[*email.Event](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Event) error) error {
+	return keel.Each[*email.Event](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEvent() unsafe.Pointer { return unsafe.Pointer(new(email.Event)) }
@@ -412,7 +1131,7 @@ var messagesRef = keel.Ref{Table: &messagesTable}
 
 // MessagesTable is the table of email.Message.
 type MessagesTable struct {
-	keel.Handle[*email.Message]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -443,7 +1162,7 @@ type MessagesTable struct {
 
 // Messages references the email_messages table.
 var Messages = &MessagesTable{
-	Handle:            keel.Handle[*email.Message]{Ref: &messagesRef},
+	TableBase:         keel.TableBase{Ref: &messagesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
@@ -472,10 +1191,10 @@ var Messages = &MessagesTable{
 	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
 }
 
-// BuildMessages builds the handle of email_messages for ref. Generated relation and alias methods call it.
+// BuildMessages builds the table of email_messages for ref. Generated relation and alias methods call it.
 func BuildMessages(r *keel.Ref) *MessagesTable {
 	return &MessagesTable{
-		Handle:            keel.Handle[*email.Message]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -522,6 +1241,365 @@ func (t *MessagesTable) Attachments() *AttachmentsTable { return keel.Path(t.Ref
 // Get returns the email_messages row with the given key, or keel.ErrNotFound.
 func (t *MessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*email.Message, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// MessagesQuery is a query over email.Message.
+type MessagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*email.Message] = (*MessagesTable)(nil)
+
+var _ keel.Query[*email.Message] = (*MessagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *MessagesTable) Query() keel.Query[*email.Message] {
+	return &MessagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see MessagesQuery.Where.
+func (t *MessagesTable) Where(ps ...keel.Pred) keel.Query[*email.Message] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see MessagesQuery.Pick.
+func (t *MessagesTable) Pick(es ...keel.Expr) keel.Query[*email.Message] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see MessagesQuery.Load.
+func (t *MessagesTable) Load(ls ...keel.Loader) keel.Query[*email.Message] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see MessagesQuery.Omit.
+func (t *MessagesTable) Omit(cols ...keel.Column) keel.Query[*email.Message] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see MessagesQuery.Order.
+func (t *MessagesTable) Order(os ...keel.Order) keel.Query[*email.Message] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see MessagesQuery.Limit.
+func (t *MessagesTable) Limit(n int) keel.Query[*email.Message] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see MessagesQuery.Group.
+func (t *MessagesTable) Group(es ...keel.Expr) keel.Query[*email.Message] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see MessagesQuery.GroupingSets.
+func (t *MessagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Message] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see MessagesQuery.Rollup.
+func (t *MessagesTable) Rollup(es ...keel.Expr) keel.Query[*email.Message] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see MessagesQuery.Cube.
+func (t *MessagesTable) Cube(es ...keel.Expr) keel.Query[*email.Message] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see MessagesQuery.AllTenants.
+func (t *MessagesTable) AllTenants() keel.Query[*email.Message] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see MessagesQuery.Join.
+func (t *MessagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Message] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see MessagesQuery.LeftJoin.
+func (t *MessagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Message] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see MessagesQuery.LeftJoinLateral.
+func (t *MessagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Message] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see MessagesQuery.JoinLateral.
+func (t *MessagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*email.Message] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see MessagesQuery.Lock.
+func (t *MessagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Message] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see MessagesQuery.DistinctOn.
+func (t *MessagesTable) DistinctOn(es ...keel.Expr) keel.Query[*email.Message] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see MessagesQuery.Cache.
+func (t *MessagesTable) Cache(opts ...keel.CacheOption) keel.Query[*email.Message] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see MessagesQuery.LoadStrategy.
+func (t *MessagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Message] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see MessagesQuery.With.
+func (t *MessagesTable) With(ctes ...*keel.CTETable) keel.Query[*email.Message] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see MessagesQuery.Compute.
+func (t *MessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Message] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *MessagesTable) Create(ctx context.Context, db *keel.DB, row *email.Message) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *MessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Message) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *MessagesTable) Save(ctx context.Context, db *keel.DB, row *email.Message, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *MessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Message, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *MessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Message) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *MessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Message, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *MessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Message, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *MessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Message) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *MessagesQuery) Where(ps ...keel.Pred) keel.Query[*email.Message] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *MessagesQuery) Pick(es ...keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *MessagesQuery) Omit(cols ...keel.Column) keel.Query[*email.Message] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *MessagesQuery) Load(ls ...keel.Loader) keel.Query[*email.Message] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *MessagesQuery) Order(os ...keel.Order) keel.Query[*email.Message] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *MessagesQuery) Distinct() keel.Query[*email.Message] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *MessagesQuery) Group(es ...keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *MessagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *MessagesQuery) Rollup(es ...keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *MessagesQuery) Cube(es ...keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *MessagesQuery) Window(name string, w keel.Window) keel.Query[*email.Message] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *MessagesQuery) Having(ps ...keel.Pred) keel.Query[*email.Message] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *MessagesQuery) Limit(n int) keel.Query[*email.Message] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *MessagesQuery) Offset(n int) keel.Query[*email.Message] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *MessagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *MessagesQuery) AllTenants() keel.Query[*email.Message] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *MessagesQuery) CustomPlan() keel.Query[*email.Message] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *MessagesQuery) Timeout(d time.Duration) keel.Query[*email.Message] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *MessagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Message] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *MessagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Message] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *MessagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Message] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *MessagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Message] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *MessagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*email.Message] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *MessagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*email.Message] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *MessagesQuery) With(ctes ...*keel.CTETable) keel.Query[*email.Message] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *MessagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Message] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *MessagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Message] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *MessagesQuery) Clone() keel.Query[*email.Message] {
+	return &MessagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *MessagesQuery) One(ctx context.Context, db *keel.DB) (*email.Message, error) {
+	return keel.One[*email.Message](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *MessagesQuery) First(ctx context.Context, db *keel.DB) (*email.Message, error) {
+	return keel.First[*email.Message](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *MessagesQuery) List(ctx context.Context, db *keel.DB) ([]*email.Message, error) {
+	return keel.List[*email.Message](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *MessagesQuery) All(ctx context.Context, db *keel.DB) ([]*email.Message, error) {
+	return keel.All[*email.Message](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *MessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Message, error) {
+	return keel.UpdateReturning[*email.Message](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *MessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Message], error) {
+	return keel.PageOf[*email.Message](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *MessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Message) error) error {
+	return keel.Each[*email.Message](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newMessage() unsafe.Pointer { return unsafe.Pointer(new(email.Message)) }
@@ -733,7 +1811,7 @@ var profilesRef = keel.Ref{Table: &profilesTable}
 
 // ProfilesTable is the table of email.Profile.
 type ProfilesTable struct {
-	keel.Handle[*email.Profile]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -754,7 +1832,7 @@ type ProfilesTable struct {
 
 // Profiles references the email_profiles table.
 var Profiles = &ProfilesTable{
-	Handle:         keel.Handle[*email.Profile]{Ref: &profilesRef},
+	TableBase:      keel.TableBase{Ref: &profilesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
@@ -773,10 +1851,10 @@ var Profiles = &ProfilesTable{
 	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &profilesRef, Index: 15}},
 }
 
-// BuildProfiles builds the handle of email_profiles for ref. Generated relation and alias methods call it.
+// BuildProfiles builds the table of email_profiles for ref. Generated relation and alias methods call it.
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
-		Handle:         keel.Handle[*email.Profile]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -807,6 +1885,365 @@ func (t *ProfilesTable) As(alias string) *ProfilesTable {
 // Get returns the email_profiles row with the given key, or keel.ErrNotFound.
 func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*email.Profile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProfilesQuery is a query over email.Profile.
+type ProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*email.Profile] = (*ProfilesTable)(nil)
+
+var _ keel.Query[*email.Profile] = (*ProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProfilesTable) Query() keel.Query[*email.Profile] {
+	return &ProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProfilesQuery.Where.
+func (t *ProfilesTable) Where(ps ...keel.Pred) keel.Query[*email.Profile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProfilesQuery.Pick.
+func (t *ProfilesTable) Pick(es ...keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProfilesQuery.Load.
+func (t *ProfilesTable) Load(ls ...keel.Loader) keel.Query[*email.Profile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProfilesQuery.Omit.
+func (t *ProfilesTable) Omit(cols ...keel.Column) keel.Query[*email.Profile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProfilesQuery.Order.
+func (t *ProfilesTable) Order(os ...keel.Order) keel.Query[*email.Profile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProfilesQuery.Limit.
+func (t *ProfilesTable) Limit(n int) keel.Query[*email.Profile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProfilesQuery.Group.
+func (t *ProfilesTable) Group(es ...keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProfilesQuery.GroupingSets.
+func (t *ProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProfilesQuery.Rollup.
+func (t *ProfilesTable) Rollup(es ...keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProfilesQuery.Cube.
+func (t *ProfilesTable) Cube(es ...keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProfilesQuery.AllTenants.
+func (t *ProfilesTable) AllTenants() keel.Query[*email.Profile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProfilesQuery.Join.
+func (t *ProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Profile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProfilesQuery.LeftJoin.
+func (t *ProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Profile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProfilesQuery.LeftJoinLateral.
+func (t *ProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Profile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProfilesQuery.JoinLateral.
+func (t *ProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*email.Profile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProfilesQuery.Lock.
+func (t *ProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Profile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProfilesQuery.DistinctOn.
+func (t *ProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProfilesQuery.Cache.
+func (t *ProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*email.Profile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProfilesQuery.LoadStrategy.
+func (t *ProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Profile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProfilesQuery.With.
+func (t *ProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*email.Profile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProfilesQuery.Compute.
+func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Profile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *email.Profile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Profile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *email.Profile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Profile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Profile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Profile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Profile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Profile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProfilesQuery) Where(ps ...keel.Pred) keel.Query[*email.Profile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProfilesQuery) Pick(es ...keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProfilesQuery) Omit(cols ...keel.Column) keel.Query[*email.Profile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProfilesQuery) Load(ls ...keel.Loader) keel.Query[*email.Profile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProfilesQuery) Order(os ...keel.Order) keel.Query[*email.Profile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProfilesQuery) Distinct() keel.Query[*email.Profile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProfilesQuery) Group(es ...keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProfilesQuery) Cube(es ...keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProfilesQuery) Window(name string, w keel.Window) keel.Query[*email.Profile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProfilesQuery) Having(ps ...keel.Pred) keel.Query[*email.Profile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProfilesQuery) Limit(n int) keel.Query[*email.Profile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProfilesQuery) Offset(n int) keel.Query[*email.Profile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProfilesQuery) AllTenants() keel.Query[*email.Profile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProfilesQuery) CustomPlan() keel.Query[*email.Profile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProfilesQuery) Timeout(d time.Duration) keel.Query[*email.Profile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Profile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Profile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Profile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Profile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*email.Profile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*email.Profile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*email.Profile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Profile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Profile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProfilesQuery) Clone() keel.Query[*email.Profile] {
+	return &ProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*email.Profile, error) {
+	return keel.One[*email.Profile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*email.Profile, error) {
+	return keel.First[*email.Profile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*email.Profile, error) {
+	return keel.List[*email.Profile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*email.Profile, error) {
+	return keel.All[*email.Profile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Profile, error) {
+	return keel.UpdateReturning[*email.Profile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Profile], error) {
+	return keel.PageOf[*email.Profile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Profile) error) error {
+	return keel.Each[*email.Profile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(email.Profile)) }
@@ -948,7 +2385,7 @@ var profileAssignmentsRef = keel.Ref{Table: &profileAssignmentsTable}
 
 // ProfileAssignmentsTable is the table of email.ProfileAssignment.
 type ProfileAssignmentsTable struct {
-	keel.Handle[*email.ProfileAssignment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -960,7 +2397,7 @@ type ProfileAssignmentsTable struct {
 
 // ProfileAssignments references the email_profile_assignments table.
 var ProfileAssignments = &ProfileAssignmentsTable{
-	Handle:         keel.Handle[*email.ProfileAssignment]{Ref: &profileAssignmentsRef},
+	TableBase:      keel.TableBase{Ref: &profileAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 2}}},
@@ -970,10 +2407,10 @@ var ProfileAssignments = &ProfileAssignmentsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 6}},
 }
 
-// BuildProfileAssignments builds the handle of email_profile_assignments for ref. Generated relation and alias methods call it.
+// BuildProfileAssignments builds the table of email_profile_assignments for ref. Generated relation and alias methods call it.
 func BuildProfileAssignments(r *keel.Ref) *ProfileAssignmentsTable {
 	return &ProfileAssignmentsTable{
-		Handle:         keel.Handle[*email.ProfileAssignment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -998,6 +2435,365 @@ func (t *ProfileAssignmentsTable) Profile() *ProfilesTable { return keel.Path(t.
 // Get returns the email_profile_assignments row with the given key, or keel.ErrNotFound.
 func (t *ProfileAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*email.ProfileAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ProfileAssignmentsQuery is a query over email.ProfileAssignment.
+type ProfileAssignmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*email.ProfileAssignment] = (*ProfileAssignmentsTable)(nil)
+
+var _ keel.Query[*email.ProfileAssignment] = (*ProfileAssignmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ProfileAssignmentsTable) Query() keel.Query[*email.ProfileAssignment] {
+	return &ProfileAssignmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ProfileAssignmentsQuery.Where.
+func (t *ProfileAssignmentsTable) Where(ps ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ProfileAssignmentsQuery.Pick.
+func (t *ProfileAssignmentsTable) Pick(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ProfileAssignmentsQuery.Load.
+func (t *ProfileAssignmentsTable) Load(ls ...keel.Loader) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ProfileAssignmentsQuery.Omit.
+func (t *ProfileAssignmentsTable) Omit(cols ...keel.Column) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ProfileAssignmentsQuery.Order.
+func (t *ProfileAssignmentsTable) Order(os ...keel.Order) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ProfileAssignmentsQuery.Limit.
+func (t *ProfileAssignmentsTable) Limit(n int) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ProfileAssignmentsQuery.Group.
+func (t *ProfileAssignmentsTable) Group(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ProfileAssignmentsQuery.GroupingSets.
+func (t *ProfileAssignmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ProfileAssignmentsQuery.Rollup.
+func (t *ProfileAssignmentsTable) Rollup(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ProfileAssignmentsQuery.Cube.
+func (t *ProfileAssignmentsTable) Cube(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ProfileAssignmentsQuery.AllTenants.
+func (t *ProfileAssignmentsTable) AllTenants() keel.Query[*email.ProfileAssignment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ProfileAssignmentsQuery.Join.
+func (t *ProfileAssignmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ProfileAssignmentsQuery.LeftJoin.
+func (t *ProfileAssignmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ProfileAssignmentsQuery.LeftJoinLateral.
+func (t *ProfileAssignmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.ProfileAssignment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ProfileAssignmentsQuery.JoinLateral.
+func (t *ProfileAssignmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*email.ProfileAssignment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ProfileAssignmentsQuery.Lock.
+func (t *ProfileAssignmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ProfileAssignmentsQuery.DistinctOn.
+func (t *ProfileAssignmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ProfileAssignmentsQuery.Cache.
+func (t *ProfileAssignmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ProfileAssignmentsQuery.LoadStrategy.
+func (t *ProfileAssignmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.ProfileAssignment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ProfileAssignmentsQuery.With.
+func (t *ProfileAssignmentsTable) With(ctes ...*keel.CTETable) keel.Query[*email.ProfileAssignment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ProfileAssignmentsQuery.Compute.
+func (t *ProfileAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.ProfileAssignment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ProfileAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *email.ProfileAssignment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ProfileAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ProfileAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *email.ProfileAssignment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ProfileAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.ProfileAssignment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ProfileAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.ProfileAssignment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ProfileAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ProfileAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ProfileAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ProfileAssignmentsQuery) Where(ps ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ProfileAssignmentsQuery) Pick(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ProfileAssignmentsQuery) Omit(cols ...keel.Column) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ProfileAssignmentsQuery) Load(ls ...keel.Loader) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ProfileAssignmentsQuery) Order(os ...keel.Order) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ProfileAssignmentsQuery) Distinct() keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ProfileAssignmentsQuery) Group(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ProfileAssignmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ProfileAssignmentsQuery) Rollup(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ProfileAssignmentsQuery) Cube(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ProfileAssignmentsQuery) Window(name string, w keel.Window) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ProfileAssignmentsQuery) Having(ps ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ProfileAssignmentsQuery) Limit(n int) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ProfileAssignmentsQuery) Offset(n int) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ProfileAssignmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ProfileAssignmentsQuery) AllTenants() keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ProfileAssignmentsQuery) CustomPlan() keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ProfileAssignmentsQuery) Timeout(d time.Duration) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ProfileAssignmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ProfileAssignmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ProfileAssignmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ProfileAssignmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ProfileAssignmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ProfileAssignmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ProfileAssignmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ProfileAssignmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ProfileAssignmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.ProfileAssignment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ProfileAssignmentsQuery) Clone() keel.Query[*email.ProfileAssignment] {
+	return &ProfileAssignmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ProfileAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*email.ProfileAssignment, error) {
+	return keel.One[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ProfileAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*email.ProfileAssignment, error) {
+	return keel.First[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ProfileAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*email.ProfileAssignment, error) {
+	return keel.List[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ProfileAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*email.ProfileAssignment, error) {
+	return keel.All[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ProfileAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.ProfileAssignment, error) {
+	return keel.UpdateReturning[*email.ProfileAssignment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ProfileAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.ProfileAssignment], error) {
+	return keel.PageOf[*email.ProfileAssignment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ProfileAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.ProfileAssignment) error) error {
+	return keel.Each[*email.ProfileAssignment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newProfileAssignment() unsafe.Pointer { return unsafe.Pointer(new(email.ProfileAssignment)) }
@@ -1099,7 +2895,7 @@ var suppressionsRef = keel.Ref{Table: &suppressionsTable}
 
 // SuppressionsTable is the table of email.Suppression.
 type SuppressionsTable struct {
-	keel.Handle[*email.Suppression]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1114,7 +2910,7 @@ type SuppressionsTable struct {
 
 // Suppressions references the email_suppressions table.
 var Suppressions = &SuppressionsTable{
-	Handle:         keel.Handle[*email.Suppression]{Ref: &suppressionsRef},
+	TableBase:      keel.TableBase{Ref: &suppressionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 2}}},
@@ -1127,10 +2923,10 @@ var Suppressions = &SuppressionsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &suppressionsRef, Index: 9}},
 }
 
-// BuildSuppressions builds the handle of email_suppressions for ref. Generated relation and alias methods call it.
+// BuildSuppressions builds the table of email_suppressions for ref. Generated relation and alias methods call it.
 func BuildSuppressions(r *keel.Ref) *SuppressionsTable {
 	return &SuppressionsTable{
-		Handle:         keel.Handle[*email.Suppression]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1155,6 +2951,365 @@ func (t *SuppressionsTable) As(alias string) *SuppressionsTable {
 // Get returns the email_suppressions row with the given key, or keel.ErrNotFound.
 func (t *SuppressionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*email.Suppression, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SuppressionsQuery is a query over email.Suppression.
+type SuppressionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*email.Suppression] = (*SuppressionsTable)(nil)
+
+var _ keel.Query[*email.Suppression] = (*SuppressionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SuppressionsTable) Query() keel.Query[*email.Suppression] {
+	return &SuppressionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SuppressionsQuery.Where.
+func (t *SuppressionsTable) Where(ps ...keel.Pred) keel.Query[*email.Suppression] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SuppressionsQuery.Pick.
+func (t *SuppressionsTable) Pick(es ...keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SuppressionsQuery.Load.
+func (t *SuppressionsTable) Load(ls ...keel.Loader) keel.Query[*email.Suppression] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SuppressionsQuery.Omit.
+func (t *SuppressionsTable) Omit(cols ...keel.Column) keel.Query[*email.Suppression] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SuppressionsQuery.Order.
+func (t *SuppressionsTable) Order(os ...keel.Order) keel.Query[*email.Suppression] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SuppressionsQuery.Limit.
+func (t *SuppressionsTable) Limit(n int) keel.Query[*email.Suppression] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SuppressionsQuery.Group.
+func (t *SuppressionsTable) Group(es ...keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SuppressionsQuery.GroupingSets.
+func (t *SuppressionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SuppressionsQuery.Rollup.
+func (t *SuppressionsTable) Rollup(es ...keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SuppressionsQuery.Cube.
+func (t *SuppressionsTable) Cube(es ...keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SuppressionsQuery.AllTenants.
+func (t *SuppressionsTable) AllTenants() keel.Query[*email.Suppression] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SuppressionsQuery.Join.
+func (t *SuppressionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Suppression] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SuppressionsQuery.LeftJoin.
+func (t *SuppressionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Suppression] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SuppressionsQuery.LeftJoinLateral.
+func (t *SuppressionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Suppression] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SuppressionsQuery.JoinLateral.
+func (t *SuppressionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*email.Suppression] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SuppressionsQuery.Lock.
+func (t *SuppressionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Suppression] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SuppressionsQuery.DistinctOn.
+func (t *SuppressionsTable) DistinctOn(es ...keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SuppressionsQuery.Cache.
+func (t *SuppressionsTable) Cache(opts ...keel.CacheOption) keel.Query[*email.Suppression] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SuppressionsQuery.LoadStrategy.
+func (t *SuppressionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Suppression] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SuppressionsQuery.With.
+func (t *SuppressionsTable) With(ctes ...*keel.CTETable) keel.Query[*email.Suppression] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SuppressionsQuery.Compute.
+func (t *SuppressionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Suppression] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SuppressionsTable) Create(ctx context.Context, db *keel.DB, row *email.Suppression) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SuppressionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Suppression) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SuppressionsTable) Save(ctx context.Context, db *keel.DB, row *email.Suppression, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SuppressionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Suppression, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SuppressionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Suppression) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SuppressionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Suppression, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SuppressionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Suppression, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SuppressionsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Suppression) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SuppressionsQuery) Where(ps ...keel.Pred) keel.Query[*email.Suppression] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SuppressionsQuery) Pick(es ...keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SuppressionsQuery) Omit(cols ...keel.Column) keel.Query[*email.Suppression] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SuppressionsQuery) Load(ls ...keel.Loader) keel.Query[*email.Suppression] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SuppressionsQuery) Order(os ...keel.Order) keel.Query[*email.Suppression] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SuppressionsQuery) Distinct() keel.Query[*email.Suppression] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SuppressionsQuery) Group(es ...keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SuppressionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SuppressionsQuery) Rollup(es ...keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SuppressionsQuery) Cube(es ...keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SuppressionsQuery) Window(name string, w keel.Window) keel.Query[*email.Suppression] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SuppressionsQuery) Having(ps ...keel.Pred) keel.Query[*email.Suppression] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SuppressionsQuery) Limit(n int) keel.Query[*email.Suppression] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SuppressionsQuery) Offset(n int) keel.Query[*email.Suppression] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SuppressionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SuppressionsQuery) AllTenants() keel.Query[*email.Suppression] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SuppressionsQuery) CustomPlan() keel.Query[*email.Suppression] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SuppressionsQuery) Timeout(d time.Duration) keel.Query[*email.Suppression] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SuppressionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*email.Suppression] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SuppressionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Suppression] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SuppressionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*email.Suppression] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SuppressionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*email.Suppression] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SuppressionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*email.Suppression] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SuppressionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*email.Suppression] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SuppressionsQuery) With(ctes ...*keel.CTETable) keel.Query[*email.Suppression] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SuppressionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Suppression] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SuppressionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*email.Suppression] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SuppressionsQuery) Clone() keel.Query[*email.Suppression] {
+	return &SuppressionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SuppressionsQuery) One(ctx context.Context, db *keel.DB) (*email.Suppression, error) {
+	return keel.One[*email.Suppression](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SuppressionsQuery) First(ctx context.Context, db *keel.DB) (*email.Suppression, error) {
+	return keel.First[*email.Suppression](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SuppressionsQuery) List(ctx context.Context, db *keel.DB) ([]*email.Suppression, error) {
+	return keel.List[*email.Suppression](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SuppressionsQuery) All(ctx context.Context, db *keel.DB) ([]*email.Suppression, error) {
+	return keel.All[*email.Suppression](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SuppressionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Suppression, error) {
+	return keel.UpdateReturning[*email.Suppression](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SuppressionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Suppression], error) {
+	return keel.PageOf[*email.Suppression](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SuppressionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Suppression) error) error {
+	return keel.Each[*email.Suppression](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSuppression() unsafe.Pointer { return unsafe.Pointer(new(email.Suppression)) }

@@ -4,6 +4,7 @@ package editenderchangedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -81,7 +82,7 @@ var tenderChangesRef = keel.Ref{Table: &tenderChangesTable}
 
 // TenderChangesTable is the table of editenderchange.TenderChange.
 type TenderChangesTable struct {
-	keel.Handle[*editenderchange.TenderChange]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	SourceOrganizationID    keelkinds.PulidIDCol
@@ -115,7 +116,7 @@ type TenderChangesTable struct {
 
 // TenderChanges references the edi_tender_changes table.
 var TenderChanges = &TenderChangesTable{
-	Handle:                  keel.Handle[*editenderchange.TenderChange]{Ref: &tenderChangesRef},
+	TableBase:               keel.TableBase{Ref: &tenderChangesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 1}}},
 	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderChangesRef, Index: 2}}},
@@ -147,10 +148,10 @@ var TenderChanges = &TenderChangesTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderChangesRef, Index: 28}},
 }
 
-// BuildTenderChanges builds the handle of edi_tender_changes for ref. Generated relation and alias methods call it.
+// BuildTenderChanges builds the table of edi_tender_changes for ref. Generated relation and alias methods call it.
 func BuildTenderChanges(r *keel.Ref) *TenderChangesTable {
 	return &TenderChangesTable{
-		Handle:                  keel.Handle[*editenderchange.TenderChange]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -199,6 +200,365 @@ func (t *TenderChangesTable) Recipient() *TenderRecipientsTable {
 // Get returns the edi_tender_changes row with the given key, or keel.ErrNotFound.
 func (t *TenderChangesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*editenderchange.TenderChange, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TenderChangesQuery is a query over editenderchange.TenderChange.
+type TenderChangesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*editenderchange.TenderChange] = (*TenderChangesTable)(nil)
+
+var _ keel.Query[*editenderchange.TenderChange] = (*TenderChangesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TenderChangesTable) Query() keel.Query[*editenderchange.TenderChange] {
+	return &TenderChangesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TenderChangesQuery.Where.
+func (t *TenderChangesTable) Where(ps ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TenderChangesQuery.Pick.
+func (t *TenderChangesTable) Pick(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TenderChangesQuery.Load.
+func (t *TenderChangesTable) Load(ls ...keel.Loader) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TenderChangesQuery.Omit.
+func (t *TenderChangesTable) Omit(cols ...keel.Column) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TenderChangesQuery.Order.
+func (t *TenderChangesTable) Order(os ...keel.Order) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TenderChangesQuery.Limit.
+func (t *TenderChangesTable) Limit(n int) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TenderChangesQuery.Group.
+func (t *TenderChangesTable) Group(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TenderChangesQuery.GroupingSets.
+func (t *TenderChangesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TenderChangesQuery.Rollup.
+func (t *TenderChangesTable) Rollup(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TenderChangesQuery.Cube.
+func (t *TenderChangesTable) Cube(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TenderChangesQuery.AllTenants.
+func (t *TenderChangesTable) AllTenants() keel.Query[*editenderchange.TenderChange] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TenderChangesQuery.Join.
+func (t *TenderChangesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TenderChangesQuery.LeftJoin.
+func (t *TenderChangesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TenderChangesQuery.LeftJoinLateral.
+func (t *TenderChangesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TenderChangesQuery.JoinLateral.
+func (t *TenderChangesTable) JoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TenderChangesQuery.Lock.
+func (t *TenderChangesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TenderChangesQuery.DistinctOn.
+func (t *TenderChangesTable) DistinctOn(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TenderChangesQuery.Cache.
+func (t *TenderChangesTable) Cache(opts ...keel.CacheOption) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TenderChangesQuery.LoadStrategy.
+func (t *TenderChangesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TenderChangesQuery.With.
+func (t *TenderChangesTable) With(ctes ...*keel.CTETable) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TenderChangesQuery.Compute.
+func (t *TenderChangesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TenderChangesTable) Create(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TenderChangesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TenderChangesTable) Save(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TenderChangesTable) SaveExcept(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TenderChangesTable) DeleteRow(ctx context.Context, db *keel.DB, row *editenderchange.TenderChange) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TenderChangesTable) Upsert(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TenderChangesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TenderChangesTable) Copy(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderChange) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TenderChangesQuery) Where(ps ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TenderChangesQuery) Pick(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TenderChangesQuery) Omit(cols ...keel.Column) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TenderChangesQuery) Load(ls ...keel.Loader) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TenderChangesQuery) Order(os ...keel.Order) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TenderChangesQuery) Distinct() keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TenderChangesQuery) Group(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TenderChangesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TenderChangesQuery) Rollup(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TenderChangesQuery) Cube(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TenderChangesQuery) Window(name string, w keel.Window) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TenderChangesQuery) Having(ps ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TenderChangesQuery) Limit(n int) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TenderChangesQuery) Offset(n int) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TenderChangesQuery) DistinctOn(es ...keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TenderChangesQuery) AllTenants() keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TenderChangesQuery) CustomPlan() keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TenderChangesQuery) Timeout(d time.Duration) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TenderChangesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TenderChangesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TenderChangesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TenderChangesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TenderChangesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TenderChangesQuery) Cache(opts ...keel.CacheOption) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TenderChangesQuery) With(ctes ...*keel.CTETable) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TenderChangesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TenderChangesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*editenderchange.TenderChange] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TenderChangesQuery) Clone() keel.Query[*editenderchange.TenderChange] {
+	return &TenderChangesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TenderChangesQuery) One(ctx context.Context, db *keel.DB) (*editenderchange.TenderChange, error) {
+	return keel.One[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TenderChangesQuery) First(ctx context.Context, db *keel.DB) (*editenderchange.TenderChange, error) {
+	return keel.First[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TenderChangesQuery) List(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderChange, error) {
+	return keel.List[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TenderChangesQuery) All(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderChange, error) {
+	return keel.All[*editenderchange.TenderChange](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TenderChangesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*editenderchange.TenderChange, error) {
+	return keel.UpdateReturning[*editenderchange.TenderChange](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TenderChangesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*editenderchange.TenderChange], error) {
+	return keel.PageOf[*editenderchange.TenderChange](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TenderChangesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*editenderchange.TenderChange) error) error {
+	return keel.Each[*editenderchange.TenderChange](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTenderChange() unsafe.Pointer { return unsafe.Pointer(new(editenderchange.TenderChange)) }
@@ -441,7 +801,7 @@ var tenderRecipientsRef = keel.Ref{Table: &tenderRecipientsTable}
 
 // TenderRecipientsTable is the table of editenderchange.TenderRecipient.
 type TenderRecipientsTable struct {
-	keel.Handle[*editenderchange.TenderRecipient]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	SourceOrganizationID    keelkinds.PulidIDCol
@@ -465,7 +825,7 @@ type TenderRecipientsTable struct {
 
 // TenderRecipients references the edi_tender_recipients table.
 var TenderRecipients = &TenderRecipientsTable{
-	Handle:                  keel.Handle[*editenderchange.TenderRecipient]{Ref: &tenderRecipientsRef},
+	TableBase:               keel.TableBase{Ref: &tenderRecipientsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
 	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
@@ -487,10 +847,10 @@ var TenderRecipients = &TenderRecipientsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 18}},
 }
 
-// BuildTenderRecipients builds the handle of edi_tender_recipients for ref. Generated relation and alias methods call it.
+// BuildTenderRecipients builds the table of edi_tender_recipients for ref. Generated relation and alias methods call it.
 func BuildTenderRecipients(r *keel.Ref) *TenderRecipientsTable {
 	return &TenderRecipientsTable{
-		Handle:                  keel.Handle[*editenderchange.TenderRecipient]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -524,6 +884,365 @@ func (t *TenderRecipientsTable) As(alias string) *TenderRecipientsTable {
 // Get returns the edi_tender_recipients row with the given key, or keel.ErrNotFound.
 func (t *TenderRecipientsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*editenderchange.TenderRecipient, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TenderRecipientsQuery is a query over editenderchange.TenderRecipient.
+type TenderRecipientsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*editenderchange.TenderRecipient] = (*TenderRecipientsTable)(nil)
+
+var _ keel.Query[*editenderchange.TenderRecipient] = (*TenderRecipientsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TenderRecipientsTable) Query() keel.Query[*editenderchange.TenderRecipient] {
+	return &TenderRecipientsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TenderRecipientsQuery.Where.
+func (t *TenderRecipientsTable) Where(ps ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TenderRecipientsQuery.Pick.
+func (t *TenderRecipientsTable) Pick(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TenderRecipientsQuery.Load.
+func (t *TenderRecipientsTable) Load(ls ...keel.Loader) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TenderRecipientsQuery.Omit.
+func (t *TenderRecipientsTable) Omit(cols ...keel.Column) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TenderRecipientsQuery.Order.
+func (t *TenderRecipientsTable) Order(os ...keel.Order) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TenderRecipientsQuery.Limit.
+func (t *TenderRecipientsTable) Limit(n int) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TenderRecipientsQuery.Group.
+func (t *TenderRecipientsTable) Group(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TenderRecipientsQuery.GroupingSets.
+func (t *TenderRecipientsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TenderRecipientsQuery.Rollup.
+func (t *TenderRecipientsTable) Rollup(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TenderRecipientsQuery.Cube.
+func (t *TenderRecipientsTable) Cube(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TenderRecipientsQuery.AllTenants.
+func (t *TenderRecipientsTable) AllTenants() keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TenderRecipientsQuery.Join.
+func (t *TenderRecipientsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TenderRecipientsQuery.LeftJoin.
+func (t *TenderRecipientsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TenderRecipientsQuery.LeftJoinLateral.
+func (t *TenderRecipientsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TenderRecipientsQuery.JoinLateral.
+func (t *TenderRecipientsTable) JoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TenderRecipientsQuery.Lock.
+func (t *TenderRecipientsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TenderRecipientsQuery.DistinctOn.
+func (t *TenderRecipientsTable) DistinctOn(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TenderRecipientsQuery.Cache.
+func (t *TenderRecipientsTable) Cache(opts ...keel.CacheOption) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TenderRecipientsQuery.LoadStrategy.
+func (t *TenderRecipientsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TenderRecipientsQuery.With.
+func (t *TenderRecipientsTable) With(ctes ...*keel.CTETable) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TenderRecipientsQuery.Compute.
+func (t *TenderRecipientsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TenderRecipientsTable) Create(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TenderRecipientsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TenderRecipientsTable) Save(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TenderRecipientsTable) SaveExcept(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TenderRecipientsTable) DeleteRow(ctx context.Context, db *keel.DB, row *editenderchange.TenderRecipient) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TenderRecipientsTable) Upsert(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TenderRecipientsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TenderRecipientsTable) Copy(ctx context.Context, db *keel.DB, rows []*editenderchange.TenderRecipient) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TenderRecipientsQuery) Where(ps ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TenderRecipientsQuery) Pick(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TenderRecipientsQuery) Omit(cols ...keel.Column) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TenderRecipientsQuery) Load(ls ...keel.Loader) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TenderRecipientsQuery) Order(os ...keel.Order) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TenderRecipientsQuery) Distinct() keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TenderRecipientsQuery) Group(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TenderRecipientsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TenderRecipientsQuery) Rollup(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TenderRecipientsQuery) Cube(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TenderRecipientsQuery) Window(name string, w keel.Window) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TenderRecipientsQuery) Having(ps ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TenderRecipientsQuery) Limit(n int) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TenderRecipientsQuery) Offset(n int) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TenderRecipientsQuery) DistinctOn(es ...keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TenderRecipientsQuery) AllTenants() keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TenderRecipientsQuery) CustomPlan() keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TenderRecipientsQuery) Timeout(d time.Duration) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TenderRecipientsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TenderRecipientsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TenderRecipientsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TenderRecipientsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TenderRecipientsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TenderRecipientsQuery) Cache(opts ...keel.CacheOption) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TenderRecipientsQuery) With(ctes ...*keel.CTETable) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TenderRecipientsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TenderRecipientsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*editenderchange.TenderRecipient] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TenderRecipientsQuery) Clone() keel.Query[*editenderchange.TenderRecipient] {
+	return &TenderRecipientsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TenderRecipientsQuery) One(ctx context.Context, db *keel.DB) (*editenderchange.TenderRecipient, error) {
+	return keel.One[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TenderRecipientsQuery) First(ctx context.Context, db *keel.DB) (*editenderchange.TenderRecipient, error) {
+	return keel.First[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TenderRecipientsQuery) List(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderRecipient, error) {
+	return keel.List[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TenderRecipientsQuery) All(ctx context.Context, db *keel.DB) ([]*editenderchange.TenderRecipient, error) {
+	return keel.All[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TenderRecipientsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*editenderchange.TenderRecipient, error) {
+	return keel.UpdateReturning[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TenderRecipientsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*editenderchange.TenderRecipient], error) {
+	return keel.PageOf[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TenderRecipientsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*editenderchange.TenderRecipient) error) error {
+	return keel.Each[*editenderchange.TenderRecipient](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTenderRecipient() unsafe.Pointer { return unsafe.Pointer(new(editenderchange.TenderRecipient)) }

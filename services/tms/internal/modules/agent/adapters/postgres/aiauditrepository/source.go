@@ -57,11 +57,11 @@ func NewSource(p Params) aiauditports.AIAuditSourceRepository {
 }
 
 func keyset[T any](
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	ts keel.Int64Col,
 	id keelkinds.PulidIDCol,
 	page aiauditports.AIAuditSourcePage,
-) *keel.Query[*T] {
+) keel.Query[*T] {
 	return q.AllTenants().
 		Where(
 			keel.Tuple(ts, id).Gt(keel.Tuple(page.AfterTS, page.AfterID)),

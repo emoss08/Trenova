@@ -4,6 +4,7 @@ package billingqueuedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -109,7 +110,7 @@ var billingQueueItemsRef = keel.Ref{Table: &billingQueueItemsTable}
 
 // BillingQueueItemsTable is the table of billingqueue.BillingQueueItem.
 type BillingQueueItemsTable struct {
-	keel.Handle[*billingqueue.BillingQueueItem]
+	keel.TableBase
 	ID                        keelkinds.PulidIDCol
 	OrganizationID            keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
@@ -164,7 +165,7 @@ type BillingQueueItemsTable struct {
 
 // BillingQueueItems references the billing_queue_items table.
 var BillingQueueItems = &BillingQueueItemsTable{
-	Handle:                    keel.Handle[*billingqueue.BillingQueueItem]{Ref: &billingQueueItemsRef},
+	TableBase:                 keel.TableBase{Ref: &billingQueueItemsRef},
 	ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 0}}},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 1}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 2}}},
@@ -217,10 +218,10 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 49}},
 }
 
-// BuildBillingQueueItems builds the handle of billing_queue_items for ref. Generated relation and alias methods call it.
+// BuildBillingQueueItems builds the table of billing_queue_items for ref. Generated relation and alias methods call it.
 func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 	return &BillingQueueItemsTable{
-		Handle:                    keel.Handle[*billingqueue.BillingQueueItem]{Ref: r},
+		TableBase:                 keel.TableBase{Ref: r},
 		ID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -305,6 +306,365 @@ func (t *BillingQueueItemsTable) CanceledBy() *tenantdb.UsersTable {
 // Get returns the billing_queue_items row with the given key, or keel.ErrNotFound.
 func (t *BillingQueueItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.BillingQueueItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BillingQueueItemsQuery is a query over billingqueue.BillingQueueItem.
+type BillingQueueItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingqueue.BillingQueueItem] = (*BillingQueueItemsTable)(nil)
+
+var _ keel.Query[*billingqueue.BillingQueueItem] = (*BillingQueueItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BillingQueueItemsTable) Query() keel.Query[*billingqueue.BillingQueueItem] {
+	return &BillingQueueItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BillingQueueItemsQuery.Where.
+func (t *BillingQueueItemsTable) Where(ps ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BillingQueueItemsQuery.Pick.
+func (t *BillingQueueItemsTable) Pick(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BillingQueueItemsQuery.Load.
+func (t *BillingQueueItemsTable) Load(ls ...keel.Loader) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BillingQueueItemsQuery.Omit.
+func (t *BillingQueueItemsTable) Omit(cols ...keel.Column) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BillingQueueItemsQuery.Order.
+func (t *BillingQueueItemsTable) Order(os ...keel.Order) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BillingQueueItemsQuery.Limit.
+func (t *BillingQueueItemsTable) Limit(n int) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BillingQueueItemsQuery.Group.
+func (t *BillingQueueItemsTable) Group(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BillingQueueItemsQuery.GroupingSets.
+func (t *BillingQueueItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BillingQueueItemsQuery.Rollup.
+func (t *BillingQueueItemsTable) Rollup(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BillingQueueItemsQuery.Cube.
+func (t *BillingQueueItemsTable) Cube(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BillingQueueItemsQuery.AllTenants.
+func (t *BillingQueueItemsTable) AllTenants() keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BillingQueueItemsQuery.Join.
+func (t *BillingQueueItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BillingQueueItemsQuery.LeftJoin.
+func (t *BillingQueueItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BillingQueueItemsQuery.LeftJoinLateral.
+func (t *BillingQueueItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BillingQueueItemsQuery.JoinLateral.
+func (t *BillingQueueItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BillingQueueItemsQuery.Lock.
+func (t *BillingQueueItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BillingQueueItemsQuery.DistinctOn.
+func (t *BillingQueueItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BillingQueueItemsQuery.Cache.
+func (t *BillingQueueItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BillingQueueItemsQuery.LoadStrategy.
+func (t *BillingQueueItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BillingQueueItemsQuery.With.
+func (t *BillingQueueItemsTable) With(ctes ...*keel.CTETable) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BillingQueueItemsQuery.Compute.
+func (t *BillingQueueItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BillingQueueItemsTable) Create(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BillingQueueItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BillingQueueItemsTable) Save(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BillingQueueItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BillingQueueItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueue.BillingQueueItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BillingQueueItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BillingQueueItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BillingQueueItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueue.BillingQueueItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BillingQueueItemsQuery) Where(ps ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BillingQueueItemsQuery) Pick(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BillingQueueItemsQuery) Omit(cols ...keel.Column) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BillingQueueItemsQuery) Load(ls ...keel.Loader) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BillingQueueItemsQuery) Order(os ...keel.Order) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BillingQueueItemsQuery) Distinct() keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BillingQueueItemsQuery) Group(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BillingQueueItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BillingQueueItemsQuery) Rollup(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BillingQueueItemsQuery) Cube(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BillingQueueItemsQuery) Window(name string, w keel.Window) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BillingQueueItemsQuery) Having(ps ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BillingQueueItemsQuery) Limit(n int) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BillingQueueItemsQuery) Offset(n int) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BillingQueueItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BillingQueueItemsQuery) AllTenants() keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BillingQueueItemsQuery) CustomPlan() keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BillingQueueItemsQuery) Timeout(d time.Duration) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BillingQueueItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BillingQueueItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BillingQueueItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BillingQueueItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BillingQueueItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BillingQueueItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BillingQueueItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BillingQueueItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BillingQueueItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueue.BillingQueueItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BillingQueueItemsQuery) Clone() keel.Query[*billingqueue.BillingQueueItem] {
+	return &BillingQueueItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BillingQueueItemsQuery) One(ctx context.Context, db *keel.DB) (*billingqueue.BillingQueueItem, error) {
+	return keel.One[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BillingQueueItemsQuery) First(ctx context.Context, db *keel.DB) (*billingqueue.BillingQueueItem, error) {
+	return keel.First[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BillingQueueItemsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueue.BillingQueueItem, error) {
+	return keel.List[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BillingQueueItemsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueue.BillingQueueItem, error) {
+	return keel.All[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BillingQueueItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueue.BillingQueueItem, error) {
+	return keel.UpdateReturning[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BillingQueueItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueue.BillingQueueItem], error) {
+	return keel.PageOf[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BillingQueueItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueue.BillingQueueItem) error) error {
+	return keel.Each[*billingqueue.BillingQueueItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBillingQueueItem() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.BillingQueueItem)) }
@@ -704,7 +1064,7 @@ var issuesRef = keel.Ref{Table: &issuesTable}
 
 // IssuesTable is the table of billingqueue.Issue.
 type IssuesTable struct {
-	keel.Handle[*billingqueue.Issue]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -732,7 +1092,7 @@ type IssuesTable struct {
 
 // Issues references the billing_queue_issues table.
 var Issues = &IssuesTable{
-	Handle:          keel.Handle[*billingqueue.Issue]{Ref: &issuesRef},
+	TableBase:       keel.TableBase{Ref: &issuesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &issuesRef, Index: 2}}},
@@ -758,10 +1118,10 @@ var Issues = &IssuesTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &issuesRef, Index: 22}},
 }
 
-// BuildIssues builds the handle of billing_queue_issues for ref. Generated relation and alias methods call it.
+// BuildIssues builds the table of billing_queue_issues for ref. Generated relation and alias methods call it.
 func BuildIssues(r *keel.Ref) *IssuesTable {
 	return &IssuesTable{
-		Handle:          keel.Handle[*billingqueue.Issue]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -797,6 +1157,365 @@ func (t *IssuesTable) As(alias string) *IssuesTable { return keel.Alias(t.Ref, a
 // Get returns the billing_queue_issues row with the given key, or keel.ErrNotFound.
 func (t *IssuesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.Issue, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// IssuesQuery is a query over billingqueue.Issue.
+type IssuesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingqueue.Issue] = (*IssuesTable)(nil)
+
+var _ keel.Query[*billingqueue.Issue] = (*IssuesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *IssuesTable) Query() keel.Query[*billingqueue.Issue] {
+	return &IssuesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see IssuesQuery.Where.
+func (t *IssuesTable) Where(ps ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see IssuesQuery.Pick.
+func (t *IssuesTable) Pick(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see IssuesQuery.Load.
+func (t *IssuesTable) Load(ls ...keel.Loader) keel.Query[*billingqueue.Issue] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see IssuesQuery.Omit.
+func (t *IssuesTable) Omit(cols ...keel.Column) keel.Query[*billingqueue.Issue] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see IssuesQuery.Order.
+func (t *IssuesTable) Order(os ...keel.Order) keel.Query[*billingqueue.Issue] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see IssuesQuery.Limit.
+func (t *IssuesTable) Limit(n int) keel.Query[*billingqueue.Issue] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see IssuesQuery.Group.
+func (t *IssuesTable) Group(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see IssuesQuery.GroupingSets.
+func (t *IssuesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see IssuesQuery.Rollup.
+func (t *IssuesTable) Rollup(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see IssuesQuery.Cube.
+func (t *IssuesTable) Cube(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see IssuesQuery.AllTenants.
+func (t *IssuesTable) AllTenants() keel.Query[*billingqueue.Issue] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see IssuesQuery.Join.
+func (t *IssuesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see IssuesQuery.LeftJoin.
+func (t *IssuesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see IssuesQuery.LeftJoinLateral.
+func (t *IssuesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.Issue] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see IssuesQuery.JoinLateral.
+func (t *IssuesTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.Issue] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see IssuesQuery.Lock.
+func (t *IssuesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueue.Issue] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see IssuesQuery.DistinctOn.
+func (t *IssuesTable) DistinctOn(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see IssuesQuery.Cache.
+func (t *IssuesTable) Cache(opts ...keel.CacheOption) keel.Query[*billingqueue.Issue] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see IssuesQuery.LoadStrategy.
+func (t *IssuesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueue.Issue] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see IssuesQuery.With.
+func (t *IssuesTable) With(ctes ...*keel.CTETable) keel.Query[*billingqueue.Issue] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see IssuesQuery.Compute.
+func (t *IssuesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueue.Issue] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *IssuesTable) Create(ctx context.Context, db *keel.DB, row *billingqueue.Issue) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *IssuesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *IssuesTable) Save(ctx context.Context, db *keel.DB, row *billingqueue.Issue, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *IssuesTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueue.Issue, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *IssuesTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueue.Issue) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *IssuesTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *IssuesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *IssuesTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueue.Issue) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *IssuesQuery) Where(ps ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *IssuesQuery) Pick(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *IssuesQuery) Omit(cols ...keel.Column) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *IssuesQuery) Load(ls ...keel.Loader) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *IssuesQuery) Order(os ...keel.Order) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *IssuesQuery) Distinct() keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *IssuesQuery) Group(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *IssuesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *IssuesQuery) Rollup(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *IssuesQuery) Cube(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *IssuesQuery) Window(name string, w keel.Window) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *IssuesQuery) Having(ps ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *IssuesQuery) Limit(n int) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *IssuesQuery) Offset(n int) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *IssuesQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *IssuesQuery) AllTenants() keel.Query[*billingqueue.Issue] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *IssuesQuery) CustomPlan() keel.Query[*billingqueue.Issue] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *IssuesQuery) Timeout(d time.Duration) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *IssuesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *IssuesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *IssuesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *IssuesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *IssuesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *IssuesQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *IssuesQuery) With(ctes ...*keel.CTETable) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *IssuesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *IssuesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueue.Issue] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *IssuesQuery) Clone() keel.Query[*billingqueue.Issue] {
+	return &IssuesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *IssuesQuery) One(ctx context.Context, db *keel.DB) (*billingqueue.Issue, error) {
+	return keel.One[*billingqueue.Issue](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *IssuesQuery) First(ctx context.Context, db *keel.DB) (*billingqueue.Issue, error) {
+	return keel.First[*billingqueue.Issue](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *IssuesQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueue.Issue, error) {
+	return keel.List[*billingqueue.Issue](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *IssuesQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueue.Issue, error) {
+	return keel.All[*billingqueue.Issue](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *IssuesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueue.Issue, error) {
+	return keel.UpdateReturning[*billingqueue.Issue](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *IssuesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueue.Issue], error) {
+	return keel.PageOf[*billingqueue.Issue](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *IssuesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueue.Issue) error) error {
+	return keel.Each[*billingqueue.Issue](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newIssue() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.Issue)) }
@@ -989,7 +1708,7 @@ var queueBriefsRef = keel.Ref{Table: &queueBriefsTable}
 
 // QueueBriefsTable is the table of billingqueue.QueueBrief.
 type QueueBriefsTable struct {
-	keel.Handle[*billingqueue.QueueBrief]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1003,7 +1722,7 @@ type QueueBriefsTable struct {
 
 // QueueBriefs references the billing_queue_briefs table.
 var QueueBriefs = &QueueBriefsTable{
-	Handle:         keel.Handle[*billingqueue.QueueBrief]{Ref: &queueBriefsRef},
+	TableBase:      keel.TableBase{Ref: &queueBriefsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 2}}},
@@ -1015,10 +1734,10 @@ var QueueBriefs = &QueueBriefsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 8}},
 }
 
-// BuildQueueBriefs builds the handle of billing_queue_briefs for ref. Generated relation and alias methods call it.
+// BuildQueueBriefs builds the table of billing_queue_briefs for ref. Generated relation and alias methods call it.
 func BuildQueueBriefs(r *keel.Ref) *QueueBriefsTable {
 	return &QueueBriefsTable{
-		Handle:         keel.Handle[*billingqueue.QueueBrief]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1042,6 +1761,365 @@ func (t *QueueBriefsTable) As(alias string) *QueueBriefsTable {
 // Get returns the billing_queue_briefs row with the given key, or keel.ErrNotFound.
 func (t *QueueBriefsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueue.QueueBrief, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// QueueBriefsQuery is a query over billingqueue.QueueBrief.
+type QueueBriefsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingqueue.QueueBrief] = (*QueueBriefsTable)(nil)
+
+var _ keel.Query[*billingqueue.QueueBrief] = (*QueueBriefsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *QueueBriefsTable) Query() keel.Query[*billingqueue.QueueBrief] {
+	return &QueueBriefsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see QueueBriefsQuery.Where.
+func (t *QueueBriefsTable) Where(ps ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see QueueBriefsQuery.Pick.
+func (t *QueueBriefsTable) Pick(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see QueueBriefsQuery.Load.
+func (t *QueueBriefsTable) Load(ls ...keel.Loader) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see QueueBriefsQuery.Omit.
+func (t *QueueBriefsTable) Omit(cols ...keel.Column) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see QueueBriefsQuery.Order.
+func (t *QueueBriefsTable) Order(os ...keel.Order) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see QueueBriefsQuery.Limit.
+func (t *QueueBriefsTable) Limit(n int) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see QueueBriefsQuery.Group.
+func (t *QueueBriefsTable) Group(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see QueueBriefsQuery.GroupingSets.
+func (t *QueueBriefsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see QueueBriefsQuery.Rollup.
+func (t *QueueBriefsTable) Rollup(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see QueueBriefsQuery.Cube.
+func (t *QueueBriefsTable) Cube(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see QueueBriefsQuery.AllTenants.
+func (t *QueueBriefsTable) AllTenants() keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see QueueBriefsQuery.Join.
+func (t *QueueBriefsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see QueueBriefsQuery.LeftJoin.
+func (t *QueueBriefsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see QueueBriefsQuery.LeftJoinLateral.
+func (t *QueueBriefsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see QueueBriefsQuery.JoinLateral.
+func (t *QueueBriefsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see QueueBriefsQuery.Lock.
+func (t *QueueBriefsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see QueueBriefsQuery.DistinctOn.
+func (t *QueueBriefsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see QueueBriefsQuery.Cache.
+func (t *QueueBriefsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see QueueBriefsQuery.LoadStrategy.
+func (t *QueueBriefsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see QueueBriefsQuery.With.
+func (t *QueueBriefsTable) With(ctes ...*keel.CTETable) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see QueueBriefsQuery.Compute.
+func (t *QueueBriefsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *QueueBriefsTable) Create(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *QueueBriefsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *QueueBriefsTable) Save(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *QueueBriefsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *QueueBriefsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueue.QueueBrief) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *QueueBriefsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *QueueBriefsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *QueueBriefsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueue.QueueBrief) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *QueueBriefsQuery) Where(ps ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *QueueBriefsQuery) Pick(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *QueueBriefsQuery) Omit(cols ...keel.Column) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *QueueBriefsQuery) Load(ls ...keel.Loader) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *QueueBriefsQuery) Order(os ...keel.Order) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *QueueBriefsQuery) Distinct() keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *QueueBriefsQuery) Group(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *QueueBriefsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *QueueBriefsQuery) Rollup(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *QueueBriefsQuery) Cube(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *QueueBriefsQuery) Window(name string, w keel.Window) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *QueueBriefsQuery) Having(ps ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *QueueBriefsQuery) Limit(n int) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *QueueBriefsQuery) Offset(n int) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *QueueBriefsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *QueueBriefsQuery) AllTenants() keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *QueueBriefsQuery) CustomPlan() keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *QueueBriefsQuery) Timeout(d time.Duration) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *QueueBriefsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *QueueBriefsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *QueueBriefsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *QueueBriefsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *QueueBriefsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *QueueBriefsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *QueueBriefsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *QueueBriefsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *QueueBriefsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueue.QueueBrief] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *QueueBriefsQuery) Clone() keel.Query[*billingqueue.QueueBrief] {
+	return &QueueBriefsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *QueueBriefsQuery) One(ctx context.Context, db *keel.DB) (*billingqueue.QueueBrief, error) {
+	return keel.One[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *QueueBriefsQuery) First(ctx context.Context, db *keel.DB) (*billingqueue.QueueBrief, error) {
+	return keel.First[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *QueueBriefsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueue.QueueBrief, error) {
+	return keel.List[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *QueueBriefsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueue.QueueBrief, error) {
+	return keel.All[*billingqueue.QueueBrief](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *QueueBriefsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueue.QueueBrief, error) {
+	return keel.UpdateReturning[*billingqueue.QueueBrief](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *QueueBriefsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueue.QueueBrief], error) {
+	return keel.PageOf[*billingqueue.QueueBrief](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *QueueBriefsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueue.QueueBrief) error) error {
+	return keel.Each[*billingqueue.QueueBrief](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newQueueBrief() unsafe.Pointer { return unsafe.Pointer(new(billingqueue.QueueBrief)) }

@@ -4,6 +4,7 @@ package permitdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -70,7 +71,7 @@ var permitsRef = keel.Ref{Table: &permitsTable}
 
 // PermitsTable is the table of permit.Permit.
 type PermitsTable struct {
-	keel.Handle[*permit.Permit]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -91,7 +92,7 @@ type PermitsTable struct {
 
 // Permits references the permits table.
 var Permits = &PermitsTable{
-	Handle:         keel.Handle[*permit.Permit]{Ref: &permitsRef},
+	TableBase:      keel.TableBase{Ref: &permitsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 2}}},
@@ -110,10 +111,10 @@ var Permits = &PermitsTable{
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &permitsRef, Index: 15}},
 }
 
-// BuildPermits builds the handle of permits for ref. Generated relation and alias methods call it.
+// BuildPermits builds the table of permits for ref. Generated relation and alias methods call it.
 func BuildPermits(r *keel.Ref) *PermitsTable {
 	return &PermitsTable{
-		Handle:         keel.Handle[*permit.Permit]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -147,6 +148,365 @@ func (t *PermitsTable) State() *usstatedb.UsStatesTable {
 // Get returns the permits row with the given key, or keel.ErrNotFound.
 func (t *PermitsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permit.Permit, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PermitsQuery is a query over permit.Permit.
+type PermitsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*permit.Permit] = (*PermitsTable)(nil)
+
+var _ keel.Query[*permit.Permit] = (*PermitsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PermitsTable) Query() keel.Query[*permit.Permit] {
+	return &PermitsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PermitsQuery.Where.
+func (t *PermitsTable) Where(ps ...keel.Pred) keel.Query[*permit.Permit] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PermitsQuery.Pick.
+func (t *PermitsTable) Pick(es ...keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PermitsQuery.Load.
+func (t *PermitsTable) Load(ls ...keel.Loader) keel.Query[*permit.Permit] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PermitsQuery.Omit.
+func (t *PermitsTable) Omit(cols ...keel.Column) keel.Query[*permit.Permit] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PermitsQuery.Order.
+func (t *PermitsTable) Order(os ...keel.Order) keel.Query[*permit.Permit] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PermitsQuery.Limit.
+func (t *PermitsTable) Limit(n int) keel.Query[*permit.Permit] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PermitsQuery.Group.
+func (t *PermitsTable) Group(es ...keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PermitsQuery.GroupingSets.
+func (t *PermitsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PermitsQuery.Rollup.
+func (t *PermitsTable) Rollup(es ...keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PermitsQuery.Cube.
+func (t *PermitsTable) Cube(es ...keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PermitsQuery.AllTenants.
+func (t *PermitsTable) AllTenants() keel.Query[*permit.Permit] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PermitsQuery.Join.
+func (t *PermitsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Permit] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PermitsQuery.LeftJoin.
+func (t *PermitsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Permit] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PermitsQuery.LeftJoinLateral.
+func (t *PermitsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*permit.Permit] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PermitsQuery.JoinLateral.
+func (t *PermitsTable) JoinLateral(sub keel.LateralSource) keel.Query[*permit.Permit] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PermitsQuery.Lock.
+func (t *PermitsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*permit.Permit] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PermitsQuery.DistinctOn.
+func (t *PermitsTable) DistinctOn(es ...keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PermitsQuery.Cache.
+func (t *PermitsTable) Cache(opts ...keel.CacheOption) keel.Query[*permit.Permit] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PermitsQuery.LoadStrategy.
+func (t *PermitsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*permit.Permit] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PermitsQuery.With.
+func (t *PermitsTable) With(ctes ...*keel.CTETable) keel.Query[*permit.Permit] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PermitsQuery.Compute.
+func (t *PermitsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*permit.Permit] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PermitsTable) Create(ctx context.Context, db *keel.DB, row *permit.Permit) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PermitsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*permit.Permit) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PermitsTable) Save(ctx context.Context, db *keel.DB, row *permit.Permit, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PermitsTable) SaveExcept(ctx context.Context, db *keel.DB, row *permit.Permit, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PermitsTable) DeleteRow(ctx context.Context, db *keel.DB, row *permit.Permit) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PermitsTable) Upsert(ctx context.Context, db *keel.DB, rows []*permit.Permit, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PermitsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*permit.Permit, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PermitsTable) Copy(ctx context.Context, db *keel.DB, rows []*permit.Permit) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PermitsQuery) Where(ps ...keel.Pred) keel.Query[*permit.Permit] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PermitsQuery) Pick(es ...keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PermitsQuery) Omit(cols ...keel.Column) keel.Query[*permit.Permit] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PermitsQuery) Load(ls ...keel.Loader) keel.Query[*permit.Permit] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PermitsQuery) Order(os ...keel.Order) keel.Query[*permit.Permit] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PermitsQuery) Distinct() keel.Query[*permit.Permit] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PermitsQuery) Group(es ...keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PermitsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PermitsQuery) Rollup(es ...keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PermitsQuery) Cube(es ...keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PermitsQuery) Window(name string, w keel.Window) keel.Query[*permit.Permit] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PermitsQuery) Having(ps ...keel.Pred) keel.Query[*permit.Permit] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PermitsQuery) Limit(n int) keel.Query[*permit.Permit] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PermitsQuery) Offset(n int) keel.Query[*permit.Permit] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PermitsQuery) DistinctOn(es ...keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PermitsQuery) AllTenants() keel.Query[*permit.Permit] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PermitsQuery) CustomPlan() keel.Query[*permit.Permit] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PermitsQuery) Timeout(d time.Duration) keel.Query[*permit.Permit] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PermitsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*permit.Permit] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PermitsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Permit] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PermitsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Permit] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PermitsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*permit.Permit] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PermitsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*permit.Permit] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PermitsQuery) Cache(opts ...keel.CacheOption) keel.Query[*permit.Permit] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PermitsQuery) With(ctes ...*keel.CTETable) keel.Query[*permit.Permit] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PermitsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*permit.Permit] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PermitsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*permit.Permit] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PermitsQuery) Clone() keel.Query[*permit.Permit] {
+	return &PermitsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PermitsQuery) One(ctx context.Context, db *keel.DB) (*permit.Permit, error) {
+	return keel.One[*permit.Permit](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PermitsQuery) First(ctx context.Context, db *keel.DB) (*permit.Permit, error) {
+	return keel.First[*permit.Permit](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PermitsQuery) List(ctx context.Context, db *keel.DB) ([]*permit.Permit, error) {
+	return keel.List[*permit.Permit](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PermitsQuery) All(ctx context.Context, db *keel.DB) ([]*permit.Permit, error) {
+	return keel.All[*permit.Permit](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PermitsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*permit.Permit, error) {
+	return keel.UpdateReturning[*permit.Permit](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PermitsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*permit.Permit], error) {
+	return keel.PageOf[*permit.Permit](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PermitsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*permit.Permit) error) error {
+	return keel.Each[*permit.Permit](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPermit() unsafe.Pointer { return unsafe.Pointer(new(permit.Permit)) }
@@ -324,7 +684,7 @@ var requirementsRef = keel.Ref{Table: &requirementsTable}
 
 // RequirementsTable is the table of permit.Requirement.
 type RequirementsTable struct {
-	keel.Handle[*permit.Requirement]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -351,7 +711,7 @@ type RequirementsTable struct {
 
 // Requirements references the permit_requirements table.
 var Requirements = &RequirementsTable{
-	Handle:              keel.Handle[*permit.Requirement]{Ref: &requirementsRef},
+	TableBase:           keel.TableBase{Ref: &requirementsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requirementsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requirementsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &requirementsRef, Index: 2}}},
@@ -376,10 +736,10 @@ var Requirements = &RequirementsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &requirementsRef, Index: 21}},
 }
 
-// BuildRequirements builds the handle of permit_requirements for ref. Generated relation and alias methods call it.
+// BuildRequirements builds the table of permit_requirements for ref. Generated relation and alias methods call it.
 func BuildRequirements(r *keel.Ref) *RequirementsTable {
 	return &RequirementsTable{
-		Handle:              keel.Handle[*permit.Requirement]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -426,6 +786,365 @@ func (t *RequirementsTable) SatisfiedByPermit() *PermitsTable {
 // Get returns the permit_requirements row with the given key, or keel.ErrNotFound.
 func (t *RequirementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*permit.Requirement, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RequirementsQuery is a query over permit.Requirement.
+type RequirementsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*permit.Requirement] = (*RequirementsTable)(nil)
+
+var _ keel.Query[*permit.Requirement] = (*RequirementsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RequirementsTable) Query() keel.Query[*permit.Requirement] {
+	return &RequirementsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RequirementsQuery.Where.
+func (t *RequirementsTable) Where(ps ...keel.Pred) keel.Query[*permit.Requirement] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RequirementsQuery.Pick.
+func (t *RequirementsTable) Pick(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RequirementsQuery.Load.
+func (t *RequirementsTable) Load(ls ...keel.Loader) keel.Query[*permit.Requirement] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RequirementsQuery.Omit.
+func (t *RequirementsTable) Omit(cols ...keel.Column) keel.Query[*permit.Requirement] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RequirementsQuery.Order.
+func (t *RequirementsTable) Order(os ...keel.Order) keel.Query[*permit.Requirement] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RequirementsQuery.Limit.
+func (t *RequirementsTable) Limit(n int) keel.Query[*permit.Requirement] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RequirementsQuery.Group.
+func (t *RequirementsTable) Group(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RequirementsQuery.GroupingSets.
+func (t *RequirementsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RequirementsQuery.Rollup.
+func (t *RequirementsTable) Rollup(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RequirementsQuery.Cube.
+func (t *RequirementsTable) Cube(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RequirementsQuery.AllTenants.
+func (t *RequirementsTable) AllTenants() keel.Query[*permit.Requirement] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RequirementsQuery.Join.
+func (t *RequirementsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Requirement] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RequirementsQuery.LeftJoin.
+func (t *RequirementsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Requirement] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RequirementsQuery.LeftJoinLateral.
+func (t *RequirementsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*permit.Requirement] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RequirementsQuery.JoinLateral.
+func (t *RequirementsTable) JoinLateral(sub keel.LateralSource) keel.Query[*permit.Requirement] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RequirementsQuery.Lock.
+func (t *RequirementsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*permit.Requirement] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RequirementsQuery.DistinctOn.
+func (t *RequirementsTable) DistinctOn(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RequirementsQuery.Cache.
+func (t *RequirementsTable) Cache(opts ...keel.CacheOption) keel.Query[*permit.Requirement] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RequirementsQuery.LoadStrategy.
+func (t *RequirementsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*permit.Requirement] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RequirementsQuery.With.
+func (t *RequirementsTable) With(ctes ...*keel.CTETable) keel.Query[*permit.Requirement] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RequirementsQuery.Compute.
+func (t *RequirementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*permit.Requirement] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RequirementsTable) Create(ctx context.Context, db *keel.DB, row *permit.Requirement) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RequirementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*permit.Requirement) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RequirementsTable) Save(ctx context.Context, db *keel.DB, row *permit.Requirement, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RequirementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *permit.Requirement, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RequirementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *permit.Requirement) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RequirementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*permit.Requirement, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RequirementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*permit.Requirement, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RequirementsTable) Copy(ctx context.Context, db *keel.DB, rows []*permit.Requirement) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RequirementsQuery) Where(ps ...keel.Pred) keel.Query[*permit.Requirement] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RequirementsQuery) Pick(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RequirementsQuery) Omit(cols ...keel.Column) keel.Query[*permit.Requirement] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RequirementsQuery) Load(ls ...keel.Loader) keel.Query[*permit.Requirement] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RequirementsQuery) Order(os ...keel.Order) keel.Query[*permit.Requirement] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RequirementsQuery) Distinct() keel.Query[*permit.Requirement] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RequirementsQuery) Group(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RequirementsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RequirementsQuery) Rollup(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RequirementsQuery) Cube(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RequirementsQuery) Window(name string, w keel.Window) keel.Query[*permit.Requirement] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RequirementsQuery) Having(ps ...keel.Pred) keel.Query[*permit.Requirement] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RequirementsQuery) Limit(n int) keel.Query[*permit.Requirement] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RequirementsQuery) Offset(n int) keel.Query[*permit.Requirement] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RequirementsQuery) DistinctOn(es ...keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RequirementsQuery) AllTenants() keel.Query[*permit.Requirement] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RequirementsQuery) CustomPlan() keel.Query[*permit.Requirement] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RequirementsQuery) Timeout(d time.Duration) keel.Query[*permit.Requirement] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RequirementsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*permit.Requirement] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RequirementsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Requirement] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RequirementsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*permit.Requirement] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RequirementsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*permit.Requirement] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RequirementsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*permit.Requirement] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RequirementsQuery) Cache(opts ...keel.CacheOption) keel.Query[*permit.Requirement] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RequirementsQuery) With(ctes ...*keel.CTETable) keel.Query[*permit.Requirement] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RequirementsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*permit.Requirement] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RequirementsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*permit.Requirement] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RequirementsQuery) Clone() keel.Query[*permit.Requirement] {
+	return &RequirementsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RequirementsQuery) One(ctx context.Context, db *keel.DB) (*permit.Requirement, error) {
+	return keel.One[*permit.Requirement](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RequirementsQuery) First(ctx context.Context, db *keel.DB) (*permit.Requirement, error) {
+	return keel.First[*permit.Requirement](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RequirementsQuery) List(ctx context.Context, db *keel.DB) ([]*permit.Requirement, error) {
+	return keel.List[*permit.Requirement](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RequirementsQuery) All(ctx context.Context, db *keel.DB) ([]*permit.Requirement, error) {
+	return keel.All[*permit.Requirement](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RequirementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*permit.Requirement, error) {
+	return keel.UpdateReturning[*permit.Requirement](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RequirementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*permit.Requirement], error) {
+	return keel.PageOf[*permit.Requirement](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RequirementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*permit.Requirement) error) error {
+	return keel.Each[*permit.Requirement](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRequirement() unsafe.Pointer { return unsafe.Pointer(new(permit.Requirement)) }

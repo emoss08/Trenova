@@ -4,6 +4,7 @@ package rateconfirmationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -81,7 +82,7 @@ var rateConfirmationsRef = keel.Ref{Table: &rateConfirmationsTable}
 
 // RateConfirmationsTable is the table of rateconfirmation.RateConfirmation.
 type RateConfirmationsTable struct {
-	keel.Handle[*rateconfirmation.RateConfirmation]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -111,7 +112,7 @@ type RateConfirmationsTable struct {
 
 // RateConfirmations references the rate_confirmations table.
 var RateConfirmations = &RateConfirmationsTable{
-	Handle:              keel.Handle[*rateconfirmation.RateConfirmation]{Ref: &rateConfirmationsRef},
+	TableBase:           keel.TableBase{Ref: &rateConfirmationsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 2}}},
@@ -139,10 +140,10 @@ var RateConfirmations = &RateConfirmationsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationsRef, Index: 24}},
 }
 
-// BuildRateConfirmations builds the handle of rate_confirmations for ref. Generated relation and alias methods call it.
+// BuildRateConfirmations builds the table of rate_confirmations for ref. Generated relation and alias methods call it.
 func BuildRateConfirmations(r *keel.Ref) *RateConfirmationsTable {
 	return &RateConfirmationsTable{
-		Handle:              keel.Handle[*rateconfirmation.RateConfirmation]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -197,6 +198,365 @@ func (t *RateConfirmationsTable) Shipment() *shipmentdb.ShipmentsTable {
 // Get returns the rate_confirmations row with the given key, or keel.ErrNotFound.
 func (t *RateConfirmationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateconfirmation.RateConfirmation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateConfirmationsQuery is a query over rateconfirmation.RateConfirmation.
+type RateConfirmationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateconfirmation.RateConfirmation] = (*RateConfirmationsTable)(nil)
+
+var _ keel.Query[*rateconfirmation.RateConfirmation] = (*RateConfirmationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateConfirmationsTable) Query() keel.Query[*rateconfirmation.RateConfirmation] {
+	return &RateConfirmationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateConfirmationsQuery.Where.
+func (t *RateConfirmationsTable) Where(ps ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateConfirmationsQuery.Pick.
+func (t *RateConfirmationsTable) Pick(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateConfirmationsQuery.Load.
+func (t *RateConfirmationsTable) Load(ls ...keel.Loader) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateConfirmationsQuery.Omit.
+func (t *RateConfirmationsTable) Omit(cols ...keel.Column) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateConfirmationsQuery.Order.
+func (t *RateConfirmationsTable) Order(os ...keel.Order) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateConfirmationsQuery.Limit.
+func (t *RateConfirmationsTable) Limit(n int) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateConfirmationsQuery.Group.
+func (t *RateConfirmationsTable) Group(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateConfirmationsQuery.GroupingSets.
+func (t *RateConfirmationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateConfirmationsQuery.Rollup.
+func (t *RateConfirmationsTable) Rollup(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateConfirmationsQuery.Cube.
+func (t *RateConfirmationsTable) Cube(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateConfirmationsQuery.AllTenants.
+func (t *RateConfirmationsTable) AllTenants() keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateConfirmationsQuery.Join.
+func (t *RateConfirmationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateConfirmationsQuery.LeftJoin.
+func (t *RateConfirmationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateConfirmationsQuery.LeftJoinLateral.
+func (t *RateConfirmationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateConfirmationsQuery.JoinLateral.
+func (t *RateConfirmationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateConfirmationsQuery.Lock.
+func (t *RateConfirmationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateConfirmationsQuery.DistinctOn.
+func (t *RateConfirmationsTable) DistinctOn(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateConfirmationsQuery.Cache.
+func (t *RateConfirmationsTable) Cache(opts ...keel.CacheOption) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateConfirmationsQuery.LoadStrategy.
+func (t *RateConfirmationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateConfirmationsQuery.With.
+func (t *RateConfirmationsTable) With(ctes ...*keel.CTETable) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateConfirmationsQuery.Compute.
+func (t *RateConfirmationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateConfirmationsTable) Create(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateConfirmationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateConfirmationsTable) Save(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateConfirmationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateConfirmationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateConfirmationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateConfirmationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateConfirmationsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateConfirmationsQuery) Where(ps ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateConfirmationsQuery) Pick(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateConfirmationsQuery) Omit(cols ...keel.Column) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateConfirmationsQuery) Load(ls ...keel.Loader) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateConfirmationsQuery) Order(os ...keel.Order) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateConfirmationsQuery) Distinct() keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateConfirmationsQuery) Group(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateConfirmationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateConfirmationsQuery) Rollup(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateConfirmationsQuery) Cube(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateConfirmationsQuery) Window(name string, w keel.Window) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateConfirmationsQuery) Having(ps ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateConfirmationsQuery) Limit(n int) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateConfirmationsQuery) Offset(n int) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateConfirmationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateConfirmationsQuery) AllTenants() keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateConfirmationsQuery) CustomPlan() keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateConfirmationsQuery) Timeout(d time.Duration) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateConfirmationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateConfirmationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateConfirmationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateConfirmationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateConfirmationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateConfirmationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateConfirmationsQuery) With(ctes ...*keel.CTETable) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateConfirmationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateConfirmationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateconfirmation.RateConfirmation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateConfirmationsQuery) Clone() keel.Query[*rateconfirmation.RateConfirmation] {
+	return &RateConfirmationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateConfirmationsQuery) One(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmation, error) {
+	return keel.One[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateConfirmationsQuery) First(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmation, error) {
+	return keel.First[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateConfirmationsQuery) List(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmation, error) {
+	return keel.List[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateConfirmationsQuery) All(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmation, error) {
+	return keel.All[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateConfirmationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateconfirmation.RateConfirmation, error) {
+	return keel.UpdateReturning[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateConfirmationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateconfirmation.RateConfirmation], error) {
+	return keel.PageOf[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateConfirmationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateconfirmation.RateConfirmation) error) error {
+	return keel.Each[*rateconfirmation.RateConfirmation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateConfirmation() unsafe.Pointer {
@@ -420,7 +780,7 @@ var rateConfirmationTokensRef = keel.Ref{Table: &rateConfirmationTokensTable}
 
 // RateConfirmationTokensTable is the table of rateconfirmation.RateConfirmationToken.
 type RateConfirmationTokensTable struct {
-	keel.Handle[*rateconfirmation.RateConfirmationToken]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -436,7 +796,7 @@ type RateConfirmationTokensTable struct {
 
 // RateConfirmationTokens references the rate_confirmation_tokens table.
 var RateConfirmationTokens = &RateConfirmationTokensTable{
-	Handle:             keel.Handle[*rateconfirmation.RateConfirmationToken]{Ref: &rateConfirmationTokensRef},
+	TableBase:          keel.TableBase{Ref: &rateConfirmationTokensRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 2}}},
@@ -450,10 +810,10 @@ var RateConfirmationTokens = &RateConfirmationTokensTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &rateConfirmationTokensRef, Index: 10}},
 }
 
-// BuildRateConfirmationTokens builds the handle of rate_confirmation_tokens for ref. Generated relation and alias methods call it.
+// BuildRateConfirmationTokens builds the table of rate_confirmation_tokens for ref. Generated relation and alias methods call it.
 func BuildRateConfirmationTokens(r *keel.Ref) *RateConfirmationTokensTable {
 	return &RateConfirmationTokensTable{
-		Handle:             keel.Handle[*rateconfirmation.RateConfirmationToken]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -484,6 +844,365 @@ func (t *RateConfirmationTokensTable) RateConfirmation() *RateConfirmationsTable
 // Get returns the rate_confirmation_tokens row with the given key, or keel.ErrNotFound.
 func (t *RateConfirmationTokensTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rateconfirmation.RateConfirmationToken, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RateConfirmationTokensQuery is a query over rateconfirmation.RateConfirmationToken.
+type RateConfirmationTokensQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rateconfirmation.RateConfirmationToken] = (*RateConfirmationTokensTable)(nil)
+
+var _ keel.Query[*rateconfirmation.RateConfirmationToken] = (*RateConfirmationTokensQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RateConfirmationTokensTable) Query() keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return &RateConfirmationTokensQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RateConfirmationTokensQuery.Where.
+func (t *RateConfirmationTokensTable) Where(ps ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RateConfirmationTokensQuery.Pick.
+func (t *RateConfirmationTokensTable) Pick(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RateConfirmationTokensQuery.Load.
+func (t *RateConfirmationTokensTable) Load(ls ...keel.Loader) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RateConfirmationTokensQuery.Omit.
+func (t *RateConfirmationTokensTable) Omit(cols ...keel.Column) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RateConfirmationTokensQuery.Order.
+func (t *RateConfirmationTokensTable) Order(os ...keel.Order) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RateConfirmationTokensQuery.Limit.
+func (t *RateConfirmationTokensTable) Limit(n int) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RateConfirmationTokensQuery.Group.
+func (t *RateConfirmationTokensTable) Group(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RateConfirmationTokensQuery.GroupingSets.
+func (t *RateConfirmationTokensTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RateConfirmationTokensQuery.Rollup.
+func (t *RateConfirmationTokensTable) Rollup(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RateConfirmationTokensQuery.Cube.
+func (t *RateConfirmationTokensTable) Cube(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RateConfirmationTokensQuery.AllTenants.
+func (t *RateConfirmationTokensTable) AllTenants() keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RateConfirmationTokensQuery.Join.
+func (t *RateConfirmationTokensTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RateConfirmationTokensQuery.LeftJoin.
+func (t *RateConfirmationTokensTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RateConfirmationTokensQuery.LeftJoinLateral.
+func (t *RateConfirmationTokensTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RateConfirmationTokensQuery.JoinLateral.
+func (t *RateConfirmationTokensTable) JoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RateConfirmationTokensQuery.Lock.
+func (t *RateConfirmationTokensTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RateConfirmationTokensQuery.DistinctOn.
+func (t *RateConfirmationTokensTable) DistinctOn(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RateConfirmationTokensQuery.Cache.
+func (t *RateConfirmationTokensTable) Cache(opts ...keel.CacheOption) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RateConfirmationTokensQuery.LoadStrategy.
+func (t *RateConfirmationTokensTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RateConfirmationTokensQuery.With.
+func (t *RateConfirmationTokensTable) With(ctes ...*keel.CTETable) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RateConfirmationTokensQuery.Compute.
+func (t *RateConfirmationTokensTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RateConfirmationTokensTable) Create(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RateConfirmationTokensTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RateConfirmationTokensTable) Save(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RateConfirmationTokensTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RateConfirmationTokensTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateconfirmation.RateConfirmationToken) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RateConfirmationTokensTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RateConfirmationTokensTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RateConfirmationTokensTable) Copy(ctx context.Context, db *keel.DB, rows []*rateconfirmation.RateConfirmationToken) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RateConfirmationTokensQuery) Where(ps ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RateConfirmationTokensQuery) Pick(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RateConfirmationTokensQuery) Omit(cols ...keel.Column) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RateConfirmationTokensQuery) Load(ls ...keel.Loader) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RateConfirmationTokensQuery) Order(os ...keel.Order) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RateConfirmationTokensQuery) Distinct() keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RateConfirmationTokensQuery) Group(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RateConfirmationTokensQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RateConfirmationTokensQuery) Rollup(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RateConfirmationTokensQuery) Cube(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RateConfirmationTokensQuery) Window(name string, w keel.Window) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RateConfirmationTokensQuery) Having(ps ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RateConfirmationTokensQuery) Limit(n int) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RateConfirmationTokensQuery) Offset(n int) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RateConfirmationTokensQuery) DistinctOn(es ...keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RateConfirmationTokensQuery) AllTenants() keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RateConfirmationTokensQuery) CustomPlan() keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RateConfirmationTokensQuery) Timeout(d time.Duration) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RateConfirmationTokensQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RateConfirmationTokensQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RateConfirmationTokensQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RateConfirmationTokensQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RateConfirmationTokensQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RateConfirmationTokensQuery) Cache(opts ...keel.CacheOption) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RateConfirmationTokensQuery) With(ctes ...*keel.CTETable) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RateConfirmationTokensQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RateConfirmationTokensQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rateconfirmation.RateConfirmationToken] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RateConfirmationTokensQuery) Clone() keel.Query[*rateconfirmation.RateConfirmationToken] {
+	return &RateConfirmationTokensQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RateConfirmationTokensQuery) One(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmationToken, error) {
+	return keel.One[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RateConfirmationTokensQuery) First(ctx context.Context, db *keel.DB) (*rateconfirmation.RateConfirmationToken, error) {
+	return keel.First[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RateConfirmationTokensQuery) List(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmationToken, error) {
+	return keel.List[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RateConfirmationTokensQuery) All(ctx context.Context, db *keel.DB) ([]*rateconfirmation.RateConfirmationToken, error) {
+	return keel.All[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RateConfirmationTokensQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateconfirmation.RateConfirmationToken, error) {
+	return keel.UpdateReturning[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RateConfirmationTokensQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateconfirmation.RateConfirmationToken], error) {
+	return keel.PageOf[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RateConfirmationTokensQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateconfirmation.RateConfirmationToken) error) error {
+	return keel.Each[*rateconfirmation.RateConfirmationToken](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRateConfirmationToken() unsafe.Pointer {

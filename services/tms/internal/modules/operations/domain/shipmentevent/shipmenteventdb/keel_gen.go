@@ -4,6 +4,7 @@ package shipmenteventdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -73,7 +74,7 @@ var eventsRef = keel.Ref{Table: &eventsTable}
 
 // EventsTable is the table of shipmentevent.Event.
 type EventsTable struct {
-	keel.Handle[*shipmentevent.Event]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -96,7 +97,7 @@ type EventsTable struct {
 
 // Events references the shipment_events table.
 var Events = &EventsTable{
-	Handle:         keel.Handle[*shipmentevent.Event]{Ref: &eventsRef},
+	TableBase:      keel.TableBase{Ref: &eventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
@@ -117,10 +118,10 @@ var Events = &EventsTable{
 	CorrelationID:  keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 17}},
 }
 
-// BuildEvents builds the handle of shipment_events for ref. Generated relation and alias methods call it.
+// BuildEvents builds the table of shipment_events for ref. Generated relation and alias methods call it.
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
-		Handle:         keel.Handle[*shipmentevent.Event]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -159,6 +160,365 @@ func (t *EventsTable) Shipment() *shipmentdb.ShipmentsTable {
 // Get returns the shipment_events row with the given key, or keel.ErrNotFound.
 func (t *EventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipmentevent.Event, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// EventsQuery is a query over shipmentevent.Event.
+type EventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*shipmentevent.Event] = (*EventsTable)(nil)
+
+var _ keel.Query[*shipmentevent.Event] = (*EventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EventsTable) Query() keel.Query[*shipmentevent.Event] {
+	return &EventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EventsQuery.Where.
+func (t *EventsTable) Where(ps ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EventsQuery.Pick.
+func (t *EventsTable) Pick(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EventsQuery.Load.
+func (t *EventsTable) Load(ls ...keel.Loader) keel.Query[*shipmentevent.Event] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EventsQuery.Omit.
+func (t *EventsTable) Omit(cols ...keel.Column) keel.Query[*shipmentevent.Event] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EventsQuery.Order.
+func (t *EventsTable) Order(os ...keel.Order) keel.Query[*shipmentevent.Event] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EventsQuery.Limit.
+func (t *EventsTable) Limit(n int) keel.Query[*shipmentevent.Event] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EventsQuery.Group.
+func (t *EventsTable) Group(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EventsQuery.GroupingSets.
+func (t *EventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EventsQuery.Rollup.
+func (t *EventsTable) Rollup(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EventsQuery.Cube.
+func (t *EventsTable) Cube(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EventsQuery.AllTenants.
+func (t *EventsTable) AllTenants() keel.Query[*shipmentevent.Event] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EventsQuery.Join.
+func (t *EventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EventsQuery.LeftJoin.
+func (t *EventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EventsQuery.LeftJoinLateral.
+func (t *EventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentevent.Event] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EventsQuery.JoinLateral.
+func (t *EventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentevent.Event] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EventsQuery.Lock.
+func (t *EventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentevent.Event] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EventsQuery.DistinctOn.
+func (t *EventsTable) DistinctOn(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EventsQuery.Cache.
+func (t *EventsTable) Cache(opts ...keel.CacheOption) keel.Query[*shipmentevent.Event] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EventsQuery.LoadStrategy.
+func (t *EventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentevent.Event] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EventsQuery.With.
+func (t *EventsTable) With(ctes ...*keel.CTETable) keel.Query[*shipmentevent.Event] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EventsQuery.Compute.
+func (t *EventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentevent.Event] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EventsTable) Create(ctx context.Context, db *keel.DB, row *shipmentevent.Event) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentevent.Event) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EventsTable) Save(ctx context.Context, db *keel.DB, row *shipmentevent.Event, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentevent.Event, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentevent.Event) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentevent.Event, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentevent.Event, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EventsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentevent.Event) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EventsQuery) Where(ps ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EventsQuery) Pick(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EventsQuery) Omit(cols ...keel.Column) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EventsQuery) Load(ls ...keel.Loader) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EventsQuery) Order(os ...keel.Order) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EventsQuery) Distinct() keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EventsQuery) Group(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EventsQuery) Rollup(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EventsQuery) Cube(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EventsQuery) Window(name string, w keel.Window) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EventsQuery) Having(ps ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EventsQuery) Limit(n int) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EventsQuery) Offset(n int) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EventsQuery) AllTenants() keel.Query[*shipmentevent.Event] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EventsQuery) CustomPlan() keel.Query[*shipmentevent.Event] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EventsQuery) Timeout(d time.Duration) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EventsQuery) With(ctes ...*keel.CTETable) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentevent.Event] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EventsQuery) Clone() keel.Query[*shipmentevent.Event] {
+	return &EventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EventsQuery) One(ctx context.Context, db *keel.DB) (*shipmentevent.Event, error) {
+	return keel.One[*shipmentevent.Event](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EventsQuery) First(ctx context.Context, db *keel.DB) (*shipmentevent.Event, error) {
+	return keel.First[*shipmentevent.Event](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EventsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentevent.Event, error) {
+	return keel.List[*shipmentevent.Event](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EventsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentevent.Event, error) {
+	return keel.All[*shipmentevent.Event](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentevent.Event, error) {
+	return keel.UpdateReturning[*shipmentevent.Event](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentevent.Event], error) {
+	return keel.PageOf[*shipmentevent.Event](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentevent.Event) error) error {
+	return keel.Each[*shipmentevent.Event](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEvent() unsafe.Pointer { return unsafe.Pointer(new(shipmentevent.Event)) }

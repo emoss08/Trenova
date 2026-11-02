@@ -4,6 +4,7 @@ package carrierintelcontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -80,7 +81,7 @@ var carrierIntelControlsRef = keel.Ref{Table: &carrierIntelControlsTable}
 
 // CarrierIntelControlsTable is the table of carrierintelcontrol.CarrierIntelControl.
 type CarrierIntelControlsTable struct {
-	keel.Handle[*carrierintelcontrol.CarrierIntelControl]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -118,7 +119,7 @@ type CarrierIntelControlsTable struct {
 
 // CarrierIntelControls references the carrier_intel_controls table.
 var CarrierIntelControls = &CarrierIntelControlsTable{
-	Handle:                  keel.Handle[*carrierintelcontrol.CarrierIntelControl]{Ref: &carrierIntelControlsRef},
+	TableBase:               keel.TableBase{Ref: &carrierIntelControlsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelControlsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelControlsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelControlsRef, Index: 2}}},
@@ -154,10 +155,10 @@ var CarrierIntelControls = &CarrierIntelControlsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &carrierIntelControlsRef, Index: 32}},
 }
 
-// BuildCarrierIntelControls builds the handle of carrier_intel_controls for ref. Generated relation and alias methods call it.
+// BuildCarrierIntelControls builds the table of carrier_intel_controls for ref. Generated relation and alias methods call it.
 func BuildCarrierIntelControls(r *keel.Ref) *CarrierIntelControlsTable {
 	return &CarrierIntelControlsTable{
-		Handle:                  keel.Handle[*carrierintelcontrol.CarrierIntelControl]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -205,6 +206,365 @@ func (t *CarrierIntelControlsTable) As(alias string) *CarrierIntelControlsTable 
 // Get returns the carrier_intel_controls row with the given key, or keel.ErrNotFound.
 func (t *CarrierIntelControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*carrierintelcontrol.CarrierIntelControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CarrierIntelControlsQuery is a query over carrierintelcontrol.CarrierIntelControl.
+type CarrierIntelControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*carrierintelcontrol.CarrierIntelControl] = (*CarrierIntelControlsTable)(nil)
+
+var _ keel.Query[*carrierintelcontrol.CarrierIntelControl] = (*CarrierIntelControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CarrierIntelControlsTable) Query() keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return &CarrierIntelControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CarrierIntelControlsQuery.Where.
+func (t *CarrierIntelControlsTable) Where(ps ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CarrierIntelControlsQuery.Pick.
+func (t *CarrierIntelControlsTable) Pick(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CarrierIntelControlsQuery.Load.
+func (t *CarrierIntelControlsTable) Load(ls ...keel.Loader) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CarrierIntelControlsQuery.Omit.
+func (t *CarrierIntelControlsTable) Omit(cols ...keel.Column) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CarrierIntelControlsQuery.Order.
+func (t *CarrierIntelControlsTable) Order(os ...keel.Order) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CarrierIntelControlsQuery.Limit.
+func (t *CarrierIntelControlsTable) Limit(n int) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CarrierIntelControlsQuery.Group.
+func (t *CarrierIntelControlsTable) Group(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CarrierIntelControlsQuery.GroupingSets.
+func (t *CarrierIntelControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CarrierIntelControlsQuery.Rollup.
+func (t *CarrierIntelControlsTable) Rollup(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CarrierIntelControlsQuery.Cube.
+func (t *CarrierIntelControlsTable) Cube(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CarrierIntelControlsQuery.AllTenants.
+func (t *CarrierIntelControlsTable) AllTenants() keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CarrierIntelControlsQuery.Join.
+func (t *CarrierIntelControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CarrierIntelControlsQuery.LeftJoin.
+func (t *CarrierIntelControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CarrierIntelControlsQuery.LeftJoinLateral.
+func (t *CarrierIntelControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CarrierIntelControlsQuery.JoinLateral.
+func (t *CarrierIntelControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CarrierIntelControlsQuery.Lock.
+func (t *CarrierIntelControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CarrierIntelControlsQuery.DistinctOn.
+func (t *CarrierIntelControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CarrierIntelControlsQuery.Cache.
+func (t *CarrierIntelControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CarrierIntelControlsQuery.LoadStrategy.
+func (t *CarrierIntelControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CarrierIntelControlsQuery.With.
+func (t *CarrierIntelControlsTable) With(ctes ...*keel.CTETable) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CarrierIntelControlsQuery.Compute.
+func (t *CarrierIntelControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CarrierIntelControlsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelcontrol.CarrierIntelControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CarrierIntelControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelcontrol.CarrierIntelControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CarrierIntelControlsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelcontrol.CarrierIntelControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CarrierIntelControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelcontrol.CarrierIntelControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CarrierIntelControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelcontrol.CarrierIntelControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CarrierIntelControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelcontrol.CarrierIntelControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CarrierIntelControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelcontrol.CarrierIntelControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CarrierIntelControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelcontrol.CarrierIntelControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CarrierIntelControlsQuery) Where(ps ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CarrierIntelControlsQuery) Pick(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CarrierIntelControlsQuery) Omit(cols ...keel.Column) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CarrierIntelControlsQuery) Load(ls ...keel.Loader) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CarrierIntelControlsQuery) Order(os ...keel.Order) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CarrierIntelControlsQuery) Distinct() keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CarrierIntelControlsQuery) Group(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CarrierIntelControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CarrierIntelControlsQuery) Rollup(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CarrierIntelControlsQuery) Cube(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CarrierIntelControlsQuery) Window(name string, w keel.Window) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CarrierIntelControlsQuery) Having(ps ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CarrierIntelControlsQuery) Limit(n int) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CarrierIntelControlsQuery) Offset(n int) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CarrierIntelControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CarrierIntelControlsQuery) AllTenants() keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CarrierIntelControlsQuery) CustomPlan() keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CarrierIntelControlsQuery) Timeout(d time.Duration) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CarrierIntelControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CarrierIntelControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CarrierIntelControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CarrierIntelControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CarrierIntelControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CarrierIntelControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CarrierIntelControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CarrierIntelControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CarrierIntelControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CarrierIntelControlsQuery) Clone() keel.Query[*carrierintelcontrol.CarrierIntelControl] {
+	return &CarrierIntelControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CarrierIntelControlsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelcontrol.CarrierIntelControl, error) {
+	return keel.One[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CarrierIntelControlsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelcontrol.CarrierIntelControl, error) {
+	return keel.First[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CarrierIntelControlsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelcontrol.CarrierIntelControl, error) {
+	return keel.List[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CarrierIntelControlsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelcontrol.CarrierIntelControl, error) {
+	return keel.All[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CarrierIntelControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelcontrol.CarrierIntelControl, error) {
+	return keel.UpdateReturning[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CarrierIntelControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelcontrol.CarrierIntelControl], error) {
+	return keel.PageOf[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CarrierIntelControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelcontrol.CarrierIntelControl) error) error {
+	return keel.Each[*carrierintelcontrol.CarrierIntelControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCarrierIntelControl() unsafe.Pointer {

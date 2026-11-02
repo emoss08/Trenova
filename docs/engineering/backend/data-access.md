@@ -159,7 +159,7 @@ q = q.LeftJoinLateral(current).Compute(t.LastKnownLocationID, ec.CurrentLocation
 
 A table of a module this one may not import is reached through a column port (see "Column
 ports" in [module-architecture.md](../module-architecture.md#column-ports)): the port carries
-that table's generated columns, and the query starts from `keel.Handle[*keel.Row]{Ref: col.Ref}`
+that table's generated columns, and the query starts from `keel.RowsOf(col.Ref)` (a join target is `keel.TableBase{Ref: col.Ref}`)
 (`lastknownlocation.Of`). Never `keel.Raw` for it. Aggregates use `keel.Into` over `Group(col).Pick(col, keel.Count())`;
 `Count`, `CountUpTo` and `Exists` are terminals; `keel.Into[row]` decodes a `Pick` into a small
 struct.
@@ -187,7 +187,7 @@ struct.
   	Filter:  req.Filter,
   	Cursor:  req.Cursor,
   	Columns: req.FleetCodeColumns,
-  	Shape:   func(q *keel.Query[*fleetcode.FleetCode]) *keel.Query[*fleetcode.FleetCode] { return q.Load(fc.Manager()) },
+  	Shape:   func(q keel.Query[*fleetcode.FleetCode]) keel.Query[*fleetcode.FleetCode] { return q.Load(fc.Manager()) },
   })
   ```
 

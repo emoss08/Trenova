@@ -4,6 +4,7 @@ package billingqueueeventdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -59,7 +60,7 @@ var itemEventsRef = keel.Ref{Table: &itemEventsTable}
 
 // ItemEventsTable is the table of billingqueueevent.ItemEvent.
 type ItemEventsTable struct {
-	keel.Handle[*billingqueueevent.ItemEvent]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -76,7 +77,7 @@ type ItemEventsTable struct {
 
 // ItemEvents references the billing_queue_events table.
 var ItemEvents = &ItemEventsTable{
-	Handle:         keel.Handle[*billingqueueevent.ItemEvent]{Ref: &itemEventsRef},
+	TableBase:      keel.TableBase{Ref: &itemEventsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &itemEventsRef, Index: 2}}},
@@ -91,10 +92,10 @@ var ItemEvents = &ItemEventsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &itemEventsRef, Index: 11}},
 }
 
-// BuildItemEvents builds the handle of billing_queue_events for ref. Generated relation and alias methods call it.
+// BuildItemEvents builds the table of billing_queue_events for ref. Generated relation and alias methods call it.
 func BuildItemEvents(r *keel.Ref) *ItemEventsTable {
 	return &ItemEventsTable{
-		Handle:         keel.Handle[*billingqueueevent.ItemEvent]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -121,6 +122,365 @@ func (t *ItemEventsTable) As(alias string) *ItemEventsTable {
 // Get returns the billing_queue_events row with the given key, or keel.ErrNotFound.
 func (t *ItemEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingqueueevent.ItemEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ItemEventsQuery is a query over billingqueueevent.ItemEvent.
+type ItemEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingqueueevent.ItemEvent] = (*ItemEventsTable)(nil)
+
+var _ keel.Query[*billingqueueevent.ItemEvent] = (*ItemEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ItemEventsTable) Query() keel.Query[*billingqueueevent.ItemEvent] {
+	return &ItemEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ItemEventsQuery.Where.
+func (t *ItemEventsTable) Where(ps ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ItemEventsQuery.Pick.
+func (t *ItemEventsTable) Pick(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ItemEventsQuery.Load.
+func (t *ItemEventsTable) Load(ls ...keel.Loader) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ItemEventsQuery.Omit.
+func (t *ItemEventsTable) Omit(cols ...keel.Column) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ItemEventsQuery.Order.
+func (t *ItemEventsTable) Order(os ...keel.Order) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ItemEventsQuery.Limit.
+func (t *ItemEventsTable) Limit(n int) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ItemEventsQuery.Group.
+func (t *ItemEventsTable) Group(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ItemEventsQuery.GroupingSets.
+func (t *ItemEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ItemEventsQuery.Rollup.
+func (t *ItemEventsTable) Rollup(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ItemEventsQuery.Cube.
+func (t *ItemEventsTable) Cube(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ItemEventsQuery.AllTenants.
+func (t *ItemEventsTable) AllTenants() keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ItemEventsQuery.Join.
+func (t *ItemEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ItemEventsQuery.LeftJoin.
+func (t *ItemEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ItemEventsQuery.LeftJoinLateral.
+func (t *ItemEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ItemEventsQuery.JoinLateral.
+func (t *ItemEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ItemEventsQuery.Lock.
+func (t *ItemEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ItemEventsQuery.DistinctOn.
+func (t *ItemEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ItemEventsQuery.Cache.
+func (t *ItemEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ItemEventsQuery.LoadStrategy.
+func (t *ItemEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ItemEventsQuery.With.
+func (t *ItemEventsTable) With(ctes ...*keel.CTETable) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ItemEventsQuery.Compute.
+func (t *ItemEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ItemEventsTable) Create(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ItemEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ItemEventsTable) Save(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ItemEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ItemEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueueevent.ItemEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ItemEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ItemEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ItemEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueueevent.ItemEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ItemEventsQuery) Where(ps ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ItemEventsQuery) Pick(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ItemEventsQuery) Omit(cols ...keel.Column) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ItemEventsQuery) Load(ls ...keel.Loader) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ItemEventsQuery) Order(os ...keel.Order) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ItemEventsQuery) Distinct() keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ItemEventsQuery) Group(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ItemEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ItemEventsQuery) Rollup(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ItemEventsQuery) Cube(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ItemEventsQuery) Window(name string, w keel.Window) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ItemEventsQuery) Having(ps ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ItemEventsQuery) Limit(n int) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ItemEventsQuery) Offset(n int) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ItemEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ItemEventsQuery) AllTenants() keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ItemEventsQuery) CustomPlan() keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ItemEventsQuery) Timeout(d time.Duration) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ItemEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ItemEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ItemEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ItemEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ItemEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ItemEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ItemEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ItemEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ItemEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingqueueevent.ItemEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ItemEventsQuery) Clone() keel.Query[*billingqueueevent.ItemEvent] {
+	return &ItemEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ItemEventsQuery) One(ctx context.Context, db *keel.DB) (*billingqueueevent.ItemEvent, error) {
+	return keel.One[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ItemEventsQuery) First(ctx context.Context, db *keel.DB) (*billingqueueevent.ItemEvent, error) {
+	return keel.First[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ItemEventsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueueevent.ItemEvent, error) {
+	return keel.List[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ItemEventsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueueevent.ItemEvent, error) {
+	return keel.All[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ItemEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueueevent.ItemEvent, error) {
+	return keel.UpdateReturning[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ItemEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueueevent.ItemEvent], error) {
+	return keel.PageOf[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ItemEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueueevent.ItemEvent) error) error {
+	return keel.Each[*billingqueueevent.ItemEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newItemEvent() unsafe.Pointer { return unsafe.Pointer(new(billingqueueevent.ItemEvent)) }

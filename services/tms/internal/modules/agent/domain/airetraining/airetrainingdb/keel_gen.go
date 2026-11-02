@@ -4,6 +4,7 @@ package airetrainingdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -85,7 +86,7 @@ var retrainingCyclesRef = keel.Ref{Table: &retrainingCyclesTable}
 
 // RetrainingCyclesTable is the table of airetraining.RetrainingCycle.
 type RetrainingCyclesTable struct {
-	keel.Handle[*airetraining.RetrainingCycle]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	Task                 aicorrectiondb.TaskCol
 	Trigger              RetrainingTriggerCol
@@ -128,7 +129,7 @@ type RetrainingCyclesTable struct {
 
 // RetrainingCycles references the ai_retraining_cycles table.
 var RetrainingCycles = &RetrainingCyclesTable{
-	Handle:               keel.Handle[*airetraining.RetrainingCycle]{Ref: &retrainingCyclesRef},
+	TableBase:            keel.TableBase{Ref: &retrainingCyclesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 0}}},
 	Task:                 aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 1}}},
 	Trigger:              RetrainingTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 2}}},
@@ -169,10 +170,10 @@ var RetrainingCycles = &RetrainingCyclesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &retrainingCyclesRef, Index: 37}},
 }
 
-// BuildRetrainingCycles builds the handle of ai_retraining_cycles for ref. Generated relation and alias methods call it.
+// BuildRetrainingCycles builds the table of ai_retraining_cycles for ref. Generated relation and alias methods call it.
 func BuildRetrainingCycles(r *keel.Ref) *RetrainingCyclesTable {
 	return &RetrainingCyclesTable{
-		Handle:               keel.Handle[*airetraining.RetrainingCycle]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Task:                 aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Trigger:              RetrainingTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -225,6 +226,365 @@ func (t *RetrainingCyclesTable) As(alias string) *RetrainingCyclesTable {
 // Get returns the ai_retraining_cycles row with the given key, or keel.ErrNotFound.
 func (t *RetrainingCyclesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*airetraining.RetrainingCycle, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RetrainingCyclesQuery is a query over airetraining.RetrainingCycle.
+type RetrainingCyclesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*airetraining.RetrainingCycle] = (*RetrainingCyclesTable)(nil)
+
+var _ keel.Query[*airetraining.RetrainingCycle] = (*RetrainingCyclesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RetrainingCyclesTable) Query() keel.Query[*airetraining.RetrainingCycle] {
+	return &RetrainingCyclesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RetrainingCyclesQuery.Where.
+func (t *RetrainingCyclesTable) Where(ps ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RetrainingCyclesQuery.Pick.
+func (t *RetrainingCyclesTable) Pick(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RetrainingCyclesQuery.Load.
+func (t *RetrainingCyclesTable) Load(ls ...keel.Loader) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RetrainingCyclesQuery.Omit.
+func (t *RetrainingCyclesTable) Omit(cols ...keel.Column) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RetrainingCyclesQuery.Order.
+func (t *RetrainingCyclesTable) Order(os ...keel.Order) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RetrainingCyclesQuery.Limit.
+func (t *RetrainingCyclesTable) Limit(n int) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RetrainingCyclesQuery.Group.
+func (t *RetrainingCyclesTable) Group(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RetrainingCyclesQuery.GroupingSets.
+func (t *RetrainingCyclesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RetrainingCyclesQuery.Rollup.
+func (t *RetrainingCyclesTable) Rollup(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RetrainingCyclesQuery.Cube.
+func (t *RetrainingCyclesTable) Cube(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RetrainingCyclesQuery.AllTenants.
+func (t *RetrainingCyclesTable) AllTenants() keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RetrainingCyclesQuery.Join.
+func (t *RetrainingCyclesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RetrainingCyclesQuery.LeftJoin.
+func (t *RetrainingCyclesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RetrainingCyclesQuery.LeftJoinLateral.
+func (t *RetrainingCyclesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RetrainingCyclesQuery.JoinLateral.
+func (t *RetrainingCyclesTable) JoinLateral(sub keel.LateralSource) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RetrainingCyclesQuery.Lock.
+func (t *RetrainingCyclesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RetrainingCyclesQuery.DistinctOn.
+func (t *RetrainingCyclesTable) DistinctOn(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RetrainingCyclesQuery.Cache.
+func (t *RetrainingCyclesTable) Cache(opts ...keel.CacheOption) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RetrainingCyclesQuery.LoadStrategy.
+func (t *RetrainingCyclesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RetrainingCyclesQuery.With.
+func (t *RetrainingCyclesTable) With(ctes ...*keel.CTETable) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RetrainingCyclesQuery.Compute.
+func (t *RetrainingCyclesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RetrainingCyclesTable) Create(ctx context.Context, db *keel.DB, row *airetraining.RetrainingCycle) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RetrainingCyclesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetraining.RetrainingCycle) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RetrainingCyclesTable) Save(ctx context.Context, db *keel.DB, row *airetraining.RetrainingCycle, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RetrainingCyclesTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetraining.RetrainingCycle, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RetrainingCyclesTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetraining.RetrainingCycle) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RetrainingCyclesTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetraining.RetrainingCycle, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RetrainingCyclesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetraining.RetrainingCycle, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RetrainingCyclesTable) Copy(ctx context.Context, db *keel.DB, rows []*airetraining.RetrainingCycle) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RetrainingCyclesQuery) Where(ps ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RetrainingCyclesQuery) Pick(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RetrainingCyclesQuery) Omit(cols ...keel.Column) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RetrainingCyclesQuery) Load(ls ...keel.Loader) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RetrainingCyclesQuery) Order(os ...keel.Order) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RetrainingCyclesQuery) Distinct() keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RetrainingCyclesQuery) Group(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RetrainingCyclesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RetrainingCyclesQuery) Rollup(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RetrainingCyclesQuery) Cube(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RetrainingCyclesQuery) Window(name string, w keel.Window) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RetrainingCyclesQuery) Having(ps ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RetrainingCyclesQuery) Limit(n int) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RetrainingCyclesQuery) Offset(n int) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RetrainingCyclesQuery) DistinctOn(es ...keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RetrainingCyclesQuery) AllTenants() keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RetrainingCyclesQuery) CustomPlan() keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RetrainingCyclesQuery) Timeout(d time.Duration) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RetrainingCyclesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RetrainingCyclesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RetrainingCyclesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RetrainingCyclesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RetrainingCyclesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RetrainingCyclesQuery) Cache(opts ...keel.CacheOption) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RetrainingCyclesQuery) With(ctes ...*keel.CTETable) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RetrainingCyclesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RetrainingCyclesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetraining.RetrainingCycle] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RetrainingCyclesQuery) Clone() keel.Query[*airetraining.RetrainingCycle] {
+	return &RetrainingCyclesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RetrainingCyclesQuery) One(ctx context.Context, db *keel.DB) (*airetraining.RetrainingCycle, error) {
+	return keel.One[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RetrainingCyclesQuery) First(ctx context.Context, db *keel.DB) (*airetraining.RetrainingCycle, error) {
+	return keel.First[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RetrainingCyclesQuery) List(ctx context.Context, db *keel.DB) ([]*airetraining.RetrainingCycle, error) {
+	return keel.List[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RetrainingCyclesQuery) All(ctx context.Context, db *keel.DB) ([]*airetraining.RetrainingCycle, error) {
+	return keel.All[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RetrainingCyclesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetraining.RetrainingCycle, error) {
+	return keel.UpdateReturning[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RetrainingCyclesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetraining.RetrainingCycle], error) {
+	return keel.PageOf[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RetrainingCyclesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetraining.RetrainingCycle) error) error {
+	return keel.Each[*airetraining.RetrainingCycle](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRetrainingCycle() unsafe.Pointer { return unsafe.Pointer(new(airetraining.RetrainingCycle)) }

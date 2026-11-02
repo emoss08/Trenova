@@ -4,6 +4,7 @@ package servicefailuredb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -80,7 +81,7 @@ var reasonCodesRef = keel.Ref{Table: &reasonCodesTable}
 
 // ReasonCodesTable is the table of servicefailure.ReasonCode.
 type ReasonCodesTable struct {
-	keel.Handle[*servicefailure.ReasonCode]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -108,7 +109,7 @@ type ReasonCodesTable struct {
 
 // ReasonCodes references the service_failure_reason_codes table.
 var ReasonCodes = &ReasonCodesTable{
-	Handle:               keel.Handle[*servicefailure.ReasonCode]{Ref: &reasonCodesRef},
+	TableBase:            keel.TableBase{Ref: &reasonCodesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 2}}},
@@ -134,10 +135,10 @@ var ReasonCodes = &ReasonCodesTable{
 	SearchVector:         keel.TSVectorCol{Col: keel.Col{Ref: &reasonCodesRef, Index: 22}},
 }
 
-// BuildReasonCodes builds the handle of service_failure_reason_codes for ref. Generated relation and alias methods call it.
+// BuildReasonCodes builds the table of service_failure_reason_codes for ref. Generated relation and alias methods call it.
 func BuildReasonCodes(r *keel.Ref) *ReasonCodesTable {
 	return &ReasonCodesTable{
-		Handle:               keel.Handle[*servicefailure.ReasonCode]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -185,6 +186,365 @@ func (t *ReasonCodesTable) ActivatedBy() *tenantdb.UsersTable {
 // Get returns the service_failure_reason_codes row with the given key, or keel.ErrNotFound.
 func (t *ReasonCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*servicefailure.ReasonCode, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReasonCodesQuery is a query over servicefailure.ReasonCode.
+type ReasonCodesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*servicefailure.ReasonCode] = (*ReasonCodesTable)(nil)
+
+var _ keel.Query[*servicefailure.ReasonCode] = (*ReasonCodesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReasonCodesTable) Query() keel.Query[*servicefailure.ReasonCode] {
+	return &ReasonCodesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReasonCodesQuery.Where.
+func (t *ReasonCodesTable) Where(ps ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReasonCodesQuery.Pick.
+func (t *ReasonCodesTable) Pick(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReasonCodesQuery.Load.
+func (t *ReasonCodesTable) Load(ls ...keel.Loader) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReasonCodesQuery.Omit.
+func (t *ReasonCodesTable) Omit(cols ...keel.Column) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReasonCodesQuery.Order.
+func (t *ReasonCodesTable) Order(os ...keel.Order) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReasonCodesQuery.Limit.
+func (t *ReasonCodesTable) Limit(n int) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReasonCodesQuery.Group.
+func (t *ReasonCodesTable) Group(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReasonCodesQuery.GroupingSets.
+func (t *ReasonCodesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReasonCodesQuery.Rollup.
+func (t *ReasonCodesTable) Rollup(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReasonCodesQuery.Cube.
+func (t *ReasonCodesTable) Cube(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReasonCodesQuery.AllTenants.
+func (t *ReasonCodesTable) AllTenants() keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReasonCodesQuery.Join.
+func (t *ReasonCodesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReasonCodesQuery.LeftJoin.
+func (t *ReasonCodesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReasonCodesQuery.LeftJoinLateral.
+func (t *ReasonCodesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReasonCodesQuery.JoinLateral.
+func (t *ReasonCodesTable) JoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReasonCodesQuery.Lock.
+func (t *ReasonCodesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReasonCodesQuery.DistinctOn.
+func (t *ReasonCodesTable) DistinctOn(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReasonCodesQuery.Cache.
+func (t *ReasonCodesTable) Cache(opts ...keel.CacheOption) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReasonCodesQuery.LoadStrategy.
+func (t *ReasonCodesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReasonCodesQuery.With.
+func (t *ReasonCodesTable) With(ctes ...*keel.CTETable) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReasonCodesQuery.Compute.
+func (t *ReasonCodesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReasonCodesTable) Create(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReasonCodesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReasonCodesTable) Save(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReasonCodesTable) SaveExcept(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReasonCodesTable) DeleteRow(ctx context.Context, db *keel.DB, row *servicefailure.ReasonCode) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReasonCodesTable) Upsert(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReasonCodesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReasonCodesTable) Copy(ctx context.Context, db *keel.DB, rows []*servicefailure.ReasonCode) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReasonCodesQuery) Where(ps ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReasonCodesQuery) Pick(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReasonCodesQuery) Omit(cols ...keel.Column) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReasonCodesQuery) Load(ls ...keel.Loader) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReasonCodesQuery) Order(os ...keel.Order) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReasonCodesQuery) Distinct() keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReasonCodesQuery) Group(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReasonCodesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReasonCodesQuery) Rollup(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReasonCodesQuery) Cube(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReasonCodesQuery) Window(name string, w keel.Window) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReasonCodesQuery) Having(ps ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReasonCodesQuery) Limit(n int) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReasonCodesQuery) Offset(n int) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReasonCodesQuery) DistinctOn(es ...keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReasonCodesQuery) AllTenants() keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReasonCodesQuery) CustomPlan() keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReasonCodesQuery) Timeout(d time.Duration) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReasonCodesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReasonCodesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReasonCodesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReasonCodesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReasonCodesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReasonCodesQuery) Cache(opts ...keel.CacheOption) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReasonCodesQuery) With(ctes ...*keel.CTETable) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReasonCodesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReasonCodesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*servicefailure.ReasonCode] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReasonCodesQuery) Clone() keel.Query[*servicefailure.ReasonCode] {
+	return &ReasonCodesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReasonCodesQuery) One(ctx context.Context, db *keel.DB) (*servicefailure.ReasonCode, error) {
+	return keel.One[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReasonCodesQuery) First(ctx context.Context, db *keel.DB) (*servicefailure.ReasonCode, error) {
+	return keel.First[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReasonCodesQuery) List(ctx context.Context, db *keel.DB) ([]*servicefailure.ReasonCode, error) {
+	return keel.List[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReasonCodesQuery) All(ctx context.Context, db *keel.DB) ([]*servicefailure.ReasonCode, error) {
+	return keel.All[*servicefailure.ReasonCode](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReasonCodesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*servicefailure.ReasonCode, error) {
+	return keel.UpdateReturning[*servicefailure.ReasonCode](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReasonCodesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*servicefailure.ReasonCode], error) {
+	return keel.PageOf[*servicefailure.ReasonCode](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReasonCodesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*servicefailure.ReasonCode) error) error {
+	return keel.Each[*servicefailure.ReasonCode](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReasonCode() unsafe.Pointer { return unsafe.Pointer(new(servicefailure.ReasonCode)) }
@@ -428,7 +788,7 @@ var serviceFailuresRef = keel.Ref{Table: &serviceFailuresTable}
 
 // ServiceFailuresTable is the table of servicefailure.ServiceFailure.
 type ServiceFailuresTable struct {
-	keel.Handle[*servicefailure.ServiceFailure]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -468,7 +828,7 @@ type ServiceFailuresTable struct {
 
 // ServiceFailures references the service_failures table.
 var ServiceFailures = &ServiceFailuresTable{
-	Handle:                keel.Handle[*servicefailure.ServiceFailure]{Ref: &serviceFailuresRef},
+	TableBase:             keel.TableBase{Ref: &serviceFailuresRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 2}}},
@@ -506,10 +866,10 @@ var ServiceFailures = &ServiceFailuresTable{
 	LocationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &serviceFailuresRef, Index: 34}}},
 }
 
-// BuildServiceFailures builds the handle of service_failures for ref. Generated relation and alias methods call it.
+// BuildServiceFailures builds the table of service_failures for ref. Generated relation and alias methods call it.
 func BuildServiceFailures(r *keel.Ref) *ServiceFailuresTable {
 	return &ServiceFailuresTable{
-		Handle:                keel.Handle[*servicefailure.ServiceFailure]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -599,6 +959,365 @@ func (t *ServiceFailuresTable) VoidedBy() *tenantdb.UsersTable {
 // Get returns the service_failures row with the given key, or keel.ErrNotFound.
 func (t *ServiceFailuresTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*servicefailure.ServiceFailure, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ServiceFailuresQuery is a query over servicefailure.ServiceFailure.
+type ServiceFailuresQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*servicefailure.ServiceFailure] = (*ServiceFailuresTable)(nil)
+
+var _ keel.Query[*servicefailure.ServiceFailure] = (*ServiceFailuresQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ServiceFailuresTable) Query() keel.Query[*servicefailure.ServiceFailure] {
+	return &ServiceFailuresQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ServiceFailuresQuery.Where.
+func (t *ServiceFailuresTable) Where(ps ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ServiceFailuresQuery.Pick.
+func (t *ServiceFailuresTable) Pick(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ServiceFailuresQuery.Load.
+func (t *ServiceFailuresTable) Load(ls ...keel.Loader) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ServiceFailuresQuery.Omit.
+func (t *ServiceFailuresTable) Omit(cols ...keel.Column) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ServiceFailuresQuery.Order.
+func (t *ServiceFailuresTable) Order(os ...keel.Order) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ServiceFailuresQuery.Limit.
+func (t *ServiceFailuresTable) Limit(n int) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ServiceFailuresQuery.Group.
+func (t *ServiceFailuresTable) Group(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ServiceFailuresQuery.GroupingSets.
+func (t *ServiceFailuresTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ServiceFailuresQuery.Rollup.
+func (t *ServiceFailuresTable) Rollup(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ServiceFailuresQuery.Cube.
+func (t *ServiceFailuresTable) Cube(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ServiceFailuresQuery.AllTenants.
+func (t *ServiceFailuresTable) AllTenants() keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ServiceFailuresQuery.Join.
+func (t *ServiceFailuresTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ServiceFailuresQuery.LeftJoin.
+func (t *ServiceFailuresTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ServiceFailuresQuery.LeftJoinLateral.
+func (t *ServiceFailuresTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ServiceFailuresQuery.JoinLateral.
+func (t *ServiceFailuresTable) JoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ServiceFailuresQuery.Lock.
+func (t *ServiceFailuresTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ServiceFailuresQuery.DistinctOn.
+func (t *ServiceFailuresTable) DistinctOn(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ServiceFailuresQuery.Cache.
+func (t *ServiceFailuresTable) Cache(opts ...keel.CacheOption) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ServiceFailuresQuery.LoadStrategy.
+func (t *ServiceFailuresTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ServiceFailuresQuery.With.
+func (t *ServiceFailuresTable) With(ctes ...*keel.CTETable) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ServiceFailuresQuery.Compute.
+func (t *ServiceFailuresTable) Compute(col keel.Column, e keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ServiceFailuresTable) Create(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ServiceFailuresTable) CreateMany(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ServiceFailuresTable) Save(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ServiceFailuresTable) SaveExcept(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ServiceFailuresTable) DeleteRow(ctx context.Context, db *keel.DB, row *servicefailure.ServiceFailure) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ServiceFailuresTable) Upsert(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ServiceFailuresTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ServiceFailuresTable) Copy(ctx context.Context, db *keel.DB, rows []*servicefailure.ServiceFailure) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ServiceFailuresQuery) Where(ps ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ServiceFailuresQuery) Pick(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ServiceFailuresQuery) Omit(cols ...keel.Column) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ServiceFailuresQuery) Load(ls ...keel.Loader) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ServiceFailuresQuery) Order(os ...keel.Order) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ServiceFailuresQuery) Distinct() keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ServiceFailuresQuery) Group(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ServiceFailuresQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ServiceFailuresQuery) Rollup(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ServiceFailuresQuery) Cube(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ServiceFailuresQuery) Window(name string, w keel.Window) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ServiceFailuresQuery) Having(ps ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ServiceFailuresQuery) Limit(n int) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ServiceFailuresQuery) Offset(n int) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ServiceFailuresQuery) DistinctOn(es ...keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ServiceFailuresQuery) AllTenants() keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ServiceFailuresQuery) CustomPlan() keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ServiceFailuresQuery) Timeout(d time.Duration) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ServiceFailuresQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ServiceFailuresQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ServiceFailuresQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ServiceFailuresQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ServiceFailuresQuery) JoinLateral(sub keel.LateralSource) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ServiceFailuresQuery) Cache(opts ...keel.CacheOption) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ServiceFailuresQuery) With(ctes ...*keel.CTETable) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ServiceFailuresQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ServiceFailuresQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*servicefailure.ServiceFailure] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ServiceFailuresQuery) Clone() keel.Query[*servicefailure.ServiceFailure] {
+	return &ServiceFailuresQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ServiceFailuresQuery) One(ctx context.Context, db *keel.DB) (*servicefailure.ServiceFailure, error) {
+	return keel.One[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ServiceFailuresQuery) First(ctx context.Context, db *keel.DB) (*servicefailure.ServiceFailure, error) {
+	return keel.First[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ServiceFailuresQuery) List(ctx context.Context, db *keel.DB) ([]*servicefailure.ServiceFailure, error) {
+	return keel.List[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ServiceFailuresQuery) All(ctx context.Context, db *keel.DB) ([]*servicefailure.ServiceFailure, error) {
+	return keel.All[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ServiceFailuresQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*servicefailure.ServiceFailure, error) {
+	return keel.UpdateReturning[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ServiceFailuresQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*servicefailure.ServiceFailure], error) {
+	return keel.PageOf[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ServiceFailuresQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*servicefailure.ServiceFailure) error) error {
+	return keel.Each[*servicefailure.ServiceFailure](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newServiceFailure() unsafe.Pointer { return unsafe.Pointer(new(servicefailure.ServiceFailure)) }

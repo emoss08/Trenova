@@ -300,7 +300,7 @@ func (b *tmBuilder) writePositions(ctx context.Context, tx *keel.DB) error {
 	if err := volumegen.InsertRows(
 		ctx,
 		tx,
-		telematicsdb.VehiclePositions.Handle,
+		telematicsdb.VehiclePositions,
 		rows,
 	); err != nil {
 		return err
@@ -356,7 +356,7 @@ func (b *tmBuilder) writeHOS(ctx context.Context, tx *keel.DB) error {
 			add(t, *t.crew.SecondaryWorkerID, mate)
 		}
 	}
-	if err := volumegen.InsertRows(ctx, tx, telematicsdb.WorkerHOSStates.Handle, rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, telematicsdb.WorkerHOSStates, rows); err != nil {
 		return err
 	}
 	b.counts["worker_hos_states"] += len(rows)
@@ -433,7 +433,7 @@ func (b *tmBuilder) writeViolations(ctx context.Context) error {
 	for begin := 0; begin < len(rows); begin += tmChunk {
 		chunk := rows[begin:min(begin+tmChunk, len(rows))]
 		if err := b.g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-			return volumegen.InsertRows(ctx, tx, telematicsdb.WorkerHOSViolations.Handle, chunk)
+			return volumegen.InsertRows(ctx, tx, telematicsdb.WorkerHOSViolations, chunk)
 		}); err != nil {
 			return err
 		}

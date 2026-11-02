@@ -35,7 +35,7 @@ func New(p Params) orgholidayports.OrgHolidayRepository {
 	}
 }
 
-func listQuery(req *orgholidayports.ListOrgHolidaysRequest) *keel.Query[*pto.OrgHoliday] {
+func listQuery(req *orgholidayports.ListOrgHolidaysRequest) keel.Query[*pto.OrgHoliday] {
 	h := ptodb.OrgHolidays
 	var window keel.Pred
 	if req.From > 0 || req.To > 0 {

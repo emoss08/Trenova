@@ -76,7 +76,7 @@ func (r *repository) ListMessages(
 	)
 }
 
-func archiveQuery(req *edimessageports.ListEDIMessagesRequest) *keel.Query[*edimessage.EDIMessage] {
+func archiveQuery(req *edimessageports.ListEDIMessagesRequest) keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	ve := edimessagedb.EDIMessageValidationErrors
 	search := strings.TrimSpace(req.Query)
@@ -116,7 +116,7 @@ func (r *repository) ListMessagesCursor(
 				&listquery.Request[edimessage.EDIMessage]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*edimessage.EDIMessage]) *keel.Query[*edimessage.EDIMessage] {
+					Shape: func(q keel.Query[*edimessage.EDIMessage]) keel.Query[*edimessage.EDIMessage] {
 						return q.Load(m.Partner())
 					},
 				},
@@ -224,7 +224,7 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 
 func lifecycleMessageQuery(
 	req *edimessageports.GetServiceFailure214LifecycleMessageRequest,
-) *keel.Query[*edimessage.EDIMessage] {
+) keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	failureID := req.ServiceFailureID.String()
 
@@ -258,7 +258,7 @@ func serviceFailure214LatestFor(alias, failureID, trigger string) keel.StringExp
 		Limit(1))).Coalesce("")
 }
 
-func serviceFailure214StatusQuery(failureID string) *keel.Query[*edimessage.EDIMessage] {
+func serviceFailure214StatusQuery(failureID string) keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	e := edimessagedb.EDIMessageValidationErrors
 
@@ -565,7 +565,7 @@ func (r *repository) GetPartnerScorecards(
 
 func scorecardQuery(
 	req *edimessageports.GetEDIPartnerScorecardsRequest,
-) *keel.Query[*edimessage.EDIMessage] {
+) keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	partner := m.Partner()
 	outbound := m.Direction.Eq(edidocument.DocumentDirectionOutbound)
@@ -632,7 +632,7 @@ func (r *repository) GetVolumeSeries(
 
 func volumeQuery(
 	req *edimessageports.GetEDIVolumeSeriesRequest,
-) *keel.Query[*edimessage.EDIMessage] {
+) keel.Query[*edimessage.EDIMessage] {
 	m := edimessagedb.EDIMessages
 	bucket := req.BucketSeconds
 	if bucket <= 0 {

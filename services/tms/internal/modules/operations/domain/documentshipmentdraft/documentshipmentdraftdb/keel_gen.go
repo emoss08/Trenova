@@ -4,6 +4,7 @@ package documentshipmentdraftdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var documentShipmentDraftsRef = keel.Ref{Table: &documentShipmentDraftsTable}
 
 // DocumentShipmentDraftsTable is the table of documentshipmentdraft.DocumentShipmentDraft.
 type DocumentShipmentDraftsTable struct {
-	keel.Handle[*documentshipmentdraft.DocumentShipmentDraft]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	DocumentID         keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type DocumentShipmentDraftsTable struct {
 
 // DocumentShipmentDrafts references the document_shipment_drafts table.
 var DocumentShipmentDrafts = &DocumentShipmentDraftsTable{
-	Handle:             keel.Handle[*documentshipmentdraft.DocumentShipmentDraft]{Ref: &documentShipmentDraftsRef},
+	TableBase:          keel.TableBase{Ref: &documentShipmentDraftsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 0}}},
 	DocumentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 2}}},
@@ -103,10 +104,10 @@ var DocumentShipmentDrafts = &DocumentShipmentDraftsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &documentShipmentDraftsRef, Index: 15}},
 }
 
-// BuildDocumentShipmentDrafts builds the handle of document_shipment_drafts for ref. Generated relation and alias methods call it.
+// BuildDocumentShipmentDrafts builds the table of document_shipment_drafts for ref. Generated relation and alias methods call it.
 func BuildDocumentShipmentDrafts(r *keel.Ref) *DocumentShipmentDraftsTable {
 	return &DocumentShipmentDraftsTable{
-		Handle:             keel.Handle[*documentshipmentdraft.DocumentShipmentDraft]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DocumentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -137,6 +138,365 @@ func (t *DocumentShipmentDraftsTable) As(alias string) *DocumentShipmentDraftsTa
 // Get returns the document_shipment_drafts row with the given key, or keel.ErrNotFound.
 func (t *DocumentShipmentDraftsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DocumentShipmentDraftsQuery is a query over documentshipmentdraft.DocumentShipmentDraft.
+type DocumentShipmentDraftsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*documentshipmentdraft.DocumentShipmentDraft] = (*DocumentShipmentDraftsTable)(nil)
+
+var _ keel.Query[*documentshipmentdraft.DocumentShipmentDraft] = (*DocumentShipmentDraftsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DocumentShipmentDraftsTable) Query() keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return &DocumentShipmentDraftsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DocumentShipmentDraftsQuery.Where.
+func (t *DocumentShipmentDraftsTable) Where(ps ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DocumentShipmentDraftsQuery.Pick.
+func (t *DocumentShipmentDraftsTable) Pick(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DocumentShipmentDraftsQuery.Load.
+func (t *DocumentShipmentDraftsTable) Load(ls ...keel.Loader) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DocumentShipmentDraftsQuery.Omit.
+func (t *DocumentShipmentDraftsTable) Omit(cols ...keel.Column) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DocumentShipmentDraftsQuery.Order.
+func (t *DocumentShipmentDraftsTable) Order(os ...keel.Order) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DocumentShipmentDraftsQuery.Limit.
+func (t *DocumentShipmentDraftsTable) Limit(n int) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DocumentShipmentDraftsQuery.Group.
+func (t *DocumentShipmentDraftsTable) Group(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DocumentShipmentDraftsQuery.GroupingSets.
+func (t *DocumentShipmentDraftsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DocumentShipmentDraftsQuery.Rollup.
+func (t *DocumentShipmentDraftsTable) Rollup(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DocumentShipmentDraftsQuery.Cube.
+func (t *DocumentShipmentDraftsTable) Cube(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DocumentShipmentDraftsQuery.AllTenants.
+func (t *DocumentShipmentDraftsTable) AllTenants() keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DocumentShipmentDraftsQuery.Join.
+func (t *DocumentShipmentDraftsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DocumentShipmentDraftsQuery.LeftJoin.
+func (t *DocumentShipmentDraftsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DocumentShipmentDraftsQuery.LeftJoinLateral.
+func (t *DocumentShipmentDraftsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DocumentShipmentDraftsQuery.JoinLateral.
+func (t *DocumentShipmentDraftsTable) JoinLateral(sub keel.LateralSource) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DocumentShipmentDraftsQuery.Lock.
+func (t *DocumentShipmentDraftsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DocumentShipmentDraftsQuery.DistinctOn.
+func (t *DocumentShipmentDraftsTable) DistinctOn(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DocumentShipmentDraftsQuery.Cache.
+func (t *DocumentShipmentDraftsTable) Cache(opts ...keel.CacheOption) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DocumentShipmentDraftsQuery.LoadStrategy.
+func (t *DocumentShipmentDraftsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DocumentShipmentDraftsQuery.With.
+func (t *DocumentShipmentDraftsTable) With(ctes ...*keel.CTETable) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DocumentShipmentDraftsQuery.Compute.
+func (t *DocumentShipmentDraftsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DocumentShipmentDraftsTable) Create(ctx context.Context, db *keel.DB, row *documentshipmentdraft.DocumentShipmentDraft) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DocumentShipmentDraftsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documentshipmentdraft.DocumentShipmentDraft) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DocumentShipmentDraftsTable) Save(ctx context.Context, db *keel.DB, row *documentshipmentdraft.DocumentShipmentDraft, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DocumentShipmentDraftsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documentshipmentdraft.DocumentShipmentDraft, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DocumentShipmentDraftsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documentshipmentdraft.DocumentShipmentDraft) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DocumentShipmentDraftsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documentshipmentdraft.DocumentShipmentDraft, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DocumentShipmentDraftsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documentshipmentdraft.DocumentShipmentDraft, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DocumentShipmentDraftsTable) Copy(ctx context.Context, db *keel.DB, rows []*documentshipmentdraft.DocumentShipmentDraft) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DocumentShipmentDraftsQuery) Where(ps ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DocumentShipmentDraftsQuery) Pick(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DocumentShipmentDraftsQuery) Omit(cols ...keel.Column) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DocumentShipmentDraftsQuery) Load(ls ...keel.Loader) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DocumentShipmentDraftsQuery) Order(os ...keel.Order) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DocumentShipmentDraftsQuery) Distinct() keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DocumentShipmentDraftsQuery) Group(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DocumentShipmentDraftsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DocumentShipmentDraftsQuery) Rollup(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DocumentShipmentDraftsQuery) Cube(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DocumentShipmentDraftsQuery) Window(name string, w keel.Window) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DocumentShipmentDraftsQuery) Having(ps ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DocumentShipmentDraftsQuery) Limit(n int) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DocumentShipmentDraftsQuery) Offset(n int) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DocumentShipmentDraftsQuery) DistinctOn(es ...keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DocumentShipmentDraftsQuery) AllTenants() keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DocumentShipmentDraftsQuery) CustomPlan() keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DocumentShipmentDraftsQuery) Timeout(d time.Duration) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DocumentShipmentDraftsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DocumentShipmentDraftsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DocumentShipmentDraftsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DocumentShipmentDraftsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DocumentShipmentDraftsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DocumentShipmentDraftsQuery) Cache(opts ...keel.CacheOption) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DocumentShipmentDraftsQuery) With(ctes ...*keel.CTETable) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DocumentShipmentDraftsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DocumentShipmentDraftsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DocumentShipmentDraftsQuery) Clone() keel.Query[*documentshipmentdraft.DocumentShipmentDraft] {
+	return &DocumentShipmentDraftsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DocumentShipmentDraftsQuery) One(ctx context.Context, db *keel.DB) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+	return keel.One[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DocumentShipmentDraftsQuery) First(ctx context.Context, db *keel.DB) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+	return keel.First[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DocumentShipmentDraftsQuery) List(ctx context.Context, db *keel.DB) ([]*documentshipmentdraft.DocumentShipmentDraft, error) {
+	return keel.List[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DocumentShipmentDraftsQuery) All(ctx context.Context, db *keel.DB) ([]*documentshipmentdraft.DocumentShipmentDraft, error) {
+	return keel.All[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DocumentShipmentDraftsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documentshipmentdraft.DocumentShipmentDraft, error) {
+	return keel.UpdateReturning[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DocumentShipmentDraftsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documentshipmentdraft.DocumentShipmentDraft], error) {
+	return keel.PageOf[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DocumentShipmentDraftsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documentshipmentdraft.DocumentShipmentDraft) error) error {
+	return keel.Each[*documentshipmentdraft.DocumentShipmentDraft](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDocumentShipmentDraft() unsafe.Pointer {

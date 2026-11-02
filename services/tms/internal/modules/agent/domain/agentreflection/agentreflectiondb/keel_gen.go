@@ -4,6 +4,7 @@ package agentreflectiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -71,7 +72,7 @@ var reflectionsRef = keel.Ref{Table: &reflectionsTable}
 
 // ReflectionsTable is the table of agentreflection.Reflection.
 type ReflectionsTable struct {
-	keel.Handle[*agentreflection.Reflection]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -101,7 +102,7 @@ type ReflectionsTable struct {
 
 // Reflections references the agent_reflections table.
 var Reflections = &ReflectionsTable{
-	Handle:            keel.Handle[*agentreflection.Reflection]{Ref: &reflectionsRef},
+	TableBase:         keel.TableBase{Ref: &reflectionsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 2}}},
@@ -129,10 +130,10 @@ var Reflections = &ReflectionsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 24}},
 }
 
-// BuildReflections builds the handle of agent_reflections for ref. Generated relation and alias methods call it.
+// BuildReflections builds the table of agent_reflections for ref. Generated relation and alias methods call it.
 func BuildReflections(r *keel.Ref) *ReflectionsTable {
 	return &ReflectionsTable{
-		Handle:            keel.Handle[*agentreflection.Reflection]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -172,6 +173,365 @@ func (t *ReflectionsTable) As(alias string) *ReflectionsTable {
 // Get returns the agent_reflections row with the given key, or keel.ErrNotFound.
 func (t *ReflectionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentreflection.Reflection, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReflectionsQuery is a query over agentreflection.Reflection.
+type ReflectionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agentreflection.Reflection] = (*ReflectionsTable)(nil)
+
+var _ keel.Query[*agentreflection.Reflection] = (*ReflectionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReflectionsTable) Query() keel.Query[*agentreflection.Reflection] {
+	return &ReflectionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReflectionsQuery.Where.
+func (t *ReflectionsTable) Where(ps ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReflectionsQuery.Pick.
+func (t *ReflectionsTable) Pick(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReflectionsQuery.Load.
+func (t *ReflectionsTable) Load(ls ...keel.Loader) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReflectionsQuery.Omit.
+func (t *ReflectionsTable) Omit(cols ...keel.Column) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReflectionsQuery.Order.
+func (t *ReflectionsTable) Order(os ...keel.Order) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReflectionsQuery.Limit.
+func (t *ReflectionsTable) Limit(n int) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReflectionsQuery.Group.
+func (t *ReflectionsTable) Group(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReflectionsQuery.GroupingSets.
+func (t *ReflectionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReflectionsQuery.Rollup.
+func (t *ReflectionsTable) Rollup(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReflectionsQuery.Cube.
+func (t *ReflectionsTable) Cube(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReflectionsQuery.AllTenants.
+func (t *ReflectionsTable) AllTenants() keel.Query[*agentreflection.Reflection] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReflectionsQuery.Join.
+func (t *ReflectionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReflectionsQuery.LeftJoin.
+func (t *ReflectionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReflectionsQuery.LeftJoinLateral.
+func (t *ReflectionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentreflection.Reflection] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReflectionsQuery.JoinLateral.
+func (t *ReflectionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agentreflection.Reflection] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReflectionsQuery.Lock.
+func (t *ReflectionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReflectionsQuery.DistinctOn.
+func (t *ReflectionsTable) DistinctOn(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReflectionsQuery.Cache.
+func (t *ReflectionsTable) Cache(opts ...keel.CacheOption) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReflectionsQuery.LoadStrategy.
+func (t *ReflectionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentreflection.Reflection] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReflectionsQuery.With.
+func (t *ReflectionsTable) With(ctes ...*keel.CTETable) keel.Query[*agentreflection.Reflection] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReflectionsQuery.Compute.
+func (t *ReflectionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentreflection.Reflection] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReflectionsTable) Create(ctx context.Context, db *keel.DB, row *agentreflection.Reflection) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReflectionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReflectionsTable) Save(ctx context.Context, db *keel.DB, row *agentreflection.Reflection, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReflectionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentreflection.Reflection, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReflectionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentreflection.Reflection) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReflectionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReflectionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReflectionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentreflection.Reflection) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReflectionsQuery) Where(ps ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReflectionsQuery) Pick(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReflectionsQuery) Omit(cols ...keel.Column) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReflectionsQuery) Load(ls ...keel.Loader) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReflectionsQuery) Order(os ...keel.Order) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReflectionsQuery) Distinct() keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReflectionsQuery) Group(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReflectionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReflectionsQuery) Rollup(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReflectionsQuery) Cube(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReflectionsQuery) Window(name string, w keel.Window) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReflectionsQuery) Having(ps ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReflectionsQuery) Limit(n int) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReflectionsQuery) Offset(n int) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReflectionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReflectionsQuery) AllTenants() keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReflectionsQuery) CustomPlan() keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReflectionsQuery) Timeout(d time.Duration) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReflectionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReflectionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReflectionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReflectionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReflectionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReflectionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReflectionsQuery) With(ctes ...*keel.CTETable) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReflectionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReflectionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agentreflection.Reflection] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReflectionsQuery) Clone() keel.Query[*agentreflection.Reflection] {
+	return &ReflectionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReflectionsQuery) One(ctx context.Context, db *keel.DB) (*agentreflection.Reflection, error) {
+	return keel.One[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReflectionsQuery) First(ctx context.Context, db *keel.DB) (*agentreflection.Reflection, error) {
+	return keel.First[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReflectionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentreflection.Reflection, error) {
+	return keel.List[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReflectionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentreflection.Reflection, error) {
+	return keel.All[*agentreflection.Reflection](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReflectionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentreflection.Reflection, error) {
+	return keel.UpdateReturning[*agentreflection.Reflection](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReflectionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentreflection.Reflection], error) {
+	return keel.PageOf[*agentreflection.Reflection](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReflectionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentreflection.Reflection) error) error {
+	return keel.Each[*agentreflection.Reflection](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReflection() unsafe.Pointer { return unsafe.Pointer(new(agentreflection.Reflection)) }

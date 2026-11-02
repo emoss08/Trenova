@@ -26,7 +26,7 @@ func endpointStop(
 	alias string,
 	types []shipmentvocab.StopType,
 	first bool,
-) (*keel.Query[*shipment.Stop], keel.Expr) {
+) (keel.Query[*shipment.Stop], keel.Expr) {
 	stop := shipmentdb.Stops.As(alias)
 	move := shipmentdb.ShipmentMoves.As(alias + "_move")
 	order := []keel.Order{move.Sequence.Asc(), stop.Sequence.Asc()}
@@ -45,7 +45,7 @@ func endpointStop(
 func consolidationCandidates(
 	req *billingqueueports.ListConsolidationCandidatesRequest,
 	limit int,
-) *keel.Query[*billingqueue.BillingQueueItem] {
+) keel.Query[*billingqueue.BillingQueueItem] {
 	bqi := billingqueuedb.BillingQueueItems
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers

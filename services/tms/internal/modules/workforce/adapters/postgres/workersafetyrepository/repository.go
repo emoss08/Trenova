@@ -56,7 +56,7 @@ func eventLoads(includeDocument, includeActors, includeWorker bool) []keel.Loade
 
 func eventsQuery(
 	req *workersafetyports.ListWorkerSafetyEventsRequest,
-) *keel.Query[*workersafety.WorkerSafetyEvent] {
+) keel.Query[*workersafety.WorkerSafetyEvent] {
 	e := workersafetydb.WorkerSafetyEvents
 	q := e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
@@ -338,7 +338,7 @@ func (r *repository) DeleteRecognition(
 	})
 }
 
-func lapsedQuery(req *workersafetyports.ListWorkersWithLapsedPointsRequest) *keel.Query[*keel.Row] {
+func lapsedQuery(req *workersafetyports.ListWorkersWithLapsedPointsRequest) keel.Query[*keel.Row] {
 	e := workersafetydb.WorkerSafetyEvents
 	a := workerdisciplinedb.WorkerDisciplinaryActions
 

@@ -4,6 +4,7 @@ package reportdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -65,7 +66,7 @@ var dashboardsRef = keel.Ref{Table: &dashboardsTable}
 
 // DashboardsTable is the table of report.Dashboard.
 type DashboardsTable struct {
-	keel.Handle[*report.Dashboard]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -83,7 +84,7 @@ type DashboardsTable struct {
 
 // Dashboards references the report_dashboards table.
 var Dashboards = &DashboardsTable{
-	Handle:         keel.Handle[*report.Dashboard]{Ref: &dashboardsRef},
+	TableBase:      keel.TableBase{Ref: &dashboardsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 2}}},
@@ -99,10 +100,10 @@ var Dashboards = &DashboardsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dashboardsRef, Index: 12}},
 }
 
-// BuildDashboards builds the handle of report_dashboards for ref. Generated relation and alias methods call it.
+// BuildDashboards builds the table of report_dashboards for ref. Generated relation and alias methods call it.
 func BuildDashboards(r *keel.Ref) *DashboardsTable {
 	return &DashboardsTable{
-		Handle:         keel.Handle[*report.Dashboard]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -135,6 +136,365 @@ func (t *DashboardsTable) Owner() *tenantdb.UsersTable {
 // Get returns the report_dashboards row with the given key, or keel.ErrNotFound.
 func (t *DashboardsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*report.Dashboard, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DashboardsQuery is a query over report.Dashboard.
+type DashboardsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.Dashboard] = (*DashboardsTable)(nil)
+
+var _ keel.Query[*report.Dashboard] = (*DashboardsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DashboardsTable) Query() keel.Query[*report.Dashboard] {
+	return &DashboardsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DashboardsQuery.Where.
+func (t *DashboardsTable) Where(ps ...keel.Pred) keel.Query[*report.Dashboard] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DashboardsQuery.Pick.
+func (t *DashboardsTable) Pick(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DashboardsQuery.Load.
+func (t *DashboardsTable) Load(ls ...keel.Loader) keel.Query[*report.Dashboard] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DashboardsQuery.Omit.
+func (t *DashboardsTable) Omit(cols ...keel.Column) keel.Query[*report.Dashboard] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DashboardsQuery.Order.
+func (t *DashboardsTable) Order(os ...keel.Order) keel.Query[*report.Dashboard] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DashboardsQuery.Limit.
+func (t *DashboardsTable) Limit(n int) keel.Query[*report.Dashboard] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DashboardsQuery.Group.
+func (t *DashboardsTable) Group(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DashboardsQuery.GroupingSets.
+func (t *DashboardsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DashboardsQuery.Rollup.
+func (t *DashboardsTable) Rollup(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DashboardsQuery.Cube.
+func (t *DashboardsTable) Cube(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DashboardsQuery.AllTenants.
+func (t *DashboardsTable) AllTenants() keel.Query[*report.Dashboard] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DashboardsQuery.Join.
+func (t *DashboardsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.Dashboard] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DashboardsQuery.LeftJoin.
+func (t *DashboardsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.Dashboard] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DashboardsQuery.LeftJoinLateral.
+func (t *DashboardsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.Dashboard] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DashboardsQuery.JoinLateral.
+func (t *DashboardsTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.Dashboard] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DashboardsQuery.Lock.
+func (t *DashboardsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.Dashboard] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DashboardsQuery.DistinctOn.
+func (t *DashboardsTable) DistinctOn(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DashboardsQuery.Cache.
+func (t *DashboardsTable) Cache(opts ...keel.CacheOption) keel.Query[*report.Dashboard] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DashboardsQuery.LoadStrategy.
+func (t *DashboardsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.Dashboard] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DashboardsQuery.With.
+func (t *DashboardsTable) With(ctes ...*keel.CTETable) keel.Query[*report.Dashboard] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DashboardsQuery.Compute.
+func (t *DashboardsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.Dashboard] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DashboardsTable) Create(ctx context.Context, db *keel.DB, row *report.Dashboard) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DashboardsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.Dashboard) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DashboardsTable) Save(ctx context.Context, db *keel.DB, row *report.Dashboard, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DashboardsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.Dashboard, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DashboardsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.Dashboard) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DashboardsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.Dashboard, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DashboardsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.Dashboard, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DashboardsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.Dashboard) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DashboardsQuery) Where(ps ...keel.Pred) keel.Query[*report.Dashboard] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DashboardsQuery) Pick(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DashboardsQuery) Omit(cols ...keel.Column) keel.Query[*report.Dashboard] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DashboardsQuery) Load(ls ...keel.Loader) keel.Query[*report.Dashboard] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DashboardsQuery) Order(os ...keel.Order) keel.Query[*report.Dashboard] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DashboardsQuery) Distinct() keel.Query[*report.Dashboard] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DashboardsQuery) Group(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DashboardsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DashboardsQuery) Rollup(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DashboardsQuery) Cube(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DashboardsQuery) Window(name string, w keel.Window) keel.Query[*report.Dashboard] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DashboardsQuery) Having(ps ...keel.Pred) keel.Query[*report.Dashboard] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DashboardsQuery) Limit(n int) keel.Query[*report.Dashboard] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DashboardsQuery) Offset(n int) keel.Query[*report.Dashboard] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DashboardsQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DashboardsQuery) AllTenants() keel.Query[*report.Dashboard] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DashboardsQuery) CustomPlan() keel.Query[*report.Dashboard] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DashboardsQuery) Timeout(d time.Duration) keel.Query[*report.Dashboard] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DashboardsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.Dashboard] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DashboardsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.Dashboard] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DashboardsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.Dashboard] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DashboardsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.Dashboard] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DashboardsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.Dashboard] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DashboardsQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.Dashboard] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DashboardsQuery) With(ctes ...*keel.CTETable) keel.Query[*report.Dashboard] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DashboardsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.Dashboard] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DashboardsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.Dashboard] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DashboardsQuery) Clone() keel.Query[*report.Dashboard] {
+	return &DashboardsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DashboardsQuery) One(ctx context.Context, db *keel.DB) (*report.Dashboard, error) {
+	return keel.One[*report.Dashboard](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DashboardsQuery) First(ctx context.Context, db *keel.DB) (*report.Dashboard, error) {
+	return keel.First[*report.Dashboard](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DashboardsQuery) List(ctx context.Context, db *keel.DB) ([]*report.Dashboard, error) {
+	return keel.List[*report.Dashboard](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DashboardsQuery) All(ctx context.Context, db *keel.DB) ([]*report.Dashboard, error) {
+	return keel.All[*report.Dashboard](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DashboardsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.Dashboard, error) {
+	return keel.UpdateReturning[*report.Dashboard](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DashboardsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.Dashboard], error) {
+	return keel.PageOf[*report.Dashboard](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DashboardsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.Dashboard) error) error {
+	return keel.Each[*report.Dashboard](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDashboard() unsafe.Pointer { return unsafe.Pointer(new(report.Dashboard)) }
@@ -268,7 +628,7 @@ var reportCatalogVersionsRef = keel.Ref{Table: &reportCatalogVersionsTable}
 
 // ReportCatalogVersionsTable is the table of report.ReportCatalogVersion.
 type ReportCatalogVersionsTable struct {
-	keel.Handle[*report.ReportCatalogVersion]
+	keel.TableBase
 	Version     keel.StringCol
 	FirstSeenAt keel.Int64Col
 	LastSeenAt  keel.Int64Col
@@ -276,16 +636,16 @@ type ReportCatalogVersionsTable struct {
 
 // ReportCatalogVersions references the report_catalog_versions table.
 var ReportCatalogVersions = &ReportCatalogVersionsTable{
-	Handle:      keel.Handle[*report.ReportCatalogVersion]{Ref: &reportCatalogVersionsRef},
+	TableBase:   keel.TableBase{Ref: &reportCatalogVersionsRef},
 	Version:     keel.StringCol{Col: keel.Col{Ref: &reportCatalogVersionsRef, Index: 0}},
 	FirstSeenAt: keel.Int64Col{Col: keel.Col{Ref: &reportCatalogVersionsRef, Index: 1}},
 	LastSeenAt:  keel.Int64Col{Col: keel.Col{Ref: &reportCatalogVersionsRef, Index: 2}},
 }
 
-// BuildReportCatalogVersions builds the handle of report_catalog_versions for ref. Generated relation and alias methods call it.
+// BuildReportCatalogVersions builds the table of report_catalog_versions for ref. Generated relation and alias methods call it.
 func BuildReportCatalogVersions(r *keel.Ref) *ReportCatalogVersionsTable {
 	return &ReportCatalogVersionsTable{
-		Handle:      keel.Handle[*report.ReportCatalogVersion]{Ref: r},
+		TableBase:   keel.TableBase{Ref: r},
 		Version:     keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		FirstSeenAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 1}},
 		LastSeenAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -303,6 +663,365 @@ func (t *ReportCatalogVersionsTable) As(alias string) *ReportCatalogVersionsTabl
 // Get returns the report_catalog_versions row with the given key, or keel.ErrNotFound.
 func (t *ReportCatalogVersionsTable) Get(ctx context.Context, db *keel.DB, key string) (*report.ReportCatalogVersion, error) {
 	return t.Where(t.Version.Eq(key)).One(ctx, db)
+}
+
+// ReportCatalogVersionsQuery is a query over report.ReportCatalogVersion.
+type ReportCatalogVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.ReportCatalogVersion] = (*ReportCatalogVersionsTable)(nil)
+
+var _ keel.Query[*report.ReportCatalogVersion] = (*ReportCatalogVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReportCatalogVersionsTable) Query() keel.Query[*report.ReportCatalogVersion] {
+	return &ReportCatalogVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReportCatalogVersionsQuery.Where.
+func (t *ReportCatalogVersionsTable) Where(ps ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReportCatalogVersionsQuery.Pick.
+func (t *ReportCatalogVersionsTable) Pick(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReportCatalogVersionsQuery.Load.
+func (t *ReportCatalogVersionsTable) Load(ls ...keel.Loader) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReportCatalogVersionsQuery.Omit.
+func (t *ReportCatalogVersionsTable) Omit(cols ...keel.Column) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReportCatalogVersionsQuery.Order.
+func (t *ReportCatalogVersionsTable) Order(os ...keel.Order) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReportCatalogVersionsQuery.Limit.
+func (t *ReportCatalogVersionsTable) Limit(n int) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReportCatalogVersionsQuery.Group.
+func (t *ReportCatalogVersionsTable) Group(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReportCatalogVersionsQuery.GroupingSets.
+func (t *ReportCatalogVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReportCatalogVersionsQuery.Rollup.
+func (t *ReportCatalogVersionsTable) Rollup(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReportCatalogVersionsQuery.Cube.
+func (t *ReportCatalogVersionsTable) Cube(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReportCatalogVersionsQuery.AllTenants.
+func (t *ReportCatalogVersionsTable) AllTenants() keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReportCatalogVersionsQuery.Join.
+func (t *ReportCatalogVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReportCatalogVersionsQuery.LeftJoin.
+func (t *ReportCatalogVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReportCatalogVersionsQuery.LeftJoinLateral.
+func (t *ReportCatalogVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReportCatalogVersionsQuery.JoinLateral.
+func (t *ReportCatalogVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReportCatalogVersionsQuery.Lock.
+func (t *ReportCatalogVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReportCatalogVersionsQuery.DistinctOn.
+func (t *ReportCatalogVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReportCatalogVersionsQuery.Cache.
+func (t *ReportCatalogVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReportCatalogVersionsQuery.LoadStrategy.
+func (t *ReportCatalogVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReportCatalogVersionsQuery.With.
+func (t *ReportCatalogVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReportCatalogVersionsQuery.Compute.
+func (t *ReportCatalogVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReportCatalogVersionsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReportCatalogVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReportCatalogVersionsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReportCatalogVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReportCatalogVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReportCatalogVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReportCatalogVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReportCatalogVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReportCatalogVersionsQuery) Where(ps ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReportCatalogVersionsQuery) Pick(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReportCatalogVersionsQuery) Omit(cols ...keel.Column) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReportCatalogVersionsQuery) Load(ls ...keel.Loader) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReportCatalogVersionsQuery) Order(os ...keel.Order) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReportCatalogVersionsQuery) Distinct() keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReportCatalogVersionsQuery) Group(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReportCatalogVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReportCatalogVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReportCatalogVersionsQuery) Cube(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReportCatalogVersionsQuery) Window(name string, w keel.Window) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReportCatalogVersionsQuery) Having(ps ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReportCatalogVersionsQuery) Limit(n int) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReportCatalogVersionsQuery) Offset(n int) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReportCatalogVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReportCatalogVersionsQuery) AllTenants() keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReportCatalogVersionsQuery) CustomPlan() keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReportCatalogVersionsQuery) Timeout(d time.Duration) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReportCatalogVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReportCatalogVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReportCatalogVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReportCatalogVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReportCatalogVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReportCatalogVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReportCatalogVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReportCatalogVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReportCatalogVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportCatalogVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReportCatalogVersionsQuery) Clone() keel.Query[*report.ReportCatalogVersion] {
+	return &ReportCatalogVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReportCatalogVersionsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportCatalogVersion, error) {
+	return keel.One[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReportCatalogVersionsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportCatalogVersion, error) {
+	return keel.First[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReportCatalogVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportCatalogVersion, error) {
+	return keel.List[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReportCatalogVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportCatalogVersion, error) {
+	return keel.All[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReportCatalogVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportCatalogVersion, error) {
+	return keel.UpdateReturning[*report.ReportCatalogVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReportCatalogVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportCatalogVersion], error) {
+	return keel.PageOf[*report.ReportCatalogVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReportCatalogVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportCatalogVersion) error) error {
+	return keel.Each[*report.ReportCatalogVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReportCatalogVersion() unsafe.Pointer {
@@ -400,7 +1119,7 @@ var reportDefinitionsRef = keel.Ref{Table: &reportDefinitionsTable}
 
 // ReportDefinitionsTable is the table of report.ReportDefinition.
 type ReportDefinitionsTable struct {
-	keel.Handle[*report.ReportDefinition]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -427,7 +1146,7 @@ type ReportDefinitionsTable struct {
 
 // ReportDefinitions references the report_definitions table.
 var ReportDefinitions = &ReportDefinitionsTable{
-	Handle:          keel.Handle[*report.ReportDefinition]{Ref: &reportDefinitionsRef},
+	TableBase:       keel.TableBase{Ref: &reportDefinitionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 2}}},
@@ -452,10 +1171,10 @@ var ReportDefinitions = &ReportDefinitionsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 21}},
 }
 
-// BuildReportDefinitions builds the handle of report_definitions for ref. Generated relation and alias methods call it.
+// BuildReportDefinitions builds the table of report_definitions for ref. Generated relation and alias methods call it.
 func BuildReportDefinitions(r *keel.Ref) *ReportDefinitionsTable {
 	return &ReportDefinitionsTable{
-		Handle:          keel.Handle[*report.ReportDefinition]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -497,6 +1216,365 @@ func (t *ReportDefinitionsTable) Owner() *tenantdb.UsersTable {
 // Get returns the report_definitions row with the given key, or keel.ErrNotFound.
 func (t *ReportDefinitionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*report.ReportDefinition, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReportDefinitionsQuery is a query over report.ReportDefinition.
+type ReportDefinitionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.ReportDefinition] = (*ReportDefinitionsTable)(nil)
+
+var _ keel.Query[*report.ReportDefinition] = (*ReportDefinitionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReportDefinitionsTable) Query() keel.Query[*report.ReportDefinition] {
+	return &ReportDefinitionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReportDefinitionsQuery.Where.
+func (t *ReportDefinitionsTable) Where(ps ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReportDefinitionsQuery.Pick.
+func (t *ReportDefinitionsTable) Pick(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReportDefinitionsQuery.Load.
+func (t *ReportDefinitionsTable) Load(ls ...keel.Loader) keel.Query[*report.ReportDefinition] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReportDefinitionsQuery.Omit.
+func (t *ReportDefinitionsTable) Omit(cols ...keel.Column) keel.Query[*report.ReportDefinition] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReportDefinitionsQuery.Order.
+func (t *ReportDefinitionsTable) Order(os ...keel.Order) keel.Query[*report.ReportDefinition] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReportDefinitionsQuery.Limit.
+func (t *ReportDefinitionsTable) Limit(n int) keel.Query[*report.ReportDefinition] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReportDefinitionsQuery.Group.
+func (t *ReportDefinitionsTable) Group(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReportDefinitionsQuery.GroupingSets.
+func (t *ReportDefinitionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReportDefinitionsQuery.Rollup.
+func (t *ReportDefinitionsTable) Rollup(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReportDefinitionsQuery.Cube.
+func (t *ReportDefinitionsTable) Cube(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReportDefinitionsQuery.AllTenants.
+func (t *ReportDefinitionsTable) AllTenants() keel.Query[*report.ReportDefinition] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReportDefinitionsQuery.Join.
+func (t *ReportDefinitionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReportDefinitionsQuery.LeftJoin.
+func (t *ReportDefinitionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReportDefinitionsQuery.LeftJoinLateral.
+func (t *ReportDefinitionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinition] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReportDefinitionsQuery.JoinLateral.
+func (t *ReportDefinitionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinition] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReportDefinitionsQuery.Lock.
+func (t *ReportDefinitionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportDefinition] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReportDefinitionsQuery.DistinctOn.
+func (t *ReportDefinitionsTable) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReportDefinitionsQuery.Cache.
+func (t *ReportDefinitionsTable) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportDefinition] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReportDefinitionsQuery.LoadStrategy.
+func (t *ReportDefinitionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportDefinition] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReportDefinitionsQuery.With.
+func (t *ReportDefinitionsTable) With(ctes ...*keel.CTETable) keel.Query[*report.ReportDefinition] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReportDefinitionsQuery.Compute.
+func (t *ReportDefinitionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportDefinition] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReportDefinitionsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportDefinition) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReportDefinitionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReportDefinitionsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportDefinition, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReportDefinitionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportDefinition, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReportDefinitionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportDefinition) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReportDefinitionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReportDefinitionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReportDefinitionsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReportDefinitionsQuery) Where(ps ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReportDefinitionsQuery) Pick(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReportDefinitionsQuery) Omit(cols ...keel.Column) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReportDefinitionsQuery) Load(ls ...keel.Loader) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReportDefinitionsQuery) Order(os ...keel.Order) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReportDefinitionsQuery) Distinct() keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReportDefinitionsQuery) Group(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReportDefinitionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReportDefinitionsQuery) Rollup(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReportDefinitionsQuery) Cube(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReportDefinitionsQuery) Window(name string, w keel.Window) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReportDefinitionsQuery) Having(ps ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReportDefinitionsQuery) Limit(n int) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReportDefinitionsQuery) Offset(n int) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReportDefinitionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReportDefinitionsQuery) AllTenants() keel.Query[*report.ReportDefinition] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReportDefinitionsQuery) CustomPlan() keel.Query[*report.ReportDefinition] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReportDefinitionsQuery) Timeout(d time.Duration) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReportDefinitionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReportDefinitionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReportDefinitionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReportDefinitionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReportDefinitionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReportDefinitionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReportDefinitionsQuery) With(ctes ...*keel.CTETable) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReportDefinitionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReportDefinitionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportDefinition] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReportDefinitionsQuery) Clone() keel.Query[*report.ReportDefinition] {
+	return &ReportDefinitionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReportDefinitionsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportDefinition, error) {
+	return keel.One[*report.ReportDefinition](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReportDefinitionsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportDefinition, error) {
+	return keel.First[*report.ReportDefinition](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReportDefinitionsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportDefinition, error) {
+	return keel.List[*report.ReportDefinition](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReportDefinitionsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportDefinition, error) {
+	return keel.All[*report.ReportDefinition](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReportDefinitionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportDefinition, error) {
+	return keel.UpdateReturning[*report.ReportDefinition](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReportDefinitionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportDefinition], error) {
+	return keel.PageOf[*report.ReportDefinition](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReportDefinitionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportDefinition) error) error {
+	return keel.Each[*report.ReportDefinition](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReportDefinition() unsafe.Pointer { return unsafe.Pointer(new(report.ReportDefinition)) }
@@ -688,7 +1766,7 @@ var reportDefinitionRevisionsRef = keel.Ref{Table: &reportDefinitionRevisionsTab
 
 // ReportDefinitionRevisionsTable is the table of report.ReportDefinitionRevision.
 type ReportDefinitionRevisionsTable struct {
-	keel.Handle[*report.ReportDefinitionRevision]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -702,7 +1780,7 @@ type ReportDefinitionRevisionsTable struct {
 
 // ReportDefinitionRevisions references the report_definition_revisions table.
 var ReportDefinitionRevisions = &ReportDefinitionRevisionsTable{
-	Handle:         keel.Handle[*report.ReportDefinitionRevision]{Ref: &reportDefinitionRevisionsRef},
+	TableBase:      keel.TableBase{Ref: &reportDefinitionRevisionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 2}}},
@@ -714,10 +1792,10 @@ var ReportDefinitionRevisions = &ReportDefinitionRevisionsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 8}},
 }
 
-// BuildReportDefinitionRevisions builds the handle of report_definition_revisions for ref. Generated relation and alias methods call it.
+// BuildReportDefinitionRevisions builds the table of report_definition_revisions for ref. Generated relation and alias methods call it.
 func BuildReportDefinitionRevisions(r *keel.Ref) *ReportDefinitionRevisionsTable {
 	return &ReportDefinitionRevisionsTable{
-		Handle:         keel.Handle[*report.ReportDefinitionRevision]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -746,6 +1824,365 @@ func (t *ReportDefinitionRevisionsTable) ReportDefinition() *ReportDefinitionsTa
 // Get returns the report_definition_revisions row with the given key, or keel.ErrNotFound.
 func (t *ReportDefinitionRevisionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*report.ReportDefinitionRevision, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReportDefinitionRevisionsQuery is a query over report.ReportDefinitionRevision.
+type ReportDefinitionRevisionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.ReportDefinitionRevision] = (*ReportDefinitionRevisionsTable)(nil)
+
+var _ keel.Query[*report.ReportDefinitionRevision] = (*ReportDefinitionRevisionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReportDefinitionRevisionsTable) Query() keel.Query[*report.ReportDefinitionRevision] {
+	return &ReportDefinitionRevisionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReportDefinitionRevisionsQuery.Where.
+func (t *ReportDefinitionRevisionsTable) Where(ps ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReportDefinitionRevisionsQuery.Pick.
+func (t *ReportDefinitionRevisionsTable) Pick(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReportDefinitionRevisionsQuery.Load.
+func (t *ReportDefinitionRevisionsTable) Load(ls ...keel.Loader) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReportDefinitionRevisionsQuery.Omit.
+func (t *ReportDefinitionRevisionsTable) Omit(cols ...keel.Column) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReportDefinitionRevisionsQuery.Order.
+func (t *ReportDefinitionRevisionsTable) Order(os ...keel.Order) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReportDefinitionRevisionsQuery.Limit.
+func (t *ReportDefinitionRevisionsTable) Limit(n int) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReportDefinitionRevisionsQuery.Group.
+func (t *ReportDefinitionRevisionsTable) Group(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReportDefinitionRevisionsQuery.GroupingSets.
+func (t *ReportDefinitionRevisionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReportDefinitionRevisionsQuery.Rollup.
+func (t *ReportDefinitionRevisionsTable) Rollup(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReportDefinitionRevisionsQuery.Cube.
+func (t *ReportDefinitionRevisionsTable) Cube(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReportDefinitionRevisionsQuery.AllTenants.
+func (t *ReportDefinitionRevisionsTable) AllTenants() keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReportDefinitionRevisionsQuery.Join.
+func (t *ReportDefinitionRevisionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReportDefinitionRevisionsQuery.LeftJoin.
+func (t *ReportDefinitionRevisionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReportDefinitionRevisionsQuery.LeftJoinLateral.
+func (t *ReportDefinitionRevisionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReportDefinitionRevisionsQuery.JoinLateral.
+func (t *ReportDefinitionRevisionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReportDefinitionRevisionsQuery.Lock.
+func (t *ReportDefinitionRevisionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReportDefinitionRevisionsQuery.DistinctOn.
+func (t *ReportDefinitionRevisionsTable) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReportDefinitionRevisionsQuery.Cache.
+func (t *ReportDefinitionRevisionsTable) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReportDefinitionRevisionsQuery.LoadStrategy.
+func (t *ReportDefinitionRevisionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReportDefinitionRevisionsQuery.With.
+func (t *ReportDefinitionRevisionsTable) With(ctes ...*keel.CTETable) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReportDefinitionRevisionsQuery.Compute.
+func (t *ReportDefinitionRevisionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReportDefinitionRevisionsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReportDefinitionRevisionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReportDefinitionRevisionsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReportDefinitionRevisionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReportDefinitionRevisionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReportDefinitionRevisionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReportDefinitionRevisionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReportDefinitionRevisionsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReportDefinitionRevisionsQuery) Where(ps ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReportDefinitionRevisionsQuery) Pick(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReportDefinitionRevisionsQuery) Omit(cols ...keel.Column) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReportDefinitionRevisionsQuery) Load(ls ...keel.Loader) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReportDefinitionRevisionsQuery) Order(os ...keel.Order) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReportDefinitionRevisionsQuery) Distinct() keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReportDefinitionRevisionsQuery) Group(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReportDefinitionRevisionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReportDefinitionRevisionsQuery) Rollup(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReportDefinitionRevisionsQuery) Cube(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReportDefinitionRevisionsQuery) Window(name string, w keel.Window) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReportDefinitionRevisionsQuery) Having(ps ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReportDefinitionRevisionsQuery) Limit(n int) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReportDefinitionRevisionsQuery) Offset(n int) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReportDefinitionRevisionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReportDefinitionRevisionsQuery) AllTenants() keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReportDefinitionRevisionsQuery) CustomPlan() keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReportDefinitionRevisionsQuery) Timeout(d time.Duration) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReportDefinitionRevisionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReportDefinitionRevisionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReportDefinitionRevisionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReportDefinitionRevisionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReportDefinitionRevisionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReportDefinitionRevisionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReportDefinitionRevisionsQuery) With(ctes ...*keel.CTETable) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReportDefinitionRevisionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReportDefinitionRevisionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportDefinitionRevision] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReportDefinitionRevisionsQuery) Clone() keel.Query[*report.ReportDefinitionRevision] {
+	return &ReportDefinitionRevisionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReportDefinitionRevisionsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportDefinitionRevision, error) {
+	return keel.One[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReportDefinitionRevisionsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportDefinitionRevision, error) {
+	return keel.First[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReportDefinitionRevisionsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportDefinitionRevision, error) {
+	return keel.List[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReportDefinitionRevisionsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportDefinitionRevision, error) {
+	return keel.All[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReportDefinitionRevisionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportDefinitionRevision, error) {
+	return keel.UpdateReturning[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReportDefinitionRevisionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportDefinitionRevision], error) {
+	return keel.PageOf[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReportDefinitionRevisionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportDefinitionRevision) error) error {
+	return keel.Each[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReportDefinitionRevision() unsafe.Pointer {
@@ -889,7 +2326,7 @@ var reportRunsRef = keel.Ref{Table: &reportRunsTable}
 
 // ReportRunsTable is the table of report.ReportRun.
 type ReportRunsTable struct {
-	keel.Handle[*report.ReportRun]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -925,7 +2362,7 @@ type ReportRunsTable struct {
 
 // ReportRuns references the report_runs table.
 var ReportRuns = &ReportRunsTable{
-	Handle:             keel.Handle[*report.ReportRun]{Ref: &reportRunsRef},
+	TableBase:          keel.TableBase{Ref: &reportRunsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 2}}},
@@ -959,10 +2396,10 @@ var ReportRuns = &ReportRunsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 30}},
 }
 
-// BuildReportRuns builds the handle of report_runs for ref. Generated relation and alias methods call it.
+// BuildReportRuns builds the table of report_runs for ref. Generated relation and alias methods call it.
 func BuildReportRuns(r *keel.Ref) *ReportRunsTable {
 	return &ReportRunsTable{
-		Handle:             keel.Handle[*report.ReportRun]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1023,6 +2460,365 @@ func (t *ReportRunsTable) Revision() *ReportDefinitionRevisionsTable {
 // Get returns the report_runs row with the given key, or keel.ErrNotFound.
 func (t *ReportRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*report.ReportRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReportRunsQuery is a query over report.ReportRun.
+type ReportRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.ReportRun] = (*ReportRunsTable)(nil)
+
+var _ keel.Query[*report.ReportRun] = (*ReportRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReportRunsTable) Query() keel.Query[*report.ReportRun] {
+	return &ReportRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReportRunsQuery.Where.
+func (t *ReportRunsTable) Where(ps ...keel.Pred) keel.Query[*report.ReportRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReportRunsQuery.Pick.
+func (t *ReportRunsTable) Pick(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReportRunsQuery.Load.
+func (t *ReportRunsTable) Load(ls ...keel.Loader) keel.Query[*report.ReportRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReportRunsQuery.Omit.
+func (t *ReportRunsTable) Omit(cols ...keel.Column) keel.Query[*report.ReportRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReportRunsQuery.Order.
+func (t *ReportRunsTable) Order(os ...keel.Order) keel.Query[*report.ReportRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReportRunsQuery.Limit.
+func (t *ReportRunsTable) Limit(n int) keel.Query[*report.ReportRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReportRunsQuery.Group.
+func (t *ReportRunsTable) Group(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReportRunsQuery.GroupingSets.
+func (t *ReportRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReportRunsQuery.Rollup.
+func (t *ReportRunsTable) Rollup(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReportRunsQuery.Cube.
+func (t *ReportRunsTable) Cube(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReportRunsQuery.AllTenants.
+func (t *ReportRunsTable) AllTenants() keel.Query[*report.ReportRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReportRunsQuery.Join.
+func (t *ReportRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReportRunsQuery.LeftJoin.
+func (t *ReportRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReportRunsQuery.LeftJoinLateral.
+func (t *ReportRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReportRunsQuery.JoinLateral.
+func (t *ReportRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReportRunsQuery.Lock.
+func (t *ReportRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReportRunsQuery.DistinctOn.
+func (t *ReportRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReportRunsQuery.Cache.
+func (t *ReportRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReportRunsQuery.LoadStrategy.
+func (t *ReportRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReportRunsQuery.With.
+func (t *ReportRunsTable) With(ctes ...*keel.CTETable) keel.Query[*report.ReportRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReportRunsQuery.Compute.
+func (t *ReportRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReportRunsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReportRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReportRunsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReportRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReportRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReportRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReportRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReportRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReportRunsQuery) Where(ps ...keel.Pred) keel.Query[*report.ReportRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReportRunsQuery) Pick(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReportRunsQuery) Omit(cols ...keel.Column) keel.Query[*report.ReportRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReportRunsQuery) Load(ls ...keel.Loader) keel.Query[*report.ReportRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReportRunsQuery) Order(os ...keel.Order) keel.Query[*report.ReportRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReportRunsQuery) Distinct() keel.Query[*report.ReportRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReportRunsQuery) Group(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReportRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReportRunsQuery) Rollup(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReportRunsQuery) Cube(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReportRunsQuery) Window(name string, w keel.Window) keel.Query[*report.ReportRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReportRunsQuery) Having(ps ...keel.Pred) keel.Query[*report.ReportRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReportRunsQuery) Limit(n int) keel.Query[*report.ReportRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReportRunsQuery) Offset(n int) keel.Query[*report.ReportRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReportRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReportRunsQuery) AllTenants() keel.Query[*report.ReportRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReportRunsQuery) CustomPlan() keel.Query[*report.ReportRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReportRunsQuery) Timeout(d time.Duration) keel.Query[*report.ReportRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReportRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReportRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReportRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReportRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReportRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReportRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReportRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*report.ReportRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReportRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReportRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReportRunsQuery) Clone() keel.Query[*report.ReportRun] {
+	return &ReportRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReportRunsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportRun, error) {
+	return keel.One[*report.ReportRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReportRunsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportRun, error) {
+	return keel.First[*report.ReportRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReportRunsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportRun, error) {
+	return keel.List[*report.ReportRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReportRunsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportRun, error) {
+	return keel.All[*report.ReportRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReportRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportRun, error) {
+	return keel.UpdateReturning[*report.ReportRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReportRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportRun], error) {
+	return keel.PageOf[*report.ReportRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReportRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportRun) error) error {
+	return keel.Each[*report.ReportRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReportRun() unsafe.Pointer { return unsafe.Pointer(new(report.ReportRun)) }
@@ -1294,7 +3090,7 @@ var reportSchedulesRef = keel.Ref{Table: &reportSchedulesTable}
 
 // ReportSchedulesTable is the table of report.ReportSchedule.
 type ReportSchedulesTable struct {
-	keel.Handle[*report.ReportSchedule]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1317,7 +3113,7 @@ type ReportSchedulesTable struct {
 
 // ReportSchedules references the report_schedules table.
 var ReportSchedules = &ReportSchedulesTable{
-	Handle:              keel.Handle[*report.ReportSchedule]{Ref: &reportSchedulesRef},
+	TableBase:           keel.TableBase{Ref: &reportSchedulesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 2}}},
@@ -1338,10 +3134,10 @@ var ReportSchedules = &ReportSchedulesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &reportSchedulesRef, Index: 17}},
 }
 
-// BuildReportSchedules builds the handle of report_schedules for ref. Generated relation and alias methods call it.
+// BuildReportSchedules builds the table of report_schedules for ref. Generated relation and alias methods call it.
 func BuildReportSchedules(r *keel.Ref) *ReportSchedulesTable {
 	return &ReportSchedulesTable{
-		Handle:              keel.Handle[*report.ReportSchedule]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1384,6 +3180,365 @@ func (t *ReportSchedulesTable) ReportDefinition() *ReportDefinitionsTable {
 // Get returns the report_schedules row with the given key, or keel.ErrNotFound.
 func (t *ReportSchedulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*report.ReportSchedule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReportSchedulesQuery is a query over report.ReportSchedule.
+type ReportSchedulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.ReportSchedule] = (*ReportSchedulesTable)(nil)
+
+var _ keel.Query[*report.ReportSchedule] = (*ReportSchedulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReportSchedulesTable) Query() keel.Query[*report.ReportSchedule] {
+	return &ReportSchedulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReportSchedulesQuery.Where.
+func (t *ReportSchedulesTable) Where(ps ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReportSchedulesQuery.Pick.
+func (t *ReportSchedulesTable) Pick(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReportSchedulesQuery.Load.
+func (t *ReportSchedulesTable) Load(ls ...keel.Loader) keel.Query[*report.ReportSchedule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReportSchedulesQuery.Omit.
+func (t *ReportSchedulesTable) Omit(cols ...keel.Column) keel.Query[*report.ReportSchedule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReportSchedulesQuery.Order.
+func (t *ReportSchedulesTable) Order(os ...keel.Order) keel.Query[*report.ReportSchedule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReportSchedulesQuery.Limit.
+func (t *ReportSchedulesTable) Limit(n int) keel.Query[*report.ReportSchedule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReportSchedulesQuery.Group.
+func (t *ReportSchedulesTable) Group(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReportSchedulesQuery.GroupingSets.
+func (t *ReportSchedulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReportSchedulesQuery.Rollup.
+func (t *ReportSchedulesTable) Rollup(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReportSchedulesQuery.Cube.
+func (t *ReportSchedulesTable) Cube(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReportSchedulesQuery.AllTenants.
+func (t *ReportSchedulesTable) AllTenants() keel.Query[*report.ReportSchedule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReportSchedulesQuery.Join.
+func (t *ReportSchedulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReportSchedulesQuery.LeftJoin.
+func (t *ReportSchedulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReportSchedulesQuery.LeftJoinLateral.
+func (t *ReportSchedulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportSchedule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReportSchedulesQuery.JoinLateral.
+func (t *ReportSchedulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportSchedule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReportSchedulesQuery.Lock.
+func (t *ReportSchedulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportSchedule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReportSchedulesQuery.DistinctOn.
+func (t *ReportSchedulesTable) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReportSchedulesQuery.Cache.
+func (t *ReportSchedulesTable) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportSchedule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReportSchedulesQuery.LoadStrategy.
+func (t *ReportSchedulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportSchedule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReportSchedulesQuery.With.
+func (t *ReportSchedulesTable) With(ctes ...*keel.CTETable) keel.Query[*report.ReportSchedule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReportSchedulesQuery.Compute.
+func (t *ReportSchedulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportSchedule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReportSchedulesTable) Create(ctx context.Context, db *keel.DB, row *report.ReportSchedule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReportSchedulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReportSchedulesTable) Save(ctx context.Context, db *keel.DB, row *report.ReportSchedule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReportSchedulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportSchedule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReportSchedulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportSchedule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReportSchedulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReportSchedulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReportSchedulesTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReportSchedulesQuery) Where(ps ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReportSchedulesQuery) Pick(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReportSchedulesQuery) Omit(cols ...keel.Column) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReportSchedulesQuery) Load(ls ...keel.Loader) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReportSchedulesQuery) Order(os ...keel.Order) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReportSchedulesQuery) Distinct() keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReportSchedulesQuery) Group(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReportSchedulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReportSchedulesQuery) Rollup(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReportSchedulesQuery) Cube(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReportSchedulesQuery) Window(name string, w keel.Window) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReportSchedulesQuery) Having(ps ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReportSchedulesQuery) Limit(n int) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReportSchedulesQuery) Offset(n int) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReportSchedulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReportSchedulesQuery) AllTenants() keel.Query[*report.ReportSchedule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReportSchedulesQuery) CustomPlan() keel.Query[*report.ReportSchedule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReportSchedulesQuery) Timeout(d time.Duration) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReportSchedulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReportSchedulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReportSchedulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReportSchedulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReportSchedulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReportSchedulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReportSchedulesQuery) With(ctes ...*keel.CTETable) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReportSchedulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReportSchedulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportSchedule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReportSchedulesQuery) Clone() keel.Query[*report.ReportSchedule] {
+	return &ReportSchedulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReportSchedulesQuery) One(ctx context.Context, db *keel.DB) (*report.ReportSchedule, error) {
+	return keel.One[*report.ReportSchedule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReportSchedulesQuery) First(ctx context.Context, db *keel.DB) (*report.ReportSchedule, error) {
+	return keel.First[*report.ReportSchedule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReportSchedulesQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportSchedule, error) {
+	return keel.List[*report.ReportSchedule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReportSchedulesQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportSchedule, error) {
+	return keel.All[*report.ReportSchedule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReportSchedulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportSchedule, error) {
+	return keel.UpdateReturning[*report.ReportSchedule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReportSchedulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportSchedule], error) {
+	return keel.PageOf[*report.ReportSchedule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReportSchedulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportSchedule) error) error {
+	return keel.Each[*report.ReportSchedule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReportSchedule() unsafe.Pointer { return unsafe.Pointer(new(report.ReportSchedule)) }
@@ -1557,7 +3712,7 @@ var reportViewsRef = keel.Ref{Table: &reportViewsTable}
 
 // ReportViewsTable is the table of report.ReportView.
 type ReportViewsTable struct {
-	keel.Handle[*report.ReportView]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1578,7 +3733,7 @@ type ReportViewsTable struct {
 
 // ReportViews references the report_views table.
 var ReportViews = &ReportViewsTable{
-	Handle:         keel.Handle[*report.ReportView]{Ref: &reportViewsRef},
+	TableBase:      keel.TableBase{Ref: &reportViewsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 2}}},
@@ -1597,10 +3752,10 @@ var ReportViews = &ReportViewsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &reportViewsRef, Index: 15}},
 }
 
-// BuildReportViews builds the handle of report_views for ref. Generated relation and alias methods call it.
+// BuildReportViews builds the table of report_views for ref. Generated relation and alias methods call it.
 func BuildReportViews(r *keel.Ref) *ReportViewsTable {
 	return &ReportViewsTable{
-		Handle:         keel.Handle[*report.ReportView]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1641,6 +3796,365 @@ func (t *ReportViewsTable) ReportDefinition() *ReportDefinitionsTable {
 // Get returns the report_views row with the given key, or keel.ErrNotFound.
 func (t *ReportViewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*report.ReportView, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReportViewsQuery is a query over report.ReportView.
+type ReportViewsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*report.ReportView] = (*ReportViewsTable)(nil)
+
+var _ keel.Query[*report.ReportView] = (*ReportViewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReportViewsTable) Query() keel.Query[*report.ReportView] {
+	return &ReportViewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReportViewsQuery.Where.
+func (t *ReportViewsTable) Where(ps ...keel.Pred) keel.Query[*report.ReportView] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReportViewsQuery.Pick.
+func (t *ReportViewsTable) Pick(es ...keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReportViewsQuery.Load.
+func (t *ReportViewsTable) Load(ls ...keel.Loader) keel.Query[*report.ReportView] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReportViewsQuery.Omit.
+func (t *ReportViewsTable) Omit(cols ...keel.Column) keel.Query[*report.ReportView] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReportViewsQuery.Order.
+func (t *ReportViewsTable) Order(os ...keel.Order) keel.Query[*report.ReportView] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReportViewsQuery.Limit.
+func (t *ReportViewsTable) Limit(n int) keel.Query[*report.ReportView] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReportViewsQuery.Group.
+func (t *ReportViewsTable) Group(es ...keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReportViewsQuery.GroupingSets.
+func (t *ReportViewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReportViewsQuery.Rollup.
+func (t *ReportViewsTable) Rollup(es ...keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReportViewsQuery.Cube.
+func (t *ReportViewsTable) Cube(es ...keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReportViewsQuery.AllTenants.
+func (t *ReportViewsTable) AllTenants() keel.Query[*report.ReportView] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReportViewsQuery.Join.
+func (t *ReportViewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportView] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReportViewsQuery.LeftJoin.
+func (t *ReportViewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportView] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReportViewsQuery.LeftJoinLateral.
+func (t *ReportViewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportView] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReportViewsQuery.JoinLateral.
+func (t *ReportViewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportView] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReportViewsQuery.Lock.
+func (t *ReportViewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportView] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReportViewsQuery.DistinctOn.
+func (t *ReportViewsTable) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReportViewsQuery.Cache.
+func (t *ReportViewsTable) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportView] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReportViewsQuery.LoadStrategy.
+func (t *ReportViewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportView] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReportViewsQuery.With.
+func (t *ReportViewsTable) With(ctes ...*keel.CTETable) keel.Query[*report.ReportView] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReportViewsQuery.Compute.
+func (t *ReportViewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportView] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReportViewsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportView) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReportViewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportView) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReportViewsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportView, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReportViewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportView, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReportViewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportView) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReportViewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportView, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReportViewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportView, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReportViewsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportView) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReportViewsQuery) Where(ps ...keel.Pred) keel.Query[*report.ReportView] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReportViewsQuery) Pick(es ...keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReportViewsQuery) Omit(cols ...keel.Column) keel.Query[*report.ReportView] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReportViewsQuery) Load(ls ...keel.Loader) keel.Query[*report.ReportView] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReportViewsQuery) Order(os ...keel.Order) keel.Query[*report.ReportView] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReportViewsQuery) Distinct() keel.Query[*report.ReportView] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReportViewsQuery) Group(es ...keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReportViewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReportViewsQuery) Rollup(es ...keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReportViewsQuery) Cube(es ...keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReportViewsQuery) Window(name string, w keel.Window) keel.Query[*report.ReportView] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReportViewsQuery) Having(ps ...keel.Pred) keel.Query[*report.ReportView] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReportViewsQuery) Limit(n int) keel.Query[*report.ReportView] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReportViewsQuery) Offset(n int) keel.Query[*report.ReportView] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReportViewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReportViewsQuery) AllTenants() keel.Query[*report.ReportView] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReportViewsQuery) CustomPlan() keel.Query[*report.ReportView] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReportViewsQuery) Timeout(d time.Duration) keel.Query[*report.ReportView] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReportViewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*report.ReportView] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReportViewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportView] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReportViewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*report.ReportView] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReportViewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*report.ReportView] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReportViewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*report.ReportView] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReportViewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*report.ReportView] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReportViewsQuery) With(ctes ...*keel.CTETable) keel.Query[*report.ReportView] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReportViewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*report.ReportView] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReportViewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*report.ReportView] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReportViewsQuery) Clone() keel.Query[*report.ReportView] {
+	return &ReportViewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReportViewsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportView, error) {
+	return keel.One[*report.ReportView](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReportViewsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportView, error) {
+	return keel.First[*report.ReportView](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReportViewsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportView, error) {
+	return keel.List[*report.ReportView](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReportViewsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportView, error) {
+	return keel.All[*report.ReportView](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReportViewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportView, error) {
+	return keel.UpdateReturning[*report.ReportView](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReportViewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportView], error) {
+	return keel.PageOf[*report.ReportView](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReportViewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportView) error) error {
+	return keel.Each[*report.ReportView](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReportView() unsafe.Pointer { return unsafe.Pointer(new(report.ReportView)) }

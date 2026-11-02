@@ -4,6 +4,7 @@ package recurringshipmentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -94,7 +95,7 @@ var recurringShipmentsRef = keel.Ref{Table: &recurringShipmentsTable}
 
 // RecurringShipmentsTable is the table of recurringshipment.RecurringShipment.
 type RecurringShipmentsTable struct {
-	keel.Handle[*recurringshipment.RecurringShipment]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -130,7 +131,7 @@ type RecurringShipmentsTable struct {
 
 // RecurringShipments references the recurring_shipments table.
 var RecurringShipments = &RecurringShipmentsTable{
-	Handle:                  keel.Handle[*recurringshipment.RecurringShipment]{Ref: &recurringShipmentsRef},
+	TableBase:               keel.TableBase{Ref: &recurringShipmentsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 2}}},
@@ -164,10 +165,10 @@ var RecurringShipments = &RecurringShipmentsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 30}},
 }
 
-// BuildRecurringShipments builds the handle of recurring_shipments for ref. Generated relation and alias methods call it.
+// BuildRecurringShipments builds the table of recurring_shipments for ref. Generated relation and alias methods call it.
 func BuildRecurringShipments(r *keel.Ref) *RecurringShipmentsTable {
 	return &RecurringShipmentsTable{
-		Handle:                  keel.Handle[*recurringshipment.RecurringShipment]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -238,6 +239,365 @@ func (t *RecurringShipmentsTable) EnteredBy() *tenantdb.UsersTable {
 // Get returns the recurring_shipments row with the given key, or keel.ErrNotFound.
 func (t *RecurringShipmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*recurringshipment.RecurringShipment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RecurringShipmentsQuery is a query over recurringshipment.RecurringShipment.
+type RecurringShipmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*recurringshipment.RecurringShipment] = (*RecurringShipmentsTable)(nil)
+
+var _ keel.Query[*recurringshipment.RecurringShipment] = (*RecurringShipmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RecurringShipmentsTable) Query() keel.Query[*recurringshipment.RecurringShipment] {
+	return &RecurringShipmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RecurringShipmentsQuery.Where.
+func (t *RecurringShipmentsTable) Where(ps ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RecurringShipmentsQuery.Pick.
+func (t *RecurringShipmentsTable) Pick(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RecurringShipmentsQuery.Load.
+func (t *RecurringShipmentsTable) Load(ls ...keel.Loader) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RecurringShipmentsQuery.Omit.
+func (t *RecurringShipmentsTable) Omit(cols ...keel.Column) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RecurringShipmentsQuery.Order.
+func (t *RecurringShipmentsTable) Order(os ...keel.Order) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RecurringShipmentsQuery.Limit.
+func (t *RecurringShipmentsTable) Limit(n int) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RecurringShipmentsQuery.Group.
+func (t *RecurringShipmentsTable) Group(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RecurringShipmentsQuery.GroupingSets.
+func (t *RecurringShipmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RecurringShipmentsQuery.Rollup.
+func (t *RecurringShipmentsTable) Rollup(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RecurringShipmentsQuery.Cube.
+func (t *RecurringShipmentsTable) Cube(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RecurringShipmentsQuery.AllTenants.
+func (t *RecurringShipmentsTable) AllTenants() keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RecurringShipmentsQuery.Join.
+func (t *RecurringShipmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RecurringShipmentsQuery.LeftJoin.
+func (t *RecurringShipmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RecurringShipmentsQuery.LeftJoinLateral.
+func (t *RecurringShipmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RecurringShipmentsQuery.JoinLateral.
+func (t *RecurringShipmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RecurringShipmentsQuery.Lock.
+func (t *RecurringShipmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RecurringShipmentsQuery.DistinctOn.
+func (t *RecurringShipmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RecurringShipmentsQuery.Cache.
+func (t *RecurringShipmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RecurringShipmentsQuery.LoadStrategy.
+func (t *RecurringShipmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RecurringShipmentsQuery.With.
+func (t *RecurringShipmentsTable) With(ctes ...*keel.CTETable) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RecurringShipmentsQuery.Compute.
+func (t *RecurringShipmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RecurringShipmentsTable) Create(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RecurringShipmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RecurringShipmentsTable) Save(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RecurringShipmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RecurringShipmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RecurringShipmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RecurringShipmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RecurringShipmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RecurringShipmentsQuery) Where(ps ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RecurringShipmentsQuery) Pick(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RecurringShipmentsQuery) Omit(cols ...keel.Column) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RecurringShipmentsQuery) Load(ls ...keel.Loader) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RecurringShipmentsQuery) Order(os ...keel.Order) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RecurringShipmentsQuery) Distinct() keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RecurringShipmentsQuery) Group(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RecurringShipmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RecurringShipmentsQuery) Rollup(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RecurringShipmentsQuery) Cube(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RecurringShipmentsQuery) Window(name string, w keel.Window) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RecurringShipmentsQuery) Having(ps ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RecurringShipmentsQuery) Limit(n int) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RecurringShipmentsQuery) Offset(n int) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RecurringShipmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RecurringShipmentsQuery) AllTenants() keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RecurringShipmentsQuery) CustomPlan() keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RecurringShipmentsQuery) Timeout(d time.Duration) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RecurringShipmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RecurringShipmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RecurringShipmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RecurringShipmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RecurringShipmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RecurringShipmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RecurringShipmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RecurringShipmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RecurringShipmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringshipment.RecurringShipment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RecurringShipmentsQuery) Clone() keel.Query[*recurringshipment.RecurringShipment] {
+	return &RecurringShipmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RecurringShipmentsQuery) One(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipment, error) {
+	return keel.One[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RecurringShipmentsQuery) First(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipment, error) {
+	return keel.First[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RecurringShipmentsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipment, error) {
+	return keel.List[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RecurringShipmentsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipment, error) {
+	return keel.All[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RecurringShipmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringshipment.RecurringShipment, error) {
+	return keel.UpdateReturning[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RecurringShipmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringshipment.RecurringShipment], error) {
+	return keel.PageOf[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RecurringShipmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringshipment.RecurringShipment) error) error {
+	return keel.Each[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRecurringShipment() unsafe.Pointer {
@@ -499,7 +859,7 @@ var recurringShipmentRunsRef = keel.Ref{Table: &recurringShipmentRunsTable}
 
 // RecurringShipmentRunsTable is the table of recurringshipment.RecurringShipmentRun.
 type RecurringShipmentRunsTable struct {
-	keel.Handle[*recurringshipment.RecurringShipmentRun]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -516,7 +876,7 @@ type RecurringShipmentRunsTable struct {
 
 // RecurringShipmentRuns references the recurring_shipment_runs table.
 var RecurringShipmentRuns = &RecurringShipmentRunsTable{
-	Handle:               keel.Handle[*recurringshipment.RecurringShipmentRun]{Ref: &recurringShipmentRunsRef},
+	TableBase:            keel.TableBase{Ref: &recurringShipmentRunsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 2}}},
@@ -531,10 +891,10 @@ var RecurringShipmentRuns = &RecurringShipmentRunsTable{
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 11}},
 }
 
-// BuildRecurringShipmentRuns builds the handle of recurring_shipment_runs for ref. Generated relation and alias methods call it.
+// BuildRecurringShipmentRuns builds the table of recurring_shipment_runs for ref. Generated relation and alias methods call it.
 func BuildRecurringShipmentRuns(r *keel.Ref) *RecurringShipmentRunsTable {
 	return &RecurringShipmentRunsTable{
-		Handle:               keel.Handle[*recurringshipment.RecurringShipmentRun]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -576,6 +936,365 @@ func (t *RecurringShipmentRunsTable) TriggeredBy() *tenantdb.UsersTable {
 // Get returns the recurring_shipment_runs row with the given key, or keel.ErrNotFound.
 func (t *RecurringShipmentRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*recurringshipment.RecurringShipmentRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RecurringShipmentRunsQuery is a query over recurringshipment.RecurringShipmentRun.
+type RecurringShipmentRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*recurringshipment.RecurringShipmentRun] = (*RecurringShipmentRunsTable)(nil)
+
+var _ keel.Query[*recurringshipment.RecurringShipmentRun] = (*RecurringShipmentRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RecurringShipmentRunsTable) Query() keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return &RecurringShipmentRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RecurringShipmentRunsQuery.Where.
+func (t *RecurringShipmentRunsTable) Where(ps ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RecurringShipmentRunsQuery.Pick.
+func (t *RecurringShipmentRunsTable) Pick(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RecurringShipmentRunsQuery.Load.
+func (t *RecurringShipmentRunsTable) Load(ls ...keel.Loader) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RecurringShipmentRunsQuery.Omit.
+func (t *RecurringShipmentRunsTable) Omit(cols ...keel.Column) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RecurringShipmentRunsQuery.Order.
+func (t *RecurringShipmentRunsTable) Order(os ...keel.Order) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RecurringShipmentRunsQuery.Limit.
+func (t *RecurringShipmentRunsTable) Limit(n int) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RecurringShipmentRunsQuery.Group.
+func (t *RecurringShipmentRunsTable) Group(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RecurringShipmentRunsQuery.GroupingSets.
+func (t *RecurringShipmentRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RecurringShipmentRunsQuery.Rollup.
+func (t *RecurringShipmentRunsTable) Rollup(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RecurringShipmentRunsQuery.Cube.
+func (t *RecurringShipmentRunsTable) Cube(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RecurringShipmentRunsQuery.AllTenants.
+func (t *RecurringShipmentRunsTable) AllTenants() keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RecurringShipmentRunsQuery.Join.
+func (t *RecurringShipmentRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RecurringShipmentRunsQuery.LeftJoin.
+func (t *RecurringShipmentRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RecurringShipmentRunsQuery.LeftJoinLateral.
+func (t *RecurringShipmentRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RecurringShipmentRunsQuery.JoinLateral.
+func (t *RecurringShipmentRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RecurringShipmentRunsQuery.Lock.
+func (t *RecurringShipmentRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RecurringShipmentRunsQuery.DistinctOn.
+func (t *RecurringShipmentRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RecurringShipmentRunsQuery.Cache.
+func (t *RecurringShipmentRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RecurringShipmentRunsQuery.LoadStrategy.
+func (t *RecurringShipmentRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RecurringShipmentRunsQuery.With.
+func (t *RecurringShipmentRunsTable) With(ctes ...*keel.CTETable) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RecurringShipmentRunsQuery.Compute.
+func (t *RecurringShipmentRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RecurringShipmentRunsTable) Create(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RecurringShipmentRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RecurringShipmentRunsTable) Save(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RecurringShipmentRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RecurringShipmentRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RecurringShipmentRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RecurringShipmentRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RecurringShipmentRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RecurringShipmentRunsQuery) Where(ps ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RecurringShipmentRunsQuery) Pick(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RecurringShipmentRunsQuery) Omit(cols ...keel.Column) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RecurringShipmentRunsQuery) Load(ls ...keel.Loader) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RecurringShipmentRunsQuery) Order(os ...keel.Order) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RecurringShipmentRunsQuery) Distinct() keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RecurringShipmentRunsQuery) Group(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RecurringShipmentRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RecurringShipmentRunsQuery) Rollup(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RecurringShipmentRunsQuery) Cube(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RecurringShipmentRunsQuery) Window(name string, w keel.Window) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RecurringShipmentRunsQuery) Having(ps ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RecurringShipmentRunsQuery) Limit(n int) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RecurringShipmentRunsQuery) Offset(n int) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RecurringShipmentRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RecurringShipmentRunsQuery) AllTenants() keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RecurringShipmentRunsQuery) CustomPlan() keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RecurringShipmentRunsQuery) Timeout(d time.Duration) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RecurringShipmentRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RecurringShipmentRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RecurringShipmentRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RecurringShipmentRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RecurringShipmentRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RecurringShipmentRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RecurringShipmentRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RecurringShipmentRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RecurringShipmentRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*recurringshipment.RecurringShipmentRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RecurringShipmentRunsQuery) Clone() keel.Query[*recurringshipment.RecurringShipmentRun] {
+	return &RecurringShipmentRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RecurringShipmentRunsQuery) One(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipmentRun, error) {
+	return keel.One[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RecurringShipmentRunsQuery) First(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipmentRun, error) {
+	return keel.First[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RecurringShipmentRunsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipmentRun, error) {
+	return keel.List[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RecurringShipmentRunsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipmentRun, error) {
+	return keel.All[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RecurringShipmentRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringshipment.RecurringShipmentRun, error) {
+	return keel.UpdateReturning[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RecurringShipmentRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringshipment.RecurringShipmentRun], error) {
+	return keel.PageOf[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RecurringShipmentRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringshipment.RecurringShipmentRun) error) error {
+	return keel.Each[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRecurringShipmentRun() unsafe.Pointer {

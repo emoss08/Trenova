@@ -85,7 +85,7 @@ func (r *orderReferenceMatcher) MatchOrderReferences(
 	)
 }
 
-func orderReferenceCandidatesQuery(query string) *keel.Query[*order.Order] {
+func orderReferenceCandidatesQuery(query string) keel.Query[*order.Order] {
 	o := orderdb.Orders
 
 	return o.Pick(o.ID, o.OrderNumber, o.PONumber.Coalesce(""), o.CreatedAt).
@@ -116,7 +116,7 @@ func newestOrderReferences(
 	return matches
 }
 
-func orderReferenceQuery(query string, limit int) *keel.Query[*order.Order] {
+func orderReferenceQuery(query string, limit int) keel.Query[*order.Order] {
 	o := orderdb.Orders
 
 	return o.Pick(o.ID, o.OrderNumber, o.PONumber.Coalesce("")).
@@ -159,7 +159,7 @@ func (r *activeHoldReader) ActiveHolds(
 	})
 }
 
-func activeHoldsQuery(ids []pulid.ID) *keel.Query[*shipmenthold.ShipmentHold] {
+func activeHoldsQuery(ids []pulid.ID) keel.Query[*shipmenthold.ShipmentHold] {
 	sh := shipmentholddb.ShipmentHolds
 
 	return sh.Where(sh.ShipmentID.In(ids...), sh.ReleasedAt.IsNull()).
@@ -198,7 +198,7 @@ func (r *newestCommentReader) NewestComments(
 	})
 }
 
-func newestCommentsQuery(ids []pulid.ID) *keel.Query[*shipment.ShipmentComment] {
+func newestCommentsQuery(ids []pulid.ID) keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 
 	return sc.Where(sc.ShipmentID.In(ids...), sc.ParentCommentID.IsNull(), sc.DeletedAt.IsNull()).

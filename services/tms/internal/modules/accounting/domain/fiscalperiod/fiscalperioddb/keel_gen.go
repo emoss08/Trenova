@@ -4,6 +4,7 @@ package fiscalperioddb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -82,7 +83,7 @@ var fiscalPeriodsRef = keel.Ref{Table: &fiscalPeriodsTable}
 
 // FiscalPeriodsTable is the table of fiscalperiod.FiscalPeriod.
 type FiscalPeriodsTable struct {
-	keel.Handle[*fiscalperiod.FiscalPeriod]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -112,7 +113,7 @@ type FiscalPeriodsTable struct {
 
 // FiscalPeriods references the fiscal_periods table.
 var FiscalPeriods = &FiscalPeriodsTable{
-	Handle:                keel.Handle[*fiscalperiod.FiscalPeriod]{Ref: &fiscalPeriodsRef},
+	TableBase:             keel.TableBase{Ref: &fiscalPeriodsRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 2}}},
@@ -140,10 +141,10 @@ var FiscalPeriods = &FiscalPeriodsTable{
 	Rank:                  keel.StringCol{Col: keel.Col{Ref: &fiscalPeriodsRef, Index: 24}},
 }
 
-// BuildFiscalPeriods builds the handle of fiscal_periods for ref. Generated relation and alias methods call it.
+// BuildFiscalPeriods builds the table of fiscal_periods for ref. Generated relation and alias methods call it.
 func BuildFiscalPeriods(r *keel.Ref) *FiscalPeriodsTable {
 	return &FiscalPeriodsTable{
-		Handle:                keel.Handle[*fiscalperiod.FiscalPeriod]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -198,6 +199,365 @@ func (t *FiscalPeriodsTable) ReopenedBy() *tenantdb.UsersTable {
 // Get returns the fiscal_periods row with the given key, or keel.ErrNotFound.
 func (t *FiscalPeriodsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*fiscalperiod.FiscalPeriod, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FiscalPeriodsQuery is a query over fiscalperiod.FiscalPeriod.
+type FiscalPeriodsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*fiscalperiod.FiscalPeriod] = (*FiscalPeriodsTable)(nil)
+
+var _ keel.Query[*fiscalperiod.FiscalPeriod] = (*FiscalPeriodsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FiscalPeriodsTable) Query() keel.Query[*fiscalperiod.FiscalPeriod] {
+	return &FiscalPeriodsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FiscalPeriodsQuery.Where.
+func (t *FiscalPeriodsTable) Where(ps ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FiscalPeriodsQuery.Pick.
+func (t *FiscalPeriodsTable) Pick(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FiscalPeriodsQuery.Load.
+func (t *FiscalPeriodsTable) Load(ls ...keel.Loader) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FiscalPeriodsQuery.Omit.
+func (t *FiscalPeriodsTable) Omit(cols ...keel.Column) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FiscalPeriodsQuery.Order.
+func (t *FiscalPeriodsTable) Order(os ...keel.Order) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FiscalPeriodsQuery.Limit.
+func (t *FiscalPeriodsTable) Limit(n int) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FiscalPeriodsQuery.Group.
+func (t *FiscalPeriodsTable) Group(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FiscalPeriodsQuery.GroupingSets.
+func (t *FiscalPeriodsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FiscalPeriodsQuery.Rollup.
+func (t *FiscalPeriodsTable) Rollup(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FiscalPeriodsQuery.Cube.
+func (t *FiscalPeriodsTable) Cube(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FiscalPeriodsQuery.AllTenants.
+func (t *FiscalPeriodsTable) AllTenants() keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FiscalPeriodsQuery.Join.
+func (t *FiscalPeriodsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FiscalPeriodsQuery.LeftJoin.
+func (t *FiscalPeriodsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FiscalPeriodsQuery.LeftJoinLateral.
+func (t *FiscalPeriodsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FiscalPeriodsQuery.JoinLateral.
+func (t *FiscalPeriodsTable) JoinLateral(sub keel.LateralSource) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FiscalPeriodsQuery.Lock.
+func (t *FiscalPeriodsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FiscalPeriodsQuery.DistinctOn.
+func (t *FiscalPeriodsTable) DistinctOn(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FiscalPeriodsQuery.Cache.
+func (t *FiscalPeriodsTable) Cache(opts ...keel.CacheOption) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FiscalPeriodsQuery.LoadStrategy.
+func (t *FiscalPeriodsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FiscalPeriodsQuery.With.
+func (t *FiscalPeriodsTable) With(ctes ...*keel.CTETable) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FiscalPeriodsQuery.Compute.
+func (t *FiscalPeriodsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FiscalPeriodsTable) Create(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FiscalPeriodsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FiscalPeriodsTable) Save(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FiscalPeriodsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FiscalPeriodsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fiscalperiod.FiscalPeriod) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FiscalPeriodsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FiscalPeriodsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FiscalPeriodsTable) Copy(ctx context.Context, db *keel.DB, rows []*fiscalperiod.FiscalPeriod) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FiscalPeriodsQuery) Where(ps ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FiscalPeriodsQuery) Pick(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FiscalPeriodsQuery) Omit(cols ...keel.Column) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FiscalPeriodsQuery) Load(ls ...keel.Loader) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FiscalPeriodsQuery) Order(os ...keel.Order) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FiscalPeriodsQuery) Distinct() keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FiscalPeriodsQuery) Group(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FiscalPeriodsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FiscalPeriodsQuery) Rollup(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FiscalPeriodsQuery) Cube(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FiscalPeriodsQuery) Window(name string, w keel.Window) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FiscalPeriodsQuery) Having(ps ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FiscalPeriodsQuery) Limit(n int) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FiscalPeriodsQuery) Offset(n int) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FiscalPeriodsQuery) DistinctOn(es ...keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FiscalPeriodsQuery) AllTenants() keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FiscalPeriodsQuery) CustomPlan() keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FiscalPeriodsQuery) Timeout(d time.Duration) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FiscalPeriodsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FiscalPeriodsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FiscalPeriodsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FiscalPeriodsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FiscalPeriodsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FiscalPeriodsQuery) Cache(opts ...keel.CacheOption) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FiscalPeriodsQuery) With(ctes ...*keel.CTETable) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FiscalPeriodsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FiscalPeriodsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*fiscalperiod.FiscalPeriod] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FiscalPeriodsQuery) Clone() keel.Query[*fiscalperiod.FiscalPeriod] {
+	return &FiscalPeriodsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FiscalPeriodsQuery) One(ctx context.Context, db *keel.DB) (*fiscalperiod.FiscalPeriod, error) {
+	return keel.One[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FiscalPeriodsQuery) First(ctx context.Context, db *keel.DB) (*fiscalperiod.FiscalPeriod, error) {
+	return keel.First[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FiscalPeriodsQuery) List(ctx context.Context, db *keel.DB) ([]*fiscalperiod.FiscalPeriod, error) {
+	return keel.List[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FiscalPeriodsQuery) All(ctx context.Context, db *keel.DB) ([]*fiscalperiod.FiscalPeriod, error) {
+	return keel.All[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FiscalPeriodsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fiscalperiod.FiscalPeriod, error) {
+	return keel.UpdateReturning[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FiscalPeriodsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fiscalperiod.FiscalPeriod], error) {
+	return keel.PageOf[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FiscalPeriodsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fiscalperiod.FiscalPeriod) error) error {
+	return keel.Each[*fiscalperiod.FiscalPeriod](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFiscalPeriod() unsafe.Pointer { return unsafe.Pointer(new(fiscalperiod.FiscalPeriod)) }

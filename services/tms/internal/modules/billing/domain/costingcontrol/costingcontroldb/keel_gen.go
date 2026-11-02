@@ -4,6 +4,7 @@ package costingcontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -70,7 +71,7 @@ var costCategoriesRef = keel.Ref{Table: &costCategoriesTable}
 
 // CostCategoriesTable is the table of costingcontrol.CostCategory.
 type CostCategoriesTable struct {
-	keel.Handle[*costingcontrol.CostCategory]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -90,7 +91,7 @@ type CostCategoriesTable struct {
 
 // CostCategories references the cost_categories table.
 var CostCategories = &CostCategoriesTable{
-	Handle:               keel.Handle[*costingcontrol.CostCategory]{Ref: &costCategoriesRef},
+	TableBase:            keel.TableBase{Ref: &costCategoriesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoriesRef, Index: 2}}},
@@ -108,10 +109,10 @@ var CostCategories = &CostCategoriesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &costCategoriesRef, Index: 14}},
 }
 
-// BuildCostCategories builds the handle of cost_categories for ref. Generated relation and alias methods call it.
+// BuildCostCategories builds the table of cost_categories for ref. Generated relation and alias methods call it.
 func BuildCostCategories(r *keel.Ref) *CostCategoriesTable {
 	return &CostCategoriesTable{
-		Handle:               keel.Handle[*costingcontrol.CostCategory]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -146,6 +147,365 @@ func (t *CostCategoriesTable) GLAccounts() *CostCategoryGLAccountsTable {
 // Get returns the cost_categories row with the given key, or keel.ErrNotFound.
 func (t *CostCategoriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*costingcontrol.CostCategory, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CostCategoriesQuery is a query over costingcontrol.CostCategory.
+type CostCategoriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*costingcontrol.CostCategory] = (*CostCategoriesTable)(nil)
+
+var _ keel.Query[*costingcontrol.CostCategory] = (*CostCategoriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CostCategoriesTable) Query() keel.Query[*costingcontrol.CostCategory] {
+	return &CostCategoriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CostCategoriesQuery.Where.
+func (t *CostCategoriesTable) Where(ps ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CostCategoriesQuery.Pick.
+func (t *CostCategoriesTable) Pick(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CostCategoriesQuery.Load.
+func (t *CostCategoriesTable) Load(ls ...keel.Loader) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CostCategoriesQuery.Omit.
+func (t *CostCategoriesTable) Omit(cols ...keel.Column) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CostCategoriesQuery.Order.
+func (t *CostCategoriesTable) Order(os ...keel.Order) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CostCategoriesQuery.Limit.
+func (t *CostCategoriesTable) Limit(n int) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CostCategoriesQuery.Group.
+func (t *CostCategoriesTable) Group(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CostCategoriesQuery.GroupingSets.
+func (t *CostCategoriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CostCategoriesQuery.Rollup.
+func (t *CostCategoriesTable) Rollup(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CostCategoriesQuery.Cube.
+func (t *CostCategoriesTable) Cube(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CostCategoriesQuery.AllTenants.
+func (t *CostCategoriesTable) AllTenants() keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CostCategoriesQuery.Join.
+func (t *CostCategoriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CostCategoriesQuery.LeftJoin.
+func (t *CostCategoriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CostCategoriesQuery.LeftJoinLateral.
+func (t *CostCategoriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CostCategoriesQuery.JoinLateral.
+func (t *CostCategoriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CostCategoriesQuery.Lock.
+func (t *CostCategoriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CostCategoriesQuery.DistinctOn.
+func (t *CostCategoriesTable) DistinctOn(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CostCategoriesQuery.Cache.
+func (t *CostCategoriesTable) Cache(opts ...keel.CacheOption) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CostCategoriesQuery.LoadStrategy.
+func (t *CostCategoriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CostCategoriesQuery.With.
+func (t *CostCategoriesTable) With(ctes ...*keel.CTETable) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CostCategoriesQuery.Compute.
+func (t *CostCategoriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CostCategoriesTable) Create(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CostCategoriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CostCategoriesTable) Save(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CostCategoriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CostCategoriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategory) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CostCategoriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CostCategoriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CostCategoriesTable) Copy(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategory) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CostCategoriesQuery) Where(ps ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CostCategoriesQuery) Pick(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CostCategoriesQuery) Omit(cols ...keel.Column) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CostCategoriesQuery) Load(ls ...keel.Loader) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CostCategoriesQuery) Order(os ...keel.Order) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CostCategoriesQuery) Distinct() keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CostCategoriesQuery) Group(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CostCategoriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CostCategoriesQuery) Rollup(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CostCategoriesQuery) Cube(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CostCategoriesQuery) Window(name string, w keel.Window) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CostCategoriesQuery) Having(ps ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CostCategoriesQuery) Limit(n int) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CostCategoriesQuery) Offset(n int) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CostCategoriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CostCategoriesQuery) AllTenants() keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CostCategoriesQuery) CustomPlan() keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CostCategoriesQuery) Timeout(d time.Duration) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CostCategoriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CostCategoriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CostCategoriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CostCategoriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CostCategoriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CostCategoriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CostCategoriesQuery) With(ctes ...*keel.CTETable) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CostCategoriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CostCategoriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*costingcontrol.CostCategory] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CostCategoriesQuery) Clone() keel.Query[*costingcontrol.CostCategory] {
+	return &CostCategoriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CostCategoriesQuery) One(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategory, error) {
+	return keel.One[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CostCategoriesQuery) First(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategory, error) {
+	return keel.First[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CostCategoriesQuery) List(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategory, error) {
+	return keel.List[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CostCategoriesQuery) All(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategory, error) {
+	return keel.All[*costingcontrol.CostCategory](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CostCategoriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*costingcontrol.CostCategory, error) {
+	return keel.UpdateReturning[*costingcontrol.CostCategory](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CostCategoriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*costingcontrol.CostCategory], error) {
+	return keel.PageOf[*costingcontrol.CostCategory](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CostCategoriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*costingcontrol.CostCategory) error) error {
+	return keel.Each[*costingcontrol.CostCategory](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCostCategory() unsafe.Pointer { return unsafe.Pointer(new(costingcontrol.CostCategory)) }
@@ -282,7 +642,7 @@ var costCategoryGLAccountsRef = keel.Ref{Table: &costCategoryGLAccountsTable}
 
 // CostCategoryGLAccountsTable is the table of costingcontrol.CostCategoryGLAccount.
 type CostCategoryGLAccountsTable struct {
-	keel.Handle[*costingcontrol.CostCategoryGLAccount]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -293,7 +653,7 @@ type CostCategoryGLAccountsTable struct {
 
 // CostCategoryGLAccounts references the cost_category_gl_accounts table.
 var CostCategoryGLAccounts = &CostCategoryGLAccountsTable{
-	Handle:         keel.Handle[*costingcontrol.CostCategoryGLAccount]{Ref: &costCategoryGLAccountsRef},
+	TableBase:      keel.TableBase{Ref: &costCategoryGLAccountsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 2}}},
@@ -302,10 +662,10 @@ var CostCategoryGLAccounts = &CostCategoryGLAccountsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &costCategoryGLAccountsRef, Index: 5}},
 }
 
-// BuildCostCategoryGLAccounts builds the handle of cost_category_gl_accounts for ref. Generated relation and alias methods call it.
+// BuildCostCategoryGLAccounts builds the table of cost_category_gl_accounts for ref. Generated relation and alias methods call it.
 func BuildCostCategoryGLAccounts(r *keel.Ref) *CostCategoryGLAccountsTable {
 	return &CostCategoryGLAccountsTable{
-		Handle:         keel.Handle[*costingcontrol.CostCategoryGLAccount]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -331,6 +691,365 @@ func (t *CostCategoryGLAccountsTable) GLAccount() *glaccountdb.GLAccountsTable {
 // Get returns the cost_category_gl_accounts row with the given key, or keel.ErrNotFound.
 func (t *CostCategoryGLAccountsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*costingcontrol.CostCategoryGLAccount, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CostCategoryGLAccountsQuery is a query over costingcontrol.CostCategoryGLAccount.
+type CostCategoryGLAccountsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*costingcontrol.CostCategoryGLAccount] = (*CostCategoryGLAccountsTable)(nil)
+
+var _ keel.Query[*costingcontrol.CostCategoryGLAccount] = (*CostCategoryGLAccountsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CostCategoryGLAccountsTable) Query() keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return &CostCategoryGLAccountsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CostCategoryGLAccountsQuery.Where.
+func (t *CostCategoryGLAccountsTable) Where(ps ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CostCategoryGLAccountsQuery.Pick.
+func (t *CostCategoryGLAccountsTable) Pick(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CostCategoryGLAccountsQuery.Load.
+func (t *CostCategoryGLAccountsTable) Load(ls ...keel.Loader) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CostCategoryGLAccountsQuery.Omit.
+func (t *CostCategoryGLAccountsTable) Omit(cols ...keel.Column) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CostCategoryGLAccountsQuery.Order.
+func (t *CostCategoryGLAccountsTable) Order(os ...keel.Order) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CostCategoryGLAccountsQuery.Limit.
+func (t *CostCategoryGLAccountsTable) Limit(n int) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CostCategoryGLAccountsQuery.Group.
+func (t *CostCategoryGLAccountsTable) Group(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CostCategoryGLAccountsQuery.GroupingSets.
+func (t *CostCategoryGLAccountsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CostCategoryGLAccountsQuery.Rollup.
+func (t *CostCategoryGLAccountsTable) Rollup(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CostCategoryGLAccountsQuery.Cube.
+func (t *CostCategoryGLAccountsTable) Cube(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CostCategoryGLAccountsQuery.AllTenants.
+func (t *CostCategoryGLAccountsTable) AllTenants() keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CostCategoryGLAccountsQuery.Join.
+func (t *CostCategoryGLAccountsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CostCategoryGLAccountsQuery.LeftJoin.
+func (t *CostCategoryGLAccountsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CostCategoryGLAccountsQuery.LeftJoinLateral.
+func (t *CostCategoryGLAccountsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CostCategoryGLAccountsQuery.JoinLateral.
+func (t *CostCategoryGLAccountsTable) JoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CostCategoryGLAccountsQuery.Lock.
+func (t *CostCategoryGLAccountsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CostCategoryGLAccountsQuery.DistinctOn.
+func (t *CostCategoryGLAccountsTable) DistinctOn(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CostCategoryGLAccountsQuery.Cache.
+func (t *CostCategoryGLAccountsTable) Cache(opts ...keel.CacheOption) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CostCategoryGLAccountsQuery.LoadStrategy.
+func (t *CostCategoryGLAccountsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CostCategoryGLAccountsQuery.With.
+func (t *CostCategoryGLAccountsTable) With(ctes ...*keel.CTETable) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CostCategoryGLAccountsQuery.Compute.
+func (t *CostCategoryGLAccountsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CostCategoryGLAccountsTable) Create(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CostCategoryGLAccountsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CostCategoryGLAccountsTable) Save(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CostCategoryGLAccountsTable) SaveExcept(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CostCategoryGLAccountsTable) DeleteRow(ctx context.Context, db *keel.DB, row *costingcontrol.CostCategoryGLAccount) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CostCategoryGLAccountsTable) Upsert(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CostCategoryGLAccountsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CostCategoryGLAccountsTable) Copy(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostCategoryGLAccount) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CostCategoryGLAccountsQuery) Where(ps ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CostCategoryGLAccountsQuery) Pick(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CostCategoryGLAccountsQuery) Omit(cols ...keel.Column) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CostCategoryGLAccountsQuery) Load(ls ...keel.Loader) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CostCategoryGLAccountsQuery) Order(os ...keel.Order) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CostCategoryGLAccountsQuery) Distinct() keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CostCategoryGLAccountsQuery) Group(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CostCategoryGLAccountsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CostCategoryGLAccountsQuery) Rollup(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CostCategoryGLAccountsQuery) Cube(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CostCategoryGLAccountsQuery) Window(name string, w keel.Window) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CostCategoryGLAccountsQuery) Having(ps ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CostCategoryGLAccountsQuery) Limit(n int) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CostCategoryGLAccountsQuery) Offset(n int) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CostCategoryGLAccountsQuery) DistinctOn(es ...keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CostCategoryGLAccountsQuery) AllTenants() keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CostCategoryGLAccountsQuery) CustomPlan() keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CostCategoryGLAccountsQuery) Timeout(d time.Duration) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CostCategoryGLAccountsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CostCategoryGLAccountsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CostCategoryGLAccountsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CostCategoryGLAccountsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CostCategoryGLAccountsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CostCategoryGLAccountsQuery) Cache(opts ...keel.CacheOption) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CostCategoryGLAccountsQuery) With(ctes ...*keel.CTETable) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CostCategoryGLAccountsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CostCategoryGLAccountsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CostCategoryGLAccountsQuery) Clone() keel.Query[*costingcontrol.CostCategoryGLAccount] {
+	return &CostCategoryGLAccountsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CostCategoryGLAccountsQuery) One(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategoryGLAccount, error) {
+	return keel.One[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CostCategoryGLAccountsQuery) First(ctx context.Context, db *keel.DB) (*costingcontrol.CostCategoryGLAccount, error) {
+	return keel.First[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CostCategoryGLAccountsQuery) List(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategoryGLAccount, error) {
+	return keel.List[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CostCategoryGLAccountsQuery) All(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostCategoryGLAccount, error) {
+	return keel.All[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CostCategoryGLAccountsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*costingcontrol.CostCategoryGLAccount, error) {
+	return keel.UpdateReturning[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CostCategoryGLAccountsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*costingcontrol.CostCategoryGLAccount], error) {
+	return keel.PageOf[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CostCategoryGLAccountsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*costingcontrol.CostCategoryGLAccount) error) error {
+	return keel.Each[*costingcontrol.CostCategoryGLAccount](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCostCategoryGLAccount() unsafe.Pointer {
@@ -439,7 +1158,7 @@ var costingControlsRef = keel.Ref{Table: &costingControlsTable}
 
 // CostingControlsTable is the table of costingcontrol.CostingControl.
 type CostingControlsTable struct {
-	keel.Handle[*costingcontrol.CostingControl]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -458,7 +1177,7 @@ type CostingControlsTable struct {
 
 // CostingControls references the costing_controls table.
 var CostingControls = &CostingControlsTable{
-	Handle:               keel.Handle[*costingcontrol.CostingControl]{Ref: &costingControlsRef},
+	TableBase:            keel.TableBase{Ref: &costingControlsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costingControlsRef, Index: 2}}},
@@ -475,10 +1194,10 @@ var CostingControls = &CostingControlsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &costingControlsRef, Index: 13}},
 }
 
-// BuildCostingControls builds the handle of costing_controls for ref. Generated relation and alias methods call it.
+// BuildCostingControls builds the table of costing_controls for ref. Generated relation and alias methods call it.
 func BuildCostingControls(r *keel.Ref) *CostingControlsTable {
 	return &CostingControlsTable{
-		Handle:               keel.Handle[*costingcontrol.CostingControl]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -517,6 +1236,365 @@ func (t *CostingControlsTable) Categories() *CostCategoriesTable {
 // Get returns the costing_controls row with the given key, or keel.ErrNotFound.
 func (t *CostingControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*costingcontrol.CostingControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CostingControlsQuery is a query over costingcontrol.CostingControl.
+type CostingControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*costingcontrol.CostingControl] = (*CostingControlsTable)(nil)
+
+var _ keel.Query[*costingcontrol.CostingControl] = (*CostingControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CostingControlsTable) Query() keel.Query[*costingcontrol.CostingControl] {
+	return &CostingControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CostingControlsQuery.Where.
+func (t *CostingControlsTable) Where(ps ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CostingControlsQuery.Pick.
+func (t *CostingControlsTable) Pick(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CostingControlsQuery.Load.
+func (t *CostingControlsTable) Load(ls ...keel.Loader) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CostingControlsQuery.Omit.
+func (t *CostingControlsTable) Omit(cols ...keel.Column) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CostingControlsQuery.Order.
+func (t *CostingControlsTable) Order(os ...keel.Order) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CostingControlsQuery.Limit.
+func (t *CostingControlsTable) Limit(n int) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CostingControlsQuery.Group.
+func (t *CostingControlsTable) Group(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CostingControlsQuery.GroupingSets.
+func (t *CostingControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CostingControlsQuery.Rollup.
+func (t *CostingControlsTable) Rollup(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CostingControlsQuery.Cube.
+func (t *CostingControlsTable) Cube(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CostingControlsQuery.AllTenants.
+func (t *CostingControlsTable) AllTenants() keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CostingControlsQuery.Join.
+func (t *CostingControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CostingControlsQuery.LeftJoin.
+func (t *CostingControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CostingControlsQuery.LeftJoinLateral.
+func (t *CostingControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CostingControlsQuery.JoinLateral.
+func (t *CostingControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CostingControlsQuery.Lock.
+func (t *CostingControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CostingControlsQuery.DistinctOn.
+func (t *CostingControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CostingControlsQuery.Cache.
+func (t *CostingControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CostingControlsQuery.LoadStrategy.
+func (t *CostingControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CostingControlsQuery.With.
+func (t *CostingControlsTable) With(ctes ...*keel.CTETable) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CostingControlsQuery.Compute.
+func (t *CostingControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CostingControlsTable) Create(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CostingControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CostingControlsTable) Save(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CostingControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CostingControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *costingcontrol.CostingControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CostingControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CostingControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CostingControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*costingcontrol.CostingControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CostingControlsQuery) Where(ps ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CostingControlsQuery) Pick(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CostingControlsQuery) Omit(cols ...keel.Column) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CostingControlsQuery) Load(ls ...keel.Loader) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CostingControlsQuery) Order(os ...keel.Order) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CostingControlsQuery) Distinct() keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CostingControlsQuery) Group(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CostingControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CostingControlsQuery) Rollup(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CostingControlsQuery) Cube(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CostingControlsQuery) Window(name string, w keel.Window) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CostingControlsQuery) Having(ps ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CostingControlsQuery) Limit(n int) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CostingControlsQuery) Offset(n int) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CostingControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CostingControlsQuery) AllTenants() keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CostingControlsQuery) CustomPlan() keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CostingControlsQuery) Timeout(d time.Duration) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CostingControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CostingControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CostingControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CostingControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CostingControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CostingControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CostingControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CostingControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CostingControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*costingcontrol.CostingControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CostingControlsQuery) Clone() keel.Query[*costingcontrol.CostingControl] {
+	return &CostingControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CostingControlsQuery) One(ctx context.Context, db *keel.DB) (*costingcontrol.CostingControl, error) {
+	return keel.One[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CostingControlsQuery) First(ctx context.Context, db *keel.DB) (*costingcontrol.CostingControl, error) {
+	return keel.First[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CostingControlsQuery) List(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostingControl, error) {
+	return keel.List[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CostingControlsQuery) All(ctx context.Context, db *keel.DB) ([]*costingcontrol.CostingControl, error) {
+	return keel.All[*costingcontrol.CostingControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CostingControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*costingcontrol.CostingControl, error) {
+	return keel.UpdateReturning[*costingcontrol.CostingControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CostingControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*costingcontrol.CostingControl], error) {
+	return keel.PageOf[*costingcontrol.CostingControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CostingControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*costingcontrol.CostingControl) error) error {
+	return keel.Each[*costingcontrol.CostingControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCostingControl() unsafe.Pointer { return unsafe.Pointer(new(costingcontrol.CostingControl)) }

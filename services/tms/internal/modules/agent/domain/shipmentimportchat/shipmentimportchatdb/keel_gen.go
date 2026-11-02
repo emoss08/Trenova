@@ -4,6 +4,7 @@ package shipmentimportchatdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -60,7 +61,7 @@ var conversationsRef = keel.Ref{Table: &conversationsTable}
 
 // ConversationsTable is the table of shipmentimportchat.Conversation.
 type ConversationsTable struct {
-	keel.Handle[*shipmentimportchat.Conversation]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
@@ -78,7 +79,7 @@ type ConversationsTable struct {
 
 // Conversations references the shipment_import_chat_conversations table.
 var Conversations = &ConversationsTable{
-	Handle:                 keel.Handle[*shipmentimportchat.Conversation]{Ref: &conversationsRef},
+	TableBase:              keel.TableBase{Ref: &conversationsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 0}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 1}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &conversationsRef, Index: 2}}},
@@ -94,10 +95,10 @@ var Conversations = &ConversationsTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &conversationsRef, Index: 12}},
 }
 
-// BuildConversations builds the handle of shipment_import_chat_conversations for ref. Generated relation and alias methods call it.
+// BuildConversations builds the table of shipment_import_chat_conversations for ref. Generated relation and alias methods call it.
 func BuildConversations(r *keel.Ref) *ConversationsTable {
 	return &ConversationsTable{
-		Handle:                 keel.Handle[*shipmentimportchat.Conversation]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -125,6 +126,365 @@ func (t *ConversationsTable) As(alias string) *ConversationsTable {
 // Get returns the shipment_import_chat_conversations row with the given key, or keel.ErrNotFound.
 func (t *ConversationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipmentimportchat.Conversation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ConversationsQuery is a query over shipmentimportchat.Conversation.
+type ConversationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*shipmentimportchat.Conversation] = (*ConversationsTable)(nil)
+
+var _ keel.Query[*shipmentimportchat.Conversation] = (*ConversationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ConversationsTable) Query() keel.Query[*shipmentimportchat.Conversation] {
+	return &ConversationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ConversationsQuery.Where.
+func (t *ConversationsTable) Where(ps ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ConversationsQuery.Pick.
+func (t *ConversationsTable) Pick(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ConversationsQuery.Load.
+func (t *ConversationsTable) Load(ls ...keel.Loader) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ConversationsQuery.Omit.
+func (t *ConversationsTable) Omit(cols ...keel.Column) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ConversationsQuery.Order.
+func (t *ConversationsTable) Order(os ...keel.Order) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ConversationsQuery.Limit.
+func (t *ConversationsTable) Limit(n int) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ConversationsQuery.Group.
+func (t *ConversationsTable) Group(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ConversationsQuery.GroupingSets.
+func (t *ConversationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ConversationsQuery.Rollup.
+func (t *ConversationsTable) Rollup(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ConversationsQuery.Cube.
+func (t *ConversationsTable) Cube(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ConversationsQuery.AllTenants.
+func (t *ConversationsTable) AllTenants() keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ConversationsQuery.Join.
+func (t *ConversationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ConversationsQuery.LeftJoin.
+func (t *ConversationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ConversationsQuery.LeftJoinLateral.
+func (t *ConversationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ConversationsQuery.JoinLateral.
+func (t *ConversationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ConversationsQuery.Lock.
+func (t *ConversationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ConversationsQuery.DistinctOn.
+func (t *ConversationsTable) DistinctOn(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ConversationsQuery.Cache.
+func (t *ConversationsTable) Cache(opts ...keel.CacheOption) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ConversationsQuery.LoadStrategy.
+func (t *ConversationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ConversationsQuery.With.
+func (t *ConversationsTable) With(ctes ...*keel.CTETable) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ConversationsQuery.Compute.
+func (t *ConversationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ConversationsTable) Create(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ConversationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ConversationsTable) Save(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ConversationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ConversationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentimportchat.Conversation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ConversationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ConversationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ConversationsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Conversation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ConversationsQuery) Where(ps ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ConversationsQuery) Pick(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ConversationsQuery) Omit(cols ...keel.Column) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ConversationsQuery) Load(ls ...keel.Loader) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ConversationsQuery) Order(os ...keel.Order) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ConversationsQuery) Distinct() keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ConversationsQuery) Group(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ConversationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ConversationsQuery) Rollup(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ConversationsQuery) Cube(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ConversationsQuery) Window(name string, w keel.Window) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ConversationsQuery) Having(ps ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ConversationsQuery) Limit(n int) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ConversationsQuery) Offset(n int) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ConversationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ConversationsQuery) AllTenants() keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ConversationsQuery) CustomPlan() keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ConversationsQuery) Timeout(d time.Duration) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ConversationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ConversationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ConversationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ConversationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ConversationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ConversationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ConversationsQuery) With(ctes ...*keel.CTETable) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ConversationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ConversationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentimportchat.Conversation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ConversationsQuery) Clone() keel.Query[*shipmentimportchat.Conversation] {
+	return &ConversationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ConversationsQuery) One(ctx context.Context, db *keel.DB) (*shipmentimportchat.Conversation, error) {
+	return keel.One[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ConversationsQuery) First(ctx context.Context, db *keel.DB) (*shipmentimportchat.Conversation, error) {
+	return keel.First[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ConversationsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Conversation, error) {
+	return keel.List[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ConversationsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Conversation, error) {
+	return keel.All[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ConversationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentimportchat.Conversation, error) {
+	return keel.UpdateReturning[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ConversationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentimportchat.Conversation], error) {
+	return keel.PageOf[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ConversationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentimportchat.Conversation) error) error {
+	return keel.Each[*shipmentimportchat.Conversation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newConversation() unsafe.Pointer { return unsafe.Pointer(new(shipmentimportchat.Conversation)) }
@@ -268,7 +628,7 @@ var turnsRef = keel.Ref{Table: &turnsTable}
 
 // TurnsTable is the table of shipmentimportchat.Turn.
 type TurnsTable struct {
-	keel.Handle[*shipmentimportchat.Turn]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	ConversationID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -292,7 +652,7 @@ type TurnsTable struct {
 
 // Turns references the shipment_import_chat_turns table.
 var Turns = &TurnsTable{
-	Handle:                 keel.Handle[*shipmentimportchat.Turn]{Ref: &turnsRef},
+	TableBase:              keel.TableBase{Ref: &turnsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 0}}},
 	ConversationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &turnsRef, Index: 2}}},
@@ -314,10 +674,10 @@ var Turns = &TurnsTable{
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &turnsRef, Index: 18}},
 }
 
-// BuildTurns builds the handle of shipment_import_chat_turns for ref. Generated relation and alias methods call it.
+// BuildTurns builds the table of shipment_import_chat_turns for ref. Generated relation and alias methods call it.
 func BuildTurns(r *keel.Ref) *TurnsTable {
 	return &TurnsTable{
-		Handle:                 keel.Handle[*shipmentimportchat.Turn]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		ConversationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -349,6 +709,365 @@ func (t *TurnsTable) As(alias string) *TurnsTable { return keel.Alias(t.Ref, ali
 // Get returns the shipment_import_chat_turns row with the given key, or keel.ErrNotFound.
 func (t *TurnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*shipmentimportchat.Turn, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TurnsQuery is a query over shipmentimportchat.Turn.
+type TurnsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*shipmentimportchat.Turn] = (*TurnsTable)(nil)
+
+var _ keel.Query[*shipmentimportchat.Turn] = (*TurnsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TurnsTable) Query() keel.Query[*shipmentimportchat.Turn] {
+	return &TurnsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TurnsQuery.Where.
+func (t *TurnsTable) Where(ps ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TurnsQuery.Pick.
+func (t *TurnsTable) Pick(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TurnsQuery.Load.
+func (t *TurnsTable) Load(ls ...keel.Loader) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TurnsQuery.Omit.
+func (t *TurnsTable) Omit(cols ...keel.Column) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TurnsQuery.Order.
+func (t *TurnsTable) Order(os ...keel.Order) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TurnsQuery.Limit.
+func (t *TurnsTable) Limit(n int) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TurnsQuery.Group.
+func (t *TurnsTable) Group(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TurnsQuery.GroupingSets.
+func (t *TurnsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TurnsQuery.Rollup.
+func (t *TurnsTable) Rollup(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TurnsQuery.Cube.
+func (t *TurnsTable) Cube(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TurnsQuery.AllTenants.
+func (t *TurnsTable) AllTenants() keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TurnsQuery.Join.
+func (t *TurnsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TurnsQuery.LeftJoin.
+func (t *TurnsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TurnsQuery.LeftJoinLateral.
+func (t *TurnsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TurnsQuery.JoinLateral.
+func (t *TurnsTable) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TurnsQuery.Lock.
+func (t *TurnsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TurnsQuery.DistinctOn.
+func (t *TurnsTable) DistinctOn(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TurnsQuery.Cache.
+func (t *TurnsTable) Cache(opts ...keel.CacheOption) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TurnsQuery.LoadStrategy.
+func (t *TurnsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TurnsQuery.With.
+func (t *TurnsTable) With(ctes ...*keel.CTETable) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TurnsQuery.Compute.
+func (t *TurnsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TurnsTable) Create(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TurnsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TurnsTable) Save(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TurnsTable) SaveExcept(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TurnsTable) DeleteRow(ctx context.Context, db *keel.DB, row *shipmentimportchat.Turn) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TurnsTable) Upsert(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TurnsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TurnsTable) Copy(ctx context.Context, db *keel.DB, rows []*shipmentimportchat.Turn) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TurnsQuery) Where(ps ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TurnsQuery) Pick(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TurnsQuery) Omit(cols ...keel.Column) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TurnsQuery) Load(ls ...keel.Loader) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TurnsQuery) Order(os ...keel.Order) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TurnsQuery) Distinct() keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TurnsQuery) Group(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TurnsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TurnsQuery) Rollup(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TurnsQuery) Cube(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TurnsQuery) Window(name string, w keel.Window) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TurnsQuery) Having(ps ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TurnsQuery) Limit(n int) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TurnsQuery) Offset(n int) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TurnsQuery) DistinctOn(es ...keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TurnsQuery) AllTenants() keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TurnsQuery) CustomPlan() keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TurnsQuery) Timeout(d time.Duration) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TurnsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TurnsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TurnsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TurnsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TurnsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TurnsQuery) Cache(opts ...keel.CacheOption) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TurnsQuery) With(ctes ...*keel.CTETable) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TurnsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TurnsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*shipmentimportchat.Turn] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TurnsQuery) Clone() keel.Query[*shipmentimportchat.Turn] {
+	return &TurnsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TurnsQuery) One(ctx context.Context, db *keel.DB) (*shipmentimportchat.Turn, error) {
+	return keel.One[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TurnsQuery) First(ctx context.Context, db *keel.DB) (*shipmentimportchat.Turn, error) {
+	return keel.First[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TurnsQuery) List(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Turn, error) {
+	return keel.List[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TurnsQuery) All(ctx context.Context, db *keel.DB) ([]*shipmentimportchat.Turn, error) {
+	return keel.All[*shipmentimportchat.Turn](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TurnsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*shipmentimportchat.Turn, error) {
+	return keel.UpdateReturning[*shipmentimportchat.Turn](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TurnsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*shipmentimportchat.Turn], error) {
+	return keel.PageOf[*shipmentimportchat.Turn](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TurnsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*shipmentimportchat.Turn) error) error {
+	return keel.Each[*shipmentimportchat.Turn](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTurn() unsafe.Pointer { return unsafe.Pointer(new(shipmentimportchat.Turn)) }

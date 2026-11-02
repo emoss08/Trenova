@@ -333,7 +333,7 @@ func seedOutboundMessages(
 		if err := tenantfixtures.Backdate(
 			ctx,
 			db,
-			edimessagedb.EDIMessages.Handle,
+			edimessagedb.EDIMessages,
 			[]string{message.ID.String()},
 			[]int64{generated.Unix()},
 		); err != nil {

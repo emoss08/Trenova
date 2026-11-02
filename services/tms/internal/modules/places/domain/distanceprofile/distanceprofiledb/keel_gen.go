@@ -4,6 +4,7 @@ package distanceprofiledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -68,7 +69,7 @@ var distanceProfilesRef = keel.Ref{Table: &distanceProfilesTable}
 
 // DistanceProfilesTable is the table of distanceprofile.DistanceProfile.
 type DistanceProfilesTable struct {
-	keel.Handle[*distanceprofile.DistanceProfile]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -94,7 +95,7 @@ type DistanceProfilesTable struct {
 
 // DistanceProfiles references the distance_profiles table.
 var DistanceProfiles = &DistanceProfilesTable{
-	Handle:              keel.Handle[*distanceprofile.DistanceProfile]{Ref: &distanceProfilesRef},
+	TableBase:           keel.TableBase{Ref: &distanceProfilesRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &distanceProfilesRef, Index: 2}}},
@@ -118,10 +119,10 @@ var DistanceProfiles = &DistanceProfilesTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &distanceProfilesRef, Index: 20}},
 }
 
-// BuildDistanceProfiles builds the handle of distance_profiles for ref. Generated relation and alias methods call it.
+// BuildDistanceProfiles builds the table of distance_profiles for ref. Generated relation and alias methods call it.
 func BuildDistanceProfiles(r *keel.Ref) *DistanceProfilesTable {
 	return &DistanceProfilesTable{
-		Handle:              keel.Handle[*distanceprofile.DistanceProfile]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -157,6 +158,365 @@ func (t *DistanceProfilesTable) As(alias string) *DistanceProfilesTable {
 // Get returns the distance_profiles row with the given key, or keel.ErrNotFound.
 func (t *DistanceProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*distanceprofile.DistanceProfile, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// DistanceProfilesQuery is a query over distanceprofile.DistanceProfile.
+type DistanceProfilesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*distanceprofile.DistanceProfile] = (*DistanceProfilesTable)(nil)
+
+var _ keel.Query[*distanceprofile.DistanceProfile] = (*DistanceProfilesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *DistanceProfilesTable) Query() keel.Query[*distanceprofile.DistanceProfile] {
+	return &DistanceProfilesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see DistanceProfilesQuery.Where.
+func (t *DistanceProfilesTable) Where(ps ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see DistanceProfilesQuery.Pick.
+func (t *DistanceProfilesTable) Pick(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see DistanceProfilesQuery.Load.
+func (t *DistanceProfilesTable) Load(ls ...keel.Loader) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see DistanceProfilesQuery.Omit.
+func (t *DistanceProfilesTable) Omit(cols ...keel.Column) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see DistanceProfilesQuery.Order.
+func (t *DistanceProfilesTable) Order(os ...keel.Order) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see DistanceProfilesQuery.Limit.
+func (t *DistanceProfilesTable) Limit(n int) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see DistanceProfilesQuery.Group.
+func (t *DistanceProfilesTable) Group(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see DistanceProfilesQuery.GroupingSets.
+func (t *DistanceProfilesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see DistanceProfilesQuery.Rollup.
+func (t *DistanceProfilesTable) Rollup(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see DistanceProfilesQuery.Cube.
+func (t *DistanceProfilesTable) Cube(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see DistanceProfilesQuery.AllTenants.
+func (t *DistanceProfilesTable) AllTenants() keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see DistanceProfilesQuery.Join.
+func (t *DistanceProfilesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see DistanceProfilesQuery.LeftJoin.
+func (t *DistanceProfilesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see DistanceProfilesQuery.LeftJoinLateral.
+func (t *DistanceProfilesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see DistanceProfilesQuery.JoinLateral.
+func (t *DistanceProfilesTable) JoinLateral(sub keel.LateralSource) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see DistanceProfilesQuery.Lock.
+func (t *DistanceProfilesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see DistanceProfilesQuery.DistinctOn.
+func (t *DistanceProfilesTable) DistinctOn(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see DistanceProfilesQuery.Cache.
+func (t *DistanceProfilesTable) Cache(opts ...keel.CacheOption) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see DistanceProfilesQuery.LoadStrategy.
+func (t *DistanceProfilesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see DistanceProfilesQuery.With.
+func (t *DistanceProfilesTable) With(ctes ...*keel.CTETable) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see DistanceProfilesQuery.Compute.
+func (t *DistanceProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *DistanceProfilesTable) Create(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *DistanceProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *DistanceProfilesTable) Save(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *DistanceProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *DistanceProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *distanceprofile.DistanceProfile) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *DistanceProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *DistanceProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *DistanceProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*distanceprofile.DistanceProfile) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *DistanceProfilesQuery) Where(ps ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *DistanceProfilesQuery) Pick(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *DistanceProfilesQuery) Omit(cols ...keel.Column) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *DistanceProfilesQuery) Load(ls ...keel.Loader) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *DistanceProfilesQuery) Order(os ...keel.Order) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *DistanceProfilesQuery) Distinct() keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *DistanceProfilesQuery) Group(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *DistanceProfilesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *DistanceProfilesQuery) Rollup(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *DistanceProfilesQuery) Cube(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *DistanceProfilesQuery) Window(name string, w keel.Window) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *DistanceProfilesQuery) Having(ps ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *DistanceProfilesQuery) Limit(n int) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *DistanceProfilesQuery) Offset(n int) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *DistanceProfilesQuery) DistinctOn(es ...keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *DistanceProfilesQuery) AllTenants() keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *DistanceProfilesQuery) CustomPlan() keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *DistanceProfilesQuery) Timeout(d time.Duration) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *DistanceProfilesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *DistanceProfilesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *DistanceProfilesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *DistanceProfilesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *DistanceProfilesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *DistanceProfilesQuery) Cache(opts ...keel.CacheOption) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *DistanceProfilesQuery) With(ctes ...*keel.CTETable) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *DistanceProfilesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *DistanceProfilesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*distanceprofile.DistanceProfile] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *DistanceProfilesQuery) Clone() keel.Query[*distanceprofile.DistanceProfile] {
+	return &DistanceProfilesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *DistanceProfilesQuery) One(ctx context.Context, db *keel.DB) (*distanceprofile.DistanceProfile, error) {
+	return keel.One[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *DistanceProfilesQuery) First(ctx context.Context, db *keel.DB) (*distanceprofile.DistanceProfile, error) {
+	return keel.First[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *DistanceProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*distanceprofile.DistanceProfile, error) {
+	return keel.List[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *DistanceProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*distanceprofile.DistanceProfile, error) {
+	return keel.All[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *DistanceProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*distanceprofile.DistanceProfile, error) {
+	return keel.UpdateReturning[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *DistanceProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*distanceprofile.DistanceProfile], error) {
+	return keel.PageOf[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *DistanceProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*distanceprofile.DistanceProfile) error) error {
+	return keel.Each[*distanceprofile.DistanceProfile](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newDistanceProfile() unsafe.Pointer { return unsafe.Pointer(new(distanceprofile.DistanceProfile)) }

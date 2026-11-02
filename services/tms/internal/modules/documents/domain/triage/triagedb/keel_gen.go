@@ -4,6 +4,7 @@ package triagedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var activitiesRef = keel.Ref{Table: &activitiesTable}
 
 // ActivitiesTable is the table of triage.Activity.
 type ActivitiesTable struct {
-	keel.Handle[*triage.Activity]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -82,7 +83,7 @@ type ActivitiesTable struct {
 
 // Activities references the inbound_message_activities table.
 var Activities = &ActivitiesTable{
-	Handle:             keel.Handle[*triage.Activity]{Ref: &activitiesRef},
+	TableBase:          keel.TableBase{Ref: &activitiesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
@@ -99,10 +100,10 @@ var Activities = &ActivitiesTable{
 	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &activitiesRef, Index: 13}},
 }
 
-// BuildActivities builds the handle of inbound_message_activities for ref. Generated relation and alias methods call it.
+// BuildActivities builds the table of inbound_message_activities for ref. Generated relation and alias methods call it.
 func BuildActivities(r *keel.Ref) *ActivitiesTable {
 	return &ActivitiesTable{
-		Handle:             keel.Handle[*triage.Activity]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -131,6 +132,365 @@ func (t *ActivitiesTable) As(alias string) *ActivitiesTable {
 // Get returns the inbound_message_activities row with the given key, or keel.ErrNotFound.
 func (t *ActivitiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*triage.Activity, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ActivitiesQuery is a query over triage.Activity.
+type ActivitiesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.Activity] = (*ActivitiesTable)(nil)
+
+var _ keel.Query[*triage.Activity] = (*ActivitiesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ActivitiesTable) Query() keel.Query[*triage.Activity] {
+	return &ActivitiesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ActivitiesQuery.Where.
+func (t *ActivitiesTable) Where(ps ...keel.Pred) keel.Query[*triage.Activity] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ActivitiesQuery.Pick.
+func (t *ActivitiesTable) Pick(es ...keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ActivitiesQuery.Load.
+func (t *ActivitiesTable) Load(ls ...keel.Loader) keel.Query[*triage.Activity] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ActivitiesQuery.Omit.
+func (t *ActivitiesTable) Omit(cols ...keel.Column) keel.Query[*triage.Activity] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ActivitiesQuery.Order.
+func (t *ActivitiesTable) Order(os ...keel.Order) keel.Query[*triage.Activity] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ActivitiesQuery.Limit.
+func (t *ActivitiesTable) Limit(n int) keel.Query[*triage.Activity] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ActivitiesQuery.Group.
+func (t *ActivitiesTable) Group(es ...keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ActivitiesQuery.GroupingSets.
+func (t *ActivitiesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ActivitiesQuery.Rollup.
+func (t *ActivitiesTable) Rollup(es ...keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ActivitiesQuery.Cube.
+func (t *ActivitiesTable) Cube(es ...keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ActivitiesQuery.AllTenants.
+func (t *ActivitiesTable) AllTenants() keel.Query[*triage.Activity] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ActivitiesQuery.Join.
+func (t *ActivitiesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Activity] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ActivitiesQuery.LeftJoin.
+func (t *ActivitiesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Activity] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ActivitiesQuery.LeftJoinLateral.
+func (t *ActivitiesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Activity] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ActivitiesQuery.JoinLateral.
+func (t *ActivitiesTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Activity] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ActivitiesQuery.Lock.
+func (t *ActivitiesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Activity] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ActivitiesQuery.DistinctOn.
+func (t *ActivitiesTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ActivitiesQuery.Cache.
+func (t *ActivitiesTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.Activity] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ActivitiesQuery.LoadStrategy.
+func (t *ActivitiesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Activity] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ActivitiesQuery.With.
+func (t *ActivitiesTable) With(ctes ...*keel.CTETable) keel.Query[*triage.Activity] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ActivitiesQuery.Compute.
+func (t *ActivitiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Activity] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ActivitiesTable) Create(ctx context.Context, db *keel.DB, row *triage.Activity) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ActivitiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.Activity) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ActivitiesTable) Save(ctx context.Context, db *keel.DB, row *triage.Activity, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ActivitiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.Activity, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ActivitiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.Activity) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ActivitiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.Activity, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ActivitiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.Activity, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ActivitiesTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.Activity) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ActivitiesQuery) Where(ps ...keel.Pred) keel.Query[*triage.Activity] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ActivitiesQuery) Pick(es ...keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ActivitiesQuery) Omit(cols ...keel.Column) keel.Query[*triage.Activity] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ActivitiesQuery) Load(ls ...keel.Loader) keel.Query[*triage.Activity] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ActivitiesQuery) Order(os ...keel.Order) keel.Query[*triage.Activity] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ActivitiesQuery) Distinct() keel.Query[*triage.Activity] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ActivitiesQuery) Group(es ...keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ActivitiesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ActivitiesQuery) Rollup(es ...keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ActivitiesQuery) Cube(es ...keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ActivitiesQuery) Window(name string, w keel.Window) keel.Query[*triage.Activity] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ActivitiesQuery) Having(ps ...keel.Pred) keel.Query[*triage.Activity] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ActivitiesQuery) Limit(n int) keel.Query[*triage.Activity] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ActivitiesQuery) Offset(n int) keel.Query[*triage.Activity] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ActivitiesQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ActivitiesQuery) AllTenants() keel.Query[*triage.Activity] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ActivitiesQuery) CustomPlan() keel.Query[*triage.Activity] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ActivitiesQuery) Timeout(d time.Duration) keel.Query[*triage.Activity] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ActivitiesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Activity] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ActivitiesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Activity] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ActivitiesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Activity] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ActivitiesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Activity] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ActivitiesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Activity] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ActivitiesQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.Activity] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ActivitiesQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.Activity] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ActivitiesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Activity] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ActivitiesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Activity] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ActivitiesQuery) Clone() keel.Query[*triage.Activity] {
+	return &ActivitiesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ActivitiesQuery) One(ctx context.Context, db *keel.DB) (*triage.Activity, error) {
+	return keel.One[*triage.Activity](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ActivitiesQuery) First(ctx context.Context, db *keel.DB) (*triage.Activity, error) {
+	return keel.First[*triage.Activity](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ActivitiesQuery) List(ctx context.Context, db *keel.DB) ([]*triage.Activity, error) {
+	return keel.List[*triage.Activity](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ActivitiesQuery) All(ctx context.Context, db *keel.DB) ([]*triage.Activity, error) {
+	return keel.All[*triage.Activity](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ActivitiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.Activity, error) {
+	return keel.UpdateReturning[*triage.Activity](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ActivitiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.Activity], error) {
+	return keel.PageOf[*triage.Activity](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ActivitiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.Activity) error) error {
+	return keel.Each[*triage.Activity](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newActivity() unsafe.Pointer { return unsafe.Pointer(new(triage.Activity)) }
@@ -298,7 +658,7 @@ var repliesRef = keel.Ref{Table: &repliesTable}
 
 // RepliesTable is the table of triage.Reply.
 type RepliesTable struct {
-	keel.Handle[*triage.Reply]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -329,7 +689,7 @@ type RepliesTable struct {
 
 // Replies references the inbound_replies table.
 var Replies = &RepliesTable{
-	Handle:            keel.Handle[*triage.Reply]{Ref: &repliesRef},
+	TableBase:         keel.TableBase{Ref: &repliesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &repliesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &repliesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &repliesRef, Index: 2}}},
@@ -358,10 +718,10 @@ var Replies = &RepliesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &repliesRef, Index: 25}},
 }
 
-// BuildReplies builds the handle of inbound_replies for ref. Generated relation and alias methods call it.
+// BuildReplies builds the table of inbound_replies for ref. Generated relation and alias methods call it.
 func BuildReplies(r *keel.Ref) *RepliesTable {
 	return &RepliesTable{
-		Handle:            keel.Handle[*triage.Reply]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -400,6 +760,365 @@ func (t *RepliesTable) As(alias string) *RepliesTable { return keel.Alias(t.Ref,
 // Get returns the inbound_replies row with the given key, or keel.ErrNotFound.
 func (t *RepliesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*triage.Reply, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RepliesQuery is a query over triage.Reply.
+type RepliesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.Reply] = (*RepliesTable)(nil)
+
+var _ keel.Query[*triage.Reply] = (*RepliesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RepliesTable) Query() keel.Query[*triage.Reply] {
+	return &RepliesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RepliesQuery.Where.
+func (t *RepliesTable) Where(ps ...keel.Pred) keel.Query[*triage.Reply] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RepliesQuery.Pick.
+func (t *RepliesTable) Pick(es ...keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RepliesQuery.Load.
+func (t *RepliesTable) Load(ls ...keel.Loader) keel.Query[*triage.Reply] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RepliesQuery.Omit.
+func (t *RepliesTable) Omit(cols ...keel.Column) keel.Query[*triage.Reply] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RepliesQuery.Order.
+func (t *RepliesTable) Order(os ...keel.Order) keel.Query[*triage.Reply] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RepliesQuery.Limit.
+func (t *RepliesTable) Limit(n int) keel.Query[*triage.Reply] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RepliesQuery.Group.
+func (t *RepliesTable) Group(es ...keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RepliesQuery.GroupingSets.
+func (t *RepliesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RepliesQuery.Rollup.
+func (t *RepliesTable) Rollup(es ...keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RepliesQuery.Cube.
+func (t *RepliesTable) Cube(es ...keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RepliesQuery.AllTenants.
+func (t *RepliesTable) AllTenants() keel.Query[*triage.Reply] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RepliesQuery.Join.
+func (t *RepliesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Reply] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RepliesQuery.LeftJoin.
+func (t *RepliesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Reply] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RepliesQuery.LeftJoinLateral.
+func (t *RepliesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Reply] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RepliesQuery.JoinLateral.
+func (t *RepliesTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Reply] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RepliesQuery.Lock.
+func (t *RepliesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Reply] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RepliesQuery.DistinctOn.
+func (t *RepliesTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RepliesQuery.Cache.
+func (t *RepliesTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.Reply] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RepliesQuery.LoadStrategy.
+func (t *RepliesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Reply] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RepliesQuery.With.
+func (t *RepliesTable) With(ctes ...*keel.CTETable) keel.Query[*triage.Reply] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RepliesQuery.Compute.
+func (t *RepliesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Reply] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RepliesTable) Create(ctx context.Context, db *keel.DB, row *triage.Reply) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RepliesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.Reply) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RepliesTable) Save(ctx context.Context, db *keel.DB, row *triage.Reply, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RepliesTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.Reply, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RepliesTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.Reply) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RepliesTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.Reply, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RepliesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.Reply, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RepliesTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.Reply) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RepliesQuery) Where(ps ...keel.Pred) keel.Query[*triage.Reply] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RepliesQuery) Pick(es ...keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RepliesQuery) Omit(cols ...keel.Column) keel.Query[*triage.Reply] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RepliesQuery) Load(ls ...keel.Loader) keel.Query[*triage.Reply] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RepliesQuery) Order(os ...keel.Order) keel.Query[*triage.Reply] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RepliesQuery) Distinct() keel.Query[*triage.Reply] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RepliesQuery) Group(es ...keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RepliesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RepliesQuery) Rollup(es ...keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RepliesQuery) Cube(es ...keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RepliesQuery) Window(name string, w keel.Window) keel.Query[*triage.Reply] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RepliesQuery) Having(ps ...keel.Pred) keel.Query[*triage.Reply] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RepliesQuery) Limit(n int) keel.Query[*triage.Reply] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RepliesQuery) Offset(n int) keel.Query[*triage.Reply] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RepliesQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RepliesQuery) AllTenants() keel.Query[*triage.Reply] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RepliesQuery) CustomPlan() keel.Query[*triage.Reply] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RepliesQuery) Timeout(d time.Duration) keel.Query[*triage.Reply] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RepliesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Reply] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RepliesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Reply] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RepliesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Reply] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RepliesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Reply] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RepliesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Reply] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RepliesQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.Reply] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RepliesQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.Reply] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RepliesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Reply] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RepliesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Reply] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RepliesQuery) Clone() keel.Query[*triage.Reply] {
+	return &RepliesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RepliesQuery) One(ctx context.Context, db *keel.DB) (*triage.Reply, error) {
+	return keel.One[*triage.Reply](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RepliesQuery) First(ctx context.Context, db *keel.DB) (*triage.Reply, error) {
+	return keel.First[*triage.Reply](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RepliesQuery) List(ctx context.Context, db *keel.DB) ([]*triage.Reply, error) {
+	return keel.List[*triage.Reply](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RepliesQuery) All(ctx context.Context, db *keel.DB) ([]*triage.Reply, error) {
+	return keel.All[*triage.Reply](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RepliesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.Reply, error) {
+	return keel.UpdateReturning[*triage.Reply](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RepliesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.Reply], error) {
+	return keel.PageOf[*triage.Reply](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RepliesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.Reply) error) error {
+	return keel.Each[*triage.Reply](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReply() unsafe.Pointer { return unsafe.Pointer(new(triage.Reply)) }
@@ -610,7 +1329,7 @@ var replyTemplatesRef = keel.Ref{Table: &replyTemplatesTable}
 
 // ReplyTemplatesTable is the table of triage.ReplyTemplate.
 type ReplyTemplatesTable struct {
-	keel.Handle[*triage.ReplyTemplate]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -624,7 +1343,7 @@ type ReplyTemplatesTable struct {
 
 // ReplyTemplates references the triage_reply_templates table.
 var ReplyTemplates = &ReplyTemplatesTable{
-	Handle:         keel.Handle[*triage.ReplyTemplate]{Ref: &replyTemplatesRef},
+	TableBase:      keel.TableBase{Ref: &replyTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &replyTemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &replyTemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &replyTemplatesRef, Index: 2}}},
@@ -636,10 +1355,10 @@ var ReplyTemplates = &ReplyTemplatesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &replyTemplatesRef, Index: 8}},
 }
 
-// BuildReplyTemplates builds the handle of triage_reply_templates for ref. Generated relation and alias methods call it.
+// BuildReplyTemplates builds the table of triage_reply_templates for ref. Generated relation and alias methods call it.
 func BuildReplyTemplates(r *keel.Ref) *ReplyTemplatesTable {
 	return &ReplyTemplatesTable{
-		Handle:         keel.Handle[*triage.ReplyTemplate]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -663,6 +1382,365 @@ func (t *ReplyTemplatesTable) As(alias string) *ReplyTemplatesTable {
 // Get returns the triage_reply_templates row with the given key, or keel.ErrNotFound.
 func (t *ReplyTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*triage.ReplyTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReplyTemplatesQuery is a query over triage.ReplyTemplate.
+type ReplyTemplatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.ReplyTemplate] = (*ReplyTemplatesTable)(nil)
+
+var _ keel.Query[*triage.ReplyTemplate] = (*ReplyTemplatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReplyTemplatesTable) Query() keel.Query[*triage.ReplyTemplate] {
+	return &ReplyTemplatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReplyTemplatesQuery.Where.
+func (t *ReplyTemplatesTable) Where(ps ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReplyTemplatesQuery.Pick.
+func (t *ReplyTemplatesTable) Pick(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReplyTemplatesQuery.Load.
+func (t *ReplyTemplatesTable) Load(ls ...keel.Loader) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReplyTemplatesQuery.Omit.
+func (t *ReplyTemplatesTable) Omit(cols ...keel.Column) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReplyTemplatesQuery.Order.
+func (t *ReplyTemplatesTable) Order(os ...keel.Order) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReplyTemplatesQuery.Limit.
+func (t *ReplyTemplatesTable) Limit(n int) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReplyTemplatesQuery.Group.
+func (t *ReplyTemplatesTable) Group(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReplyTemplatesQuery.GroupingSets.
+func (t *ReplyTemplatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReplyTemplatesQuery.Rollup.
+func (t *ReplyTemplatesTable) Rollup(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReplyTemplatesQuery.Cube.
+func (t *ReplyTemplatesTable) Cube(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReplyTemplatesQuery.AllTenants.
+func (t *ReplyTemplatesTable) AllTenants() keel.Query[*triage.ReplyTemplate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReplyTemplatesQuery.Join.
+func (t *ReplyTemplatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReplyTemplatesQuery.LeftJoin.
+func (t *ReplyTemplatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReplyTemplatesQuery.LeftJoinLateral.
+func (t *ReplyTemplatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReplyTemplatesQuery.JoinLateral.
+func (t *ReplyTemplatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReplyTemplatesQuery.Lock.
+func (t *ReplyTemplatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReplyTemplatesQuery.DistinctOn.
+func (t *ReplyTemplatesTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReplyTemplatesQuery.Cache.
+func (t *ReplyTemplatesTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReplyTemplatesQuery.LoadStrategy.
+func (t *ReplyTemplatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReplyTemplatesQuery.With.
+func (t *ReplyTemplatesTable) With(ctes ...*keel.CTETable) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReplyTemplatesQuery.Compute.
+func (t *ReplyTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReplyTemplatesTable) Create(ctx context.Context, db *keel.DB, row *triage.ReplyTemplate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReplyTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.ReplyTemplate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReplyTemplatesTable) Save(ctx context.Context, db *keel.DB, row *triage.ReplyTemplate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReplyTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.ReplyTemplate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReplyTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.ReplyTemplate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReplyTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.ReplyTemplate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReplyTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.ReplyTemplate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReplyTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.ReplyTemplate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReplyTemplatesQuery) Where(ps ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReplyTemplatesQuery) Pick(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReplyTemplatesQuery) Omit(cols ...keel.Column) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReplyTemplatesQuery) Load(ls ...keel.Loader) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReplyTemplatesQuery) Order(os ...keel.Order) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReplyTemplatesQuery) Distinct() keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReplyTemplatesQuery) Group(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReplyTemplatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReplyTemplatesQuery) Rollup(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReplyTemplatesQuery) Cube(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReplyTemplatesQuery) Window(name string, w keel.Window) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReplyTemplatesQuery) Having(ps ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReplyTemplatesQuery) Limit(n int) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReplyTemplatesQuery) Offset(n int) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReplyTemplatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReplyTemplatesQuery) AllTenants() keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReplyTemplatesQuery) CustomPlan() keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReplyTemplatesQuery) Timeout(d time.Duration) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReplyTemplatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReplyTemplatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReplyTemplatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReplyTemplatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReplyTemplatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReplyTemplatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReplyTemplatesQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReplyTemplatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReplyTemplatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.ReplyTemplate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReplyTemplatesQuery) Clone() keel.Query[*triage.ReplyTemplate] {
+	return &ReplyTemplatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReplyTemplatesQuery) One(ctx context.Context, db *keel.DB) (*triage.ReplyTemplate, error) {
+	return keel.One[*triage.ReplyTemplate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReplyTemplatesQuery) First(ctx context.Context, db *keel.DB) (*triage.ReplyTemplate, error) {
+	return keel.First[*triage.ReplyTemplate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReplyTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*triage.ReplyTemplate, error) {
+	return keel.List[*triage.ReplyTemplate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReplyTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*triage.ReplyTemplate, error) {
+	return keel.All[*triage.ReplyTemplate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReplyTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.ReplyTemplate, error) {
+	return keel.UpdateReturning[*triage.ReplyTemplate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReplyTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.ReplyTemplate], error) {
+	return keel.PageOf[*triage.ReplyTemplate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReplyTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.ReplyTemplate) error) error {
+	return keel.Each[*triage.ReplyTemplate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReplyTemplate() unsafe.Pointer { return unsafe.Pointer(new(triage.ReplyTemplate)) }
@@ -771,7 +1849,7 @@ var responseTargetsRef = keel.Ref{Table: &responseTargetsTable}
 
 // ResponseTargetsTable is the table of triage.ResponseTarget.
 type ResponseTargetsTable struct {
-	keel.Handle[*triage.ResponseTarget]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	Classification inboundmessagedb.ClassificationCol
@@ -783,7 +1861,7 @@ type ResponseTargetsTable struct {
 
 // ResponseTargets references the triage_response_targets table.
 var ResponseTargets = &ResponseTargetsTable{
-	Handle:         keel.Handle[*triage.ResponseTarget]{Ref: &responseTargetsRef},
+	TableBase:      keel.TableBase{Ref: &responseTargetsRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &responseTargetsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &responseTargetsRef, Index: 1}}},
 	Classification: inboundmessagedb.ClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &responseTargetsRef, Index: 2}}},
@@ -793,10 +1871,10 @@ var ResponseTargets = &ResponseTargetsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &responseTargetsRef, Index: 6}},
 }
 
-// BuildResponseTargets builds the handle of triage_response_targets for ref. Generated relation and alias methods call it.
+// BuildResponseTargets builds the table of triage_response_targets for ref. Generated relation and alias methods call it.
 func BuildResponseTargets(r *keel.Ref) *ResponseTargetsTable {
 	return &ResponseTargetsTable{
-		Handle:         keel.Handle[*triage.ResponseTarget]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Classification: inboundmessagedb.ClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -818,6 +1896,365 @@ func (t *ResponseTargetsTable) As(alias string) *ResponseTargetsTable {
 // Get returns the triage_response_targets row with the given key, or keel.ErrNotFound.
 func (t *ResponseTargetsTable) Get(ctx context.Context, db *keel.DB, key inboundmessage.Classification) (*triage.ResponseTarget, error) {
 	return t.Where(t.Classification.Eq(key)).One(ctx, db)
+}
+
+// ResponseTargetsQuery is a query over triage.ResponseTarget.
+type ResponseTargetsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.ResponseTarget] = (*ResponseTargetsTable)(nil)
+
+var _ keel.Query[*triage.ResponseTarget] = (*ResponseTargetsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ResponseTargetsTable) Query() keel.Query[*triage.ResponseTarget] {
+	return &ResponseTargetsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ResponseTargetsQuery.Where.
+func (t *ResponseTargetsTable) Where(ps ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ResponseTargetsQuery.Pick.
+func (t *ResponseTargetsTable) Pick(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ResponseTargetsQuery.Load.
+func (t *ResponseTargetsTable) Load(ls ...keel.Loader) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ResponseTargetsQuery.Omit.
+func (t *ResponseTargetsTable) Omit(cols ...keel.Column) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ResponseTargetsQuery.Order.
+func (t *ResponseTargetsTable) Order(os ...keel.Order) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ResponseTargetsQuery.Limit.
+func (t *ResponseTargetsTable) Limit(n int) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ResponseTargetsQuery.Group.
+func (t *ResponseTargetsTable) Group(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ResponseTargetsQuery.GroupingSets.
+func (t *ResponseTargetsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ResponseTargetsQuery.Rollup.
+func (t *ResponseTargetsTable) Rollup(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ResponseTargetsQuery.Cube.
+func (t *ResponseTargetsTable) Cube(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ResponseTargetsQuery.AllTenants.
+func (t *ResponseTargetsTable) AllTenants() keel.Query[*triage.ResponseTarget] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ResponseTargetsQuery.Join.
+func (t *ResponseTargetsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ResponseTargetsQuery.LeftJoin.
+func (t *ResponseTargetsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ResponseTargetsQuery.LeftJoinLateral.
+func (t *ResponseTargetsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.ResponseTarget] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ResponseTargetsQuery.JoinLateral.
+func (t *ResponseTargetsTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.ResponseTarget] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ResponseTargetsQuery.Lock.
+func (t *ResponseTargetsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ResponseTargetsQuery.DistinctOn.
+func (t *ResponseTargetsTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ResponseTargetsQuery.Cache.
+func (t *ResponseTargetsTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ResponseTargetsQuery.LoadStrategy.
+func (t *ResponseTargetsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.ResponseTarget] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ResponseTargetsQuery.With.
+func (t *ResponseTargetsTable) With(ctes ...*keel.CTETable) keel.Query[*triage.ResponseTarget] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ResponseTargetsQuery.Compute.
+func (t *ResponseTargetsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.ResponseTarget] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ResponseTargetsTable) Create(ctx context.Context, db *keel.DB, row *triage.ResponseTarget) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ResponseTargetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.ResponseTarget) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ResponseTargetsTable) Save(ctx context.Context, db *keel.DB, row *triage.ResponseTarget, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ResponseTargetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.ResponseTarget, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ResponseTargetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.ResponseTarget) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ResponseTargetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.ResponseTarget, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ResponseTargetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.ResponseTarget, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ResponseTargetsTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.ResponseTarget) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ResponseTargetsQuery) Where(ps ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ResponseTargetsQuery) Pick(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ResponseTargetsQuery) Omit(cols ...keel.Column) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ResponseTargetsQuery) Load(ls ...keel.Loader) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ResponseTargetsQuery) Order(os ...keel.Order) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ResponseTargetsQuery) Distinct() keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ResponseTargetsQuery) Group(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ResponseTargetsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ResponseTargetsQuery) Rollup(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ResponseTargetsQuery) Cube(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ResponseTargetsQuery) Window(name string, w keel.Window) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ResponseTargetsQuery) Having(ps ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ResponseTargetsQuery) Limit(n int) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ResponseTargetsQuery) Offset(n int) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ResponseTargetsQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ResponseTargetsQuery) AllTenants() keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ResponseTargetsQuery) CustomPlan() keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ResponseTargetsQuery) Timeout(d time.Duration) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ResponseTargetsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ResponseTargetsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ResponseTargetsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ResponseTargetsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ResponseTargetsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ResponseTargetsQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ResponseTargetsQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ResponseTargetsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ResponseTargetsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.ResponseTarget] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ResponseTargetsQuery) Clone() keel.Query[*triage.ResponseTarget] {
+	return &ResponseTargetsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ResponseTargetsQuery) One(ctx context.Context, db *keel.DB) (*triage.ResponseTarget, error) {
+	return keel.One[*triage.ResponseTarget](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ResponseTargetsQuery) First(ctx context.Context, db *keel.DB) (*triage.ResponseTarget, error) {
+	return keel.First[*triage.ResponseTarget](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ResponseTargetsQuery) List(ctx context.Context, db *keel.DB) ([]*triage.ResponseTarget, error) {
+	return keel.List[*triage.ResponseTarget](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ResponseTargetsQuery) All(ctx context.Context, db *keel.DB) ([]*triage.ResponseTarget, error) {
+	return keel.All[*triage.ResponseTarget](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ResponseTargetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.ResponseTarget, error) {
+	return keel.UpdateReturning[*triage.ResponseTarget](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ResponseTargetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.ResponseTarget], error) {
+	return keel.PageOf[*triage.ResponseTarget](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ResponseTargetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.ResponseTarget) error) error {
+	return keel.Each[*triage.ResponseTarget](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newResponseTarget() unsafe.Pointer { return unsafe.Pointer(new(triage.ResponseTarget)) }
@@ -923,7 +2360,7 @@ var rulesRef = keel.Ref{Table: &rulesTable}
 
 // RulesTable is the table of triage.Rule.
 type RulesTable struct {
-	keel.Handle[*triage.Rule]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -945,7 +2382,7 @@ type RulesTable struct {
 
 // Rules references the triage_rules table.
 var Rules = &RulesTable{
-	Handle:         keel.Handle[*triage.Rule]{Ref: &rulesRef},
+	TableBase:      keel.TableBase{Ref: &rulesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rulesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rulesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rulesRef, Index: 2}}},
@@ -965,10 +2402,10 @@ var Rules = &RulesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &rulesRef, Index: 16}},
 }
 
-// BuildRules builds the handle of triage_rules for ref. Generated relation and alias methods call it.
+// BuildRules builds the table of triage_rules for ref. Generated relation and alias methods call it.
 func BuildRules(r *keel.Ref) *RulesTable {
 	return &RulesTable{
-		Handle:         keel.Handle[*triage.Rule]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -998,6 +2435,365 @@ func (t *RulesTable) As(alias string) *RulesTable { return keel.Alias(t.Ref, ali
 // Get returns the triage_rules row with the given key, or keel.ErrNotFound.
 func (t *RulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*triage.Rule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RulesQuery is a query over triage.Rule.
+type RulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.Rule] = (*RulesTable)(nil)
+
+var _ keel.Query[*triage.Rule] = (*RulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RulesTable) Query() keel.Query[*triage.Rule] {
+	return &RulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RulesQuery.Where.
+func (t *RulesTable) Where(ps ...keel.Pred) keel.Query[*triage.Rule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RulesQuery.Pick.
+func (t *RulesTable) Pick(es ...keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RulesQuery.Load.
+func (t *RulesTable) Load(ls ...keel.Loader) keel.Query[*triage.Rule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RulesQuery.Omit.
+func (t *RulesTable) Omit(cols ...keel.Column) keel.Query[*triage.Rule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RulesQuery.Order.
+func (t *RulesTable) Order(os ...keel.Order) keel.Query[*triage.Rule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RulesQuery.Limit.
+func (t *RulesTable) Limit(n int) keel.Query[*triage.Rule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RulesQuery.Group.
+func (t *RulesTable) Group(es ...keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RulesQuery.GroupingSets.
+func (t *RulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RulesQuery.Rollup.
+func (t *RulesTable) Rollup(es ...keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RulesQuery.Cube.
+func (t *RulesTable) Cube(es ...keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RulesQuery.AllTenants.
+func (t *RulesTable) AllTenants() keel.Query[*triage.Rule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RulesQuery.Join.
+func (t *RulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Rule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RulesQuery.LeftJoin.
+func (t *RulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Rule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RulesQuery.LeftJoinLateral.
+func (t *RulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Rule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RulesQuery.JoinLateral.
+func (t *RulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Rule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RulesQuery.Lock.
+func (t *RulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Rule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RulesQuery.DistinctOn.
+func (t *RulesTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RulesQuery.Cache.
+func (t *RulesTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.Rule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RulesQuery.LoadStrategy.
+func (t *RulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Rule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RulesQuery.With.
+func (t *RulesTable) With(ctes ...*keel.CTETable) keel.Query[*triage.Rule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RulesQuery.Compute.
+func (t *RulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Rule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RulesTable) Create(ctx context.Context, db *keel.DB, row *triage.Rule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.Rule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RulesTable) Save(ctx context.Context, db *keel.DB, row *triage.Rule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.Rule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.Rule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.Rule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.Rule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RulesTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.Rule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RulesQuery) Where(ps ...keel.Pred) keel.Query[*triage.Rule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RulesQuery) Pick(es ...keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RulesQuery) Omit(cols ...keel.Column) keel.Query[*triage.Rule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RulesQuery) Load(ls ...keel.Loader) keel.Query[*triage.Rule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RulesQuery) Order(os ...keel.Order) keel.Query[*triage.Rule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RulesQuery) Distinct() keel.Query[*triage.Rule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RulesQuery) Group(es ...keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RulesQuery) Rollup(es ...keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RulesQuery) Cube(es ...keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RulesQuery) Window(name string, w keel.Window) keel.Query[*triage.Rule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RulesQuery) Having(ps ...keel.Pred) keel.Query[*triage.Rule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RulesQuery) Limit(n int) keel.Query[*triage.Rule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RulesQuery) Offset(n int) keel.Query[*triage.Rule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RulesQuery) AllTenants() keel.Query[*triage.Rule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RulesQuery) CustomPlan() keel.Query[*triage.Rule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RulesQuery) Timeout(d time.Duration) keel.Query[*triage.Rule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Rule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Rule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Rule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Rule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Rule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.Rule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RulesQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.Rule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Rule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Rule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RulesQuery) Clone() keel.Query[*triage.Rule] {
+	return &RulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RulesQuery) One(ctx context.Context, db *keel.DB) (*triage.Rule, error) {
+	return keel.One[*triage.Rule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RulesQuery) First(ctx context.Context, db *keel.DB) (*triage.Rule, error) {
+	return keel.First[*triage.Rule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RulesQuery) List(ctx context.Context, db *keel.DB) ([]*triage.Rule, error) {
+	return keel.List[*triage.Rule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RulesQuery) All(ctx context.Context, db *keel.DB) ([]*triage.Rule, error) {
+	return keel.All[*triage.Rule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.Rule, error) {
+	return keel.UpdateReturning[*triage.Rule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.Rule], error) {
+	return keel.PageOf[*triage.Rule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.Rule) error) error {
+	return keel.Each[*triage.Rule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRule() unsafe.Pointer { return unsafe.Pointer(new(triage.Rule)) }
@@ -1150,7 +2946,7 @@ var senderHintsRef = keel.Ref{Table: &senderHintsTable}
 
 // SenderHintsTable is the table of triage.SenderHint.
 type SenderHintsTable struct {
-	keel.Handle[*triage.SenderHint]
+	keel.TableBase
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	SenderDomain    keel.StringCol
@@ -1161,7 +2957,7 @@ type SenderHintsTable struct {
 
 // SenderHints references the inbound_sender_hints table.
 var SenderHints = &SenderHintsTable{
-	Handle:          keel.Handle[*triage.SenderHint]{Ref: &senderHintsRef},
+	TableBase:       keel.TableBase{Ref: &senderHintsRef},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &senderHintsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &senderHintsRef, Index: 1}}},
 	SenderDomain:    keel.StringCol{Col: keel.Col{Ref: &senderHintsRef, Index: 2}},
@@ -1170,10 +2966,10 @@ var SenderHints = &SenderHintsTable{
 	LastCorrectedAt: keel.Int64Col{Col: keel.Col{Ref: &senderHintsRef, Index: 5}},
 }
 
-// BuildSenderHints builds the handle of inbound_sender_hints for ref. Generated relation and alias methods call it.
+// BuildSenderHints builds the table of inbound_sender_hints for ref. Generated relation and alias methods call it.
 func BuildSenderHints(r *keel.Ref) *SenderHintsTable {
 	return &SenderHintsTable{
-		Handle:          keel.Handle[*triage.SenderHint]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SenderDomain:    keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1189,6 +2985,365 @@ func SenderHintsSchema() *schema.Table { return &senderHintsTable }
 // As returns a handle that references inbound_sender_hints under its own alias.
 func (t *SenderHintsTable) As(alias string) *SenderHintsTable {
 	return keel.Alias(t.Ref, alias, BuildSenderHints)
+}
+
+// SenderHintsQuery is a query over triage.SenderHint.
+type SenderHintsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.SenderHint] = (*SenderHintsTable)(nil)
+
+var _ keel.Query[*triage.SenderHint] = (*SenderHintsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SenderHintsTable) Query() keel.Query[*triage.SenderHint] {
+	return &SenderHintsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SenderHintsQuery.Where.
+func (t *SenderHintsTable) Where(ps ...keel.Pred) keel.Query[*triage.SenderHint] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SenderHintsQuery.Pick.
+func (t *SenderHintsTable) Pick(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SenderHintsQuery.Load.
+func (t *SenderHintsTable) Load(ls ...keel.Loader) keel.Query[*triage.SenderHint] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SenderHintsQuery.Omit.
+func (t *SenderHintsTable) Omit(cols ...keel.Column) keel.Query[*triage.SenderHint] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SenderHintsQuery.Order.
+func (t *SenderHintsTable) Order(os ...keel.Order) keel.Query[*triage.SenderHint] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SenderHintsQuery.Limit.
+func (t *SenderHintsTable) Limit(n int) keel.Query[*triage.SenderHint] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SenderHintsQuery.Group.
+func (t *SenderHintsTable) Group(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SenderHintsQuery.GroupingSets.
+func (t *SenderHintsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SenderHintsQuery.Rollup.
+func (t *SenderHintsTable) Rollup(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SenderHintsQuery.Cube.
+func (t *SenderHintsTable) Cube(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SenderHintsQuery.AllTenants.
+func (t *SenderHintsTable) AllTenants() keel.Query[*triage.SenderHint] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SenderHintsQuery.Join.
+func (t *SenderHintsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.SenderHint] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SenderHintsQuery.LeftJoin.
+func (t *SenderHintsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.SenderHint] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SenderHintsQuery.LeftJoinLateral.
+func (t *SenderHintsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.SenderHint] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SenderHintsQuery.JoinLateral.
+func (t *SenderHintsTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.SenderHint] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SenderHintsQuery.Lock.
+func (t *SenderHintsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.SenderHint] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SenderHintsQuery.DistinctOn.
+func (t *SenderHintsTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SenderHintsQuery.Cache.
+func (t *SenderHintsTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.SenderHint] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SenderHintsQuery.LoadStrategy.
+func (t *SenderHintsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.SenderHint] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SenderHintsQuery.With.
+func (t *SenderHintsTable) With(ctes ...*keel.CTETable) keel.Query[*triage.SenderHint] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SenderHintsQuery.Compute.
+func (t *SenderHintsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.SenderHint] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SenderHintsTable) Create(ctx context.Context, db *keel.DB, row *triage.SenderHint) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SenderHintsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.SenderHint) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SenderHintsTable) Save(ctx context.Context, db *keel.DB, row *triage.SenderHint, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SenderHintsTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.SenderHint, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SenderHintsTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.SenderHint) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SenderHintsTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.SenderHint, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SenderHintsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.SenderHint, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SenderHintsTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.SenderHint) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SenderHintsQuery) Where(ps ...keel.Pred) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SenderHintsQuery) Pick(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SenderHintsQuery) Omit(cols ...keel.Column) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SenderHintsQuery) Load(ls ...keel.Loader) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SenderHintsQuery) Order(os ...keel.Order) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SenderHintsQuery) Distinct() keel.Query[*triage.SenderHint] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SenderHintsQuery) Group(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SenderHintsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SenderHintsQuery) Rollup(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SenderHintsQuery) Cube(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SenderHintsQuery) Window(name string, w keel.Window) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SenderHintsQuery) Having(ps ...keel.Pred) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SenderHintsQuery) Limit(n int) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SenderHintsQuery) Offset(n int) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SenderHintsQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SenderHintsQuery) AllTenants() keel.Query[*triage.SenderHint] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SenderHintsQuery) CustomPlan() keel.Query[*triage.SenderHint] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SenderHintsQuery) Timeout(d time.Duration) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SenderHintsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SenderHintsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SenderHintsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.SenderHint] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SenderHintsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.SenderHint] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SenderHintsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.SenderHint] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SenderHintsQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SenderHintsQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.SenderHint] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SenderHintsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.SenderHint] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SenderHintsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.SenderHint] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SenderHintsQuery) Clone() keel.Query[*triage.SenderHint] {
+	return &SenderHintsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SenderHintsQuery) One(ctx context.Context, db *keel.DB) (*triage.SenderHint, error) {
+	return keel.One[*triage.SenderHint](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SenderHintsQuery) First(ctx context.Context, db *keel.DB) (*triage.SenderHint, error) {
+	return keel.First[*triage.SenderHint](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SenderHintsQuery) List(ctx context.Context, db *keel.DB) ([]*triage.SenderHint, error) {
+	return keel.List[*triage.SenderHint](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SenderHintsQuery) All(ctx context.Context, db *keel.DB) ([]*triage.SenderHint, error) {
+	return keel.All[*triage.SenderHint](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SenderHintsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.SenderHint, error) {
+	return keel.UpdateReturning[*triage.SenderHint](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SenderHintsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.SenderHint], error) {
+	return keel.PageOf[*triage.SenderHint](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SenderHintsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.SenderHint) error) error {
+	return keel.Each[*triage.SenderHint](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSenderHint() unsafe.Pointer { return unsafe.Pointer(new(triage.SenderHint)) }
@@ -1275,7 +3430,7 @@ var settingsesRef = keel.Ref{Table: &settingsesTable}
 
 // SettingsesTable is the table of triage.Settings.
 type SettingsesTable struct {
-	keel.Handle[*triage.Settings]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OnCallUserID   keelkinds.PulidIDCol
@@ -1287,7 +3442,7 @@ type SettingsesTable struct {
 
 // Settingses references the triage_settings table.
 var Settingses = &SettingsesTable{
-	Handle:         keel.Handle[*triage.Settings]{Ref: &settingsesRef},
+	TableBase:      keel.TableBase{Ref: &settingsesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 1}}},
 	OnCallUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 2}}},
@@ -1297,10 +3452,10 @@ var Settingses = &SettingsesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &settingsesRef, Index: 6}},
 }
 
-// BuildSettingses builds the handle of triage_settings for ref. Generated relation and alias methods call it.
+// BuildSettingses builds the table of triage_settings for ref. Generated relation and alias methods call it.
 func BuildSettingses(r *keel.Ref) *SettingsesTable {
 	return &SettingsesTable{
-		Handle:         keel.Handle[*triage.Settings]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OnCallUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1317,6 +3472,365 @@ func SettingsesSchema() *schema.Table { return &settingsesTable }
 // As returns a handle that references triage_settings under its own alias.
 func (t *SettingsesTable) As(alias string) *SettingsesTable {
 	return keel.Alias(t.Ref, alias, BuildSettingses)
+}
+
+// SettingsesQuery is a query over triage.Settings.
+type SettingsesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.Settings] = (*SettingsesTable)(nil)
+
+var _ keel.Query[*triage.Settings] = (*SettingsesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SettingsesTable) Query() keel.Query[*triage.Settings] {
+	return &SettingsesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SettingsesQuery.Where.
+func (t *SettingsesTable) Where(ps ...keel.Pred) keel.Query[*triage.Settings] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SettingsesQuery.Pick.
+func (t *SettingsesTable) Pick(es ...keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SettingsesQuery.Load.
+func (t *SettingsesTable) Load(ls ...keel.Loader) keel.Query[*triage.Settings] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SettingsesQuery.Omit.
+func (t *SettingsesTable) Omit(cols ...keel.Column) keel.Query[*triage.Settings] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SettingsesQuery.Order.
+func (t *SettingsesTable) Order(os ...keel.Order) keel.Query[*triage.Settings] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SettingsesQuery.Limit.
+func (t *SettingsesTable) Limit(n int) keel.Query[*triage.Settings] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SettingsesQuery.Group.
+func (t *SettingsesTable) Group(es ...keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SettingsesQuery.GroupingSets.
+func (t *SettingsesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SettingsesQuery.Rollup.
+func (t *SettingsesTable) Rollup(es ...keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SettingsesQuery.Cube.
+func (t *SettingsesTable) Cube(es ...keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SettingsesQuery.AllTenants.
+func (t *SettingsesTable) AllTenants() keel.Query[*triage.Settings] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SettingsesQuery.Join.
+func (t *SettingsesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Settings] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SettingsesQuery.LeftJoin.
+func (t *SettingsesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Settings] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SettingsesQuery.LeftJoinLateral.
+func (t *SettingsesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Settings] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SettingsesQuery.JoinLateral.
+func (t *SettingsesTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Settings] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SettingsesQuery.Lock.
+func (t *SettingsesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Settings] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SettingsesQuery.DistinctOn.
+func (t *SettingsesTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SettingsesQuery.Cache.
+func (t *SettingsesTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.Settings] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SettingsesQuery.LoadStrategy.
+func (t *SettingsesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Settings] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SettingsesQuery.With.
+func (t *SettingsesTable) With(ctes ...*keel.CTETable) keel.Query[*triage.Settings] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SettingsesQuery.Compute.
+func (t *SettingsesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Settings] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SettingsesTable) Create(ctx context.Context, db *keel.DB, row *triage.Settings) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SettingsesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.Settings) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SettingsesTable) Save(ctx context.Context, db *keel.DB, row *triage.Settings, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SettingsesTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.Settings, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SettingsesTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.Settings) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SettingsesTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.Settings, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SettingsesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.Settings, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SettingsesTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.Settings) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SettingsesQuery) Where(ps ...keel.Pred) keel.Query[*triage.Settings] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SettingsesQuery) Pick(es ...keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SettingsesQuery) Omit(cols ...keel.Column) keel.Query[*triage.Settings] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SettingsesQuery) Load(ls ...keel.Loader) keel.Query[*triage.Settings] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SettingsesQuery) Order(os ...keel.Order) keel.Query[*triage.Settings] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SettingsesQuery) Distinct() keel.Query[*triage.Settings] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SettingsesQuery) Group(es ...keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SettingsesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SettingsesQuery) Rollup(es ...keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SettingsesQuery) Cube(es ...keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SettingsesQuery) Window(name string, w keel.Window) keel.Query[*triage.Settings] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SettingsesQuery) Having(ps ...keel.Pred) keel.Query[*triage.Settings] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SettingsesQuery) Limit(n int) keel.Query[*triage.Settings] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SettingsesQuery) Offset(n int) keel.Query[*triage.Settings] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SettingsesQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SettingsesQuery) AllTenants() keel.Query[*triage.Settings] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SettingsesQuery) CustomPlan() keel.Query[*triage.Settings] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SettingsesQuery) Timeout(d time.Duration) keel.Query[*triage.Settings] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SettingsesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.Settings] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SettingsesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Settings] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SettingsesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.Settings] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SettingsesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.Settings] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SettingsesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.Settings] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SettingsesQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.Settings] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SettingsesQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.Settings] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SettingsesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.Settings] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SettingsesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.Settings] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SettingsesQuery) Clone() keel.Query[*triage.Settings] {
+	return &SettingsesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SettingsesQuery) One(ctx context.Context, db *keel.DB) (*triage.Settings, error) {
+	return keel.One[*triage.Settings](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SettingsesQuery) First(ctx context.Context, db *keel.DB) (*triage.Settings, error) {
+	return keel.First[*triage.Settings](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SettingsesQuery) List(ctx context.Context, db *keel.DB) ([]*triage.Settings, error) {
+	return keel.List[*triage.Settings](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SettingsesQuery) All(ctx context.Context, db *keel.DB) ([]*triage.Settings, error) {
+	return keel.All[*triage.Settings](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SettingsesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.Settings, error) {
+	return keel.UpdateReturning[*triage.Settings](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SettingsesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.Settings], error) {
+	return keel.PageOf[*triage.Settings](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SettingsesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.Settings) error) error {
+	return keel.Each[*triage.Settings](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSettings() unsafe.Pointer { return unsafe.Pointer(new(triage.Settings)) }
@@ -1417,13 +3931,13 @@ var viewsRef = keel.Ref{Table: &viewsTable}
 
 // ViewsTable is the table of triage.View.
 type ViewsTable struct {
-	keel.Handle[*triage.View]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	Name           keel.StringCol
-	Query          keel.StringCol
+	QueryCol       keel.StringCol
 	Position       keel.Int64Col
 	CreatedAt      keel.Int64Col
 	UpdatedAt      keel.Int64Col
@@ -1431,28 +3945,28 @@ type ViewsTable struct {
 
 // Views references the triage_views table.
 var Views = &ViewsTable{
-	Handle:         keel.Handle[*triage.View]{Ref: &viewsRef},
+	TableBase:      keel.TableBase{Ref: &viewsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 2}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 3}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 4}},
-	Query:          keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 5}},
+	QueryCol:       keel.StringCol{Col: keel.Col{Ref: &viewsRef, Index: 5}},
 	Position:       keel.Int64Col{Col: keel.Col{Ref: &viewsRef, Index: 6}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &viewsRef, Index: 7}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &viewsRef, Index: 8}},
 }
 
-// BuildViews builds the handle of triage_views for ref. Generated relation and alias methods call it.
+// BuildViews builds the table of triage_views for ref. Generated relation and alias methods call it.
 func BuildViews(r *keel.Ref) *ViewsTable {
 	return &ViewsTable{
-		Handle:         keel.Handle[*triage.View]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Query:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		QueryCol:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Position:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -1468,6 +3982,365 @@ func (t *ViewsTable) As(alias string) *ViewsTable { return keel.Alias(t.Ref, ali
 // Get returns the triage_views row with the given key, or keel.ErrNotFound.
 func (t *ViewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*triage.View, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ViewsQuery is a query over triage.View.
+type ViewsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*triage.View] = (*ViewsTable)(nil)
+
+var _ keel.Query[*triage.View] = (*ViewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ViewsTable) Query() keel.Query[*triage.View] {
+	return &ViewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ViewsQuery.Where.
+func (t *ViewsTable) Where(ps ...keel.Pred) keel.Query[*triage.View] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ViewsQuery.Pick.
+func (t *ViewsTable) Pick(es ...keel.Expr) keel.Query[*triage.View] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ViewsQuery.Load.
+func (t *ViewsTable) Load(ls ...keel.Loader) keel.Query[*triage.View] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ViewsQuery.Omit.
+func (t *ViewsTable) Omit(cols ...keel.Column) keel.Query[*triage.View] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ViewsQuery.Order.
+func (t *ViewsTable) Order(os ...keel.Order) keel.Query[*triage.View] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ViewsQuery.Limit.
+func (t *ViewsTable) Limit(n int) keel.Query[*triage.View] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ViewsQuery.Group.
+func (t *ViewsTable) Group(es ...keel.Expr) keel.Query[*triage.View] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ViewsQuery.GroupingSets.
+func (t *ViewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.View] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ViewsQuery.Rollup.
+func (t *ViewsTable) Rollup(es ...keel.Expr) keel.Query[*triage.View] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ViewsQuery.Cube.
+func (t *ViewsTable) Cube(es ...keel.Expr) keel.Query[*triage.View] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ViewsQuery.AllTenants.
+func (t *ViewsTable) AllTenants() keel.Query[*triage.View] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ViewsQuery.Join.
+func (t *ViewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.View] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ViewsQuery.LeftJoin.
+func (t *ViewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.View] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ViewsQuery.LeftJoinLateral.
+func (t *ViewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.View] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ViewsQuery.JoinLateral.
+func (t *ViewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*triage.View] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ViewsQuery.Lock.
+func (t *ViewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.View] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ViewsQuery.DistinctOn.
+func (t *ViewsTable) DistinctOn(es ...keel.Expr) keel.Query[*triage.View] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ViewsQuery.Cache.
+func (t *ViewsTable) Cache(opts ...keel.CacheOption) keel.Query[*triage.View] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ViewsQuery.LoadStrategy.
+func (t *ViewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.View] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ViewsQuery.With.
+func (t *ViewsTable) With(ctes ...*keel.CTETable) keel.Query[*triage.View] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ViewsQuery.Compute.
+func (t *ViewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.View] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ViewsTable) Create(ctx context.Context, db *keel.DB, row *triage.View) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ViewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*triage.View) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ViewsTable) Save(ctx context.Context, db *keel.DB, row *triage.View, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ViewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *triage.View, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ViewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *triage.View) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ViewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*triage.View, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ViewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*triage.View, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ViewsTable) Copy(ctx context.Context, db *keel.DB, rows []*triage.View) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ViewsQuery) Where(ps ...keel.Pred) keel.Query[*triage.View] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ViewsQuery) Pick(es ...keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ViewsQuery) Omit(cols ...keel.Column) keel.Query[*triage.View] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ViewsQuery) Load(ls ...keel.Loader) keel.Query[*triage.View] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ViewsQuery) Order(os ...keel.Order) keel.Query[*triage.View] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ViewsQuery) Distinct() keel.Query[*triage.View] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ViewsQuery) Group(es ...keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ViewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ViewsQuery) Rollup(es ...keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ViewsQuery) Cube(es ...keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ViewsQuery) Window(name string, w keel.Window) keel.Query[*triage.View] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ViewsQuery) Having(ps ...keel.Pred) keel.Query[*triage.View] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ViewsQuery) Limit(n int) keel.Query[*triage.View] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ViewsQuery) Offset(n int) keel.Query[*triage.View] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ViewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ViewsQuery) AllTenants() keel.Query[*triage.View] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ViewsQuery) CustomPlan() keel.Query[*triage.View] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ViewsQuery) Timeout(d time.Duration) keel.Query[*triage.View] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ViewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*triage.View] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ViewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.View] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ViewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*triage.View] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ViewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*triage.View] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ViewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*triage.View] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ViewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*triage.View] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ViewsQuery) With(ctes ...*keel.CTETable) keel.Query[*triage.View] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ViewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*triage.View] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ViewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*triage.View] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ViewsQuery) Clone() keel.Query[*triage.View] {
+	return &ViewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ViewsQuery) One(ctx context.Context, db *keel.DB) (*triage.View, error) {
+	return keel.One[*triage.View](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ViewsQuery) First(ctx context.Context, db *keel.DB) (*triage.View, error) {
+	return keel.First[*triage.View](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ViewsQuery) List(ctx context.Context, db *keel.DB) ([]*triage.View, error) {
+	return keel.List[*triage.View](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ViewsQuery) All(ctx context.Context, db *keel.DB) ([]*triage.View, error) {
+	return keel.All[*triage.View](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ViewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*triage.View, error) {
+	return keel.UpdateReturning[*triage.View](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ViewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*triage.View], error) {
+	return keel.PageOf[*triage.View](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ViewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*triage.View) error) error {
+	return keel.Each[*triage.View](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newView() unsafe.Pointer { return unsafe.Pointer(new(triage.View)) }

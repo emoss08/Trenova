@@ -4,6 +4,7 @@ package workertrainingdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -78,7 +79,7 @@ var trainingCoursesRef = keel.Ref{Table: &trainingCoursesTable}
 
 // TrainingCoursesTable is the table of workertraining.TrainingCourse.
 type TrainingCoursesTable struct {
-	keel.Handle[*workertraining.TrainingCourse]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	BusinessUnitID          keelkinds.PulidIDCol
 	OrganizationID          keelkinds.PulidIDCol
@@ -106,7 +107,7 @@ type TrainingCoursesTable struct {
 
 // TrainingCourses references the training_courses table.
 var TrainingCourses = &TrainingCoursesTable{
-	Handle:                  keel.Handle[*workertraining.TrainingCourse]{Ref: &trainingCoursesRef},
+	TableBase:               keel.TableBase{Ref: &trainingCoursesRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 0}}},
 	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 1}}},
 	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 2}}},
@@ -132,10 +133,10 @@ var TrainingCourses = &TrainingCoursesTable{
 	SearchVector:            keel.TSVectorCol{Col: keel.Col{Ref: &trainingCoursesRef, Index: 22}},
 }
 
-// BuildTrainingCourses builds the handle of training_courses for ref. Generated relation and alias methods call it.
+// BuildTrainingCourses builds the table of training_courses for ref. Generated relation and alias methods call it.
 func BuildTrainingCourses(r *keel.Ref) *TrainingCoursesTable {
 	return &TrainingCoursesTable{
-		Handle:                  keel.Handle[*workertraining.TrainingCourse]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -173,6 +174,365 @@ func (t *TrainingCoursesTable) As(alias string) *TrainingCoursesTable {
 // Get returns the training_courses row with the given key, or keel.ErrNotFound.
 func (t *TrainingCoursesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workertraining.TrainingCourse, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TrainingCoursesQuery is a query over workertraining.TrainingCourse.
+type TrainingCoursesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workertraining.TrainingCourse] = (*TrainingCoursesTable)(nil)
+
+var _ keel.Query[*workertraining.TrainingCourse] = (*TrainingCoursesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TrainingCoursesTable) Query() keel.Query[*workertraining.TrainingCourse] {
+	return &TrainingCoursesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TrainingCoursesQuery.Where.
+func (t *TrainingCoursesTable) Where(ps ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TrainingCoursesQuery.Pick.
+func (t *TrainingCoursesTable) Pick(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TrainingCoursesQuery.Load.
+func (t *TrainingCoursesTable) Load(ls ...keel.Loader) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TrainingCoursesQuery.Omit.
+func (t *TrainingCoursesTable) Omit(cols ...keel.Column) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TrainingCoursesQuery.Order.
+func (t *TrainingCoursesTable) Order(os ...keel.Order) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TrainingCoursesQuery.Limit.
+func (t *TrainingCoursesTable) Limit(n int) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TrainingCoursesQuery.Group.
+func (t *TrainingCoursesTable) Group(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TrainingCoursesQuery.GroupingSets.
+func (t *TrainingCoursesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TrainingCoursesQuery.Rollup.
+func (t *TrainingCoursesTable) Rollup(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TrainingCoursesQuery.Cube.
+func (t *TrainingCoursesTable) Cube(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TrainingCoursesQuery.AllTenants.
+func (t *TrainingCoursesTable) AllTenants() keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TrainingCoursesQuery.Join.
+func (t *TrainingCoursesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TrainingCoursesQuery.LeftJoin.
+func (t *TrainingCoursesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TrainingCoursesQuery.LeftJoinLateral.
+func (t *TrainingCoursesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TrainingCoursesQuery.JoinLateral.
+func (t *TrainingCoursesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TrainingCoursesQuery.Lock.
+func (t *TrainingCoursesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TrainingCoursesQuery.DistinctOn.
+func (t *TrainingCoursesTable) DistinctOn(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TrainingCoursesQuery.Cache.
+func (t *TrainingCoursesTable) Cache(opts ...keel.CacheOption) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TrainingCoursesQuery.LoadStrategy.
+func (t *TrainingCoursesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TrainingCoursesQuery.With.
+func (t *TrainingCoursesTable) With(ctes ...*keel.CTETable) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TrainingCoursesQuery.Compute.
+func (t *TrainingCoursesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TrainingCoursesTable) Create(ctx context.Context, db *keel.DB, row *workertraining.TrainingCourse) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TrainingCoursesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workertraining.TrainingCourse) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TrainingCoursesTable) Save(ctx context.Context, db *keel.DB, row *workertraining.TrainingCourse, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TrainingCoursesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workertraining.TrainingCourse, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TrainingCoursesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workertraining.TrainingCourse) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TrainingCoursesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workertraining.TrainingCourse, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TrainingCoursesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workertraining.TrainingCourse, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TrainingCoursesTable) Copy(ctx context.Context, db *keel.DB, rows []*workertraining.TrainingCourse) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TrainingCoursesQuery) Where(ps ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TrainingCoursesQuery) Pick(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TrainingCoursesQuery) Omit(cols ...keel.Column) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TrainingCoursesQuery) Load(ls ...keel.Loader) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TrainingCoursesQuery) Order(os ...keel.Order) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TrainingCoursesQuery) Distinct() keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TrainingCoursesQuery) Group(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TrainingCoursesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TrainingCoursesQuery) Rollup(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TrainingCoursesQuery) Cube(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TrainingCoursesQuery) Window(name string, w keel.Window) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TrainingCoursesQuery) Having(ps ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TrainingCoursesQuery) Limit(n int) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TrainingCoursesQuery) Offset(n int) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TrainingCoursesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TrainingCoursesQuery) AllTenants() keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TrainingCoursesQuery) CustomPlan() keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TrainingCoursesQuery) Timeout(d time.Duration) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TrainingCoursesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TrainingCoursesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TrainingCoursesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TrainingCoursesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TrainingCoursesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TrainingCoursesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TrainingCoursesQuery) With(ctes ...*keel.CTETable) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TrainingCoursesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TrainingCoursesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workertraining.TrainingCourse] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TrainingCoursesQuery) Clone() keel.Query[*workertraining.TrainingCourse] {
+	return &TrainingCoursesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TrainingCoursesQuery) One(ctx context.Context, db *keel.DB) (*workertraining.TrainingCourse, error) {
+	return keel.One[*workertraining.TrainingCourse](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TrainingCoursesQuery) First(ctx context.Context, db *keel.DB) (*workertraining.TrainingCourse, error) {
+	return keel.First[*workertraining.TrainingCourse](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TrainingCoursesQuery) List(ctx context.Context, db *keel.DB) ([]*workertraining.TrainingCourse, error) {
+	return keel.List[*workertraining.TrainingCourse](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TrainingCoursesQuery) All(ctx context.Context, db *keel.DB) ([]*workertraining.TrainingCourse, error) {
+	return keel.All[*workertraining.TrainingCourse](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TrainingCoursesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workertraining.TrainingCourse, error) {
+	return keel.UpdateReturning[*workertraining.TrainingCourse](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TrainingCoursesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workertraining.TrainingCourse], error) {
+	return keel.PageOf[*workertraining.TrainingCourse](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TrainingCoursesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workertraining.TrainingCourse) error) error {
+	return keel.Each[*workertraining.TrainingCourse](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTrainingCourse() unsafe.Pointer { return unsafe.Pointer(new(workertraining.TrainingCourse)) }
@@ -375,7 +735,7 @@ var workerTrainingRecordsRef = keel.Ref{Table: &workerTrainingRecordsTable}
 
 // WorkerTrainingRecordsTable is the table of workertraining.WorkerTrainingRecord.
 type WorkerTrainingRecordsTable struct {
-	keel.Handle[*workertraining.WorkerTrainingRecord]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -402,7 +762,7 @@ type WorkerTrainingRecordsTable struct {
 
 // WorkerTrainingRecords references the worker_training_records table.
 var WorkerTrainingRecords = &WorkerTrainingRecordsTable{
-	Handle:         keel.Handle[*workertraining.WorkerTrainingRecord]{Ref: &workerTrainingRecordsRef},
+	TableBase:      keel.TableBase{Ref: &workerTrainingRecordsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 2}}},
@@ -427,10 +787,10 @@ var WorkerTrainingRecords = &WorkerTrainingRecordsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerTrainingRecordsRef, Index: 21}},
 }
 
-// BuildWorkerTrainingRecords builds the handle of worker_training_records for ref. Generated relation and alias methods call it.
+// BuildWorkerTrainingRecords builds the table of worker_training_records for ref. Generated relation and alias methods call it.
 func BuildWorkerTrainingRecords(r *keel.Ref) *WorkerTrainingRecordsTable {
 	return &WorkerTrainingRecordsTable{
-		Handle:         keel.Handle[*workertraining.WorkerTrainingRecord]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -492,6 +852,365 @@ func (t *WorkerTrainingRecordsTable) RecordedBy() *tenantdb.UsersTable {
 // Get returns the worker_training_records row with the given key, or keel.ErrNotFound.
 func (t *WorkerTrainingRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workertraining.WorkerTrainingRecord, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerTrainingRecordsQuery is a query over workertraining.WorkerTrainingRecord.
+type WorkerTrainingRecordsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workertraining.WorkerTrainingRecord] = (*WorkerTrainingRecordsTable)(nil)
+
+var _ keel.Query[*workertraining.WorkerTrainingRecord] = (*WorkerTrainingRecordsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerTrainingRecordsTable) Query() keel.Query[*workertraining.WorkerTrainingRecord] {
+	return &WorkerTrainingRecordsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerTrainingRecordsQuery.Where.
+func (t *WorkerTrainingRecordsTable) Where(ps ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerTrainingRecordsQuery.Pick.
+func (t *WorkerTrainingRecordsTable) Pick(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerTrainingRecordsQuery.Load.
+func (t *WorkerTrainingRecordsTable) Load(ls ...keel.Loader) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerTrainingRecordsQuery.Omit.
+func (t *WorkerTrainingRecordsTable) Omit(cols ...keel.Column) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerTrainingRecordsQuery.Order.
+func (t *WorkerTrainingRecordsTable) Order(os ...keel.Order) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerTrainingRecordsQuery.Limit.
+func (t *WorkerTrainingRecordsTable) Limit(n int) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerTrainingRecordsQuery.Group.
+func (t *WorkerTrainingRecordsTable) Group(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerTrainingRecordsQuery.GroupingSets.
+func (t *WorkerTrainingRecordsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerTrainingRecordsQuery.Rollup.
+func (t *WorkerTrainingRecordsTable) Rollup(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerTrainingRecordsQuery.Cube.
+func (t *WorkerTrainingRecordsTable) Cube(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerTrainingRecordsQuery.AllTenants.
+func (t *WorkerTrainingRecordsTable) AllTenants() keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerTrainingRecordsQuery.Join.
+func (t *WorkerTrainingRecordsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerTrainingRecordsQuery.LeftJoin.
+func (t *WorkerTrainingRecordsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerTrainingRecordsQuery.LeftJoinLateral.
+func (t *WorkerTrainingRecordsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerTrainingRecordsQuery.JoinLateral.
+func (t *WorkerTrainingRecordsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerTrainingRecordsQuery.Lock.
+func (t *WorkerTrainingRecordsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerTrainingRecordsQuery.DistinctOn.
+func (t *WorkerTrainingRecordsTable) DistinctOn(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerTrainingRecordsQuery.Cache.
+func (t *WorkerTrainingRecordsTable) Cache(opts ...keel.CacheOption) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerTrainingRecordsQuery.LoadStrategy.
+func (t *WorkerTrainingRecordsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerTrainingRecordsQuery.With.
+func (t *WorkerTrainingRecordsTable) With(ctes ...*keel.CTETable) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerTrainingRecordsQuery.Compute.
+func (t *WorkerTrainingRecordsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerTrainingRecordsTable) Create(ctx context.Context, db *keel.DB, row *workertraining.WorkerTrainingRecord) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerTrainingRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workertraining.WorkerTrainingRecord) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerTrainingRecordsTable) Save(ctx context.Context, db *keel.DB, row *workertraining.WorkerTrainingRecord, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerTrainingRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workertraining.WorkerTrainingRecord, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerTrainingRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workertraining.WorkerTrainingRecord) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerTrainingRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workertraining.WorkerTrainingRecord, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerTrainingRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workertraining.WorkerTrainingRecord, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerTrainingRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*workertraining.WorkerTrainingRecord) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerTrainingRecordsQuery) Where(ps ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerTrainingRecordsQuery) Pick(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerTrainingRecordsQuery) Omit(cols ...keel.Column) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerTrainingRecordsQuery) Load(ls ...keel.Loader) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerTrainingRecordsQuery) Order(os ...keel.Order) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerTrainingRecordsQuery) Distinct() keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerTrainingRecordsQuery) Group(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerTrainingRecordsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerTrainingRecordsQuery) Rollup(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerTrainingRecordsQuery) Cube(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerTrainingRecordsQuery) Window(name string, w keel.Window) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerTrainingRecordsQuery) Having(ps ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerTrainingRecordsQuery) Limit(n int) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerTrainingRecordsQuery) Offset(n int) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerTrainingRecordsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerTrainingRecordsQuery) AllTenants() keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerTrainingRecordsQuery) CustomPlan() keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerTrainingRecordsQuery) Timeout(d time.Duration) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerTrainingRecordsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerTrainingRecordsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerTrainingRecordsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerTrainingRecordsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerTrainingRecordsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerTrainingRecordsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerTrainingRecordsQuery) With(ctes ...*keel.CTETable) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerTrainingRecordsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerTrainingRecordsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workertraining.WorkerTrainingRecord] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerTrainingRecordsQuery) Clone() keel.Query[*workertraining.WorkerTrainingRecord] {
+	return &WorkerTrainingRecordsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerTrainingRecordsQuery) One(ctx context.Context, db *keel.DB) (*workertraining.WorkerTrainingRecord, error) {
+	return keel.One[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerTrainingRecordsQuery) First(ctx context.Context, db *keel.DB) (*workertraining.WorkerTrainingRecord, error) {
+	return keel.First[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerTrainingRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*workertraining.WorkerTrainingRecord, error) {
+	return keel.List[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerTrainingRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*workertraining.WorkerTrainingRecord, error) {
+	return keel.All[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerTrainingRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workertraining.WorkerTrainingRecord, error) {
+	return keel.UpdateReturning[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerTrainingRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workertraining.WorkerTrainingRecord], error) {
+	return keel.PageOf[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerTrainingRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workertraining.WorkerTrainingRecord) error) error {
+	return keel.Each[*workertraining.WorkerTrainingRecord](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerTrainingRecord() unsafe.Pointer {

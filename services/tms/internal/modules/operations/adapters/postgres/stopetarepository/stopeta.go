@@ -208,7 +208,7 @@ func attentionQuery(
 	req *stopetaports.ListAttentionRequest,
 	after *stopeta.StopETA,
 	limit int,
-) *keel.Query[*stopeta.StopETA] {
+) keel.Query[*stopeta.StopETA] {
 	e := stopetadb.StopETAs
 
 	q := e.Where(
@@ -228,7 +228,7 @@ func attentionQuery(
 func trackedShipmentsQuery(
 	shipmentIDs []pulid.ID,
 	statuses []shipmentvocab.Status,
-) *keel.Query[*shipment.Shipment] {
+) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
 	return sp.Pick(sp.ID).

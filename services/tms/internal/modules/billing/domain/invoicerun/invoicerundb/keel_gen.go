@@ -4,6 +4,7 @@ package invoicerundb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -85,7 +86,7 @@ var invoiceRunsRef = keel.Ref{Table: &invoiceRunsTable}
 
 // InvoiceRunsTable is the table of invoicerun.InvoiceRun.
 type InvoiceRunsTable struct {
-	keel.Handle[*invoicerun.InvoiceRun]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -119,7 +120,7 @@ type InvoiceRunsTable struct {
 
 // InvoiceRuns references the invoice_runs table.
 var InvoiceRuns = &InvoiceRunsTable{
-	Handle:           keel.Handle[*invoicerun.InvoiceRun]{Ref: &invoiceRunsRef},
+	TableBase:        keel.TableBase{Ref: &invoiceRunsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 2}}},
@@ -151,10 +152,10 @@ var InvoiceRuns = &InvoiceRunsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 28}},
 }
 
-// BuildInvoiceRuns builds the handle of invoice_runs for ref. Generated relation and alias methods call it.
+// BuildInvoiceRuns builds the table of invoice_runs for ref. Generated relation and alias methods call it.
 func BuildInvoiceRuns(r *keel.Ref) *InvoiceRunsTable {
 	return &InvoiceRunsTable{
-		Handle:           keel.Handle[*invoicerun.InvoiceRun]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -203,6 +204,365 @@ func (t *InvoiceRunsTable) Groups() *InvoiceRunGroupsTable {
 // Get returns the invoice_runs row with the given key, or keel.ErrNotFound.
 func (t *InvoiceRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoicerun.InvoiceRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InvoiceRunsQuery is a query over invoicerun.InvoiceRun.
+type InvoiceRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoicerun.InvoiceRun] = (*InvoiceRunsTable)(nil)
+
+var _ keel.Query[*invoicerun.InvoiceRun] = (*InvoiceRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceRunsTable) Query() keel.Query[*invoicerun.InvoiceRun] {
+	return &InvoiceRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceRunsQuery.Where.
+func (t *InvoiceRunsTable) Where(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceRunsQuery.Pick.
+func (t *InvoiceRunsTable) Pick(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceRunsQuery.Load.
+func (t *InvoiceRunsTable) Load(ls ...keel.Loader) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceRunsQuery.Omit.
+func (t *InvoiceRunsTable) Omit(cols ...keel.Column) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceRunsQuery.Order.
+func (t *InvoiceRunsTable) Order(os ...keel.Order) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceRunsQuery.Limit.
+func (t *InvoiceRunsTable) Limit(n int) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceRunsQuery.Group.
+func (t *InvoiceRunsTable) Group(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceRunsQuery.GroupingSets.
+func (t *InvoiceRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceRunsQuery.Rollup.
+func (t *InvoiceRunsTable) Rollup(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceRunsQuery.Cube.
+func (t *InvoiceRunsTable) Cube(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceRunsQuery.AllTenants.
+func (t *InvoiceRunsTable) AllTenants() keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceRunsQuery.Join.
+func (t *InvoiceRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceRunsQuery.LeftJoin.
+func (t *InvoiceRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceRunsQuery.LeftJoinLateral.
+func (t *InvoiceRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceRunsQuery.JoinLateral.
+func (t *InvoiceRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceRunsQuery.Lock.
+func (t *InvoiceRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceRunsQuery.DistinctOn.
+func (t *InvoiceRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceRunsQuery.Cache.
+func (t *InvoiceRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceRunsQuery.LoadStrategy.
+func (t *InvoiceRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceRunsQuery.With.
+func (t *InvoiceRunsTable) With(ctes ...*keel.CTETable) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceRunsQuery.Compute.
+func (t *InvoiceRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceRunsTable) Create(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceRunsTable) Save(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceRunsQuery) Where(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceRunsQuery) Pick(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceRunsQuery) Omit(cols ...keel.Column) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceRunsQuery) Load(ls ...keel.Loader) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceRunsQuery) Order(os ...keel.Order) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceRunsQuery) Distinct() keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceRunsQuery) Group(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceRunsQuery) Rollup(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceRunsQuery) Cube(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceRunsQuery) Window(name string, w keel.Window) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceRunsQuery) Having(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceRunsQuery) Limit(n int) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceRunsQuery) Offset(n int) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceRunsQuery) AllTenants() keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceRunsQuery) CustomPlan() keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceRunsQuery) Timeout(d time.Duration) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoicerun.InvoiceRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceRunsQuery) Clone() keel.Query[*invoicerun.InvoiceRun] {
+	return &InvoiceRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceRunsQuery) One(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRun, error) {
+	return keel.One[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceRunsQuery) First(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRun, error) {
+	return keel.First[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceRunsQuery) List(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRun, error) {
+	return keel.List[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceRunsQuery) All(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRun, error) {
+	return keel.All[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicerun.InvoiceRun, error) {
+	return keel.UpdateReturning[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicerun.InvoiceRun], error) {
+	return keel.PageOf[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicerun.InvoiceRun) error) error {
+	return keel.Each[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoiceRun() unsafe.Pointer { return unsafe.Pointer(new(invoicerun.InvoiceRun)) }
@@ -446,7 +806,7 @@ var invoiceRunGroupsRef = keel.Ref{Table: &invoiceRunGroupsTable}
 
 // InvoiceRunGroupsTable is the table of invoicerun.InvoiceRunGroup.
 type InvoiceRunGroupsTable struct {
-	keel.Handle[*invoicerun.InvoiceRunGroup]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -473,7 +833,7 @@ type InvoiceRunGroupsTable struct {
 
 // InvoiceRunGroups references the invoice_run_groups table.
 var InvoiceRunGroups = &InvoiceRunGroupsTable{
-	Handle:              keel.Handle[*invoicerun.InvoiceRunGroup]{Ref: &invoiceRunGroupsRef},
+	TableBase:           keel.TableBase{Ref: &invoiceRunGroupsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 0}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 2}}},
@@ -498,10 +858,10 @@ var InvoiceRunGroups = &InvoiceRunGroupsTable{
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 21}},
 }
 
-// BuildInvoiceRunGroups builds the handle of invoice_run_groups for ref. Generated relation and alias methods call it.
+// BuildInvoiceRunGroups builds the table of invoice_run_groups for ref. Generated relation and alias methods call it.
 func BuildInvoiceRunGroups(r *keel.Ref) *InvoiceRunGroupsTable {
 	return &InvoiceRunGroupsTable{
-		Handle:              keel.Handle[*invoicerun.InvoiceRunGroup]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -556,6 +916,365 @@ func (t *InvoiceRunGroupsTable) Items() *InvoiceRunGroupItemsTable {
 // Get returns the invoice_run_groups row with the given key, or keel.ErrNotFound.
 func (t *InvoiceRunGroupsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoicerun.InvoiceRunGroup, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InvoiceRunGroupsQuery is a query over invoicerun.InvoiceRunGroup.
+type InvoiceRunGroupsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoicerun.InvoiceRunGroup] = (*InvoiceRunGroupsTable)(nil)
+
+var _ keel.Query[*invoicerun.InvoiceRunGroup] = (*InvoiceRunGroupsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceRunGroupsTable) Query() keel.Query[*invoicerun.InvoiceRunGroup] {
+	return &InvoiceRunGroupsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceRunGroupsQuery.Where.
+func (t *InvoiceRunGroupsTable) Where(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceRunGroupsQuery.Pick.
+func (t *InvoiceRunGroupsTable) Pick(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceRunGroupsQuery.Load.
+func (t *InvoiceRunGroupsTable) Load(ls ...keel.Loader) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceRunGroupsQuery.Omit.
+func (t *InvoiceRunGroupsTable) Omit(cols ...keel.Column) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceRunGroupsQuery.Order.
+func (t *InvoiceRunGroupsTable) Order(os ...keel.Order) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceRunGroupsQuery.Limit.
+func (t *InvoiceRunGroupsTable) Limit(n int) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceRunGroupsQuery.Group.
+func (t *InvoiceRunGroupsTable) Group(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceRunGroupsQuery.GroupingSets.
+func (t *InvoiceRunGroupsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceRunGroupsQuery.Rollup.
+func (t *InvoiceRunGroupsTable) Rollup(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceRunGroupsQuery.Cube.
+func (t *InvoiceRunGroupsTable) Cube(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceRunGroupsQuery.AllTenants.
+func (t *InvoiceRunGroupsTable) AllTenants() keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceRunGroupsQuery.Join.
+func (t *InvoiceRunGroupsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceRunGroupsQuery.LeftJoin.
+func (t *InvoiceRunGroupsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceRunGroupsQuery.LeftJoinLateral.
+func (t *InvoiceRunGroupsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceRunGroupsQuery.JoinLateral.
+func (t *InvoiceRunGroupsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceRunGroupsQuery.Lock.
+func (t *InvoiceRunGroupsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceRunGroupsQuery.DistinctOn.
+func (t *InvoiceRunGroupsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceRunGroupsQuery.Cache.
+func (t *InvoiceRunGroupsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceRunGroupsQuery.LoadStrategy.
+func (t *InvoiceRunGroupsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceRunGroupsQuery.With.
+func (t *InvoiceRunGroupsTable) With(ctes ...*keel.CTETable) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceRunGroupsQuery.Compute.
+func (t *InvoiceRunGroupsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceRunGroupsTable) Create(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceRunGroupsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceRunGroupsTable) Save(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceRunGroupsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceRunGroupsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceRunGroupsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceRunGroupsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceRunGroupsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceRunGroupsQuery) Where(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceRunGroupsQuery) Pick(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceRunGroupsQuery) Omit(cols ...keel.Column) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceRunGroupsQuery) Load(ls ...keel.Loader) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceRunGroupsQuery) Order(os ...keel.Order) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceRunGroupsQuery) Distinct() keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceRunGroupsQuery) Group(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceRunGroupsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceRunGroupsQuery) Rollup(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceRunGroupsQuery) Cube(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceRunGroupsQuery) Window(name string, w keel.Window) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceRunGroupsQuery) Having(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceRunGroupsQuery) Limit(n int) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceRunGroupsQuery) Offset(n int) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceRunGroupsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceRunGroupsQuery) AllTenants() keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceRunGroupsQuery) CustomPlan() keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceRunGroupsQuery) Timeout(d time.Duration) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceRunGroupsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceRunGroupsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceRunGroupsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceRunGroupsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceRunGroupsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceRunGroupsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceRunGroupsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceRunGroupsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceRunGroupsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoicerun.InvoiceRunGroup] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceRunGroupsQuery) Clone() keel.Query[*invoicerun.InvoiceRunGroup] {
+	return &InvoiceRunGroupsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceRunGroupsQuery) One(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroup, error) {
+	return keel.One[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceRunGroupsQuery) First(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroup, error) {
+	return keel.First[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceRunGroupsQuery) List(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroup, error) {
+	return keel.List[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceRunGroupsQuery) All(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroup, error) {
+	return keel.All[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceRunGroupsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicerun.InvoiceRunGroup, error) {
+	return keel.UpdateReturning[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceRunGroupsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicerun.InvoiceRunGroup], error) {
+	return keel.PageOf[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceRunGroupsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicerun.InvoiceRunGroup) error) error {
+	return keel.Each[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoiceRunGroup() unsafe.Pointer { return unsafe.Pointer(new(invoicerun.InvoiceRunGroup)) }
@@ -747,7 +1466,7 @@ var invoiceRunGroupItemsRef = keel.Ref{Table: &invoiceRunGroupItemsTable}
 
 // InvoiceRunGroupItemsTable is the table of invoicerun.InvoiceRunGroupItem.
 type InvoiceRunGroupItemsTable struct {
-	keel.Handle[*invoicerun.InvoiceRunGroupItem]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -772,7 +1491,7 @@ type InvoiceRunGroupItemsTable struct {
 
 // InvoiceRunGroupItems references the invoice_run_group_items table.
 var InvoiceRunGroupItems = &InvoiceRunGroupItemsTable{
-	Handle:             keel.Handle[*invoicerun.InvoiceRunGroupItem]{Ref: &invoiceRunGroupItemsRef},
+	TableBase:          keel.TableBase{Ref: &invoiceRunGroupItemsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 2}}},
@@ -795,10 +1514,10 @@ var InvoiceRunGroupItems = &InvoiceRunGroupItemsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 19}},
 }
 
-// BuildInvoiceRunGroupItems builds the handle of invoice_run_group_items for ref. Generated relation and alias methods call it.
+// BuildInvoiceRunGroupItems builds the table of invoice_run_group_items for ref. Generated relation and alias methods call it.
 func BuildInvoiceRunGroupItems(r *keel.Ref) *InvoiceRunGroupItemsTable {
 	return &InvoiceRunGroupItemsTable{
-		Handle:             keel.Handle[*invoicerun.InvoiceRunGroupItem]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -830,14 +1549,373 @@ func (t *InvoiceRunGroupItemsTable) As(alias string) *InvoiceRunGroupItemsTable 
 	return keel.Alias(t.Ref, alias, BuildInvoiceRunGroupItems)
 }
 
-// Group is the belongs relation.
-func (t *InvoiceRunGroupItemsTable) Group() *InvoiceRunGroupsTable {
+// GroupRel is the belongs relation.
+func (t *InvoiceRunGroupItemsTable) GroupRel() *InvoiceRunGroupsTable {
 	return keel.Path(t.Ref, 0, BuildInvoiceRunGroups)
 }
 
 // Get returns the invoice_run_group_items row with the given key, or keel.ErrNotFound.
 func (t *InvoiceRunGroupItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*invoicerun.InvoiceRunGroupItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// InvoiceRunGroupItemsQuery is a query over invoicerun.InvoiceRunGroupItem.
+type InvoiceRunGroupItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*invoicerun.InvoiceRunGroupItem] = (*InvoiceRunGroupItemsTable)(nil)
+
+var _ keel.Query[*invoicerun.InvoiceRunGroupItem] = (*InvoiceRunGroupItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *InvoiceRunGroupItemsTable) Query() keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return &InvoiceRunGroupItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see InvoiceRunGroupItemsQuery.Where.
+func (t *InvoiceRunGroupItemsTable) Where(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see InvoiceRunGroupItemsQuery.Pick.
+func (t *InvoiceRunGroupItemsTable) Pick(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see InvoiceRunGroupItemsQuery.Load.
+func (t *InvoiceRunGroupItemsTable) Load(ls ...keel.Loader) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see InvoiceRunGroupItemsQuery.Omit.
+func (t *InvoiceRunGroupItemsTable) Omit(cols ...keel.Column) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see InvoiceRunGroupItemsQuery.Order.
+func (t *InvoiceRunGroupItemsTable) Order(os ...keel.Order) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see InvoiceRunGroupItemsQuery.Limit.
+func (t *InvoiceRunGroupItemsTable) Limit(n int) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see InvoiceRunGroupItemsQuery.Group.
+func (t *InvoiceRunGroupItemsTable) Group(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see InvoiceRunGroupItemsQuery.GroupingSets.
+func (t *InvoiceRunGroupItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see InvoiceRunGroupItemsQuery.Rollup.
+func (t *InvoiceRunGroupItemsTable) Rollup(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see InvoiceRunGroupItemsQuery.Cube.
+func (t *InvoiceRunGroupItemsTable) Cube(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see InvoiceRunGroupItemsQuery.AllTenants.
+func (t *InvoiceRunGroupItemsTable) AllTenants() keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see InvoiceRunGroupItemsQuery.Join.
+func (t *InvoiceRunGroupItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see InvoiceRunGroupItemsQuery.LeftJoin.
+func (t *InvoiceRunGroupItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see InvoiceRunGroupItemsQuery.LeftJoinLateral.
+func (t *InvoiceRunGroupItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see InvoiceRunGroupItemsQuery.JoinLateral.
+func (t *InvoiceRunGroupItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see InvoiceRunGroupItemsQuery.Lock.
+func (t *InvoiceRunGroupItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see InvoiceRunGroupItemsQuery.DistinctOn.
+func (t *InvoiceRunGroupItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see InvoiceRunGroupItemsQuery.Cache.
+func (t *InvoiceRunGroupItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see InvoiceRunGroupItemsQuery.LoadStrategy.
+func (t *InvoiceRunGroupItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see InvoiceRunGroupItemsQuery.With.
+func (t *InvoiceRunGroupItemsTable) With(ctes ...*keel.CTETable) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see InvoiceRunGroupItemsQuery.Compute.
+func (t *InvoiceRunGroupItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *InvoiceRunGroupItemsTable) Create(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *InvoiceRunGroupItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *InvoiceRunGroupItemsTable) Save(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *InvoiceRunGroupItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *InvoiceRunGroupItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *InvoiceRunGroupItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *InvoiceRunGroupItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *InvoiceRunGroupItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *InvoiceRunGroupItemsQuery) Where(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *InvoiceRunGroupItemsQuery) Pick(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *InvoiceRunGroupItemsQuery) Omit(cols ...keel.Column) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *InvoiceRunGroupItemsQuery) Load(ls ...keel.Loader) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *InvoiceRunGroupItemsQuery) Order(os ...keel.Order) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *InvoiceRunGroupItemsQuery) Distinct() keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *InvoiceRunGroupItemsQuery) Group(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *InvoiceRunGroupItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *InvoiceRunGroupItemsQuery) Rollup(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *InvoiceRunGroupItemsQuery) Cube(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *InvoiceRunGroupItemsQuery) Window(name string, w keel.Window) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *InvoiceRunGroupItemsQuery) Having(ps ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *InvoiceRunGroupItemsQuery) Limit(n int) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *InvoiceRunGroupItemsQuery) Offset(n int) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *InvoiceRunGroupItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *InvoiceRunGroupItemsQuery) AllTenants() keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *InvoiceRunGroupItemsQuery) CustomPlan() keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *InvoiceRunGroupItemsQuery) Timeout(d time.Duration) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *InvoiceRunGroupItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *InvoiceRunGroupItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *InvoiceRunGroupItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *InvoiceRunGroupItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *InvoiceRunGroupItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *InvoiceRunGroupItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *InvoiceRunGroupItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *InvoiceRunGroupItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *InvoiceRunGroupItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *InvoiceRunGroupItemsQuery) Clone() keel.Query[*invoicerun.InvoiceRunGroupItem] {
+	return &InvoiceRunGroupItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *InvoiceRunGroupItemsQuery) One(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroupItem, error) {
+	return keel.One[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *InvoiceRunGroupItemsQuery) First(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroupItem, error) {
+	return keel.First[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *InvoiceRunGroupItemsQuery) List(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroupItem, error) {
+	return keel.List[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *InvoiceRunGroupItemsQuery) All(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroupItem, error) {
+	return keel.All[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *InvoiceRunGroupItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicerun.InvoiceRunGroupItem, error) {
+	return keel.UpdateReturning[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *InvoiceRunGroupItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicerun.InvoiceRunGroupItem], error) {
+	return keel.PageOf[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *InvoiceRunGroupItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicerun.InvoiceRunGroupItem) error) error {
+	return keel.Each[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newInvoiceRunGroupItem() unsafe.Pointer {

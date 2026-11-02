@@ -1008,22 +1008,22 @@ func (g *cashPhase) cashBankReceipts(ctx context.Context, st *cashState) error {
 		return nil
 	}
 	if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batches); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptbatchdb.BankReceiptBatches, rows.batches); txErr != nil {
 			return fmt.Errorf("insert bank receipt batches: %w", txErr)
 		}
-		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receipts); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptdb.BankReceipts, rows.receipts); txErr != nil {
 			return fmt.Errorf("insert bank receipts: %w", txErr)
 		}
-		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.items); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, bankreceiptworkitemdb.WorkItems, rows.items); txErr != nil {
 			return fmt.Errorf("insert bank receipt work items: %w", txErr)
 		}
-		if txErr := volumegen.Backdate(ctx, tx, bankreceiptbatchdb.BankReceiptBatches.Handle, rows.batchStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, bankreceiptbatchdb.BankReceiptBatches, rows.batchStamps); txErr != nil {
 			return txErr
 		}
-		if txErr := volumegen.Backdate(ctx, tx, bankreceiptdb.BankReceipts.Handle, rows.receiptStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, bankreceiptdb.BankReceipts, rows.receiptStamps); txErr != nil {
 			return txErr
 		}
-		return volumegen.Backdate(ctx, tx, bankreceiptworkitemdb.WorkItems.Handle, rows.itemStamps)
+		return volumegen.Backdate(ctx, tx, bankreceiptworkitemdb.WorkItems, rows.itemStamps)
 	}); err != nil {
 		return err
 	}
@@ -1329,10 +1329,10 @@ func (g *cashPhase) cashLateCharges(ctx context.Context, st *cashState) error {
 		if txErr := g.Write(ctx, tx, rows); txErr != nil {
 			return txErr
 		}
-		if txErr := volumegen.InsertRows(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessments); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, latechargedb.LateChargeAssessments, assessments); txErr != nil {
 			return fmt.Errorf("insert late charge assessments: %w", txErr)
 		}
-		return volumegen.Backdate(ctx, tx, latechargedb.LateChargeAssessments.Handle, assessmentStamps)
+		return volumegen.Backdate(ctx, tx, latechargedb.LateChargeAssessments, assessmentStamps)
 	}); err != nil {
 		return err
 	}
@@ -1425,7 +1425,7 @@ func (g *cashPhase) cashReminders(ctx context.Context, st *cashState) error {
 		return nil
 	}
 	if err := g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := volumegen.InsertRows(ctx, tx, paymentreminderdb.Reminders.Handle, rows); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, paymentreminderdb.Reminders, rows); txErr != nil {
 			return fmt.Errorf("insert payment reminders: %w", txErr)
 		}
 		return nil
@@ -1502,7 +1502,7 @@ func (g *cashPhase) cashStatements(ctx context.Context, st *cashState) error {
 		return nil
 	}
 	if err := g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := volumegen.InsertRows(ctx, tx, customerstatementdb.Statements.Handle, rows); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, customerstatementdb.Statements, rows); txErr != nil {
 			return fmt.Errorf("insert customer statements: %w", txErr)
 		}
 		return nil
@@ -1713,13 +1713,13 @@ func (g *cashPhase) cashCollections(ctx context.Context, st *cashState) error {
 	}
 
 	if err := g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-		if txErr := volumegen.InsertRows(ctx, tx, collectiondb.Accounts.Handle, accounts); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, collectiondb.Accounts, accounts); txErr != nil {
 			return fmt.Errorf("insert collection accounts: %w", txErr)
 		}
-		if txErr := volumegen.InsertRows(ctx, tx, collectiondb.Activities.Handle, activities); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, collectiondb.Activities, activities); txErr != nil {
 			return fmt.Errorf("insert collection activities: %w", txErr)
 		}
-		return volumegen.Backdate(ctx, tx, collectiondb.Accounts.Handle, accountStamps)
+		return volumegen.Backdate(ctx, tx, collectiondb.Accounts, accountStamps)
 	}); err != nil {
 		return err
 	}
@@ -2043,20 +2043,20 @@ func (g *cashPhase) cashManualJournals(ctx context.Context, st *cashState) error
 				return txErr
 			}
 		}
-		if txErr := volumegen.InsertRows(ctx, tx, manualjournaldb.Requests.Handle, requests); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, manualjournaldb.Requests, requests); txErr != nil {
 			return fmt.Errorf("insert manual journal requests: %w", txErr)
 		}
-		if txErr := volumegen.InsertRows(ctx, tx, manualjournaldb.Lines.Handle, lines); txErr != nil {
+		if txErr := volumegen.InsertRows(ctx, tx, manualjournaldb.Lines, lines); txErr != nil {
 			return fmt.Errorf("insert manual journal lines: %w", txErr)
 		}
-		if txErr := volumegen.Backdate(ctx, tx, manualjournaldb.Requests.Handle, requestStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, manualjournaldb.Requests, requestStamps); txErr != nil {
 			return txErr
 		}
-		if txErr := volumegen.Backdate(ctx, tx, manualjournaldb.Lines.Handle, lineStamps); txErr != nil {
+		if txErr := volumegen.Backdate(ctx, tx, manualjournaldb.Lines, lineStamps); txErr != nil {
 			return txErr
 		}
 		if len(reversals.entities) > 0 {
-			if txErr := volumegen.InsertRows(ctx, tx, journalreversaldb.Reversals.Handle, reversals.entities); txErr != nil {
+			if txErr := volumegen.InsertRows(ctx, tx, journalreversaldb.Reversals, reversals.entities); txErr != nil {
 				return fmt.Errorf("insert journal reversals: %w", txErr)
 			}
 		}
@@ -2271,7 +2271,7 @@ func (g *cashPhase) cashMarkReversed(
 		je.ReversalDate.ToExpr(d.Col("reversal_date")),
 		je.ReversalReason.To(reversed[0].reason),
 		je.UpdatedByID.ToExpr(d.Col("user_id")),
-		volumegen.KeepUpdated(je.Handle),
+		volumegen.KeepUpdated(je),
 	); err != nil {
 		return fmt.Errorf("mark reversed journal entries: %w", err)
 	}
@@ -2343,7 +2343,7 @@ func (g *cashPhase) cashJournalsToPost(ctx context.Context, st *cashState) error
 			je.PostedByID.ToNull(),
 			je.RequiresApproval.To(!approved),
 			je.IsApproved.To(approved),
-			volumegen.KeepUpdated(je.Handle),
+			volumegen.KeepUpdated(je),
 		}
 		if !approved {
 			sets = append(sets, je.ApprovedAt.ToNull(), je.ApprovedByID.ToNull())
@@ -2359,7 +2359,7 @@ func (g *cashPhase) cashJournalsToPost(ctx context.Context, st *cashState) error
 				jb.Status.To(status),
 				jb.PostedAt.ToNull(),
 				jb.PostedByID.ToNull(),
-				volumegen.KeepUpdated(jb.Handle),
+				volumegen.KeepUpdated(jb),
 			); err != nil {
 				return fmt.Errorf("queue journal batches: %w", err)
 			}

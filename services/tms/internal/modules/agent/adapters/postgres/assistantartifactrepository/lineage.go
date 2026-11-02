@@ -264,7 +264,7 @@ func pageQuery(
 	req *assistantartifactports.ListArtifactsRequest,
 	cursor *lineageCursor,
 	limit int,
-) *keel.Query[*keel.Row] {
+) keel.Query[*keel.Row] {
 	root, pinned, last := lineages.Col("root"), lineages.Col("pinned"), lineages.Col("last")
 	window := lineages.Query().With(lineages)
 	if req.Family != "" {
@@ -334,7 +334,7 @@ func (r *repository) versionsOf(
 	return artifacts, nil
 }
 
-func summaryQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact] {
+func summaryQuery(req *versionsRequest) keel.Query[*assistantartifact.Artifact] {
 	a := assistantartifactdb.Artifacts
 
 	return versionsQuery(req).Pick(a.ID, summaryPayloadOf(a.Payload))
@@ -351,7 +351,7 @@ func summaryPayloadOf(payload keel.JSONBCol) keel.JSONBExpr {
 	return summary
 }
 
-func versionsQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact] {
+func versionsQuery(req *versionsRequest) keel.Query[*assistantartifact.Artifact] {
 	a := assistantartifactdb.Artifacts
 
 	return a.Where(

@@ -179,7 +179,7 @@ func (r *submissionRepository) SetDocuments(
 	})
 }
 
-func submissionWithItems() *keel.Query[*factoringsubmission.Submission] {
+func submissionWithItems() keel.Query[*factoringsubmission.Submission] {
 	s := factoringsubmissiondb.Submissions
 	items := s.Items()
 	return s.Load(items.Order(items.Position.Asc()))
@@ -252,7 +252,7 @@ func (r *submissionRepository) ListConnection(
 func submissionScope(
 	req *factoringsubmissionports.ListSubmissionConnectionRequest,
 	term string,
-) *keel.Query[*factoringsubmission.Submission] {
+) keel.Query[*factoringsubmission.Submission] {
 	s := factoringsubmissiondb.Submissions
 	items := s.Items()
 	return s.Where(
@@ -305,7 +305,7 @@ func (r *submissionRepository) ListLiveItems(
 
 func liveItems(
 	req *factoringsubmissionports.ListLiveItemsRequest,
-) *keel.Query[*factoringsubmission.SubmissionItem] {
+) keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringsubmissiondb.SubmissionItems
 	sub := factoringsubmissiondb.Submissions
 	return item.

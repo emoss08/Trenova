@@ -4,6 +4,7 @@ package storedmileagedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -75,7 +76,7 @@ var storedMileagesRef = keel.Ref{Table: &storedMileagesTable}
 
 // StoredMileagesTable is the table of storedmileage.StoredMileage.
 type StoredMileagesTable struct {
-	keel.Handle[*storedmileage.StoredMileage]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -110,7 +111,7 @@ type StoredMileagesTable struct {
 
 // StoredMileages references the stored_mileages table.
 var StoredMileages = &StoredMileagesTable{
-	Handle:                keel.Handle[*storedmileage.StoredMileage]{Ref: &storedMileagesRef},
+	TableBase:             keel.TableBase{Ref: &storedMileagesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &storedMileagesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &storedMileagesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &storedMileagesRef, Index: 2}}},
@@ -143,10 +144,10 @@ var StoredMileages = &StoredMileagesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &storedMileagesRef, Index: 29}},
 }
 
-// BuildStoredMileages builds the handle of stored_mileages for ref. Generated relation and alias methods call it.
+// BuildStoredMileages builds the table of stored_mileages for ref. Generated relation and alias methods call it.
 func BuildStoredMileages(r *keel.Ref) *StoredMileagesTable {
 	return &StoredMileagesTable{
-		Handle:                keel.Handle[*storedmileage.StoredMileage]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -191,6 +192,365 @@ func (t *StoredMileagesTable) As(alias string) *StoredMileagesTable {
 // Get returns the stored_mileages row with the given key, or keel.ErrNotFound.
 func (t *StoredMileagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*storedmileage.StoredMileage, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// StoredMileagesQuery is a query over storedmileage.StoredMileage.
+type StoredMileagesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*storedmileage.StoredMileage] = (*StoredMileagesTable)(nil)
+
+var _ keel.Query[*storedmileage.StoredMileage] = (*StoredMileagesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *StoredMileagesTable) Query() keel.Query[*storedmileage.StoredMileage] {
+	return &StoredMileagesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see StoredMileagesQuery.Where.
+func (t *StoredMileagesTable) Where(ps ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see StoredMileagesQuery.Pick.
+func (t *StoredMileagesTable) Pick(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see StoredMileagesQuery.Load.
+func (t *StoredMileagesTable) Load(ls ...keel.Loader) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see StoredMileagesQuery.Omit.
+func (t *StoredMileagesTable) Omit(cols ...keel.Column) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see StoredMileagesQuery.Order.
+func (t *StoredMileagesTable) Order(os ...keel.Order) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see StoredMileagesQuery.Limit.
+func (t *StoredMileagesTable) Limit(n int) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see StoredMileagesQuery.Group.
+func (t *StoredMileagesTable) Group(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see StoredMileagesQuery.GroupingSets.
+func (t *StoredMileagesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see StoredMileagesQuery.Rollup.
+func (t *StoredMileagesTable) Rollup(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see StoredMileagesQuery.Cube.
+func (t *StoredMileagesTable) Cube(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see StoredMileagesQuery.AllTenants.
+func (t *StoredMileagesTable) AllTenants() keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see StoredMileagesQuery.Join.
+func (t *StoredMileagesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see StoredMileagesQuery.LeftJoin.
+func (t *StoredMileagesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see StoredMileagesQuery.LeftJoinLateral.
+func (t *StoredMileagesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see StoredMileagesQuery.JoinLateral.
+func (t *StoredMileagesTable) JoinLateral(sub keel.LateralSource) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see StoredMileagesQuery.Lock.
+func (t *StoredMileagesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see StoredMileagesQuery.DistinctOn.
+func (t *StoredMileagesTable) DistinctOn(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see StoredMileagesQuery.Cache.
+func (t *StoredMileagesTable) Cache(opts ...keel.CacheOption) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see StoredMileagesQuery.LoadStrategy.
+func (t *StoredMileagesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see StoredMileagesQuery.With.
+func (t *StoredMileagesTable) With(ctes ...*keel.CTETable) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see StoredMileagesQuery.Compute.
+func (t *StoredMileagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *StoredMileagesTable) Create(ctx context.Context, db *keel.DB, row *storedmileage.StoredMileage) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *StoredMileagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*storedmileage.StoredMileage) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *StoredMileagesTable) Save(ctx context.Context, db *keel.DB, row *storedmileage.StoredMileage, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *StoredMileagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *storedmileage.StoredMileage, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *StoredMileagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *storedmileage.StoredMileage) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *StoredMileagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*storedmileage.StoredMileage, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *StoredMileagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*storedmileage.StoredMileage, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *StoredMileagesTable) Copy(ctx context.Context, db *keel.DB, rows []*storedmileage.StoredMileage) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *StoredMileagesQuery) Where(ps ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *StoredMileagesQuery) Pick(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *StoredMileagesQuery) Omit(cols ...keel.Column) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *StoredMileagesQuery) Load(ls ...keel.Loader) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *StoredMileagesQuery) Order(os ...keel.Order) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *StoredMileagesQuery) Distinct() keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *StoredMileagesQuery) Group(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *StoredMileagesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *StoredMileagesQuery) Rollup(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *StoredMileagesQuery) Cube(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *StoredMileagesQuery) Window(name string, w keel.Window) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *StoredMileagesQuery) Having(ps ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *StoredMileagesQuery) Limit(n int) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *StoredMileagesQuery) Offset(n int) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *StoredMileagesQuery) DistinctOn(es ...keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *StoredMileagesQuery) AllTenants() keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *StoredMileagesQuery) CustomPlan() keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *StoredMileagesQuery) Timeout(d time.Duration) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *StoredMileagesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *StoredMileagesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *StoredMileagesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *StoredMileagesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *StoredMileagesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *StoredMileagesQuery) Cache(opts ...keel.CacheOption) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *StoredMileagesQuery) With(ctes ...*keel.CTETable) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *StoredMileagesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *StoredMileagesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*storedmileage.StoredMileage] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *StoredMileagesQuery) Clone() keel.Query[*storedmileage.StoredMileage] {
+	return &StoredMileagesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *StoredMileagesQuery) One(ctx context.Context, db *keel.DB) (*storedmileage.StoredMileage, error) {
+	return keel.One[*storedmileage.StoredMileage](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *StoredMileagesQuery) First(ctx context.Context, db *keel.DB) (*storedmileage.StoredMileage, error) {
+	return keel.First[*storedmileage.StoredMileage](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *StoredMileagesQuery) List(ctx context.Context, db *keel.DB) ([]*storedmileage.StoredMileage, error) {
+	return keel.List[*storedmileage.StoredMileage](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *StoredMileagesQuery) All(ctx context.Context, db *keel.DB) ([]*storedmileage.StoredMileage, error) {
+	return keel.All[*storedmileage.StoredMileage](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *StoredMileagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*storedmileage.StoredMileage, error) {
+	return keel.UpdateReturning[*storedmileage.StoredMileage](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *StoredMileagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*storedmileage.StoredMileage], error) {
+	return keel.PageOf[*storedmileage.StoredMileage](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *StoredMileagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*storedmileage.StoredMileage) error) error {
+	return keel.Each[*storedmileage.StoredMileage](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newStoredMileage() unsafe.Pointer { return unsafe.Pointer(new(storedmileage.StoredMileage)) }

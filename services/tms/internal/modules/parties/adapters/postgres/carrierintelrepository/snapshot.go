@@ -389,7 +389,7 @@ func (r *snapshotRepository) ListReviewQueue(
 	)
 }
 
-func pruneHistoryQuery(keep int) *keel.Query[*carrierintelsnapshot.CarrierIntelSnapshot] {
+func pruneHistoryQuery(keep int) keel.Query[*carrierintelsnapshot.CarrierIntelSnapshot] {
 	s := carrierintelsnapshotdb.CarrierIntelSnapshots
 	h := s.As("history")
 	ranked := keel.CTE("ranked", []string{"id", "rn"}, h.Pick(
@@ -421,7 +421,7 @@ func (r *snapshotRepository) PruneHistory(
 
 func carrierSummaryUpdate(
 	req *carrierintelports.UpdateCarrierIntelSummaryRequest,
-) (*keel.Query[*carrier.Carrier], []keel.Assignment) {
+) (keel.Query[*carrier.Carrier], []keel.Assignment) {
 	c := carrierdb.Carriers
 	q := c.Where(
 		c.ID.Eq(req.CarrierID),

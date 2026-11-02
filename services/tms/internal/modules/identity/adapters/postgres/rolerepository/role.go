@@ -67,9 +67,9 @@ func New(p Params) permissionports.RoleRepository {
 
 func forTenant[T any](
 	ctx context.Context,
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	preds ...keel.Pred,
-) *keel.Query[*T] {
+) keel.Query[*T] {
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()
 	}
@@ -180,7 +180,7 @@ func (r *repository) GetByID(
 func rolesByIDs(
 	ctx context.Context,
 	req permissionports.GetRolesByIDsRequest,
-) *keel.Query[*rbac.Role] {
+) keel.Query[*rbac.Role] {
 	ro := rbacdb.Roles
 
 	return forTenant(
@@ -210,7 +210,7 @@ func (r *repository) GetByIDs(
 	})
 }
 
-func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) *keel.Query[*rbac.Role] {
+func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) keel.Query[*rbac.Role] {
 	ro := rbacdb.Roles
 	parent := ro.As(parentRoleAlias)
 	closure := keel.RecursiveCTE(
@@ -623,7 +623,7 @@ func (r *repository) ListOrphanedAssignments(
 	)
 }
 
-func orphanedAssignmentsQuery(now int64, limit int) *keel.Query[*rbac.UserRoleAssignment] {
+func orphanedAssignmentsQuery(now int64, limit int) keel.Query[*rbac.UserRoleAssignment] {
 	ura := rbacdb.UserRoleAssignments
 	o := tenantdb.Organizations
 	u := tenantdb.Users
@@ -804,7 +804,7 @@ func (r *repository) ListUsersWithPermission(
 
 func usersWithPermissionQuery(
 	req *permissionports.ListUsersWithPermissionRequest,
-) *keel.Query[*tenant.User] {
+) keel.Query[*tenant.User] {
 	ura := rbacdb.UserRoleAssignments
 	ro := rbacdb.Roles
 	parent := ro.As(parentRoleAlias)

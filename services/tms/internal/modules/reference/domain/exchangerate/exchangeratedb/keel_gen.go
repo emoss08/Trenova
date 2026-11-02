@@ -4,6 +4,7 @@ package exchangeratedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -62,7 +63,7 @@ var exchangeRatesRef = keel.Ref{Table: &exchangeRatesTable}
 
 // ExchangeRatesTable is the table of exchangerate.ExchangeRate.
 type ExchangeRatesTable struct {
-	keel.Handle[*exchangerate.ExchangeRate]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -82,7 +83,7 @@ type ExchangeRatesTable struct {
 
 // ExchangeRates references the exchange_rates table.
 var ExchangeRates = &ExchangeRatesTable{
-	Handle:             keel.Handle[*exchangerate.ExchangeRate]{Ref: &exchangeRatesRef},
+	TableBase:          keel.TableBase{Ref: &exchangeRatesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 2}}},
@@ -100,10 +101,10 @@ var ExchangeRates = &ExchangeRatesTable{
 	SettlementEligible: keel.BoolCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 14}},
 }
 
-// BuildExchangeRates builds the handle of exchange_rates for ref. Generated relation and alias methods call it.
+// BuildExchangeRates builds the table of exchange_rates for ref. Generated relation and alias methods call it.
 func BuildExchangeRates(r *keel.Ref) *ExchangeRatesTable {
 	return &ExchangeRatesTable{
-		Handle:             keel.Handle[*exchangerate.ExchangeRate]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -133,6 +134,365 @@ func (t *ExchangeRatesTable) As(alias string) *ExchangeRatesTable {
 // Get returns the exchange_rates row with the given key, or keel.ErrNotFound.
 func (t *ExchangeRatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*exchangerate.ExchangeRate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ExchangeRatesQuery is a query over exchangerate.ExchangeRate.
+type ExchangeRatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*exchangerate.ExchangeRate] = (*ExchangeRatesTable)(nil)
+
+var _ keel.Query[*exchangerate.ExchangeRate] = (*ExchangeRatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ExchangeRatesTable) Query() keel.Query[*exchangerate.ExchangeRate] {
+	return &ExchangeRatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ExchangeRatesQuery.Where.
+func (t *ExchangeRatesTable) Where(ps ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ExchangeRatesQuery.Pick.
+func (t *ExchangeRatesTable) Pick(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ExchangeRatesQuery.Load.
+func (t *ExchangeRatesTable) Load(ls ...keel.Loader) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ExchangeRatesQuery.Omit.
+func (t *ExchangeRatesTable) Omit(cols ...keel.Column) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ExchangeRatesQuery.Order.
+func (t *ExchangeRatesTable) Order(os ...keel.Order) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ExchangeRatesQuery.Limit.
+func (t *ExchangeRatesTable) Limit(n int) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ExchangeRatesQuery.Group.
+func (t *ExchangeRatesTable) Group(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ExchangeRatesQuery.GroupingSets.
+func (t *ExchangeRatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ExchangeRatesQuery.Rollup.
+func (t *ExchangeRatesTable) Rollup(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ExchangeRatesQuery.Cube.
+func (t *ExchangeRatesTable) Cube(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ExchangeRatesQuery.AllTenants.
+func (t *ExchangeRatesTable) AllTenants() keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ExchangeRatesQuery.Join.
+func (t *ExchangeRatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ExchangeRatesQuery.LeftJoin.
+func (t *ExchangeRatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ExchangeRatesQuery.LeftJoinLateral.
+func (t *ExchangeRatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ExchangeRatesQuery.JoinLateral.
+func (t *ExchangeRatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ExchangeRatesQuery.Lock.
+func (t *ExchangeRatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ExchangeRatesQuery.DistinctOn.
+func (t *ExchangeRatesTable) DistinctOn(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ExchangeRatesQuery.Cache.
+func (t *ExchangeRatesTable) Cache(opts ...keel.CacheOption) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ExchangeRatesQuery.LoadStrategy.
+func (t *ExchangeRatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ExchangeRatesQuery.With.
+func (t *ExchangeRatesTable) With(ctes ...*keel.CTETable) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ExchangeRatesQuery.Compute.
+func (t *ExchangeRatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ExchangeRatesTable) Create(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ExchangeRatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ExchangeRatesTable) Save(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ExchangeRatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ExchangeRatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ExchangeRatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ExchangeRatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ExchangeRatesTable) Copy(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ExchangeRatesQuery) Where(ps ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ExchangeRatesQuery) Pick(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ExchangeRatesQuery) Omit(cols ...keel.Column) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ExchangeRatesQuery) Load(ls ...keel.Loader) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ExchangeRatesQuery) Order(os ...keel.Order) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ExchangeRatesQuery) Distinct() keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ExchangeRatesQuery) Group(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ExchangeRatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ExchangeRatesQuery) Rollup(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ExchangeRatesQuery) Cube(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ExchangeRatesQuery) Window(name string, w keel.Window) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ExchangeRatesQuery) Having(ps ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ExchangeRatesQuery) Limit(n int) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ExchangeRatesQuery) Offset(n int) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ExchangeRatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ExchangeRatesQuery) AllTenants() keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ExchangeRatesQuery) CustomPlan() keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ExchangeRatesQuery) Timeout(d time.Duration) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ExchangeRatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ExchangeRatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ExchangeRatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ExchangeRatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ExchangeRatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ExchangeRatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ExchangeRatesQuery) With(ctes ...*keel.CTETable) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ExchangeRatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ExchangeRatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*exchangerate.ExchangeRate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ExchangeRatesQuery) Clone() keel.Query[*exchangerate.ExchangeRate] {
+	return &ExchangeRatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ExchangeRatesQuery) One(ctx context.Context, db *keel.DB) (*exchangerate.ExchangeRate, error) {
+	return keel.One[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ExchangeRatesQuery) First(ctx context.Context, db *keel.DB) (*exchangerate.ExchangeRate, error) {
+	return keel.First[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ExchangeRatesQuery) List(ctx context.Context, db *keel.DB) ([]*exchangerate.ExchangeRate, error) {
+	return keel.List[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ExchangeRatesQuery) All(ctx context.Context, db *keel.DB) ([]*exchangerate.ExchangeRate, error) {
+	return keel.All[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ExchangeRatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*exchangerate.ExchangeRate, error) {
+	return keel.UpdateReturning[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ExchangeRatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*exchangerate.ExchangeRate], error) {
+	return keel.PageOf[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ExchangeRatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*exchangerate.ExchangeRate) error) error {
+	return keel.Each[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newExchangeRate() unsafe.Pointer { return unsafe.Pointer(new(exchangerate.ExchangeRate)) }
@@ -269,7 +629,7 @@ var settlementQuotesRef = keel.Ref{Table: &settlementQuotesTable}
 
 // SettlementQuotesTable is the table of exchangerate.SettlementQuote.
 type SettlementQuotesTable struct {
-	keel.Handle[*exchangerate.SettlementQuote]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -287,7 +647,7 @@ type SettlementQuotesTable struct {
 
 // SettlementQuotes references the exchange_rate_settlement_quotes table.
 var SettlementQuotes = &SettlementQuotesTable{
-	Handle:          keel.Handle[*exchangerate.SettlementQuote]{Ref: &settlementQuotesRef},
+	TableBase:       keel.TableBase{Ref: &settlementQuotesRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 2}}},
@@ -303,10 +663,10 @@ var SettlementQuotes = &SettlementQuotesTable{
 	ExpiresAt:       keel.TimeCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 12}},
 }
 
-// BuildSettlementQuotes builds the handle of exchange_rate_settlement_quotes for ref. Generated relation and alias methods call it.
+// BuildSettlementQuotes builds the table of exchange_rate_settlement_quotes for ref. Generated relation and alias methods call it.
 func BuildSettlementQuotes(r *keel.Ref) *SettlementQuotesTable {
 	return &SettlementQuotesTable{
-		Handle:          keel.Handle[*exchangerate.SettlementQuote]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -334,6 +694,365 @@ func (t *SettlementQuotesTable) As(alias string) *SettlementQuotesTable {
 // Get returns the exchange_rate_settlement_quotes row with the given key, or keel.ErrNotFound.
 func (t *SettlementQuotesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*exchangerate.SettlementQuote, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SettlementQuotesQuery is a query over exchangerate.SettlementQuote.
+type SettlementQuotesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*exchangerate.SettlementQuote] = (*SettlementQuotesTable)(nil)
+
+var _ keel.Query[*exchangerate.SettlementQuote] = (*SettlementQuotesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SettlementQuotesTable) Query() keel.Query[*exchangerate.SettlementQuote] {
+	return &SettlementQuotesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SettlementQuotesQuery.Where.
+func (t *SettlementQuotesTable) Where(ps ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SettlementQuotesQuery.Pick.
+func (t *SettlementQuotesTable) Pick(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SettlementQuotesQuery.Load.
+func (t *SettlementQuotesTable) Load(ls ...keel.Loader) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SettlementQuotesQuery.Omit.
+func (t *SettlementQuotesTable) Omit(cols ...keel.Column) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SettlementQuotesQuery.Order.
+func (t *SettlementQuotesTable) Order(os ...keel.Order) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SettlementQuotesQuery.Limit.
+func (t *SettlementQuotesTable) Limit(n int) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SettlementQuotesQuery.Group.
+func (t *SettlementQuotesTable) Group(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SettlementQuotesQuery.GroupingSets.
+func (t *SettlementQuotesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SettlementQuotesQuery.Rollup.
+func (t *SettlementQuotesTable) Rollup(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SettlementQuotesQuery.Cube.
+func (t *SettlementQuotesTable) Cube(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SettlementQuotesQuery.AllTenants.
+func (t *SettlementQuotesTable) AllTenants() keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SettlementQuotesQuery.Join.
+func (t *SettlementQuotesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SettlementQuotesQuery.LeftJoin.
+func (t *SettlementQuotesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SettlementQuotesQuery.LeftJoinLateral.
+func (t *SettlementQuotesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SettlementQuotesQuery.JoinLateral.
+func (t *SettlementQuotesTable) JoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SettlementQuotesQuery.Lock.
+func (t *SettlementQuotesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SettlementQuotesQuery.DistinctOn.
+func (t *SettlementQuotesTable) DistinctOn(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SettlementQuotesQuery.Cache.
+func (t *SettlementQuotesTable) Cache(opts ...keel.CacheOption) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SettlementQuotesQuery.LoadStrategy.
+func (t *SettlementQuotesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SettlementQuotesQuery.With.
+func (t *SettlementQuotesTable) With(ctes ...*keel.CTETable) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SettlementQuotesQuery.Compute.
+func (t *SettlementQuotesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SettlementQuotesTable) Create(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SettlementQuotesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SettlementQuotesTable) Save(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SettlementQuotesTable) SaveExcept(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SettlementQuotesTable) DeleteRow(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SettlementQuotesTable) Upsert(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SettlementQuotesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SettlementQuotesTable) Copy(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SettlementQuotesQuery) Where(ps ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SettlementQuotesQuery) Pick(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SettlementQuotesQuery) Omit(cols ...keel.Column) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SettlementQuotesQuery) Load(ls ...keel.Loader) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SettlementQuotesQuery) Order(os ...keel.Order) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SettlementQuotesQuery) Distinct() keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SettlementQuotesQuery) Group(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SettlementQuotesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SettlementQuotesQuery) Rollup(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SettlementQuotesQuery) Cube(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SettlementQuotesQuery) Window(name string, w keel.Window) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SettlementQuotesQuery) Having(ps ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SettlementQuotesQuery) Limit(n int) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SettlementQuotesQuery) Offset(n int) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SettlementQuotesQuery) DistinctOn(es ...keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SettlementQuotesQuery) AllTenants() keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SettlementQuotesQuery) CustomPlan() keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SettlementQuotesQuery) Timeout(d time.Duration) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SettlementQuotesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SettlementQuotesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SettlementQuotesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SettlementQuotesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SettlementQuotesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SettlementQuotesQuery) Cache(opts ...keel.CacheOption) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SettlementQuotesQuery) With(ctes ...*keel.CTETable) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SettlementQuotesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SettlementQuotesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*exchangerate.SettlementQuote] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SettlementQuotesQuery) Clone() keel.Query[*exchangerate.SettlementQuote] {
+	return &SettlementQuotesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SettlementQuotesQuery) One(ctx context.Context, db *keel.DB) (*exchangerate.SettlementQuote, error) {
+	return keel.One[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SettlementQuotesQuery) First(ctx context.Context, db *keel.DB) (*exchangerate.SettlementQuote, error) {
+	return keel.First[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SettlementQuotesQuery) List(ctx context.Context, db *keel.DB) ([]*exchangerate.SettlementQuote, error) {
+	return keel.List[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SettlementQuotesQuery) All(ctx context.Context, db *keel.DB) ([]*exchangerate.SettlementQuote, error) {
+	return keel.All[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SettlementQuotesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*exchangerate.SettlementQuote, error) {
+	return keel.UpdateReturning[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SettlementQuotesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*exchangerate.SettlementQuote], error) {
+	return keel.PageOf[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SettlementQuotesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*exchangerate.SettlementQuote) error) error {
+	return keel.Each[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSettlementQuote() unsafe.Pointer { return unsafe.Pointer(new(exchangerate.SettlementQuote)) }

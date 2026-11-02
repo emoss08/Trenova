@@ -224,10 +224,10 @@ func (b *cvBuilder) seedProfiles(ctx context.Context, tx *keel.DB) error {
 		p.Version = 1
 		stamps = append(stamps, volumegen.Stamp{Id: p.ID, Created: created, Updated: created})
 	}
-	if err = volumegen.InsertRows(ctx, tx, cp.Handle, defs); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, cp, defs); err != nil {
 		return err
 	}
-	if err = volumegen.Backdate(ctx, tx, cp.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, cp, stamps); err != nil {
 		return err
 	}
 	b.profiles = defs
@@ -301,10 +301,10 @@ func (b *cvBuilder) seedDevices(ctx context.Context, tx *keel.DB) error {
 		rows = append(rows, d)
 		stamps = append(stamps, volumegen.Stamp{Id: id, Created: created, Updated: updated})
 	}
-	if err := volumegen.InsertRows(ctx, tx, capturedb.CaptureDevices.Handle, rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, capturedb.CaptureDevices, rows); err != nil {
 		return err
 	}
-	if err := volumegen.Backdate(ctx, tx, capturedb.CaptureDevices.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, capturedb.CaptureDevices, stamps); err != nil {
 		return err
 	}
 	b.counts[cvTableDevices] += len(rows)
@@ -316,22 +316,22 @@ func (b *cvBuilder) write(ctx context.Context, tx *keel.DB) error {
 	batch := b.batch
 	steps := []func() error{
 		func() error {
-			return volumegen.InsertRows(ctx, tx, documentdb.Documents.Handle, batch.docs)
+			return volumegen.InsertRows(ctx, tx, documentdb.Documents, batch.docs)
 		},
 		func() error {
-			return volumegen.InsertRows(ctx, tx, capturedb.CaptureBatches.Handle, batch.batches)
+			return volumegen.InsertRows(ctx, tx, capturedb.CaptureBatches, batch.batches)
 		},
 		func() error {
-			return volumegen.InsertRows(ctx, tx, capturedb.CapturePages.Handle, batch.pages)
+			return volumegen.InsertRows(ctx, tx, capturedb.CapturePages, batch.pages)
 		},
 		func() error {
-			return volumegen.InsertRows(ctx, tx, capturedb.CaptureItems.Handle, batch.items)
+			return volumegen.InsertRows(ctx, tx, capturedb.CaptureItems, batch.items)
 		},
 		func() error {
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				capturerequestdb.CaptureRequests.Handle,
+				capturerequestdb.CaptureRequests,
 				batch.requests,
 			)
 		},
@@ -339,7 +339,7 @@ func (b *cvBuilder) write(ctx context.Context, tx *keel.DB) error {
 			return volumegen.Backdate(
 				ctx,
 				tx,
-				documentdb.Documents.Handle,
+				documentdb.Documents,
 				batch.stamps[cvTableDocs],
 			)
 		},
@@ -347,7 +347,7 @@ func (b *cvBuilder) write(ctx context.Context, tx *keel.DB) error {
 			return volumegen.Backdate(
 				ctx,
 				tx,
-				capturedb.CaptureBatches.Handle,
+				capturedb.CaptureBatches,
 				batch.stamps[cvTableBatches],
 			)
 		},
@@ -355,7 +355,7 @@ func (b *cvBuilder) write(ctx context.Context, tx *keel.DB) error {
 			return volumegen.Backdate(
 				ctx,
 				tx,
-				capturedb.CapturePages.Handle,
+				capturedb.CapturePages,
 				batch.stamps[cvTablePages],
 			)
 		},
@@ -363,7 +363,7 @@ func (b *cvBuilder) write(ctx context.Context, tx *keel.DB) error {
 			return volumegen.Backdate(
 				ctx,
 				tx,
-				capturedb.CaptureItems.Handle,
+				capturedb.CaptureItems,
 				batch.stamps[cvTableItems],
 			)
 		},
@@ -371,7 +371,7 @@ func (b *cvBuilder) write(ctx context.Context, tx *keel.DB) error {
 			return volumegen.Backdate(
 				ctx,
 				tx,
-				capturerequestdb.CaptureRequests.Handle,
+				capturerequestdb.CaptureRequests,
 				batch.stamps[cvTableRequests],
 			)
 		},

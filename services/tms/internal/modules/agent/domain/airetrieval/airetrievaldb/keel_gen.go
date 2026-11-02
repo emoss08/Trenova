@@ -4,6 +4,7 @@ package airetrievaldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -52,7 +53,7 @@ var catalogEmbeddingsRef = keel.Ref{Table: &catalogEmbeddingsTable}
 
 // CatalogEmbeddingsTable is the table of airetrieval.CatalogEmbedding.
 type CatalogEmbeddingsTable struct {
-	keel.Handle[*airetrieval.CatalogEmbedding]
+	keel.TableBase
 	ModelKey    keel.StringCol
 	Corpus      CatalogCorpusCol
 	ItemKey     keel.StringCol
@@ -64,7 +65,7 @@ type CatalogEmbeddingsTable struct {
 
 // CatalogEmbeddings references the ai_catalog_embeddings table.
 var CatalogEmbeddings = &CatalogEmbeddingsTable{
-	Handle:      keel.Handle[*airetrieval.CatalogEmbedding]{Ref: &catalogEmbeddingsRef},
+	TableBase:   keel.TableBase{Ref: &catalogEmbeddingsRef},
 	ModelKey:    keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 0}},
 	Corpus:      CatalogCorpusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 1}}},
 	ItemKey:     keel.StringCol{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 2}},
@@ -74,10 +75,10 @@ var CatalogEmbeddings = &CatalogEmbeddingsTable{
 	CreatedAt:   keel.Int64Col{Col: keel.Col{Ref: &catalogEmbeddingsRef, Index: 6}},
 }
 
-// BuildCatalogEmbeddings builds the handle of ai_catalog_embeddings for ref. Generated relation and alias methods call it.
+// BuildCatalogEmbeddings builds the table of ai_catalog_embeddings for ref. Generated relation and alias methods call it.
 func BuildCatalogEmbeddings(r *keel.Ref) *CatalogEmbeddingsTable {
 	return &CatalogEmbeddingsTable{
-		Handle:      keel.Handle[*airetrieval.CatalogEmbedding]{Ref: r},
+		TableBase:   keel.TableBase{Ref: r},
 		ModelKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 0}},
 		Corpus:      CatalogCorpusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ItemKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -94,6 +95,365 @@ func CatalogEmbeddingsSchema() *schema.Table { return &catalogEmbeddingsTable }
 // As returns a handle that references ai_catalog_embeddings under its own alias.
 func (t *CatalogEmbeddingsTable) As(alias string) *CatalogEmbeddingsTable {
 	return keel.Alias(t.Ref, alias, BuildCatalogEmbeddings)
+}
+
+// CatalogEmbeddingsQuery is a query over airetrieval.CatalogEmbedding.
+type CatalogEmbeddingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*airetrieval.CatalogEmbedding] = (*CatalogEmbeddingsTable)(nil)
+
+var _ keel.Query[*airetrieval.CatalogEmbedding] = (*CatalogEmbeddingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CatalogEmbeddingsTable) Query() keel.Query[*airetrieval.CatalogEmbedding] {
+	return &CatalogEmbeddingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CatalogEmbeddingsQuery.Where.
+func (t *CatalogEmbeddingsTable) Where(ps ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CatalogEmbeddingsQuery.Pick.
+func (t *CatalogEmbeddingsTable) Pick(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CatalogEmbeddingsQuery.Load.
+func (t *CatalogEmbeddingsTable) Load(ls ...keel.Loader) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CatalogEmbeddingsQuery.Omit.
+func (t *CatalogEmbeddingsTable) Omit(cols ...keel.Column) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CatalogEmbeddingsQuery.Order.
+func (t *CatalogEmbeddingsTable) Order(os ...keel.Order) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CatalogEmbeddingsQuery.Limit.
+func (t *CatalogEmbeddingsTable) Limit(n int) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CatalogEmbeddingsQuery.Group.
+func (t *CatalogEmbeddingsTable) Group(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CatalogEmbeddingsQuery.GroupingSets.
+func (t *CatalogEmbeddingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CatalogEmbeddingsQuery.Rollup.
+func (t *CatalogEmbeddingsTable) Rollup(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CatalogEmbeddingsQuery.Cube.
+func (t *CatalogEmbeddingsTable) Cube(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CatalogEmbeddingsQuery.AllTenants.
+func (t *CatalogEmbeddingsTable) AllTenants() keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CatalogEmbeddingsQuery.Join.
+func (t *CatalogEmbeddingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CatalogEmbeddingsQuery.LeftJoin.
+func (t *CatalogEmbeddingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CatalogEmbeddingsQuery.LeftJoinLateral.
+func (t *CatalogEmbeddingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CatalogEmbeddingsQuery.JoinLateral.
+func (t *CatalogEmbeddingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CatalogEmbeddingsQuery.Lock.
+func (t *CatalogEmbeddingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CatalogEmbeddingsQuery.DistinctOn.
+func (t *CatalogEmbeddingsTable) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CatalogEmbeddingsQuery.Cache.
+func (t *CatalogEmbeddingsTable) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CatalogEmbeddingsQuery.LoadStrategy.
+func (t *CatalogEmbeddingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CatalogEmbeddingsQuery.With.
+func (t *CatalogEmbeddingsTable) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CatalogEmbeddingsQuery.Compute.
+func (t *CatalogEmbeddingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CatalogEmbeddingsTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CatalogEmbeddingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CatalogEmbeddingsTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CatalogEmbeddingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CatalogEmbeddingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.CatalogEmbedding) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CatalogEmbeddingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CatalogEmbeddingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CatalogEmbeddingsTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.CatalogEmbedding) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CatalogEmbeddingsQuery) Where(ps ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CatalogEmbeddingsQuery) Pick(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CatalogEmbeddingsQuery) Omit(cols ...keel.Column) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CatalogEmbeddingsQuery) Load(ls ...keel.Loader) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CatalogEmbeddingsQuery) Order(os ...keel.Order) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CatalogEmbeddingsQuery) Distinct() keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CatalogEmbeddingsQuery) Group(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CatalogEmbeddingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CatalogEmbeddingsQuery) Rollup(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CatalogEmbeddingsQuery) Cube(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CatalogEmbeddingsQuery) Window(name string, w keel.Window) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CatalogEmbeddingsQuery) Having(ps ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CatalogEmbeddingsQuery) Limit(n int) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CatalogEmbeddingsQuery) Offset(n int) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CatalogEmbeddingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CatalogEmbeddingsQuery) AllTenants() keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CatalogEmbeddingsQuery) CustomPlan() keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CatalogEmbeddingsQuery) Timeout(d time.Duration) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CatalogEmbeddingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CatalogEmbeddingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CatalogEmbeddingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CatalogEmbeddingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CatalogEmbeddingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CatalogEmbeddingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CatalogEmbeddingsQuery) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CatalogEmbeddingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CatalogEmbeddingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.CatalogEmbedding] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CatalogEmbeddingsQuery) Clone() keel.Query[*airetrieval.CatalogEmbedding] {
+	return &CatalogEmbeddingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CatalogEmbeddingsQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.CatalogEmbedding, error) {
+	return keel.One[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CatalogEmbeddingsQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.CatalogEmbedding, error) {
+	return keel.First[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CatalogEmbeddingsQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.CatalogEmbedding, error) {
+	return keel.List[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CatalogEmbeddingsQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.CatalogEmbedding, error) {
+	return keel.All[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CatalogEmbeddingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.CatalogEmbedding, error) {
+	return keel.UpdateReturning[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CatalogEmbeddingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.CatalogEmbedding], error) {
+	return keel.PageOf[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CatalogEmbeddingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.CatalogEmbedding) error) error {
+	return keel.Each[*airetrieval.CatalogEmbedding](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCatalogEmbedding() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.CatalogEmbedding)) }
@@ -187,7 +547,7 @@ var embeddingsRef = keel.Ref{Table: &embeddingsTable}
 
 // EmbeddingsTable is the table of airetrieval.Embedding.
 type EmbeddingsTable struct {
-	keel.Handle[*airetrieval.Embedding]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	SourceType     SourceTypeCol
@@ -203,7 +563,7 @@ type EmbeddingsTable struct {
 
 // Embeddings references the ai_embeddings table.
 var Embeddings = &EmbeddingsTable{
-	Handle:         keel.Handle[*airetrieval.Embedding]{Ref: &embeddingsRef},
+	TableBase:      keel.TableBase{Ref: &embeddingsRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 1}}},
 	SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &embeddingsRef, Index: 2}}},
@@ -217,10 +577,10 @@ var Embeddings = &EmbeddingsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &embeddingsRef, Index: 10}},
 }
 
-// BuildEmbeddings builds the handle of ai_embeddings for ref. Generated relation and alias methods call it.
+// BuildEmbeddings builds the table of ai_embeddings for ref. Generated relation and alias methods call it.
 func BuildEmbeddings(r *keel.Ref) *EmbeddingsTable {
 	return &EmbeddingsTable{
-		Handle:         keel.Handle[*airetrieval.Embedding]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -241,6 +601,365 @@ func EmbeddingsSchema() *schema.Table { return &embeddingsTable }
 // As returns a handle that references ai_embeddings under its own alias.
 func (t *EmbeddingsTable) As(alias string) *EmbeddingsTable {
 	return keel.Alias(t.Ref, alias, BuildEmbeddings)
+}
+
+// EmbeddingsQuery is a query over airetrieval.Embedding.
+type EmbeddingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*airetrieval.Embedding] = (*EmbeddingsTable)(nil)
+
+var _ keel.Query[*airetrieval.Embedding] = (*EmbeddingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *EmbeddingsTable) Query() keel.Query[*airetrieval.Embedding] {
+	return &EmbeddingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see EmbeddingsQuery.Where.
+func (t *EmbeddingsTable) Where(ps ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see EmbeddingsQuery.Pick.
+func (t *EmbeddingsTable) Pick(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see EmbeddingsQuery.Load.
+func (t *EmbeddingsTable) Load(ls ...keel.Loader) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see EmbeddingsQuery.Omit.
+func (t *EmbeddingsTable) Omit(cols ...keel.Column) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see EmbeddingsQuery.Order.
+func (t *EmbeddingsTable) Order(os ...keel.Order) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see EmbeddingsQuery.Limit.
+func (t *EmbeddingsTable) Limit(n int) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see EmbeddingsQuery.Group.
+func (t *EmbeddingsTable) Group(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see EmbeddingsQuery.GroupingSets.
+func (t *EmbeddingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see EmbeddingsQuery.Rollup.
+func (t *EmbeddingsTable) Rollup(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see EmbeddingsQuery.Cube.
+func (t *EmbeddingsTable) Cube(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see EmbeddingsQuery.AllTenants.
+func (t *EmbeddingsTable) AllTenants() keel.Query[*airetrieval.Embedding] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see EmbeddingsQuery.Join.
+func (t *EmbeddingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see EmbeddingsQuery.LeftJoin.
+func (t *EmbeddingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see EmbeddingsQuery.LeftJoinLateral.
+func (t *EmbeddingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Embedding] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see EmbeddingsQuery.JoinLateral.
+func (t *EmbeddingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Embedding] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see EmbeddingsQuery.Lock.
+func (t *EmbeddingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see EmbeddingsQuery.DistinctOn.
+func (t *EmbeddingsTable) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see EmbeddingsQuery.Cache.
+func (t *EmbeddingsTable) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see EmbeddingsQuery.LoadStrategy.
+func (t *EmbeddingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.Embedding] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see EmbeddingsQuery.With.
+func (t *EmbeddingsTable) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.Embedding] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see EmbeddingsQuery.Compute.
+func (t *EmbeddingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.Embedding] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *EmbeddingsTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.Embedding) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *EmbeddingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *EmbeddingsTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.Embedding, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *EmbeddingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.Embedding, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *EmbeddingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.Embedding) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *EmbeddingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *EmbeddingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *EmbeddingsTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.Embedding) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *EmbeddingsQuery) Where(ps ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *EmbeddingsQuery) Pick(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *EmbeddingsQuery) Omit(cols ...keel.Column) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *EmbeddingsQuery) Load(ls ...keel.Loader) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *EmbeddingsQuery) Order(os ...keel.Order) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *EmbeddingsQuery) Distinct() keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *EmbeddingsQuery) Group(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *EmbeddingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *EmbeddingsQuery) Rollup(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *EmbeddingsQuery) Cube(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *EmbeddingsQuery) Window(name string, w keel.Window) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *EmbeddingsQuery) Having(ps ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *EmbeddingsQuery) Limit(n int) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *EmbeddingsQuery) Offset(n int) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *EmbeddingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *EmbeddingsQuery) AllTenants() keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *EmbeddingsQuery) CustomPlan() keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *EmbeddingsQuery) Timeout(d time.Duration) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *EmbeddingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *EmbeddingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *EmbeddingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *EmbeddingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *EmbeddingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *EmbeddingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *EmbeddingsQuery) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *EmbeddingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *EmbeddingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.Embedding] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *EmbeddingsQuery) Clone() keel.Query[*airetrieval.Embedding] {
+	return &EmbeddingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *EmbeddingsQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.Embedding, error) {
+	return keel.One[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *EmbeddingsQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.Embedding, error) {
+	return keel.First[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *EmbeddingsQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.Embedding, error) {
+	return keel.List[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *EmbeddingsQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.Embedding, error) {
+	return keel.All[*airetrieval.Embedding](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *EmbeddingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.Embedding, error) {
+	return keel.UpdateReturning[*airetrieval.Embedding](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *EmbeddingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.Embedding], error) {
+	return keel.PageOf[*airetrieval.Embedding](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *EmbeddingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.Embedding) error) error {
+	return keel.Each[*airetrieval.Embedding](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newEmbedding() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.Embedding)) }
@@ -356,7 +1075,7 @@ var indexEntriesRef = keel.Ref{Table: &indexEntriesTable}
 
 // IndexEntriesTable is the table of airetrieval.IndexEntry.
 type IndexEntriesTable struct {
-	keel.Handle[*airetrieval.IndexEntry]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	SourceType     SourceTypeCol
@@ -377,7 +1096,7 @@ type IndexEntriesTable struct {
 
 // IndexEntries references the ai_index_entries table.
 var IndexEntries = &IndexEntriesTable{
-	Handle:         keel.Handle[*airetrieval.IndexEntry]{Ref: &indexEntriesRef},
+	TableBase:      keel.TableBase{Ref: &indexEntriesRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 1}}},
 	SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &indexEntriesRef, Index: 2}}},
@@ -396,10 +1115,10 @@ var IndexEntries = &IndexEntriesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &indexEntriesRef, Index: 15}},
 }
 
-// BuildIndexEntries builds the handle of ai_index_entries for ref. Generated relation and alias methods call it.
+// BuildIndexEntries builds the table of ai_index_entries for ref. Generated relation and alias methods call it.
 func BuildIndexEntries(r *keel.Ref) *IndexEntriesTable {
 	return &IndexEntriesTable{
-		Handle:         keel.Handle[*airetrieval.IndexEntry]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		SourceType:     SourceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -425,6 +1144,365 @@ func IndexEntriesSchema() *schema.Table { return &indexEntriesTable }
 // As returns a handle that references ai_index_entries under its own alias.
 func (t *IndexEntriesTable) As(alias string) *IndexEntriesTable {
 	return keel.Alias(t.Ref, alias, BuildIndexEntries)
+}
+
+// IndexEntriesQuery is a query over airetrieval.IndexEntry.
+type IndexEntriesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*airetrieval.IndexEntry] = (*IndexEntriesTable)(nil)
+
+var _ keel.Query[*airetrieval.IndexEntry] = (*IndexEntriesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *IndexEntriesTable) Query() keel.Query[*airetrieval.IndexEntry] {
+	return &IndexEntriesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see IndexEntriesQuery.Where.
+func (t *IndexEntriesTable) Where(ps ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see IndexEntriesQuery.Pick.
+func (t *IndexEntriesTable) Pick(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see IndexEntriesQuery.Load.
+func (t *IndexEntriesTable) Load(ls ...keel.Loader) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see IndexEntriesQuery.Omit.
+func (t *IndexEntriesTable) Omit(cols ...keel.Column) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see IndexEntriesQuery.Order.
+func (t *IndexEntriesTable) Order(os ...keel.Order) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see IndexEntriesQuery.Limit.
+func (t *IndexEntriesTable) Limit(n int) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see IndexEntriesQuery.Group.
+func (t *IndexEntriesTable) Group(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see IndexEntriesQuery.GroupingSets.
+func (t *IndexEntriesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see IndexEntriesQuery.Rollup.
+func (t *IndexEntriesTable) Rollup(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see IndexEntriesQuery.Cube.
+func (t *IndexEntriesTable) Cube(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see IndexEntriesQuery.AllTenants.
+func (t *IndexEntriesTable) AllTenants() keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see IndexEntriesQuery.Join.
+func (t *IndexEntriesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see IndexEntriesQuery.LeftJoin.
+func (t *IndexEntriesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see IndexEntriesQuery.LeftJoinLateral.
+func (t *IndexEntriesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see IndexEntriesQuery.JoinLateral.
+func (t *IndexEntriesTable) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see IndexEntriesQuery.Lock.
+func (t *IndexEntriesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see IndexEntriesQuery.DistinctOn.
+func (t *IndexEntriesTable) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see IndexEntriesQuery.Cache.
+func (t *IndexEntriesTable) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see IndexEntriesQuery.LoadStrategy.
+func (t *IndexEntriesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see IndexEntriesQuery.With.
+func (t *IndexEntriesTable) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see IndexEntriesQuery.Compute.
+func (t *IndexEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *IndexEntriesTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *IndexEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *IndexEntriesTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *IndexEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *IndexEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.IndexEntry) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *IndexEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *IndexEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *IndexEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.IndexEntry) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *IndexEntriesQuery) Where(ps ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *IndexEntriesQuery) Pick(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *IndexEntriesQuery) Omit(cols ...keel.Column) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *IndexEntriesQuery) Load(ls ...keel.Loader) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *IndexEntriesQuery) Order(os ...keel.Order) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *IndexEntriesQuery) Distinct() keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *IndexEntriesQuery) Group(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *IndexEntriesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *IndexEntriesQuery) Rollup(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *IndexEntriesQuery) Cube(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *IndexEntriesQuery) Window(name string, w keel.Window) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *IndexEntriesQuery) Having(ps ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *IndexEntriesQuery) Limit(n int) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *IndexEntriesQuery) Offset(n int) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *IndexEntriesQuery) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *IndexEntriesQuery) AllTenants() keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *IndexEntriesQuery) CustomPlan() keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *IndexEntriesQuery) Timeout(d time.Duration) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *IndexEntriesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *IndexEntriesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *IndexEntriesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *IndexEntriesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *IndexEntriesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *IndexEntriesQuery) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *IndexEntriesQuery) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *IndexEntriesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *IndexEntriesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.IndexEntry] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *IndexEntriesQuery) Clone() keel.Query[*airetrieval.IndexEntry] {
+	return &IndexEntriesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *IndexEntriesQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.IndexEntry, error) {
+	return keel.One[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *IndexEntriesQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.IndexEntry, error) {
+	return keel.First[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *IndexEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.IndexEntry, error) {
+	return keel.List[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *IndexEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.IndexEntry, error) {
+	return keel.All[*airetrieval.IndexEntry](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *IndexEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.IndexEntry, error) {
+	return keel.UpdateReturning[*airetrieval.IndexEntry](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *IndexEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.IndexEntry], error) {
+	return keel.PageOf[*airetrieval.IndexEntry](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *IndexEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.IndexEntry) error) error {
+	return keel.Each[*airetrieval.IndexEntry](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newIndexEntry() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.IndexEntry)) }
@@ -579,7 +1657,7 @@ var settingsesRef = keel.Ref{Table: &settingsesTable}
 
 // SettingsesTable is the table of airetrieval.Settings.
 type SettingsesTable struct {
-	keel.Handle[*airetrieval.Settings]
+	keel.TableBase
 	ID                       keelkinds.PulidIDCol
 	BusinessUnitID           keelkinds.PulidIDCol
 	OrganizationID           keelkinds.PulidIDCol
@@ -601,7 +1679,7 @@ type SettingsesTable struct {
 
 // Settingses references the ai_retrieval_settings table.
 var Settingses = &SettingsesTable{
-	Handle:                   keel.Handle[*airetrieval.Settings]{Ref: &settingsesRef},
+	TableBase:                keel.TableBase{Ref: &settingsesRef},
 	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 0}}},
 	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 1}}},
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingsesRef, Index: 2}}},
@@ -621,10 +1699,10 @@ var Settingses = &SettingsesTable{
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &settingsesRef, Index: 16}},
 }
 
-// BuildSettingses builds the handle of ai_retrieval_settings for ref. Generated relation and alias methods call it.
+// BuildSettingses builds the table of ai_retrieval_settings for ref. Generated relation and alias methods call it.
 func BuildSettingses(r *keel.Ref) *SettingsesTable {
 	return &SettingsesTable{
-		Handle:                   keel.Handle[*airetrieval.Settings]{Ref: r},
+		TableBase:                keel.TableBase{Ref: r},
 		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -656,6 +1734,365 @@ func (t *SettingsesTable) As(alias string) *SettingsesTable {
 // Get returns the ai_retrieval_settings row with the given key, or keel.ErrNotFound.
 func (t *SettingsesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*airetrieval.Settings, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SettingsesQuery is a query over airetrieval.Settings.
+type SettingsesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*airetrieval.Settings] = (*SettingsesTable)(nil)
+
+var _ keel.Query[*airetrieval.Settings] = (*SettingsesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SettingsesTable) Query() keel.Query[*airetrieval.Settings] {
+	return &SettingsesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SettingsesQuery.Where.
+func (t *SettingsesTable) Where(ps ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SettingsesQuery.Pick.
+func (t *SettingsesTable) Pick(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SettingsesQuery.Load.
+func (t *SettingsesTable) Load(ls ...keel.Loader) keel.Query[*airetrieval.Settings] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SettingsesQuery.Omit.
+func (t *SettingsesTable) Omit(cols ...keel.Column) keel.Query[*airetrieval.Settings] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SettingsesQuery.Order.
+func (t *SettingsesTable) Order(os ...keel.Order) keel.Query[*airetrieval.Settings] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SettingsesQuery.Limit.
+func (t *SettingsesTable) Limit(n int) keel.Query[*airetrieval.Settings] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SettingsesQuery.Group.
+func (t *SettingsesTable) Group(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SettingsesQuery.GroupingSets.
+func (t *SettingsesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SettingsesQuery.Rollup.
+func (t *SettingsesTable) Rollup(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SettingsesQuery.Cube.
+func (t *SettingsesTable) Cube(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SettingsesQuery.AllTenants.
+func (t *SettingsesTable) AllTenants() keel.Query[*airetrieval.Settings] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SettingsesQuery.Join.
+func (t *SettingsesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SettingsesQuery.LeftJoin.
+func (t *SettingsesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SettingsesQuery.LeftJoinLateral.
+func (t *SettingsesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Settings] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SettingsesQuery.JoinLateral.
+func (t *SettingsesTable) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Settings] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SettingsesQuery.Lock.
+func (t *SettingsesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.Settings] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SettingsesQuery.DistinctOn.
+func (t *SettingsesTable) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SettingsesQuery.Cache.
+func (t *SettingsesTable) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.Settings] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SettingsesQuery.LoadStrategy.
+func (t *SettingsesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.Settings] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SettingsesQuery.With.
+func (t *SettingsesTable) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.Settings] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SettingsesQuery.Compute.
+func (t *SettingsesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.Settings] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SettingsesTable) Create(ctx context.Context, db *keel.DB, row *airetrieval.Settings) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SettingsesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SettingsesTable) Save(ctx context.Context, db *keel.DB, row *airetrieval.Settings, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SettingsesTable) SaveExcept(ctx context.Context, db *keel.DB, row *airetrieval.Settings, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SettingsesTable) DeleteRow(ctx context.Context, db *keel.DB, row *airetrieval.Settings) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SettingsesTable) Upsert(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SettingsesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SettingsesTable) Copy(ctx context.Context, db *keel.DB, rows []*airetrieval.Settings) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SettingsesQuery) Where(ps ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SettingsesQuery) Pick(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SettingsesQuery) Omit(cols ...keel.Column) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SettingsesQuery) Load(ls ...keel.Loader) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SettingsesQuery) Order(os ...keel.Order) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SettingsesQuery) Distinct() keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SettingsesQuery) Group(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SettingsesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SettingsesQuery) Rollup(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SettingsesQuery) Cube(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SettingsesQuery) Window(name string, w keel.Window) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SettingsesQuery) Having(ps ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SettingsesQuery) Limit(n int) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SettingsesQuery) Offset(n int) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SettingsesQuery) DistinctOn(es ...keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SettingsesQuery) AllTenants() keel.Query[*airetrieval.Settings] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SettingsesQuery) CustomPlan() keel.Query[*airetrieval.Settings] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SettingsesQuery) Timeout(d time.Duration) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SettingsesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SettingsesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SettingsesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SettingsesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SettingsesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SettingsesQuery) Cache(opts ...keel.CacheOption) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SettingsesQuery) With(ctes ...*keel.CTETable) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SettingsesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SettingsesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*airetrieval.Settings] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SettingsesQuery) Clone() keel.Query[*airetrieval.Settings] {
+	return &SettingsesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SettingsesQuery) One(ctx context.Context, db *keel.DB) (*airetrieval.Settings, error) {
+	return keel.One[*airetrieval.Settings](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SettingsesQuery) First(ctx context.Context, db *keel.DB) (*airetrieval.Settings, error) {
+	return keel.First[*airetrieval.Settings](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SettingsesQuery) List(ctx context.Context, db *keel.DB) ([]*airetrieval.Settings, error) {
+	return keel.List[*airetrieval.Settings](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SettingsesQuery) All(ctx context.Context, db *keel.DB) ([]*airetrieval.Settings, error) {
+	return keel.All[*airetrieval.Settings](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SettingsesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*airetrieval.Settings, error) {
+	return keel.UpdateReturning[*airetrieval.Settings](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SettingsesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*airetrieval.Settings], error) {
+	return keel.PageOf[*airetrieval.Settings](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SettingsesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*airetrieval.Settings) error) error {
+	return keel.Each[*airetrieval.Settings](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSettings() unsafe.Pointer { return unsafe.Pointer(new(airetrieval.Settings)) }

@@ -4,6 +4,7 @@ package bulkeditdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -71,7 +72,7 @@ var bulkEditsRef = keel.Ref{Table: &bulkEditsTable}
 
 // BulkEditsTable is the table of bulkedit.BulkEdit.
 type BulkEditsTable struct {
-	keel.Handle[*bulkedit.BulkEdit]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -96,7 +97,7 @@ type BulkEditsTable struct {
 
 // BulkEdits references the bulk_edits table.
 var BulkEdits = &BulkEditsTable{
-	Handle:         keel.Handle[*bulkedit.BulkEdit]{Ref: &bulkEditsRef},
+	TableBase:      keel.TableBase{Ref: &bulkEditsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bulkEditsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bulkEditsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bulkEditsRef, Index: 2}}},
@@ -119,10 +120,10 @@ var BulkEdits = &BulkEditsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &bulkEditsRef, Index: 19}},
 }
 
-// BuildBulkEdits builds the handle of bulk_edits for ref. Generated relation and alias methods call it.
+// BuildBulkEdits builds the table of bulk_edits for ref. Generated relation and alias methods call it.
 func BuildBulkEdits(r *keel.Ref) *BulkEditsTable {
 	return &BulkEditsTable{
-		Handle:         keel.Handle[*bulkedit.BulkEdit]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -160,6 +161,365 @@ func (t *BulkEditsTable) User() *tenantdb.UsersTable { return keel.Path(t.Ref, 0
 // Get returns the bulk_edits row with the given key, or keel.ErrNotFound.
 func (t *BulkEditsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*bulkedit.BulkEdit, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BulkEditsQuery is a query over bulkedit.BulkEdit.
+type BulkEditsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*bulkedit.BulkEdit] = (*BulkEditsTable)(nil)
+
+var _ keel.Query[*bulkedit.BulkEdit] = (*BulkEditsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BulkEditsTable) Query() keel.Query[*bulkedit.BulkEdit] {
+	return &BulkEditsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BulkEditsQuery.Where.
+func (t *BulkEditsTable) Where(ps ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BulkEditsQuery.Pick.
+func (t *BulkEditsTable) Pick(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BulkEditsQuery.Load.
+func (t *BulkEditsTable) Load(ls ...keel.Loader) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BulkEditsQuery.Omit.
+func (t *BulkEditsTable) Omit(cols ...keel.Column) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BulkEditsQuery.Order.
+func (t *BulkEditsTable) Order(os ...keel.Order) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BulkEditsQuery.Limit.
+func (t *BulkEditsTable) Limit(n int) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BulkEditsQuery.Group.
+func (t *BulkEditsTable) Group(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BulkEditsQuery.GroupingSets.
+func (t *BulkEditsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BulkEditsQuery.Rollup.
+func (t *BulkEditsTable) Rollup(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BulkEditsQuery.Cube.
+func (t *BulkEditsTable) Cube(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BulkEditsQuery.AllTenants.
+func (t *BulkEditsTable) AllTenants() keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BulkEditsQuery.Join.
+func (t *BulkEditsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BulkEditsQuery.LeftJoin.
+func (t *BulkEditsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BulkEditsQuery.LeftJoinLateral.
+func (t *BulkEditsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BulkEditsQuery.JoinLateral.
+func (t *BulkEditsTable) JoinLateral(sub keel.LateralSource) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BulkEditsQuery.Lock.
+func (t *BulkEditsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BulkEditsQuery.DistinctOn.
+func (t *BulkEditsTable) DistinctOn(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BulkEditsQuery.Cache.
+func (t *BulkEditsTable) Cache(opts ...keel.CacheOption) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BulkEditsQuery.LoadStrategy.
+func (t *BulkEditsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BulkEditsQuery.With.
+func (t *BulkEditsTable) With(ctes ...*keel.CTETable) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BulkEditsQuery.Compute.
+func (t *BulkEditsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BulkEditsTable) Create(ctx context.Context, db *keel.DB, row *bulkedit.BulkEdit) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BulkEditsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*bulkedit.BulkEdit) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BulkEditsTable) Save(ctx context.Context, db *keel.DB, row *bulkedit.BulkEdit, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BulkEditsTable) SaveExcept(ctx context.Context, db *keel.DB, row *bulkedit.BulkEdit, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BulkEditsTable) DeleteRow(ctx context.Context, db *keel.DB, row *bulkedit.BulkEdit) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BulkEditsTable) Upsert(ctx context.Context, db *keel.DB, rows []*bulkedit.BulkEdit, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BulkEditsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*bulkedit.BulkEdit, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BulkEditsTable) Copy(ctx context.Context, db *keel.DB, rows []*bulkedit.BulkEdit) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BulkEditsQuery) Where(ps ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BulkEditsQuery) Pick(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BulkEditsQuery) Omit(cols ...keel.Column) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BulkEditsQuery) Load(ls ...keel.Loader) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BulkEditsQuery) Order(os ...keel.Order) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BulkEditsQuery) Distinct() keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BulkEditsQuery) Group(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BulkEditsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BulkEditsQuery) Rollup(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BulkEditsQuery) Cube(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BulkEditsQuery) Window(name string, w keel.Window) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BulkEditsQuery) Having(ps ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BulkEditsQuery) Limit(n int) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BulkEditsQuery) Offset(n int) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BulkEditsQuery) DistinctOn(es ...keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BulkEditsQuery) AllTenants() keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BulkEditsQuery) CustomPlan() keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BulkEditsQuery) Timeout(d time.Duration) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BulkEditsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BulkEditsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BulkEditsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BulkEditsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BulkEditsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BulkEditsQuery) Cache(opts ...keel.CacheOption) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BulkEditsQuery) With(ctes ...*keel.CTETable) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BulkEditsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BulkEditsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*bulkedit.BulkEdit] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BulkEditsQuery) Clone() keel.Query[*bulkedit.BulkEdit] {
+	return &BulkEditsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BulkEditsQuery) One(ctx context.Context, db *keel.DB) (*bulkedit.BulkEdit, error) {
+	return keel.One[*bulkedit.BulkEdit](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BulkEditsQuery) First(ctx context.Context, db *keel.DB) (*bulkedit.BulkEdit, error) {
+	return keel.First[*bulkedit.BulkEdit](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BulkEditsQuery) List(ctx context.Context, db *keel.DB) ([]*bulkedit.BulkEdit, error) {
+	return keel.List[*bulkedit.BulkEdit](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BulkEditsQuery) All(ctx context.Context, db *keel.DB) ([]*bulkedit.BulkEdit, error) {
+	return keel.All[*bulkedit.BulkEdit](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BulkEditsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*bulkedit.BulkEdit, error) {
+	return keel.UpdateReturning[*bulkedit.BulkEdit](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BulkEditsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*bulkedit.BulkEdit], error) {
+	return keel.PageOf[*bulkedit.BulkEdit](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BulkEditsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*bulkedit.BulkEdit) error) error {
+	return keel.Each[*bulkedit.BulkEdit](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBulkEdit() unsafe.Pointer { return unsafe.Pointer(new(bulkedit.BulkEdit)) }

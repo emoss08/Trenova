@@ -91,7 +91,7 @@ func testLoads(includeWorker, includeDocument, includeActors bool) []keel.Loader
 
 func testsQuery(
 	req *workerdotports.ListWorkerDOTTestsRequest,
-) *keel.Query[*workerdot.WorkerDOTTest] {
+) keel.Query[*workerdot.WorkerDOTTest] {
 	t := workerdotdb.WorkerDOTTests
 
 	return t.Where(
@@ -607,7 +607,7 @@ func (r *repository) UpdateDraw(
 
 func poolCandidatesQuery(
 	req *workerdotports.ListPoolCandidatesRequest,
-) *keel.Query[*worker.Worker] {
+) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 	driverTypes := make([]worker.DriverType, 0, len(req.DriverTypes))
@@ -642,7 +642,7 @@ func (r *repository) ListPoolCandidates(
 
 func drawEntriesQuery(
 	req *workerdotports.ListDOTRandomDrawEntriesRequest,
-) *keel.Query[*dotrandom.DOTRandomDrawEntry] {
+) keel.Query[*dotrandom.DOTRandomDrawEntry] {
 	e := dotrandomdb.DOTRandomDrawEntries
 	loads := listquery.When(req.IncludeWorker, e.Worker())
 	loads = append(loads, listquery.When(req.IncludeDraw, e.Draw())...)
@@ -728,7 +728,7 @@ func (r *repository) UpdateProfileRollup(
 
 func clearinghouseDueQuery(
 	req *workerdotports.ListWorkersWithClearinghouseDueRequest,
-) *keel.Query[*worker.Worker] {
+) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
 	wp := workerdb.WorkerProfiles
 

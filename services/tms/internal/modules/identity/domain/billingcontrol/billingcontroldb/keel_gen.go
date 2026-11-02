@@ -4,6 +4,7 @@ package billingcontroldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -87,7 +88,7 @@ var billingControlsRef = keel.Ref{Table: &billingControlsTable}
 
 // BillingControlsTable is the table of billingcontrol.BillingControl.
 type BillingControlsTable struct {
-	keel.Handle[*billingcontrol.BillingControl]
+	keel.TableBase
 	ID                                    keelkinds.PulidIDCol
 	BusinessUnitID                        keelkinds.PulidIDCol
 	OrganizationID                        keelkinds.PulidIDCol
@@ -130,7 +131,7 @@ type BillingControlsTable struct {
 
 // BillingControls references the billing_controls table.
 var BillingControls = &BillingControlsTable{
-	Handle:                                keel.Handle[*billingcontrol.BillingControl]{Ref: &billingControlsRef},
+	TableBase:                             keel.TableBase{Ref: &billingControlsRef},
 	ID:                                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 0}}},
 	BusinessUnitID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 1}}},
 	OrganizationID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingControlsRef, Index: 2}}},
@@ -171,10 +172,10 @@ var BillingControls = &BillingControlsTable{
 	UpdatedAt:                             keel.Int64Col{Col: keel.Col{Ref: &billingControlsRef, Index: 37}},
 }
 
-// BuildBillingControls builds the handle of billing_controls for ref. Generated relation and alias methods call it.
+// BuildBillingControls builds the table of billing_controls for ref. Generated relation and alias methods call it.
 func BuildBillingControls(r *keel.Ref) *BillingControlsTable {
 	return &BillingControlsTable{
-		Handle:                                keel.Handle[*billingcontrol.BillingControl]{Ref: r},
+		TableBase:                             keel.TableBase{Ref: r},
 		ID:                                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -227,6 +228,365 @@ func (t *BillingControlsTable) As(alias string) *BillingControlsTable {
 // Get returns the billing_controls row with the given key, or keel.ErrNotFound.
 func (t *BillingControlsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*billingcontrol.BillingControl, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BillingControlsQuery is a query over billingcontrol.BillingControl.
+type BillingControlsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*billingcontrol.BillingControl] = (*BillingControlsTable)(nil)
+
+var _ keel.Query[*billingcontrol.BillingControl] = (*BillingControlsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BillingControlsTable) Query() keel.Query[*billingcontrol.BillingControl] {
+	return &BillingControlsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BillingControlsQuery.Where.
+func (t *BillingControlsTable) Where(ps ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BillingControlsQuery.Pick.
+func (t *BillingControlsTable) Pick(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BillingControlsQuery.Load.
+func (t *BillingControlsTable) Load(ls ...keel.Loader) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BillingControlsQuery.Omit.
+func (t *BillingControlsTable) Omit(cols ...keel.Column) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BillingControlsQuery.Order.
+func (t *BillingControlsTable) Order(os ...keel.Order) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BillingControlsQuery.Limit.
+func (t *BillingControlsTable) Limit(n int) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BillingControlsQuery.Group.
+func (t *BillingControlsTable) Group(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BillingControlsQuery.GroupingSets.
+func (t *BillingControlsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BillingControlsQuery.Rollup.
+func (t *BillingControlsTable) Rollup(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BillingControlsQuery.Cube.
+func (t *BillingControlsTable) Cube(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BillingControlsQuery.AllTenants.
+func (t *BillingControlsTable) AllTenants() keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BillingControlsQuery.Join.
+func (t *BillingControlsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BillingControlsQuery.LeftJoin.
+func (t *BillingControlsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BillingControlsQuery.LeftJoinLateral.
+func (t *BillingControlsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BillingControlsQuery.JoinLateral.
+func (t *BillingControlsTable) JoinLateral(sub keel.LateralSource) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BillingControlsQuery.Lock.
+func (t *BillingControlsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BillingControlsQuery.DistinctOn.
+func (t *BillingControlsTable) DistinctOn(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BillingControlsQuery.Cache.
+func (t *BillingControlsTable) Cache(opts ...keel.CacheOption) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BillingControlsQuery.LoadStrategy.
+func (t *BillingControlsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BillingControlsQuery.With.
+func (t *BillingControlsTable) With(ctes ...*keel.CTETable) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BillingControlsQuery.Compute.
+func (t *BillingControlsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BillingControlsTable) Create(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BillingControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BillingControlsTable) Save(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BillingControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BillingControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingcontrol.BillingControl) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BillingControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BillingControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BillingControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingcontrol.BillingControl) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BillingControlsQuery) Where(ps ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BillingControlsQuery) Pick(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BillingControlsQuery) Omit(cols ...keel.Column) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BillingControlsQuery) Load(ls ...keel.Loader) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BillingControlsQuery) Order(os ...keel.Order) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BillingControlsQuery) Distinct() keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BillingControlsQuery) Group(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BillingControlsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BillingControlsQuery) Rollup(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BillingControlsQuery) Cube(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BillingControlsQuery) Window(name string, w keel.Window) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BillingControlsQuery) Having(ps ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BillingControlsQuery) Limit(n int) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BillingControlsQuery) Offset(n int) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BillingControlsQuery) DistinctOn(es ...keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BillingControlsQuery) AllTenants() keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BillingControlsQuery) CustomPlan() keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BillingControlsQuery) Timeout(d time.Duration) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BillingControlsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BillingControlsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BillingControlsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BillingControlsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BillingControlsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BillingControlsQuery) Cache(opts ...keel.CacheOption) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BillingControlsQuery) With(ctes ...*keel.CTETable) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BillingControlsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BillingControlsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*billingcontrol.BillingControl] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BillingControlsQuery) Clone() keel.Query[*billingcontrol.BillingControl] {
+	return &BillingControlsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BillingControlsQuery) One(ctx context.Context, db *keel.DB) (*billingcontrol.BillingControl, error) {
+	return keel.One[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BillingControlsQuery) First(ctx context.Context, db *keel.DB) (*billingcontrol.BillingControl, error) {
+	return keel.First[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BillingControlsQuery) List(ctx context.Context, db *keel.DB) ([]*billingcontrol.BillingControl, error) {
+	return keel.List[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BillingControlsQuery) All(ctx context.Context, db *keel.DB) ([]*billingcontrol.BillingControl, error) {
+	return keel.All[*billingcontrol.BillingControl](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BillingControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingcontrol.BillingControl, error) {
+	return keel.UpdateReturning[*billingcontrol.BillingControl](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BillingControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingcontrol.BillingControl], error) {
+	return keel.PageOf[*billingcontrol.BillingControl](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BillingControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingcontrol.BillingControl) error) error {
+	return keel.Each[*billingcontrol.BillingControl](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBillingControl() unsafe.Pointer { return unsafe.Pointer(new(billingcontrol.BillingControl)) }

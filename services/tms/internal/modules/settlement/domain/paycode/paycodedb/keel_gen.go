@@ -4,6 +4,7 @@ package paycodedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -71,7 +72,7 @@ var payCodesRef = keel.Ref{Table: &payCodesTable}
 
 // PayCodesTable is the table of paycode.PayCode.
 type PayCodesTable struct {
-	keel.Handle[*paycode.PayCode]
+	keel.TableBase
 	ID                    keelkinds.PulidIDCol
 	BusinessUnitID        keelkinds.PulidIDCol
 	OrganizationID        keelkinds.PulidIDCol
@@ -92,7 +93,7 @@ type PayCodesTable struct {
 
 // PayCodes references the pay_codes table.
 var PayCodes = &PayCodesTable{
-	Handle:                keel.Handle[*paycode.PayCode]{Ref: &payCodesRef},
+	TableBase:             keel.TableBase{Ref: &payCodesRef},
 	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 0}}},
 	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 1}}},
 	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payCodesRef, Index: 2}}},
@@ -111,10 +112,10 @@ var PayCodes = &PayCodesTable{
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &payCodesRef, Index: 15}},
 }
 
-// BuildPayCodes builds the handle of pay_codes for ref. Generated relation and alias methods call it.
+// BuildPayCodes builds the table of pay_codes for ref. Generated relation and alias methods call it.
 func BuildPayCodes(r *keel.Ref) *PayCodesTable {
 	return &PayCodesTable{
-		Handle:                keel.Handle[*paycode.PayCode]{Ref: r},
+		TableBase:             keel.TableBase{Ref: r},
 		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -150,6 +151,365 @@ func (t *PayCodesTable) GLAccount() *glaccountdb.GLAccountsTable {
 // Get returns the pay_codes row with the given key, or keel.ErrNotFound.
 func (t *PayCodesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paycode.PayCode, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PayCodesQuery is a query over paycode.PayCode.
+type PayCodesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*paycode.PayCode] = (*PayCodesTable)(nil)
+
+var _ keel.Query[*paycode.PayCode] = (*PayCodesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PayCodesTable) Query() keel.Query[*paycode.PayCode] {
+	return &PayCodesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PayCodesQuery.Where.
+func (t *PayCodesTable) Where(ps ...keel.Pred) keel.Query[*paycode.PayCode] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PayCodesQuery.Pick.
+func (t *PayCodesTable) Pick(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PayCodesQuery.Load.
+func (t *PayCodesTable) Load(ls ...keel.Loader) keel.Query[*paycode.PayCode] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PayCodesQuery.Omit.
+func (t *PayCodesTable) Omit(cols ...keel.Column) keel.Query[*paycode.PayCode] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PayCodesQuery.Order.
+func (t *PayCodesTable) Order(os ...keel.Order) keel.Query[*paycode.PayCode] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PayCodesQuery.Limit.
+func (t *PayCodesTable) Limit(n int) keel.Query[*paycode.PayCode] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PayCodesQuery.Group.
+func (t *PayCodesTable) Group(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PayCodesQuery.GroupingSets.
+func (t *PayCodesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PayCodesQuery.Rollup.
+func (t *PayCodesTable) Rollup(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PayCodesQuery.Cube.
+func (t *PayCodesTable) Cube(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PayCodesQuery.AllTenants.
+func (t *PayCodesTable) AllTenants() keel.Query[*paycode.PayCode] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PayCodesQuery.Join.
+func (t *PayCodesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paycode.PayCode] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PayCodesQuery.LeftJoin.
+func (t *PayCodesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paycode.PayCode] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PayCodesQuery.LeftJoinLateral.
+func (t *PayCodesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paycode.PayCode] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PayCodesQuery.JoinLateral.
+func (t *PayCodesTable) JoinLateral(sub keel.LateralSource) keel.Query[*paycode.PayCode] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PayCodesQuery.Lock.
+func (t *PayCodesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paycode.PayCode] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PayCodesQuery.DistinctOn.
+func (t *PayCodesTable) DistinctOn(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PayCodesQuery.Cache.
+func (t *PayCodesTable) Cache(opts ...keel.CacheOption) keel.Query[*paycode.PayCode] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PayCodesQuery.LoadStrategy.
+func (t *PayCodesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*paycode.PayCode] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PayCodesQuery.With.
+func (t *PayCodesTable) With(ctes ...*keel.CTETable) keel.Query[*paycode.PayCode] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PayCodesQuery.Compute.
+func (t *PayCodesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*paycode.PayCode] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PayCodesTable) Create(ctx context.Context, db *keel.DB, row *paycode.PayCode) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PayCodesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paycode.PayCode) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PayCodesTable) Save(ctx context.Context, db *keel.DB, row *paycode.PayCode, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PayCodesTable) SaveExcept(ctx context.Context, db *keel.DB, row *paycode.PayCode, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PayCodesTable) DeleteRow(ctx context.Context, db *keel.DB, row *paycode.PayCode) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PayCodesTable) Upsert(ctx context.Context, db *keel.DB, rows []*paycode.PayCode, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PayCodesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paycode.PayCode, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PayCodesTable) Copy(ctx context.Context, db *keel.DB, rows []*paycode.PayCode) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PayCodesQuery) Where(ps ...keel.Pred) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PayCodesQuery) Pick(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PayCodesQuery) Omit(cols ...keel.Column) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PayCodesQuery) Load(ls ...keel.Loader) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PayCodesQuery) Order(os ...keel.Order) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PayCodesQuery) Distinct() keel.Query[*paycode.PayCode] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PayCodesQuery) Group(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PayCodesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PayCodesQuery) Rollup(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PayCodesQuery) Cube(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PayCodesQuery) Window(name string, w keel.Window) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PayCodesQuery) Having(ps ...keel.Pred) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PayCodesQuery) Limit(n int) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PayCodesQuery) Offset(n int) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PayCodesQuery) DistinctOn(es ...keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PayCodesQuery) AllTenants() keel.Query[*paycode.PayCode] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PayCodesQuery) CustomPlan() keel.Query[*paycode.PayCode] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PayCodesQuery) Timeout(d time.Duration) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PayCodesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PayCodesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PayCodesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paycode.PayCode] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PayCodesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paycode.PayCode] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PayCodesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*paycode.PayCode] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PayCodesQuery) Cache(opts ...keel.CacheOption) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PayCodesQuery) With(ctes ...*keel.CTETable) keel.Query[*paycode.PayCode] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PayCodesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*paycode.PayCode] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PayCodesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*paycode.PayCode] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PayCodesQuery) Clone() keel.Query[*paycode.PayCode] {
+	return &PayCodesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PayCodesQuery) One(ctx context.Context, db *keel.DB) (*paycode.PayCode, error) {
+	return keel.One[*paycode.PayCode](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PayCodesQuery) First(ctx context.Context, db *keel.DB) (*paycode.PayCode, error) {
+	return keel.First[*paycode.PayCode](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PayCodesQuery) List(ctx context.Context, db *keel.DB) ([]*paycode.PayCode, error) {
+	return keel.List[*paycode.PayCode](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PayCodesQuery) All(ctx context.Context, db *keel.DB) ([]*paycode.PayCode, error) {
+	return keel.All[*paycode.PayCode](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PayCodesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paycode.PayCode, error) {
+	return keel.UpdateReturning[*paycode.PayCode](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PayCodesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paycode.PayCode], error) {
+	return keel.PageOf[*paycode.PayCode](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PayCodesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paycode.PayCode) error) error {
+	return keel.Each[*paycode.PayCode](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPayCode() unsafe.Pointer { return unsafe.Pointer(new(paycode.PayCode)) }

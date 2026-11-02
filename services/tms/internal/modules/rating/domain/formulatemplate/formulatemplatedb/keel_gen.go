@@ -4,6 +4,7 @@ package formulatemplatedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -80,7 +81,7 @@ var formulaTemplatesRef = keel.Ref{Table: &formulaTemplatesTable}
 
 // FormulaTemplatesTable is the table of formulatemplate.FormulaTemplate.
 type FormulaTemplatesTable struct {
-	keel.Handle[*formulatemplate.FormulaTemplate]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -110,7 +111,7 @@ type FormulaTemplatesTable struct {
 
 // FormulaTemplates references the formula_templates table.
 var FormulaTemplates = &FormulaTemplatesTable{
-	Handle:               keel.Handle[*formulatemplate.FormulaTemplate]{Ref: &formulaTemplatesRef},
+	TableBase:            keel.TableBase{Ref: &formulaTemplatesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 2}}},
@@ -138,10 +139,10 @@ var FormulaTemplates = &FormulaTemplatesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaTemplatesRef, Index: 24}},
 }
 
-// BuildFormulaTemplates builds the handle of formula_templates for ref. Generated relation and alias methods call it.
+// BuildFormulaTemplates builds the table of formula_templates for ref. Generated relation and alias methods call it.
 func BuildFormulaTemplates(r *keel.Ref) *FormulaTemplatesTable {
 	return &FormulaTemplatesTable{
-		Handle:               keel.Handle[*formulatemplate.FormulaTemplate]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -191,6 +192,365 @@ func (t *FormulaTemplatesTable) Versions() *FormulaTemplateVersionsTable {
 // Get returns the formula_templates row with the given key, or keel.ErrNotFound.
 func (t *FormulaTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*formulatemplate.FormulaTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormulaTemplatesQuery is a query over formulatemplate.FormulaTemplate.
+type FormulaTemplatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulatemplate.FormulaTemplate] = (*FormulaTemplatesTable)(nil)
+
+var _ keel.Query[*formulatemplate.FormulaTemplate] = (*FormulaTemplatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormulaTemplatesTable) Query() keel.Query[*formulatemplate.FormulaTemplate] {
+	return &FormulaTemplatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormulaTemplatesQuery.Where.
+func (t *FormulaTemplatesTable) Where(ps ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormulaTemplatesQuery.Pick.
+func (t *FormulaTemplatesTable) Pick(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormulaTemplatesQuery.Load.
+func (t *FormulaTemplatesTable) Load(ls ...keel.Loader) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormulaTemplatesQuery.Omit.
+func (t *FormulaTemplatesTable) Omit(cols ...keel.Column) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormulaTemplatesQuery.Order.
+func (t *FormulaTemplatesTable) Order(os ...keel.Order) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormulaTemplatesQuery.Limit.
+func (t *FormulaTemplatesTable) Limit(n int) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormulaTemplatesQuery.Group.
+func (t *FormulaTemplatesTable) Group(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormulaTemplatesQuery.GroupingSets.
+func (t *FormulaTemplatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormulaTemplatesQuery.Rollup.
+func (t *FormulaTemplatesTable) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormulaTemplatesQuery.Cube.
+func (t *FormulaTemplatesTable) Cube(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormulaTemplatesQuery.AllTenants.
+func (t *FormulaTemplatesTable) AllTenants() keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormulaTemplatesQuery.Join.
+func (t *FormulaTemplatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormulaTemplatesQuery.LeftJoin.
+func (t *FormulaTemplatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormulaTemplatesQuery.LeftJoinLateral.
+func (t *FormulaTemplatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormulaTemplatesQuery.JoinLateral.
+func (t *FormulaTemplatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormulaTemplatesQuery.Lock.
+func (t *FormulaTemplatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormulaTemplatesQuery.DistinctOn.
+func (t *FormulaTemplatesTable) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormulaTemplatesQuery.Cache.
+func (t *FormulaTemplatesTable) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormulaTemplatesQuery.LoadStrategy.
+func (t *FormulaTemplatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormulaTemplatesQuery.With.
+func (t *FormulaTemplatesTable) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormulaTemplatesQuery.Compute.
+func (t *FormulaTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormulaTemplatesTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormulaTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormulaTemplatesTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormulaTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormulaTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormulaTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormulaTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormulaTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormulaTemplatesQuery) Where(ps ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormulaTemplatesQuery) Pick(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormulaTemplatesQuery) Omit(cols ...keel.Column) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormulaTemplatesQuery) Load(ls ...keel.Loader) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormulaTemplatesQuery) Order(os ...keel.Order) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormulaTemplatesQuery) Distinct() keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormulaTemplatesQuery) Group(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormulaTemplatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormulaTemplatesQuery) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormulaTemplatesQuery) Cube(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormulaTemplatesQuery) Window(name string, w keel.Window) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormulaTemplatesQuery) Having(ps ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormulaTemplatesQuery) Limit(n int) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormulaTemplatesQuery) Offset(n int) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormulaTemplatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormulaTemplatesQuery) AllTenants() keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormulaTemplatesQuery) CustomPlan() keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormulaTemplatesQuery) Timeout(d time.Duration) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormulaTemplatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormulaTemplatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormulaTemplatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormulaTemplatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormulaTemplatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormulaTemplatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormulaTemplatesQuery) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormulaTemplatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormulaTemplatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.FormulaTemplate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormulaTemplatesQuery) Clone() keel.Query[*formulatemplate.FormulaTemplate] {
+	return &FormulaTemplatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormulaTemplatesQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplate, error) {
+	return keel.One[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormulaTemplatesQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplate, error) {
+	return keel.First[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormulaTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplate, error) {
+	return keel.List[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormulaTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplate, error) {
+	return keel.All[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormulaTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.FormulaTemplate, error) {
+	return keel.UpdateReturning[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormulaTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.FormulaTemplate], error) {
+	return keel.PageOf[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormulaTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.FormulaTemplate) error) error {
+	return keel.Each[*formulatemplate.FormulaTemplate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormulaTemplate() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.FormulaTemplate)) }
@@ -428,7 +788,7 @@ var formulaTemplateVersionsRef = keel.Ref{Table: &formulaTemplateVersionsTable}
 
 // FormulaTemplateVersionsTable is the table of formulatemplate.FormulaTemplateVersion.
 type FormulaTemplateVersionsTable struct {
-	keel.Handle[*formulatemplate.FormulaTemplateVersion]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	TemplateID     keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -453,7 +813,7 @@ type FormulaTemplateVersionsTable struct {
 
 // FormulaTemplateVersions references the formula_template_versions table.
 var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
-	Handle:         keel.Handle[*formulatemplate.FormulaTemplateVersion]{Ref: &formulaTemplateVersionsRef},
+	TableBase:      keel.TableBase{Ref: &formulaTemplateVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 0}}},
 	TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 2}}},
@@ -476,10 +836,10 @@ var FormulaTemplateVersions = &FormulaTemplateVersionsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &formulaTemplateVersionsRef, Index: 19}},
 }
 
-// BuildFormulaTemplateVersions builds the handle of formula_template_versions for ref. Generated relation and alias methods call it.
+// BuildFormulaTemplateVersions builds the table of formula_template_versions for ref. Generated relation and alias methods call it.
 func BuildFormulaTemplateVersions(r *keel.Ref) *FormulaTemplateVersionsTable {
 	return &FormulaTemplateVersionsTable{
-		Handle:         keel.Handle[*formulatemplate.FormulaTemplateVersion]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -519,6 +879,365 @@ func (t *FormulaTemplateVersionsTable) CreatedBy() *tenantdb.UsersTable {
 // Get returns the formula_template_versions row with the given key, or keel.ErrNotFound.
 func (t *FormulaTemplateVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*formulatemplate.FormulaTemplateVersion, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormulaTemplateVersionsQuery is a query over formulatemplate.FormulaTemplateVersion.
+type FormulaTemplateVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulatemplate.FormulaTemplateVersion] = (*FormulaTemplateVersionsTable)(nil)
+
+var _ keel.Query[*formulatemplate.FormulaTemplateVersion] = (*FormulaTemplateVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormulaTemplateVersionsTable) Query() keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return &FormulaTemplateVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormulaTemplateVersionsQuery.Where.
+func (t *FormulaTemplateVersionsTable) Where(ps ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormulaTemplateVersionsQuery.Pick.
+func (t *FormulaTemplateVersionsTable) Pick(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormulaTemplateVersionsQuery.Load.
+func (t *FormulaTemplateVersionsTable) Load(ls ...keel.Loader) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormulaTemplateVersionsQuery.Omit.
+func (t *FormulaTemplateVersionsTable) Omit(cols ...keel.Column) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormulaTemplateVersionsQuery.Order.
+func (t *FormulaTemplateVersionsTable) Order(os ...keel.Order) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormulaTemplateVersionsQuery.Limit.
+func (t *FormulaTemplateVersionsTable) Limit(n int) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormulaTemplateVersionsQuery.Group.
+func (t *FormulaTemplateVersionsTable) Group(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormulaTemplateVersionsQuery.GroupingSets.
+func (t *FormulaTemplateVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormulaTemplateVersionsQuery.Rollup.
+func (t *FormulaTemplateVersionsTable) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormulaTemplateVersionsQuery.Cube.
+func (t *FormulaTemplateVersionsTable) Cube(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormulaTemplateVersionsQuery.AllTenants.
+func (t *FormulaTemplateVersionsTable) AllTenants() keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormulaTemplateVersionsQuery.Join.
+func (t *FormulaTemplateVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormulaTemplateVersionsQuery.LeftJoin.
+func (t *FormulaTemplateVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormulaTemplateVersionsQuery.LeftJoinLateral.
+func (t *FormulaTemplateVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormulaTemplateVersionsQuery.JoinLateral.
+func (t *FormulaTemplateVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormulaTemplateVersionsQuery.Lock.
+func (t *FormulaTemplateVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormulaTemplateVersionsQuery.DistinctOn.
+func (t *FormulaTemplateVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormulaTemplateVersionsQuery.Cache.
+func (t *FormulaTemplateVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormulaTemplateVersionsQuery.LoadStrategy.
+func (t *FormulaTemplateVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormulaTemplateVersionsQuery.With.
+func (t *FormulaTemplateVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormulaTemplateVersionsQuery.Compute.
+func (t *FormulaTemplateVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormulaTemplateVersionsTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormulaTemplateVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormulaTemplateVersionsTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormulaTemplateVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormulaTemplateVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.FormulaTemplateVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormulaTemplateVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormulaTemplateVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormulaTemplateVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.FormulaTemplateVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormulaTemplateVersionsQuery) Where(ps ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormulaTemplateVersionsQuery) Pick(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormulaTemplateVersionsQuery) Omit(cols ...keel.Column) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormulaTemplateVersionsQuery) Load(ls ...keel.Loader) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormulaTemplateVersionsQuery) Order(os ...keel.Order) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormulaTemplateVersionsQuery) Distinct() keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormulaTemplateVersionsQuery) Group(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormulaTemplateVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormulaTemplateVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormulaTemplateVersionsQuery) Cube(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormulaTemplateVersionsQuery) Window(name string, w keel.Window) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormulaTemplateVersionsQuery) Having(ps ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormulaTemplateVersionsQuery) Limit(n int) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormulaTemplateVersionsQuery) Offset(n int) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormulaTemplateVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormulaTemplateVersionsQuery) AllTenants() keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormulaTemplateVersionsQuery) CustomPlan() keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormulaTemplateVersionsQuery) Timeout(d time.Duration) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormulaTemplateVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormulaTemplateVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormulaTemplateVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormulaTemplateVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormulaTemplateVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormulaTemplateVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormulaTemplateVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormulaTemplateVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormulaTemplateVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormulaTemplateVersionsQuery) Clone() keel.Query[*formulatemplate.FormulaTemplateVersion] {
+	return &FormulaTemplateVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormulaTemplateVersionsQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplateVersion, error) {
+	return keel.One[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormulaTemplateVersionsQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.FormulaTemplateVersion, error) {
+	return keel.First[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormulaTemplateVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return keel.List[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormulaTemplateVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return keel.All[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormulaTemplateVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return keel.UpdateReturning[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormulaTemplateVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.FormulaTemplateVersion], error) {
+	return keel.PageOf[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormulaTemplateVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.FormulaTemplateVersion) error) error {
+	return keel.Each[*formulatemplate.FormulaTemplateVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormulaTemplateVersion() unsafe.Pointer {
@@ -712,7 +1431,7 @@ var reviewsRef = keel.Ref{Table: &reviewsTable}
 
 // ReviewsTable is the table of formulatemplate.Review.
 type ReviewsTable struct {
-	keel.Handle[*formulatemplate.Review]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	TemplateID          keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -729,7 +1448,7 @@ type ReviewsTable struct {
 
 // Reviews references the formula_template_reviews table.
 var Reviews = &ReviewsTable{
-	Handle:              keel.Handle[*formulatemplate.Review]{Ref: &reviewsRef},
+	TableBase:           keel.TableBase{Ref: &reviewsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 0}}},
 	TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 2}}},
@@ -744,10 +1463,10 @@ var Reviews = &ReviewsTable{
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 11}},
 }
 
-// BuildReviews builds the handle of formula_template_reviews for ref. Generated relation and alias methods call it.
+// BuildReviews builds the table of formula_template_reviews for ref. Generated relation and alias methods call it.
 func BuildReviews(r *keel.Ref) *ReviewsTable {
 	return &ReviewsTable{
-		Handle:              keel.Handle[*formulatemplate.Review]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		TemplateID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -780,6 +1499,365 @@ func (t *ReviewsTable) RequestedReviewer() *tenantdb.UsersTable {
 // Get returns the formula_template_reviews row with the given key, or keel.ErrNotFound.
 func (t *ReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*formulatemplate.Review, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReviewsQuery is a query over formulatemplate.Review.
+type ReviewsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulatemplate.Review] = (*ReviewsTable)(nil)
+
+var _ keel.Query[*formulatemplate.Review] = (*ReviewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReviewsTable) Query() keel.Query[*formulatemplate.Review] {
+	return &ReviewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReviewsQuery.Where.
+func (t *ReviewsTable) Where(ps ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReviewsQuery.Pick.
+func (t *ReviewsTable) Pick(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReviewsQuery.Load.
+func (t *ReviewsTable) Load(ls ...keel.Loader) keel.Query[*formulatemplate.Review] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReviewsQuery.Omit.
+func (t *ReviewsTable) Omit(cols ...keel.Column) keel.Query[*formulatemplate.Review] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReviewsQuery.Order.
+func (t *ReviewsTable) Order(os ...keel.Order) keel.Query[*formulatemplate.Review] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReviewsQuery.Limit.
+func (t *ReviewsTable) Limit(n int) keel.Query[*formulatemplate.Review] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReviewsQuery.Group.
+func (t *ReviewsTable) Group(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReviewsQuery.GroupingSets.
+func (t *ReviewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReviewsQuery.Rollup.
+func (t *ReviewsTable) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReviewsQuery.Cube.
+func (t *ReviewsTable) Cube(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReviewsQuery.AllTenants.
+func (t *ReviewsTable) AllTenants() keel.Query[*formulatemplate.Review] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReviewsQuery.Join.
+func (t *ReviewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReviewsQuery.LeftJoin.
+func (t *ReviewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReviewsQuery.LeftJoinLateral.
+func (t *ReviewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.Review] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReviewsQuery.JoinLateral.
+func (t *ReviewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.Review] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReviewsQuery.Lock.
+func (t *ReviewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.Review] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReviewsQuery.DistinctOn.
+func (t *ReviewsTable) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReviewsQuery.Cache.
+func (t *ReviewsTable) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.Review] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReviewsQuery.LoadStrategy.
+func (t *ReviewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.Review] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReviewsQuery.With.
+func (t *ReviewsTable) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.Review] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReviewsQuery.Compute.
+func (t *ReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.Review] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReviewsTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.Review) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ReviewsTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.Review, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.Review, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.Review) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.Review) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReviewsQuery) Where(ps ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReviewsQuery) Pick(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReviewsQuery) Omit(cols ...keel.Column) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReviewsQuery) Load(ls ...keel.Loader) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReviewsQuery) Order(os ...keel.Order) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReviewsQuery) Distinct() keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReviewsQuery) Group(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReviewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReviewsQuery) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReviewsQuery) Cube(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReviewsQuery) Window(name string, w keel.Window) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReviewsQuery) Having(ps ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReviewsQuery) Limit(n int) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReviewsQuery) Offset(n int) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReviewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReviewsQuery) AllTenants() keel.Query[*formulatemplate.Review] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReviewsQuery) CustomPlan() keel.Query[*formulatemplate.Review] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReviewsQuery) Timeout(d time.Duration) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReviewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReviewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReviewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReviewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReviewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReviewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReviewsQuery) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReviewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReviewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.Review] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReviewsQuery) Clone() keel.Query[*formulatemplate.Review] {
+	return &ReviewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReviewsQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.Review, error) {
+	return keel.One[*formulatemplate.Review](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReviewsQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.Review, error) {
+	return keel.First[*formulatemplate.Review](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.Review, error) {
+	return keel.List[*formulatemplate.Review](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.Review, error) {
+	return keel.All[*formulatemplate.Review](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.Review, error) {
+	return keel.UpdateReturning[*formulatemplate.Review](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.Review], error) {
+	return keel.PageOf[*formulatemplate.Review](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.Review) error) error {
+	return keel.Each[*formulatemplate.Review](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReview() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.Review)) }
@@ -912,7 +1990,7 @@ var versionImportsRef = keel.Ref{Table: &versionImportsTable}
 
 // VersionImportsTable is the table of formulatemplate.VersionImport.
 type VersionImportsTable struct {
-	keel.Handle[*formulatemplate.VersionImport]
+	keel.TableBase
 	TemplateVersionID    keelkinds.PulidIDCol
 	LibraryID            keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -925,7 +2003,7 @@ type VersionImportsTable struct {
 
 // VersionImports references the formula_template_version_imports table.
 var VersionImports = &VersionImportsTable{
-	Handle:               keel.Handle[*formulatemplate.VersionImport]{Ref: &versionImportsRef},
+	TableBase:            keel.TableBase{Ref: &versionImportsRef},
 	TemplateVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 0}}},
 	LibraryID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 2}}},
@@ -936,10 +2014,10 @@ var VersionImports = &VersionImportsTable{
 	Path:                 keel.StringCol{Col: keel.Col{Ref: &versionImportsRef, Index: 7}},
 }
 
-// BuildVersionImports builds the handle of formula_template_version_imports for ref. Generated relation and alias methods call it.
+// BuildVersionImports builds the table of formula_template_version_imports for ref. Generated relation and alias methods call it.
 func BuildVersionImports(r *keel.Ref) *VersionImportsTable {
 	return &VersionImportsTable{
-		Handle:               keel.Handle[*formulatemplate.VersionImport]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		TemplateVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		LibraryID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -957,6 +2035,365 @@ func VersionImportsSchema() *schema.Table { return &versionImportsTable }
 // As returns a handle that references formula_template_version_imports under its own alias.
 func (t *VersionImportsTable) As(alias string) *VersionImportsTable {
 	return keel.Alias(t.Ref, alias, BuildVersionImports)
+}
+
+// VersionImportsQuery is a query over formulatemplate.VersionImport.
+type VersionImportsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulatemplate.VersionImport] = (*VersionImportsTable)(nil)
+
+var _ keel.Query[*formulatemplate.VersionImport] = (*VersionImportsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *VersionImportsTable) Query() keel.Query[*formulatemplate.VersionImport] {
+	return &VersionImportsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see VersionImportsQuery.Where.
+func (t *VersionImportsTable) Where(ps ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see VersionImportsQuery.Pick.
+func (t *VersionImportsTable) Pick(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see VersionImportsQuery.Load.
+func (t *VersionImportsTable) Load(ls ...keel.Loader) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see VersionImportsQuery.Omit.
+func (t *VersionImportsTable) Omit(cols ...keel.Column) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see VersionImportsQuery.Order.
+func (t *VersionImportsTable) Order(os ...keel.Order) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see VersionImportsQuery.Limit.
+func (t *VersionImportsTable) Limit(n int) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see VersionImportsQuery.Group.
+func (t *VersionImportsTable) Group(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see VersionImportsQuery.GroupingSets.
+func (t *VersionImportsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see VersionImportsQuery.Rollup.
+func (t *VersionImportsTable) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see VersionImportsQuery.Cube.
+func (t *VersionImportsTable) Cube(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see VersionImportsQuery.AllTenants.
+func (t *VersionImportsTable) AllTenants() keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see VersionImportsQuery.Join.
+func (t *VersionImportsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see VersionImportsQuery.LeftJoin.
+func (t *VersionImportsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see VersionImportsQuery.LeftJoinLateral.
+func (t *VersionImportsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see VersionImportsQuery.JoinLateral.
+func (t *VersionImportsTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see VersionImportsQuery.Lock.
+func (t *VersionImportsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see VersionImportsQuery.DistinctOn.
+func (t *VersionImportsTable) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see VersionImportsQuery.Cache.
+func (t *VersionImportsTable) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see VersionImportsQuery.LoadStrategy.
+func (t *VersionImportsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see VersionImportsQuery.With.
+func (t *VersionImportsTable) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see VersionImportsQuery.Compute.
+func (t *VersionImportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *VersionImportsTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *VersionImportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *VersionImportsTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *VersionImportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *VersionImportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.VersionImport) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *VersionImportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *VersionImportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *VersionImportsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionImport) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *VersionImportsQuery) Where(ps ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *VersionImportsQuery) Pick(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *VersionImportsQuery) Omit(cols ...keel.Column) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *VersionImportsQuery) Load(ls ...keel.Loader) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *VersionImportsQuery) Order(os ...keel.Order) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *VersionImportsQuery) Distinct() keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *VersionImportsQuery) Group(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *VersionImportsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *VersionImportsQuery) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *VersionImportsQuery) Cube(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *VersionImportsQuery) Window(name string, w keel.Window) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *VersionImportsQuery) Having(ps ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *VersionImportsQuery) Limit(n int) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *VersionImportsQuery) Offset(n int) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *VersionImportsQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *VersionImportsQuery) AllTenants() keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *VersionImportsQuery) CustomPlan() keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *VersionImportsQuery) Timeout(d time.Duration) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *VersionImportsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *VersionImportsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *VersionImportsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *VersionImportsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *VersionImportsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *VersionImportsQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *VersionImportsQuery) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *VersionImportsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *VersionImportsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.VersionImport] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *VersionImportsQuery) Clone() keel.Query[*formulatemplate.VersionImport] {
+	return &VersionImportsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *VersionImportsQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.VersionImport, error) {
+	return keel.One[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *VersionImportsQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.VersionImport, error) {
+	return keel.First[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *VersionImportsQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionImport, error) {
+	return keel.List[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *VersionImportsQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionImport, error) {
+	return keel.All[*formulatemplate.VersionImport](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *VersionImportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.VersionImport, error) {
+	return keel.UpdateReturning[*formulatemplate.VersionImport](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *VersionImportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.VersionImport], error) {
+	return keel.PageOf[*formulatemplate.VersionImport](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *VersionImportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.VersionImport) error) error {
+	return keel.Each[*formulatemplate.VersionImport](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newVersionImport() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.VersionImport)) }
@@ -1051,7 +2488,7 @@ var versionTablesRef = keel.Ref{Table: &versionTablesTable}
 
 // VersionTablesTable is the table of formulatemplate.VersionTable.
 type VersionTablesTable struct {
-	keel.Handle[*formulatemplate.VersionTable]
+	keel.TableBase
 	TemplateVersionID   keelkinds.PulidIDCol
 	RateMatrixID        keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
@@ -1064,7 +2501,7 @@ type VersionTablesTable struct {
 
 // VersionTables references the formula_template_version_tables table.
 var VersionTables = &VersionTablesTable{
-	Handle:              keel.Handle[*formulatemplate.VersionTable]{Ref: &versionTablesRef},
+	TableBase:           keel.TableBase{Ref: &versionTablesRef},
 	TemplateVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 0}}},
 	RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 1}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 2}}},
@@ -1075,10 +2512,10 @@ var VersionTables = &VersionTablesTable{
 	Code:                keel.StringCol{Col: keel.Col{Ref: &versionTablesRef, Index: 7}},
 }
 
-// BuildVersionTables builds the handle of formula_template_version_tables for ref. Generated relation and alias methods call it.
+// BuildVersionTables builds the table of formula_template_version_tables for ref. Generated relation and alias methods call it.
 func BuildVersionTables(r *keel.Ref) *VersionTablesTable {
 	return &VersionTablesTable{
-		Handle:              keel.Handle[*formulatemplate.VersionTable]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		TemplateVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1096,6 +2533,365 @@ func VersionTablesSchema() *schema.Table { return &versionTablesTable }
 // As returns a handle that references formula_template_version_tables under its own alias.
 func (t *VersionTablesTable) As(alias string) *VersionTablesTable {
 	return keel.Alias(t.Ref, alias, BuildVersionTables)
+}
+
+// VersionTablesQuery is a query over formulatemplate.VersionTable.
+type VersionTablesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulatemplate.VersionTable] = (*VersionTablesTable)(nil)
+
+var _ keel.Query[*formulatemplate.VersionTable] = (*VersionTablesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *VersionTablesTable) Query() keel.Query[*formulatemplate.VersionTable] {
+	return &VersionTablesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see VersionTablesQuery.Where.
+func (t *VersionTablesTable) Where(ps ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see VersionTablesQuery.Pick.
+func (t *VersionTablesTable) Pick(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see VersionTablesQuery.Load.
+func (t *VersionTablesTable) Load(ls ...keel.Loader) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see VersionTablesQuery.Omit.
+func (t *VersionTablesTable) Omit(cols ...keel.Column) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see VersionTablesQuery.Order.
+func (t *VersionTablesTable) Order(os ...keel.Order) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see VersionTablesQuery.Limit.
+func (t *VersionTablesTable) Limit(n int) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see VersionTablesQuery.Group.
+func (t *VersionTablesTable) Group(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see VersionTablesQuery.GroupingSets.
+func (t *VersionTablesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see VersionTablesQuery.Rollup.
+func (t *VersionTablesTable) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see VersionTablesQuery.Cube.
+func (t *VersionTablesTable) Cube(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see VersionTablesQuery.AllTenants.
+func (t *VersionTablesTable) AllTenants() keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see VersionTablesQuery.Join.
+func (t *VersionTablesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see VersionTablesQuery.LeftJoin.
+func (t *VersionTablesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see VersionTablesQuery.LeftJoinLateral.
+func (t *VersionTablesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see VersionTablesQuery.JoinLateral.
+func (t *VersionTablesTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see VersionTablesQuery.Lock.
+func (t *VersionTablesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see VersionTablesQuery.DistinctOn.
+func (t *VersionTablesTable) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see VersionTablesQuery.Cache.
+func (t *VersionTablesTable) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see VersionTablesQuery.LoadStrategy.
+func (t *VersionTablesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see VersionTablesQuery.With.
+func (t *VersionTablesTable) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see VersionTablesQuery.Compute.
+func (t *VersionTablesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *VersionTablesTable) Create(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *VersionTablesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *VersionTablesTable) Save(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *VersionTablesTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *VersionTablesTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulatemplate.VersionTable) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *VersionTablesTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *VersionTablesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *VersionTablesTable) Copy(ctx context.Context, db *keel.DB, rows []*formulatemplate.VersionTable) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *VersionTablesQuery) Where(ps ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *VersionTablesQuery) Pick(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *VersionTablesQuery) Omit(cols ...keel.Column) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *VersionTablesQuery) Load(ls ...keel.Loader) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *VersionTablesQuery) Order(os ...keel.Order) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *VersionTablesQuery) Distinct() keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *VersionTablesQuery) Group(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *VersionTablesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *VersionTablesQuery) Rollup(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *VersionTablesQuery) Cube(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *VersionTablesQuery) Window(name string, w keel.Window) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *VersionTablesQuery) Having(ps ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *VersionTablesQuery) Limit(n int) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *VersionTablesQuery) Offset(n int) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *VersionTablesQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *VersionTablesQuery) AllTenants() keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *VersionTablesQuery) CustomPlan() keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *VersionTablesQuery) Timeout(d time.Duration) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *VersionTablesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *VersionTablesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *VersionTablesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *VersionTablesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *VersionTablesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *VersionTablesQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *VersionTablesQuery) With(ctes ...*keel.CTETable) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *VersionTablesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *VersionTablesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulatemplate.VersionTable] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *VersionTablesQuery) Clone() keel.Query[*formulatemplate.VersionTable] {
+	return &VersionTablesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *VersionTablesQuery) One(ctx context.Context, db *keel.DB) (*formulatemplate.VersionTable, error) {
+	return keel.One[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *VersionTablesQuery) First(ctx context.Context, db *keel.DB) (*formulatemplate.VersionTable, error) {
+	return keel.First[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *VersionTablesQuery) List(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionTable, error) {
+	return keel.List[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *VersionTablesQuery) All(ctx context.Context, db *keel.DB) ([]*formulatemplate.VersionTable, error) {
+	return keel.All[*formulatemplate.VersionTable](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *VersionTablesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulatemplate.VersionTable, error) {
+	return keel.UpdateReturning[*formulatemplate.VersionTable](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *VersionTablesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulatemplate.VersionTable], error) {
+	return keel.PageOf[*formulatemplate.VersionTable](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *VersionTablesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulatemplate.VersionTable) error) error {
+	return keel.Each[*formulatemplate.VersionTable](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newVersionTable() unsafe.Pointer { return unsafe.Pointer(new(formulatemplate.VersionTable)) }

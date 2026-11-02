@@ -142,7 +142,7 @@ func (g *billingPhase) bilWriteDisputes(
 	tx *keel.DB,
 	disputes []*invoicedispute.InvoiceDispute,
 ) error {
-	return ledgervolume.Insert(ctx, tx, invoicedisputedb.InvoiceDisputes.Handle, disputes,
+	return ledgervolume.Insert(ctx, tx, invoicedisputedb.InvoiceDisputes, disputes,
 		func(r *invoicedispute.InvoiceDispute) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
 		}, false)

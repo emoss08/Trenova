@@ -83,7 +83,7 @@ func (r *watchtowerReader) ListInvoiceLabels(
 	)
 }
 
-func invoiceLabels(invoiceIDs []pulid.ID) *keel.Query[*invoice.Invoice] {
+func invoiceLabels(invoiceIDs []pulid.ID) keel.Query[*invoice.Invoice] {
 	inv := invoicedb.Invoices
 	return inv.Pick(
 		inv.ID,
@@ -113,7 +113,7 @@ func (r *watchtowerReader) ListCustomersMissingNoa(
 
 func customersMissingNoa(
 	req *factoringwatchtowerports.ListCustomersMissingNoaRequest,
-) *keel.Query[*customer.CustomerBillingProfile] {
+) keel.Query[*customer.CustomerBillingProfile] {
 	cbp := customerdb.CustomerBillingProfiles
 	cus := customerdb.Customers
 	fac := factoringcompanydb.FactoringCompanies
@@ -171,7 +171,7 @@ func (r *watchtowerReader) ListNoasExpiringSoon(
 
 func noasExpiringSoon(
 	req *factoringwatchtowerports.ListNoasExpiringSoonRequest,
-) *keel.Query[*factoring.Noa] {
+) keel.Query[*factoring.Noa] {
 	noa := factoringdb.Noas
 	return noa.Pick(
 		noa.ID,
@@ -209,7 +209,7 @@ func (r *watchtowerReader) ListFailedSubmissions(
 	)
 }
 
-func failedSubmissions(limit int) *keel.Query[*factoringsubmission.Submission] {
+func failedSubmissions(limit int) keel.Query[*factoringsubmission.Submission] {
 	sub := factoringsubmissiondb.Submissions
 	return sub.Pick(
 		sub.ID,
@@ -247,7 +247,7 @@ func (r *watchtowerReader) ListUnfundedSubmissions(
 
 func unfundedSubmissions(
 	req *factoringwatchtowerports.ListUnfundedSubmissionsRequest,
-) *keel.Query[*factoringsubmission.Submission] {
+) keel.Query[*factoringsubmission.Submission] {
 	sub := factoringsubmissiondb.Submissions
 	item := factoringsubmissiondb.SubmissionItems
 	agr := factoringdb.Agreements
@@ -300,7 +300,7 @@ func (r *watchtowerReader) ListChargebacksDue(
 
 func chargebacksDueSoon(
 	req *factoringwatchtowerports.ListChargebacksDueRequest,
-) *keel.Query[*factoringsubmission.SubmissionItem] {
+) keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringsubmissiondb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()

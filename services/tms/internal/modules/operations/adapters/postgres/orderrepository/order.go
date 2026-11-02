@@ -310,14 +310,14 @@ func (r *repository) DeleteIfEmpty(
 	})
 }
 
-func (r *repository) emptyOrder(orderID pulid.ID) *keel.Query[*order.Order] {
+func (r *repository) emptyOrder(orderID pulid.ID) keel.Query[*order.Order] {
 	o := orderdb.Orders
 	preds := make([]keel.Pred, 0, 3+len(r.references))
 	preds = append(preds, o.ID.Eq(orderID), o.Shipments().None(), o.Charges().None())
 	for _, ref := range r.references {
 		preds = append(
 			preds,
-			keel.NotExists(keel.Handle[*keel.Row]{Ref: ref.Ref}.Where(ref.EqCol(o.ID))),
+			keel.NotExists(keel.RowsOf(ref.Ref).Where(ref.EqCol(o.ID))),
 		)
 	}
 	return o.Where(preds...)

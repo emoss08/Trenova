@@ -4,6 +4,7 @@ package factoringcompanydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -78,7 +79,7 @@ var factoringCompaniesRef = keel.Ref{Table: &factoringCompaniesTable}
 
 // FactoringCompaniesTable is the table of factoringcompany.FactoringCompany.
 type FactoringCompaniesTable struct {
-	keel.Handle[*factoringcompany.FactoringCompany]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -104,7 +105,7 @@ type FactoringCompaniesTable struct {
 
 // FactoringCompanies references the factoring_companies table.
 var FactoringCompanies = &FactoringCompaniesTable{
-	Handle:                 keel.Handle[*factoringcompany.FactoringCompany]{Ref: &factoringCompaniesRef},
+	TableBase:              keel.TableBase{Ref: &factoringCompaniesRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &factoringCompaniesRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &factoringCompaniesRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &factoringCompaniesRef, Index: 2}}},
@@ -128,10 +129,10 @@ var FactoringCompanies = &FactoringCompaniesTable{
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &factoringCompaniesRef, Index: 20}},
 }
 
-// BuildFactoringCompanies builds the handle of factoring_companies for ref. Generated relation and alias methods call it.
+// BuildFactoringCompanies builds the table of factoring_companies for ref. Generated relation and alias methods call it.
 func BuildFactoringCompanies(r *keel.Ref) *FactoringCompaniesTable {
 	return &FactoringCompaniesTable{
-		Handle:                 keel.Handle[*factoringcompany.FactoringCompany]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -172,6 +173,365 @@ func (t *FactoringCompaniesTable) State() *usstatedb.UsStatesTable {
 // Get returns the factoring_companies row with the given key, or keel.ErrNotFound.
 func (t *FactoringCompaniesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*factoringcompany.FactoringCompany, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FactoringCompaniesQuery is a query over factoringcompany.FactoringCompany.
+type FactoringCompaniesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*factoringcompany.FactoringCompany] = (*FactoringCompaniesTable)(nil)
+
+var _ keel.Query[*factoringcompany.FactoringCompany] = (*FactoringCompaniesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FactoringCompaniesTable) Query() keel.Query[*factoringcompany.FactoringCompany] {
+	return &FactoringCompaniesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FactoringCompaniesQuery.Where.
+func (t *FactoringCompaniesTable) Where(ps ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FactoringCompaniesQuery.Pick.
+func (t *FactoringCompaniesTable) Pick(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FactoringCompaniesQuery.Load.
+func (t *FactoringCompaniesTable) Load(ls ...keel.Loader) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FactoringCompaniesQuery.Omit.
+func (t *FactoringCompaniesTable) Omit(cols ...keel.Column) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FactoringCompaniesQuery.Order.
+func (t *FactoringCompaniesTable) Order(os ...keel.Order) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FactoringCompaniesQuery.Limit.
+func (t *FactoringCompaniesTable) Limit(n int) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FactoringCompaniesQuery.Group.
+func (t *FactoringCompaniesTable) Group(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FactoringCompaniesQuery.GroupingSets.
+func (t *FactoringCompaniesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FactoringCompaniesQuery.Rollup.
+func (t *FactoringCompaniesTable) Rollup(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FactoringCompaniesQuery.Cube.
+func (t *FactoringCompaniesTable) Cube(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FactoringCompaniesQuery.AllTenants.
+func (t *FactoringCompaniesTable) AllTenants() keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FactoringCompaniesQuery.Join.
+func (t *FactoringCompaniesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FactoringCompaniesQuery.LeftJoin.
+func (t *FactoringCompaniesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FactoringCompaniesQuery.LeftJoinLateral.
+func (t *FactoringCompaniesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FactoringCompaniesQuery.JoinLateral.
+func (t *FactoringCompaniesTable) JoinLateral(sub keel.LateralSource) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FactoringCompaniesQuery.Lock.
+func (t *FactoringCompaniesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FactoringCompaniesQuery.DistinctOn.
+func (t *FactoringCompaniesTable) DistinctOn(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FactoringCompaniesQuery.Cache.
+func (t *FactoringCompaniesTable) Cache(opts ...keel.CacheOption) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FactoringCompaniesQuery.LoadStrategy.
+func (t *FactoringCompaniesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FactoringCompaniesQuery.With.
+func (t *FactoringCompaniesTable) With(ctes ...*keel.CTETable) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FactoringCompaniesQuery.Compute.
+func (t *FactoringCompaniesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FactoringCompaniesTable) Create(ctx context.Context, db *keel.DB, row *factoringcompany.FactoringCompany) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FactoringCompaniesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*factoringcompany.FactoringCompany) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FactoringCompaniesTable) Save(ctx context.Context, db *keel.DB, row *factoringcompany.FactoringCompany, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FactoringCompaniesTable) SaveExcept(ctx context.Context, db *keel.DB, row *factoringcompany.FactoringCompany, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FactoringCompaniesTable) DeleteRow(ctx context.Context, db *keel.DB, row *factoringcompany.FactoringCompany) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FactoringCompaniesTable) Upsert(ctx context.Context, db *keel.DB, rows []*factoringcompany.FactoringCompany, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FactoringCompaniesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*factoringcompany.FactoringCompany, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FactoringCompaniesTable) Copy(ctx context.Context, db *keel.DB, rows []*factoringcompany.FactoringCompany) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FactoringCompaniesQuery) Where(ps ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FactoringCompaniesQuery) Pick(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FactoringCompaniesQuery) Omit(cols ...keel.Column) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FactoringCompaniesQuery) Load(ls ...keel.Loader) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FactoringCompaniesQuery) Order(os ...keel.Order) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FactoringCompaniesQuery) Distinct() keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FactoringCompaniesQuery) Group(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FactoringCompaniesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FactoringCompaniesQuery) Rollup(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FactoringCompaniesQuery) Cube(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FactoringCompaniesQuery) Window(name string, w keel.Window) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FactoringCompaniesQuery) Having(ps ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FactoringCompaniesQuery) Limit(n int) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FactoringCompaniesQuery) Offset(n int) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FactoringCompaniesQuery) DistinctOn(es ...keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FactoringCompaniesQuery) AllTenants() keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FactoringCompaniesQuery) CustomPlan() keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FactoringCompaniesQuery) Timeout(d time.Duration) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FactoringCompaniesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FactoringCompaniesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FactoringCompaniesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FactoringCompaniesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FactoringCompaniesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FactoringCompaniesQuery) Cache(opts ...keel.CacheOption) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FactoringCompaniesQuery) With(ctes ...*keel.CTETable) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FactoringCompaniesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FactoringCompaniesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*factoringcompany.FactoringCompany] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FactoringCompaniesQuery) Clone() keel.Query[*factoringcompany.FactoringCompany] {
+	return &FactoringCompaniesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FactoringCompaniesQuery) One(ctx context.Context, db *keel.DB) (*factoringcompany.FactoringCompany, error) {
+	return keel.One[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FactoringCompaniesQuery) First(ctx context.Context, db *keel.DB) (*factoringcompany.FactoringCompany, error) {
+	return keel.First[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FactoringCompaniesQuery) List(ctx context.Context, db *keel.DB) ([]*factoringcompany.FactoringCompany, error) {
+	return keel.List[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FactoringCompaniesQuery) All(ctx context.Context, db *keel.DB) ([]*factoringcompany.FactoringCompany, error) {
+	return keel.All[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FactoringCompaniesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*factoringcompany.FactoringCompany, error) {
+	return keel.UpdateReturning[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FactoringCompaniesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*factoringcompany.FactoringCompany], error) {
+	return keel.PageOf[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FactoringCompaniesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*factoringcompany.FactoringCompany) error) error {
+	return keel.Each[*factoringcompany.FactoringCompany](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFactoringCompany() unsafe.Pointer {

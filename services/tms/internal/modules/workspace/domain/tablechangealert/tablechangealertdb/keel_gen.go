@@ -4,6 +4,7 @@ package tablechangealertdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -55,7 +56,7 @@ var tCAAllowlistedTablesRef = keel.Ref{Table: &tCAAllowlistedTablesTable}
 
 // TCAAllowlistedTablesTable is the table of tablechangealert.TCAAllowlistedTable.
 type TCAAllowlistedTablesTable struct {
-	keel.Handle[*tablechangealert.TCAAllowlistedTable]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -68,7 +69,7 @@ type TCAAllowlistedTablesTable struct {
 
 // TCAAllowlistedTables references the tca_allowlisted_tables table.
 var TCAAllowlistedTables = &TCAAllowlistedTablesTable{
-	Handle:         keel.Handle[*tablechangealert.TCAAllowlistedTable]{Ref: &tCAAllowlistedTablesRef},
+	TableBase:      keel.TableBase{Ref: &tCAAllowlistedTablesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 2}}},
@@ -79,10 +80,10 @@ var TCAAllowlistedTables = &TCAAllowlistedTablesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &tCAAllowlistedTablesRef, Index: 7}},
 }
 
-// BuildTCAAllowlistedTables builds the handle of tca_allowlisted_tables for ref. Generated relation and alias methods call it.
+// BuildTCAAllowlistedTables builds the table of tca_allowlisted_tables for ref. Generated relation and alias methods call it.
 func BuildTCAAllowlistedTables(r *keel.Ref) *TCAAllowlistedTablesTable {
 	return &TCAAllowlistedTablesTable{
-		Handle:         keel.Handle[*tablechangealert.TCAAllowlistedTable]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -105,6 +106,365 @@ func (t *TCAAllowlistedTablesTable) As(alias string) *TCAAllowlistedTablesTable 
 // Get returns the tca_allowlisted_tables row with the given key, or keel.ErrNotFound.
 func (t *TCAAllowlistedTablesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*tablechangealert.TCAAllowlistedTable, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TCAAllowlistedTablesQuery is a query over tablechangealert.TCAAllowlistedTable.
+type TCAAllowlistedTablesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*tablechangealert.TCAAllowlistedTable] = (*TCAAllowlistedTablesTable)(nil)
+
+var _ keel.Query[*tablechangealert.TCAAllowlistedTable] = (*TCAAllowlistedTablesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TCAAllowlistedTablesTable) Query() keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return &TCAAllowlistedTablesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TCAAllowlistedTablesQuery.Where.
+func (t *TCAAllowlistedTablesTable) Where(ps ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TCAAllowlistedTablesQuery.Pick.
+func (t *TCAAllowlistedTablesTable) Pick(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TCAAllowlistedTablesQuery.Load.
+func (t *TCAAllowlistedTablesTable) Load(ls ...keel.Loader) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TCAAllowlistedTablesQuery.Omit.
+func (t *TCAAllowlistedTablesTable) Omit(cols ...keel.Column) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TCAAllowlistedTablesQuery.Order.
+func (t *TCAAllowlistedTablesTable) Order(os ...keel.Order) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TCAAllowlistedTablesQuery.Limit.
+func (t *TCAAllowlistedTablesTable) Limit(n int) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TCAAllowlistedTablesQuery.Group.
+func (t *TCAAllowlistedTablesTable) Group(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TCAAllowlistedTablesQuery.GroupingSets.
+func (t *TCAAllowlistedTablesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TCAAllowlistedTablesQuery.Rollup.
+func (t *TCAAllowlistedTablesTable) Rollup(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TCAAllowlistedTablesQuery.Cube.
+func (t *TCAAllowlistedTablesTable) Cube(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TCAAllowlistedTablesQuery.AllTenants.
+func (t *TCAAllowlistedTablesTable) AllTenants() keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TCAAllowlistedTablesQuery.Join.
+func (t *TCAAllowlistedTablesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TCAAllowlistedTablesQuery.LeftJoin.
+func (t *TCAAllowlistedTablesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TCAAllowlistedTablesQuery.LeftJoinLateral.
+func (t *TCAAllowlistedTablesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TCAAllowlistedTablesQuery.JoinLateral.
+func (t *TCAAllowlistedTablesTable) JoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TCAAllowlistedTablesQuery.Lock.
+func (t *TCAAllowlistedTablesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TCAAllowlistedTablesQuery.DistinctOn.
+func (t *TCAAllowlistedTablesTable) DistinctOn(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TCAAllowlistedTablesQuery.Cache.
+func (t *TCAAllowlistedTablesTable) Cache(opts ...keel.CacheOption) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TCAAllowlistedTablesQuery.LoadStrategy.
+func (t *TCAAllowlistedTablesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TCAAllowlistedTablesQuery.With.
+func (t *TCAAllowlistedTablesTable) With(ctes ...*keel.CTETable) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TCAAllowlistedTablesQuery.Compute.
+func (t *TCAAllowlistedTablesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TCAAllowlistedTablesTable) Create(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TCAAllowlistedTablesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TCAAllowlistedTablesTable) Save(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TCAAllowlistedTablesTable) SaveExcept(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TCAAllowlistedTablesTable) DeleteRow(ctx context.Context, db *keel.DB, row *tablechangealert.TCAAllowlistedTable) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TCAAllowlistedTablesTable) Upsert(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TCAAllowlistedTablesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TCAAllowlistedTablesTable) Copy(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCAAllowlistedTable) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TCAAllowlistedTablesQuery) Where(ps ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TCAAllowlistedTablesQuery) Pick(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TCAAllowlistedTablesQuery) Omit(cols ...keel.Column) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TCAAllowlistedTablesQuery) Load(ls ...keel.Loader) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TCAAllowlistedTablesQuery) Order(os ...keel.Order) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TCAAllowlistedTablesQuery) Distinct() keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TCAAllowlistedTablesQuery) Group(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TCAAllowlistedTablesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TCAAllowlistedTablesQuery) Rollup(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TCAAllowlistedTablesQuery) Cube(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TCAAllowlistedTablesQuery) Window(name string, w keel.Window) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TCAAllowlistedTablesQuery) Having(ps ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TCAAllowlistedTablesQuery) Limit(n int) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TCAAllowlistedTablesQuery) Offset(n int) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TCAAllowlistedTablesQuery) DistinctOn(es ...keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TCAAllowlistedTablesQuery) AllTenants() keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TCAAllowlistedTablesQuery) CustomPlan() keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TCAAllowlistedTablesQuery) Timeout(d time.Duration) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TCAAllowlistedTablesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TCAAllowlistedTablesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TCAAllowlistedTablesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TCAAllowlistedTablesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TCAAllowlistedTablesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TCAAllowlistedTablesQuery) Cache(opts ...keel.CacheOption) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TCAAllowlistedTablesQuery) With(ctes ...*keel.CTETable) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TCAAllowlistedTablesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TCAAllowlistedTablesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TCAAllowlistedTablesQuery) Clone() keel.Query[*tablechangealert.TCAAllowlistedTable] {
+	return &TCAAllowlistedTablesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TCAAllowlistedTablesQuery) One(ctx context.Context, db *keel.DB) (*tablechangealert.TCAAllowlistedTable, error) {
+	return keel.One[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TCAAllowlistedTablesQuery) First(ctx context.Context, db *keel.DB) (*tablechangealert.TCAAllowlistedTable, error) {
+	return keel.First[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TCAAllowlistedTablesQuery) List(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCAAllowlistedTable, error) {
+	return keel.List[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TCAAllowlistedTablesQuery) All(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCAAllowlistedTable, error) {
+	return keel.All[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TCAAllowlistedTablesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tablechangealert.TCAAllowlistedTable, error) {
+	return keel.UpdateReturning[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TCAAllowlistedTablesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tablechangealert.TCAAllowlistedTable], error) {
+	return keel.PageOf[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TCAAllowlistedTablesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tablechangealert.TCAAllowlistedTable) error) error {
+	return keel.Each[*tablechangealert.TCAAllowlistedTable](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTCAAllowlistedTable() unsafe.Pointer {
@@ -217,7 +577,7 @@ var tCASubscriptionsRef = keel.Ref{Table: &tCASubscriptionsTable}
 
 // TCASubscriptionsTable is the table of tablechangealert.TCASubscription.
 type TCASubscriptionsTable struct {
-	keel.Handle[*tablechangealert.TCASubscription]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -241,7 +601,7 @@ type TCASubscriptionsTable struct {
 
 // TCASubscriptions references the tca_subscriptions table.
 var TCASubscriptions = &TCASubscriptionsTable{
-	Handle:         keel.Handle[*tablechangealert.TCASubscription]{Ref: &tCASubscriptionsRef},
+	TableBase:      keel.TableBase{Ref: &tCASubscriptionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 2}}},
@@ -263,10 +623,10 @@ var TCASubscriptions = &TCASubscriptionsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &tCASubscriptionsRef, Index: 18}},
 }
 
-// BuildTCASubscriptions builds the handle of tca_subscriptions for ref. Generated relation and alias methods call it.
+// BuildTCASubscriptions builds the table of tca_subscriptions for ref. Generated relation and alias methods call it.
 func BuildTCASubscriptions(r *keel.Ref) *TCASubscriptionsTable {
 	return &TCASubscriptionsTable{
-		Handle:         keel.Handle[*tablechangealert.TCASubscription]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -305,6 +665,365 @@ func (t *TCASubscriptionsTable) User() *tenantdb.UsersTable {
 // Get returns the tca_subscriptions row with the given key, or keel.ErrNotFound.
 func (t *TCASubscriptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*tablechangealert.TCASubscription, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TCASubscriptionsQuery is a query over tablechangealert.TCASubscription.
+type TCASubscriptionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*tablechangealert.TCASubscription] = (*TCASubscriptionsTable)(nil)
+
+var _ keel.Query[*tablechangealert.TCASubscription] = (*TCASubscriptionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TCASubscriptionsTable) Query() keel.Query[*tablechangealert.TCASubscription] {
+	return &TCASubscriptionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TCASubscriptionsQuery.Where.
+func (t *TCASubscriptionsTable) Where(ps ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TCASubscriptionsQuery.Pick.
+func (t *TCASubscriptionsTable) Pick(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TCASubscriptionsQuery.Load.
+func (t *TCASubscriptionsTable) Load(ls ...keel.Loader) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TCASubscriptionsQuery.Omit.
+func (t *TCASubscriptionsTable) Omit(cols ...keel.Column) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TCASubscriptionsQuery.Order.
+func (t *TCASubscriptionsTable) Order(os ...keel.Order) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TCASubscriptionsQuery.Limit.
+func (t *TCASubscriptionsTable) Limit(n int) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TCASubscriptionsQuery.Group.
+func (t *TCASubscriptionsTable) Group(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TCASubscriptionsQuery.GroupingSets.
+func (t *TCASubscriptionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TCASubscriptionsQuery.Rollup.
+func (t *TCASubscriptionsTable) Rollup(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TCASubscriptionsQuery.Cube.
+func (t *TCASubscriptionsTable) Cube(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TCASubscriptionsQuery.AllTenants.
+func (t *TCASubscriptionsTable) AllTenants() keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TCASubscriptionsQuery.Join.
+func (t *TCASubscriptionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TCASubscriptionsQuery.LeftJoin.
+func (t *TCASubscriptionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TCASubscriptionsQuery.LeftJoinLateral.
+func (t *TCASubscriptionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TCASubscriptionsQuery.JoinLateral.
+func (t *TCASubscriptionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TCASubscriptionsQuery.Lock.
+func (t *TCASubscriptionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TCASubscriptionsQuery.DistinctOn.
+func (t *TCASubscriptionsTable) DistinctOn(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TCASubscriptionsQuery.Cache.
+func (t *TCASubscriptionsTable) Cache(opts ...keel.CacheOption) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TCASubscriptionsQuery.LoadStrategy.
+func (t *TCASubscriptionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TCASubscriptionsQuery.With.
+func (t *TCASubscriptionsTable) With(ctes ...*keel.CTETable) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TCASubscriptionsQuery.Compute.
+func (t *TCASubscriptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TCASubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TCASubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TCASubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TCASubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TCASubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tablechangealert.TCASubscription) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TCASubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TCASubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TCASubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*tablechangealert.TCASubscription) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TCASubscriptionsQuery) Where(ps ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TCASubscriptionsQuery) Pick(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TCASubscriptionsQuery) Omit(cols ...keel.Column) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TCASubscriptionsQuery) Load(ls ...keel.Loader) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TCASubscriptionsQuery) Order(os ...keel.Order) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TCASubscriptionsQuery) Distinct() keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TCASubscriptionsQuery) Group(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TCASubscriptionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TCASubscriptionsQuery) Rollup(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TCASubscriptionsQuery) Cube(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TCASubscriptionsQuery) Window(name string, w keel.Window) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TCASubscriptionsQuery) Having(ps ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TCASubscriptionsQuery) Limit(n int) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TCASubscriptionsQuery) Offset(n int) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TCASubscriptionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TCASubscriptionsQuery) AllTenants() keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TCASubscriptionsQuery) CustomPlan() keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TCASubscriptionsQuery) Timeout(d time.Duration) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TCASubscriptionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TCASubscriptionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TCASubscriptionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TCASubscriptionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TCASubscriptionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TCASubscriptionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TCASubscriptionsQuery) With(ctes ...*keel.CTETable) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TCASubscriptionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TCASubscriptionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*tablechangealert.TCASubscription] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TCASubscriptionsQuery) Clone() keel.Query[*tablechangealert.TCASubscription] {
+	return &TCASubscriptionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TCASubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*tablechangealert.TCASubscription, error) {
+	return keel.One[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TCASubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*tablechangealert.TCASubscription, error) {
+	return keel.First[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TCASubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCASubscription, error) {
+	return keel.List[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TCASubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*tablechangealert.TCASubscription, error) {
+	return keel.All[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TCASubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tablechangealert.TCASubscription, error) {
+	return keel.UpdateReturning[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TCASubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tablechangealert.TCASubscription], error) {
+	return keel.PageOf[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TCASubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tablechangealert.TCASubscription) error) error {
+	return keel.Each[*tablechangealert.TCASubscription](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTCASubscription() unsafe.Pointer {

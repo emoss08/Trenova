@@ -82,8 +82,8 @@ func (r *repository) ListByShipmentID(
 					Filter: filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[*shipment.ShipmentComment],
-					) *keel.Query[*shipment.ShipmentComment] {
+						q keel.Query[*shipment.ShipmentComment],
+					) keel.Query[*shipment.ShipmentComment] {
 						q = withCommentRelations(q)
 						if replyMode {
 							return q
@@ -144,8 +144,8 @@ func listConditions(req *shipmentcommentports.ListShipmentCommentsRequest) []kee
 
 func withReplyCount(
 	ctx context.Context,
-	q *keel.Query[*shipment.ShipmentComment],
-) *keel.Query[*shipment.ShipmentComment] {
+	q keel.Query[*shipment.ShipmentComment],
+) keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 	replies := sc.As("scr")
 	count := replies.Pick(keel.Count()).Where(
@@ -165,7 +165,7 @@ func withReplyCount(
 func scopedComments(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*keel.Query[*shipment.ShipmentComment], error) {
+) (keel.Query[*shipment.ShipmentComment], error) {
 	sc := shipmentdb.ShipmentComments
 	if !dbscope.IsSystem(ctx) {
 		return sc.Query(), nil
@@ -181,8 +181,8 @@ func scopedComments(
 }
 
 func withCommentRelations(
-	q *keel.Query[*shipment.ShipmentComment],
-) *keel.Query[*shipment.ShipmentComment] {
+	q keel.Query[*shipment.ShipmentComment],
+) keel.Query[*shipment.ShipmentComment] {
 	sc := shipmentdb.ShipmentComments
 	mentions := sc.MentionedUsers()
 	acks := sc.Acknowledgments()

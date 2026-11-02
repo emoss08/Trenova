@@ -4,6 +4,7 @@ package aitrainingdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -74,7 +75,7 @@ var trainingExportsRef = keel.Ref{Table: &trainingExportsTable}
 
 // TrainingExportsTable is the table of aitraining.TrainingExport.
 type TrainingExportsTable struct {
-	keel.Handle[*aitraining.TrainingExport]
+	keel.TableBase
 	ID                      keelkinds.PulidIDCol
 	Task                    aicorrectiondb.TaskCol
 	Status                  ExportStatusCol
@@ -106,7 +107,7 @@ type TrainingExportsTable struct {
 
 // TrainingExports references the ai_training_exports table.
 var TrainingExports = &TrainingExportsTable{
-	Handle:                  keel.Handle[*aitraining.TrainingExport]{Ref: &trainingExportsRef},
+	TableBase:               keel.TableBase{Ref: &trainingExportsRef},
 	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportsRef, Index: 0}}},
 	Task:                    aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportsRef, Index: 1}}},
 	Status:                  ExportStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportsRef, Index: 2}}},
@@ -136,10 +137,10 @@ var TrainingExports = &TrainingExportsTable{
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &trainingExportsRef, Index: 26}},
 }
 
-// BuildTrainingExports builds the handle of ai_training_exports for ref. Generated relation and alias methods call it.
+// BuildTrainingExports builds the table of ai_training_exports for ref. Generated relation and alias methods call it.
 func BuildTrainingExports(r *keel.Ref) *TrainingExportsTable {
 	return &TrainingExportsTable{
-		Handle:                  keel.Handle[*aitraining.TrainingExport]{Ref: r},
+		TableBase:               keel.TableBase{Ref: r},
 		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		Task:                    aicorrectiondb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Status:                  ExportStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -181,6 +182,365 @@ func (t *TrainingExportsTable) As(alias string) *TrainingExportsTable {
 // Get returns the ai_training_exports row with the given key, or keel.ErrNotFound.
 func (t *TrainingExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aitraining.TrainingExport, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TrainingExportsQuery is a query over aitraining.TrainingExport.
+type TrainingExportsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aitraining.TrainingExport] = (*TrainingExportsTable)(nil)
+
+var _ keel.Query[*aitraining.TrainingExport] = (*TrainingExportsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TrainingExportsTable) Query() keel.Query[*aitraining.TrainingExport] {
+	return &TrainingExportsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TrainingExportsQuery.Where.
+func (t *TrainingExportsTable) Where(ps ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TrainingExportsQuery.Pick.
+func (t *TrainingExportsTable) Pick(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TrainingExportsQuery.Load.
+func (t *TrainingExportsTable) Load(ls ...keel.Loader) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TrainingExportsQuery.Omit.
+func (t *TrainingExportsTable) Omit(cols ...keel.Column) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TrainingExportsQuery.Order.
+func (t *TrainingExportsTable) Order(os ...keel.Order) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TrainingExportsQuery.Limit.
+func (t *TrainingExportsTable) Limit(n int) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TrainingExportsQuery.Group.
+func (t *TrainingExportsTable) Group(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TrainingExportsQuery.GroupingSets.
+func (t *TrainingExportsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TrainingExportsQuery.Rollup.
+func (t *TrainingExportsTable) Rollup(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TrainingExportsQuery.Cube.
+func (t *TrainingExportsTable) Cube(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TrainingExportsQuery.AllTenants.
+func (t *TrainingExportsTable) AllTenants() keel.Query[*aitraining.TrainingExport] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TrainingExportsQuery.Join.
+func (t *TrainingExportsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TrainingExportsQuery.LeftJoin.
+func (t *TrainingExportsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TrainingExportsQuery.LeftJoinLateral.
+func (t *TrainingExportsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TrainingExportsQuery.JoinLateral.
+func (t *TrainingExportsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TrainingExportsQuery.Lock.
+func (t *TrainingExportsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TrainingExportsQuery.DistinctOn.
+func (t *TrainingExportsTable) DistinctOn(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TrainingExportsQuery.Cache.
+func (t *TrainingExportsTable) Cache(opts ...keel.CacheOption) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TrainingExportsQuery.LoadStrategy.
+func (t *TrainingExportsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TrainingExportsQuery.With.
+func (t *TrainingExportsTable) With(ctes ...*keel.CTETable) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TrainingExportsQuery.Compute.
+func (t *TrainingExportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TrainingExportsTable) Create(ctx context.Context, db *keel.DB, row *aitraining.TrainingExport) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TrainingExportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExport) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TrainingExportsTable) Save(ctx context.Context, db *keel.DB, row *aitraining.TrainingExport, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TrainingExportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aitraining.TrainingExport, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TrainingExportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aitraining.TrainingExport) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TrainingExportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExport, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TrainingExportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExport, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TrainingExportsTable) Copy(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExport) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TrainingExportsQuery) Where(ps ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TrainingExportsQuery) Pick(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TrainingExportsQuery) Omit(cols ...keel.Column) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TrainingExportsQuery) Load(ls ...keel.Loader) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TrainingExportsQuery) Order(os ...keel.Order) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TrainingExportsQuery) Distinct() keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TrainingExportsQuery) Group(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TrainingExportsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TrainingExportsQuery) Rollup(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TrainingExportsQuery) Cube(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TrainingExportsQuery) Window(name string, w keel.Window) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TrainingExportsQuery) Having(ps ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TrainingExportsQuery) Limit(n int) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TrainingExportsQuery) Offset(n int) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TrainingExportsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TrainingExportsQuery) AllTenants() keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TrainingExportsQuery) CustomPlan() keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TrainingExportsQuery) Timeout(d time.Duration) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TrainingExportsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TrainingExportsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TrainingExportsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TrainingExportsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TrainingExportsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TrainingExportsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TrainingExportsQuery) With(ctes ...*keel.CTETable) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TrainingExportsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TrainingExportsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aitraining.TrainingExport] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TrainingExportsQuery) Clone() keel.Query[*aitraining.TrainingExport] {
+	return &TrainingExportsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TrainingExportsQuery) One(ctx context.Context, db *keel.DB) (*aitraining.TrainingExport, error) {
+	return keel.One[*aitraining.TrainingExport](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TrainingExportsQuery) First(ctx context.Context, db *keel.DB) (*aitraining.TrainingExport, error) {
+	return keel.First[*aitraining.TrainingExport](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TrainingExportsQuery) List(ctx context.Context, db *keel.DB) ([]*aitraining.TrainingExport, error) {
+	return keel.List[*aitraining.TrainingExport](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TrainingExportsQuery) All(ctx context.Context, db *keel.DB) ([]*aitraining.TrainingExport, error) {
+	return keel.All[*aitraining.TrainingExport](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TrainingExportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aitraining.TrainingExport, error) {
+	return keel.UpdateReturning[*aitraining.TrainingExport](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TrainingExportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aitraining.TrainingExport], error) {
+	return keel.PageOf[*aitraining.TrainingExport](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TrainingExportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aitraining.TrainingExport) error) error {
+	return keel.Each[*aitraining.TrainingExport](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTrainingExport() unsafe.Pointer { return unsafe.Pointer(new(aitraining.TrainingExport)) }
@@ -387,7 +747,7 @@ var trainingExportRecordsRef = keel.Ref{Table: &trainingExportRecordsTable}
 
 // TrainingExportRecordsTable is the table of aitraining.TrainingExportRecord.
 type TrainingExportRecordsTable struct {
-	keel.Handle[*aitraining.TrainingExportRecord]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -402,7 +762,7 @@ type TrainingExportRecordsTable struct {
 
 // TrainingExportRecords references the ai_training_export_records table.
 var TrainingExportRecords = &TrainingExportRecordsTable{
-	Handle:           keel.Handle[*aitraining.TrainingExportRecord]{Ref: &trainingExportRecordsRef},
+	TableBase:        keel.TableBase{Ref: &trainingExportRecordsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 2}}},
@@ -415,10 +775,10 @@ var TrainingExportRecords = &TrainingExportRecordsTable{
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &trainingExportRecordsRef, Index: 9}},
 }
 
-// BuildTrainingExportRecords builds the handle of ai_training_export_records for ref. Generated relation and alias methods call it.
+// BuildTrainingExportRecords builds the table of ai_training_export_records for ref. Generated relation and alias methods call it.
 func BuildTrainingExportRecords(r *keel.Ref) *TrainingExportRecordsTable {
 	return &TrainingExportRecordsTable{
-		Handle:           keel.Handle[*aitraining.TrainingExportRecord]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -443,6 +803,365 @@ func (t *TrainingExportRecordsTable) As(alias string) *TrainingExportRecordsTabl
 // Get returns the ai_training_export_records row with the given key, or keel.ErrNotFound.
 func (t *TrainingExportRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aitraining.TrainingExportRecord, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// TrainingExportRecordsQuery is a query over aitraining.TrainingExportRecord.
+type TrainingExportRecordsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aitraining.TrainingExportRecord] = (*TrainingExportRecordsTable)(nil)
+
+var _ keel.Query[*aitraining.TrainingExportRecord] = (*TrainingExportRecordsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *TrainingExportRecordsTable) Query() keel.Query[*aitraining.TrainingExportRecord] {
+	return &TrainingExportRecordsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see TrainingExportRecordsQuery.Where.
+func (t *TrainingExportRecordsTable) Where(ps ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see TrainingExportRecordsQuery.Pick.
+func (t *TrainingExportRecordsTable) Pick(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see TrainingExportRecordsQuery.Load.
+func (t *TrainingExportRecordsTable) Load(ls ...keel.Loader) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see TrainingExportRecordsQuery.Omit.
+func (t *TrainingExportRecordsTable) Omit(cols ...keel.Column) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see TrainingExportRecordsQuery.Order.
+func (t *TrainingExportRecordsTable) Order(os ...keel.Order) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see TrainingExportRecordsQuery.Limit.
+func (t *TrainingExportRecordsTable) Limit(n int) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see TrainingExportRecordsQuery.Group.
+func (t *TrainingExportRecordsTable) Group(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see TrainingExportRecordsQuery.GroupingSets.
+func (t *TrainingExportRecordsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see TrainingExportRecordsQuery.Rollup.
+func (t *TrainingExportRecordsTable) Rollup(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see TrainingExportRecordsQuery.Cube.
+func (t *TrainingExportRecordsTable) Cube(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see TrainingExportRecordsQuery.AllTenants.
+func (t *TrainingExportRecordsTable) AllTenants() keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see TrainingExportRecordsQuery.Join.
+func (t *TrainingExportRecordsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see TrainingExportRecordsQuery.LeftJoin.
+func (t *TrainingExportRecordsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see TrainingExportRecordsQuery.LeftJoinLateral.
+func (t *TrainingExportRecordsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see TrainingExportRecordsQuery.JoinLateral.
+func (t *TrainingExportRecordsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see TrainingExportRecordsQuery.Lock.
+func (t *TrainingExportRecordsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see TrainingExportRecordsQuery.DistinctOn.
+func (t *TrainingExportRecordsTable) DistinctOn(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see TrainingExportRecordsQuery.Cache.
+func (t *TrainingExportRecordsTable) Cache(opts ...keel.CacheOption) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see TrainingExportRecordsQuery.LoadStrategy.
+func (t *TrainingExportRecordsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see TrainingExportRecordsQuery.With.
+func (t *TrainingExportRecordsTable) With(ctes ...*keel.CTETable) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see TrainingExportRecordsQuery.Compute.
+func (t *TrainingExportRecordsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *TrainingExportRecordsTable) Create(ctx context.Context, db *keel.DB, row *aitraining.TrainingExportRecord) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *TrainingExportRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExportRecord) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *TrainingExportRecordsTable) Save(ctx context.Context, db *keel.DB, row *aitraining.TrainingExportRecord, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *TrainingExportRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aitraining.TrainingExportRecord, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *TrainingExportRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aitraining.TrainingExportRecord) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *TrainingExportRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExportRecord, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *TrainingExportRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExportRecord, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *TrainingExportRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*aitraining.TrainingExportRecord) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *TrainingExportRecordsQuery) Where(ps ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *TrainingExportRecordsQuery) Pick(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *TrainingExportRecordsQuery) Omit(cols ...keel.Column) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *TrainingExportRecordsQuery) Load(ls ...keel.Loader) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *TrainingExportRecordsQuery) Order(os ...keel.Order) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *TrainingExportRecordsQuery) Distinct() keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *TrainingExportRecordsQuery) Group(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *TrainingExportRecordsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *TrainingExportRecordsQuery) Rollup(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *TrainingExportRecordsQuery) Cube(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *TrainingExportRecordsQuery) Window(name string, w keel.Window) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *TrainingExportRecordsQuery) Having(ps ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *TrainingExportRecordsQuery) Limit(n int) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *TrainingExportRecordsQuery) Offset(n int) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *TrainingExportRecordsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *TrainingExportRecordsQuery) AllTenants() keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *TrainingExportRecordsQuery) CustomPlan() keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *TrainingExportRecordsQuery) Timeout(d time.Duration) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *TrainingExportRecordsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *TrainingExportRecordsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *TrainingExportRecordsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *TrainingExportRecordsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *TrainingExportRecordsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *TrainingExportRecordsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *TrainingExportRecordsQuery) With(ctes ...*keel.CTETable) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *TrainingExportRecordsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *TrainingExportRecordsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aitraining.TrainingExportRecord] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *TrainingExportRecordsQuery) Clone() keel.Query[*aitraining.TrainingExportRecord] {
+	return &TrainingExportRecordsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *TrainingExportRecordsQuery) One(ctx context.Context, db *keel.DB) (*aitraining.TrainingExportRecord, error) {
+	return keel.One[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *TrainingExportRecordsQuery) First(ctx context.Context, db *keel.DB) (*aitraining.TrainingExportRecord, error) {
+	return keel.First[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *TrainingExportRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*aitraining.TrainingExportRecord, error) {
+	return keel.List[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *TrainingExportRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*aitraining.TrainingExportRecord, error) {
+	return keel.All[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *TrainingExportRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aitraining.TrainingExportRecord, error) {
+	return keel.UpdateReturning[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *TrainingExportRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aitraining.TrainingExportRecord], error) {
+	return keel.PageOf[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *TrainingExportRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aitraining.TrainingExportRecord) error) error {
+	return keel.Each[*aitraining.TrainingExportRecord](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newTrainingExportRecord() unsafe.Pointer {

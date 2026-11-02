@@ -4,6 +4,7 @@ package rbacdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -54,7 +55,7 @@ var resourcePermissionsRef = keel.Ref{Table: &resourcePermissionsTable}
 
 // ResourcePermissionsTable is the table of rbac.ResourcePermission.
 type ResourcePermissionsTable struct {
-	keel.Handle[*rbac.ResourcePermission]
+	keel.TableBase
 	ID         keelkinds.PulidIDCol
 	RoleID     keelkinds.PulidIDCol
 	Resource   keel.StringCol
@@ -66,7 +67,7 @@ type ResourcePermissionsTable struct {
 
 // ResourcePermissions references the resource_permissions table.
 var ResourcePermissions = &ResourcePermissionsTable{
-	Handle:     keel.Handle[*rbac.ResourcePermission]{Ref: &resourcePermissionsRef},
+	TableBase:  keel.TableBase{Ref: &resourcePermissionsRef},
 	ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 0}}},
 	RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 1}}},
 	Resource:   keel.StringCol{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 2}},
@@ -76,10 +77,10 @@ var ResourcePermissions = &ResourcePermissionsTable{
 	UpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: &resourcePermissionsRef, Index: 6}},
 }
 
-// BuildResourcePermissions builds the handle of resource_permissions for ref. Generated relation and alias methods call it.
+// BuildResourcePermissions builds the table of resource_permissions for ref. Generated relation and alias methods call it.
 func BuildResourcePermissions(r *keel.Ref) *ResourcePermissionsTable {
 	return &ResourcePermissionsTable{
-		Handle:     keel.Handle[*rbac.ResourcePermission]{Ref: r},
+		TableBase:  keel.TableBase{Ref: r},
 		ID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RoleID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Resource:   keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -101,6 +102,365 @@ func (t *ResourcePermissionsTable) As(alias string) *ResourcePermissionsTable {
 // Get returns the resource_permissions row with the given key, or keel.ErrNotFound.
 func (t *ResourcePermissionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.ResourcePermission, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ResourcePermissionsQuery is a query over rbac.ResourcePermission.
+type ResourcePermissionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.ResourcePermission] = (*ResourcePermissionsTable)(nil)
+
+var _ keel.Query[*rbac.ResourcePermission] = (*ResourcePermissionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ResourcePermissionsTable) Query() keel.Query[*rbac.ResourcePermission] {
+	return &ResourcePermissionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ResourcePermissionsQuery.Where.
+func (t *ResourcePermissionsTable) Where(ps ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ResourcePermissionsQuery.Pick.
+func (t *ResourcePermissionsTable) Pick(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ResourcePermissionsQuery.Load.
+func (t *ResourcePermissionsTable) Load(ls ...keel.Loader) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ResourcePermissionsQuery.Omit.
+func (t *ResourcePermissionsTable) Omit(cols ...keel.Column) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ResourcePermissionsQuery.Order.
+func (t *ResourcePermissionsTable) Order(os ...keel.Order) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ResourcePermissionsQuery.Limit.
+func (t *ResourcePermissionsTable) Limit(n int) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ResourcePermissionsQuery.Group.
+func (t *ResourcePermissionsTable) Group(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ResourcePermissionsQuery.GroupingSets.
+func (t *ResourcePermissionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ResourcePermissionsQuery.Rollup.
+func (t *ResourcePermissionsTable) Rollup(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ResourcePermissionsQuery.Cube.
+func (t *ResourcePermissionsTable) Cube(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ResourcePermissionsQuery.AllTenants.
+func (t *ResourcePermissionsTable) AllTenants() keel.Query[*rbac.ResourcePermission] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ResourcePermissionsQuery.Join.
+func (t *ResourcePermissionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ResourcePermissionsQuery.LeftJoin.
+func (t *ResourcePermissionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ResourcePermissionsQuery.LeftJoinLateral.
+func (t *ResourcePermissionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ResourcePermissionsQuery.JoinLateral.
+func (t *ResourcePermissionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ResourcePermissionsQuery.Lock.
+func (t *ResourcePermissionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ResourcePermissionsQuery.DistinctOn.
+func (t *ResourcePermissionsTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ResourcePermissionsQuery.Cache.
+func (t *ResourcePermissionsTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ResourcePermissionsQuery.LoadStrategy.
+func (t *ResourcePermissionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ResourcePermissionsQuery.With.
+func (t *ResourcePermissionsTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ResourcePermissionsQuery.Compute.
+func (t *ResourcePermissionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ResourcePermissionsTable) Create(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ResourcePermissionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ResourcePermissionsTable) Save(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ResourcePermissionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ResourcePermissionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.ResourcePermission) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ResourcePermissionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ResourcePermissionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ResourcePermissionsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.ResourcePermission) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ResourcePermissionsQuery) Where(ps ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ResourcePermissionsQuery) Pick(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ResourcePermissionsQuery) Omit(cols ...keel.Column) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ResourcePermissionsQuery) Load(ls ...keel.Loader) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ResourcePermissionsQuery) Order(os ...keel.Order) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ResourcePermissionsQuery) Distinct() keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ResourcePermissionsQuery) Group(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ResourcePermissionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ResourcePermissionsQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ResourcePermissionsQuery) Cube(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ResourcePermissionsQuery) Window(name string, w keel.Window) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ResourcePermissionsQuery) Having(ps ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ResourcePermissionsQuery) Limit(n int) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ResourcePermissionsQuery) Offset(n int) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ResourcePermissionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ResourcePermissionsQuery) AllTenants() keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ResourcePermissionsQuery) CustomPlan() keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ResourcePermissionsQuery) Timeout(d time.Duration) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ResourcePermissionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ResourcePermissionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ResourcePermissionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ResourcePermissionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ResourcePermissionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ResourcePermissionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ResourcePermissionsQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ResourcePermissionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ResourcePermissionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.ResourcePermission] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ResourcePermissionsQuery) Clone() keel.Query[*rbac.ResourcePermission] {
+	return &ResourcePermissionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ResourcePermissionsQuery) One(ctx context.Context, db *keel.DB) (*rbac.ResourcePermission, error) {
+	return keel.One[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ResourcePermissionsQuery) First(ctx context.Context, db *keel.DB) (*rbac.ResourcePermission, error) {
+	return keel.First[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ResourcePermissionsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.ResourcePermission, error) {
+	return keel.List[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ResourcePermissionsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.ResourcePermission, error) {
+	return keel.All[*rbac.ResourcePermission](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ResourcePermissionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.ResourcePermission, error) {
+	return keel.UpdateReturning[*rbac.ResourcePermission](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ResourcePermissionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.ResourcePermission], error) {
+	return keel.PageOf[*rbac.ResourcePermission](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ResourcePermissionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.ResourcePermission) error) error {
+	return keel.Each[*rbac.ResourcePermission](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newResourcePermission() unsafe.Pointer { return unsafe.Pointer(new(rbac.ResourcePermission)) }
@@ -211,7 +571,7 @@ var rolesRef = keel.Ref{Table: &rolesTable}
 
 // RolesTable is the table of rbac.Role.
 type RolesTable struct {
-	keel.Handle[*rbac.Role]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -228,7 +588,7 @@ type RolesTable struct {
 
 // Roles references the roles table.
 var Roles = &RolesTable{
-	Handle:             keel.Handle[*rbac.Role]{Ref: &rolesRef},
+	TableBase:          keel.TableBase{Ref: &rolesRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rolesRef, Index: 2}}},
@@ -243,10 +603,10 @@ var Roles = &RolesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &rolesRef, Index: 11}},
 }
 
-// BuildRoles builds the handle of roles for ref. Generated relation and alias methods call it.
+// BuildRoles builds the table of roles for ref. Generated relation and alias methods call it.
 func BuildRoles(r *keel.Ref) *RolesTable {
 	return &RolesTable{
-		Handle:             keel.Handle[*rbac.Role]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -276,6 +636,365 @@ func (t *RolesTable) Permissions() *ResourcePermissionsTable {
 // Get returns the roles row with the given key, or keel.ErrNotFound.
 func (t *RolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.Role, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RolesQuery is a query over rbac.Role.
+type RolesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.Role] = (*RolesTable)(nil)
+
+var _ keel.Query[*rbac.Role] = (*RolesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RolesTable) Query() keel.Query[*rbac.Role] {
+	return &RolesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RolesQuery.Where.
+func (t *RolesTable) Where(ps ...keel.Pred) keel.Query[*rbac.Role] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RolesQuery.Pick.
+func (t *RolesTable) Pick(es ...keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RolesQuery.Load.
+func (t *RolesTable) Load(ls ...keel.Loader) keel.Query[*rbac.Role] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RolesQuery.Omit.
+func (t *RolesTable) Omit(cols ...keel.Column) keel.Query[*rbac.Role] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RolesQuery.Order.
+func (t *RolesTable) Order(os ...keel.Order) keel.Query[*rbac.Role] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RolesQuery.Limit.
+func (t *RolesTable) Limit(n int) keel.Query[*rbac.Role] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RolesQuery.Group.
+func (t *RolesTable) Group(es ...keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RolesQuery.GroupingSets.
+func (t *RolesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RolesQuery.Rollup.
+func (t *RolesTable) Rollup(es ...keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RolesQuery.Cube.
+func (t *RolesTable) Cube(es ...keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RolesQuery.AllTenants.
+func (t *RolesTable) AllTenants() keel.Query[*rbac.Role] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RolesQuery.Join.
+func (t *RolesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.Role] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RolesQuery.LeftJoin.
+func (t *RolesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.Role] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RolesQuery.LeftJoinLateral.
+func (t *RolesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.Role] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RolesQuery.JoinLateral.
+func (t *RolesTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.Role] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RolesQuery.Lock.
+func (t *RolesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.Role] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RolesQuery.DistinctOn.
+func (t *RolesTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RolesQuery.Cache.
+func (t *RolesTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.Role] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RolesQuery.LoadStrategy.
+func (t *RolesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.Role] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RolesQuery.With.
+func (t *RolesTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.Role] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RolesQuery.Compute.
+func (t *RolesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.Role] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RolesTable) Create(ctx context.Context, db *keel.DB, row *rbac.Role) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RolesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.Role) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RolesTable) Save(ctx context.Context, db *keel.DB, row *rbac.Role, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RolesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.Role, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RolesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.Role) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RolesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.Role, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RolesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.Role, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RolesTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.Role) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RolesQuery) Where(ps ...keel.Pred) keel.Query[*rbac.Role] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RolesQuery) Pick(es ...keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RolesQuery) Omit(cols ...keel.Column) keel.Query[*rbac.Role] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RolesQuery) Load(ls ...keel.Loader) keel.Query[*rbac.Role] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RolesQuery) Order(os ...keel.Order) keel.Query[*rbac.Role] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RolesQuery) Distinct() keel.Query[*rbac.Role] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RolesQuery) Group(es ...keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RolesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RolesQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RolesQuery) Cube(es ...keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RolesQuery) Window(name string, w keel.Window) keel.Query[*rbac.Role] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RolesQuery) Having(ps ...keel.Pred) keel.Query[*rbac.Role] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RolesQuery) Limit(n int) keel.Query[*rbac.Role] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RolesQuery) Offset(n int) keel.Query[*rbac.Role] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RolesQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RolesQuery) AllTenants() keel.Query[*rbac.Role] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RolesQuery) CustomPlan() keel.Query[*rbac.Role] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RolesQuery) Timeout(d time.Duration) keel.Query[*rbac.Role] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RolesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.Role] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RolesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.Role] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RolesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.Role] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RolesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.Role] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RolesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.Role] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RolesQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.Role] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RolesQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.Role] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RolesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.Role] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RolesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.Role] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RolesQuery) Clone() keel.Query[*rbac.Role] {
+	return &RolesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RolesQuery) One(ctx context.Context, db *keel.DB) (*rbac.Role, error) {
+	return keel.One[*rbac.Role](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RolesQuery) First(ctx context.Context, db *keel.DB) (*rbac.Role, error) {
+	return keel.First[*rbac.Role](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RolesQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.Role, error) {
+	return keel.List[*rbac.Role](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RolesQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.Role, error) {
+	return keel.All[*rbac.Role](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RolesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.Role, error) {
+	return keel.UpdateReturning[*rbac.Role](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RolesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.Role], error) {
+	return keel.PageOf[*rbac.Role](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RolesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.Role) error) error {
+	return keel.Each[*rbac.Role](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRole() unsafe.Pointer { return unsafe.Pointer(new(rbac.Role)) }
@@ -409,7 +1128,7 @@ var roleAgentGrantsRef = keel.Ref{Table: &roleAgentGrantsTable}
 
 // RoleAgentGrantsTable is the table of rbac.RoleAgentGrant.
 type RoleAgentGrantsTable struct {
-	keel.Handle[*rbac.RoleAgentGrant]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
@@ -421,7 +1140,7 @@ type RoleAgentGrantsTable struct {
 
 // RoleAgentGrants references the role_agent_grants table.
 var RoleAgentGrants = &RoleAgentGrantsTable{
-	Handle:            keel.Handle[*rbac.RoleAgentGrant]{Ref: &roleAgentGrantsRef},
+	TableBase:         keel.TableBase{Ref: &roleAgentGrantsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 0}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 1}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 2}}},
@@ -431,10 +1150,10 @@ var RoleAgentGrants = &RoleAgentGrantsTable{
 	GrantedAt:         keel.Int64Col{Col: keel.Col{Ref: &roleAgentGrantsRef, Index: 6}},
 }
 
-// BuildRoleAgentGrants builds the handle of role_agent_grants for ref. Generated relation and alias methods call it.
+// BuildRoleAgentGrants builds the table of role_agent_grants for ref. Generated relation and alias methods call it.
 func BuildRoleAgentGrants(r *keel.Ref) *RoleAgentGrantsTable {
 	return &RoleAgentGrantsTable{
-		Handle:            keel.Handle[*rbac.RoleAgentGrant]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -456,6 +1175,365 @@ func (t *RoleAgentGrantsTable) As(alias string) *RoleAgentGrantsTable {
 // Get returns the role_agent_grants row with the given key, or keel.ErrNotFound.
 func (t *RoleAgentGrantsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleAgentGrant, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RoleAgentGrantsQuery is a query over rbac.RoleAgentGrant.
+type RoleAgentGrantsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.RoleAgentGrant] = (*RoleAgentGrantsTable)(nil)
+
+var _ keel.Query[*rbac.RoleAgentGrant] = (*RoleAgentGrantsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RoleAgentGrantsTable) Query() keel.Query[*rbac.RoleAgentGrant] {
+	return &RoleAgentGrantsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RoleAgentGrantsQuery.Where.
+func (t *RoleAgentGrantsTable) Where(ps ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RoleAgentGrantsQuery.Pick.
+func (t *RoleAgentGrantsTable) Pick(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RoleAgentGrantsQuery.Load.
+func (t *RoleAgentGrantsTable) Load(ls ...keel.Loader) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RoleAgentGrantsQuery.Omit.
+func (t *RoleAgentGrantsTable) Omit(cols ...keel.Column) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RoleAgentGrantsQuery.Order.
+func (t *RoleAgentGrantsTable) Order(os ...keel.Order) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RoleAgentGrantsQuery.Limit.
+func (t *RoleAgentGrantsTable) Limit(n int) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RoleAgentGrantsQuery.Group.
+func (t *RoleAgentGrantsTable) Group(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RoleAgentGrantsQuery.GroupingSets.
+func (t *RoleAgentGrantsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RoleAgentGrantsQuery.Rollup.
+func (t *RoleAgentGrantsTable) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RoleAgentGrantsQuery.Cube.
+func (t *RoleAgentGrantsTable) Cube(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RoleAgentGrantsQuery.AllTenants.
+func (t *RoleAgentGrantsTable) AllTenants() keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RoleAgentGrantsQuery.Join.
+func (t *RoleAgentGrantsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RoleAgentGrantsQuery.LeftJoin.
+func (t *RoleAgentGrantsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RoleAgentGrantsQuery.LeftJoinLateral.
+func (t *RoleAgentGrantsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RoleAgentGrantsQuery.JoinLateral.
+func (t *RoleAgentGrantsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RoleAgentGrantsQuery.Lock.
+func (t *RoleAgentGrantsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RoleAgentGrantsQuery.DistinctOn.
+func (t *RoleAgentGrantsTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RoleAgentGrantsQuery.Cache.
+func (t *RoleAgentGrantsTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RoleAgentGrantsQuery.LoadStrategy.
+func (t *RoleAgentGrantsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RoleAgentGrantsQuery.With.
+func (t *RoleAgentGrantsTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RoleAgentGrantsQuery.Compute.
+func (t *RoleAgentGrantsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RoleAgentGrantsTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RoleAgentGrantsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RoleAgentGrantsTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RoleAgentGrantsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RoleAgentGrantsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleAgentGrant) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RoleAgentGrantsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RoleAgentGrantsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RoleAgentGrantsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleAgentGrant) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RoleAgentGrantsQuery) Where(ps ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RoleAgentGrantsQuery) Pick(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RoleAgentGrantsQuery) Omit(cols ...keel.Column) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RoleAgentGrantsQuery) Load(ls ...keel.Loader) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RoleAgentGrantsQuery) Order(os ...keel.Order) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RoleAgentGrantsQuery) Distinct() keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RoleAgentGrantsQuery) Group(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RoleAgentGrantsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RoleAgentGrantsQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RoleAgentGrantsQuery) Cube(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RoleAgentGrantsQuery) Window(name string, w keel.Window) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RoleAgentGrantsQuery) Having(ps ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RoleAgentGrantsQuery) Limit(n int) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RoleAgentGrantsQuery) Offset(n int) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RoleAgentGrantsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RoleAgentGrantsQuery) AllTenants() keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RoleAgentGrantsQuery) CustomPlan() keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RoleAgentGrantsQuery) Timeout(d time.Duration) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RoleAgentGrantsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RoleAgentGrantsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RoleAgentGrantsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RoleAgentGrantsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RoleAgentGrantsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RoleAgentGrantsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RoleAgentGrantsQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RoleAgentGrantsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RoleAgentGrantsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleAgentGrant] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RoleAgentGrantsQuery) Clone() keel.Query[*rbac.RoleAgentGrant] {
+	return &RoleAgentGrantsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RoleAgentGrantsQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleAgentGrant, error) {
+	return keel.One[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RoleAgentGrantsQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleAgentGrant, error) {
+	return keel.First[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RoleAgentGrantsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleAgentGrant, error) {
+	return keel.List[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RoleAgentGrantsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleAgentGrant, error) {
+	return keel.All[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RoleAgentGrantsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleAgentGrant, error) {
+	return keel.UpdateReturning[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RoleAgentGrantsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleAgentGrant], error) {
+	return keel.PageOf[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RoleAgentGrantsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleAgentGrant) error) error {
+	return keel.Each[*rbac.RoleAgentGrant](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRoleAgentGrant() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleAgentGrant)) }
@@ -560,7 +1638,7 @@ var roleConstraintsRef = keel.Ref{Table: &roleConstraintsTable}
 
 // RoleConstraintsTable is the table of rbac.RoleConstraint.
 type RoleConstraintsTable struct {
-	keel.Handle[*rbac.RoleConstraint]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -576,7 +1654,7 @@ type RoleConstraintsTable struct {
 
 // RoleConstraints references the role_constraints table.
 var RoleConstraints = &RoleConstraintsTable{
-	Handle:         keel.Handle[*rbac.RoleConstraint]{Ref: &roleConstraintsRef},
+	TableBase:      keel.TableBase{Ref: &roleConstraintsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintsRef, Index: 2}}},
@@ -590,10 +1668,10 @@ var RoleConstraints = &RoleConstraintsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &roleConstraintsRef, Index: 10}},
 }
 
-// BuildRoleConstraints builds the handle of role_constraints for ref. Generated relation and alias methods call it.
+// BuildRoleConstraints builds the table of role_constraints for ref. Generated relation and alias methods call it.
 func BuildRoleConstraints(r *keel.Ref) *RoleConstraintsTable {
 	return &RoleConstraintsTable{
-		Handle:         keel.Handle[*rbac.RoleConstraint]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -622,6 +1700,365 @@ func (t *RoleConstraintsTable) Roles() *RolesTable { return keel.Path(t.Ref, 0, 
 // Get returns the role_constraints row with the given key, or keel.ErrNotFound.
 func (t *RoleConstraintsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleConstraint, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RoleConstraintsQuery is a query over rbac.RoleConstraint.
+type RoleConstraintsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.RoleConstraint] = (*RoleConstraintsTable)(nil)
+
+var _ keel.Query[*rbac.RoleConstraint] = (*RoleConstraintsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RoleConstraintsTable) Query() keel.Query[*rbac.RoleConstraint] {
+	return &RoleConstraintsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RoleConstraintsQuery.Where.
+func (t *RoleConstraintsTable) Where(ps ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RoleConstraintsQuery.Pick.
+func (t *RoleConstraintsTable) Pick(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RoleConstraintsQuery.Load.
+func (t *RoleConstraintsTable) Load(ls ...keel.Loader) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RoleConstraintsQuery.Omit.
+func (t *RoleConstraintsTable) Omit(cols ...keel.Column) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RoleConstraintsQuery.Order.
+func (t *RoleConstraintsTable) Order(os ...keel.Order) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RoleConstraintsQuery.Limit.
+func (t *RoleConstraintsTable) Limit(n int) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RoleConstraintsQuery.Group.
+func (t *RoleConstraintsTable) Group(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RoleConstraintsQuery.GroupingSets.
+func (t *RoleConstraintsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RoleConstraintsQuery.Rollup.
+func (t *RoleConstraintsTable) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RoleConstraintsQuery.Cube.
+func (t *RoleConstraintsTable) Cube(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RoleConstraintsQuery.AllTenants.
+func (t *RoleConstraintsTable) AllTenants() keel.Query[*rbac.RoleConstraint] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RoleConstraintsQuery.Join.
+func (t *RoleConstraintsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RoleConstraintsQuery.LeftJoin.
+func (t *RoleConstraintsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RoleConstraintsQuery.LeftJoinLateral.
+func (t *RoleConstraintsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RoleConstraintsQuery.JoinLateral.
+func (t *RoleConstraintsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RoleConstraintsQuery.Lock.
+func (t *RoleConstraintsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RoleConstraintsQuery.DistinctOn.
+func (t *RoleConstraintsTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RoleConstraintsQuery.Cache.
+func (t *RoleConstraintsTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RoleConstraintsQuery.LoadStrategy.
+func (t *RoleConstraintsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RoleConstraintsQuery.With.
+func (t *RoleConstraintsTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RoleConstraintsQuery.Compute.
+func (t *RoleConstraintsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RoleConstraintsTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RoleConstraintsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RoleConstraintsTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RoleConstraintsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RoleConstraintsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleConstraint) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RoleConstraintsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RoleConstraintsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RoleConstraintsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraint) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RoleConstraintsQuery) Where(ps ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RoleConstraintsQuery) Pick(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RoleConstraintsQuery) Omit(cols ...keel.Column) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RoleConstraintsQuery) Load(ls ...keel.Loader) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RoleConstraintsQuery) Order(os ...keel.Order) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RoleConstraintsQuery) Distinct() keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RoleConstraintsQuery) Group(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RoleConstraintsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RoleConstraintsQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RoleConstraintsQuery) Cube(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RoleConstraintsQuery) Window(name string, w keel.Window) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RoleConstraintsQuery) Having(ps ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RoleConstraintsQuery) Limit(n int) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RoleConstraintsQuery) Offset(n int) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RoleConstraintsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RoleConstraintsQuery) AllTenants() keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RoleConstraintsQuery) CustomPlan() keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RoleConstraintsQuery) Timeout(d time.Duration) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RoleConstraintsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RoleConstraintsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RoleConstraintsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RoleConstraintsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RoleConstraintsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RoleConstraintsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RoleConstraintsQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RoleConstraintsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RoleConstraintsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleConstraint] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RoleConstraintsQuery) Clone() keel.Query[*rbac.RoleConstraint] {
+	return &RoleConstraintsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RoleConstraintsQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleConstraint, error) {
+	return keel.One[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RoleConstraintsQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleConstraint, error) {
+	return keel.First[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RoleConstraintsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraint, error) {
+	return keel.List[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RoleConstraintsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraint, error) {
+	return keel.All[*rbac.RoleConstraint](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RoleConstraintsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleConstraint, error) {
+	return keel.UpdateReturning[*rbac.RoleConstraint](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RoleConstraintsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleConstraint], error) {
+	return keel.PageOf[*rbac.RoleConstraint](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RoleConstraintsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleConstraint) error) error {
+	return keel.Each[*rbac.RoleConstraint](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRoleConstraint() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleConstraint)) }
@@ -745,7 +2182,7 @@ var roleConstraintRolesRef = keel.Ref{Table: &roleConstraintRolesTable}
 
 // RoleConstraintRolesTable is the table of rbac.RoleConstraintRole.
 type RoleConstraintRolesTable struct {
-	keel.Handle[*rbac.RoleConstraintRole]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	RoleConstraintID keelkinds.PulidIDCol
 	RoleID           keelkinds.PulidIDCol
@@ -756,7 +2193,7 @@ type RoleConstraintRolesTable struct {
 
 // RoleConstraintRoles references the role_constraint_roles table.
 var RoleConstraintRoles = &RoleConstraintRolesTable{
-	Handle:           keel.Handle[*rbac.RoleConstraintRole]{Ref: &roleConstraintRolesRef},
+	TableBase:        keel.TableBase{Ref: &roleConstraintRolesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 0}}},
 	RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 1}}},
 	RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 2}}},
@@ -765,10 +2202,10 @@ var RoleConstraintRoles = &RoleConstraintRolesTable{
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &roleConstraintRolesRef, Index: 5}},
 }
 
-// BuildRoleConstraintRoles builds the handle of role_constraint_roles for ref. Generated relation and alias methods call it.
+// BuildRoleConstraintRoles builds the table of role_constraint_roles for ref. Generated relation and alias methods call it.
 func BuildRoleConstraintRoles(r *keel.Ref) *RoleConstraintRolesTable {
 	return &RoleConstraintRolesTable{
-		Handle:           keel.Handle[*rbac.RoleConstraintRole]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		RoleConstraintID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		RoleID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -797,6 +2234,365 @@ func (t *RoleConstraintRolesTable) Role() *RolesTable { return keel.Path(t.Ref, 
 // Get returns the role_constraint_roles row with the given key, or keel.ErrNotFound.
 func (t *RoleConstraintRolesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleConstraintRole, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RoleConstraintRolesQuery is a query over rbac.RoleConstraintRole.
+type RoleConstraintRolesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.RoleConstraintRole] = (*RoleConstraintRolesTable)(nil)
+
+var _ keel.Query[*rbac.RoleConstraintRole] = (*RoleConstraintRolesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RoleConstraintRolesTable) Query() keel.Query[*rbac.RoleConstraintRole] {
+	return &RoleConstraintRolesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RoleConstraintRolesQuery.Where.
+func (t *RoleConstraintRolesTable) Where(ps ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RoleConstraintRolesQuery.Pick.
+func (t *RoleConstraintRolesTable) Pick(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RoleConstraintRolesQuery.Load.
+func (t *RoleConstraintRolesTable) Load(ls ...keel.Loader) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RoleConstraintRolesQuery.Omit.
+func (t *RoleConstraintRolesTable) Omit(cols ...keel.Column) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RoleConstraintRolesQuery.Order.
+func (t *RoleConstraintRolesTable) Order(os ...keel.Order) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RoleConstraintRolesQuery.Limit.
+func (t *RoleConstraintRolesTable) Limit(n int) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RoleConstraintRolesQuery.Group.
+func (t *RoleConstraintRolesTable) Group(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RoleConstraintRolesQuery.GroupingSets.
+func (t *RoleConstraintRolesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RoleConstraintRolesQuery.Rollup.
+func (t *RoleConstraintRolesTable) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RoleConstraintRolesQuery.Cube.
+func (t *RoleConstraintRolesTable) Cube(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RoleConstraintRolesQuery.AllTenants.
+func (t *RoleConstraintRolesTable) AllTenants() keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RoleConstraintRolesQuery.Join.
+func (t *RoleConstraintRolesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RoleConstraintRolesQuery.LeftJoin.
+func (t *RoleConstraintRolesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RoleConstraintRolesQuery.LeftJoinLateral.
+func (t *RoleConstraintRolesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RoleConstraintRolesQuery.JoinLateral.
+func (t *RoleConstraintRolesTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RoleConstraintRolesQuery.Lock.
+func (t *RoleConstraintRolesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RoleConstraintRolesQuery.DistinctOn.
+func (t *RoleConstraintRolesTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RoleConstraintRolesQuery.Cache.
+func (t *RoleConstraintRolesTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RoleConstraintRolesQuery.LoadStrategy.
+func (t *RoleConstraintRolesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RoleConstraintRolesQuery.With.
+func (t *RoleConstraintRolesTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RoleConstraintRolesQuery.Compute.
+func (t *RoleConstraintRolesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RoleConstraintRolesTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RoleConstraintRolesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RoleConstraintRolesTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RoleConstraintRolesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RoleConstraintRolesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleConstraintRole) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RoleConstraintRolesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RoleConstraintRolesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RoleConstraintRolesTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleConstraintRole) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RoleConstraintRolesQuery) Where(ps ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RoleConstraintRolesQuery) Pick(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RoleConstraintRolesQuery) Omit(cols ...keel.Column) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RoleConstraintRolesQuery) Load(ls ...keel.Loader) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RoleConstraintRolesQuery) Order(os ...keel.Order) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RoleConstraintRolesQuery) Distinct() keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RoleConstraintRolesQuery) Group(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RoleConstraintRolesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RoleConstraintRolesQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RoleConstraintRolesQuery) Cube(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RoleConstraintRolesQuery) Window(name string, w keel.Window) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RoleConstraintRolesQuery) Having(ps ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RoleConstraintRolesQuery) Limit(n int) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RoleConstraintRolesQuery) Offset(n int) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RoleConstraintRolesQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RoleConstraintRolesQuery) AllTenants() keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RoleConstraintRolesQuery) CustomPlan() keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RoleConstraintRolesQuery) Timeout(d time.Duration) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RoleConstraintRolesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RoleConstraintRolesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RoleConstraintRolesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RoleConstraintRolesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RoleConstraintRolesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RoleConstraintRolesQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RoleConstraintRolesQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RoleConstraintRolesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RoleConstraintRolesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleConstraintRole] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RoleConstraintRolesQuery) Clone() keel.Query[*rbac.RoleConstraintRole] {
+	return &RoleConstraintRolesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RoleConstraintRolesQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleConstraintRole, error) {
+	return keel.One[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RoleConstraintRolesQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleConstraintRole, error) {
+	return keel.First[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RoleConstraintRolesQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraintRole, error) {
+	return keel.List[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RoleConstraintRolesQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleConstraintRole, error) {
+	return keel.All[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RoleConstraintRolesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleConstraintRole, error) {
+	return keel.UpdateReturning[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RoleConstraintRolesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleConstraintRole], error) {
+	return keel.PageOf[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RoleConstraintRolesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleConstraintRole) error) error {
+	return keel.Each[*rbac.RoleConstraintRole](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRoleConstraintRole() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleConstraintRole)) }
@@ -898,7 +2694,7 @@ var roleHierarchyEdgesRef = keel.Ref{Table: &roleHierarchyEdgesTable}
 
 // RoleHierarchyEdgesTable is the table of rbac.RoleHierarchyEdge.
 type RoleHierarchyEdgesTable struct {
-	keel.Handle[*rbac.RoleHierarchyEdge]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	SeniorRoleID   keelkinds.PulidIDCol
 	JuniorRoleID   keelkinds.PulidIDCol
@@ -911,7 +2707,7 @@ type RoleHierarchyEdgesTable struct {
 
 // RoleHierarchyEdges references the role_hierarchy_edges table.
 var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
-	Handle:         keel.Handle[*rbac.RoleHierarchyEdge]{Ref: &roleHierarchyEdgesRef},
+	TableBase:      keel.TableBase{Ref: &roleHierarchyEdgesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 0}}},
 	SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 1}}},
 	JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 2}}},
@@ -922,10 +2718,10 @@ var RoleHierarchyEdges = &RoleHierarchyEdgesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &roleHierarchyEdgesRef, Index: 7}},
 }
 
-// BuildRoleHierarchyEdges builds the handle of role_hierarchy_edges for ref. Generated relation and alias methods call it.
+// BuildRoleHierarchyEdges builds the table of role_hierarchy_edges for ref. Generated relation and alias methods call it.
 func BuildRoleHierarchyEdges(r *keel.Ref) *RoleHierarchyEdgesTable {
 	return &RoleHierarchyEdgesTable{
-		Handle:         keel.Handle[*rbac.RoleHierarchyEdge]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		SeniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		JuniorRoleID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -954,6 +2750,365 @@ func (t *RoleHierarchyEdgesTable) JuniorRole() *RolesTable { return keel.Path(t.
 // Get returns the role_hierarchy_edges row with the given key, or keel.ErrNotFound.
 func (t *RoleHierarchyEdgesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.RoleHierarchyEdge, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RoleHierarchyEdgesQuery is a query over rbac.RoleHierarchyEdge.
+type RoleHierarchyEdgesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.RoleHierarchyEdge] = (*RoleHierarchyEdgesTable)(nil)
+
+var _ keel.Query[*rbac.RoleHierarchyEdge] = (*RoleHierarchyEdgesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RoleHierarchyEdgesTable) Query() keel.Query[*rbac.RoleHierarchyEdge] {
+	return &RoleHierarchyEdgesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RoleHierarchyEdgesQuery.Where.
+func (t *RoleHierarchyEdgesTable) Where(ps ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RoleHierarchyEdgesQuery.Pick.
+func (t *RoleHierarchyEdgesTable) Pick(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RoleHierarchyEdgesQuery.Load.
+func (t *RoleHierarchyEdgesTable) Load(ls ...keel.Loader) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RoleHierarchyEdgesQuery.Omit.
+func (t *RoleHierarchyEdgesTable) Omit(cols ...keel.Column) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RoleHierarchyEdgesQuery.Order.
+func (t *RoleHierarchyEdgesTable) Order(os ...keel.Order) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RoleHierarchyEdgesQuery.Limit.
+func (t *RoleHierarchyEdgesTable) Limit(n int) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RoleHierarchyEdgesQuery.Group.
+func (t *RoleHierarchyEdgesTable) Group(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RoleHierarchyEdgesQuery.GroupingSets.
+func (t *RoleHierarchyEdgesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RoleHierarchyEdgesQuery.Rollup.
+func (t *RoleHierarchyEdgesTable) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RoleHierarchyEdgesQuery.Cube.
+func (t *RoleHierarchyEdgesTable) Cube(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RoleHierarchyEdgesQuery.AllTenants.
+func (t *RoleHierarchyEdgesTable) AllTenants() keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RoleHierarchyEdgesQuery.Join.
+func (t *RoleHierarchyEdgesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RoleHierarchyEdgesQuery.LeftJoin.
+func (t *RoleHierarchyEdgesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RoleHierarchyEdgesQuery.LeftJoinLateral.
+func (t *RoleHierarchyEdgesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RoleHierarchyEdgesQuery.JoinLateral.
+func (t *RoleHierarchyEdgesTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RoleHierarchyEdgesQuery.Lock.
+func (t *RoleHierarchyEdgesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RoleHierarchyEdgesQuery.DistinctOn.
+func (t *RoleHierarchyEdgesTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RoleHierarchyEdgesQuery.Cache.
+func (t *RoleHierarchyEdgesTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RoleHierarchyEdgesQuery.LoadStrategy.
+func (t *RoleHierarchyEdgesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RoleHierarchyEdgesQuery.With.
+func (t *RoleHierarchyEdgesTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RoleHierarchyEdgesQuery.Compute.
+func (t *RoleHierarchyEdgesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RoleHierarchyEdgesTable) Create(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RoleHierarchyEdgesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RoleHierarchyEdgesTable) Save(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RoleHierarchyEdgesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RoleHierarchyEdgesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.RoleHierarchyEdge) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RoleHierarchyEdgesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RoleHierarchyEdgesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RoleHierarchyEdgesTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.RoleHierarchyEdge) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RoleHierarchyEdgesQuery) Where(ps ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RoleHierarchyEdgesQuery) Pick(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RoleHierarchyEdgesQuery) Omit(cols ...keel.Column) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RoleHierarchyEdgesQuery) Load(ls ...keel.Loader) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RoleHierarchyEdgesQuery) Order(os ...keel.Order) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RoleHierarchyEdgesQuery) Distinct() keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RoleHierarchyEdgesQuery) Group(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RoleHierarchyEdgesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RoleHierarchyEdgesQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RoleHierarchyEdgesQuery) Cube(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RoleHierarchyEdgesQuery) Window(name string, w keel.Window) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RoleHierarchyEdgesQuery) Having(ps ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RoleHierarchyEdgesQuery) Limit(n int) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RoleHierarchyEdgesQuery) Offset(n int) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RoleHierarchyEdgesQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RoleHierarchyEdgesQuery) AllTenants() keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RoleHierarchyEdgesQuery) CustomPlan() keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RoleHierarchyEdgesQuery) Timeout(d time.Duration) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RoleHierarchyEdgesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RoleHierarchyEdgesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RoleHierarchyEdgesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RoleHierarchyEdgesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RoleHierarchyEdgesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RoleHierarchyEdgesQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RoleHierarchyEdgesQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RoleHierarchyEdgesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RoleHierarchyEdgesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.RoleHierarchyEdge] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RoleHierarchyEdgesQuery) Clone() keel.Query[*rbac.RoleHierarchyEdge] {
+	return &RoleHierarchyEdgesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RoleHierarchyEdgesQuery) One(ctx context.Context, db *keel.DB) (*rbac.RoleHierarchyEdge, error) {
+	return keel.One[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RoleHierarchyEdgesQuery) First(ctx context.Context, db *keel.DB) (*rbac.RoleHierarchyEdge, error) {
+	return keel.First[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RoleHierarchyEdgesQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.RoleHierarchyEdge, error) {
+	return keel.List[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RoleHierarchyEdgesQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.RoleHierarchyEdge, error) {
+	return keel.All[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RoleHierarchyEdgesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.RoleHierarchyEdge, error) {
+	return keel.UpdateReturning[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RoleHierarchyEdgesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.RoleHierarchyEdge], error) {
+	return keel.PageOf[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RoleHierarchyEdgesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.RoleHierarchyEdge) error) error {
+	return keel.Each[*rbac.RoleHierarchyEdge](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newRoleHierarchyEdge() unsafe.Pointer { return unsafe.Pointer(new(rbac.RoleHierarchyEdge)) }
@@ -1065,7 +3220,7 @@ var userRoleAssignmentsRef = keel.Ref{Table: &userRoleAssignmentsTable}
 
 // UserRoleAssignmentsTable is the table of rbac.UserRoleAssignment.
 type UserRoleAssignmentsTable struct {
-	keel.Handle[*rbac.UserRoleAssignment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -1077,7 +3232,7 @@ type UserRoleAssignmentsTable struct {
 
 // UserRoleAssignments references the user_role_assignments table.
 var UserRoleAssignments = &UserRoleAssignmentsTable{
-	Handle:         keel.Handle[*rbac.UserRoleAssignment]{Ref: &userRoleAssignmentsRef},
+	TableBase:      keel.TableBase{Ref: &userRoleAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 2}}},
@@ -1087,10 +3242,10 @@ var UserRoleAssignments = &UserRoleAssignmentsTable{
 	AssignedAt:     keel.Int64Col{Col: keel.Col{Ref: &userRoleAssignmentsRef, Index: 6}},
 }
 
-// BuildUserRoleAssignments builds the handle of user_role_assignments for ref. Generated relation and alias methods call it.
+// BuildUserRoleAssignments builds the table of user_role_assignments for ref. Generated relation and alias methods call it.
 func BuildUserRoleAssignments(r *keel.Ref) *UserRoleAssignmentsTable {
 	return &UserRoleAssignmentsTable{
-		Handle:         keel.Handle[*rbac.UserRoleAssignment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1115,6 +3270,365 @@ func (t *UserRoleAssignmentsTable) Role() *RolesTable { return keel.Path(t.Ref, 
 // Get returns the user_role_assignments row with the given key, or keel.ErrNotFound.
 func (t *UserRoleAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*rbac.UserRoleAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// UserRoleAssignmentsQuery is a query over rbac.UserRoleAssignment.
+type UserRoleAssignmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*rbac.UserRoleAssignment] = (*UserRoleAssignmentsTable)(nil)
+
+var _ keel.Query[*rbac.UserRoleAssignment] = (*UserRoleAssignmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *UserRoleAssignmentsTable) Query() keel.Query[*rbac.UserRoleAssignment] {
+	return &UserRoleAssignmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see UserRoleAssignmentsQuery.Where.
+func (t *UserRoleAssignmentsTable) Where(ps ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see UserRoleAssignmentsQuery.Pick.
+func (t *UserRoleAssignmentsTable) Pick(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see UserRoleAssignmentsQuery.Load.
+func (t *UserRoleAssignmentsTable) Load(ls ...keel.Loader) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see UserRoleAssignmentsQuery.Omit.
+func (t *UserRoleAssignmentsTable) Omit(cols ...keel.Column) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see UserRoleAssignmentsQuery.Order.
+func (t *UserRoleAssignmentsTable) Order(os ...keel.Order) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see UserRoleAssignmentsQuery.Limit.
+func (t *UserRoleAssignmentsTable) Limit(n int) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see UserRoleAssignmentsQuery.Group.
+func (t *UserRoleAssignmentsTable) Group(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see UserRoleAssignmentsQuery.GroupingSets.
+func (t *UserRoleAssignmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see UserRoleAssignmentsQuery.Rollup.
+func (t *UserRoleAssignmentsTable) Rollup(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see UserRoleAssignmentsQuery.Cube.
+func (t *UserRoleAssignmentsTable) Cube(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see UserRoleAssignmentsQuery.AllTenants.
+func (t *UserRoleAssignmentsTable) AllTenants() keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see UserRoleAssignmentsQuery.Join.
+func (t *UserRoleAssignmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see UserRoleAssignmentsQuery.LeftJoin.
+func (t *UserRoleAssignmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see UserRoleAssignmentsQuery.LeftJoinLateral.
+func (t *UserRoleAssignmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see UserRoleAssignmentsQuery.JoinLateral.
+func (t *UserRoleAssignmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see UserRoleAssignmentsQuery.Lock.
+func (t *UserRoleAssignmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see UserRoleAssignmentsQuery.DistinctOn.
+func (t *UserRoleAssignmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see UserRoleAssignmentsQuery.Cache.
+func (t *UserRoleAssignmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see UserRoleAssignmentsQuery.LoadStrategy.
+func (t *UserRoleAssignmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see UserRoleAssignmentsQuery.With.
+func (t *UserRoleAssignmentsTable) With(ctes ...*keel.CTETable) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see UserRoleAssignmentsQuery.Compute.
+func (t *UserRoleAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *UserRoleAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *UserRoleAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *UserRoleAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *UserRoleAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *UserRoleAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rbac.UserRoleAssignment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *UserRoleAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *UserRoleAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *UserRoleAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*rbac.UserRoleAssignment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *UserRoleAssignmentsQuery) Where(ps ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *UserRoleAssignmentsQuery) Pick(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *UserRoleAssignmentsQuery) Omit(cols ...keel.Column) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *UserRoleAssignmentsQuery) Load(ls ...keel.Loader) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *UserRoleAssignmentsQuery) Order(os ...keel.Order) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *UserRoleAssignmentsQuery) Distinct() keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *UserRoleAssignmentsQuery) Group(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *UserRoleAssignmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *UserRoleAssignmentsQuery) Rollup(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *UserRoleAssignmentsQuery) Cube(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *UserRoleAssignmentsQuery) Window(name string, w keel.Window) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *UserRoleAssignmentsQuery) Having(ps ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *UserRoleAssignmentsQuery) Limit(n int) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *UserRoleAssignmentsQuery) Offset(n int) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *UserRoleAssignmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *UserRoleAssignmentsQuery) AllTenants() keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *UserRoleAssignmentsQuery) CustomPlan() keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *UserRoleAssignmentsQuery) Timeout(d time.Duration) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *UserRoleAssignmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *UserRoleAssignmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *UserRoleAssignmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *UserRoleAssignmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *UserRoleAssignmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *UserRoleAssignmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *UserRoleAssignmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *UserRoleAssignmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *UserRoleAssignmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*rbac.UserRoleAssignment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *UserRoleAssignmentsQuery) Clone() keel.Query[*rbac.UserRoleAssignment] {
+	return &UserRoleAssignmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *UserRoleAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*rbac.UserRoleAssignment, error) {
+	return keel.One[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *UserRoleAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*rbac.UserRoleAssignment, error) {
+	return keel.First[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *UserRoleAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*rbac.UserRoleAssignment, error) {
+	return keel.List[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *UserRoleAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*rbac.UserRoleAssignment, error) {
+	return keel.All[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *UserRoleAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rbac.UserRoleAssignment, error) {
+	return keel.UpdateReturning[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *UserRoleAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rbac.UserRoleAssignment], error) {
+	return keel.PageOf[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *UserRoleAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rbac.UserRoleAssignment) error) error {
+	return keel.Each[*rbac.UserRoleAssignment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newUserRoleAssignment() unsafe.Pointer { return unsafe.Pointer(new(rbac.UserRoleAssignment)) }

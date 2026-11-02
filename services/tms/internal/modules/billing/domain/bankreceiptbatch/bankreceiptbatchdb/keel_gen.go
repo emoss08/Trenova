@@ -4,6 +4,7 @@ package bankreceiptbatchdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var bankReceiptBatchesRef = keel.Ref{Table: &bankReceiptBatchesTable}
 
 // BankReceiptBatchesTable is the table of bankreceiptbatch.BankReceiptBatch.
 type BankReceiptBatchesTable struct {
-	keel.Handle[*bankreceiptbatch.BankReceiptBatch]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -85,7 +86,7 @@ type BankReceiptBatchesTable struct {
 
 // BankReceiptBatches references the bank_receipt_import_batches table.
 var BankReceiptBatches = &BankReceiptBatchesTable{
-	Handle:               keel.Handle[*bankreceiptbatch.BankReceiptBatch]{Ref: &bankReceiptBatchesRef},
+	TableBase:            keel.TableBase{Ref: &bankReceiptBatchesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 2}}},
@@ -105,10 +106,10 @@ var BankReceiptBatches = &BankReceiptBatchesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &bankReceiptBatchesRef, Index: 16}},
 }
 
-// BuildBankReceiptBatches builds the handle of bank_receipt_import_batches for ref. Generated relation and alias methods call it.
+// BuildBankReceiptBatches builds the table of bank_receipt_import_batches for ref. Generated relation and alias methods call it.
 func BuildBankReceiptBatches(r *keel.Ref) *BankReceiptBatchesTable {
 	return &BankReceiptBatchesTable{
-		Handle:               keel.Handle[*bankreceiptbatch.BankReceiptBatch]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -140,6 +141,365 @@ func (t *BankReceiptBatchesTable) As(alias string) *BankReceiptBatchesTable {
 // Get returns the bank_receipt_import_batches row with the given key, or keel.ErrNotFound.
 func (t *BankReceiptBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*bankreceiptbatch.BankReceiptBatch, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// BankReceiptBatchesQuery is a query over bankreceiptbatch.BankReceiptBatch.
+type BankReceiptBatchesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*bankreceiptbatch.BankReceiptBatch] = (*BankReceiptBatchesTable)(nil)
+
+var _ keel.Query[*bankreceiptbatch.BankReceiptBatch] = (*BankReceiptBatchesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *BankReceiptBatchesTable) Query() keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return &BankReceiptBatchesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see BankReceiptBatchesQuery.Where.
+func (t *BankReceiptBatchesTable) Where(ps ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see BankReceiptBatchesQuery.Pick.
+func (t *BankReceiptBatchesTable) Pick(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see BankReceiptBatchesQuery.Load.
+func (t *BankReceiptBatchesTable) Load(ls ...keel.Loader) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see BankReceiptBatchesQuery.Omit.
+func (t *BankReceiptBatchesTable) Omit(cols ...keel.Column) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see BankReceiptBatchesQuery.Order.
+func (t *BankReceiptBatchesTable) Order(os ...keel.Order) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see BankReceiptBatchesQuery.Limit.
+func (t *BankReceiptBatchesTable) Limit(n int) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see BankReceiptBatchesQuery.Group.
+func (t *BankReceiptBatchesTable) Group(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see BankReceiptBatchesQuery.GroupingSets.
+func (t *BankReceiptBatchesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see BankReceiptBatchesQuery.Rollup.
+func (t *BankReceiptBatchesTable) Rollup(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see BankReceiptBatchesQuery.Cube.
+func (t *BankReceiptBatchesTable) Cube(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see BankReceiptBatchesQuery.AllTenants.
+func (t *BankReceiptBatchesTable) AllTenants() keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see BankReceiptBatchesQuery.Join.
+func (t *BankReceiptBatchesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see BankReceiptBatchesQuery.LeftJoin.
+func (t *BankReceiptBatchesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see BankReceiptBatchesQuery.LeftJoinLateral.
+func (t *BankReceiptBatchesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see BankReceiptBatchesQuery.JoinLateral.
+func (t *BankReceiptBatchesTable) JoinLateral(sub keel.LateralSource) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see BankReceiptBatchesQuery.Lock.
+func (t *BankReceiptBatchesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see BankReceiptBatchesQuery.DistinctOn.
+func (t *BankReceiptBatchesTable) DistinctOn(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see BankReceiptBatchesQuery.Cache.
+func (t *BankReceiptBatchesTable) Cache(opts ...keel.CacheOption) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see BankReceiptBatchesQuery.LoadStrategy.
+func (t *BankReceiptBatchesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see BankReceiptBatchesQuery.With.
+func (t *BankReceiptBatchesTable) With(ctes ...*keel.CTETable) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see BankReceiptBatchesQuery.Compute.
+func (t *BankReceiptBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *BankReceiptBatchesTable) Create(ctx context.Context, db *keel.DB, row *bankreceiptbatch.BankReceiptBatch) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *BankReceiptBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*bankreceiptbatch.BankReceiptBatch) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *BankReceiptBatchesTable) Save(ctx context.Context, db *keel.DB, row *bankreceiptbatch.BankReceiptBatch, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *BankReceiptBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *bankreceiptbatch.BankReceiptBatch, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *BankReceiptBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *bankreceiptbatch.BankReceiptBatch) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *BankReceiptBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*bankreceiptbatch.BankReceiptBatch, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *BankReceiptBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*bankreceiptbatch.BankReceiptBatch, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *BankReceiptBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*bankreceiptbatch.BankReceiptBatch) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *BankReceiptBatchesQuery) Where(ps ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *BankReceiptBatchesQuery) Pick(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *BankReceiptBatchesQuery) Omit(cols ...keel.Column) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *BankReceiptBatchesQuery) Load(ls ...keel.Loader) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *BankReceiptBatchesQuery) Order(os ...keel.Order) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *BankReceiptBatchesQuery) Distinct() keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *BankReceiptBatchesQuery) Group(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *BankReceiptBatchesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *BankReceiptBatchesQuery) Rollup(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *BankReceiptBatchesQuery) Cube(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *BankReceiptBatchesQuery) Window(name string, w keel.Window) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *BankReceiptBatchesQuery) Having(ps ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *BankReceiptBatchesQuery) Limit(n int) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *BankReceiptBatchesQuery) Offset(n int) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *BankReceiptBatchesQuery) DistinctOn(es ...keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *BankReceiptBatchesQuery) AllTenants() keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *BankReceiptBatchesQuery) CustomPlan() keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *BankReceiptBatchesQuery) Timeout(d time.Duration) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *BankReceiptBatchesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *BankReceiptBatchesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *BankReceiptBatchesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *BankReceiptBatchesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *BankReceiptBatchesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *BankReceiptBatchesQuery) Cache(opts ...keel.CacheOption) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *BankReceiptBatchesQuery) With(ctes ...*keel.CTETable) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *BankReceiptBatchesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *BankReceiptBatchesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *BankReceiptBatchesQuery) Clone() keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	return &BankReceiptBatchesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *BankReceiptBatchesQuery) One(ctx context.Context, db *keel.DB) (*bankreceiptbatch.BankReceiptBatch, error) {
+	return keel.One[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *BankReceiptBatchesQuery) First(ctx context.Context, db *keel.DB) (*bankreceiptbatch.BankReceiptBatch, error) {
+	return keel.First[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *BankReceiptBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*bankreceiptbatch.BankReceiptBatch, error) {
+	return keel.List[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *BankReceiptBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*bankreceiptbatch.BankReceiptBatch, error) {
+	return keel.All[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *BankReceiptBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*bankreceiptbatch.BankReceiptBatch, error) {
+	return keel.UpdateReturning[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *BankReceiptBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*bankreceiptbatch.BankReceiptBatch], error) {
+	return keel.PageOf[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *BankReceiptBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*bankreceiptbatch.BankReceiptBatch) error) error {
+	return keel.Each[*bankreceiptbatch.BankReceiptBatch](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newBankReceiptBatch() unsafe.Pointer {

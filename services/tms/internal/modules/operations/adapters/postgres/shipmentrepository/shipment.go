@@ -123,7 +123,7 @@ func (r *repository) List(
 				&listquery.Request[shipment.Shipment]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
+					Shape: func(q keel.Query[*shipment.Shipment]) keel.Query[*shipment.Shipment] {
 						return q.Load(loads...)
 					},
 				},
@@ -268,7 +268,7 @@ func (r *repository) GetUnassigned(
 				&listquery.Request[shipment.Shipment]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
+					Shape: func(q keel.Query[*shipment.Shipment]) keel.Query[*shipment.Shipment] {
 						return q.Load(loads...)
 					},
 				},
@@ -574,7 +574,7 @@ func (r *repository) UpdateDerivedState(
 func (r *repository) updateOne(
 	ctx context.Context,
 	id pulid.ID,
-	q *keel.Query[*shipment.Shipment],
+	q keel.Query[*shipment.Shipment],
 	sets ...keel.Assignment,
 ) (*shipment.Shipment, error) {
 	rows, err := q.UpdateReturning(ctx, r.db.Keel(ctx), sets...)
@@ -979,7 +979,7 @@ var errNoShipmentScope = errors.New("shipment graph source needs a tenant")
 func tenantShipments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*keel.Query[*shipment.Shipment], error) {
+) (keel.Query[*shipment.Shipment], error) {
 	sp := shipmentdb.Shipments
 	if !dbscope.IsSystem(ctx) {
 		return sp.Query(), nil

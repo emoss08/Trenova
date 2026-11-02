@@ -45,7 +45,7 @@ const minOnTimeStops = 12
 
 func customerOnTimeQuery(
 	req insightports.InsightWindowRequest,
-) *keel.Query[*shipment.Stop] {
+) keel.Query[*shipment.Stop] {
 	stp := shipmentdb.Stops
 	smv := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
@@ -113,7 +113,7 @@ func (r *metricsRepository) CustomerOnTimeComparison(
 
 func unbilledShipmentsQuery(
 	req insightports.UnbilledShipmentsRequest,
-) *keel.Query[*shipment.Shipment] {
+) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
 
@@ -163,7 +163,7 @@ func (r *metricsRepository) UnbilledDeliveredShipments(
 
 func unbilledDetentionQuery(
 	req insightports.InsightWindowRequest,
-) *keel.Query[*detention.DetentionOccurrence] {
+) keel.Query[*detention.DetentionOccurrence] {
 	dto := detentiondb.DetentionOccurrences
 	loc := locationdb.Locations
 
@@ -218,7 +218,7 @@ func (r *metricsRepository) UnbilledDetention(
 
 func customerEmptyMilesQuery(
 	req insightports.InsightWindowRequest,
-) *keel.Query[*shipment.ShipmentMove] {
+) keel.Query[*shipment.ShipmentMove] {
 	smv := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers
@@ -275,7 +275,7 @@ func (r *metricsRepository) CustomerEmptyMiles(
 
 func expiringCredentialsQuery(
 	req insightports.ExpiringCredentialsRequest,
-) *keel.Query[*workercredential.WorkerCredential] {
+) keel.Query[*workercredential.WorkerCredential] {
 	wcred := workercredentialdb.WorkerCredentials
 	wct := workercredentialdb.WorkerCredentialTypes
 	wrk := workerdb.Workers

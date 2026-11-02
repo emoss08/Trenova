@@ -4,6 +4,7 @@ package aifeedbackdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -74,7 +75,7 @@ var feedbacksRef = keel.Ref{Table: &feedbacksTable}
 
 // FeedbacksTable is the table of aifeedback.Feedback.
 type FeedbacksTable struct {
-	keel.Handle[*aifeedback.Feedback]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -107,7 +108,7 @@ type FeedbacksTable struct {
 
 // Feedbacks references the ai_feedback table.
 var Feedbacks = &FeedbacksTable{
-	Handle:            keel.Handle[*aifeedback.Feedback]{Ref: &feedbacksRef},
+	TableBase:         keel.TableBase{Ref: &feedbacksRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &feedbacksRef, Index: 2}}},
@@ -138,10 +139,10 @@ var Feedbacks = &FeedbacksTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &feedbacksRef, Index: 27}},
 }
 
-// BuildFeedbacks builds the handle of ai_feedback for ref. Generated relation and alias methods call it.
+// BuildFeedbacks builds the table of ai_feedback for ref. Generated relation and alias methods call it.
 func BuildFeedbacks(r *keel.Ref) *FeedbacksTable {
 	return &FeedbacksTable{
-		Handle:            keel.Handle[*aifeedback.Feedback]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -184,6 +185,365 @@ func (t *FeedbacksTable) As(alias string) *FeedbacksTable {
 // Get returns the ai_feedback row with the given key, or keel.ErrNotFound.
 func (t *FeedbacksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aifeedback.Feedback, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FeedbacksQuery is a query over aifeedback.Feedback.
+type FeedbacksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aifeedback.Feedback] = (*FeedbacksTable)(nil)
+
+var _ keel.Query[*aifeedback.Feedback] = (*FeedbacksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FeedbacksTable) Query() keel.Query[*aifeedback.Feedback] {
+	return &FeedbacksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FeedbacksQuery.Where.
+func (t *FeedbacksTable) Where(ps ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FeedbacksQuery.Pick.
+func (t *FeedbacksTable) Pick(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FeedbacksQuery.Load.
+func (t *FeedbacksTable) Load(ls ...keel.Loader) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FeedbacksQuery.Omit.
+func (t *FeedbacksTable) Omit(cols ...keel.Column) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FeedbacksQuery.Order.
+func (t *FeedbacksTable) Order(os ...keel.Order) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FeedbacksQuery.Limit.
+func (t *FeedbacksTable) Limit(n int) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FeedbacksQuery.Group.
+func (t *FeedbacksTable) Group(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FeedbacksQuery.GroupingSets.
+func (t *FeedbacksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FeedbacksQuery.Rollup.
+func (t *FeedbacksTable) Rollup(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FeedbacksQuery.Cube.
+func (t *FeedbacksTable) Cube(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FeedbacksQuery.AllTenants.
+func (t *FeedbacksTable) AllTenants() keel.Query[*aifeedback.Feedback] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FeedbacksQuery.Join.
+func (t *FeedbacksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FeedbacksQuery.LeftJoin.
+func (t *FeedbacksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FeedbacksQuery.LeftJoinLateral.
+func (t *FeedbacksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aifeedback.Feedback] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FeedbacksQuery.JoinLateral.
+func (t *FeedbacksTable) JoinLateral(sub keel.LateralSource) keel.Query[*aifeedback.Feedback] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FeedbacksQuery.Lock.
+func (t *FeedbacksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FeedbacksQuery.DistinctOn.
+func (t *FeedbacksTable) DistinctOn(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FeedbacksQuery.Cache.
+func (t *FeedbacksTable) Cache(opts ...keel.CacheOption) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FeedbacksQuery.LoadStrategy.
+func (t *FeedbacksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aifeedback.Feedback] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FeedbacksQuery.With.
+func (t *FeedbacksTable) With(ctes ...*keel.CTETable) keel.Query[*aifeedback.Feedback] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FeedbacksQuery.Compute.
+func (t *FeedbacksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aifeedback.Feedback] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FeedbacksTable) Create(ctx context.Context, db *keel.DB, row *aifeedback.Feedback) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FeedbacksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FeedbacksTable) Save(ctx context.Context, db *keel.DB, row *aifeedback.Feedback, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FeedbacksTable) SaveExcept(ctx context.Context, db *keel.DB, row *aifeedback.Feedback, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FeedbacksTable) DeleteRow(ctx context.Context, db *keel.DB, row *aifeedback.Feedback) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FeedbacksTable) Upsert(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FeedbacksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FeedbacksTable) Copy(ctx context.Context, db *keel.DB, rows []*aifeedback.Feedback) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FeedbacksQuery) Where(ps ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FeedbacksQuery) Pick(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FeedbacksQuery) Omit(cols ...keel.Column) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FeedbacksQuery) Load(ls ...keel.Loader) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FeedbacksQuery) Order(os ...keel.Order) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FeedbacksQuery) Distinct() keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FeedbacksQuery) Group(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FeedbacksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FeedbacksQuery) Rollup(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FeedbacksQuery) Cube(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FeedbacksQuery) Window(name string, w keel.Window) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FeedbacksQuery) Having(ps ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FeedbacksQuery) Limit(n int) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FeedbacksQuery) Offset(n int) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FeedbacksQuery) DistinctOn(es ...keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FeedbacksQuery) AllTenants() keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FeedbacksQuery) CustomPlan() keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FeedbacksQuery) Timeout(d time.Duration) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FeedbacksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FeedbacksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FeedbacksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FeedbacksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FeedbacksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FeedbacksQuery) Cache(opts ...keel.CacheOption) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FeedbacksQuery) With(ctes ...*keel.CTETable) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FeedbacksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FeedbacksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aifeedback.Feedback] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FeedbacksQuery) Clone() keel.Query[*aifeedback.Feedback] {
+	return &FeedbacksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FeedbacksQuery) One(ctx context.Context, db *keel.DB) (*aifeedback.Feedback, error) {
+	return keel.One[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FeedbacksQuery) First(ctx context.Context, db *keel.DB) (*aifeedback.Feedback, error) {
+	return keel.First[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FeedbacksQuery) List(ctx context.Context, db *keel.DB) ([]*aifeedback.Feedback, error) {
+	return keel.List[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FeedbacksQuery) All(ctx context.Context, db *keel.DB) ([]*aifeedback.Feedback, error) {
+	return keel.All[*aifeedback.Feedback](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FeedbacksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aifeedback.Feedback, error) {
+	return keel.UpdateReturning[*aifeedback.Feedback](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FeedbacksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aifeedback.Feedback], error) {
+	return keel.PageOf[*aifeedback.Feedback](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FeedbacksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aifeedback.Feedback) error) error {
+	return keel.Each[*aifeedback.Feedback](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFeedback() unsafe.Pointer { return unsafe.Pointer(new(aifeedback.Feedback)) }

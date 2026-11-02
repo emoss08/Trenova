@@ -39,7 +39,7 @@ func (r *repository) attachHeadlines(
 	return nil
 }
 
-func openIssues(itemIDs []pulid.ID) *keel.Query[*billingqueue.Issue] {
+func openIssues(itemIDs []pulid.ID) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues
 
 	return iss.Pick(iss.ItemID, iss.CheckKey, iss.Code, iss.Summary, iss.RequestedAt, iss.CreatedAt).

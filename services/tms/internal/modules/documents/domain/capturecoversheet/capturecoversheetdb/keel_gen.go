@@ -4,6 +4,7 @@ package capturecoversheetdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -58,7 +59,7 @@ var captureCoverSheetsRef = keel.Ref{Table: &captureCoverSheetsTable}
 
 // CaptureCoverSheetsTable is the table of capturecoversheet.CaptureCoverSheet.
 type CaptureCoverSheetsTable struct {
-	keel.Handle[*capturecoversheet.CaptureCoverSheet]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -75,7 +76,7 @@ type CaptureCoverSheetsTable struct {
 
 // CaptureCoverSheets references the capture_cover_sheets table.
 var CaptureCoverSheets = &CaptureCoverSheetsTable{
-	Handle:         keel.Handle[*capturecoversheet.CaptureCoverSheet]{Ref: &captureCoverSheetsRef},
+	TableBase:      keel.TableBase{Ref: &captureCoverSheetsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 2}}},
@@ -90,10 +91,10 @@ var CaptureCoverSheets = &CaptureCoverSheetsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 11}},
 }
 
-// BuildCaptureCoverSheets builds the handle of capture_cover_sheets for ref. Generated relation and alias methods call it.
+// BuildCaptureCoverSheets builds the table of capture_cover_sheets for ref. Generated relation and alias methods call it.
 func BuildCaptureCoverSheets(r *keel.Ref) *CaptureCoverSheetsTable {
 	return &CaptureCoverSheetsTable{
-		Handle:         keel.Handle[*capturecoversheet.CaptureCoverSheet]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -120,6 +121,365 @@ func (t *CaptureCoverSheetsTable) As(alias string) *CaptureCoverSheetsTable {
 // Get returns the capture_cover_sheets row with the given key, or keel.ErrNotFound.
 func (t *CaptureCoverSheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*capturecoversheet.CaptureCoverSheet, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// CaptureCoverSheetsQuery is a query over capturecoversheet.CaptureCoverSheet.
+type CaptureCoverSheetsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*capturecoversheet.CaptureCoverSheet] = (*CaptureCoverSheetsTable)(nil)
+
+var _ keel.Query[*capturecoversheet.CaptureCoverSheet] = (*CaptureCoverSheetsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *CaptureCoverSheetsTable) Query() keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return &CaptureCoverSheetsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see CaptureCoverSheetsQuery.Where.
+func (t *CaptureCoverSheetsTable) Where(ps ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see CaptureCoverSheetsQuery.Pick.
+func (t *CaptureCoverSheetsTable) Pick(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see CaptureCoverSheetsQuery.Load.
+func (t *CaptureCoverSheetsTable) Load(ls ...keel.Loader) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see CaptureCoverSheetsQuery.Omit.
+func (t *CaptureCoverSheetsTable) Omit(cols ...keel.Column) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see CaptureCoverSheetsQuery.Order.
+func (t *CaptureCoverSheetsTable) Order(os ...keel.Order) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see CaptureCoverSheetsQuery.Limit.
+func (t *CaptureCoverSheetsTable) Limit(n int) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see CaptureCoverSheetsQuery.Group.
+func (t *CaptureCoverSheetsTable) Group(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see CaptureCoverSheetsQuery.GroupingSets.
+func (t *CaptureCoverSheetsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see CaptureCoverSheetsQuery.Rollup.
+func (t *CaptureCoverSheetsTable) Rollup(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see CaptureCoverSheetsQuery.Cube.
+func (t *CaptureCoverSheetsTable) Cube(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see CaptureCoverSheetsQuery.AllTenants.
+func (t *CaptureCoverSheetsTable) AllTenants() keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see CaptureCoverSheetsQuery.Join.
+func (t *CaptureCoverSheetsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see CaptureCoverSheetsQuery.LeftJoin.
+func (t *CaptureCoverSheetsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see CaptureCoverSheetsQuery.LeftJoinLateral.
+func (t *CaptureCoverSheetsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see CaptureCoverSheetsQuery.JoinLateral.
+func (t *CaptureCoverSheetsTable) JoinLateral(sub keel.LateralSource) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see CaptureCoverSheetsQuery.Lock.
+func (t *CaptureCoverSheetsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see CaptureCoverSheetsQuery.DistinctOn.
+func (t *CaptureCoverSheetsTable) DistinctOn(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see CaptureCoverSheetsQuery.Cache.
+func (t *CaptureCoverSheetsTable) Cache(opts ...keel.CacheOption) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see CaptureCoverSheetsQuery.LoadStrategy.
+func (t *CaptureCoverSheetsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see CaptureCoverSheetsQuery.With.
+func (t *CaptureCoverSheetsTable) With(ctes ...*keel.CTETable) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see CaptureCoverSheetsQuery.Compute.
+func (t *CaptureCoverSheetsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *CaptureCoverSheetsTable) Create(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *CaptureCoverSheetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *CaptureCoverSheetsTable) Save(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *CaptureCoverSheetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *CaptureCoverSheetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *CaptureCoverSheetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *CaptureCoverSheetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *CaptureCoverSheetsTable) Copy(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *CaptureCoverSheetsQuery) Where(ps ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *CaptureCoverSheetsQuery) Pick(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *CaptureCoverSheetsQuery) Omit(cols ...keel.Column) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *CaptureCoverSheetsQuery) Load(ls ...keel.Loader) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *CaptureCoverSheetsQuery) Order(os ...keel.Order) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *CaptureCoverSheetsQuery) Distinct() keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *CaptureCoverSheetsQuery) Group(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *CaptureCoverSheetsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *CaptureCoverSheetsQuery) Rollup(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *CaptureCoverSheetsQuery) Cube(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *CaptureCoverSheetsQuery) Window(name string, w keel.Window) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *CaptureCoverSheetsQuery) Having(ps ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *CaptureCoverSheetsQuery) Limit(n int) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *CaptureCoverSheetsQuery) Offset(n int) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *CaptureCoverSheetsQuery) DistinctOn(es ...keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *CaptureCoverSheetsQuery) AllTenants() keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *CaptureCoverSheetsQuery) CustomPlan() keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *CaptureCoverSheetsQuery) Timeout(d time.Duration) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *CaptureCoverSheetsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *CaptureCoverSheetsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *CaptureCoverSheetsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *CaptureCoverSheetsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *CaptureCoverSheetsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *CaptureCoverSheetsQuery) Cache(opts ...keel.CacheOption) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *CaptureCoverSheetsQuery) With(ctes ...*keel.CTETable) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *CaptureCoverSheetsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *CaptureCoverSheetsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *CaptureCoverSheetsQuery) Clone() keel.Query[*capturecoversheet.CaptureCoverSheet] {
+	return &CaptureCoverSheetsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *CaptureCoverSheetsQuery) One(ctx context.Context, db *keel.DB) (*capturecoversheet.CaptureCoverSheet, error) {
+	return keel.One[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *CaptureCoverSheetsQuery) First(ctx context.Context, db *keel.DB) (*capturecoversheet.CaptureCoverSheet, error) {
+	return keel.First[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *CaptureCoverSheetsQuery) List(ctx context.Context, db *keel.DB) ([]*capturecoversheet.CaptureCoverSheet, error) {
+	return keel.List[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *CaptureCoverSheetsQuery) All(ctx context.Context, db *keel.DB) ([]*capturecoversheet.CaptureCoverSheet, error) {
+	return keel.All[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *CaptureCoverSheetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capturecoversheet.CaptureCoverSheet, error) {
+	return keel.UpdateReturning[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *CaptureCoverSheetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capturecoversheet.CaptureCoverSheet], error) {
+	return keel.PageOf[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *CaptureCoverSheetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capturecoversheet.CaptureCoverSheet) error) error {
+	return keel.Each[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newCaptureCoverSheet() unsafe.Pointer {

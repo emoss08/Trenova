@@ -4,6 +4,7 @@ package conversationturndb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -66,7 +67,7 @@ var assistantTurnsRef = keel.Ref{Table: &assistantTurnsTable}
 
 // AssistantTurnsTable is the table of conversationturn.AssistantTurn.
 type AssistantTurnsTable struct {
-	keel.Handle[*conversationturn.AssistantTurn]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -89,7 +90,7 @@ type AssistantTurnsTable struct {
 
 // AssistantTurns references the assistant_turns table.
 var AssistantTurns = &AssistantTurnsTable{
-	Handle:         keel.Handle[*conversationturn.AssistantTurn]{Ref: &assistantTurnsRef},
+	TableBase:      keel.TableBase{Ref: &assistantTurnsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &assistantTurnsRef, Index: 2}}},
@@ -110,10 +111,10 @@ var AssistantTurns = &AssistantTurnsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &assistantTurnsRef, Index: 17}},
 }
 
-// BuildAssistantTurns builds the handle of assistant_turns for ref. Generated relation and alias methods call it.
+// BuildAssistantTurns builds the table of assistant_turns for ref. Generated relation and alias methods call it.
 func BuildAssistantTurns(r *keel.Ref) *AssistantTurnsTable {
 	return &AssistantTurnsTable{
-		Handle:         keel.Handle[*conversationturn.AssistantTurn]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -146,6 +147,365 @@ func (t *AssistantTurnsTable) As(alias string) *AssistantTurnsTable {
 // Get returns the assistant_turns row with the given key, or keel.ErrNotFound.
 func (t *AssistantTurnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationturn.AssistantTurn, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AssistantTurnsQuery is a query over conversationturn.AssistantTurn.
+type AssistantTurnsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*conversationturn.AssistantTurn] = (*AssistantTurnsTable)(nil)
+
+var _ keel.Query[*conversationturn.AssistantTurn] = (*AssistantTurnsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AssistantTurnsTable) Query() keel.Query[*conversationturn.AssistantTurn] {
+	return &AssistantTurnsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AssistantTurnsQuery.Where.
+func (t *AssistantTurnsTable) Where(ps ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AssistantTurnsQuery.Pick.
+func (t *AssistantTurnsTable) Pick(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AssistantTurnsQuery.Load.
+func (t *AssistantTurnsTable) Load(ls ...keel.Loader) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AssistantTurnsQuery.Omit.
+func (t *AssistantTurnsTable) Omit(cols ...keel.Column) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AssistantTurnsQuery.Order.
+func (t *AssistantTurnsTable) Order(os ...keel.Order) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AssistantTurnsQuery.Limit.
+func (t *AssistantTurnsTable) Limit(n int) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AssistantTurnsQuery.Group.
+func (t *AssistantTurnsTable) Group(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AssistantTurnsQuery.GroupingSets.
+func (t *AssistantTurnsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AssistantTurnsQuery.Rollup.
+func (t *AssistantTurnsTable) Rollup(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AssistantTurnsQuery.Cube.
+func (t *AssistantTurnsTable) Cube(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AssistantTurnsQuery.AllTenants.
+func (t *AssistantTurnsTable) AllTenants() keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AssistantTurnsQuery.Join.
+func (t *AssistantTurnsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AssistantTurnsQuery.LeftJoin.
+func (t *AssistantTurnsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AssistantTurnsQuery.LeftJoinLateral.
+func (t *AssistantTurnsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AssistantTurnsQuery.JoinLateral.
+func (t *AssistantTurnsTable) JoinLateral(sub keel.LateralSource) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AssistantTurnsQuery.Lock.
+func (t *AssistantTurnsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AssistantTurnsQuery.DistinctOn.
+func (t *AssistantTurnsTable) DistinctOn(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AssistantTurnsQuery.Cache.
+func (t *AssistantTurnsTable) Cache(opts ...keel.CacheOption) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AssistantTurnsQuery.LoadStrategy.
+func (t *AssistantTurnsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AssistantTurnsQuery.With.
+func (t *AssistantTurnsTable) With(ctes ...*keel.CTETable) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AssistantTurnsQuery.Compute.
+func (t *AssistantTurnsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AssistantTurnsTable) Create(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AssistantTurnsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AssistantTurnsTable) Save(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AssistantTurnsTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AssistantTurnsTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversationturn.AssistantTurn) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AssistantTurnsTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AssistantTurnsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AssistantTurnsTable) Copy(ctx context.Context, db *keel.DB, rows []*conversationturn.AssistantTurn) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AssistantTurnsQuery) Where(ps ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AssistantTurnsQuery) Pick(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AssistantTurnsQuery) Omit(cols ...keel.Column) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AssistantTurnsQuery) Load(ls ...keel.Loader) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AssistantTurnsQuery) Order(os ...keel.Order) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AssistantTurnsQuery) Distinct() keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AssistantTurnsQuery) Group(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AssistantTurnsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AssistantTurnsQuery) Rollup(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AssistantTurnsQuery) Cube(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AssistantTurnsQuery) Window(name string, w keel.Window) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AssistantTurnsQuery) Having(ps ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AssistantTurnsQuery) Limit(n int) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AssistantTurnsQuery) Offset(n int) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AssistantTurnsQuery) DistinctOn(es ...keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AssistantTurnsQuery) AllTenants() keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AssistantTurnsQuery) CustomPlan() keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AssistantTurnsQuery) Timeout(d time.Duration) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AssistantTurnsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AssistantTurnsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AssistantTurnsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AssistantTurnsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AssistantTurnsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AssistantTurnsQuery) Cache(opts ...keel.CacheOption) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AssistantTurnsQuery) With(ctes ...*keel.CTETable) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AssistantTurnsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AssistantTurnsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationturn.AssistantTurn] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AssistantTurnsQuery) Clone() keel.Query[*conversationturn.AssistantTurn] {
+	return &AssistantTurnsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AssistantTurnsQuery) One(ctx context.Context, db *keel.DB) (*conversationturn.AssistantTurn, error) {
+	return keel.One[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AssistantTurnsQuery) First(ctx context.Context, db *keel.DB) (*conversationturn.AssistantTurn, error) {
+	return keel.First[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AssistantTurnsQuery) List(ctx context.Context, db *keel.DB) ([]*conversationturn.AssistantTurn, error) {
+	return keel.List[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AssistantTurnsQuery) All(ctx context.Context, db *keel.DB) ([]*conversationturn.AssistantTurn, error) {
+	return keel.All[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AssistantTurnsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversationturn.AssistantTurn, error) {
+	return keel.UpdateReturning[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AssistantTurnsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversationturn.AssistantTurn], error) {
+	return keel.PageOf[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AssistantTurnsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversationturn.AssistantTurn) error) error {
+	return keel.Each[*conversationturn.AssistantTurn](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAssistantTurn() unsafe.Pointer { return unsafe.Pointer(new(conversationturn.AssistantTurn)) }

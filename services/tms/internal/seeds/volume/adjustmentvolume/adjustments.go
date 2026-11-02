@@ -1884,7 +1884,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups.Handle,
+		invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups,
 		rows.groupOrder,
 		func(r *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.CreatedAt}
@@ -1906,7 +1906,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustments.Handle,
+		invoiceadjustmentdb.InvoiceAdjustments,
 		rows.adjustments,
 		func(r *invoiceadjustment.InvoiceAdjustment) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
@@ -1918,7 +1918,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustmentLines.Handle,
+		invoiceadjustmentdb.InvoiceAdjustmentLines,
 		rows.lines,
 		func(r *invoiceadjustment.InvoiceAdjustmentLine) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
@@ -1930,7 +1930,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustmentSnapshots.Handle,
+		invoiceadjustmentdb.InvoiceAdjustmentSnapshots,
 		rows.snapshots,
 		func(r *invoiceadjustment.InvoiceAdjustmentSnapshot) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt}
@@ -1942,7 +1942,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions.Handle,
+		invoiceadjustmentdb.InvoiceAdjustmentReconciliationExceptions,
 		rows.exceptions,
 		func(r *invoiceadjustment.InvoiceAdjustmentReconciliationException) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
@@ -1954,7 +1954,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustmentBatches.Handle,
+		invoiceadjustmentdb.InvoiceAdjustmentBatches,
 		rows.batches,
 		func(r *invoiceadjustment.InvoiceAdjustmentBatch) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
@@ -1966,7 +1966,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if err := ledgervolume.Insert(
 		ctx,
 		tx,
-		invoiceadjustmentdb.InvoiceAdjustmentBatchItems.Handle,
+		invoiceadjustmentdb.InvoiceAdjustmentBatchItems,
 		rows.batchItems,
 		func(r *invoiceadjustment.InvoiceAdjustmentBatchItem) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt, Updated: r.UpdatedAt}
@@ -1990,7 +1990,7 @@ func (g *adjustmentPhase) adjWrite(ctx context.Context, tx *keel.DB, rows *adjRo
 	if len(rows.writeOffs) > 0 {
 		je := journalentrydb.JournalEntries
 		if _, err := je.Where(je.ID.In(rows.writeOffs...)).
-			Update(ctx, tx, je.EntryType.To(journalentry.EntryTypeAdjusting), volumegen.KeepUpdated(je.Handle)); err != nil {
+			Update(ctx, tx, je.EntryType.To(journalentry.EntryTypeAdjusting), volumegen.KeepUpdated(je)); err != nil {
 			return fmt.Errorf("mark write-off journals adjusting: %w", err)
 		}
 	}
@@ -2022,11 +2022,11 @@ func (g *adjustmentPhase) adjUpdateGroupLinks(
 	if onInvoices {
 		inv := invoicedb.Invoices
 		_, err = inv.With(d).Join(d, d.Col("id").EqCol(inv.ID)).Where(keel.True()).
-			Update(ctx, tx, inv.CorrectionGroupID.ToExpr(d.Col("value")), volumegen.KeepUpdated(inv.Handle))
+			Update(ctx, tx, inv.CorrectionGroupID.ToExpr(d.Col("value")), volumegen.KeepUpdated(inv))
 	} else {
 		cg := invoiceadjustmentdb.InvoiceAdjustmentCorrectionGroups
 		_, err = cg.With(d).Join(d, d.Col("id").EqCol(cg.ID)).Where(keel.True()).
-			Update(ctx, tx, cg.CurrentInvoiceID.ToExpr(d.Col("value")), volumegen.KeepUpdated(cg.Handle))
+			Update(ctx, tx, cg.CurrentInvoiceID.ToExpr(d.Col("value")), volumegen.KeepUpdated(cg))
 	}
 	if err != nil {
 		return fmt.Errorf("link correction groups: %w", err)

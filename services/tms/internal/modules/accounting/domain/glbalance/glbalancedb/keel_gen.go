@@ -3,6 +3,8 @@
 package glbalancedb
 
 import (
+	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -71,7 +73,7 @@ var gLAccountPeriodBalancesRef = keel.Ref{Table: &gLAccountPeriodBalancesTable}
 
 // GLAccountPeriodBalancesTable is the table of glbalance.GLAccountPeriodBalance.
 type GLAccountPeriodBalancesTable struct {
-	keel.Handle[*glbalance.GLAccountPeriodBalance]
+	keel.TableBase
 	OrganizationID     keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	GLAccountID        keelkinds.PulidIDCol
@@ -87,7 +89,7 @@ type GLAccountPeriodBalancesTable struct {
 
 // GLAccountPeriodBalances references the gl_account_balances_by_period table.
 var GLAccountPeriodBalances = &GLAccountPeriodBalancesTable{
-	Handle:             keel.Handle[*glbalance.GLAccountPeriodBalance]{Ref: &gLAccountPeriodBalancesRef},
+	TableBase:          keel.TableBase{Ref: &gLAccountPeriodBalancesRef},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 1}}},
 	GLAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 2}}},
@@ -101,10 +103,10 @@ var GLAccountPeriodBalances = &GLAccountPeriodBalancesTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &gLAccountPeriodBalancesRef, Index: 10}},
 }
 
-// BuildGLAccountPeriodBalances builds the handle of gl_account_balances_by_period for ref. Generated relation and alias methods call it.
+// BuildGLAccountPeriodBalances builds the table of gl_account_balances_by_period for ref. Generated relation and alias methods call it.
 func BuildGLAccountPeriodBalances(r *keel.Ref) *GLAccountPeriodBalancesTable {
 	return &GLAccountPeriodBalancesTable{
-		Handle:             keel.Handle[*glbalance.GLAccountPeriodBalance]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		GLAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -145,6 +147,365 @@ func (t *GLAccountPeriodBalancesTable) FiscalPeriod() *fiscalperioddb.FiscalPeri
 // LastJournalEntry is the belongs relation.
 func (t *GLAccountPeriodBalancesTable) LastJournalEntry() *journalentrydb.JournalEntriesTable {
 	return keel.Path(t.Ref, 3, journalentrydb.BuildJournalEntries)
+}
+
+// GLAccountPeriodBalancesQuery is a query over glbalance.GLAccountPeriodBalance.
+type GLAccountPeriodBalancesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*glbalance.GLAccountPeriodBalance] = (*GLAccountPeriodBalancesTable)(nil)
+
+var _ keel.Query[*glbalance.GLAccountPeriodBalance] = (*GLAccountPeriodBalancesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *GLAccountPeriodBalancesTable) Query() keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return &GLAccountPeriodBalancesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see GLAccountPeriodBalancesQuery.Where.
+func (t *GLAccountPeriodBalancesTable) Where(ps ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see GLAccountPeriodBalancesQuery.Pick.
+func (t *GLAccountPeriodBalancesTable) Pick(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see GLAccountPeriodBalancesQuery.Load.
+func (t *GLAccountPeriodBalancesTable) Load(ls ...keel.Loader) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see GLAccountPeriodBalancesQuery.Omit.
+func (t *GLAccountPeriodBalancesTable) Omit(cols ...keel.Column) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see GLAccountPeriodBalancesQuery.Order.
+func (t *GLAccountPeriodBalancesTable) Order(os ...keel.Order) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see GLAccountPeriodBalancesQuery.Limit.
+func (t *GLAccountPeriodBalancesTable) Limit(n int) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see GLAccountPeriodBalancesQuery.Group.
+func (t *GLAccountPeriodBalancesTable) Group(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see GLAccountPeriodBalancesQuery.GroupingSets.
+func (t *GLAccountPeriodBalancesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see GLAccountPeriodBalancesQuery.Rollup.
+func (t *GLAccountPeriodBalancesTable) Rollup(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see GLAccountPeriodBalancesQuery.Cube.
+func (t *GLAccountPeriodBalancesTable) Cube(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see GLAccountPeriodBalancesQuery.AllTenants.
+func (t *GLAccountPeriodBalancesTable) AllTenants() keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see GLAccountPeriodBalancesQuery.Join.
+func (t *GLAccountPeriodBalancesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see GLAccountPeriodBalancesQuery.LeftJoin.
+func (t *GLAccountPeriodBalancesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see GLAccountPeriodBalancesQuery.LeftJoinLateral.
+func (t *GLAccountPeriodBalancesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see GLAccountPeriodBalancesQuery.JoinLateral.
+func (t *GLAccountPeriodBalancesTable) JoinLateral(sub keel.LateralSource) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see GLAccountPeriodBalancesQuery.Lock.
+func (t *GLAccountPeriodBalancesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see GLAccountPeriodBalancesQuery.DistinctOn.
+func (t *GLAccountPeriodBalancesTable) DistinctOn(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see GLAccountPeriodBalancesQuery.Cache.
+func (t *GLAccountPeriodBalancesTable) Cache(opts ...keel.CacheOption) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see GLAccountPeriodBalancesQuery.LoadStrategy.
+func (t *GLAccountPeriodBalancesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see GLAccountPeriodBalancesQuery.With.
+func (t *GLAccountPeriodBalancesTable) With(ctes ...*keel.CTETable) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see GLAccountPeriodBalancesQuery.Compute.
+func (t *GLAccountPeriodBalancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *GLAccountPeriodBalancesTable) Create(ctx context.Context, db *keel.DB, row *glbalance.GLAccountPeriodBalance) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *GLAccountPeriodBalancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountPeriodBalance) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *GLAccountPeriodBalancesTable) Save(ctx context.Context, db *keel.DB, row *glbalance.GLAccountPeriodBalance, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *GLAccountPeriodBalancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *glbalance.GLAccountPeriodBalance, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *GLAccountPeriodBalancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *glbalance.GLAccountPeriodBalance) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *GLAccountPeriodBalancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountPeriodBalance, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *GLAccountPeriodBalancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountPeriodBalance, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *GLAccountPeriodBalancesTable) Copy(ctx context.Context, db *keel.DB, rows []*glbalance.GLAccountPeriodBalance) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *GLAccountPeriodBalancesQuery) Where(ps ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *GLAccountPeriodBalancesQuery) Pick(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *GLAccountPeriodBalancesQuery) Omit(cols ...keel.Column) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *GLAccountPeriodBalancesQuery) Load(ls ...keel.Loader) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *GLAccountPeriodBalancesQuery) Order(os ...keel.Order) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *GLAccountPeriodBalancesQuery) Distinct() keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *GLAccountPeriodBalancesQuery) Group(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *GLAccountPeriodBalancesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *GLAccountPeriodBalancesQuery) Rollup(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *GLAccountPeriodBalancesQuery) Cube(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *GLAccountPeriodBalancesQuery) Window(name string, w keel.Window) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *GLAccountPeriodBalancesQuery) Having(ps ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *GLAccountPeriodBalancesQuery) Limit(n int) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *GLAccountPeriodBalancesQuery) Offset(n int) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *GLAccountPeriodBalancesQuery) DistinctOn(es ...keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *GLAccountPeriodBalancesQuery) AllTenants() keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *GLAccountPeriodBalancesQuery) CustomPlan() keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *GLAccountPeriodBalancesQuery) Timeout(d time.Duration) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *GLAccountPeriodBalancesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *GLAccountPeriodBalancesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *GLAccountPeriodBalancesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *GLAccountPeriodBalancesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *GLAccountPeriodBalancesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *GLAccountPeriodBalancesQuery) Cache(opts ...keel.CacheOption) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *GLAccountPeriodBalancesQuery) With(ctes ...*keel.CTETable) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *GLAccountPeriodBalancesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *GLAccountPeriodBalancesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*glbalance.GLAccountPeriodBalance] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *GLAccountPeriodBalancesQuery) Clone() keel.Query[*glbalance.GLAccountPeriodBalance] {
+	return &GLAccountPeriodBalancesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *GLAccountPeriodBalancesQuery) One(ctx context.Context, db *keel.DB) (*glbalance.GLAccountPeriodBalance, error) {
+	return keel.One[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *GLAccountPeriodBalancesQuery) First(ctx context.Context, db *keel.DB) (*glbalance.GLAccountPeriodBalance, error) {
+	return keel.First[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *GLAccountPeriodBalancesQuery) List(ctx context.Context, db *keel.DB) ([]*glbalance.GLAccountPeriodBalance, error) {
+	return keel.List[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *GLAccountPeriodBalancesQuery) All(ctx context.Context, db *keel.DB) ([]*glbalance.GLAccountPeriodBalance, error) {
+	return keel.All[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *GLAccountPeriodBalancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*glbalance.GLAccountPeriodBalance, error) {
+	return keel.UpdateReturning[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *GLAccountPeriodBalancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*glbalance.GLAccountPeriodBalance], error) {
+	return keel.PageOf[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *GLAccountPeriodBalancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*glbalance.GLAccountPeriodBalance) error) error {
+	return keel.Each[*glbalance.GLAccountPeriodBalance](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newGLAccountPeriodBalance() unsafe.Pointer {

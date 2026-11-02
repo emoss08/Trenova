@@ -4,6 +4,7 @@ package deskcasedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -57,7 +58,7 @@ var checklistTemplatesRef = keel.Ref{Table: &checklistTemplatesTable}
 
 // ChecklistTemplatesTable is the table of deskcase.ChecklistTemplate.
 type ChecklistTemplatesTable struct {
-	keel.Handle[*deskcase.ChecklistTemplate]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -73,7 +74,7 @@ type ChecklistTemplatesTable struct {
 
 // ChecklistTemplates references the case_checklist_templates table.
 var ChecklistTemplates = &ChecklistTemplatesTable{
-	Handle:         keel.Handle[*deskcase.ChecklistTemplate]{Ref: &checklistTemplatesRef},
+	TableBase:      keel.TableBase{Ref: &checklistTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 2}}},
@@ -87,10 +88,10 @@ var ChecklistTemplates = &ChecklistTemplatesTable{
 	CustomerName:   keel.StringCol{Col: keel.Col{Ref: &checklistTemplatesRef, Index: 10}},
 }
 
-// BuildChecklistTemplates builds the handle of case_checklist_templates for ref. Generated relation and alias methods call it.
+// BuildChecklistTemplates builds the table of case_checklist_templates for ref. Generated relation and alias methods call it.
 func BuildChecklistTemplates(r *keel.Ref) *ChecklistTemplatesTable {
 	return &ChecklistTemplatesTable{
-		Handle:         keel.Handle[*deskcase.ChecklistTemplate]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -116,6 +117,365 @@ func (t *ChecklistTemplatesTable) As(alias string) *ChecklistTemplatesTable {
 // Get returns the case_checklist_templates row with the given key, or keel.ErrNotFound.
 func (t *ChecklistTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*deskcase.ChecklistTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ChecklistTemplatesQuery is a query over deskcase.ChecklistTemplate.
+type ChecklistTemplatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*deskcase.ChecklistTemplate] = (*ChecklistTemplatesTable)(nil)
+
+var _ keel.Query[*deskcase.ChecklistTemplate] = (*ChecklistTemplatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ChecklistTemplatesTable) Query() keel.Query[*deskcase.ChecklistTemplate] {
+	return &ChecklistTemplatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ChecklistTemplatesQuery.Where.
+func (t *ChecklistTemplatesTable) Where(ps ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ChecklistTemplatesQuery.Pick.
+func (t *ChecklistTemplatesTable) Pick(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ChecklistTemplatesQuery.Load.
+func (t *ChecklistTemplatesTable) Load(ls ...keel.Loader) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ChecklistTemplatesQuery.Omit.
+func (t *ChecklistTemplatesTable) Omit(cols ...keel.Column) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ChecklistTemplatesQuery.Order.
+func (t *ChecklistTemplatesTable) Order(os ...keel.Order) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ChecklistTemplatesQuery.Limit.
+func (t *ChecklistTemplatesTable) Limit(n int) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ChecklistTemplatesQuery.Group.
+func (t *ChecklistTemplatesTable) Group(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ChecklistTemplatesQuery.GroupingSets.
+func (t *ChecklistTemplatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ChecklistTemplatesQuery.Rollup.
+func (t *ChecklistTemplatesTable) Rollup(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ChecklistTemplatesQuery.Cube.
+func (t *ChecklistTemplatesTable) Cube(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ChecklistTemplatesQuery.AllTenants.
+func (t *ChecklistTemplatesTable) AllTenants() keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ChecklistTemplatesQuery.Join.
+func (t *ChecklistTemplatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ChecklistTemplatesQuery.LeftJoin.
+func (t *ChecklistTemplatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ChecklistTemplatesQuery.LeftJoinLateral.
+func (t *ChecklistTemplatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ChecklistTemplatesQuery.JoinLateral.
+func (t *ChecklistTemplatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ChecklistTemplatesQuery.Lock.
+func (t *ChecklistTemplatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ChecklistTemplatesQuery.DistinctOn.
+func (t *ChecklistTemplatesTable) DistinctOn(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ChecklistTemplatesQuery.Cache.
+func (t *ChecklistTemplatesTable) Cache(opts ...keel.CacheOption) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ChecklistTemplatesQuery.LoadStrategy.
+func (t *ChecklistTemplatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ChecklistTemplatesQuery.With.
+func (t *ChecklistTemplatesTable) With(ctes ...*keel.CTETable) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ChecklistTemplatesQuery.Compute.
+func (t *ChecklistTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ChecklistTemplatesTable) Create(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ChecklistTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ChecklistTemplatesTable) Save(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ChecklistTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ChecklistTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTemplate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ChecklistTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ChecklistTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ChecklistTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTemplate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ChecklistTemplatesQuery) Where(ps ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ChecklistTemplatesQuery) Pick(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ChecklistTemplatesQuery) Omit(cols ...keel.Column) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ChecklistTemplatesQuery) Load(ls ...keel.Loader) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ChecklistTemplatesQuery) Order(os ...keel.Order) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ChecklistTemplatesQuery) Distinct() keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ChecklistTemplatesQuery) Group(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ChecklistTemplatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ChecklistTemplatesQuery) Rollup(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ChecklistTemplatesQuery) Cube(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ChecklistTemplatesQuery) Window(name string, w keel.Window) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ChecklistTemplatesQuery) Having(ps ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ChecklistTemplatesQuery) Limit(n int) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ChecklistTemplatesQuery) Offset(n int) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ChecklistTemplatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ChecklistTemplatesQuery) AllTenants() keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ChecklistTemplatesQuery) CustomPlan() keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ChecklistTemplatesQuery) Timeout(d time.Duration) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ChecklistTemplatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ChecklistTemplatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ChecklistTemplatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ChecklistTemplatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ChecklistTemplatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ChecklistTemplatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ChecklistTemplatesQuery) With(ctes ...*keel.CTETable) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ChecklistTemplatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ChecklistTemplatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*deskcase.ChecklistTemplate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ChecklistTemplatesQuery) Clone() keel.Query[*deskcase.ChecklistTemplate] {
+	return &ChecklistTemplatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ChecklistTemplatesQuery) One(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTemplate, error) {
+	return keel.One[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ChecklistTemplatesQuery) First(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTemplate, error) {
+	return keel.First[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ChecklistTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTemplate, error) {
+	return keel.List[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ChecklistTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTemplate, error) {
+	return keel.All[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ChecklistTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*deskcase.ChecklistTemplate, error) {
+	return keel.UpdateReturning[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ChecklistTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*deskcase.ChecklistTemplate], error) {
+	return keel.PageOf[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ChecklistTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*deskcase.ChecklistTemplate) error) error {
+	return keel.Each[*deskcase.ChecklistTemplate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newChecklistTemplate() unsafe.Pointer { return unsafe.Pointer(new(deskcase.ChecklistTemplate)) }
@@ -233,7 +593,7 @@ var checklistTicksRef = keel.Ref{Table: &checklistTicksTable}
 
 // ChecklistTicksTable is the table of deskcase.ChecklistTick.
 type ChecklistTicksTable struct {
-	keel.Handle[*deskcase.ChecklistTick]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -247,7 +607,7 @@ type ChecklistTicksTable struct {
 
 // ChecklistTicks references the case_checklist_ticks table.
 var ChecklistTicks = &ChecklistTicksTable{
-	Handle:         keel.Handle[*deskcase.ChecklistTick]{Ref: &checklistTicksRef},
+	TableBase:      keel.TableBase{Ref: &checklistTicksRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 2}}},
@@ -259,10 +619,10 @@ var ChecklistTicks = &ChecklistTicksTable{
 	TickedByName:   keel.StringCol{Col: keel.Col{Ref: &checklistTicksRef, Index: 8}},
 }
 
-// BuildChecklistTicks builds the handle of case_checklist_ticks for ref. Generated relation and alias methods call it.
+// BuildChecklistTicks builds the table of case_checklist_ticks for ref. Generated relation and alias methods call it.
 func BuildChecklistTicks(r *keel.Ref) *ChecklistTicksTable {
 	return &ChecklistTicksTable{
-		Handle:         keel.Handle[*deskcase.ChecklistTick]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -286,6 +646,365 @@ func (t *ChecklistTicksTable) As(alias string) *ChecklistTicksTable {
 // Get returns the case_checklist_ticks row with the given key, or keel.ErrNotFound.
 func (t *ChecklistTicksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*deskcase.ChecklistTick, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ChecklistTicksQuery is a query over deskcase.ChecklistTick.
+type ChecklistTicksQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*deskcase.ChecklistTick] = (*ChecklistTicksTable)(nil)
+
+var _ keel.Query[*deskcase.ChecklistTick] = (*ChecklistTicksQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ChecklistTicksTable) Query() keel.Query[*deskcase.ChecklistTick] {
+	return &ChecklistTicksQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ChecklistTicksQuery.Where.
+func (t *ChecklistTicksTable) Where(ps ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ChecklistTicksQuery.Pick.
+func (t *ChecklistTicksTable) Pick(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ChecklistTicksQuery.Load.
+func (t *ChecklistTicksTable) Load(ls ...keel.Loader) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ChecklistTicksQuery.Omit.
+func (t *ChecklistTicksTable) Omit(cols ...keel.Column) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ChecklistTicksQuery.Order.
+func (t *ChecklistTicksTable) Order(os ...keel.Order) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ChecklistTicksQuery.Limit.
+func (t *ChecklistTicksTable) Limit(n int) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ChecklistTicksQuery.Group.
+func (t *ChecklistTicksTable) Group(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ChecklistTicksQuery.GroupingSets.
+func (t *ChecklistTicksTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ChecklistTicksQuery.Rollup.
+func (t *ChecklistTicksTable) Rollup(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ChecklistTicksQuery.Cube.
+func (t *ChecklistTicksTable) Cube(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ChecklistTicksQuery.AllTenants.
+func (t *ChecklistTicksTable) AllTenants() keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ChecklistTicksQuery.Join.
+func (t *ChecklistTicksTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ChecklistTicksQuery.LeftJoin.
+func (t *ChecklistTicksTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ChecklistTicksQuery.LeftJoinLateral.
+func (t *ChecklistTicksTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ChecklistTicksQuery.JoinLateral.
+func (t *ChecklistTicksTable) JoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ChecklistTicksQuery.Lock.
+func (t *ChecklistTicksTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ChecklistTicksQuery.DistinctOn.
+func (t *ChecklistTicksTable) DistinctOn(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ChecklistTicksQuery.Cache.
+func (t *ChecklistTicksTable) Cache(opts ...keel.CacheOption) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ChecklistTicksQuery.LoadStrategy.
+func (t *ChecklistTicksTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ChecklistTicksQuery.With.
+func (t *ChecklistTicksTable) With(ctes ...*keel.CTETable) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ChecklistTicksQuery.Compute.
+func (t *ChecklistTicksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ChecklistTicksTable) Create(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ChecklistTicksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ChecklistTicksTable) Save(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ChecklistTicksTable) SaveExcept(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ChecklistTicksTable) DeleteRow(ctx context.Context, db *keel.DB, row *deskcase.ChecklistTick) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ChecklistTicksTable) Upsert(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ChecklistTicksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ChecklistTicksTable) Copy(ctx context.Context, db *keel.DB, rows []*deskcase.ChecklistTick) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ChecklistTicksQuery) Where(ps ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ChecklistTicksQuery) Pick(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ChecklistTicksQuery) Omit(cols ...keel.Column) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ChecklistTicksQuery) Load(ls ...keel.Loader) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ChecklistTicksQuery) Order(os ...keel.Order) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ChecklistTicksQuery) Distinct() keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ChecklistTicksQuery) Group(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ChecklistTicksQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ChecklistTicksQuery) Rollup(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ChecklistTicksQuery) Cube(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ChecklistTicksQuery) Window(name string, w keel.Window) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ChecklistTicksQuery) Having(ps ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ChecklistTicksQuery) Limit(n int) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ChecklistTicksQuery) Offset(n int) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ChecklistTicksQuery) DistinctOn(es ...keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ChecklistTicksQuery) AllTenants() keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ChecklistTicksQuery) CustomPlan() keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ChecklistTicksQuery) Timeout(d time.Duration) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ChecklistTicksQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ChecklistTicksQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ChecklistTicksQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ChecklistTicksQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ChecklistTicksQuery) JoinLateral(sub keel.LateralSource) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ChecklistTicksQuery) Cache(opts ...keel.CacheOption) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ChecklistTicksQuery) With(ctes ...*keel.CTETable) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ChecklistTicksQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ChecklistTicksQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*deskcase.ChecklistTick] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ChecklistTicksQuery) Clone() keel.Query[*deskcase.ChecklistTick] {
+	return &ChecklistTicksQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ChecklistTicksQuery) One(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTick, error) {
+	return keel.One[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ChecklistTicksQuery) First(ctx context.Context, db *keel.DB) (*deskcase.ChecklistTick, error) {
+	return keel.First[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ChecklistTicksQuery) List(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTick, error) {
+	return keel.List[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ChecklistTicksQuery) All(ctx context.Context, db *keel.DB) ([]*deskcase.ChecklistTick, error) {
+	return keel.All[*deskcase.ChecklistTick](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ChecklistTicksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*deskcase.ChecklistTick, error) {
+	return keel.UpdateReturning[*deskcase.ChecklistTick](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ChecklistTicksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*deskcase.ChecklistTick], error) {
+	return keel.PageOf[*deskcase.ChecklistTick](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ChecklistTicksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*deskcase.ChecklistTick) error) error {
+	return keel.Each[*deskcase.ChecklistTick](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newChecklistTick() unsafe.Pointer { return unsafe.Pointer(new(deskcase.ChecklistTick)) }

@@ -4,6 +4,7 @@ package portalinvitationdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var portalInvitationsRef = keel.Ref{Table: &portalInvitationsTable}
 
 // PortalInvitationsTable is the table of portalinvitation.PortalInvitation.
 type PortalInvitationsTable struct {
-	keel.Handle[*portalinvitation.PortalInvitation]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -88,7 +89,7 @@ type PortalInvitationsTable struct {
 
 // PortalInvitations references the worker_portal_invitations table.
 var PortalInvitations = &PortalInvitationsTable{
-	Handle:         keel.Handle[*portalinvitation.PortalInvitation]{Ref: &portalInvitationsRef},
+	TableBase:      keel.TableBase{Ref: &portalInvitationsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalInvitationsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalInvitationsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalInvitationsRef, Index: 2}}},
@@ -105,10 +106,10 @@ var PortalInvitations = &PortalInvitationsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &portalInvitationsRef, Index: 13}},
 }
 
-// BuildPortalInvitations builds the handle of worker_portal_invitations for ref. Generated relation and alias methods call it.
+// BuildPortalInvitations builds the table of worker_portal_invitations for ref. Generated relation and alias methods call it.
 func BuildPortalInvitations(r *keel.Ref) *PortalInvitationsTable {
 	return &PortalInvitationsTable{
-		Handle:         keel.Handle[*portalinvitation.PortalInvitation]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -147,6 +148,365 @@ func (t *PortalInvitationsTable) InvitedBy() *tenantdb.UsersTable {
 // Get returns the worker_portal_invitations row with the given key, or keel.ErrNotFound.
 func (t *PortalInvitationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*portalinvitation.PortalInvitation, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PortalInvitationsQuery is a query over portalinvitation.PortalInvitation.
+type PortalInvitationsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*portalinvitation.PortalInvitation] = (*PortalInvitationsTable)(nil)
+
+var _ keel.Query[*portalinvitation.PortalInvitation] = (*PortalInvitationsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PortalInvitationsTable) Query() keel.Query[*portalinvitation.PortalInvitation] {
+	return &PortalInvitationsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PortalInvitationsQuery.Where.
+func (t *PortalInvitationsTable) Where(ps ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PortalInvitationsQuery.Pick.
+func (t *PortalInvitationsTable) Pick(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PortalInvitationsQuery.Load.
+func (t *PortalInvitationsTable) Load(ls ...keel.Loader) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PortalInvitationsQuery.Omit.
+func (t *PortalInvitationsTable) Omit(cols ...keel.Column) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PortalInvitationsQuery.Order.
+func (t *PortalInvitationsTable) Order(os ...keel.Order) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PortalInvitationsQuery.Limit.
+func (t *PortalInvitationsTable) Limit(n int) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PortalInvitationsQuery.Group.
+func (t *PortalInvitationsTable) Group(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PortalInvitationsQuery.GroupingSets.
+func (t *PortalInvitationsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PortalInvitationsQuery.Rollup.
+func (t *PortalInvitationsTable) Rollup(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PortalInvitationsQuery.Cube.
+func (t *PortalInvitationsTable) Cube(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PortalInvitationsQuery.AllTenants.
+func (t *PortalInvitationsTable) AllTenants() keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PortalInvitationsQuery.Join.
+func (t *PortalInvitationsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PortalInvitationsQuery.LeftJoin.
+func (t *PortalInvitationsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PortalInvitationsQuery.LeftJoinLateral.
+func (t *PortalInvitationsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PortalInvitationsQuery.JoinLateral.
+func (t *PortalInvitationsTable) JoinLateral(sub keel.LateralSource) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PortalInvitationsQuery.Lock.
+func (t *PortalInvitationsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PortalInvitationsQuery.DistinctOn.
+func (t *PortalInvitationsTable) DistinctOn(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PortalInvitationsQuery.Cache.
+func (t *PortalInvitationsTable) Cache(opts ...keel.CacheOption) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PortalInvitationsQuery.LoadStrategy.
+func (t *PortalInvitationsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PortalInvitationsQuery.With.
+func (t *PortalInvitationsTable) With(ctes ...*keel.CTETable) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PortalInvitationsQuery.Compute.
+func (t *PortalInvitationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PortalInvitationsTable) Create(ctx context.Context, db *keel.DB, row *portalinvitation.PortalInvitation) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PortalInvitationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*portalinvitation.PortalInvitation) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PortalInvitationsTable) Save(ctx context.Context, db *keel.DB, row *portalinvitation.PortalInvitation, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PortalInvitationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *portalinvitation.PortalInvitation, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PortalInvitationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *portalinvitation.PortalInvitation) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PortalInvitationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*portalinvitation.PortalInvitation, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PortalInvitationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*portalinvitation.PortalInvitation, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PortalInvitationsTable) Copy(ctx context.Context, db *keel.DB, rows []*portalinvitation.PortalInvitation) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PortalInvitationsQuery) Where(ps ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PortalInvitationsQuery) Pick(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PortalInvitationsQuery) Omit(cols ...keel.Column) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PortalInvitationsQuery) Load(ls ...keel.Loader) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PortalInvitationsQuery) Order(os ...keel.Order) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PortalInvitationsQuery) Distinct() keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PortalInvitationsQuery) Group(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PortalInvitationsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PortalInvitationsQuery) Rollup(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PortalInvitationsQuery) Cube(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PortalInvitationsQuery) Window(name string, w keel.Window) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PortalInvitationsQuery) Having(ps ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PortalInvitationsQuery) Limit(n int) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PortalInvitationsQuery) Offset(n int) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PortalInvitationsQuery) DistinctOn(es ...keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PortalInvitationsQuery) AllTenants() keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PortalInvitationsQuery) CustomPlan() keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PortalInvitationsQuery) Timeout(d time.Duration) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PortalInvitationsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PortalInvitationsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PortalInvitationsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PortalInvitationsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PortalInvitationsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PortalInvitationsQuery) Cache(opts ...keel.CacheOption) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PortalInvitationsQuery) With(ctes ...*keel.CTETable) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PortalInvitationsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PortalInvitationsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*portalinvitation.PortalInvitation] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PortalInvitationsQuery) Clone() keel.Query[*portalinvitation.PortalInvitation] {
+	return &PortalInvitationsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PortalInvitationsQuery) One(ctx context.Context, db *keel.DB) (*portalinvitation.PortalInvitation, error) {
+	return keel.One[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PortalInvitationsQuery) First(ctx context.Context, db *keel.DB) (*portalinvitation.PortalInvitation, error) {
+	return keel.First[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PortalInvitationsQuery) List(ctx context.Context, db *keel.DB) ([]*portalinvitation.PortalInvitation, error) {
+	return keel.List[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PortalInvitationsQuery) All(ctx context.Context, db *keel.DB) ([]*portalinvitation.PortalInvitation, error) {
+	return keel.All[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PortalInvitationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*portalinvitation.PortalInvitation, error) {
+	return keel.UpdateReturning[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PortalInvitationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*portalinvitation.PortalInvitation], error) {
+	return keel.PageOf[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PortalInvitationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*portalinvitation.PortalInvitation) error) error {
+	return keel.Each[*portalinvitation.PortalInvitation](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPortalInvitation() unsafe.Pointer {

@@ -4,6 +4,7 @@ package agenttooltrustdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -57,7 +58,7 @@ var toolRuleOverridesRef = keel.Ref{Table: &toolRuleOverridesTable}
 
 // ToolRuleOverridesTable is the table of agenttooltrust.ToolRuleOverride.
 type ToolRuleOverridesTable struct {
-	keel.Handle[*agenttooltrust.ToolRuleOverride]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -73,7 +74,7 @@ type ToolRuleOverridesTable struct {
 
 // ToolRuleOverrides references the agent_tool_rule_overrides table.
 var ToolRuleOverrides = &ToolRuleOverridesTable{
-	Handle:         keel.Handle[*agenttooltrust.ToolRuleOverride]{Ref: &toolRuleOverridesRef},
+	TableBase:      keel.TableBase{Ref: &toolRuleOverridesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 2}}},
@@ -87,10 +88,10 @@ var ToolRuleOverrides = &ToolRuleOverridesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &toolRuleOverridesRef, Index: 10}},
 }
 
-// BuildToolRuleOverrides builds the handle of agent_tool_rule_overrides for ref. Generated relation and alias methods call it.
+// BuildToolRuleOverrides builds the table of agent_tool_rule_overrides for ref. Generated relation and alias methods call it.
 func BuildToolRuleOverrides(r *keel.Ref) *ToolRuleOverridesTable {
 	return &ToolRuleOverridesTable{
-		Handle:         keel.Handle[*agenttooltrust.ToolRuleOverride]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -116,6 +117,365 @@ func (t *ToolRuleOverridesTable) As(alias string) *ToolRuleOverridesTable {
 // Get returns the agent_tool_rule_overrides row with the given key, or keel.ErrNotFound.
 func (t *ToolRuleOverridesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agenttooltrust.ToolRuleOverride, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ToolRuleOverridesQuery is a query over agenttooltrust.ToolRuleOverride.
+type ToolRuleOverridesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agenttooltrust.ToolRuleOverride] = (*ToolRuleOverridesTable)(nil)
+
+var _ keel.Query[*agenttooltrust.ToolRuleOverride] = (*ToolRuleOverridesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ToolRuleOverridesTable) Query() keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return &ToolRuleOverridesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ToolRuleOverridesQuery.Where.
+func (t *ToolRuleOverridesTable) Where(ps ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ToolRuleOverridesQuery.Pick.
+func (t *ToolRuleOverridesTable) Pick(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ToolRuleOverridesQuery.Load.
+func (t *ToolRuleOverridesTable) Load(ls ...keel.Loader) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ToolRuleOverridesQuery.Omit.
+func (t *ToolRuleOverridesTable) Omit(cols ...keel.Column) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ToolRuleOverridesQuery.Order.
+func (t *ToolRuleOverridesTable) Order(os ...keel.Order) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ToolRuleOverridesQuery.Limit.
+func (t *ToolRuleOverridesTable) Limit(n int) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ToolRuleOverridesQuery.Group.
+func (t *ToolRuleOverridesTable) Group(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ToolRuleOverridesQuery.GroupingSets.
+func (t *ToolRuleOverridesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ToolRuleOverridesQuery.Rollup.
+func (t *ToolRuleOverridesTable) Rollup(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ToolRuleOverridesQuery.Cube.
+func (t *ToolRuleOverridesTable) Cube(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ToolRuleOverridesQuery.AllTenants.
+func (t *ToolRuleOverridesTable) AllTenants() keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ToolRuleOverridesQuery.Join.
+func (t *ToolRuleOverridesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ToolRuleOverridesQuery.LeftJoin.
+func (t *ToolRuleOverridesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ToolRuleOverridesQuery.LeftJoinLateral.
+func (t *ToolRuleOverridesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ToolRuleOverridesQuery.JoinLateral.
+func (t *ToolRuleOverridesTable) JoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ToolRuleOverridesQuery.Lock.
+func (t *ToolRuleOverridesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ToolRuleOverridesQuery.DistinctOn.
+func (t *ToolRuleOverridesTable) DistinctOn(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ToolRuleOverridesQuery.Cache.
+func (t *ToolRuleOverridesTable) Cache(opts ...keel.CacheOption) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ToolRuleOverridesQuery.LoadStrategy.
+func (t *ToolRuleOverridesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ToolRuleOverridesQuery.With.
+func (t *ToolRuleOverridesTable) With(ctes ...*keel.CTETable) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ToolRuleOverridesQuery.Compute.
+func (t *ToolRuleOverridesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ToolRuleOverridesTable) Create(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ToolRuleOverridesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ToolRuleOverridesTable) Save(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ToolRuleOverridesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ToolRuleOverridesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolRuleOverride) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ToolRuleOverridesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ToolRuleOverridesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ToolRuleOverridesTable) Copy(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolRuleOverride) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ToolRuleOverridesQuery) Where(ps ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ToolRuleOverridesQuery) Pick(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ToolRuleOverridesQuery) Omit(cols ...keel.Column) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ToolRuleOverridesQuery) Load(ls ...keel.Loader) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ToolRuleOverridesQuery) Order(os ...keel.Order) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ToolRuleOverridesQuery) Distinct() keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ToolRuleOverridesQuery) Group(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ToolRuleOverridesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ToolRuleOverridesQuery) Rollup(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ToolRuleOverridesQuery) Cube(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ToolRuleOverridesQuery) Window(name string, w keel.Window) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ToolRuleOverridesQuery) Having(ps ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ToolRuleOverridesQuery) Limit(n int) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ToolRuleOverridesQuery) Offset(n int) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ToolRuleOverridesQuery) DistinctOn(es ...keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ToolRuleOverridesQuery) AllTenants() keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ToolRuleOverridesQuery) CustomPlan() keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ToolRuleOverridesQuery) Timeout(d time.Duration) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ToolRuleOverridesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ToolRuleOverridesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ToolRuleOverridesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ToolRuleOverridesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ToolRuleOverridesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ToolRuleOverridesQuery) Cache(opts ...keel.CacheOption) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ToolRuleOverridesQuery) With(ctes ...*keel.CTETable) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ToolRuleOverridesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ToolRuleOverridesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agenttooltrust.ToolRuleOverride] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ToolRuleOverridesQuery) Clone() keel.Query[*agenttooltrust.ToolRuleOverride] {
+	return &ToolRuleOverridesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ToolRuleOverridesQuery) One(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolRuleOverride, error) {
+	return keel.One[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ToolRuleOverridesQuery) First(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolRuleOverride, error) {
+	return keel.First[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ToolRuleOverridesQuery) List(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolRuleOverride, error) {
+	return keel.List[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ToolRuleOverridesQuery) All(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolRuleOverride, error) {
+	return keel.All[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ToolRuleOverridesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agenttooltrust.ToolRuleOverride, error) {
+	return keel.UpdateReturning[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ToolRuleOverridesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agenttooltrust.ToolRuleOverride], error) {
+	return keel.PageOf[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ToolRuleOverridesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agenttooltrust.ToolRuleOverride) error) error {
+	return keel.Each[*agenttooltrust.ToolRuleOverride](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newToolRuleOverride() unsafe.Pointer {
@@ -243,7 +603,7 @@ var toolTrustsRef = keel.Ref{Table: &toolTrustsTable}
 
 // ToolTrustsTable is the table of agenttooltrust.ToolTrust.
 type ToolTrustsTable struct {
-	keel.Handle[*agenttooltrust.ToolTrust]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -265,7 +625,7 @@ type ToolTrustsTable struct {
 
 // ToolTrusts references the agent_tool_trust table.
 var ToolTrusts = &ToolTrustsTable{
-	Handle:            keel.Handle[*agenttooltrust.ToolTrust]{Ref: &toolTrustsRef},
+	TableBase:         keel.TableBase{Ref: &toolTrustsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolTrustsRef, Index: 2}}},
@@ -285,10 +645,10 @@ var ToolTrusts = &ToolTrustsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &toolTrustsRef, Index: 16}},
 }
 
-// BuildToolTrusts builds the handle of agent_tool_trust for ref. Generated relation and alias methods call it.
+// BuildToolTrusts builds the table of agent_tool_trust for ref. Generated relation and alias methods call it.
 func BuildToolTrusts(r *keel.Ref) *ToolTrustsTable {
 	return &ToolTrustsTable{
-		Handle:            keel.Handle[*agenttooltrust.ToolTrust]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -320,6 +680,365 @@ func (t *ToolTrustsTable) As(alias string) *ToolTrustsTable {
 // Get returns the agent_tool_trust row with the given key, or keel.ErrNotFound.
 func (t *ToolTrustsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agenttooltrust.ToolTrust, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ToolTrustsQuery is a query over agenttooltrust.ToolTrust.
+type ToolTrustsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*agenttooltrust.ToolTrust] = (*ToolTrustsTable)(nil)
+
+var _ keel.Query[*agenttooltrust.ToolTrust] = (*ToolTrustsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ToolTrustsTable) Query() keel.Query[*agenttooltrust.ToolTrust] {
+	return &ToolTrustsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ToolTrustsQuery.Where.
+func (t *ToolTrustsTable) Where(ps ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ToolTrustsQuery.Pick.
+func (t *ToolTrustsTable) Pick(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ToolTrustsQuery.Load.
+func (t *ToolTrustsTable) Load(ls ...keel.Loader) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ToolTrustsQuery.Omit.
+func (t *ToolTrustsTable) Omit(cols ...keel.Column) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ToolTrustsQuery.Order.
+func (t *ToolTrustsTable) Order(os ...keel.Order) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ToolTrustsQuery.Limit.
+func (t *ToolTrustsTable) Limit(n int) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ToolTrustsQuery.Group.
+func (t *ToolTrustsTable) Group(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ToolTrustsQuery.GroupingSets.
+func (t *ToolTrustsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ToolTrustsQuery.Rollup.
+func (t *ToolTrustsTable) Rollup(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ToolTrustsQuery.Cube.
+func (t *ToolTrustsTable) Cube(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ToolTrustsQuery.AllTenants.
+func (t *ToolTrustsTable) AllTenants() keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ToolTrustsQuery.Join.
+func (t *ToolTrustsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ToolTrustsQuery.LeftJoin.
+func (t *ToolTrustsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ToolTrustsQuery.LeftJoinLateral.
+func (t *ToolTrustsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ToolTrustsQuery.JoinLateral.
+func (t *ToolTrustsTable) JoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ToolTrustsQuery.Lock.
+func (t *ToolTrustsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ToolTrustsQuery.DistinctOn.
+func (t *ToolTrustsTable) DistinctOn(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ToolTrustsQuery.Cache.
+func (t *ToolTrustsTable) Cache(opts ...keel.CacheOption) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ToolTrustsQuery.LoadStrategy.
+func (t *ToolTrustsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ToolTrustsQuery.With.
+func (t *ToolTrustsTable) With(ctes ...*keel.CTETable) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ToolTrustsQuery.Compute.
+func (t *ToolTrustsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ToolTrustsTable) Create(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ToolTrustsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ToolTrustsTable) Save(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ToolTrustsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ToolTrustsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agenttooltrust.ToolTrust) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ToolTrustsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ToolTrustsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ToolTrustsTable) Copy(ctx context.Context, db *keel.DB, rows []*agenttooltrust.ToolTrust) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ToolTrustsQuery) Where(ps ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ToolTrustsQuery) Pick(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ToolTrustsQuery) Omit(cols ...keel.Column) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ToolTrustsQuery) Load(ls ...keel.Loader) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ToolTrustsQuery) Order(os ...keel.Order) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ToolTrustsQuery) Distinct() keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ToolTrustsQuery) Group(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ToolTrustsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ToolTrustsQuery) Rollup(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ToolTrustsQuery) Cube(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ToolTrustsQuery) Window(name string, w keel.Window) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ToolTrustsQuery) Having(ps ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ToolTrustsQuery) Limit(n int) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ToolTrustsQuery) Offset(n int) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ToolTrustsQuery) DistinctOn(es ...keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ToolTrustsQuery) AllTenants() keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ToolTrustsQuery) CustomPlan() keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ToolTrustsQuery) Timeout(d time.Duration) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ToolTrustsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ToolTrustsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ToolTrustsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ToolTrustsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ToolTrustsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ToolTrustsQuery) Cache(opts ...keel.CacheOption) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ToolTrustsQuery) With(ctes ...*keel.CTETable) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ToolTrustsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ToolTrustsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*agenttooltrust.ToolTrust] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ToolTrustsQuery) Clone() keel.Query[*agenttooltrust.ToolTrust] {
+	return &ToolTrustsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ToolTrustsQuery) One(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolTrust, error) {
+	return keel.One[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ToolTrustsQuery) First(ctx context.Context, db *keel.DB) (*agenttooltrust.ToolTrust, error) {
+	return keel.First[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ToolTrustsQuery) List(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolTrust, error) {
+	return keel.List[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ToolTrustsQuery) All(ctx context.Context, db *keel.DB) ([]*agenttooltrust.ToolTrust, error) {
+	return keel.All[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ToolTrustsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agenttooltrust.ToolTrust, error) {
+	return keel.UpdateReturning[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ToolTrustsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agenttooltrust.ToolTrust], error) {
+	return keel.PageOf[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ToolTrustsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agenttooltrust.ToolTrust) error) error {
+	return keel.Each[*agenttooltrust.ToolTrust](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newToolTrust() unsafe.Pointer { return unsafe.Pointer(new(agenttooltrust.ToolTrust)) }

@@ -63,7 +63,7 @@ func newStopEdge(alias string, last bool) stopEdge {
 	}
 }
 
-func joinEdge[T any](q *keel.Query[*T], e stopEdge, moveID keel.Expr) *keel.Query[*T] {
+func joinEdge[T any](q keel.Query[*T], e stopEdge, moveID keel.Expr) keel.Query[*T] {
 	st := e.stop
 	order := st.Sequence.Asc()
 	if e.last {
@@ -103,7 +103,7 @@ func zero(e keel.Expr) keel.Int64Expr {
 
 // boardMoves is the move board's FROM clause: the move, its shipment and customer, its
 // live assignment and carrier assignment, and its first and last stops.
-func boardMoves() *moveQuery {
+func boardMoves() moveQuery {
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 	cus := customerdb.Customers

@@ -62,19 +62,19 @@ func inOrder() []keel.Order {
 
 func listQuery(
 	scope *assistantturnports.AssistantQueueScope,
-) *keel.Query[*conversationqueue.QueuedMessage] {
+) keel.Query[*conversationqueue.QueuedMessage] {
 	return conversationqueuedb.QueuedMessages.Where(inScope(scope)).Order(inOrder()...)
 }
 
 func getQuery(
 	req *assistantturnports.QueuedMessageRequest,
-) *keel.Query[*conversationqueue.QueuedMessage] {
+) keel.Query[*conversationqueue.QueuedMessage] {
 	q := conversationqueuedb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.Eq(req.ID))
 }
 
-func tallyQuery(threadID pulid.ID) *keel.Query[*conversationqueue.QueuedMessage] {
+func tallyQuery(threadID pulid.ID) keel.Query[*conversationqueue.QueuedMessage] {
 	q := conversationqueuedb.QueuedMessages
 
 	return q.Pick(keel.Count(), keel.Int64Of(q.Position.Max()).Coalesce(0)).
@@ -84,7 +84,7 @@ func tallyQuery(threadID pulid.ID) *keel.Query[*conversationqueue.QueuedMessage]
 func editQuery(
 	entity *conversationqueue.QueuedMessage,
 	version int64,
-) *keel.Query[*conversationqueue.QueuedMessage] {
+) keel.Query[*conversationqueue.QueuedMessage] {
 	q := conversationqueuedb.QueuedMessages
 
 	return q.Where(
@@ -101,7 +101,7 @@ func editQuery(
 
 func reorderQuery(
 	req *assistantturnports.ReorderQueuedMessagesRequest,
-) *keel.Query[*conversationqueue.QueuedMessage] {
+) keel.Query[*conversationqueue.QueuedMessage] {
 	q := conversationqueuedb.QueuedMessages
 
 	return q.Where(inScope(&req.Scope), q.ID.In(req.IDs...))
@@ -118,13 +118,13 @@ func reorderPosition(ids []pulid.ID) keel.Assignment {
 
 func headQuery(
 	scope *assistantturnports.AssistantQueueScope,
-) *keel.Query[*conversationqueue.QueuedMessage] {
+) keel.Query[*conversationqueue.QueuedMessage] {
 	return listQuery(scope).Limit(1).Lock(keel.ForUpdate, keel.SkipLocked)
 }
 
 func claimQuery(
 	req *assistantturnports.QueuedMessageRequest,
-) *keel.Query[*conversationqueue.QueuedMessage] {
+) keel.Query[*conversationqueue.QueuedMessage] {
 	return getQuery(req).Lock(keel.ForUpdate)
 }
 
@@ -351,7 +351,7 @@ func (r *repository) Claim(
 func (r *repository) claim(
 	ctx context.Context,
 	scope *assistantturnports.AssistantQueueScope,
-	pick *keel.Query[*conversationqueue.QueuedMessage],
+	pick keel.Query[*conversationqueue.QueuedMessage],
 ) (*conversationqueue.QueuedMessage, error) {
 	db := r.db.Keel(ctx)
 	entity, err := pick.First(ctx, db)

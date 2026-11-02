@@ -48,7 +48,7 @@ func listLoads() []keel.Loader {
 	return []keel.Loader{sf.ReasonCode(), sf.Shipment(), sf.Stop().Location().State()}
 }
 
-func detailQuery() *keel.Query[*servicefailure.ServiceFailure] {
+func detailQuery() keel.Query[*servicefailure.ServiceFailure] {
 	sf := servicefailuredb.ServiceFailures
 	return sf.Load(
 		sf.ReasonCode(),

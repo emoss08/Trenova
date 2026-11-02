@@ -4,6 +4,7 @@ package paymentreminderdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -60,7 +61,7 @@ var remindersRef = keel.Ref{Table: &remindersTable}
 
 // RemindersTable is the table of paymentreminder.Reminder.
 type RemindersTable struct {
-	keel.Handle[*paymentreminder.Reminder]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
@@ -78,7 +79,7 @@ type RemindersTable struct {
 
 // Reminders references the invoice_payment_reminders table.
 var Reminders = &RemindersTable{
-	Handle:          keel.Handle[*paymentreminder.Reminder]{Ref: &remindersRef},
+	TableBase:       keel.TableBase{Ref: &remindersRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 0}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 1}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &remindersRef, Index: 2}}},
@@ -94,10 +95,10 @@ var Reminders = &RemindersTable{
 	SentAt:          keel.Int64Col{Col: keel.Col{Ref: &remindersRef, Index: 12}},
 }
 
-// BuildReminders builds the handle of invoice_payment_reminders for ref. Generated relation and alias methods call it.
+// BuildReminders builds the table of invoice_payment_reminders for ref. Generated relation and alias methods call it.
 func BuildReminders(r *keel.Ref) *RemindersTable {
 	return &RemindersTable{
-		Handle:          keel.Handle[*paymentreminder.Reminder]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -125,6 +126,365 @@ func (t *RemindersTable) As(alias string) *RemindersTable {
 // Get returns the invoice_payment_reminders row with the given key, or keel.ErrNotFound.
 func (t *RemindersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*paymentreminder.Reminder, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// RemindersQuery is a query over paymentreminder.Reminder.
+type RemindersQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*paymentreminder.Reminder] = (*RemindersTable)(nil)
+
+var _ keel.Query[*paymentreminder.Reminder] = (*RemindersQuery)(nil)
+
+// Query starts a query over the table.
+func (t *RemindersTable) Query() keel.Query[*paymentreminder.Reminder] {
+	return &RemindersQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see RemindersQuery.Where.
+func (t *RemindersTable) Where(ps ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see RemindersQuery.Pick.
+func (t *RemindersTable) Pick(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see RemindersQuery.Load.
+func (t *RemindersTable) Load(ls ...keel.Loader) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see RemindersQuery.Omit.
+func (t *RemindersTable) Omit(cols ...keel.Column) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see RemindersQuery.Order.
+func (t *RemindersTable) Order(os ...keel.Order) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see RemindersQuery.Limit.
+func (t *RemindersTable) Limit(n int) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see RemindersQuery.Group.
+func (t *RemindersTable) Group(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see RemindersQuery.GroupingSets.
+func (t *RemindersTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see RemindersQuery.Rollup.
+func (t *RemindersTable) Rollup(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see RemindersQuery.Cube.
+func (t *RemindersTable) Cube(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see RemindersQuery.AllTenants.
+func (t *RemindersTable) AllTenants() keel.Query[*paymentreminder.Reminder] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see RemindersQuery.Join.
+func (t *RemindersTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see RemindersQuery.LeftJoin.
+func (t *RemindersTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see RemindersQuery.LeftJoinLateral.
+func (t *RemindersTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see RemindersQuery.JoinLateral.
+func (t *RemindersTable) JoinLateral(sub keel.LateralSource) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see RemindersQuery.Lock.
+func (t *RemindersTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see RemindersQuery.DistinctOn.
+func (t *RemindersTable) DistinctOn(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see RemindersQuery.Cache.
+func (t *RemindersTable) Cache(opts ...keel.CacheOption) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see RemindersQuery.LoadStrategy.
+func (t *RemindersTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see RemindersQuery.With.
+func (t *RemindersTable) With(ctes ...*keel.CTETable) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see RemindersQuery.Compute.
+func (t *RemindersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *RemindersTable) Create(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *RemindersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *RemindersTable) Save(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *RemindersTable) SaveExcept(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *RemindersTable) DeleteRow(ctx context.Context, db *keel.DB, row *paymentreminder.Reminder) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *RemindersTable) Upsert(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *RemindersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *RemindersTable) Copy(ctx context.Context, db *keel.DB, rows []*paymentreminder.Reminder) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *RemindersQuery) Where(ps ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *RemindersQuery) Pick(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *RemindersQuery) Omit(cols ...keel.Column) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *RemindersQuery) Load(ls ...keel.Loader) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *RemindersQuery) Order(os ...keel.Order) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *RemindersQuery) Distinct() keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *RemindersQuery) Group(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *RemindersQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *RemindersQuery) Rollup(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *RemindersQuery) Cube(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *RemindersQuery) Window(name string, w keel.Window) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *RemindersQuery) Having(ps ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *RemindersQuery) Limit(n int) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *RemindersQuery) Offset(n int) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *RemindersQuery) DistinctOn(es ...keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *RemindersQuery) AllTenants() keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *RemindersQuery) CustomPlan() keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *RemindersQuery) Timeout(d time.Duration) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *RemindersQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *RemindersQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *RemindersQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *RemindersQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *RemindersQuery) JoinLateral(sub keel.LateralSource) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *RemindersQuery) Cache(opts ...keel.CacheOption) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *RemindersQuery) With(ctes ...*keel.CTETable) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *RemindersQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *RemindersQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*paymentreminder.Reminder] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *RemindersQuery) Clone() keel.Query[*paymentreminder.Reminder] {
+	return &RemindersQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *RemindersQuery) One(ctx context.Context, db *keel.DB) (*paymentreminder.Reminder, error) {
+	return keel.One[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *RemindersQuery) First(ctx context.Context, db *keel.DB) (*paymentreminder.Reminder, error) {
+	return keel.First[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *RemindersQuery) List(ctx context.Context, db *keel.DB) ([]*paymentreminder.Reminder, error) {
+	return keel.List[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *RemindersQuery) All(ctx context.Context, db *keel.DB) ([]*paymentreminder.Reminder, error) {
+	return keel.All[*paymentreminder.Reminder](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *RemindersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*paymentreminder.Reminder, error) {
+	return keel.UpdateReturning[*paymentreminder.Reminder](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *RemindersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*paymentreminder.Reminder], error) {
+	return keel.PageOf[*paymentreminder.Reminder](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *RemindersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*paymentreminder.Reminder) error) error {
+	return keel.Each[*paymentreminder.Reminder](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newReminder() unsafe.Pointer { return unsafe.Pointer(new(paymentreminder.Reminder)) }

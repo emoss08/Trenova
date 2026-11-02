@@ -4,6 +4,7 @@ package passwordresetdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var passwordResetTokensRef = keel.Ref{Table: &passwordResetTokensTable}
 
 // PasswordResetTokensTable is the table of passwordreset.PasswordResetToken.
 type PasswordResetTokensTable struct {
-	keel.Handle[*passwordreset.PasswordResetToken]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	UserID         keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -78,7 +79,7 @@ type PasswordResetTokensTable struct {
 
 // PasswordResetTokens references the password_reset_tokens table.
 var PasswordResetTokens = &PasswordResetTokensTable{
-	Handle:         keel.Handle[*passwordreset.PasswordResetToken]{Ref: &passwordResetTokensRef},
+	TableBase:      keel.TableBase{Ref: &passwordResetTokensRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &passwordResetTokensRef, Index: 0}}},
 	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &passwordResetTokensRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &passwordResetTokensRef, Index: 2}}},
@@ -91,10 +92,10 @@ var PasswordResetTokens = &PasswordResetTokensTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &passwordResetTokensRef, Index: 9}},
 }
 
-// BuildPasswordResetTokens builds the handle of password_reset_tokens for ref. Generated relation and alias methods call it.
+// BuildPasswordResetTokens builds the table of password_reset_tokens for ref. Generated relation and alias methods call it.
 func BuildPasswordResetTokens(r *keel.Ref) *PasswordResetTokensTable {
 	return &PasswordResetTokensTable{
-		Handle:         keel.Handle[*passwordreset.PasswordResetToken]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -124,6 +125,365 @@ func (t *PasswordResetTokensTable) User() *tenantdb.UsersTable {
 // Get returns the password_reset_tokens row with the given key, or keel.ErrNotFound.
 func (t *PasswordResetTokensTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*passwordreset.PasswordResetToken, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PasswordResetTokensQuery is a query over passwordreset.PasswordResetToken.
+type PasswordResetTokensQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*passwordreset.PasswordResetToken] = (*PasswordResetTokensTable)(nil)
+
+var _ keel.Query[*passwordreset.PasswordResetToken] = (*PasswordResetTokensQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PasswordResetTokensTable) Query() keel.Query[*passwordreset.PasswordResetToken] {
+	return &PasswordResetTokensQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PasswordResetTokensQuery.Where.
+func (t *PasswordResetTokensTable) Where(ps ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PasswordResetTokensQuery.Pick.
+func (t *PasswordResetTokensTable) Pick(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PasswordResetTokensQuery.Load.
+func (t *PasswordResetTokensTable) Load(ls ...keel.Loader) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PasswordResetTokensQuery.Omit.
+func (t *PasswordResetTokensTable) Omit(cols ...keel.Column) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PasswordResetTokensQuery.Order.
+func (t *PasswordResetTokensTable) Order(os ...keel.Order) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PasswordResetTokensQuery.Limit.
+func (t *PasswordResetTokensTable) Limit(n int) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PasswordResetTokensQuery.Group.
+func (t *PasswordResetTokensTable) Group(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PasswordResetTokensQuery.GroupingSets.
+func (t *PasswordResetTokensTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PasswordResetTokensQuery.Rollup.
+func (t *PasswordResetTokensTable) Rollup(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PasswordResetTokensQuery.Cube.
+func (t *PasswordResetTokensTable) Cube(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PasswordResetTokensQuery.AllTenants.
+func (t *PasswordResetTokensTable) AllTenants() keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PasswordResetTokensQuery.Join.
+func (t *PasswordResetTokensTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PasswordResetTokensQuery.LeftJoin.
+func (t *PasswordResetTokensTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PasswordResetTokensQuery.LeftJoinLateral.
+func (t *PasswordResetTokensTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PasswordResetTokensQuery.JoinLateral.
+func (t *PasswordResetTokensTable) JoinLateral(sub keel.LateralSource) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PasswordResetTokensQuery.Lock.
+func (t *PasswordResetTokensTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PasswordResetTokensQuery.DistinctOn.
+func (t *PasswordResetTokensTable) DistinctOn(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PasswordResetTokensQuery.Cache.
+func (t *PasswordResetTokensTable) Cache(opts ...keel.CacheOption) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PasswordResetTokensQuery.LoadStrategy.
+func (t *PasswordResetTokensTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PasswordResetTokensQuery.With.
+func (t *PasswordResetTokensTable) With(ctes ...*keel.CTETable) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PasswordResetTokensQuery.Compute.
+func (t *PasswordResetTokensTable) Compute(col keel.Column, e keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PasswordResetTokensTable) Create(ctx context.Context, db *keel.DB, row *passwordreset.PasswordResetToken) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PasswordResetTokensTable) CreateMany(ctx context.Context, db *keel.DB, rows []*passwordreset.PasswordResetToken) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PasswordResetTokensTable) Save(ctx context.Context, db *keel.DB, row *passwordreset.PasswordResetToken, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PasswordResetTokensTable) SaveExcept(ctx context.Context, db *keel.DB, row *passwordreset.PasswordResetToken, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PasswordResetTokensTable) DeleteRow(ctx context.Context, db *keel.DB, row *passwordreset.PasswordResetToken) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PasswordResetTokensTable) Upsert(ctx context.Context, db *keel.DB, rows []*passwordreset.PasswordResetToken, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PasswordResetTokensTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*passwordreset.PasswordResetToken, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PasswordResetTokensTable) Copy(ctx context.Context, db *keel.DB, rows []*passwordreset.PasswordResetToken) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PasswordResetTokensQuery) Where(ps ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PasswordResetTokensQuery) Pick(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PasswordResetTokensQuery) Omit(cols ...keel.Column) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PasswordResetTokensQuery) Load(ls ...keel.Loader) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PasswordResetTokensQuery) Order(os ...keel.Order) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PasswordResetTokensQuery) Distinct() keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PasswordResetTokensQuery) Group(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PasswordResetTokensQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PasswordResetTokensQuery) Rollup(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PasswordResetTokensQuery) Cube(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PasswordResetTokensQuery) Window(name string, w keel.Window) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PasswordResetTokensQuery) Having(ps ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PasswordResetTokensQuery) Limit(n int) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PasswordResetTokensQuery) Offset(n int) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PasswordResetTokensQuery) DistinctOn(es ...keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PasswordResetTokensQuery) AllTenants() keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PasswordResetTokensQuery) CustomPlan() keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PasswordResetTokensQuery) Timeout(d time.Duration) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PasswordResetTokensQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PasswordResetTokensQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PasswordResetTokensQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PasswordResetTokensQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PasswordResetTokensQuery) JoinLateral(sub keel.LateralSource) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PasswordResetTokensQuery) Cache(opts ...keel.CacheOption) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PasswordResetTokensQuery) With(ctes ...*keel.CTETable) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PasswordResetTokensQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PasswordResetTokensQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*passwordreset.PasswordResetToken] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PasswordResetTokensQuery) Clone() keel.Query[*passwordreset.PasswordResetToken] {
+	return &PasswordResetTokensQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PasswordResetTokensQuery) One(ctx context.Context, db *keel.DB) (*passwordreset.PasswordResetToken, error) {
+	return keel.One[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PasswordResetTokensQuery) First(ctx context.Context, db *keel.DB) (*passwordreset.PasswordResetToken, error) {
+	return keel.First[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PasswordResetTokensQuery) List(ctx context.Context, db *keel.DB) ([]*passwordreset.PasswordResetToken, error) {
+	return keel.List[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PasswordResetTokensQuery) All(ctx context.Context, db *keel.DB) ([]*passwordreset.PasswordResetToken, error) {
+	return keel.All[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PasswordResetTokensQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*passwordreset.PasswordResetToken, error) {
+	return keel.UpdateReturning[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PasswordResetTokensQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*passwordreset.PasswordResetToken], error) {
+	return keel.PageOf[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PasswordResetTokensQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*passwordreset.PasswordResetToken) error) error {
+	return keel.Each[*passwordreset.PasswordResetToken](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPasswordResetToken() unsafe.Pointer {

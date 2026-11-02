@@ -372,11 +372,11 @@ func (g *settlementPhase) csPartners(
 	rows *csRows,
 	carriers map[pulid.ID]*csCarrier,
 ) error {
-	codes, err := volumegen.Taken(ctx, g.DB, edidb.EDIPartners.Handle, edidb.EDIPartners.Code)
+	codes, err := volumegen.Taken(ctx, g.DB, edidb.EDIPartners, edidb.EDIPartners.Code)
 	if err != nil {
 		return err
 	}
-	names, err := volumegen.Taken(ctx, g.DB, edidb.EDIPartners.Handle, edidb.EDIPartners.Name)
+	names, err := volumegen.Taken(ctx, g.DB, edidb.EDIPartners, edidb.EDIPartners.Name)
 	if err != nil {
 		return err
 	}
@@ -1464,15 +1464,15 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 	}{
 		{
 			csTablePartners,
-			func() error { return volumegen.InsertRows(ctx, tx, edidb.EDIPartners.Handle, rows.partners) },
+			func() error { return volumegen.InsertRows(ctx, tx, edidb.EDIPartners, rows.partners) },
 		},
 		{
 			csTableChannels,
-			func() error { return volumegen.InsertRows(ctx, tx, carrierdb.CarrierEDIChannels.Handle, rows.channels) },
+			func() error { return volumegen.InsertRows(ctx, tx, carrierdb.CarrierEDIChannels, rows.channels) },
 		},
 		{
 			csTableMessages,
-			func() error { return volumegen.InsertRows(ctx, tx, edimessagedb.EDIMessages.Handle, rows.messages) },
+			func() error { return volumegen.InsertRows(ctx, tx, edimessagedb.EDIMessages, rows.messages) },
 		},
 		{
 			csTableInvoices,
@@ -1480,7 +1480,7 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					edicarrierinvoicedb.CarrierInvoices.Handle,
+					edicarrierinvoicedb.CarrierInvoices,
 					rows.invoices,
 				)
 			},
@@ -1491,7 +1491,7 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					rateconfirmationdb.RateConfirmations.Handle,
+					rateconfirmationdb.RateConfirmations,
 					rows.rateCons,
 				)
 			},
@@ -1500,7 +1500,7 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				carriersettlementdb.CarrierSettlementBatches.Handle,
+				carriersettlementdb.CarrierSettlementBatches,
 				rows.batches,
 			)
 		}},
@@ -1510,20 +1510,20 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					carriersettlementdb.CarrierSettlements.Handle,
+					carriersettlementdb.CarrierSettlements,
 					settlements,
 				)
 			},
 		},
 		{
 			csTableEvents,
-			func() error { return volumegen.InsertRows(ctx, tx, carriersettlementdb.CostEvents.Handle, events) },
+			func() error { return volumegen.InsertRows(ctx, tx, carriersettlementdb.CostEvents, events) },
 		},
 		{csTableLines, func() error {
 			return volumegen.InsertRows(
 				ctx,
 				tx,
-				carriersettlementdb.CarrierSettlementLines.Handle,
+				carriersettlementdb.CarrierSettlementLines,
 				rows.lines,
 			)
 		}},
@@ -1533,7 +1533,7 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 				return volumegen.InsertRows(
 					ctx,
 					tx,
-					carriersettlementdb.InvoiceMatches.Handle,
+					carriersettlementdb.InvoiceMatches,
 					rows.matches,
 				)
 			},
@@ -1551,7 +1551,7 @@ func (g *settlementPhase) csWrite(ctx context.Context, tx *keel.DB, rows *csRows
 	if err := volumegen.InsertRows(
 		ctx,
 		tx,
-		carriersettlementdb.LedgerEntries.Handle,
+		carriersettlementdb.LedgerEntries,
 		rows.ledger,
 	); err != nil {
 		return fmt.Errorf("insert %s: %w", csTableLedger, err)
@@ -1626,7 +1626,7 @@ func (g *settlementPhase) csBatchAggregates(
 		csb.SettlementCount.ToExpr(d.Col("settlements")),
 		csb.TotalGrossMinor.ToExpr(d.Col("gross")),
 		csb.TotalNetMinor.ToExpr(d.Col("net")),
-		volumegen.KeepUpdated(csb.Handle),
+		volumegen.KeepUpdated(csb),
 	); err != nil {
 		return fmt.Errorf("recalculate carrier settlement batch aggregates: %w", err)
 	}

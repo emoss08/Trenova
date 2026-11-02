@@ -158,7 +158,7 @@ func (r *repository) GetByKeys(
 
 func versionsByKeysQuery(
 	keys []ratematrixversion.VersionKey,
-) *keel.Query[*ratematrixversion.RateMatrixVersion] {
+) keel.Query[*ratematrixversion.RateMatrixVersion] {
 	v := ratematrixversiondb.RateMatrixVersions
 	wanted := versionKeys(keys)
 
@@ -176,7 +176,7 @@ func servedMatrices() []keel.Pred {
 	}
 }
 
-func servedQuery() *keel.Query[*ratematrixversion.RateMatrixVersion] {
+func servedQuery() keel.Query[*ratematrixversion.RateMatrixVersion] {
 	v := ratematrixversiondb.RateMatrixVersions
 	rm := ratematrixdb.RateMatrixes
 
@@ -209,7 +209,7 @@ func (r *repository) ListServed(
 	)
 }
 
-func servedStampQuery() *keel.Query[*ratematrix.RateMatrix] {
+func servedStampQuery() keel.Query[*ratematrix.RateMatrix] {
 	rm := ratematrixdb.RateMatrixes
 
 	stamps := keel.StringAgg(
@@ -278,7 +278,7 @@ func (r *repository) attachDimensions(
 
 func dimensionsQuery(
 	keys []ratematrixversion.VersionKey,
-) *keel.Query[*ratematrix.RateMatrixDimension] {
+) keel.Query[*ratematrix.RateMatrixDimension] {
 	d := ratematrixdb.RateMatrixDimensions
 	wanted := versionKeys(keys)
 

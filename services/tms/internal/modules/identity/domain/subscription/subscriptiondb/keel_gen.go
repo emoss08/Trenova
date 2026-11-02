@@ -4,6 +4,7 @@ package subscriptiondb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -57,7 +58,7 @@ var subscriptionsRef = keel.Ref{Table: &subscriptionsTable}
 
 // SubscriptionsTable is the table of subscription.Subscription.
 type SubscriptionsTable struct {
-	keel.Handle[*subscription.Subscription]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -74,7 +75,7 @@ type SubscriptionsTable struct {
 
 // Subscriptions references the organization_subscriptions table.
 var Subscriptions = &SubscriptionsTable{
-	Handle:               keel.Handle[*subscription.Subscription]{Ref: &subscriptionsRef},
+	TableBase:            keel.TableBase{Ref: &subscriptionsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 2}}},
@@ -89,10 +90,10 @@ var Subscriptions = &SubscriptionsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &subscriptionsRef, Index: 11}},
 }
 
-// BuildSubscriptions builds the handle of organization_subscriptions for ref. Generated relation and alias methods call it.
+// BuildSubscriptions builds the table of organization_subscriptions for ref. Generated relation and alias methods call it.
 func BuildSubscriptions(r *keel.Ref) *SubscriptionsTable {
 	return &SubscriptionsTable{
-		Handle:               keel.Handle[*subscription.Subscription]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -119,6 +120,365 @@ func (t *SubscriptionsTable) As(alias string) *SubscriptionsTable {
 // Get returns the organization_subscriptions row with the given key, or keel.ErrNotFound.
 func (t *SubscriptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*subscription.Subscription, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SubscriptionsQuery is a query over subscription.Subscription.
+type SubscriptionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*subscription.Subscription] = (*SubscriptionsTable)(nil)
+
+var _ keel.Query[*subscription.Subscription] = (*SubscriptionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SubscriptionsTable) Query() keel.Query[*subscription.Subscription] {
+	return &SubscriptionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SubscriptionsQuery.Where.
+func (t *SubscriptionsTable) Where(ps ...keel.Pred) keel.Query[*subscription.Subscription] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SubscriptionsQuery.Pick.
+func (t *SubscriptionsTable) Pick(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SubscriptionsQuery.Load.
+func (t *SubscriptionsTable) Load(ls ...keel.Loader) keel.Query[*subscription.Subscription] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SubscriptionsQuery.Omit.
+func (t *SubscriptionsTable) Omit(cols ...keel.Column) keel.Query[*subscription.Subscription] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SubscriptionsQuery.Order.
+func (t *SubscriptionsTable) Order(os ...keel.Order) keel.Query[*subscription.Subscription] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SubscriptionsQuery.Limit.
+func (t *SubscriptionsTable) Limit(n int) keel.Query[*subscription.Subscription] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SubscriptionsQuery.Group.
+func (t *SubscriptionsTable) Group(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SubscriptionsQuery.GroupingSets.
+func (t *SubscriptionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SubscriptionsQuery.Rollup.
+func (t *SubscriptionsTable) Rollup(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SubscriptionsQuery.Cube.
+func (t *SubscriptionsTable) Cube(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SubscriptionsQuery.AllTenants.
+func (t *SubscriptionsTable) AllTenants() keel.Query[*subscription.Subscription] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SubscriptionsQuery.Join.
+func (t *SubscriptionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*subscription.Subscription] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SubscriptionsQuery.LeftJoin.
+func (t *SubscriptionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*subscription.Subscription] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SubscriptionsQuery.LeftJoinLateral.
+func (t *SubscriptionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*subscription.Subscription] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SubscriptionsQuery.JoinLateral.
+func (t *SubscriptionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*subscription.Subscription] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SubscriptionsQuery.Lock.
+func (t *SubscriptionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*subscription.Subscription] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SubscriptionsQuery.DistinctOn.
+func (t *SubscriptionsTable) DistinctOn(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SubscriptionsQuery.Cache.
+func (t *SubscriptionsTable) Cache(opts ...keel.CacheOption) keel.Query[*subscription.Subscription] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SubscriptionsQuery.LoadStrategy.
+func (t *SubscriptionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*subscription.Subscription] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SubscriptionsQuery.With.
+func (t *SubscriptionsTable) With(ctes ...*keel.CTETable) keel.Query[*subscription.Subscription] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SubscriptionsQuery.Compute.
+func (t *SubscriptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*subscription.Subscription] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *subscription.Subscription) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*subscription.Subscription) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *subscription.Subscription, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *subscription.Subscription, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *subscription.Subscription) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*subscription.Subscription, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*subscription.Subscription, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*subscription.Subscription) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SubscriptionsQuery) Where(ps ...keel.Pred) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SubscriptionsQuery) Pick(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SubscriptionsQuery) Omit(cols ...keel.Column) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SubscriptionsQuery) Load(ls ...keel.Loader) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SubscriptionsQuery) Order(os ...keel.Order) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SubscriptionsQuery) Distinct() keel.Query[*subscription.Subscription] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SubscriptionsQuery) Group(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SubscriptionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SubscriptionsQuery) Rollup(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SubscriptionsQuery) Cube(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SubscriptionsQuery) Window(name string, w keel.Window) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SubscriptionsQuery) Having(ps ...keel.Pred) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SubscriptionsQuery) Limit(n int) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SubscriptionsQuery) Offset(n int) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SubscriptionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SubscriptionsQuery) AllTenants() keel.Query[*subscription.Subscription] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SubscriptionsQuery) CustomPlan() keel.Query[*subscription.Subscription] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SubscriptionsQuery) Timeout(d time.Duration) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SubscriptionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SubscriptionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SubscriptionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*subscription.Subscription] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SubscriptionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*subscription.Subscription] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SubscriptionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*subscription.Subscription] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SubscriptionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SubscriptionsQuery) With(ctes ...*keel.CTETable) keel.Query[*subscription.Subscription] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SubscriptionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*subscription.Subscription] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SubscriptionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*subscription.Subscription] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SubscriptionsQuery) Clone() keel.Query[*subscription.Subscription] {
+	return &SubscriptionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*subscription.Subscription, error) {
+	return keel.One[*subscription.Subscription](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*subscription.Subscription, error) {
+	return keel.First[*subscription.Subscription](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*subscription.Subscription, error) {
+	return keel.List[*subscription.Subscription](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*subscription.Subscription, error) {
+	return keel.All[*subscription.Subscription](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*subscription.Subscription, error) {
+	return keel.UpdateReturning[*subscription.Subscription](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*subscription.Subscription], error) {
+	return keel.PageOf[*subscription.Subscription](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*subscription.Subscription) error) error {
+	return keel.Each[*subscription.Subscription](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSubscription() unsafe.Pointer { return unsafe.Pointer(new(subscription.Subscription)) }

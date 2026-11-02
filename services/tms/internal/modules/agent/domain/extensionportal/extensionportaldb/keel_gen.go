@@ -4,6 +4,7 @@ package extensionportaldb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -78,7 +79,7 @@ var portalRunsRef = keel.Ref{Table: &portalRunsTable}
 
 // PortalRunsTable is the table of extensionportal.PortalRun.
 type PortalRunsTable struct {
-	keel.Handle[*extensionportal.PortalRun]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -115,7 +116,7 @@ type PortalRunsTable struct {
 
 // PortalRuns references the agent_portal_runs table.
 var PortalRuns = &PortalRunsTable{
-	Handle:            keel.Handle[*extensionportal.PortalRun]{Ref: &portalRunsRef},
+	TableBase:         keel.TableBase{Ref: &portalRunsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 2}}},
@@ -150,10 +151,10 @@ var PortalRuns = &PortalRunsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &portalRunsRef, Index: 31}},
 }
 
-// BuildPortalRuns builds the handle of agent_portal_runs for ref. Generated relation and alias methods call it.
+// BuildPortalRuns builds the table of agent_portal_runs for ref. Generated relation and alias methods call it.
 func BuildPortalRuns(r *keel.Ref) *PortalRunsTable {
 	return &PortalRunsTable{
-		Handle:            keel.Handle[*extensionportal.PortalRun]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -200,6 +201,365 @@ func (t *PortalRunsTable) As(alias string) *PortalRunsTable {
 // Get returns the agent_portal_runs row with the given key, or keel.ErrNotFound.
 func (t *PortalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionportal.PortalRun, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PortalRunsQuery is a query over extensionportal.PortalRun.
+type PortalRunsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extensionportal.PortalRun] = (*PortalRunsTable)(nil)
+
+var _ keel.Query[*extensionportal.PortalRun] = (*PortalRunsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PortalRunsTable) Query() keel.Query[*extensionportal.PortalRun] {
+	return &PortalRunsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PortalRunsQuery.Where.
+func (t *PortalRunsTable) Where(ps ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PortalRunsQuery.Pick.
+func (t *PortalRunsTable) Pick(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PortalRunsQuery.Load.
+func (t *PortalRunsTable) Load(ls ...keel.Loader) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PortalRunsQuery.Omit.
+func (t *PortalRunsTable) Omit(cols ...keel.Column) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PortalRunsQuery.Order.
+func (t *PortalRunsTable) Order(os ...keel.Order) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PortalRunsQuery.Limit.
+func (t *PortalRunsTable) Limit(n int) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PortalRunsQuery.Group.
+func (t *PortalRunsTable) Group(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PortalRunsQuery.GroupingSets.
+func (t *PortalRunsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PortalRunsQuery.Rollup.
+func (t *PortalRunsTable) Rollup(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PortalRunsQuery.Cube.
+func (t *PortalRunsTable) Cube(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PortalRunsQuery.AllTenants.
+func (t *PortalRunsTable) AllTenants() keel.Query[*extensionportal.PortalRun] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PortalRunsQuery.Join.
+func (t *PortalRunsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PortalRunsQuery.LeftJoin.
+func (t *PortalRunsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PortalRunsQuery.LeftJoinLateral.
+func (t *PortalRunsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PortalRunsQuery.JoinLateral.
+func (t *PortalRunsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PortalRunsQuery.Lock.
+func (t *PortalRunsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PortalRunsQuery.DistinctOn.
+func (t *PortalRunsTable) DistinctOn(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PortalRunsQuery.Cache.
+func (t *PortalRunsTable) Cache(opts ...keel.CacheOption) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PortalRunsQuery.LoadStrategy.
+func (t *PortalRunsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PortalRunsQuery.With.
+func (t *PortalRunsTable) With(ctes ...*keel.CTETable) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PortalRunsQuery.Compute.
+func (t *PortalRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PortalRunsTable) Create(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PortalRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PortalRunsTable) Save(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PortalRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PortalRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PortalRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PortalRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PortalRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PortalRunsQuery) Where(ps ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PortalRunsQuery) Pick(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PortalRunsQuery) Omit(cols ...keel.Column) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PortalRunsQuery) Load(ls ...keel.Loader) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PortalRunsQuery) Order(os ...keel.Order) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PortalRunsQuery) Distinct() keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PortalRunsQuery) Group(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PortalRunsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PortalRunsQuery) Rollup(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PortalRunsQuery) Cube(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PortalRunsQuery) Window(name string, w keel.Window) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PortalRunsQuery) Having(ps ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PortalRunsQuery) Limit(n int) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PortalRunsQuery) Offset(n int) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PortalRunsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PortalRunsQuery) AllTenants() keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PortalRunsQuery) CustomPlan() keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PortalRunsQuery) Timeout(d time.Duration) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PortalRunsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PortalRunsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PortalRunsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PortalRunsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PortalRunsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PortalRunsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PortalRunsQuery) With(ctes ...*keel.CTETable) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PortalRunsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PortalRunsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionportal.PortalRun] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PortalRunsQuery) Clone() keel.Query[*extensionportal.PortalRun] {
+	return &PortalRunsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PortalRunsQuery) One(ctx context.Context, db *keel.DB) (*extensionportal.PortalRun, error) {
+	return keel.One[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PortalRunsQuery) First(ctx context.Context, db *keel.DB) (*extensionportal.PortalRun, error) {
+	return keel.First[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PortalRunsQuery) List(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalRun, error) {
+	return keel.List[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PortalRunsQuery) All(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalRun, error) {
+	return keel.All[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PortalRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionportal.PortalRun, error) {
+	return keel.UpdateReturning[*extensionportal.PortalRun](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PortalRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionportal.PortalRun], error) {
+	return keel.PageOf[*extensionportal.PortalRun](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PortalRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionportal.PortalRun) error) error {
+	return keel.Each[*extensionportal.PortalRun](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPortalRun() unsafe.Pointer { return unsafe.Pointer(new(extensionportal.PortalRun)) }
@@ -430,7 +790,7 @@ var portalSitesRef = keel.Ref{Table: &portalSitesTable}
 
 // PortalSitesTable is the table of extensionportal.PortalSite.
 type PortalSitesTable struct {
-	keel.Handle[*extensionportal.PortalSite]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -450,7 +810,7 @@ type PortalSitesTable struct {
 
 // PortalSites references the agent_portal_sites table.
 var PortalSites = &PortalSitesTable{
-	Handle:           keel.Handle[*extensionportal.PortalSite]{Ref: &portalSitesRef},
+	TableBase:        keel.TableBase{Ref: &portalSitesRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 2}}},
@@ -468,10 +828,10 @@ var PortalSites = &PortalSitesTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 14}},
 }
 
-// BuildPortalSites builds the handle of agent_portal_sites for ref. Generated relation and alias methods call it.
+// BuildPortalSites builds the table of agent_portal_sites for ref. Generated relation and alias methods call it.
 func BuildPortalSites(r *keel.Ref) *PortalSitesTable {
 	return &PortalSitesTable{
-		Handle:           keel.Handle[*extensionportal.PortalSite]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -501,6 +861,365 @@ func (t *PortalSitesTable) As(alias string) *PortalSitesTable {
 // Get returns the agent_portal_sites row with the given key, or keel.ErrNotFound.
 func (t *PortalSitesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionportal.PortalSite, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// PortalSitesQuery is a query over extensionportal.PortalSite.
+type PortalSitesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extensionportal.PortalSite] = (*PortalSitesTable)(nil)
+
+var _ keel.Query[*extensionportal.PortalSite] = (*PortalSitesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *PortalSitesTable) Query() keel.Query[*extensionportal.PortalSite] {
+	return &PortalSitesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see PortalSitesQuery.Where.
+func (t *PortalSitesTable) Where(ps ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see PortalSitesQuery.Pick.
+func (t *PortalSitesTable) Pick(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see PortalSitesQuery.Load.
+func (t *PortalSitesTable) Load(ls ...keel.Loader) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see PortalSitesQuery.Omit.
+func (t *PortalSitesTable) Omit(cols ...keel.Column) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see PortalSitesQuery.Order.
+func (t *PortalSitesTable) Order(os ...keel.Order) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see PortalSitesQuery.Limit.
+func (t *PortalSitesTable) Limit(n int) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see PortalSitesQuery.Group.
+func (t *PortalSitesTable) Group(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see PortalSitesQuery.GroupingSets.
+func (t *PortalSitesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see PortalSitesQuery.Rollup.
+func (t *PortalSitesTable) Rollup(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see PortalSitesQuery.Cube.
+func (t *PortalSitesTable) Cube(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see PortalSitesQuery.AllTenants.
+func (t *PortalSitesTable) AllTenants() keel.Query[*extensionportal.PortalSite] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see PortalSitesQuery.Join.
+func (t *PortalSitesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see PortalSitesQuery.LeftJoin.
+func (t *PortalSitesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see PortalSitesQuery.LeftJoinLateral.
+func (t *PortalSitesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see PortalSitesQuery.JoinLateral.
+func (t *PortalSitesTable) JoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see PortalSitesQuery.Lock.
+func (t *PortalSitesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see PortalSitesQuery.DistinctOn.
+func (t *PortalSitesTable) DistinctOn(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see PortalSitesQuery.Cache.
+func (t *PortalSitesTable) Cache(opts ...keel.CacheOption) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see PortalSitesQuery.LoadStrategy.
+func (t *PortalSitesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see PortalSitesQuery.With.
+func (t *PortalSitesTable) With(ctes ...*keel.CTETable) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see PortalSitesQuery.Compute.
+func (t *PortalSitesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *PortalSitesTable) Create(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *PortalSitesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *PortalSitesTable) Save(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *PortalSitesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *PortalSitesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *PortalSitesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *PortalSitesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *PortalSitesTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *PortalSitesQuery) Where(ps ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *PortalSitesQuery) Pick(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *PortalSitesQuery) Omit(cols ...keel.Column) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *PortalSitesQuery) Load(ls ...keel.Loader) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *PortalSitesQuery) Order(os ...keel.Order) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *PortalSitesQuery) Distinct() keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *PortalSitesQuery) Group(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *PortalSitesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *PortalSitesQuery) Rollup(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *PortalSitesQuery) Cube(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *PortalSitesQuery) Window(name string, w keel.Window) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *PortalSitesQuery) Having(ps ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *PortalSitesQuery) Limit(n int) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *PortalSitesQuery) Offset(n int) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *PortalSitesQuery) DistinctOn(es ...keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *PortalSitesQuery) AllTenants() keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *PortalSitesQuery) CustomPlan() keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *PortalSitesQuery) Timeout(d time.Duration) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *PortalSitesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *PortalSitesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *PortalSitesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *PortalSitesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *PortalSitesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *PortalSitesQuery) Cache(opts ...keel.CacheOption) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *PortalSitesQuery) With(ctes ...*keel.CTETable) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *PortalSitesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *PortalSitesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionportal.PortalSite] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *PortalSitesQuery) Clone() keel.Query[*extensionportal.PortalSite] {
+	return &PortalSitesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *PortalSitesQuery) One(ctx context.Context, db *keel.DB) (*extensionportal.PortalSite, error) {
+	return keel.One[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *PortalSitesQuery) First(ctx context.Context, db *keel.DB) (*extensionportal.PortalSite, error) {
+	return keel.First[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *PortalSitesQuery) List(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalSite, error) {
+	return keel.List[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *PortalSitesQuery) All(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalSite, error) {
+	return keel.All[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *PortalSitesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionportal.PortalSite, error) {
+	return keel.UpdateReturning[*extensionportal.PortalSite](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *PortalSitesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionportal.PortalSite], error) {
+	return keel.PageOf[*extensionportal.PortalSite](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *PortalSitesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionportal.PortalSite) error) error {
+	return keel.Each[*extensionportal.PortalSite](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newPortalSite() unsafe.Pointer { return unsafe.Pointer(new(extensionportal.PortalSite)) }

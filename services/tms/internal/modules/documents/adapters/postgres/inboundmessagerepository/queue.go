@@ -140,7 +140,7 @@ func (r *repository) queueStates(
 
 func queueStatesQuery(
 	req inboundmessageports.QueueStatesRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	q := m.Pick(stateColumns()...).
 		Where(m.ID.In(req.IDs...)).
@@ -176,7 +176,7 @@ func (r *repository) SelectIDs(
 
 func selectIDsQuery(
 	req inboundmessageports.SelectInboundMessageIDsRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	folder := req.Folder
 
@@ -463,7 +463,7 @@ func (r *repository) ListThread(
 
 func listThreadQuery(
 	req inboundmessageports.ListThreadRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	newest := inboundmessagedb.InboundMessages.As("newest")
 	limit := max(req.Limit, 1)
@@ -645,7 +645,7 @@ func (r *repository) HandOffCandidates(
 
 func handOffCandidatesQuery(
 	req inboundmessageports.HandOffCandidatesRequest,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 
 	return m.Pick(m.ID).

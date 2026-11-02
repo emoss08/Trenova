@@ -72,8 +72,8 @@ func (r *payAdvanceRepository) ListConnection(
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 					Shape: func(
-						q *keel.Query[*payadvance.PayAdvance],
-					) *keel.Query[*payadvance.PayAdvance] {
+						q keel.Query[*payadvance.PayAdvance],
+					) keel.Query[*payadvance.PayAdvance] {
 						return q.Load(pa.Worker())
 					},
 				},

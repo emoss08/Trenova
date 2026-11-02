@@ -21,7 +21,7 @@ const (
 	everyTenant  tenancy = true
 )
 
-func scoped[T any](q *keel.Query[*T], t tenancy) *keel.Query[*T] {
+func scoped[T any](q keel.Query[*T], t tenancy) keel.Query[*T] {
 	if t == everyTenant {
 		return q.AllTenants()
 	}
@@ -37,7 +37,7 @@ func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipment
 	return req.RestoredStatus
 }
 
-func movesOf(shipmentIDs []pulid.ID, t tenancy) *keel.Query[*shipment.ShipmentMove] {
+func movesOf(shipmentIDs []pulid.ID, t tenancy) keel.Query[*shipment.ShipmentMove] {
 	sm := shipmentdb.ShipmentMoves.As("cancel_sm")
 	return scoped(sm.Pick(sm.ID).Where(sm.ShipmentID.In(shipmentIDs...)), t)
 }

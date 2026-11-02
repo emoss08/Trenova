@@ -30,16 +30,16 @@ func Backdate[T any](
 		return nil
 	}
 
-	t := h.Ref.Table
-	id := keel.Col{Ref: h.Ref, Index: t.PK[0]}
-	created := keel.Col{Ref: h.Ref, Index: t.AutoCreate}
+	t := h.TableRef().Table
+	id := keel.Col{Ref: h.TableRef(), Index: t.PK[0]}
+	created := keel.Col{Ref: h.TableRef(), Index: t.AutoCreate}
 	values := keel.Unnest("backdated", []string{"id", "at"}, ids, ats)
 	sets := []keel.Assignment{created.ToExpr(values.Col("at"))}
 	if t.AutoUpdate >= 0 {
-		sets = append(sets, keel.Col{Ref: h.Ref, Index: t.AutoUpdate}.ToExpr(values.Col("at")))
+		sets = append(sets, keel.Col{Ref: h.TableRef(), Index: t.AutoUpdate}.ToExpr(values.Col("at")))
 	}
 	if t.Version >= 0 {
-		version := keel.Col{Ref: h.Ref, Index: t.Version}
+		version := keel.Col{Ref: h.TableRef(), Index: t.Version}
 		sets = append(sets, version.ToExpr(version))
 	}
 

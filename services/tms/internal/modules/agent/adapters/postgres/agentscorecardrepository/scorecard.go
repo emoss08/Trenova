@@ -137,7 +137,7 @@ func (r *repository) Aggregate(
 	)
 }
 
-func runsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*agent.AgentRun] {
+func runsQuery(req *agentevaluationports.ScorecardRequest) keel.Query[*agent.AgentRun] {
 	run := agentdb.AgentRuns
 
 	return run.Pick(keel.Count(), keel.Count().Filter(run.Status.Eq(agent.RunStatusFailed))).
@@ -148,7 +148,7 @@ func runsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*agent.Ag
 // being rejected" is the question a person actually has, and one total hides
 // a bad tool inside nine good ones. An automatic write is one the trust
 // ladder let through: it ran at the auto tier, so nobody was asked.
-func proposalsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*agent.AgentProposal] {
+func proposalsQuery(req *agentevaluationports.ScorecardRequest) keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 	status := func(s agent.ProposalStatus) keel.Agg {
 		return keel.Count().Filter(p.Status.Eq(s))
@@ -181,7 +181,7 @@ func proposalsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*age
 // A step from before verdicts were kept reads as its status implies, and a
 // step still Started, whose outcome nobody recorded, as unknown. The ranking
 // is done in SQL, so only the few reasons kept per verdict leave the database.
-func verdictsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*keel.Row] {
+func verdictsQuery(req *agentevaluationports.ScorecardRequest) keel.Query[*keel.Row] {
 	step := agentrunstepdb.AgentRunSteps
 	labelled := keel.CTE("labelled", []string{"tool_name", "verdict", "reason"}, step.
 		Pick(
@@ -281,7 +281,7 @@ func foldVerdicts(rows []verdictRow) []agentevaluation.ToolVerdictCount {
 
 func exceptionsQuery(
 	req *agentevaluationports.ScorecardRequest,
-) *keel.Query[*agentexception.AgentException] {
+) keel.Query[*agentexception.AgentException] {
 	e := agentexceptiondb.AgentExceptions
 	run := agentdb.AgentRuns
 
@@ -289,7 +289,7 @@ func exceptionsQuery(
 		Where(run.AgentDefinitionID.Eq(req.AgentDefinitionID), e.CreatedAt.Gte(req.Since))
 }
 
-func usageQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*aiusage.AIUsageRecord] {
+func usageQuery(req *agentevaluationports.ScorecardRequest) keel.Query[*aiusage.AIUsageRecord] {
 	u := aiusagedb.AIUsageRecords
 
 	return u.Pick(

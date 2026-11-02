@@ -39,7 +39,7 @@ func (f suggestionFixture) agent(t *testing.T, name string) pulid.ID {
 		Name:           name,
 		Enabled:        true,
 	}
-	insert(f.ctx, t, f.db, agentdefinitiondb.Definitions.Handle, definition)
+	insert(f.ctx, t, f.db, agentdefinitiondb.Definitions, definition)
 
 	return definition.ID
 }

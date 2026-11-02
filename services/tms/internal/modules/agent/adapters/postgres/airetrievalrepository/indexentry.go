@@ -258,9 +258,9 @@ func outcomeTable(rows []outcomeRow) *keel.CTETable {
 }
 
 func matchOutcome(
-	q *keel.Query[*airetrieval.IndexEntry],
+	q keel.Query[*airetrieval.IndexEntry],
 	outcome *keel.CTETable,
-) *keel.Query[*airetrieval.IndexEntry] {
+) keel.Query[*airetrieval.IndexEntry] {
 	e := airetrievaldb.IndexEntries
 
 	return q.With(outcome).Join(outcome,
@@ -513,7 +513,7 @@ type staleSource struct {
 }
 
 func staleSources[T any](
-	q *keel.Query[*T],
+	q keel.Query[*T],
 	source staleSource,
 	req *retrievalports.FindStaleAIRetrievalSourcesRequest,
 	limit int,

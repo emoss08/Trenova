@@ -4,6 +4,7 @@ package conversationscheduledb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -63,7 +64,7 @@ var schedulesRef = keel.Ref{Table: &schedulesTable}
 
 // SchedulesTable is the table of conversationschedule.Schedule.
 type SchedulesTable struct {
-	keel.Handle[*conversationschedule.Schedule]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -84,7 +85,7 @@ type SchedulesTable struct {
 
 // Schedules references the conversation_schedules table.
 var Schedules = &SchedulesTable{
-	Handle:         keel.Handle[*conversationschedule.Schedule]{Ref: &schedulesRef},
+	TableBase:      keel.TableBase{Ref: &schedulesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &schedulesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &schedulesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &schedulesRef, Index: 2}}},
@@ -103,10 +104,10 @@ var Schedules = &SchedulesTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &schedulesRef, Index: 15}},
 }
 
-// BuildSchedules builds the handle of conversation_schedules for ref. Generated relation and alias methods call it.
+// BuildSchedules builds the table of conversation_schedules for ref. Generated relation and alias methods call it.
 func BuildSchedules(r *keel.Ref) *SchedulesTable {
 	return &SchedulesTable{
-		Handle:         keel.Handle[*conversationschedule.Schedule]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -137,6 +138,365 @@ func (t *SchedulesTable) As(alias string) *SchedulesTable {
 // Get returns the conversation_schedules row with the given key, or keel.ErrNotFound.
 func (t *SchedulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*conversationschedule.Schedule, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// SchedulesQuery is a query over conversationschedule.Schedule.
+type SchedulesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*conversationschedule.Schedule] = (*SchedulesTable)(nil)
+
+var _ keel.Query[*conversationschedule.Schedule] = (*SchedulesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *SchedulesTable) Query() keel.Query[*conversationschedule.Schedule] {
+	return &SchedulesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see SchedulesQuery.Where.
+func (t *SchedulesTable) Where(ps ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see SchedulesQuery.Pick.
+func (t *SchedulesTable) Pick(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see SchedulesQuery.Load.
+func (t *SchedulesTable) Load(ls ...keel.Loader) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see SchedulesQuery.Omit.
+func (t *SchedulesTable) Omit(cols ...keel.Column) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see SchedulesQuery.Order.
+func (t *SchedulesTable) Order(os ...keel.Order) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see SchedulesQuery.Limit.
+func (t *SchedulesTable) Limit(n int) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see SchedulesQuery.Group.
+func (t *SchedulesTable) Group(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see SchedulesQuery.GroupingSets.
+func (t *SchedulesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see SchedulesQuery.Rollup.
+func (t *SchedulesTable) Rollup(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see SchedulesQuery.Cube.
+func (t *SchedulesTable) Cube(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see SchedulesQuery.AllTenants.
+func (t *SchedulesTable) AllTenants() keel.Query[*conversationschedule.Schedule] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see SchedulesQuery.Join.
+func (t *SchedulesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see SchedulesQuery.LeftJoin.
+func (t *SchedulesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see SchedulesQuery.LeftJoinLateral.
+func (t *SchedulesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see SchedulesQuery.JoinLateral.
+func (t *SchedulesTable) JoinLateral(sub keel.LateralSource) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see SchedulesQuery.Lock.
+func (t *SchedulesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see SchedulesQuery.DistinctOn.
+func (t *SchedulesTable) DistinctOn(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see SchedulesQuery.Cache.
+func (t *SchedulesTable) Cache(opts ...keel.CacheOption) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see SchedulesQuery.LoadStrategy.
+func (t *SchedulesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see SchedulesQuery.With.
+func (t *SchedulesTable) With(ctes ...*keel.CTETable) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see SchedulesQuery.Compute.
+func (t *SchedulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *SchedulesTable) Create(ctx context.Context, db *keel.DB, row *conversationschedule.Schedule) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *SchedulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*conversationschedule.Schedule) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *SchedulesTable) Save(ctx context.Context, db *keel.DB, row *conversationschedule.Schedule, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *SchedulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *conversationschedule.Schedule, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *SchedulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *conversationschedule.Schedule) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *SchedulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*conversationschedule.Schedule, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *SchedulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*conversationschedule.Schedule, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *SchedulesTable) Copy(ctx context.Context, db *keel.DB, rows []*conversationschedule.Schedule) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *SchedulesQuery) Where(ps ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *SchedulesQuery) Pick(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *SchedulesQuery) Omit(cols ...keel.Column) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *SchedulesQuery) Load(ls ...keel.Loader) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *SchedulesQuery) Order(os ...keel.Order) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *SchedulesQuery) Distinct() keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *SchedulesQuery) Group(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *SchedulesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *SchedulesQuery) Rollup(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *SchedulesQuery) Cube(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *SchedulesQuery) Window(name string, w keel.Window) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *SchedulesQuery) Having(ps ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *SchedulesQuery) Limit(n int) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *SchedulesQuery) Offset(n int) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *SchedulesQuery) DistinctOn(es ...keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *SchedulesQuery) AllTenants() keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *SchedulesQuery) CustomPlan() keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *SchedulesQuery) Timeout(d time.Duration) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *SchedulesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *SchedulesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *SchedulesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *SchedulesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *SchedulesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *SchedulesQuery) Cache(opts ...keel.CacheOption) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *SchedulesQuery) With(ctes ...*keel.CTETable) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *SchedulesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *SchedulesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*conversationschedule.Schedule] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *SchedulesQuery) Clone() keel.Query[*conversationschedule.Schedule] {
+	return &SchedulesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *SchedulesQuery) One(ctx context.Context, db *keel.DB) (*conversationschedule.Schedule, error) {
+	return keel.One[*conversationschedule.Schedule](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *SchedulesQuery) First(ctx context.Context, db *keel.DB) (*conversationschedule.Schedule, error) {
+	return keel.First[*conversationschedule.Schedule](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *SchedulesQuery) List(ctx context.Context, db *keel.DB) ([]*conversationschedule.Schedule, error) {
+	return keel.List[*conversationschedule.Schedule](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *SchedulesQuery) All(ctx context.Context, db *keel.DB) ([]*conversationschedule.Schedule, error) {
+	return keel.All[*conversationschedule.Schedule](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *SchedulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*conversationschedule.Schedule, error) {
+	return keel.UpdateReturning[*conversationschedule.Schedule](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *SchedulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*conversationschedule.Schedule], error) {
+	return keel.PageOf[*conversationschedule.Schedule](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *SchedulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*conversationschedule.Schedule) error) error {
+	return keel.Each[*conversationschedule.Schedule](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newSchedule() unsafe.Pointer { return unsafe.Pointer(new(conversationschedule.Schedule)) }

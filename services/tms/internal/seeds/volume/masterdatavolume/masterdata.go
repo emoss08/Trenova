@@ -123,7 +123,7 @@ var mdPaymentTerms = []customer.PaymentTerm{
 var mdPaymentTermWeights = []int{50, 15, 10, 10, 5, 5, 5}
 
 func (g *masterdataPhase) mdCustomers(ctx context.Context, tx *keel.DB) error {
-	taken, err := volumegen.Taken(ctx, tx, customerdb.Customers.Handle, customerdb.Customers.Code)
+	taken, err := volumegen.Taken(ctx, tx, customerdb.Customers, customerdb.Customers.Code)
 	if err != nil {
 		return err
 	}
@@ -241,13 +241,13 @@ func (g *masterdataPhase) mdCustomers(ctx context.Context, tx *keel.DB) error {
 		})
 	}
 
-	if err = volumegen.InsertRows(ctx, tx, customerdb.Customers.Handle, customers); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, customerdb.Customers, customers); err != nil {
 		return fmt.Errorf("insert customers: %w", err)
 	}
-	if err = volumegen.InsertRows(ctx, tx, customerdb.CustomerBillingProfiles.Handle, profiles); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, customerdb.CustomerBillingProfiles, profiles); err != nil {
 		return fmt.Errorf("insert customer billing profiles: %w", err)
 	}
-	if err = volumegen.InsertRows(ctx, tx, customerdb.CustomerEmailProfiles.Handle, emails); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, customerdb.CustomerEmailProfiles, emails); err != nil {
 		return fmt.Errorf("insert customer email profiles: %w", err)
 	}
 	for _, b := range []struct {
@@ -485,10 +485,10 @@ func (g *masterdataPhase) mdLocationCategories(
 	if len(created) == 0 {
 		return byName, nil
 	}
-	if err := volumegen.InsertRows(ctx, tx, locationcategorydb.LocationCategories.Handle, created); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, locationcategorydb.LocationCategories, created); err != nil {
 		return nil, fmt.Errorf("insert location categories: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, locationcategorydb.LocationCategories.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, locationcategorydb.LocationCategories, stamps); err != nil {
 		return nil, err
 	}
 	g.Report.Add("Location categories", len(created))
@@ -501,7 +501,7 @@ func (g *masterdataPhase) mdLocations(ctx context.Context, tx *keel.DB) error {
 	if err != nil {
 		return err
 	}
-	taken, err := volumegen.Taken(ctx, tx, locationdb.Locations.Handle, locationdb.Locations.Code)
+	taken, err := volumegen.Taken(ctx, tx, locationdb.Locations, locationdb.Locations.Code)
 	if err != nil {
 		return err
 	}
@@ -590,7 +590,7 @@ func (g *masterdataPhase) mdLocations(ctx context.Context, tx *keel.DB) error {
 		}
 	}
 
-	if err = volumegen.InsertRows(ctx, tx, locationdb.Locations.Handle, locations); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, locationdb.Locations, locations); err != nil {
 		return fmt.Errorf("insert locations: %w", err)
 	}
 	l := locationdb.Locations
@@ -603,7 +603,7 @@ func (g *masterdataPhase) mdLocations(ctx context.Context, tx *keel.DB) error {
 	)); err != nil {
 		return fmt.Errorf("build location geofences: %w", err)
 	}
-	if err = volumegen.Backdate(ctx, tx, locationdb.Locations.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, locationdb.Locations, stamps); err != nil {
 		return err
 	}
 	g.Report.Add("Locations", len(locations))
@@ -948,7 +948,7 @@ func (g *masterdataPhase) mdCommodities(ctx context.Context, tx *keel.DB) error 
 	taken, err := volumegen.Taken(
 		ctx,
 		tx,
-		commoditydb.Commodities.Handle,
+		commoditydb.Commodities,
 		commoditydb.Commodities.Name,
 	)
 	if err != nil {
@@ -1000,10 +1000,10 @@ func (g *masterdataPhase) mdCommodities(ctx context.Context, tx *keel.DB) error 
 		stamps = append(stamps, g.mdStamp(row.ID, at))
 	}
 	if len(rows) > 0 {
-		if err = volumegen.InsertRows(ctx, tx, commoditydb.Commodities.Handle, rows); err != nil {
+		if err = volumegen.InsertRows(ctx, tx, commoditydb.Commodities, rows); err != nil {
 			return fmt.Errorf("insert commodities: %w", err)
 		}
-		if err = volumegen.Backdate(ctx, tx, commoditydb.Commodities.Handle, stamps); err != nil {
+		if err = volumegen.Backdate(ctx, tx, commoditydb.Commodities, stamps); err != nil {
 			return err
 		}
 	}
@@ -1174,10 +1174,10 @@ func (g *masterdataPhase) mdManufacturers(
 	if len(rows) == 0 {
 		return nil
 	}
-	if err := volumegen.InsertRows(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, rows); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers, rows); err != nil {
 		return fmt.Errorf("insert equipment manufacturers: %w", err)
 	}
-	if err := volumegen.Backdate(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers.Handle, stamps); err != nil {
+	if err := volumegen.Backdate(ctx, tx, equipmentmanufacturerdb.EquipmentManufacturers, stamps); err != nil {
 		return err
 	}
 	g.Report.Add("Equipment manufacturers", len(rows))
@@ -1189,7 +1189,7 @@ func (g *masterdataPhase) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]puli
 	taken, err := volumegen.Taken(
 		ctx,
 		tx,
-		fleetcodedb.FleetCodes.Handle,
+		fleetcodedb.FleetCodes,
 		fleetcodedb.FleetCodes.Code,
 	)
 	if err != nil {
@@ -1223,10 +1223,10 @@ func (g *masterdataPhase) mdFleetCodes(ctx context.Context, tx *keel.DB) ([]puli
 		ids = append(ids, row.ID)
 		stamps = append(stamps, g.mdStamp(row.ID, at))
 	}
-	if err = volumegen.InsertRows(ctx, tx, fleetcodedb.FleetCodes.Handle, rows); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, fleetcodedb.FleetCodes, rows); err != nil {
 		return nil, fmt.Errorf("insert fleet codes: %w", err)
 	}
-	if err = volumegen.Backdate(ctx, tx, fleetcodedb.FleetCodes.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, fleetcodedb.FleetCodes, stamps); err != nil {
 		return nil, err
 	}
 	g.Report.Add("Fleet codes", len(rows))
@@ -1367,13 +1367,13 @@ func (g *masterdataPhase) mdWorkers(
 		}
 	}
 
-	if err := volumegen.InsertRows(ctx, tx, workerdb.Workers.Handle, workers); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, workerdb.Workers, workers); err != nil {
 		return nil, fmt.Errorf("insert workers: %w", err)
 	}
-	if err := volumegen.InsertRows(ctx, tx, workerdb.WorkerProfiles.Handle, profiles); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, workerdb.WorkerProfiles, profiles); err != nil {
 		return nil, fmt.Errorf("insert worker profiles: %w", err)
 	}
-	if err := volumegen.InsertRows(ctx, tx, workerdb.WorkerPTOs.Handle, ptos); err != nil {
+	if err := volumegen.InsertRows(ctx, tx, workerdb.WorkerPTOs, ptos); err != nil {
 		return nil, fmt.Errorf("insert worker pto: %w", err)
 	}
 	for _, b := range []struct {
@@ -1599,7 +1599,7 @@ func (g *masterdataPhase) mdFleet(
 	tractorTaken, err := volumegen.Taken(
 		ctx,
 		tx,
-		tractordb.Tractors.Handle,
+		tractordb.Tractors,
 		tractordb.Tractors.Code,
 	)
 	if err != nil {
@@ -1608,7 +1608,7 @@ func (g *masterdataPhase) mdFleet(
 	trailerTaken, err := volumegen.Taken(
 		ctx,
 		tx,
-		trailerdb.Trailers.Handle,
+		trailerdb.Trailers,
 		trailerdb.Trailers.Code,
 	)
 	if err != nil {
@@ -1732,16 +1732,16 @@ func (g *masterdataPhase) mdFleet(
 		tractorStamps = append(tractorStamps, g.mdStamp(entity.ID, at))
 	}
 
-	if err = volumegen.InsertRows(ctx, tx, tractordb.Tractors.Handle, tractors); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, tractordb.Tractors, tractors); err != nil {
 		return fmt.Errorf("insert tractors: %w", err)
 	}
-	if err = volumegen.InsertRows(ctx, tx, trailerdb.Trailers.Handle, trailers); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, trailerdb.Trailers, trailers); err != nil {
 		return fmt.Errorf("insert trailers: %w", err)
 	}
-	if err = volumegen.Backdate(ctx, tx, tractordb.Tractors.Handle, tractorStamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, tractordb.Tractors, tractorStamps); err != nil {
 		return err
 	}
-	if err = volumegen.Backdate(ctx, tx, trailerdb.Trailers.Handle, trailerStamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, trailerdb.Trailers, trailerStamps); err != nil {
 		return err
 	}
 	g.Report.Add("Tractors", len(tractors))
@@ -1872,19 +1872,19 @@ func (g *masterdataPhase) mdUniqueSCAC(name string, taken map[string]struct{}) s
 }
 
 func (g *masterdataPhase) mdCarriers(ctx context.Context, tx *keel.DB) error {
-	codes, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.Code)
+	codes, err := volumegen.Taken(ctx, tx, carrierdb.Carriers, carrierdb.Carriers.Code)
 	if err != nil {
 		return err
 	}
-	scacs, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.SCAC)
+	scacs, err := volumegen.Taken(ctx, tx, carrierdb.Carriers, carrierdb.Carriers.SCAC)
 	if err != nil {
 		return err
 	}
-	dots, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.DOTNumber)
+	dots, err := volumegen.Taken(ctx, tx, carrierdb.Carriers, carrierdb.Carriers.DOTNumber)
 	if err != nil {
 		return err
 	}
-	mcs, err := volumegen.Taken(ctx, tx, carrierdb.Carriers.Handle, carrierdb.Carriers.MCNumber)
+	mcs, err := volumegen.Taken(ctx, tx, carrierdb.Carriers, carrierdb.Carriers.MCNumber)
 	if err != nil {
 		return err
 	}
@@ -2026,16 +2026,16 @@ func (g *masterdataPhase) mdCarriers(ctx context.Context, tx *keel.DB) error {
 		}
 	}
 
-	if err = volumegen.InsertRows(ctx, tx, carrierdb.Carriers.Handle, rows); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, carrierdb.Carriers, rows); err != nil {
 		return fmt.Errorf("insert carriers: %w", err)
 	}
-	if err = volumegen.InsertRows(ctx, tx, carrierdb.CarrierContacts.Handle, contacts); err != nil {
+	if err = volumegen.InsertRows(ctx, tx, carrierdb.CarrierContacts, contacts); err != nil {
 		return fmt.Errorf("insert carrier contacts: %w", err)
 	}
-	if err = volumegen.Backdate(ctx, tx, carrierdb.Carriers.Handle, stamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, carrierdb.Carriers, stamps); err != nil {
 		return err
 	}
-	if err = volumegen.Backdate(ctx, tx, carrierdb.CarrierContacts.Handle, contactStamps); err != nil {
+	if err = volumegen.Backdate(ctx, tx, carrierdb.CarrierContacts, contactStamps); err != nil {
 		return err
 	}
 	g.Report.Add("Carriers", len(rows))

@@ -4,6 +4,7 @@ package workerchecklistdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -82,7 +83,7 @@ var workerChecklistsRef = keel.Ref{Table: &workerChecklistsTable}
 
 // WorkerChecklistsTable is the table of workerchecklist.WorkerChecklist.
 type WorkerChecklistsTable struct {
-	keel.Handle[*workerchecklist.WorkerChecklist]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -105,7 +106,7 @@ type WorkerChecklistsTable struct {
 
 // WorkerChecklists references the worker_checklists table.
 var WorkerChecklists = &WorkerChecklistsTable{
-	Handle:         keel.Handle[*workerchecklist.WorkerChecklist]{Ref: &workerChecklistsRef},
+	TableBase:      keel.TableBase{Ref: &workerChecklistsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 2}}},
@@ -126,10 +127,10 @@ var WorkerChecklists = &WorkerChecklistsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 17}},
 }
 
-// BuildWorkerChecklists builds the handle of worker_checklists for ref. Generated relation and alias methods call it.
+// BuildWorkerChecklists builds the table of worker_checklists for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklists(r *keel.Ref) *WorkerChecklistsTable {
 	return &WorkerChecklistsTable{
-		Handle:         keel.Handle[*workerchecklist.WorkerChecklist]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -182,6 +183,365 @@ func (t *WorkerChecklistsTable) StartedBy() *tenantdb.UsersTable {
 // Get returns the worker_checklists row with the given key, or keel.ErrNotFound.
 func (t *WorkerChecklistsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklist, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerChecklistsQuery is a query over workerchecklist.WorkerChecklist.
+type WorkerChecklistsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerchecklist.WorkerChecklist] = (*WorkerChecklistsTable)(nil)
+
+var _ keel.Query[*workerchecklist.WorkerChecklist] = (*WorkerChecklistsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerChecklistsTable) Query() keel.Query[*workerchecklist.WorkerChecklist] {
+	return &WorkerChecklistsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerChecklistsQuery.Where.
+func (t *WorkerChecklistsTable) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerChecklistsQuery.Pick.
+func (t *WorkerChecklistsTable) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerChecklistsQuery.Load.
+func (t *WorkerChecklistsTable) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerChecklistsQuery.Omit.
+func (t *WorkerChecklistsTable) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerChecklistsQuery.Order.
+func (t *WorkerChecklistsTable) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerChecklistsQuery.Limit.
+func (t *WorkerChecklistsTable) Limit(n int) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerChecklistsQuery.Group.
+func (t *WorkerChecklistsTable) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerChecklistsQuery.GroupingSets.
+func (t *WorkerChecklistsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerChecklistsQuery.Rollup.
+func (t *WorkerChecklistsTable) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerChecklistsQuery.Cube.
+func (t *WorkerChecklistsTable) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerChecklistsQuery.AllTenants.
+func (t *WorkerChecklistsTable) AllTenants() keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerChecklistsQuery.Join.
+func (t *WorkerChecklistsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerChecklistsQuery.LeftJoin.
+func (t *WorkerChecklistsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerChecklistsQuery.LeftJoinLateral.
+func (t *WorkerChecklistsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerChecklistsQuery.JoinLateral.
+func (t *WorkerChecklistsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerChecklistsQuery.Lock.
+func (t *WorkerChecklistsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerChecklistsQuery.DistinctOn.
+func (t *WorkerChecklistsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerChecklistsQuery.Cache.
+func (t *WorkerChecklistsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerChecklistsQuery.LoadStrategy.
+func (t *WorkerChecklistsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerChecklistsQuery.With.
+func (t *WorkerChecklistsTable) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerChecklistsQuery.Compute.
+func (t *WorkerChecklistsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerChecklistsTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerChecklistsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerChecklistsTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerChecklistsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerChecklistsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerChecklistsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerChecklistsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerChecklistsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerChecklistsQuery) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerChecklistsQuery) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerChecklistsQuery) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerChecklistsQuery) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerChecklistsQuery) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerChecklistsQuery) Distinct() keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerChecklistsQuery) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerChecklistsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerChecklistsQuery) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerChecklistsQuery) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerChecklistsQuery) Window(name string, w keel.Window) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerChecklistsQuery) Having(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerChecklistsQuery) Limit(n int) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerChecklistsQuery) Offset(n int) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerChecklistsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerChecklistsQuery) AllTenants() keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerChecklistsQuery) CustomPlan() keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerChecklistsQuery) Timeout(d time.Duration) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerChecklistsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerChecklistsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerChecklistsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerChecklistsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerChecklistsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerChecklistsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerChecklistsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerChecklistsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerChecklistsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklist] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerChecklistsQuery) Clone() keel.Query[*workerchecklist.WorkerChecklist] {
+	return &WorkerChecklistsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerChecklistsQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklist, error) {
+	return keel.One[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerChecklistsQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklist, error) {
+	return keel.First[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerChecklistsQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklist, error) {
+	return keel.List[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerChecklistsQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklist, error) {
+	return keel.All[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerChecklistsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklist, error) {
+	return keel.UpdateReturning[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerChecklistsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklist], error) {
+	return keel.PageOf[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerChecklistsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklist) error) error {
+	return keel.Each[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerChecklist() unsafe.Pointer { return unsafe.Pointer(new(workerchecklist.WorkerChecklist)) }
@@ -380,7 +740,7 @@ var workerChecklistItemsRef = keel.Ref{Table: &workerChecklistItemsTable}
 
 // WorkerChecklistItemsTable is the table of workerchecklist.WorkerChecklistItem.
 type WorkerChecklistItemsTable struct {
-	keel.Handle[*workerchecklist.WorkerChecklistItem]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
@@ -409,7 +769,7 @@ type WorkerChecklistItemsTable struct {
 
 // WorkerChecklistItems references the worker_checklist_items table.
 var WorkerChecklistItems = &WorkerChecklistItemsTable{
-	Handle:               keel.Handle[*workerchecklist.WorkerChecklistItem]{Ref: &workerChecklistItemsRef},
+	TableBase:            keel.TableBase{Ref: &workerChecklistItemsRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 0}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 1}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 2}}},
@@ -436,10 +796,10 @@ var WorkerChecklistItems = &WorkerChecklistItemsTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 23}},
 }
 
-// BuildWorkerChecklistItems builds the handle of worker_checklist_items for ref. Generated relation and alias methods call it.
+// BuildWorkerChecklistItems builds the table of worker_checklist_items for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklistItems(r *keel.Ref) *WorkerChecklistItemsTable {
 	return &WorkerChecklistItemsTable{
-		Handle:               keel.Handle[*workerchecklist.WorkerChecklistItem]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -498,6 +858,365 @@ func (t *WorkerChecklistItemsTable) CredentialType() *workercredentialdb.WorkerC
 // Get returns the worker_checklist_items row with the given key, or keel.ErrNotFound.
 func (t *WorkerChecklistItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklistItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerChecklistItemsQuery is a query over workerchecklist.WorkerChecklistItem.
+type WorkerChecklistItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerchecklist.WorkerChecklistItem] = (*WorkerChecklistItemsTable)(nil)
+
+var _ keel.Query[*workerchecklist.WorkerChecklistItem] = (*WorkerChecklistItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerChecklistItemsTable) Query() keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return &WorkerChecklistItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerChecklistItemsQuery.Where.
+func (t *WorkerChecklistItemsTable) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerChecklistItemsQuery.Pick.
+func (t *WorkerChecklistItemsTable) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerChecklistItemsQuery.Load.
+func (t *WorkerChecklistItemsTable) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerChecklistItemsQuery.Omit.
+func (t *WorkerChecklistItemsTable) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerChecklistItemsQuery.Order.
+func (t *WorkerChecklistItemsTable) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerChecklistItemsQuery.Limit.
+func (t *WorkerChecklistItemsTable) Limit(n int) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerChecklistItemsQuery.Group.
+func (t *WorkerChecklistItemsTable) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerChecklistItemsQuery.GroupingSets.
+func (t *WorkerChecklistItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerChecklistItemsQuery.Rollup.
+func (t *WorkerChecklistItemsTable) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerChecklistItemsQuery.Cube.
+func (t *WorkerChecklistItemsTable) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerChecklistItemsQuery.AllTenants.
+func (t *WorkerChecklistItemsTable) AllTenants() keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerChecklistItemsQuery.Join.
+func (t *WorkerChecklistItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerChecklistItemsQuery.LeftJoin.
+func (t *WorkerChecklistItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerChecklistItemsQuery.LeftJoinLateral.
+func (t *WorkerChecklistItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerChecklistItemsQuery.JoinLateral.
+func (t *WorkerChecklistItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerChecklistItemsQuery.Lock.
+func (t *WorkerChecklistItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerChecklistItemsQuery.DistinctOn.
+func (t *WorkerChecklistItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerChecklistItemsQuery.Cache.
+func (t *WorkerChecklistItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerChecklistItemsQuery.LoadStrategy.
+func (t *WorkerChecklistItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerChecklistItemsQuery.With.
+func (t *WorkerChecklistItemsTable) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerChecklistItemsQuery.Compute.
+func (t *WorkerChecklistItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerChecklistItemsTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerChecklistItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerChecklistItemsTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerChecklistItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerChecklistItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerChecklistItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerChecklistItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerChecklistItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerChecklistItemsQuery) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerChecklistItemsQuery) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerChecklistItemsQuery) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerChecklistItemsQuery) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerChecklistItemsQuery) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerChecklistItemsQuery) Distinct() keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerChecklistItemsQuery) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerChecklistItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerChecklistItemsQuery) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerChecklistItemsQuery) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerChecklistItemsQuery) Window(name string, w keel.Window) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerChecklistItemsQuery) Having(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerChecklistItemsQuery) Limit(n int) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerChecklistItemsQuery) Offset(n int) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerChecklistItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerChecklistItemsQuery) AllTenants() keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerChecklistItemsQuery) CustomPlan() keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerChecklistItemsQuery) Timeout(d time.Duration) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerChecklistItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerChecklistItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerChecklistItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerChecklistItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerChecklistItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerChecklistItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerChecklistItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerChecklistItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerChecklistItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklistItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerChecklistItemsQuery) Clone() keel.Query[*workerchecklist.WorkerChecklistItem] {
+	return &WorkerChecklistItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerChecklistItemsQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistItem, error) {
+	return keel.One[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerChecklistItemsQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistItem, error) {
+	return keel.First[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerChecklistItemsQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistItem, error) {
+	return keel.List[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerChecklistItemsQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistItem, error) {
+	return keel.All[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerChecklistItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklistItem, error) {
+	return keel.UpdateReturning[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerChecklistItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklistItem], error) {
+	return keel.PageOf[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerChecklistItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklistItem) error) error {
+	return keel.Each[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerChecklistItem() unsafe.Pointer {
@@ -718,7 +1437,7 @@ var workerChecklistTemplatesRef = keel.Ref{Table: &workerChecklistTemplatesTable
 
 // WorkerChecklistTemplatesTable is the table of workerchecklist.WorkerChecklistTemplate.
 type WorkerChecklistTemplatesTable struct {
-	keel.Handle[*workerchecklist.WorkerChecklistTemplate]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -737,7 +1456,7 @@ type WorkerChecklistTemplatesTable struct {
 
 // WorkerChecklistTemplates references the worker_checklist_templates table.
 var WorkerChecklistTemplates = &WorkerChecklistTemplatesTable{
-	Handle:         keel.Handle[*workerchecklist.WorkerChecklistTemplate]{Ref: &workerChecklistTemplatesRef},
+	TableBase:      keel.TableBase{Ref: &workerChecklistTemplatesRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 2}}},
@@ -754,10 +1473,10 @@ var WorkerChecklistTemplates = &WorkerChecklistTemplatesTable{
 	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 13}},
 }
 
-// BuildWorkerChecklistTemplates builds the handle of worker_checklist_templates for ref. Generated relation and alias methods call it.
+// BuildWorkerChecklistTemplates builds the table of worker_checklist_templates for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklistTemplates(r *keel.Ref) *WorkerChecklistTemplatesTable {
 	return &WorkerChecklistTemplatesTable{
-		Handle:         keel.Handle[*workerchecklist.WorkerChecklistTemplate]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -791,6 +1510,365 @@ func (t *WorkerChecklistTemplatesTable) Items() *WorkerChecklistTemplateItemsTab
 // Get returns the worker_checklist_templates row with the given key, or keel.ErrNotFound.
 func (t *WorkerChecklistTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklistTemplate, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerChecklistTemplatesQuery is a query over workerchecklist.WorkerChecklistTemplate.
+type WorkerChecklistTemplatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerchecklist.WorkerChecklistTemplate] = (*WorkerChecklistTemplatesTable)(nil)
+
+var _ keel.Query[*workerchecklist.WorkerChecklistTemplate] = (*WorkerChecklistTemplatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerChecklistTemplatesTable) Query() keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return &WorkerChecklistTemplatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerChecklistTemplatesQuery.Where.
+func (t *WorkerChecklistTemplatesTable) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerChecklistTemplatesQuery.Pick.
+func (t *WorkerChecklistTemplatesTable) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerChecklistTemplatesQuery.Load.
+func (t *WorkerChecklistTemplatesTable) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerChecklistTemplatesQuery.Omit.
+func (t *WorkerChecklistTemplatesTable) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerChecklistTemplatesQuery.Order.
+func (t *WorkerChecklistTemplatesTable) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerChecklistTemplatesQuery.Limit.
+func (t *WorkerChecklistTemplatesTable) Limit(n int) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerChecklistTemplatesQuery.Group.
+func (t *WorkerChecklistTemplatesTable) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerChecklistTemplatesQuery.GroupingSets.
+func (t *WorkerChecklistTemplatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerChecklistTemplatesQuery.Rollup.
+func (t *WorkerChecklistTemplatesTable) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerChecklistTemplatesQuery.Cube.
+func (t *WorkerChecklistTemplatesTable) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerChecklistTemplatesQuery.AllTenants.
+func (t *WorkerChecklistTemplatesTable) AllTenants() keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerChecklistTemplatesQuery.Join.
+func (t *WorkerChecklistTemplatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerChecklistTemplatesQuery.LeftJoin.
+func (t *WorkerChecklistTemplatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerChecklistTemplatesQuery.LeftJoinLateral.
+func (t *WorkerChecklistTemplatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerChecklistTemplatesQuery.JoinLateral.
+func (t *WorkerChecklistTemplatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerChecklistTemplatesQuery.Lock.
+func (t *WorkerChecklistTemplatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerChecklistTemplatesQuery.DistinctOn.
+func (t *WorkerChecklistTemplatesTable) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerChecklistTemplatesQuery.Cache.
+func (t *WorkerChecklistTemplatesTable) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerChecklistTemplatesQuery.LoadStrategy.
+func (t *WorkerChecklistTemplatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerChecklistTemplatesQuery.With.
+func (t *WorkerChecklistTemplatesTable) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerChecklistTemplatesQuery.Compute.
+func (t *WorkerChecklistTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerChecklistTemplatesTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerChecklistTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerChecklistTemplatesTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerChecklistTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerChecklistTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerChecklistTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerChecklistTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerChecklistTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerChecklistTemplatesQuery) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerChecklistTemplatesQuery) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerChecklistTemplatesQuery) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerChecklistTemplatesQuery) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerChecklistTemplatesQuery) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerChecklistTemplatesQuery) Distinct() keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerChecklistTemplatesQuery) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerChecklistTemplatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerChecklistTemplatesQuery) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerChecklistTemplatesQuery) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerChecklistTemplatesQuery) Window(name string, w keel.Window) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerChecklistTemplatesQuery) Having(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerChecklistTemplatesQuery) Limit(n int) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerChecklistTemplatesQuery) Offset(n int) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerChecklistTemplatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerChecklistTemplatesQuery) AllTenants() keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerChecklistTemplatesQuery) CustomPlan() keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerChecklistTemplatesQuery) Timeout(d time.Duration) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerChecklistTemplatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerChecklistTemplatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerChecklistTemplatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerChecklistTemplatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerChecklistTemplatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerChecklistTemplatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerChecklistTemplatesQuery) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerChecklistTemplatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerChecklistTemplatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerChecklistTemplatesQuery) Clone() keel.Query[*workerchecklist.WorkerChecklistTemplate] {
+	return &WorkerChecklistTemplatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerChecklistTemplatesQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplate, error) {
+	return keel.One[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerChecklistTemplatesQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplate, error) {
+	return keel.First[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerChecklistTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplate, error) {
+	return keel.List[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerChecklistTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplate, error) {
+	return keel.All[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerChecklistTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklistTemplate, error) {
+	return keel.UpdateReturning[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerChecklistTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklistTemplate], error) {
+	return keel.PageOf[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerChecklistTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklistTemplate) error) error {
+	return keel.Each[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerChecklistTemplate() unsafe.Pointer {
@@ -940,7 +2018,7 @@ var workerChecklistTemplateItemsRef = keel.Ref{Table: &workerChecklistTemplateIt
 
 // WorkerChecklistTemplateItemsTable is the table of workerchecklist.WorkerChecklistTemplateItem.
 type WorkerChecklistTemplateItemsTable struct {
-	keel.Handle[*workerchecklist.WorkerChecklistTemplateItem]
+	keel.TableBase
 	ID               keelkinds.PulidIDCol
 	BusinessUnitID   keelkinds.PulidIDCol
 	OrganizationID   keelkinds.PulidIDCol
@@ -960,7 +2038,7 @@ type WorkerChecklistTemplateItemsTable struct {
 
 // WorkerChecklistTemplateItems references the worker_checklist_template_items table.
 var WorkerChecklistTemplateItems = &WorkerChecklistTemplateItemsTable{
-	Handle:           keel.Handle[*workerchecklist.WorkerChecklistTemplateItem]{Ref: &workerChecklistTemplateItemsRef},
+	TableBase:        keel.TableBase{Ref: &workerChecklistTemplateItemsRef},
 	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 0}}},
 	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 1}}},
 	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 2}}},
@@ -978,10 +2056,10 @@ var WorkerChecklistTemplateItems = &WorkerChecklistTemplateItemsTable{
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 14}},
 }
 
-// BuildWorkerChecklistTemplateItems builds the handle of worker_checklist_template_items for ref. Generated relation and alias methods call it.
+// BuildWorkerChecklistTemplateItems builds the table of worker_checklist_template_items for ref. Generated relation and alias methods call it.
 func BuildWorkerChecklistTemplateItems(r *keel.Ref) *WorkerChecklistTemplateItemsTable {
 	return &WorkerChecklistTemplateItemsTable{
-		Handle:           keel.Handle[*workerchecklist.WorkerChecklistTemplateItem]{Ref: r},
+		TableBase:        keel.TableBase{Ref: r},
 		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1021,6 +2099,365 @@ func (t *WorkerChecklistTemplateItemsTable) DocumentType() *documenttypedb.Docum
 // Get returns the worker_checklist_template_items row with the given key, or keel.ErrNotFound.
 func (t *WorkerChecklistTemplateItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerchecklist.WorkerChecklistTemplateItem, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerChecklistTemplateItemsQuery is a query over workerchecklist.WorkerChecklistTemplateItem.
+type WorkerChecklistTemplateItemsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerchecklist.WorkerChecklistTemplateItem] = (*WorkerChecklistTemplateItemsTable)(nil)
+
+var _ keel.Query[*workerchecklist.WorkerChecklistTemplateItem] = (*WorkerChecklistTemplateItemsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerChecklistTemplateItemsTable) Query() keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return &WorkerChecklistTemplateItemsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerChecklistTemplateItemsQuery.Where.
+func (t *WorkerChecklistTemplateItemsTable) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerChecklistTemplateItemsQuery.Pick.
+func (t *WorkerChecklistTemplateItemsTable) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerChecklistTemplateItemsQuery.Load.
+func (t *WorkerChecklistTemplateItemsTable) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerChecklistTemplateItemsQuery.Omit.
+func (t *WorkerChecklistTemplateItemsTable) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerChecklistTemplateItemsQuery.Order.
+func (t *WorkerChecklistTemplateItemsTable) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerChecklistTemplateItemsQuery.Limit.
+func (t *WorkerChecklistTemplateItemsTable) Limit(n int) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerChecklistTemplateItemsQuery.Group.
+func (t *WorkerChecklistTemplateItemsTable) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerChecklistTemplateItemsQuery.GroupingSets.
+func (t *WorkerChecklistTemplateItemsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerChecklistTemplateItemsQuery.Rollup.
+func (t *WorkerChecklistTemplateItemsTable) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerChecklistTemplateItemsQuery.Cube.
+func (t *WorkerChecklistTemplateItemsTable) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerChecklistTemplateItemsQuery.AllTenants.
+func (t *WorkerChecklistTemplateItemsTable) AllTenants() keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerChecklistTemplateItemsQuery.Join.
+func (t *WorkerChecklistTemplateItemsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerChecklistTemplateItemsQuery.LeftJoin.
+func (t *WorkerChecklistTemplateItemsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerChecklistTemplateItemsQuery.LeftJoinLateral.
+func (t *WorkerChecklistTemplateItemsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerChecklistTemplateItemsQuery.JoinLateral.
+func (t *WorkerChecklistTemplateItemsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerChecklistTemplateItemsQuery.Lock.
+func (t *WorkerChecklistTemplateItemsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerChecklistTemplateItemsQuery.DistinctOn.
+func (t *WorkerChecklistTemplateItemsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerChecklistTemplateItemsQuery.Cache.
+func (t *WorkerChecklistTemplateItemsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerChecklistTemplateItemsQuery.LoadStrategy.
+func (t *WorkerChecklistTemplateItemsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerChecklistTemplateItemsQuery.With.
+func (t *WorkerChecklistTemplateItemsTable) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerChecklistTemplateItemsQuery.Compute.
+func (t *WorkerChecklistTemplateItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerChecklistTemplateItemsTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerChecklistTemplateItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerChecklistTemplateItemsTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerChecklistTemplateItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerChecklistTemplateItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerChecklistTemplateItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerChecklistTemplateItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerChecklistTemplateItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerChecklistTemplateItemsQuery) Where(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerChecklistTemplateItemsQuery) Pick(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerChecklistTemplateItemsQuery) Omit(cols ...keel.Column) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerChecklistTemplateItemsQuery) Load(ls ...keel.Loader) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerChecklistTemplateItemsQuery) Order(os ...keel.Order) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerChecklistTemplateItemsQuery) Distinct() keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerChecklistTemplateItemsQuery) Group(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerChecklistTemplateItemsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerChecklistTemplateItemsQuery) Rollup(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerChecklistTemplateItemsQuery) Cube(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerChecklistTemplateItemsQuery) Window(name string, w keel.Window) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerChecklistTemplateItemsQuery) Having(ps ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerChecklistTemplateItemsQuery) Limit(n int) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerChecklistTemplateItemsQuery) Offset(n int) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerChecklistTemplateItemsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerChecklistTemplateItemsQuery) AllTenants() keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerChecklistTemplateItemsQuery) CustomPlan() keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerChecklistTemplateItemsQuery) Timeout(d time.Duration) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerChecklistTemplateItemsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerChecklistTemplateItemsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerChecklistTemplateItemsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerChecklistTemplateItemsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerChecklistTemplateItemsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerChecklistTemplateItemsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerChecklistTemplateItemsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerChecklistTemplateItemsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerChecklistTemplateItemsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerChecklistTemplateItemsQuery) Clone() keel.Query[*workerchecklist.WorkerChecklistTemplateItem] {
+	return &WorkerChecklistTemplateItemsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerChecklistTemplateItemsQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplateItem, error) {
+	return keel.One[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerChecklistTemplateItemsQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplateItem, error) {
+	return keel.First[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerChecklistTemplateItemsQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplateItem, error) {
+	return keel.List[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerChecklistTemplateItemsQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplateItem, error) {
+	return keel.All[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerChecklistTemplateItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklistTemplateItem, error) {
+	return keel.UpdateReturning[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerChecklistTemplateItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklistTemplateItem], error) {
+	return keel.PageOf[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerChecklistTemplateItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklistTemplateItem) error) error {
+	return keel.Each[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerChecklistTemplateItem() unsafe.Pointer {

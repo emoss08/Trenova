@@ -4,6 +4,7 @@ package workerdisciplinedb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -85,7 +86,7 @@ var workerDisciplinaryActionsRef = keel.Ref{Table: &workerDisciplinaryActionsTab
 
 // WorkerDisciplinaryActionsTable is the table of workerdiscipline.WorkerDisciplinaryAction.
 type WorkerDisciplinaryActionsTable struct {
-	keel.Handle[*workerdiscipline.WorkerDisciplinaryAction]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -113,7 +114,7 @@ type WorkerDisciplinaryActionsTable struct {
 
 // WorkerDisciplinaryActions references the worker_disciplinary_actions table.
 var WorkerDisciplinaryActions = &WorkerDisciplinaryActionsTable{
-	Handle:         keel.Handle[*workerdiscipline.WorkerDisciplinaryAction]{Ref: &workerDisciplinaryActionsRef},
+	TableBase:      keel.TableBase{Ref: &workerDisciplinaryActionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 2}}},
@@ -139,10 +140,10 @@ var WorkerDisciplinaryActions = &WorkerDisciplinaryActionsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerDisciplinaryActionsRef, Index: 22}},
 }
 
-// BuildWorkerDisciplinaryActions builds the handle of worker_disciplinary_actions for ref. Generated relation and alias methods call it.
+// BuildWorkerDisciplinaryActions builds the table of worker_disciplinary_actions for ref. Generated relation and alias methods call it.
 func BuildWorkerDisciplinaryActions(r *keel.Ref) *WorkerDisciplinaryActionsTable {
 	return &WorkerDisciplinaryActionsTable{
-		Handle:         keel.Handle[*workerdiscipline.WorkerDisciplinaryAction]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -200,6 +201,365 @@ func (t *WorkerDisciplinaryActionsTable) IssuedBy() *tenantdb.UsersTable {
 // Get returns the worker_disciplinary_actions row with the given key, or keel.ErrNotFound.
 func (t *WorkerDisciplinaryActionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdiscipline.WorkerDisciplinaryAction, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerDisciplinaryActionsQuery is a query over workerdiscipline.WorkerDisciplinaryAction.
+type WorkerDisciplinaryActionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerdiscipline.WorkerDisciplinaryAction] = (*WorkerDisciplinaryActionsTable)(nil)
+
+var _ keel.Query[*workerdiscipline.WorkerDisciplinaryAction] = (*WorkerDisciplinaryActionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerDisciplinaryActionsTable) Query() keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return &WorkerDisciplinaryActionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerDisciplinaryActionsQuery.Where.
+func (t *WorkerDisciplinaryActionsTable) Where(ps ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerDisciplinaryActionsQuery.Pick.
+func (t *WorkerDisciplinaryActionsTable) Pick(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerDisciplinaryActionsQuery.Load.
+func (t *WorkerDisciplinaryActionsTable) Load(ls ...keel.Loader) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerDisciplinaryActionsQuery.Omit.
+func (t *WorkerDisciplinaryActionsTable) Omit(cols ...keel.Column) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerDisciplinaryActionsQuery.Order.
+func (t *WorkerDisciplinaryActionsTable) Order(os ...keel.Order) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerDisciplinaryActionsQuery.Limit.
+func (t *WorkerDisciplinaryActionsTable) Limit(n int) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerDisciplinaryActionsQuery.Group.
+func (t *WorkerDisciplinaryActionsTable) Group(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerDisciplinaryActionsQuery.GroupingSets.
+func (t *WorkerDisciplinaryActionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerDisciplinaryActionsQuery.Rollup.
+func (t *WorkerDisciplinaryActionsTable) Rollup(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerDisciplinaryActionsQuery.Cube.
+func (t *WorkerDisciplinaryActionsTable) Cube(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerDisciplinaryActionsQuery.AllTenants.
+func (t *WorkerDisciplinaryActionsTable) AllTenants() keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerDisciplinaryActionsQuery.Join.
+func (t *WorkerDisciplinaryActionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerDisciplinaryActionsQuery.LeftJoin.
+func (t *WorkerDisciplinaryActionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerDisciplinaryActionsQuery.LeftJoinLateral.
+func (t *WorkerDisciplinaryActionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerDisciplinaryActionsQuery.JoinLateral.
+func (t *WorkerDisciplinaryActionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerDisciplinaryActionsQuery.Lock.
+func (t *WorkerDisciplinaryActionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerDisciplinaryActionsQuery.DistinctOn.
+func (t *WorkerDisciplinaryActionsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerDisciplinaryActionsQuery.Cache.
+func (t *WorkerDisciplinaryActionsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerDisciplinaryActionsQuery.LoadStrategy.
+func (t *WorkerDisciplinaryActionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerDisciplinaryActionsQuery.With.
+func (t *WorkerDisciplinaryActionsTable) With(ctes ...*keel.CTETable) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerDisciplinaryActionsQuery.Compute.
+func (t *WorkerDisciplinaryActionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerDisciplinaryActionsTable) Create(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerDisciplinaryAction) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerDisciplinaryActionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerDisciplinaryAction) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerDisciplinaryActionsTable) Save(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerDisciplinaryAction, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerDisciplinaryActionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerDisciplinaryAction, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerDisciplinaryActionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerDisciplinaryAction) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerDisciplinaryActionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerDisciplinaryAction, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerDisciplinaryActionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerDisciplinaryAction, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerDisciplinaryActionsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerDisciplinaryAction) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerDisciplinaryActionsQuery) Where(ps ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerDisciplinaryActionsQuery) Pick(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerDisciplinaryActionsQuery) Omit(cols ...keel.Column) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerDisciplinaryActionsQuery) Load(ls ...keel.Loader) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerDisciplinaryActionsQuery) Order(os ...keel.Order) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerDisciplinaryActionsQuery) Distinct() keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerDisciplinaryActionsQuery) Group(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerDisciplinaryActionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerDisciplinaryActionsQuery) Rollup(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerDisciplinaryActionsQuery) Cube(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerDisciplinaryActionsQuery) Window(name string, w keel.Window) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerDisciplinaryActionsQuery) Having(ps ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerDisciplinaryActionsQuery) Limit(n int) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerDisciplinaryActionsQuery) Offset(n int) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerDisciplinaryActionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerDisciplinaryActionsQuery) AllTenants() keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerDisciplinaryActionsQuery) CustomPlan() keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerDisciplinaryActionsQuery) Timeout(d time.Duration) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerDisciplinaryActionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerDisciplinaryActionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerDisciplinaryActionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerDisciplinaryActionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerDisciplinaryActionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerDisciplinaryActionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerDisciplinaryActionsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerDisciplinaryActionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerDisciplinaryActionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerDisciplinaryActionsQuery) Clone() keel.Query[*workerdiscipline.WorkerDisciplinaryAction] {
+	return &WorkerDisciplinaryActionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerDisciplinaryActionsQuery) One(ctx context.Context, db *keel.DB) (*workerdiscipline.WorkerDisciplinaryAction, error) {
+	return keel.One[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerDisciplinaryActionsQuery) First(ctx context.Context, db *keel.DB) (*workerdiscipline.WorkerDisciplinaryAction, error) {
+	return keel.First[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerDisciplinaryActionsQuery) List(ctx context.Context, db *keel.DB) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
+	return keel.List[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerDisciplinaryActionsQuery) All(ctx context.Context, db *keel.DB) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
+	return keel.All[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerDisciplinaryActionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {
+	return keel.UpdateReturning[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerDisciplinaryActionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerdiscipline.WorkerDisciplinaryAction], error) {
+	return keel.PageOf[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerDisciplinaryActionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerdiscipline.WorkerDisciplinaryAction) error) error {
+	return keel.Each[*workerdiscipline.WorkerDisciplinaryAction](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerDisciplinaryAction() unsafe.Pointer {
@@ -422,7 +782,7 @@ var workerRecognitionsRef = keel.Ref{Table: &workerRecognitionsTable}
 
 // WorkerRecognitionsTable is the table of workerdiscipline.WorkerRecognition.
 type WorkerRecognitionsTable struct {
-	keel.Handle[*workerdiscipline.WorkerRecognition]
+	keel.TableBase
 	ID              keelkinds.PulidIDCol
 	BusinessUnitID  keelkinds.PulidIDCol
 	OrganizationID  keelkinds.PulidIDCol
@@ -440,7 +800,7 @@ type WorkerRecognitionsTable struct {
 
 // WorkerRecognitions references the worker_recognitions table.
 var WorkerRecognitions = &WorkerRecognitionsTable{
-	Handle:          keel.Handle[*workerdiscipline.WorkerRecognition]{Ref: &workerRecognitionsRef},
+	TableBase:       keel.TableBase{Ref: &workerRecognitionsRef},
 	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 0}}},
 	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 1}}},
 	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 2}}},
@@ -456,10 +816,10 @@ var WorkerRecognitions = &WorkerRecognitionsTable{
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerRecognitionsRef, Index: 12}},
 }
 
-// BuildWorkerRecognitions builds the handle of worker_recognitions for ref. Generated relation and alias methods call it.
+// BuildWorkerRecognitions builds the table of worker_recognitions for ref. Generated relation and alias methods call it.
 func BuildWorkerRecognitions(r *keel.Ref) *WorkerRecognitionsTable {
 	return &WorkerRecognitionsTable{
-		Handle:          keel.Handle[*workerdiscipline.WorkerRecognition]{Ref: r},
+		TableBase:       keel.TableBase{Ref: r},
 		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -497,6 +857,365 @@ func (t *WorkerRecognitionsTable) AwardedBy() *tenantdb.UsersTable {
 // Get returns the worker_recognitions row with the given key, or keel.ErrNotFound.
 func (t *WorkerRecognitionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*workerdiscipline.WorkerRecognition, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerRecognitionsQuery is a query over workerdiscipline.WorkerRecognition.
+type WorkerRecognitionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*workerdiscipline.WorkerRecognition] = (*WorkerRecognitionsTable)(nil)
+
+var _ keel.Query[*workerdiscipline.WorkerRecognition] = (*WorkerRecognitionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerRecognitionsTable) Query() keel.Query[*workerdiscipline.WorkerRecognition] {
+	return &WorkerRecognitionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerRecognitionsQuery.Where.
+func (t *WorkerRecognitionsTable) Where(ps ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerRecognitionsQuery.Pick.
+func (t *WorkerRecognitionsTable) Pick(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerRecognitionsQuery.Load.
+func (t *WorkerRecognitionsTable) Load(ls ...keel.Loader) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerRecognitionsQuery.Omit.
+func (t *WorkerRecognitionsTable) Omit(cols ...keel.Column) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerRecognitionsQuery.Order.
+func (t *WorkerRecognitionsTable) Order(os ...keel.Order) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerRecognitionsQuery.Limit.
+func (t *WorkerRecognitionsTable) Limit(n int) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerRecognitionsQuery.Group.
+func (t *WorkerRecognitionsTable) Group(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerRecognitionsQuery.GroupingSets.
+func (t *WorkerRecognitionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerRecognitionsQuery.Rollup.
+func (t *WorkerRecognitionsTable) Rollup(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerRecognitionsQuery.Cube.
+func (t *WorkerRecognitionsTable) Cube(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerRecognitionsQuery.AllTenants.
+func (t *WorkerRecognitionsTable) AllTenants() keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerRecognitionsQuery.Join.
+func (t *WorkerRecognitionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerRecognitionsQuery.LeftJoin.
+func (t *WorkerRecognitionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerRecognitionsQuery.LeftJoinLateral.
+func (t *WorkerRecognitionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerRecognitionsQuery.JoinLateral.
+func (t *WorkerRecognitionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerRecognitionsQuery.Lock.
+func (t *WorkerRecognitionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerRecognitionsQuery.DistinctOn.
+func (t *WorkerRecognitionsTable) DistinctOn(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerRecognitionsQuery.Cache.
+func (t *WorkerRecognitionsTable) Cache(opts ...keel.CacheOption) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerRecognitionsQuery.LoadStrategy.
+func (t *WorkerRecognitionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerRecognitionsQuery.With.
+func (t *WorkerRecognitionsTable) With(ctes ...*keel.CTETable) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerRecognitionsQuery.Compute.
+func (t *WorkerRecognitionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerRecognitionsTable) Create(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerRecognition) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerRecognitionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerRecognition) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerRecognitionsTable) Save(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerRecognition, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerRecognitionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerRecognition, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerRecognitionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerdiscipline.WorkerRecognition) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerRecognitionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerRecognition, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerRecognitionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerRecognition, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerRecognitionsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerdiscipline.WorkerRecognition) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerRecognitionsQuery) Where(ps ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerRecognitionsQuery) Pick(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerRecognitionsQuery) Omit(cols ...keel.Column) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerRecognitionsQuery) Load(ls ...keel.Loader) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerRecognitionsQuery) Order(os ...keel.Order) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerRecognitionsQuery) Distinct() keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerRecognitionsQuery) Group(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerRecognitionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerRecognitionsQuery) Rollup(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerRecognitionsQuery) Cube(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerRecognitionsQuery) Window(name string, w keel.Window) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerRecognitionsQuery) Having(ps ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerRecognitionsQuery) Limit(n int) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerRecognitionsQuery) Offset(n int) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerRecognitionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerRecognitionsQuery) AllTenants() keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerRecognitionsQuery) CustomPlan() keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerRecognitionsQuery) Timeout(d time.Duration) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerRecognitionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerRecognitionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerRecognitionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerRecognitionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerRecognitionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerRecognitionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerRecognitionsQuery) With(ctes ...*keel.CTETable) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerRecognitionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerRecognitionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*workerdiscipline.WorkerRecognition] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerRecognitionsQuery) Clone() keel.Query[*workerdiscipline.WorkerRecognition] {
+	return &WorkerRecognitionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerRecognitionsQuery) One(ctx context.Context, db *keel.DB) (*workerdiscipline.WorkerRecognition, error) {
+	return keel.One[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerRecognitionsQuery) First(ctx context.Context, db *keel.DB) (*workerdiscipline.WorkerRecognition, error) {
+	return keel.First[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerRecognitionsQuery) List(ctx context.Context, db *keel.DB) ([]*workerdiscipline.WorkerRecognition, error) {
+	return keel.List[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerRecognitionsQuery) All(ctx context.Context, db *keel.DB) ([]*workerdiscipline.WorkerRecognition, error) {
+	return keel.All[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerRecognitionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerdiscipline.WorkerRecognition, error) {
+	return keel.UpdateReturning[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerRecognitionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerdiscipline.WorkerRecognition], error) {
+	return keel.PageOf[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerRecognitionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerdiscipline.WorkerRecognition) error) error {
+	return keel.Each[*workerdiscipline.WorkerRecognition](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerRecognition() unsafe.Pointer {

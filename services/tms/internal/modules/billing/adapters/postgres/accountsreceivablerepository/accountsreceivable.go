@@ -141,7 +141,7 @@ func invoiceAgingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.Agg {
 	return agingBuckets(inv.DueDate, keel.Int64(asOf), receivablesql.OpenMinor(inv))
 }
 
-func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[*invoice.Invoice] {
+func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) keel.Query[*invoice.Invoice] {
 	buckets := invoiceAgingBuckets(inv, asOf)
 	return inv.
 		Pick(
@@ -161,7 +161,7 @@ func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[*invoice.I
 func postedApplications(
 	cpa *customerpaymentdb.ApplicationsTable,
 	cp *customerpaymentdb.PaymentsTable,
-) *keel.Query[*customerpayment.Application] {
+) keel.Query[*customerpayment.Application] {
 	return cpa.Join(
 		cp,
 		cp.ID.EqCol(cpa.CustomerPaymentID),

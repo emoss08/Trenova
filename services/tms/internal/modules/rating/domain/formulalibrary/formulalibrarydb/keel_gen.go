@@ -4,6 +4,7 @@ package formulalibrarydb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -73,7 +74,7 @@ var formulaLibrariesRef = keel.Ref{Table: &formulaLibrariesTable}
 
 // FormulaLibrariesTable is the table of formulalibrary.FormulaLibrary.
 type FormulaLibrariesTable struct {
-	keel.Handle[*formulalibrary.FormulaLibrary]
+	keel.TableBase
 	ID                   keelkinds.PulidIDCol
 	OrganizationID       keelkinds.PulidIDCol
 	BusinessUnitID       keelkinds.PulidIDCol
@@ -100,7 +101,7 @@ type FormulaLibrariesTable struct {
 
 // FormulaLibraries references the formula_libraries table.
 var FormulaLibraries = &FormulaLibrariesTable{
-	Handle:               keel.Handle[*formulalibrary.FormulaLibrary]{Ref: &formulaLibrariesRef},
+	TableBase:            keel.TableBase{Ref: &formulaLibrariesRef},
 	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 0}}},
 	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 1}}},
 	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 2}}},
@@ -125,10 +126,10 @@ var FormulaLibraries = &FormulaLibrariesTable{
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &formulaLibrariesRef, Index: 21}},
 }
 
-// BuildFormulaLibraries builds the handle of formula_libraries for ref. Generated relation and alias methods call it.
+// BuildFormulaLibraries builds the table of formula_libraries for ref. Generated relation and alias methods call it.
 func BuildFormulaLibraries(r *keel.Ref) *FormulaLibrariesTable {
 	return &FormulaLibrariesTable{
-		Handle:               keel.Handle[*formulalibrary.FormulaLibrary]{Ref: r},
+		TableBase:            keel.TableBase{Ref: r},
 		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -165,6 +166,365 @@ func (t *FormulaLibrariesTable) As(alias string) *FormulaLibrariesTable {
 // Get returns the formula_libraries row with the given key, or keel.ErrNotFound.
 func (t *FormulaLibrariesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*formulalibrary.FormulaLibrary, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormulaLibrariesQuery is a query over formulalibrary.FormulaLibrary.
+type FormulaLibrariesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulalibrary.FormulaLibrary] = (*FormulaLibrariesTable)(nil)
+
+var _ keel.Query[*formulalibrary.FormulaLibrary] = (*FormulaLibrariesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormulaLibrariesTable) Query() keel.Query[*formulalibrary.FormulaLibrary] {
+	return &FormulaLibrariesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormulaLibrariesQuery.Where.
+func (t *FormulaLibrariesTable) Where(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormulaLibrariesQuery.Pick.
+func (t *FormulaLibrariesTable) Pick(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormulaLibrariesQuery.Load.
+func (t *FormulaLibrariesTable) Load(ls ...keel.Loader) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormulaLibrariesQuery.Omit.
+func (t *FormulaLibrariesTable) Omit(cols ...keel.Column) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormulaLibrariesQuery.Order.
+func (t *FormulaLibrariesTable) Order(os ...keel.Order) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormulaLibrariesQuery.Limit.
+func (t *FormulaLibrariesTable) Limit(n int) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormulaLibrariesQuery.Group.
+func (t *FormulaLibrariesTable) Group(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormulaLibrariesQuery.GroupingSets.
+func (t *FormulaLibrariesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormulaLibrariesQuery.Rollup.
+func (t *FormulaLibrariesTable) Rollup(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormulaLibrariesQuery.Cube.
+func (t *FormulaLibrariesTable) Cube(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormulaLibrariesQuery.AllTenants.
+func (t *FormulaLibrariesTable) AllTenants() keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormulaLibrariesQuery.Join.
+func (t *FormulaLibrariesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormulaLibrariesQuery.LeftJoin.
+func (t *FormulaLibrariesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormulaLibrariesQuery.LeftJoinLateral.
+func (t *FormulaLibrariesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormulaLibrariesQuery.JoinLateral.
+func (t *FormulaLibrariesTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormulaLibrariesQuery.Lock.
+func (t *FormulaLibrariesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormulaLibrariesQuery.DistinctOn.
+func (t *FormulaLibrariesTable) DistinctOn(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormulaLibrariesQuery.Cache.
+func (t *FormulaLibrariesTable) Cache(opts ...keel.CacheOption) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormulaLibrariesQuery.LoadStrategy.
+func (t *FormulaLibrariesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormulaLibrariesQuery.With.
+func (t *FormulaLibrariesTable) With(ctes ...*keel.CTETable) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormulaLibrariesQuery.Compute.
+func (t *FormulaLibrariesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormulaLibrariesTable) Create(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibrary) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormulaLibrariesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibrary) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormulaLibrariesTable) Save(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibrary, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormulaLibrariesTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibrary, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormulaLibrariesTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibrary) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormulaLibrariesTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibrary, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormulaLibrariesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibrary, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormulaLibrariesTable) Copy(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibrary) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormulaLibrariesQuery) Where(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormulaLibrariesQuery) Pick(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormulaLibrariesQuery) Omit(cols ...keel.Column) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormulaLibrariesQuery) Load(ls ...keel.Loader) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormulaLibrariesQuery) Order(os ...keel.Order) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormulaLibrariesQuery) Distinct() keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormulaLibrariesQuery) Group(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormulaLibrariesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormulaLibrariesQuery) Rollup(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormulaLibrariesQuery) Cube(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormulaLibrariesQuery) Window(name string, w keel.Window) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormulaLibrariesQuery) Having(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormulaLibrariesQuery) Limit(n int) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormulaLibrariesQuery) Offset(n int) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormulaLibrariesQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormulaLibrariesQuery) AllTenants() keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormulaLibrariesQuery) CustomPlan() keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormulaLibrariesQuery) Timeout(d time.Duration) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormulaLibrariesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormulaLibrariesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormulaLibrariesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormulaLibrariesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormulaLibrariesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormulaLibrariesQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormulaLibrariesQuery) With(ctes ...*keel.CTETable) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormulaLibrariesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormulaLibrariesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulalibrary.FormulaLibrary] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormulaLibrariesQuery) Clone() keel.Query[*formulalibrary.FormulaLibrary] {
+	return &FormulaLibrariesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormulaLibrariesQuery) One(ctx context.Context, db *keel.DB) (*formulalibrary.FormulaLibrary, error) {
+	return keel.One[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormulaLibrariesQuery) First(ctx context.Context, db *keel.DB) (*formulalibrary.FormulaLibrary, error) {
+	return keel.First[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormulaLibrariesQuery) List(ctx context.Context, db *keel.DB) ([]*formulalibrary.FormulaLibrary, error) {
+	return keel.List[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormulaLibrariesQuery) All(ctx context.Context, db *keel.DB) ([]*formulalibrary.FormulaLibrary, error) {
+	return keel.All[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormulaLibrariesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulalibrary.FormulaLibrary, error) {
+	return keel.UpdateReturning[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormulaLibrariesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulalibrary.FormulaLibrary], error) {
+	return keel.PageOf[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormulaLibrariesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulalibrary.FormulaLibrary) error) error {
+	return keel.Each[*formulalibrary.FormulaLibrary](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormulaLibrary() unsafe.Pointer { return unsafe.Pointer(new(formulalibrary.FormulaLibrary)) }
@@ -363,7 +723,7 @@ var formulaLibraryReviewsRef = keel.Ref{Table: &formulaLibraryReviewsTable}
 
 // FormulaLibraryReviewsTable is the table of formulalibrary.FormulaLibraryReview.
 type FormulaLibraryReviewsTable struct {
-	keel.Handle[*formulalibrary.FormulaLibraryReview]
+	keel.TableBase
 	ID                  keelkinds.PulidIDCol
 	OrganizationID      keelkinds.PulidIDCol
 	BusinessUnitID      keelkinds.PulidIDCol
@@ -380,7 +740,7 @@ type FormulaLibraryReviewsTable struct {
 
 // FormulaLibraryReviews references the formula_library_reviews table.
 var FormulaLibraryReviews = &FormulaLibraryReviewsTable{
-	Handle:              keel.Handle[*formulalibrary.FormulaLibraryReview]{Ref: &formulaLibraryReviewsRef},
+	TableBase:           keel.TableBase{Ref: &formulaLibraryReviewsRef},
 	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 0}}},
 	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 1}}},
 	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 2}}},
@@ -395,10 +755,10 @@ var FormulaLibraryReviews = &FormulaLibraryReviewsTable{
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &formulaLibraryReviewsRef, Index: 11}},
 }
 
-// BuildFormulaLibraryReviews builds the handle of formula_library_reviews for ref. Generated relation and alias methods call it.
+// BuildFormulaLibraryReviews builds the table of formula_library_reviews for ref. Generated relation and alias methods call it.
 func BuildFormulaLibraryReviews(r *keel.Ref) *FormulaLibraryReviewsTable {
 	return &FormulaLibraryReviewsTable{
-		Handle:              keel.Handle[*formulalibrary.FormulaLibraryReview]{Ref: r},
+		TableBase:           keel.TableBase{Ref: r},
 		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -435,6 +795,365 @@ func (t *FormulaLibraryReviewsTable) RequestedReviewer() *tenantdb.UsersTable {
 // Get returns the formula_library_reviews row with the given key, or keel.ErrNotFound.
 func (t *FormulaLibraryReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*formulalibrary.FormulaLibraryReview, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormulaLibraryReviewsQuery is a query over formulalibrary.FormulaLibraryReview.
+type FormulaLibraryReviewsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulalibrary.FormulaLibraryReview] = (*FormulaLibraryReviewsTable)(nil)
+
+var _ keel.Query[*formulalibrary.FormulaLibraryReview] = (*FormulaLibraryReviewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormulaLibraryReviewsTable) Query() keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return &FormulaLibraryReviewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormulaLibraryReviewsQuery.Where.
+func (t *FormulaLibraryReviewsTable) Where(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormulaLibraryReviewsQuery.Pick.
+func (t *FormulaLibraryReviewsTable) Pick(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormulaLibraryReviewsQuery.Load.
+func (t *FormulaLibraryReviewsTable) Load(ls ...keel.Loader) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormulaLibraryReviewsQuery.Omit.
+func (t *FormulaLibraryReviewsTable) Omit(cols ...keel.Column) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormulaLibraryReviewsQuery.Order.
+func (t *FormulaLibraryReviewsTable) Order(os ...keel.Order) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormulaLibraryReviewsQuery.Limit.
+func (t *FormulaLibraryReviewsTable) Limit(n int) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormulaLibraryReviewsQuery.Group.
+func (t *FormulaLibraryReviewsTable) Group(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormulaLibraryReviewsQuery.GroupingSets.
+func (t *FormulaLibraryReviewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormulaLibraryReviewsQuery.Rollup.
+func (t *FormulaLibraryReviewsTable) Rollup(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormulaLibraryReviewsQuery.Cube.
+func (t *FormulaLibraryReviewsTable) Cube(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormulaLibraryReviewsQuery.AllTenants.
+func (t *FormulaLibraryReviewsTable) AllTenants() keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormulaLibraryReviewsQuery.Join.
+func (t *FormulaLibraryReviewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormulaLibraryReviewsQuery.LeftJoin.
+func (t *FormulaLibraryReviewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormulaLibraryReviewsQuery.LeftJoinLateral.
+func (t *FormulaLibraryReviewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormulaLibraryReviewsQuery.JoinLateral.
+func (t *FormulaLibraryReviewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormulaLibraryReviewsQuery.Lock.
+func (t *FormulaLibraryReviewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormulaLibraryReviewsQuery.DistinctOn.
+func (t *FormulaLibraryReviewsTable) DistinctOn(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormulaLibraryReviewsQuery.Cache.
+func (t *FormulaLibraryReviewsTable) Cache(opts ...keel.CacheOption) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormulaLibraryReviewsQuery.LoadStrategy.
+func (t *FormulaLibraryReviewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormulaLibraryReviewsQuery.With.
+func (t *FormulaLibraryReviewsTable) With(ctes ...*keel.CTETable) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormulaLibraryReviewsQuery.Compute.
+func (t *FormulaLibraryReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormulaLibraryReviewsTable) Create(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryReview) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormulaLibraryReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryReview) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormulaLibraryReviewsTable) Save(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryReview, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormulaLibraryReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryReview, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormulaLibraryReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryReview) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormulaLibraryReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryReview, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormulaLibraryReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryReview, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormulaLibraryReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryReview) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormulaLibraryReviewsQuery) Where(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormulaLibraryReviewsQuery) Pick(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormulaLibraryReviewsQuery) Omit(cols ...keel.Column) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormulaLibraryReviewsQuery) Load(ls ...keel.Loader) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormulaLibraryReviewsQuery) Order(os ...keel.Order) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormulaLibraryReviewsQuery) Distinct() keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormulaLibraryReviewsQuery) Group(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormulaLibraryReviewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormulaLibraryReviewsQuery) Rollup(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormulaLibraryReviewsQuery) Cube(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormulaLibraryReviewsQuery) Window(name string, w keel.Window) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormulaLibraryReviewsQuery) Having(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormulaLibraryReviewsQuery) Limit(n int) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormulaLibraryReviewsQuery) Offset(n int) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormulaLibraryReviewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormulaLibraryReviewsQuery) AllTenants() keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormulaLibraryReviewsQuery) CustomPlan() keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormulaLibraryReviewsQuery) Timeout(d time.Duration) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormulaLibraryReviewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormulaLibraryReviewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormulaLibraryReviewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormulaLibraryReviewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormulaLibraryReviewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormulaLibraryReviewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormulaLibraryReviewsQuery) With(ctes ...*keel.CTETable) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormulaLibraryReviewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormulaLibraryReviewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulalibrary.FormulaLibraryReview] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormulaLibraryReviewsQuery) Clone() keel.Query[*formulalibrary.FormulaLibraryReview] {
+	return &FormulaLibraryReviewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormulaLibraryReviewsQuery) One(ctx context.Context, db *keel.DB) (*formulalibrary.FormulaLibraryReview, error) {
+	return keel.One[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormulaLibraryReviewsQuery) First(ctx context.Context, db *keel.DB) (*formulalibrary.FormulaLibraryReview, error) {
+	return keel.First[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormulaLibraryReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*formulalibrary.FormulaLibraryReview, error) {
+	return keel.List[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormulaLibraryReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*formulalibrary.FormulaLibraryReview, error) {
+	return keel.All[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormulaLibraryReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulalibrary.FormulaLibraryReview, error) {
+	return keel.UpdateReturning[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormulaLibraryReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulalibrary.FormulaLibraryReview], error) {
+	return keel.PageOf[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormulaLibraryReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulalibrary.FormulaLibraryReview) error) error {
+	return keel.Each[*formulalibrary.FormulaLibraryReview](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormulaLibraryReview() unsafe.Pointer {
@@ -581,7 +1300,7 @@ var formulaLibraryVersionsRef = keel.Ref{Table: &formulaLibraryVersionsTable}
 
 // FormulaLibraryVersionsTable is the table of formulalibrary.FormulaLibraryVersion.
 type FormulaLibraryVersionsTable struct {
-	keel.Handle[*formulalibrary.FormulaLibraryVersion]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
@@ -601,7 +1320,7 @@ type FormulaLibraryVersionsTable struct {
 
 // FormulaLibraryVersions references the formula_library_versions table.
 var FormulaLibraryVersions = &FormulaLibraryVersionsTable{
-	Handle:         keel.Handle[*formulalibrary.FormulaLibraryVersion]{Ref: &formulaLibraryVersionsRef},
+	TableBase:      keel.TableBase{Ref: &formulaLibraryVersionsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 0}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 1}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 2}}},
@@ -619,10 +1338,10 @@ var FormulaLibraryVersions = &FormulaLibraryVersionsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &formulaLibraryVersionsRef, Index: 14}},
 }
 
-// BuildFormulaLibraryVersions builds the handle of formula_library_versions for ref. Generated relation and alias methods call it.
+// BuildFormulaLibraryVersions builds the table of formula_library_versions for ref. Generated relation and alias methods call it.
 func BuildFormulaLibraryVersions(r *keel.Ref) *FormulaLibraryVersionsTable {
 	return &FormulaLibraryVersionsTable{
-		Handle:         keel.Handle[*formulalibrary.FormulaLibraryVersion]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -657,6 +1376,365 @@ func (t *FormulaLibraryVersionsTable) CreatedBy() *tenantdb.UsersTable {
 // Get returns the formula_library_versions row with the given key, or keel.ErrNotFound.
 func (t *FormulaLibraryVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*formulalibrary.FormulaLibraryVersion, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// FormulaLibraryVersionsQuery is a query over formulalibrary.FormulaLibraryVersion.
+type FormulaLibraryVersionsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*formulalibrary.FormulaLibraryVersion] = (*FormulaLibraryVersionsTable)(nil)
+
+var _ keel.Query[*formulalibrary.FormulaLibraryVersion] = (*FormulaLibraryVersionsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *FormulaLibraryVersionsTable) Query() keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return &FormulaLibraryVersionsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see FormulaLibraryVersionsQuery.Where.
+func (t *FormulaLibraryVersionsTable) Where(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see FormulaLibraryVersionsQuery.Pick.
+func (t *FormulaLibraryVersionsTable) Pick(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see FormulaLibraryVersionsQuery.Load.
+func (t *FormulaLibraryVersionsTable) Load(ls ...keel.Loader) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see FormulaLibraryVersionsQuery.Omit.
+func (t *FormulaLibraryVersionsTable) Omit(cols ...keel.Column) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see FormulaLibraryVersionsQuery.Order.
+func (t *FormulaLibraryVersionsTable) Order(os ...keel.Order) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see FormulaLibraryVersionsQuery.Limit.
+func (t *FormulaLibraryVersionsTable) Limit(n int) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see FormulaLibraryVersionsQuery.Group.
+func (t *FormulaLibraryVersionsTable) Group(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see FormulaLibraryVersionsQuery.GroupingSets.
+func (t *FormulaLibraryVersionsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see FormulaLibraryVersionsQuery.Rollup.
+func (t *FormulaLibraryVersionsTable) Rollup(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see FormulaLibraryVersionsQuery.Cube.
+func (t *FormulaLibraryVersionsTable) Cube(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see FormulaLibraryVersionsQuery.AllTenants.
+func (t *FormulaLibraryVersionsTable) AllTenants() keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see FormulaLibraryVersionsQuery.Join.
+func (t *FormulaLibraryVersionsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see FormulaLibraryVersionsQuery.LeftJoin.
+func (t *FormulaLibraryVersionsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see FormulaLibraryVersionsQuery.LeftJoinLateral.
+func (t *FormulaLibraryVersionsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see FormulaLibraryVersionsQuery.JoinLateral.
+func (t *FormulaLibraryVersionsTable) JoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see FormulaLibraryVersionsQuery.Lock.
+func (t *FormulaLibraryVersionsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see FormulaLibraryVersionsQuery.DistinctOn.
+func (t *FormulaLibraryVersionsTable) DistinctOn(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see FormulaLibraryVersionsQuery.Cache.
+func (t *FormulaLibraryVersionsTable) Cache(opts ...keel.CacheOption) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see FormulaLibraryVersionsQuery.LoadStrategy.
+func (t *FormulaLibraryVersionsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see FormulaLibraryVersionsQuery.With.
+func (t *FormulaLibraryVersionsTable) With(ctes ...*keel.CTETable) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see FormulaLibraryVersionsQuery.Compute.
+func (t *FormulaLibraryVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *FormulaLibraryVersionsTable) Create(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryVersion) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *FormulaLibraryVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryVersion) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *FormulaLibraryVersionsTable) Save(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryVersion, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *FormulaLibraryVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryVersion, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *FormulaLibraryVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *formulalibrary.FormulaLibraryVersion) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *FormulaLibraryVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryVersion, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *FormulaLibraryVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryVersion, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *FormulaLibraryVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*formulalibrary.FormulaLibraryVersion) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *FormulaLibraryVersionsQuery) Where(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *FormulaLibraryVersionsQuery) Pick(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *FormulaLibraryVersionsQuery) Omit(cols ...keel.Column) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *FormulaLibraryVersionsQuery) Load(ls ...keel.Loader) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *FormulaLibraryVersionsQuery) Order(os ...keel.Order) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *FormulaLibraryVersionsQuery) Distinct() keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *FormulaLibraryVersionsQuery) Group(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *FormulaLibraryVersionsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *FormulaLibraryVersionsQuery) Rollup(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *FormulaLibraryVersionsQuery) Cube(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *FormulaLibraryVersionsQuery) Window(name string, w keel.Window) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *FormulaLibraryVersionsQuery) Having(ps ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *FormulaLibraryVersionsQuery) Limit(n int) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *FormulaLibraryVersionsQuery) Offset(n int) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *FormulaLibraryVersionsQuery) DistinctOn(es ...keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *FormulaLibraryVersionsQuery) AllTenants() keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *FormulaLibraryVersionsQuery) CustomPlan() keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *FormulaLibraryVersionsQuery) Timeout(d time.Duration) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *FormulaLibraryVersionsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *FormulaLibraryVersionsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *FormulaLibraryVersionsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *FormulaLibraryVersionsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *FormulaLibraryVersionsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *FormulaLibraryVersionsQuery) Cache(opts ...keel.CacheOption) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *FormulaLibraryVersionsQuery) With(ctes ...*keel.CTETable) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *FormulaLibraryVersionsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *FormulaLibraryVersionsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *FormulaLibraryVersionsQuery) Clone() keel.Query[*formulalibrary.FormulaLibraryVersion] {
+	return &FormulaLibraryVersionsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *FormulaLibraryVersionsQuery) One(ctx context.Context, db *keel.DB) (*formulalibrary.FormulaLibraryVersion, error) {
+	return keel.One[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *FormulaLibraryVersionsQuery) First(ctx context.Context, db *keel.DB) (*formulalibrary.FormulaLibraryVersion, error) {
+	return keel.First[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *FormulaLibraryVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*formulalibrary.FormulaLibraryVersion, error) {
+	return keel.List[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *FormulaLibraryVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*formulalibrary.FormulaLibraryVersion, error) {
+	return keel.All[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *FormulaLibraryVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*formulalibrary.FormulaLibraryVersion, error) {
+	return keel.UpdateReturning[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *FormulaLibraryVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*formulalibrary.FormulaLibraryVersion], error) {
+	return keel.PageOf[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *FormulaLibraryVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*formulalibrary.FormulaLibraryVersion) error) error {
+	return keel.Each[*formulalibrary.FormulaLibraryVersion](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newFormulaLibraryVersion() unsafe.Pointer {

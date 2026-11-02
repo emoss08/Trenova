@@ -353,7 +353,7 @@ func (r *repository) SearchDocuments(
 	)
 }
 
-func searchDocumentsQuery(plan keywordPlan) *keel.Query[*document.Document] {
+func searchDocumentsQuery(plan keywordPlan) keel.Query[*document.Document] {
 	d := documentdb.Documents
 	dc := documentcontentdb.Contents
 	simple := anyWord("simple")
@@ -408,7 +408,7 @@ func (r *repository) SearchInboundMessages(
 func searchMessagesQuery(
 	plan keywordPlan,
 	filter retrievalports.InboundMessageFilter,
-) *keel.Query[*inboundmessage.InboundMessage] {
+) keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	english := anyWord("english")
 	rank := m.SearchVector.RankCD(plan.query, english...)

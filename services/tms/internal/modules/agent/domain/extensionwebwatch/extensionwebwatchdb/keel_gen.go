@@ -4,6 +4,7 @@ package extensionwebwatchdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -74,13 +75,13 @@ var webWatchesRef = keel.Ref{Table: &webWatchesTable}
 
 // WebWatchesTable is the table of extensionwebwatch.WebWatch.
 type WebWatchesTable struct {
-	keel.Handle[*extensionwebwatch.WebWatch]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
 	ExtensionType     agentextensiondb.TypeCol
 	VendorMonitorID   keel.StringCol
-	Query             keel.StringCol
+	QueryCol          keel.StringCol
 	Purpose           keel.StringCol
 	IncludeDomains    keel.JSONBCol
 	Cadence           WebWatchCadenceCol
@@ -106,13 +107,13 @@ type WebWatchesTable struct {
 
 // WebWatches references the agent_web_watches table.
 var WebWatches = &WebWatchesTable{
-	Handle:            keel.Handle[*extensionwebwatch.WebWatch]{Ref: &webWatchesRef},
+	TableBase:         keel.TableBase{Ref: &webWatchesRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 2}}},
 	ExtensionType:     agentextensiondb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 3}}},
 	VendorMonitorID:   keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 4}},
-	Query:             keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 5}},
+	QueryCol:          keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 5}},
 	Purpose:           keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 6}},
 	IncludeDomains:    keel.JSONBCol{Col: keel.Col{Ref: &webWatchesRef, Index: 7}},
 	Cadence:           WebWatchCadenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 8}}},
@@ -136,16 +137,16 @@ var WebWatches = &WebWatchesTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 26}},
 }
 
-// BuildWebWatches builds the handle of agent_web_watches for ref. Generated relation and alias methods call it.
+// BuildWebWatches builds the table of agent_web_watches for ref. Generated relation and alias methods call it.
 func BuildWebWatches(r *keel.Ref) *WebWatchesTable {
 	return &WebWatchesTable{
-		Handle:            keel.Handle[*extensionwebwatch.WebWatch]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		ExtensionType:     agentextensiondb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VendorMonitorID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Query:             keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		QueryCol:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Purpose:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IncludeDomains:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		Cadence:           WebWatchCadenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
@@ -181,6 +182,365 @@ func (t *WebWatchesTable) As(alias string) *WebWatchesTable {
 // Get returns the agent_web_watches row with the given key, or keel.ErrNotFound.
 func (t *WebWatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionwebwatch.WebWatch, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WebWatchesQuery is a query over extensionwebwatch.WebWatch.
+type WebWatchesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extensionwebwatch.WebWatch] = (*WebWatchesTable)(nil)
+
+var _ keel.Query[*extensionwebwatch.WebWatch] = (*WebWatchesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WebWatchesTable) Query() keel.Query[*extensionwebwatch.WebWatch] {
+	return &WebWatchesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WebWatchesQuery.Where.
+func (t *WebWatchesTable) Where(ps ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WebWatchesQuery.Pick.
+func (t *WebWatchesTable) Pick(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WebWatchesQuery.Load.
+func (t *WebWatchesTable) Load(ls ...keel.Loader) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WebWatchesQuery.Omit.
+func (t *WebWatchesTable) Omit(cols ...keel.Column) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WebWatchesQuery.Order.
+func (t *WebWatchesTable) Order(os ...keel.Order) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WebWatchesQuery.Limit.
+func (t *WebWatchesTable) Limit(n int) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WebWatchesQuery.Group.
+func (t *WebWatchesTable) Group(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WebWatchesQuery.GroupingSets.
+func (t *WebWatchesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WebWatchesQuery.Rollup.
+func (t *WebWatchesTable) Rollup(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WebWatchesQuery.Cube.
+func (t *WebWatchesTable) Cube(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WebWatchesQuery.AllTenants.
+func (t *WebWatchesTable) AllTenants() keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WebWatchesQuery.Join.
+func (t *WebWatchesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WebWatchesQuery.LeftJoin.
+func (t *WebWatchesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WebWatchesQuery.LeftJoinLateral.
+func (t *WebWatchesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WebWatchesQuery.JoinLateral.
+func (t *WebWatchesTable) JoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WebWatchesQuery.Lock.
+func (t *WebWatchesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WebWatchesQuery.DistinctOn.
+func (t *WebWatchesTable) DistinctOn(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WebWatchesQuery.Cache.
+func (t *WebWatchesTable) Cache(opts ...keel.CacheOption) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WebWatchesQuery.LoadStrategy.
+func (t *WebWatchesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WebWatchesQuery.With.
+func (t *WebWatchesTable) With(ctes ...*keel.CTETable) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WebWatchesQuery.Compute.
+func (t *WebWatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WebWatchesTable) Create(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WebWatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WebWatchesTable) Save(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WebWatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WebWatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WebWatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WebWatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WebWatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WebWatchesQuery) Where(ps ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WebWatchesQuery) Pick(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WebWatchesQuery) Omit(cols ...keel.Column) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WebWatchesQuery) Load(ls ...keel.Loader) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WebWatchesQuery) Order(os ...keel.Order) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WebWatchesQuery) Distinct() keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WebWatchesQuery) Group(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WebWatchesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WebWatchesQuery) Rollup(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WebWatchesQuery) Cube(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WebWatchesQuery) Window(name string, w keel.Window) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WebWatchesQuery) Having(ps ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WebWatchesQuery) Limit(n int) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WebWatchesQuery) Offset(n int) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WebWatchesQuery) DistinctOn(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WebWatchesQuery) AllTenants() keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WebWatchesQuery) CustomPlan() keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WebWatchesQuery) Timeout(d time.Duration) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WebWatchesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WebWatchesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WebWatchesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WebWatchesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WebWatchesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WebWatchesQuery) Cache(opts ...keel.CacheOption) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WebWatchesQuery) With(ctes ...*keel.CTETable) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WebWatchesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WebWatchesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionwebwatch.WebWatch] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WebWatchesQuery) Clone() keel.Query[*extensionwebwatch.WebWatch] {
+	return &WebWatchesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WebWatchesQuery) One(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatch, error) {
+	return keel.One[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WebWatchesQuery) First(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatch, error) {
+	return keel.First[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WebWatchesQuery) List(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatch, error) {
+	return keel.List[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WebWatchesQuery) All(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatch, error) {
+	return keel.All[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WebWatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionwebwatch.WebWatch, error) {
+	return keel.UpdateReturning[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WebWatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionwebwatch.WebWatch], error) {
+	return keel.PageOf[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WebWatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionwebwatch.WebWatch) error) error {
+	return keel.Each[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWebWatch() unsafe.Pointer { return unsafe.Pointer(new(extensionwebwatch.WebWatch)) }
@@ -384,7 +744,7 @@ var webWatchFindingsRef = keel.Ref{Table: &webWatchFindingsTable}
 
 // WebWatchFindingsTable is the table of extensionwebwatch.WebWatchFinding.
 type WebWatchFindingsTable struct {
-	keel.Handle[*extensionwebwatch.WebWatchFinding]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -399,7 +759,7 @@ type WebWatchFindingsTable struct {
 
 // WebWatchFindings references the agent_web_watch_findings table.
 var WebWatchFindings = &WebWatchFindingsTable{
-	Handle:         keel.Handle[*extensionwebwatch.WebWatchFinding]{Ref: &webWatchFindingsRef},
+	TableBase:      keel.TableBase{Ref: &webWatchFindingsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 2}}},
@@ -412,10 +772,10 @@ var WebWatchFindings = &WebWatchFindingsTable{
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 9}},
 }
 
-// BuildWebWatchFindings builds the handle of agent_web_watch_findings for ref. Generated relation and alias methods call it.
+// BuildWebWatchFindings builds the table of agent_web_watch_findings for ref. Generated relation and alias methods call it.
 func BuildWebWatchFindings(r *keel.Ref) *WebWatchFindingsTable {
 	return &WebWatchFindingsTable{
-		Handle:         keel.Handle[*extensionwebwatch.WebWatchFinding]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -440,6 +800,365 @@ func (t *WebWatchFindingsTable) As(alias string) *WebWatchFindingsTable {
 // Get returns the agent_web_watch_findings row with the given key, or keel.ErrNotFound.
 func (t *WebWatchFindingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*extensionwebwatch.WebWatchFinding, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WebWatchFindingsQuery is a query over extensionwebwatch.WebWatchFinding.
+type WebWatchFindingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*extensionwebwatch.WebWatchFinding] = (*WebWatchFindingsTable)(nil)
+
+var _ keel.Query[*extensionwebwatch.WebWatchFinding] = (*WebWatchFindingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WebWatchFindingsTable) Query() keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return &WebWatchFindingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WebWatchFindingsQuery.Where.
+func (t *WebWatchFindingsTable) Where(ps ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WebWatchFindingsQuery.Pick.
+func (t *WebWatchFindingsTable) Pick(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WebWatchFindingsQuery.Load.
+func (t *WebWatchFindingsTable) Load(ls ...keel.Loader) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WebWatchFindingsQuery.Omit.
+func (t *WebWatchFindingsTable) Omit(cols ...keel.Column) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WebWatchFindingsQuery.Order.
+func (t *WebWatchFindingsTable) Order(os ...keel.Order) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WebWatchFindingsQuery.Limit.
+func (t *WebWatchFindingsTable) Limit(n int) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WebWatchFindingsQuery.Group.
+func (t *WebWatchFindingsTable) Group(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WebWatchFindingsQuery.GroupingSets.
+func (t *WebWatchFindingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WebWatchFindingsQuery.Rollup.
+func (t *WebWatchFindingsTable) Rollup(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WebWatchFindingsQuery.Cube.
+func (t *WebWatchFindingsTable) Cube(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WebWatchFindingsQuery.AllTenants.
+func (t *WebWatchFindingsTable) AllTenants() keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WebWatchFindingsQuery.Join.
+func (t *WebWatchFindingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WebWatchFindingsQuery.LeftJoin.
+func (t *WebWatchFindingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WebWatchFindingsQuery.LeftJoinLateral.
+func (t *WebWatchFindingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WebWatchFindingsQuery.JoinLateral.
+func (t *WebWatchFindingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WebWatchFindingsQuery.Lock.
+func (t *WebWatchFindingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WebWatchFindingsQuery.DistinctOn.
+func (t *WebWatchFindingsTable) DistinctOn(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WebWatchFindingsQuery.Cache.
+func (t *WebWatchFindingsTable) Cache(opts ...keel.CacheOption) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WebWatchFindingsQuery.LoadStrategy.
+func (t *WebWatchFindingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WebWatchFindingsQuery.With.
+func (t *WebWatchFindingsTable) With(ctes ...*keel.CTETable) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WebWatchFindingsQuery.Compute.
+func (t *WebWatchFindingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WebWatchFindingsTable) Create(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WebWatchFindingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WebWatchFindingsTable) Save(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WebWatchFindingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WebWatchFindingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WebWatchFindingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WebWatchFindingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WebWatchFindingsTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WebWatchFindingsQuery) Where(ps ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WebWatchFindingsQuery) Pick(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WebWatchFindingsQuery) Omit(cols ...keel.Column) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WebWatchFindingsQuery) Load(ls ...keel.Loader) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WebWatchFindingsQuery) Order(os ...keel.Order) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WebWatchFindingsQuery) Distinct() keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WebWatchFindingsQuery) Group(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WebWatchFindingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WebWatchFindingsQuery) Rollup(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WebWatchFindingsQuery) Cube(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WebWatchFindingsQuery) Window(name string, w keel.Window) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WebWatchFindingsQuery) Having(ps ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WebWatchFindingsQuery) Limit(n int) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WebWatchFindingsQuery) Offset(n int) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WebWatchFindingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WebWatchFindingsQuery) AllTenants() keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WebWatchFindingsQuery) CustomPlan() keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WebWatchFindingsQuery) Timeout(d time.Duration) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WebWatchFindingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WebWatchFindingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WebWatchFindingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WebWatchFindingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WebWatchFindingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WebWatchFindingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WebWatchFindingsQuery) With(ctes ...*keel.CTETable) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WebWatchFindingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WebWatchFindingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*extensionwebwatch.WebWatchFinding] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WebWatchFindingsQuery) Clone() keel.Query[*extensionwebwatch.WebWatchFinding] {
+	return &WebWatchFindingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WebWatchFindingsQuery) One(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatchFinding, error) {
+	return keel.One[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WebWatchFindingsQuery) First(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatchFinding, error) {
+	return keel.First[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WebWatchFindingsQuery) List(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatchFinding, error) {
+	return keel.List[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WebWatchFindingsQuery) All(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatchFinding, error) {
+	return keel.All[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WebWatchFindingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionwebwatch.WebWatchFinding, error) {
+	return keel.UpdateReturning[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WebWatchFindingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionwebwatch.WebWatchFinding], error) {
+	return keel.PageOf[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WebWatchFindingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionwebwatch.WebWatchFinding) error) error {
+	return keel.Each[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWebWatchFinding() unsafe.Pointer {

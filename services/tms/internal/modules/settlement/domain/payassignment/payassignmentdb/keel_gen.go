@@ -4,6 +4,7 @@ package payassignmentdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -69,7 +70,7 @@ var workerPayAssignmentsRef = keel.Ref{Table: &workerPayAssignmentsTable}
 
 // WorkerPayAssignmentsTable is the table of payassignment.WorkerPayAssignment.
 type WorkerPayAssignmentsTable struct {
-	keel.Handle[*payassignment.WorkerPayAssignment]
+	keel.TableBase
 	ID             keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	OrganizationID keelkinds.PulidIDCol
@@ -88,7 +89,7 @@ type WorkerPayAssignmentsTable struct {
 
 // WorkerPayAssignments references the worker_pay_assignments table.
 var WorkerPayAssignments = &WorkerPayAssignmentsTable{
-	Handle:         keel.Handle[*payassignment.WorkerPayAssignment]{Ref: &workerPayAssignmentsRef},
+	TableBase:      keel.TableBase{Ref: &workerPayAssignmentsRef},
 	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 1}}},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 2}}},
@@ -105,10 +106,10 @@ var WorkerPayAssignments = &WorkerPayAssignmentsTable{
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerPayAssignmentsRef, Index: 13}},
 }
 
-// BuildWorkerPayAssignments builds the handle of worker_pay_assignments for ref. Generated relation and alias methods call it.
+// BuildWorkerPayAssignments builds the table of worker_pay_assignments for ref. Generated relation and alias methods call it.
 func BuildWorkerPayAssignments(r *keel.Ref) *WorkerPayAssignmentsTable {
 	return &WorkerPayAssignmentsTable{
-		Handle:         keel.Handle[*payassignment.WorkerPayAssignment]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -147,6 +148,365 @@ func (t *WorkerPayAssignmentsTable) PayProfile() *driverpaydb.PayProfilesTable {
 // Get returns the worker_pay_assignments row with the given key, or keel.ErrNotFound.
 func (t *WorkerPayAssignmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*payassignment.WorkerPayAssignment, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// WorkerPayAssignmentsQuery is a query over payassignment.WorkerPayAssignment.
+type WorkerPayAssignmentsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*payassignment.WorkerPayAssignment] = (*WorkerPayAssignmentsTable)(nil)
+
+var _ keel.Query[*payassignment.WorkerPayAssignment] = (*WorkerPayAssignmentsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *WorkerPayAssignmentsTable) Query() keel.Query[*payassignment.WorkerPayAssignment] {
+	return &WorkerPayAssignmentsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see WorkerPayAssignmentsQuery.Where.
+func (t *WorkerPayAssignmentsTable) Where(ps ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see WorkerPayAssignmentsQuery.Pick.
+func (t *WorkerPayAssignmentsTable) Pick(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see WorkerPayAssignmentsQuery.Load.
+func (t *WorkerPayAssignmentsTable) Load(ls ...keel.Loader) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see WorkerPayAssignmentsQuery.Omit.
+func (t *WorkerPayAssignmentsTable) Omit(cols ...keel.Column) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see WorkerPayAssignmentsQuery.Order.
+func (t *WorkerPayAssignmentsTable) Order(os ...keel.Order) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see WorkerPayAssignmentsQuery.Limit.
+func (t *WorkerPayAssignmentsTable) Limit(n int) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see WorkerPayAssignmentsQuery.Group.
+func (t *WorkerPayAssignmentsTable) Group(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see WorkerPayAssignmentsQuery.GroupingSets.
+func (t *WorkerPayAssignmentsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see WorkerPayAssignmentsQuery.Rollup.
+func (t *WorkerPayAssignmentsTable) Rollup(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see WorkerPayAssignmentsQuery.Cube.
+func (t *WorkerPayAssignmentsTable) Cube(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see WorkerPayAssignmentsQuery.AllTenants.
+func (t *WorkerPayAssignmentsTable) AllTenants() keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see WorkerPayAssignmentsQuery.Join.
+func (t *WorkerPayAssignmentsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see WorkerPayAssignmentsQuery.LeftJoin.
+func (t *WorkerPayAssignmentsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see WorkerPayAssignmentsQuery.LeftJoinLateral.
+func (t *WorkerPayAssignmentsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see WorkerPayAssignmentsQuery.JoinLateral.
+func (t *WorkerPayAssignmentsTable) JoinLateral(sub keel.LateralSource) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see WorkerPayAssignmentsQuery.Lock.
+func (t *WorkerPayAssignmentsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see WorkerPayAssignmentsQuery.DistinctOn.
+func (t *WorkerPayAssignmentsTable) DistinctOn(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see WorkerPayAssignmentsQuery.Cache.
+func (t *WorkerPayAssignmentsTable) Cache(opts ...keel.CacheOption) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see WorkerPayAssignmentsQuery.LoadStrategy.
+func (t *WorkerPayAssignmentsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see WorkerPayAssignmentsQuery.With.
+func (t *WorkerPayAssignmentsTable) With(ctes ...*keel.CTETable) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see WorkerPayAssignmentsQuery.Compute.
+func (t *WorkerPayAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *WorkerPayAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *payassignment.WorkerPayAssignment) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *WorkerPayAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*payassignment.WorkerPayAssignment) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *WorkerPayAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *payassignment.WorkerPayAssignment, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *WorkerPayAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *payassignment.WorkerPayAssignment, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *WorkerPayAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *payassignment.WorkerPayAssignment) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *WorkerPayAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*payassignment.WorkerPayAssignment, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *WorkerPayAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*payassignment.WorkerPayAssignment, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *WorkerPayAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*payassignment.WorkerPayAssignment) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *WorkerPayAssignmentsQuery) Where(ps ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *WorkerPayAssignmentsQuery) Pick(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *WorkerPayAssignmentsQuery) Omit(cols ...keel.Column) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *WorkerPayAssignmentsQuery) Load(ls ...keel.Loader) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *WorkerPayAssignmentsQuery) Order(os ...keel.Order) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *WorkerPayAssignmentsQuery) Distinct() keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *WorkerPayAssignmentsQuery) Group(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *WorkerPayAssignmentsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *WorkerPayAssignmentsQuery) Rollup(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *WorkerPayAssignmentsQuery) Cube(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *WorkerPayAssignmentsQuery) Window(name string, w keel.Window) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *WorkerPayAssignmentsQuery) Having(ps ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *WorkerPayAssignmentsQuery) Limit(n int) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *WorkerPayAssignmentsQuery) Offset(n int) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *WorkerPayAssignmentsQuery) DistinctOn(es ...keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *WorkerPayAssignmentsQuery) AllTenants() keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *WorkerPayAssignmentsQuery) CustomPlan() keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *WorkerPayAssignmentsQuery) Timeout(d time.Duration) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *WorkerPayAssignmentsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *WorkerPayAssignmentsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *WorkerPayAssignmentsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *WorkerPayAssignmentsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *WorkerPayAssignmentsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *WorkerPayAssignmentsQuery) Cache(opts ...keel.CacheOption) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *WorkerPayAssignmentsQuery) With(ctes ...*keel.CTETable) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *WorkerPayAssignmentsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *WorkerPayAssignmentsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*payassignment.WorkerPayAssignment] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *WorkerPayAssignmentsQuery) Clone() keel.Query[*payassignment.WorkerPayAssignment] {
+	return &WorkerPayAssignmentsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *WorkerPayAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*payassignment.WorkerPayAssignment, error) {
+	return keel.One[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *WorkerPayAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*payassignment.WorkerPayAssignment, error) {
+	return keel.First[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *WorkerPayAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*payassignment.WorkerPayAssignment, error) {
+	return keel.List[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *WorkerPayAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*payassignment.WorkerPayAssignment, error) {
+	return keel.All[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *WorkerPayAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*payassignment.WorkerPayAssignment, error) {
+	return keel.UpdateReturning[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *WorkerPayAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*payassignment.WorkerPayAssignment], error) {
+	return keel.PageOf[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *WorkerPayAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*payassignment.WorkerPayAssignment) error) error {
+	return keel.Each[*payassignment.WorkerPayAssignment](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newWorkerPayAssignment() unsafe.Pointer {

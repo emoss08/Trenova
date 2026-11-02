@@ -4,6 +4,7 @@ package aiauditdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -59,7 +60,7 @@ var aIAuditChainHeadsRef = keel.Ref{Table: &aIAuditChainHeadsTable}
 
 // AIAuditChainHeadsTable is the table of aiaudit.AIAuditChainHead.
 type AIAuditChainHeadsTable struct {
-	keel.Handle[*aiaudit.AIAuditChainHead]
+	keel.TableBase
 	OrganizationID            keelkinds.PulidIDCol
 	BusinessUnitID            keelkinds.PulidIDCol
 	LastSeq                   keel.Int64Col
@@ -77,7 +78,7 @@ type AIAuditChainHeadsTable struct {
 
 // AIAuditChainHeads references the ai_audit_chain_heads table.
 var AIAuditChainHeads = &AIAuditChainHeadsTable{
-	Handle:                    keel.Handle[*aiaudit.AIAuditChainHead]{Ref: &aIAuditChainHeadsRef},
+	TableBase:                 keel.TableBase{Ref: &aIAuditChainHeadsRef},
 	OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 0}}},
 	BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 1}}},
 	LastSeq:                   keel.Int64Col{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 2}},
@@ -93,10 +94,10 @@ var AIAuditChainHeads = &AIAuditChainHeadsTable{
 	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &aIAuditChainHeadsRef, Index: 12}},
 }
 
-// BuildAIAuditChainHeads builds the handle of ai_audit_chain_heads for ref. Generated relation and alias methods call it.
+// BuildAIAuditChainHeads builds the table of ai_audit_chain_heads for ref. Generated relation and alias methods call it.
 func BuildAIAuditChainHeads(r *keel.Ref) *AIAuditChainHeadsTable {
 	return &AIAuditChainHeadsTable{
-		Handle:                    keel.Handle[*aiaudit.AIAuditChainHead]{Ref: r},
+		TableBase:                 keel.TableBase{Ref: r},
 		OrganizationID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		LastSeq:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -119,6 +120,365 @@ func AIAuditChainHeadsSchema() *schema.Table { return &aIAuditChainHeadsTable }
 // As returns a handle that references ai_audit_chain_heads under its own alias.
 func (t *AIAuditChainHeadsTable) As(alias string) *AIAuditChainHeadsTable {
 	return keel.Alias(t.Ref, alias, BuildAIAuditChainHeads)
+}
+
+// AIAuditChainHeadsQuery is a query over aiaudit.AIAuditChainHead.
+type AIAuditChainHeadsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aiaudit.AIAuditChainHead] = (*AIAuditChainHeadsTable)(nil)
+
+var _ keel.Query[*aiaudit.AIAuditChainHead] = (*AIAuditChainHeadsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AIAuditChainHeadsTable) Query() keel.Query[*aiaudit.AIAuditChainHead] {
+	return &AIAuditChainHeadsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AIAuditChainHeadsQuery.Where.
+func (t *AIAuditChainHeadsTable) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AIAuditChainHeadsQuery.Pick.
+func (t *AIAuditChainHeadsTable) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AIAuditChainHeadsQuery.Load.
+func (t *AIAuditChainHeadsTable) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AIAuditChainHeadsQuery.Omit.
+func (t *AIAuditChainHeadsTable) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AIAuditChainHeadsQuery.Order.
+func (t *AIAuditChainHeadsTable) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AIAuditChainHeadsQuery.Limit.
+func (t *AIAuditChainHeadsTable) Limit(n int) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AIAuditChainHeadsQuery.Group.
+func (t *AIAuditChainHeadsTable) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AIAuditChainHeadsQuery.GroupingSets.
+func (t *AIAuditChainHeadsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AIAuditChainHeadsQuery.Rollup.
+func (t *AIAuditChainHeadsTable) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AIAuditChainHeadsQuery.Cube.
+func (t *AIAuditChainHeadsTable) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AIAuditChainHeadsQuery.AllTenants.
+func (t *AIAuditChainHeadsTable) AllTenants() keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AIAuditChainHeadsQuery.Join.
+func (t *AIAuditChainHeadsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AIAuditChainHeadsQuery.LeftJoin.
+func (t *AIAuditChainHeadsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AIAuditChainHeadsQuery.LeftJoinLateral.
+func (t *AIAuditChainHeadsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AIAuditChainHeadsQuery.JoinLateral.
+func (t *AIAuditChainHeadsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AIAuditChainHeadsQuery.Lock.
+func (t *AIAuditChainHeadsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AIAuditChainHeadsQuery.DistinctOn.
+func (t *AIAuditChainHeadsTable) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AIAuditChainHeadsQuery.Cache.
+func (t *AIAuditChainHeadsTable) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AIAuditChainHeadsQuery.LoadStrategy.
+func (t *AIAuditChainHeadsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AIAuditChainHeadsQuery.With.
+func (t *AIAuditChainHeadsTable) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AIAuditChainHeadsQuery.Compute.
+func (t *AIAuditChainHeadsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AIAuditChainHeadsTable) Create(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditChainHead) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AIAuditChainHeadsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditChainHead) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AIAuditChainHeadsTable) Save(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditChainHead, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AIAuditChainHeadsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditChainHead, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AIAuditChainHeadsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditChainHead) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AIAuditChainHeadsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditChainHead, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AIAuditChainHeadsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditChainHead, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AIAuditChainHeadsTable) Copy(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditChainHead) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AIAuditChainHeadsQuery) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AIAuditChainHeadsQuery) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AIAuditChainHeadsQuery) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AIAuditChainHeadsQuery) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AIAuditChainHeadsQuery) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AIAuditChainHeadsQuery) Distinct() keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AIAuditChainHeadsQuery) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AIAuditChainHeadsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AIAuditChainHeadsQuery) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AIAuditChainHeadsQuery) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AIAuditChainHeadsQuery) Window(name string, w keel.Window) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AIAuditChainHeadsQuery) Having(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AIAuditChainHeadsQuery) Limit(n int) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AIAuditChainHeadsQuery) Offset(n int) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AIAuditChainHeadsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AIAuditChainHeadsQuery) AllTenants() keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AIAuditChainHeadsQuery) CustomPlan() keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AIAuditChainHeadsQuery) Timeout(d time.Duration) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AIAuditChainHeadsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AIAuditChainHeadsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AIAuditChainHeadsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AIAuditChainHeadsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AIAuditChainHeadsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AIAuditChainHeadsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AIAuditChainHeadsQuery) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AIAuditChainHeadsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AIAuditChainHeadsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditChainHead] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AIAuditChainHeadsQuery) Clone() keel.Query[*aiaudit.AIAuditChainHead] {
+	return &AIAuditChainHeadsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AIAuditChainHeadsQuery) One(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditChainHead, error) {
+	return keel.One[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AIAuditChainHeadsQuery) First(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditChainHead, error) {
+	return keel.First[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AIAuditChainHeadsQuery) List(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditChainHead, error) {
+	return keel.List[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AIAuditChainHeadsQuery) All(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditChainHead, error) {
+	return keel.All[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AIAuditChainHeadsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiaudit.AIAuditChainHead, error) {
+	return keel.UpdateReturning[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AIAuditChainHeadsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiaudit.AIAuditChainHead], error) {
+	return keel.PageOf[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AIAuditChainHeadsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiaudit.AIAuditChainHead) error) error {
+	return keel.Each[*aiaudit.AIAuditChainHead](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAIAuditChainHead() unsafe.Pointer { return unsafe.Pointer(new(aiaudit.AIAuditChainHead)) }
@@ -315,7 +675,7 @@ var aIAuditEventsRef = keel.Ref{Table: &aIAuditEventsTable}
 
 // AIAuditEventsTable is the table of aiaudit.AIAuditEvent.
 type AIAuditEventsTable struct {
-	keel.Handle[*aiaudit.AIAuditEvent]
+	keel.TableBase
 	ID                     keelkinds.PulidIDCol
 	BusinessUnitID         keelkinds.PulidIDCol
 	OrganizationID         keelkinds.PulidIDCol
@@ -393,7 +753,7 @@ type AIAuditEventsTable struct {
 
 // AIAuditEvents references the ai_audit_events table.
 var AIAuditEvents = &AIAuditEventsTable{
-	Handle:                 keel.Handle[*aiaudit.AIAuditEvent]{Ref: &aIAuditEventsRef},
+	TableBase:              keel.TableBase{Ref: &aIAuditEventsRef},
 	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 0}}},
 	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 1}}},
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 2}}},
@@ -469,10 +829,10 @@ var AIAuditEvents = &AIAuditEventsTable{
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &aIAuditEventsRef, Index: 72}},
 }
 
-// BuildAIAuditEvents builds the handle of ai_audit_events for ref. Generated relation and alias methods call it.
+// BuildAIAuditEvents builds the table of ai_audit_events for ref. Generated relation and alias methods call it.
 func BuildAIAuditEvents(r *keel.Ref) *AIAuditEventsTable {
 	return &AIAuditEventsTable{
-		Handle:                 keel.Handle[*aiaudit.AIAuditEvent]{Ref: r},
+		TableBase:              keel.TableBase{Ref: r},
 		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -560,6 +920,365 @@ func (t *AIAuditEventsTable) As(alias string) *AIAuditEventsTable {
 // Get returns the ai_audit_events row with the given key, or keel.ErrNotFound.
 func (t *AIAuditEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiaudit.AIAuditEvent, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AIAuditEventsQuery is a query over aiaudit.AIAuditEvent.
+type AIAuditEventsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aiaudit.AIAuditEvent] = (*AIAuditEventsTable)(nil)
+
+var _ keel.Query[*aiaudit.AIAuditEvent] = (*AIAuditEventsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AIAuditEventsTable) Query() keel.Query[*aiaudit.AIAuditEvent] {
+	return &AIAuditEventsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AIAuditEventsQuery.Where.
+func (t *AIAuditEventsTable) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AIAuditEventsQuery.Pick.
+func (t *AIAuditEventsTable) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AIAuditEventsQuery.Load.
+func (t *AIAuditEventsTable) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AIAuditEventsQuery.Omit.
+func (t *AIAuditEventsTable) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AIAuditEventsQuery.Order.
+func (t *AIAuditEventsTable) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AIAuditEventsQuery.Limit.
+func (t *AIAuditEventsTable) Limit(n int) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AIAuditEventsQuery.Group.
+func (t *AIAuditEventsTable) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AIAuditEventsQuery.GroupingSets.
+func (t *AIAuditEventsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AIAuditEventsQuery.Rollup.
+func (t *AIAuditEventsTable) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AIAuditEventsQuery.Cube.
+func (t *AIAuditEventsTable) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AIAuditEventsQuery.AllTenants.
+func (t *AIAuditEventsTable) AllTenants() keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AIAuditEventsQuery.Join.
+func (t *AIAuditEventsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AIAuditEventsQuery.LeftJoin.
+func (t *AIAuditEventsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AIAuditEventsQuery.LeftJoinLateral.
+func (t *AIAuditEventsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AIAuditEventsQuery.JoinLateral.
+func (t *AIAuditEventsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AIAuditEventsQuery.Lock.
+func (t *AIAuditEventsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AIAuditEventsQuery.DistinctOn.
+func (t *AIAuditEventsTable) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AIAuditEventsQuery.Cache.
+func (t *AIAuditEventsTable) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AIAuditEventsQuery.LoadStrategy.
+func (t *AIAuditEventsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AIAuditEventsQuery.With.
+func (t *AIAuditEventsTable) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AIAuditEventsQuery.Compute.
+func (t *AIAuditEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AIAuditEventsTable) Create(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditEvent) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AIAuditEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditEvent) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AIAuditEventsTable) Save(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditEvent, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AIAuditEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditEvent, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AIAuditEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditEvent) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AIAuditEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditEvent, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AIAuditEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditEvent, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AIAuditEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditEvent) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AIAuditEventsQuery) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AIAuditEventsQuery) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AIAuditEventsQuery) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AIAuditEventsQuery) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AIAuditEventsQuery) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AIAuditEventsQuery) Distinct() keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AIAuditEventsQuery) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AIAuditEventsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AIAuditEventsQuery) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AIAuditEventsQuery) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AIAuditEventsQuery) Window(name string, w keel.Window) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AIAuditEventsQuery) Having(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AIAuditEventsQuery) Limit(n int) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AIAuditEventsQuery) Offset(n int) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AIAuditEventsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AIAuditEventsQuery) AllTenants() keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AIAuditEventsQuery) CustomPlan() keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AIAuditEventsQuery) Timeout(d time.Duration) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AIAuditEventsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AIAuditEventsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AIAuditEventsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AIAuditEventsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AIAuditEventsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AIAuditEventsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AIAuditEventsQuery) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AIAuditEventsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AIAuditEventsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditEvent] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AIAuditEventsQuery) Clone() keel.Query[*aiaudit.AIAuditEvent] {
+	return &AIAuditEventsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AIAuditEventsQuery) One(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditEvent, error) {
+	return keel.One[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AIAuditEventsQuery) First(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditEvent, error) {
+	return keel.First[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AIAuditEventsQuery) List(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditEvent, error) {
+	return keel.List[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AIAuditEventsQuery) All(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditEvent, error) {
+	return keel.All[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AIAuditEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiaudit.AIAuditEvent, error) {
+	return keel.UpdateReturning[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AIAuditEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiaudit.AIAuditEvent], error) {
+	return keel.PageOf[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AIAuditEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiaudit.AIAuditEvent) error) error {
+	return keel.Each[*aiaudit.AIAuditEvent](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAIAuditEvent() unsafe.Pointer { return unsafe.Pointer(new(aiaudit.AIAuditEvent)) }
@@ -1079,7 +1798,7 @@ var aIAuditExportsRef = keel.Ref{Table: &aIAuditExportsTable}
 
 // AIAuditExportsTable is the table of aiaudit.AIAuditExport.
 type AIAuditExportsTable struct {
-	keel.Handle[*aiaudit.AIAuditExport]
+	keel.TableBase
 	ID                keelkinds.PulidIDCol
 	BusinessUnitID    keelkinds.PulidIDCol
 	OrganizationID    keelkinds.PulidIDCol
@@ -1110,7 +1829,7 @@ type AIAuditExportsTable struct {
 
 // AIAuditExports references the ai_audit_exports table.
 var AIAuditExports = &AIAuditExportsTable{
-	Handle:            keel.Handle[*aiaudit.AIAuditExport]{Ref: &aIAuditExportsRef},
+	TableBase:         keel.TableBase{Ref: &aIAuditExportsRef},
 	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 0}}},
 	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 1}}},
 	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 2}}},
@@ -1139,10 +1858,10 @@ var AIAuditExports = &AIAuditExportsTable{
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &aIAuditExportsRef, Index: 25}},
 }
 
-// BuildAIAuditExports builds the handle of ai_audit_exports for ref. Generated relation and alias methods call it.
+// BuildAIAuditExports builds the table of ai_audit_exports for ref. Generated relation and alias methods call it.
 func BuildAIAuditExports(r *keel.Ref) *AIAuditExportsTable {
 	return &AIAuditExportsTable{
-		Handle:            keel.Handle[*aiaudit.AIAuditExport]{Ref: r},
+		TableBase:         keel.TableBase{Ref: r},
 		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -1183,6 +1902,365 @@ func (t *AIAuditExportsTable) As(alias string) *AIAuditExportsTable {
 // Get returns the ai_audit_exports row with the given key, or keel.ErrNotFound.
 func (t *AIAuditExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*aiaudit.AIAuditExport, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AIAuditExportsQuery is a query over aiaudit.AIAuditExport.
+type AIAuditExportsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aiaudit.AIAuditExport] = (*AIAuditExportsTable)(nil)
+
+var _ keel.Query[*aiaudit.AIAuditExport] = (*AIAuditExportsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AIAuditExportsTable) Query() keel.Query[*aiaudit.AIAuditExport] {
+	return &AIAuditExportsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AIAuditExportsQuery.Where.
+func (t *AIAuditExportsTable) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AIAuditExportsQuery.Pick.
+func (t *AIAuditExportsTable) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AIAuditExportsQuery.Load.
+func (t *AIAuditExportsTable) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AIAuditExportsQuery.Omit.
+func (t *AIAuditExportsTable) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AIAuditExportsQuery.Order.
+func (t *AIAuditExportsTable) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AIAuditExportsQuery.Limit.
+func (t *AIAuditExportsTable) Limit(n int) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AIAuditExportsQuery.Group.
+func (t *AIAuditExportsTable) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AIAuditExportsQuery.GroupingSets.
+func (t *AIAuditExportsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AIAuditExportsQuery.Rollup.
+func (t *AIAuditExportsTable) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AIAuditExportsQuery.Cube.
+func (t *AIAuditExportsTable) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AIAuditExportsQuery.AllTenants.
+func (t *AIAuditExportsTable) AllTenants() keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AIAuditExportsQuery.Join.
+func (t *AIAuditExportsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AIAuditExportsQuery.LeftJoin.
+func (t *AIAuditExportsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AIAuditExportsQuery.LeftJoinLateral.
+func (t *AIAuditExportsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AIAuditExportsQuery.JoinLateral.
+func (t *AIAuditExportsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AIAuditExportsQuery.Lock.
+func (t *AIAuditExportsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AIAuditExportsQuery.DistinctOn.
+func (t *AIAuditExportsTable) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AIAuditExportsQuery.Cache.
+func (t *AIAuditExportsTable) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AIAuditExportsQuery.LoadStrategy.
+func (t *AIAuditExportsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AIAuditExportsQuery.With.
+func (t *AIAuditExportsTable) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AIAuditExportsQuery.Compute.
+func (t *AIAuditExportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AIAuditExportsTable) Create(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditExport) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AIAuditExportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditExport) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AIAuditExportsTable) Save(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditExport, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AIAuditExportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditExport, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AIAuditExportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditExport) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AIAuditExportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditExport, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AIAuditExportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditExport, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AIAuditExportsTable) Copy(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditExport) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AIAuditExportsQuery) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AIAuditExportsQuery) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AIAuditExportsQuery) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AIAuditExportsQuery) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AIAuditExportsQuery) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AIAuditExportsQuery) Distinct() keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AIAuditExportsQuery) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AIAuditExportsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AIAuditExportsQuery) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AIAuditExportsQuery) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AIAuditExportsQuery) Window(name string, w keel.Window) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AIAuditExportsQuery) Having(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AIAuditExportsQuery) Limit(n int) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AIAuditExportsQuery) Offset(n int) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AIAuditExportsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AIAuditExportsQuery) AllTenants() keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AIAuditExportsQuery) CustomPlan() keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AIAuditExportsQuery) Timeout(d time.Duration) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AIAuditExportsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AIAuditExportsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AIAuditExportsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AIAuditExportsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AIAuditExportsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AIAuditExportsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AIAuditExportsQuery) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AIAuditExportsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AIAuditExportsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditExport] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AIAuditExportsQuery) Clone() keel.Query[*aiaudit.AIAuditExport] {
+	return &AIAuditExportsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AIAuditExportsQuery) One(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditExport, error) {
+	return keel.One[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AIAuditExportsQuery) First(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditExport, error) {
+	return keel.First[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AIAuditExportsQuery) List(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditExport, error) {
+	return keel.List[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AIAuditExportsQuery) All(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditExport, error) {
+	return keel.All[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AIAuditExportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiaudit.AIAuditExport, error) {
+	return keel.UpdateReturning[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AIAuditExportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiaudit.AIAuditExport], error) {
+	return keel.PageOf[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AIAuditExportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiaudit.AIAuditExport) error) error {
+	return keel.Each[*aiaudit.AIAuditExport](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAIAuditExport() unsafe.Pointer { return unsafe.Pointer(new(aiaudit.AIAuditExport)) }
@@ -1383,7 +2461,7 @@ var aIAuditProjectorStatesRef = keel.Ref{Table: &aIAuditProjectorStatesTable}
 
 // AIAuditProjectorStatesTable is the table of aiaudit.AIAuditProjectorState.
 type AIAuditProjectorStatesTable struct {
-	keel.Handle[*aiaudit.AIAuditProjectorState]
+	keel.TableBase
 	Source      SourceCol
 	WatermarkTS keel.Int64Col
 	WatermarkID keel.StringCol
@@ -1392,17 +2470,17 @@ type AIAuditProjectorStatesTable struct {
 
 // AIAuditProjectorStates references the ai_audit_projector_state table.
 var AIAuditProjectorStates = &AIAuditProjectorStatesTable{
-	Handle:      keel.Handle[*aiaudit.AIAuditProjectorState]{Ref: &aIAuditProjectorStatesRef},
+	TableBase:   keel.TableBase{Ref: &aIAuditProjectorStatesRef},
 	Source:      SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 0}}},
 	WatermarkTS: keel.Int64Col{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 1}},
 	WatermarkID: keel.StringCol{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 2}},
 	UpdatedAt:   keel.Int64Col{Col: keel.Col{Ref: &aIAuditProjectorStatesRef, Index: 3}},
 }
 
-// BuildAIAuditProjectorStates builds the handle of ai_audit_projector_state for ref. Generated relation and alias methods call it.
+// BuildAIAuditProjectorStates builds the table of ai_audit_projector_state for ref. Generated relation and alias methods call it.
 func BuildAIAuditProjectorStates(r *keel.Ref) *AIAuditProjectorStatesTable {
 	return &AIAuditProjectorStatesTable{
-		Handle:      keel.Handle[*aiaudit.AIAuditProjectorState]{Ref: r},
+		TableBase:   keel.TableBase{Ref: r},
 		Source:      SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		WatermarkTS: keel.Int64Col{Col: keel.Col{Ref: r, Index: 1}},
 		WatermarkID: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
@@ -1421,6 +2499,365 @@ func (t *AIAuditProjectorStatesTable) As(alias string) *AIAuditProjectorStatesTa
 // Get returns the ai_audit_projector_state row with the given key, or keel.ErrNotFound.
 func (t *AIAuditProjectorStatesTable) Get(ctx context.Context, db *keel.DB, key aiaudit.Source) (*aiaudit.AIAuditProjectorState, error) {
 	return t.Where(t.Source.Eq(key)).One(ctx, db)
+}
+
+// AIAuditProjectorStatesQuery is a query over aiaudit.AIAuditProjectorState.
+type AIAuditProjectorStatesQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aiaudit.AIAuditProjectorState] = (*AIAuditProjectorStatesTable)(nil)
+
+var _ keel.Query[*aiaudit.AIAuditProjectorState] = (*AIAuditProjectorStatesQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AIAuditProjectorStatesTable) Query() keel.Query[*aiaudit.AIAuditProjectorState] {
+	return &AIAuditProjectorStatesQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AIAuditProjectorStatesQuery.Where.
+func (t *AIAuditProjectorStatesTable) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AIAuditProjectorStatesQuery.Pick.
+func (t *AIAuditProjectorStatesTable) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AIAuditProjectorStatesQuery.Load.
+func (t *AIAuditProjectorStatesTable) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AIAuditProjectorStatesQuery.Omit.
+func (t *AIAuditProjectorStatesTable) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AIAuditProjectorStatesQuery.Order.
+func (t *AIAuditProjectorStatesTable) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AIAuditProjectorStatesQuery.Limit.
+func (t *AIAuditProjectorStatesTable) Limit(n int) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AIAuditProjectorStatesQuery.Group.
+func (t *AIAuditProjectorStatesTable) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AIAuditProjectorStatesQuery.GroupingSets.
+func (t *AIAuditProjectorStatesTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AIAuditProjectorStatesQuery.Rollup.
+func (t *AIAuditProjectorStatesTable) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AIAuditProjectorStatesQuery.Cube.
+func (t *AIAuditProjectorStatesTable) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AIAuditProjectorStatesQuery.AllTenants.
+func (t *AIAuditProjectorStatesTable) AllTenants() keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AIAuditProjectorStatesQuery.Join.
+func (t *AIAuditProjectorStatesTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AIAuditProjectorStatesQuery.LeftJoin.
+func (t *AIAuditProjectorStatesTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AIAuditProjectorStatesQuery.LeftJoinLateral.
+func (t *AIAuditProjectorStatesTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AIAuditProjectorStatesQuery.JoinLateral.
+func (t *AIAuditProjectorStatesTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AIAuditProjectorStatesQuery.Lock.
+func (t *AIAuditProjectorStatesTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AIAuditProjectorStatesQuery.DistinctOn.
+func (t *AIAuditProjectorStatesTable) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AIAuditProjectorStatesQuery.Cache.
+func (t *AIAuditProjectorStatesTable) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AIAuditProjectorStatesQuery.LoadStrategy.
+func (t *AIAuditProjectorStatesTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AIAuditProjectorStatesQuery.With.
+func (t *AIAuditProjectorStatesTable) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AIAuditProjectorStatesQuery.Compute.
+func (t *AIAuditProjectorStatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AIAuditProjectorStatesTable) Create(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditProjectorState) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AIAuditProjectorStatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditProjectorState) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AIAuditProjectorStatesTable) Save(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditProjectorState, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AIAuditProjectorStatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditProjectorState, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AIAuditProjectorStatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditProjectorState) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AIAuditProjectorStatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditProjectorState, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AIAuditProjectorStatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditProjectorState, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AIAuditProjectorStatesTable) Copy(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditProjectorState) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AIAuditProjectorStatesQuery) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AIAuditProjectorStatesQuery) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AIAuditProjectorStatesQuery) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AIAuditProjectorStatesQuery) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AIAuditProjectorStatesQuery) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AIAuditProjectorStatesQuery) Distinct() keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AIAuditProjectorStatesQuery) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AIAuditProjectorStatesQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AIAuditProjectorStatesQuery) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AIAuditProjectorStatesQuery) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AIAuditProjectorStatesQuery) Window(name string, w keel.Window) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AIAuditProjectorStatesQuery) Having(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AIAuditProjectorStatesQuery) Limit(n int) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AIAuditProjectorStatesQuery) Offset(n int) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AIAuditProjectorStatesQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AIAuditProjectorStatesQuery) AllTenants() keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AIAuditProjectorStatesQuery) CustomPlan() keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AIAuditProjectorStatesQuery) Timeout(d time.Duration) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AIAuditProjectorStatesQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AIAuditProjectorStatesQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AIAuditProjectorStatesQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AIAuditProjectorStatesQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AIAuditProjectorStatesQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AIAuditProjectorStatesQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AIAuditProjectorStatesQuery) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AIAuditProjectorStatesQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AIAuditProjectorStatesQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditProjectorState] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AIAuditProjectorStatesQuery) Clone() keel.Query[*aiaudit.AIAuditProjectorState] {
+	return &AIAuditProjectorStatesQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AIAuditProjectorStatesQuery) One(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditProjectorState, error) {
+	return keel.One[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AIAuditProjectorStatesQuery) First(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditProjectorState, error) {
+	return keel.First[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AIAuditProjectorStatesQuery) List(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditProjectorState, error) {
+	return keel.List[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AIAuditProjectorStatesQuery) All(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditProjectorState, error) {
+	return keel.All[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AIAuditProjectorStatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiaudit.AIAuditProjectorState, error) {
+	return keel.UpdateReturning[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AIAuditProjectorStatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiaudit.AIAuditProjectorState], error) {
+	return keel.PageOf[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AIAuditProjectorStatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiaudit.AIAuditProjectorState) error) error {
+	return keel.Each[*aiaudit.AIAuditProjectorState](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAIAuditProjectorState() unsafe.Pointer {
@@ -1503,7 +2940,7 @@ var aIAuditSealsRef = keel.Ref{Table: &aIAuditSealsTable}
 
 // AIAuditSealsTable is the table of aiaudit.AIAuditSeal.
 type AIAuditSealsTable struct {
-	keel.Handle[*aiaudit.AIAuditSeal]
+	keel.TableBase
 	OrganizationID keelkinds.PulidIDCol
 	BusinessUnitID keelkinds.PulidIDCol
 	ToSeq          keel.Int64Col
@@ -1516,7 +2953,7 @@ type AIAuditSealsTable struct {
 
 // AIAuditSeals references the ai_audit_seals table.
 var AIAuditSeals = &AIAuditSealsTable{
-	Handle:         keel.Handle[*aiaudit.AIAuditSeal]{Ref: &aIAuditSealsRef},
+	TableBase:      keel.TableBase{Ref: &aIAuditSealsRef},
 	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 0}}},
 	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 1}}},
 	ToSeq:          keel.Int64Col{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 2}},
@@ -1527,10 +2964,10 @@ var AIAuditSeals = &AIAuditSealsTable{
 	SealedAt:       keel.Int64Col{Col: keel.Col{Ref: &aIAuditSealsRef, Index: 7}},
 }
 
-// BuildAIAuditSeals builds the handle of ai_audit_seals for ref. Generated relation and alias methods call it.
+// BuildAIAuditSeals builds the table of ai_audit_seals for ref. Generated relation and alias methods call it.
 func BuildAIAuditSeals(r *keel.Ref) *AIAuditSealsTable {
 	return &AIAuditSealsTable{
-		Handle:         keel.Handle[*aiaudit.AIAuditSeal]{Ref: r},
+		TableBase:      keel.TableBase{Ref: r},
 		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		ToSeq:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
@@ -1553,6 +2990,365 @@ func (t *AIAuditSealsTable) As(alias string) *AIAuditSealsTable {
 // Get returns the ai_audit_seals row with the given key, or keel.ErrNotFound.
 func (t *AIAuditSealsTable) Get(ctx context.Context, db *keel.DB, key int64) (*aiaudit.AIAuditSeal, error) {
 	return t.Where(t.ToSeq.Eq(key)).One(ctx, db)
+}
+
+// AIAuditSealsQuery is a query over aiaudit.AIAuditSeal.
+type AIAuditSealsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*aiaudit.AIAuditSeal] = (*AIAuditSealsTable)(nil)
+
+var _ keel.Query[*aiaudit.AIAuditSeal] = (*AIAuditSealsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AIAuditSealsTable) Query() keel.Query[*aiaudit.AIAuditSeal] {
+	return &AIAuditSealsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AIAuditSealsQuery.Where.
+func (t *AIAuditSealsTable) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AIAuditSealsQuery.Pick.
+func (t *AIAuditSealsTable) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AIAuditSealsQuery.Load.
+func (t *AIAuditSealsTable) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AIAuditSealsQuery.Omit.
+func (t *AIAuditSealsTable) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AIAuditSealsQuery.Order.
+func (t *AIAuditSealsTable) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AIAuditSealsQuery.Limit.
+func (t *AIAuditSealsTable) Limit(n int) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AIAuditSealsQuery.Group.
+func (t *AIAuditSealsTable) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AIAuditSealsQuery.GroupingSets.
+func (t *AIAuditSealsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AIAuditSealsQuery.Rollup.
+func (t *AIAuditSealsTable) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AIAuditSealsQuery.Cube.
+func (t *AIAuditSealsTable) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AIAuditSealsQuery.AllTenants.
+func (t *AIAuditSealsTable) AllTenants() keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AIAuditSealsQuery.Join.
+func (t *AIAuditSealsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AIAuditSealsQuery.LeftJoin.
+func (t *AIAuditSealsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AIAuditSealsQuery.LeftJoinLateral.
+func (t *AIAuditSealsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AIAuditSealsQuery.JoinLateral.
+func (t *AIAuditSealsTable) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AIAuditSealsQuery.Lock.
+func (t *AIAuditSealsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AIAuditSealsQuery.DistinctOn.
+func (t *AIAuditSealsTable) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AIAuditSealsQuery.Cache.
+func (t *AIAuditSealsTable) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AIAuditSealsQuery.LoadStrategy.
+func (t *AIAuditSealsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AIAuditSealsQuery.With.
+func (t *AIAuditSealsTable) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AIAuditSealsQuery.Compute.
+func (t *AIAuditSealsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AIAuditSealsTable) Create(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditSeal) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AIAuditSealsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditSeal) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AIAuditSealsTable) Save(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditSeal, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AIAuditSealsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditSeal, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AIAuditSealsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiaudit.AIAuditSeal) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AIAuditSealsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditSeal, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AIAuditSealsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditSeal, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AIAuditSealsTable) Copy(ctx context.Context, db *keel.DB, rows []*aiaudit.AIAuditSeal) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AIAuditSealsQuery) Where(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AIAuditSealsQuery) Pick(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AIAuditSealsQuery) Omit(cols ...keel.Column) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AIAuditSealsQuery) Load(ls ...keel.Loader) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AIAuditSealsQuery) Order(os ...keel.Order) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AIAuditSealsQuery) Distinct() keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AIAuditSealsQuery) Group(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AIAuditSealsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AIAuditSealsQuery) Rollup(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AIAuditSealsQuery) Cube(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AIAuditSealsQuery) Window(name string, w keel.Window) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AIAuditSealsQuery) Having(ps ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AIAuditSealsQuery) Limit(n int) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AIAuditSealsQuery) Offset(n int) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AIAuditSealsQuery) DistinctOn(es ...keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AIAuditSealsQuery) AllTenants() keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AIAuditSealsQuery) CustomPlan() keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AIAuditSealsQuery) Timeout(d time.Duration) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AIAuditSealsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AIAuditSealsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AIAuditSealsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AIAuditSealsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AIAuditSealsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AIAuditSealsQuery) Cache(opts ...keel.CacheOption) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AIAuditSealsQuery) With(ctes ...*keel.CTETable) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AIAuditSealsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AIAuditSealsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*aiaudit.AIAuditSeal] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AIAuditSealsQuery) Clone() keel.Query[*aiaudit.AIAuditSeal] {
+	return &AIAuditSealsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AIAuditSealsQuery) One(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditSeal, error) {
+	return keel.One[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AIAuditSealsQuery) First(ctx context.Context, db *keel.DB) (*aiaudit.AIAuditSeal, error) {
+	return keel.First[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AIAuditSealsQuery) List(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditSeal, error) {
+	return keel.List[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AIAuditSealsQuery) All(ctx context.Context, db *keel.DB) ([]*aiaudit.AIAuditSeal, error) {
+	return keel.All[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AIAuditSealsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiaudit.AIAuditSeal, error) {
+	return keel.UpdateReturning[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AIAuditSealsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiaudit.AIAuditSeal], error) {
+	return keel.PageOf[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AIAuditSealsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiaudit.AIAuditSeal) error) error {
+	return keel.Each[*aiaudit.AIAuditSeal](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAIAuditSeal() unsafe.Pointer { return unsafe.Pointer(new(aiaudit.AIAuditSeal)) }

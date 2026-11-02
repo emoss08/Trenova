@@ -4,6 +4,7 @@ package accountingdriftdb
 
 import (
 	"context"
+	"time"
 	"unsafe"
 
 	"github.com/emoss08/keel"
@@ -90,7 +91,7 @@ var accountingDriftFindingsRef = keel.Ref{Table: &accountingDriftFindingsTable}
 
 // AccountingDriftFindingsTable is the table of accountingdrift.AccountingDriftFinding.
 type AccountingDriftFindingsTable struct {
-	keel.Handle[*accountingdrift.AccountingDriftFinding]
+	keel.TableBase
 	ID                 keelkinds.PulidIDCol
 	BusinessUnitID     keelkinds.PulidIDCol
 	OrganizationID     keelkinds.PulidIDCol
@@ -128,7 +129,7 @@ type AccountingDriftFindingsTable struct {
 
 // AccountingDriftFindings references the accounting_drift_findings table.
 var AccountingDriftFindings = &AccountingDriftFindingsTable{
-	Handle:             keel.Handle[*accountingdrift.AccountingDriftFinding]{Ref: &accountingDriftFindingsRef},
+	TableBase:          keel.TableBase{Ref: &accountingDriftFindingsRef},
 	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 0}}},
 	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 1}}},
 	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 2}}},
@@ -164,10 +165,10 @@ var AccountingDriftFindings = &AccountingDriftFindingsTable{
 	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingDriftFindingsRef, Index: 32}},
 }
 
-// BuildAccountingDriftFindings builds the handle of accounting_drift_findings for ref. Generated relation and alias methods call it.
+// BuildAccountingDriftFindings builds the table of accounting_drift_findings for ref. Generated relation and alias methods call it.
 func BuildAccountingDriftFindings(r *keel.Ref) *AccountingDriftFindingsTable {
 	return &AccountingDriftFindingsTable{
-		Handle:             keel.Handle[*accountingdrift.AccountingDriftFinding]{Ref: r},
+		TableBase:          keel.TableBase{Ref: r},
 		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
@@ -220,6 +221,365 @@ func (t *AccountingDriftFindingsTable) ResolvedBy() *tenantdb.UsersTable {
 // Get returns the accounting_drift_findings row with the given key, or keel.ErrNotFound.
 func (t *AccountingDriftFindingsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*accountingdrift.AccountingDriftFinding, error) {
 	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// AccountingDriftFindingsQuery is a query over accountingdrift.AccountingDriftFinding.
+type AccountingDriftFindingsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*accountingdrift.AccountingDriftFinding] = (*AccountingDriftFindingsTable)(nil)
+
+var _ keel.Query[*accountingdrift.AccountingDriftFinding] = (*AccountingDriftFindingsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *AccountingDriftFindingsTable) Query() keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return &AccountingDriftFindingsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see AccountingDriftFindingsQuery.Where.
+func (t *AccountingDriftFindingsTable) Where(ps ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see AccountingDriftFindingsQuery.Pick.
+func (t *AccountingDriftFindingsTable) Pick(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see AccountingDriftFindingsQuery.Load.
+func (t *AccountingDriftFindingsTable) Load(ls ...keel.Loader) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see AccountingDriftFindingsQuery.Omit.
+func (t *AccountingDriftFindingsTable) Omit(cols ...keel.Column) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see AccountingDriftFindingsQuery.Order.
+func (t *AccountingDriftFindingsTable) Order(os ...keel.Order) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see AccountingDriftFindingsQuery.Limit.
+func (t *AccountingDriftFindingsTable) Limit(n int) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see AccountingDriftFindingsQuery.Group.
+func (t *AccountingDriftFindingsTable) Group(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see AccountingDriftFindingsQuery.GroupingSets.
+func (t *AccountingDriftFindingsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see AccountingDriftFindingsQuery.Rollup.
+func (t *AccountingDriftFindingsTable) Rollup(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see AccountingDriftFindingsQuery.Cube.
+func (t *AccountingDriftFindingsTable) Cube(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see AccountingDriftFindingsQuery.AllTenants.
+func (t *AccountingDriftFindingsTable) AllTenants() keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see AccountingDriftFindingsQuery.Join.
+func (t *AccountingDriftFindingsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see AccountingDriftFindingsQuery.LeftJoin.
+func (t *AccountingDriftFindingsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see AccountingDriftFindingsQuery.LeftJoinLateral.
+func (t *AccountingDriftFindingsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see AccountingDriftFindingsQuery.JoinLateral.
+func (t *AccountingDriftFindingsTable) JoinLateral(sub keel.LateralSource) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see AccountingDriftFindingsQuery.Lock.
+func (t *AccountingDriftFindingsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see AccountingDriftFindingsQuery.DistinctOn.
+func (t *AccountingDriftFindingsTable) DistinctOn(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see AccountingDriftFindingsQuery.Cache.
+func (t *AccountingDriftFindingsTable) Cache(opts ...keel.CacheOption) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see AccountingDriftFindingsQuery.LoadStrategy.
+func (t *AccountingDriftFindingsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see AccountingDriftFindingsQuery.With.
+func (t *AccountingDriftFindingsTable) With(ctes ...*keel.CTETable) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see AccountingDriftFindingsQuery.Compute.
+func (t *AccountingDriftFindingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *AccountingDriftFindingsTable) Create(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *AccountingDriftFindingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *AccountingDriftFindingsTable) Save(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *AccountingDriftFindingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *AccountingDriftFindingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingdrift.AccountingDriftFinding) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *AccountingDriftFindingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *AccountingDriftFindingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *AccountingDriftFindingsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingdrift.AccountingDriftFinding) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *AccountingDriftFindingsQuery) Where(ps ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *AccountingDriftFindingsQuery) Pick(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *AccountingDriftFindingsQuery) Omit(cols ...keel.Column) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *AccountingDriftFindingsQuery) Load(ls ...keel.Loader) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *AccountingDriftFindingsQuery) Order(os ...keel.Order) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *AccountingDriftFindingsQuery) Distinct() keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *AccountingDriftFindingsQuery) Group(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *AccountingDriftFindingsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *AccountingDriftFindingsQuery) Rollup(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *AccountingDriftFindingsQuery) Cube(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *AccountingDriftFindingsQuery) Window(name string, w keel.Window) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *AccountingDriftFindingsQuery) Having(ps ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *AccountingDriftFindingsQuery) Limit(n int) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *AccountingDriftFindingsQuery) Offset(n int) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *AccountingDriftFindingsQuery) DistinctOn(es ...keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *AccountingDriftFindingsQuery) AllTenants() keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *AccountingDriftFindingsQuery) CustomPlan() keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *AccountingDriftFindingsQuery) Timeout(d time.Duration) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *AccountingDriftFindingsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *AccountingDriftFindingsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *AccountingDriftFindingsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *AccountingDriftFindingsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *AccountingDriftFindingsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *AccountingDriftFindingsQuery) Cache(opts ...keel.CacheOption) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *AccountingDriftFindingsQuery) With(ctes ...*keel.CTETable) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *AccountingDriftFindingsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *AccountingDriftFindingsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*accountingdrift.AccountingDriftFinding] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *AccountingDriftFindingsQuery) Clone() keel.Query[*accountingdrift.AccountingDriftFinding] {
+	return &AccountingDriftFindingsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *AccountingDriftFindingsQuery) One(ctx context.Context, db *keel.DB) (*accountingdrift.AccountingDriftFinding, error) {
+	return keel.One[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *AccountingDriftFindingsQuery) First(ctx context.Context, db *keel.DB) (*accountingdrift.AccountingDriftFinding, error) {
+	return keel.First[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *AccountingDriftFindingsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingdrift.AccountingDriftFinding, error) {
+	return keel.List[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *AccountingDriftFindingsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingdrift.AccountingDriftFinding, error) {
+	return keel.All[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *AccountingDriftFindingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingdrift.AccountingDriftFinding, error) {
+	return keel.UpdateReturning[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *AccountingDriftFindingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingdrift.AccountingDriftFinding], error) {
+	return keel.PageOf[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *AccountingDriftFindingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingdrift.AccountingDriftFinding) error) error {
+	return keel.Each[*accountingdrift.AccountingDriftFinding](ctx, db, &q.QueryCore, size, fn)
 }
 
 func newAccountingDriftFinding() unsafe.Pointer {
