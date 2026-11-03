@@ -155,7 +155,7 @@ func AskedQuestions(history []conversation.Message) map[string]struct{} {
 			continue
 		}
 		for _, call := range message.ToolCalls {
-			if call.Name != Name {
+			if call.Name != "ask_user" {
 				continue
 			}
 			if _, wasRefused := refused[call.ID]; wasRefused {

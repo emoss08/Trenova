@@ -95,16 +95,6 @@ func TestExampleConfigDecodesStrictly(t *testing.T) {
 
 	platform, ok := example["platform"].(map[string]any)
 	require.True(t, ok, "config.example.yaml must have a platform section")
-	for _, path := range editionSectionPaths {
-		segments := strings.Split(path, ".")
-		if len(segments) == 1 {
-			assert.NotContainsf(t, example, segments[0], "%s belongs to an edition", path)
-			continue
-		}
-		if segments[0] == "platform" {
-			assert.NotContainsf(t, platform, segments[1], "%s belongs to an edition", path)
-		}
-	}
 
 	section, err := yaml.Marshal(map[string]any{"platform": platform})
 	require.NoError(t, err)

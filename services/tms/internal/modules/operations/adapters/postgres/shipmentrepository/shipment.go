@@ -88,13 +88,13 @@ func New(p Params) shipmentports.ShipmentRepository {
 	}
 }
 
-func busy(err error, id pulid.ID) error {
+func busy(err error, shipmentID pulid.ID) error {
 	if err == nil {
 		return nil
 	}
 
 	return dberror.MapRetryableTransactionError(
-		shipmentErrors.Map(err, id.String()),
+		shipmentErrors.Map(err, shipmentID.String()),
 		shipmentBusyMessage,
 	)
 }
