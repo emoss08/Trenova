@@ -1,11 +1,15 @@
 import { recordPath } from "@/config/record-links";
 import {
+  actualsLabel,
   etaReading,
   journeyProgress,
   journeyStops,
   laneOf,
+  punctualityLabel,
   shipmentStage,
+  stopTypeLabel,
   totalMiles,
+  windowLabel,
   type JourneyStop,
 } from "@/routes/desk/_components/artifacts/cards/shipment/shipment-card";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -52,6 +56,83 @@ function currentMove(moves: readonly ShipmentMove[]): ShipmentMove | undefined {
   return (
     ordered.find((move) => move.status !== "Completed" && move.status !== "Canceled") ??
     [...ordered].reverse().find((move) => move.status !== "Canceled")
+  );
+}
+
+/** How many stops the preview lists before it says how many more there are. */
+const STOPS_SHOWN = 5;
+
+const PUNCTUALITY_TEXT: Record<"early" | "onTime" | "late", string> = {
+  early: "text-foreground-subtle",
+  onTime: "text-foreground-subtle",
+  late: "text-warning-subtle-foreground",
+};
+
+/**
+ * Every stop in the order it is run, as the Desk's shipment card lists them
+ * down its rail: what kind of stop and where, its window or when the truck
+ * came and went, and whether it was on time. A run stop is filled, the one
+ * the truck is at ringed, a canceled one struck through.
+ */
+export function StopList({ stops }: { stops: readonly JourneyStop[] }) {
+  const t = useT();
+  const shown = stops.slice(0, STOPS_SHOWN);
+  const more = stops.length - shown.length;
+  return (
+    <ol className="flex flex-col">
+      {shown.map((stop, index) => {
+        const name = stop.place.name || stop.place.label;
+        const where = stop.place.name && stop.place.label !== name ? stop.place.label : "";
+        const when = actualsLabel(stop, t) || windowLabel(stop, t);
+        const punctuality = stop.punctuality ? punctualityLabel(stop.punctuality, t) : "";
+        return (
+          <li key={stop.id} className="relative flex gap-3 pb-2.5 last:pb-0">
+            {index < shown.length - 1 && (
+              <span aria-hidden className="bg-border absolute top-3 bottom-0 left-[3px] w-px" />
+            )}
+            <span
+              aria-hidden
+              className={cn(
+                "mt-1.5 size-[7px] shrink-0 rounded-full",
+                stop.phase === "done"
+                  ? "bg-foreground"
+                  : stop.phase === "current"
+                    ? "border-foreground bg-card border-2"
+                    : "border-border-strong bg-card border",
+              )}
+            />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span
+                className={cn(
+                  "flex min-w-0 items-baseline gap-2 text-base",
+                  stop.phase === "canceled" && "text-foreground-subtle line-through",
+                )}
+              >
+                <span className="text-foreground-subtle shrink-0 text-sm">
+                  {stopTypeLabel(stop.type, t)}
+                </span>
+                <span className="text-foreground truncate">{name || "—"}</span>
+              </span>
+              {(where || when) && (
+                <span className="text-foreground-subtle truncate text-sm">
+                  {[where, when].filter(Boolean).join(" · ")}
+                </span>
+              )}
+            </span>
+            {punctuality && stop.punctuality && (
+              <span className={cn("shrink-0 text-sm", PUNCTUALITY_TEXT[stop.punctuality.state])}>
+                {punctuality}
+              </span>
+            )}
+          </li>
+        );
+      })}
+      {more > 0 && (
+        <li className="text-foreground-subtle pt-1 pl-5 text-sm">
+          {t("{0, plural, one {# more stop} other {# more stops}}", more)}
+        </li>
+      )}
+    </ol>
   );
 }
 
@@ -183,6 +264,7 @@ function ShipmentBody({
     worker?.wholeName || [worker?.firstName, worker?.lastName].filter(Boolean).join(" ");
   const total = Number(shipment.totalChargeAmount);
   const latest = events?.[0]?.occurredAt ?? shipment.updatedAt;
+  const stops = journeyStops(shipment.moves);
 
   return (
     <>
@@ -204,6 +286,14 @@ function ShipmentBody({
       <RouteCard shipment={shipment} />
       {reading && reading.detail !== "" && (
         <p className="text-foreground-muted text-base first-letter:uppercase">{reading.detail}</p>
+      )}
+      {stops.length > 0 && (
+        <PreviewSection
+          label={t("Stops")}
+          aside={t("{0, plural, one {# stop} other {# stops}}", stops.length)}
+        >
+          <StopList stops={stops} />
+        </PreviewSection>
       )}
       <PreviewFields
         rows={[

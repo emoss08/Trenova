@@ -1,13 +1,18 @@
 import { recordPath } from "@/config/record-links";
+import {
+  accountStanding,
+  agingStretches,
+  creditUse,
+  type AgingStretch,
+} from "@/routes/desk/_components/artifacts/cards/customer/customer-card";
+import type {
+  CardCheckState,
+  CardTone,
+} from "@/routes/desk/_components/artifacts/record-card/record-card";
 import { customerPaymentTermChoices, findChoice } from "@/lib/choices";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  cn,
-  formatCompactCurrency,
-  formatCurrency,
-  formatPercent,
-} from "@trenova/shared/lib/utils";
+import { formatCompactCurrency, formatCurrency, formatPercent } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { PALETTE_ENTITY_ICONS } from "../../palette-entities";
 import type { StatusState } from "../../palette-parts";
@@ -32,7 +37,23 @@ import {
 } from "./preview-queries";
 import type { RecordPreviewProps } from "./record-preview-props";
 
-const CREDIT_WARN_SHARE = 0.8;
+const CHECK_STATE: Record<CardCheckState, StatusState> = {
+  ok: "neutral",
+  info: "neutral",
+  warn: "warn",
+  bad: "bad",
+};
+
+/** The Desk's standing tones as the palette's pill draws them. */
+const TONE_STATE: Record<CardTone, StatusState> = {
+  success: "ok",
+  warn: "warn",
+  danger: "bad",
+  progress: "neutral",
+  ink: "neutral",
+  muted: "neutral",
+  draft: "neutral",
+};
 
 function money(minor: number): string {
   return formatCurrency(minor / 100);
@@ -56,35 +77,38 @@ export function recordShipmentLane(shipment: RecordShipment): string {
   return from && to ? `${from} → ${to}` : from || to;
 }
 
-interface AgingBucket {
-  label: string;
-  minor: number;
-  tone: string;
-}
-
-function AgingBar({ buckets, total }: { buckets: readonly AgingBucket[]; total: number }) {
+/**
+ * What is open, aged as the Desk's customer card and the receivables pages age
+ * it: one strip, each bucket as wide as its share and in its own colour, and
+ * the buckets keyed underneath.
+ */
+function AgingBar({ stretches }: { stretches: readonly AgingStretch[] }) {
   return (
     <>
       <div className="bg-sunken flex h-2 overflow-hidden rounded-full" aria-hidden>
-        {buckets.map((bucket) =>
-          bucket.minor > 0 ? (
+        {stretches.map((stretch) =>
+          stretch.minor > 0 ? (
             <span
-              key={bucket.label}
-              className={cn(
-                "cp-grow-x h-full first:rounded-l-full last:rounded-r-full",
-                bucket.tone,
-              )}
-              style={{ flexGrow: bucket.minor / Math.max(total, 1) }}
+              key={stretch.key}
+              className="cp-grow-x h-full first:rounded-l-full last:rounded-r-full"
+              style={{ flexGrow: stretch.share, backgroundColor: stretch.color }}
             />
           ) : null,
         )}
       </div>
       <div className="grid grid-cols-5 gap-2">
-        {buckets.map((bucket) => (
-          <span key={bucket.label} className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-foreground-subtle truncate text-sm">{bucket.label}</span>
+        {stretches.map((stretch) => (
+          <span key={stretch.key} className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-foreground-subtle flex items-center gap-1 truncate text-sm">
+              <span
+                aria-hidden
+                className="size-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: stretch.color }}
+              />
+              {stretch.label}
+            </span>
             <span className="text-foreground truncate font-mono text-sm">
-              {bucket.minor > 0 ? formatCompactCurrency(bucket.minor / 100) : "—"}
+              {stretch.minor > 0 ? formatCompactCurrency(stretch.minor / 100) : "—"}
             </span>
           </span>
         ))}
@@ -116,6 +140,23 @@ export function CustomerPreview({ record, onNavigate }: RecordPreviewProps) {
     : null;
   const openLoads = loads.data?.total ?? null;
 
+  // Receivables count what is open now; the profile's balance is what it was
+  // when last posted, so it stands in only when receivables cannot be read,
+  // as the Desk's customer card reads it.
+  const credit = snapshot
+    ? creditUse(
+        snapshot.totalOpenMinor / 100,
+        snapshot.hasCreditLimit ? snapshot.creditLimitMinor / 100 : null,
+      )
+    : billing
+      ? creditUse(
+          Number(billing.creditBalance ?? 0),
+          billing.creditLimit === null || billing.creditLimit === undefined
+            ? null
+            : Number(billing.creditLimit),
+        )
+      : null;
+
   const stats: PreviewStat[] = [];
   if (snapshot && buckets) {
     const overdue = snapshot.overdueMinor;
@@ -129,25 +170,14 @@ export function CustomerPreview({ record, onNavigate }: RecordPreviewProps) {
         state: pastState,
       },
     );
-    if (snapshot.hasCreditLimit && snapshot.creditLimitMinor > 0) {
-      const used = aging.data!.creditUtilization;
-      stats.push({
-        label: t("Credit used"),
-        value: formatPercent(used * 100, 0),
-        state: used > 1 ? "bad" : used > CREDIT_WARN_SHARE ? "warn" : "neutral",
-      });
-    }
   }
-
-  const agingBuckets: AgingBucket[] = buckets
-    ? [
-        { label: t("Current"), minor: buckets.currentMinor, tone: "bg-border-strong" },
-        { label: t("1–30"), minor: buckets.days1To30Minor, tone: "bg-foreground-faint" },
-        { label: t("31–60"), minor: buckets.days31To60Minor, tone: "bg-foreground-subtle" },
-        { label: t("61–90"), minor: buckets.days61To90Minor, tone: "bg-foreground-muted" },
-        { label: t("90+"), minor: buckets.daysOver90Minor, tone: "bg-danger" },
-      ]
-    : [];
+  if (credit) {
+    stats.push({
+      label: t("Credit used"),
+      value: formatPercent(credit.share * 100, 0),
+      state: CHECK_STATE[credit.state],
+    });
+  }
 
   const contact = data.emailProfile?.toRecipients
     ?.split(",")
@@ -159,7 +189,7 @@ export function CustomerPreview({ record, onNavigate }: RecordPreviewProps) {
       : billing?.creditLimit && Number(billing.creditLimit) > 0
         ? formatCurrency(Number(billing.creditLimit))
         : null;
-  const active = data.status === "Active";
+  const standing = accountStanding(data.status, billing?.creditStatus, t);
 
   return (
     <>
@@ -175,9 +205,7 @@ export function CustomerPreview({ record, onNavigate }: RecordPreviewProps) {
       <PreviewHead
         title={data.name}
         subtitle={[data.code, place].filter(Boolean).join(" · ")}
-        status={
-          <StatePill label={active ? t("Active") : t("Inactive")} state={active ? "ok" : "warn"} />
-        }
+        status={<StatePill label={standing.label} state={TONE_STATE[standing.tone]} />}
       />
       <PreviewStats items={stats} />
       {buckets && buckets.totalOpenMinor > 0 && (
@@ -186,7 +214,7 @@ export function CustomerPreview({ record, onNavigate }: RecordPreviewProps) {
           aside={t("of {0}", money(buckets.totalOpenMinor))}
           className="gap-2.5"
         >
-          <AgingBar buckets={agingBuckets} total={buckets.totalOpenMinor} />
+          <AgingBar stretches={agingStretches(buckets, t)} />
         </PreviewSection>
       )}
       {loads.data && loads.data.rows.length > 0 && (

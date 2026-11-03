@@ -6,7 +6,7 @@ import type {
 } from "@/lib/graphql/worker-card";
 import { choiceLabel, endorsementTypeChoices } from "@/lib/choices";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { worstFirst, type DueCheck } from "../../record-card/card-due";
+import { worstFirst, type DueCheck } from "../../record-card/due-checks";
 import type { CardCheckState, CardFact, CardTone } from "../../record-card/record-card";
 import { cardDate, dueReading, personName } from "../../record-card/record-card-values";
 

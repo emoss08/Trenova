@@ -62,7 +62,10 @@ artifacts/
                           map-tiles.ts, with a location's fence drawn round
                           the dot), what falls due (card-due.tsx: a check is
                           bad, warn, info, which is worth knowing and asks
-                          for no look, or ok), a share
+                          for no look, or ok; the checks and their
+                          order are `due-checks.ts`, apart from the frame,
+                          so a card's helpers and the command palette's
+                          worker preview read them without it), a share
                           drawn as a meter (CardMeter: credit used, a rate
                           structure's groups), figures in a ruled strip
                           (CardStats: payment pace), a person's initials

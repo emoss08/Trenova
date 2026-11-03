@@ -1,7 +1,7 @@
 import { choiceLabel, equipmentOwnershipChoices } from "@/lib/choices";
 import type { EquipmentOwnershipType, EquipmentStatus } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { DueCheck } from "./card-due";
+import type { DueCheck } from "./due-checks";
 import type { CardFact, CardTone } from "./record-card";
 import { cardDate, dueReading } from "./record-card-values";
 

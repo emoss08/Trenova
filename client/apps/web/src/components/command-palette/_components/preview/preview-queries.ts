@@ -1,6 +1,8 @@
+import { getFileCategory } from "@/components/documents/document-utils";
 import { fetchRecordShipments, type ShipmentScope } from "@/lib/graphql/record-shipments";
 import { fetchDeskWorker } from "@/lib/graphql/worker-card";
 import { ar } from "@/lib/queries/ar";
+import { documentPage, PAGE_IMAGE_CACHE } from "@/lib/queries/document-page";
 import { shipment } from "@/lib/queries/shipment";
 import { telematics } from "@/lib/queries/telematics";
 import { apiService } from "@/services/api";
@@ -10,6 +12,7 @@ import {
   type CommandPaletteCustomerPreviewQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import type { Document } from "@trenova/shared/types/document";
 import type { QueryClient } from "@tanstack/react-query";
 import type { PaletteRecord } from "../../palette-model";
 
@@ -79,6 +82,17 @@ export function documentPreviewQuery(id: string) {
   };
 }
 
+/** Whether the server draws the file's pages: a PDF or an image, as the page endpoint serves them. */
+export function hasPages(document: Pick<Document, "fileType" | "originalName">): boolean {
+  const category = getFileCategory(document.fileType, document.originalName);
+  return category === "pdf" || category === "image";
+}
+
+/** The document's first page as the server draws it, the query its preview reads. */
+export function documentFirstPageQuery(id: string) {
+  return { ...documentPage.image(id, 1), ...PAGE_IMAGE_CACHE };
+}
+
 export function documentExtractionQuery(id: string) {
   return {
     queryKey: ["command-palette", "document-extraction", id] as const,
@@ -112,7 +126,14 @@ export function prefetchRecordPreview(queryClient: QueryClient, record: PaletteR
       void queryClient.prefetchQuery(workerPreviewQuery(record.id));
       return;
     case "document":
-      void queryClient.prefetchQuery(documentPreviewQuery(record.id));
+      void queryClient
+        .fetchQuery(documentPreviewQuery(record.id))
+        .then((document) =>
+          hasPages(document)
+            ? queryClient.prefetchQuery(documentFirstPageQuery(record.id))
+            : undefined,
+        )
+        .catch(() => undefined);
       return;
   }
 }

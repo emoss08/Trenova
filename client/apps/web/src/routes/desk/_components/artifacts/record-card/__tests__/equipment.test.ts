@@ -1,6 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { worstFirst } from "../card-due";
+import { worstFirst } from "../due-checks";
 import {
   equipmentFacts,
   equipmentName,

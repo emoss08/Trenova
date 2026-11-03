@@ -1,8 +1,17 @@
+import { hosClockTone } from "@/components/hos/hos-clock-gauges";
 import { recordPath } from "@/config/record-links";
+import type { DueCheck } from "@/routes/desk/_components/artifacts/record-card/due-checks";
+import {
+  dispatchStanding,
+  hosClocks,
+  licenseLine,
+  qualificationChecks,
+  type HosClock,
+} from "@/routes/desk/_components/artifacts/cards/worker/worker-card";
+import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import { durationLabel } from "@/routes/desk/_components/artifacts/cards/shipment/shipment-card";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatCompactAge, formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { formatClockDurationMs, formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { PALETTE_ENTITY_ICONS } from "../../palette-entities";
@@ -19,72 +28,70 @@ import {
   PreviewSource,
   RelatedRow,
   StatePill,
+  type PreviewFieldRow,
 } from "./preview-frame";
 import { openShipmentsQuery, workerHosQuery, workerPreviewQuery } from "./preview-queries";
 import type { RecordPreviewProps } from "./record-preview-props";
 
-const MS_PER_MINUTE = 60_000;
-const TIGHT_MS = 2 * 60 * MS_PER_MINUTE;
-const SOON_SECONDS = 30 * 86_400;
-const DEFAULT_LIMITS = { drive: 11, shift: 14, cycle: 70 } as const;
+/** How big the clocks' rings are drawn in the preview's narrow column. */
+const RING_SIZE = 56;
+const RING_STROKE = 5;
 
-interface Clock {
-  label: string;
-  remainingMs: number;
-  limitMs: number;
-}
+const CHECK_STATE: Record<DueCheck["state"], StatusState | undefined> = {
+  ok: undefined,
+  info: undefined,
+  warn: "warn",
+  bad: "bad",
+};
 
-function HosStrip({ clocks }: { clocks: readonly Clock[] }) {
+/**
+ * The driver's four clocks as the Desk's worker card draws them: a ring each,
+ * filled with what is left of its limit and coloured as the worker's page
+ * colours it, the time left inside and the limit under it.
+ */
+export function HosRings({ clocks }: { clocks: readonly HosClock[] }) {
   const t = useT();
   return (
-    <div className="bg-sunken rounded-surface divide-border-subtle grid grid-cols-3 divide-x">
-      {clocks.map((clock) => {
-        const share =
-          clock.limitMs > 0 ? Math.min(1, Math.max(0, clock.remainingMs / clock.limitMs)) : 0;
-        const tight = clock.remainingMs < TIGHT_MS;
-        return (
-          <div key={clock.label} className="flex min-w-0 flex-col gap-1.5 px-3.5 py-3">
-            <span className="text-foreground-subtle truncate text-sm">{clock.label}</span>
+    <div className="bg-sunken rounded-surface grid grid-cols-4 gap-1 px-2 py-3">
+      {clocks.map((clock) => (
+        <div key={clock.key} className="flex min-w-0 flex-col items-center gap-1 text-center">
+          <RingGauge
+            value={clock.share}
+            size={RING_SIZE}
+            strokeWidth={RING_STROKE}
+            tone={hosClockTone(clock.remainingMs)}
+            aria-label={t("{0} time remaining", clock.label)}
+          >
             <span
               className={cn(
-                "text-xl font-medium tabular-nums",
-                tight ? "text-warning-subtle-foreground" : "text-foreground",
+                "text-xs font-medium tabular-nums",
+                clock.state === "bad"
+                  ? "text-danger-subtle-foreground"
+                  : clock.state === "warn"
+                    ? "text-warning-subtle-foreground"
+                    : "text-foreground",
               )}
             >
-              {durationLabel(clock.remainingMs / MS_PER_MINUTE, t)}
+              {formatClockDurationMs(clock.remainingMs)}
             </span>
-            <span className="bg-border-subtle h-1 overflow-hidden rounded-full" aria-hidden>
-              <span
-                className={cn(
-                  "cp-grow-x block h-full rounded-full",
-                  tight ? "bg-warning" : "bg-foreground-muted",
-                )}
-                style={{ width: `${Math.round(share * 100)}%` }}
-              />
-            </span>
-          </div>
-        );
-      })}
+          </RingGauge>
+          <span className="text-foreground w-full truncate text-sm">{clock.label}</span>
+          <span className="text-foreground-subtle w-full truncate text-xs tabular-nums">
+            {t("of {0}", formatClockDurationMs(clock.limitMs))}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
 
-function expiry(
-  at: number | null | undefined,
-  t: ReturnType<typeof useT>,
-): { value: string; state: StatusState } | null {
-  if (!at || at <= 0) {
-    return null;
-  }
-  const left = at - Date.now() / 1000;
-  const date = formatUnixDateMedium(at);
-  if (left < 0) {
-    return { value: t("Expired {0}", date), state: "bad" };
-  }
-  if (left < SOON_SECONDS) {
-    return { value: t("Expires {0}", date), state: "warn" };
-  }
-  return { value: t("Through {0}", date), state: "neutral" };
+/** The worker's qualification dates as rows, worst first: what lapsed or falls due marked. */
+export function qualificationRows(checks: readonly DueCheck[]): PreviewFieldRow[] {
+  return checks.map((check) => ({
+    label: check.title,
+    value: check.detail,
+    state: CHECK_STATE[check.state],
+  }));
 }
 
 export function WorkerPreview({ record, onNavigate }: RecordPreviewProps) {
@@ -104,31 +111,18 @@ export function WorkerPreview({ record, onNavigate }: RecordPreviewProps) {
   const data = worker.data;
   const name = `${data.firstName} ${data.lastName}`.trim();
   const role = workerRoleText(data.type ?? undefined, data.driverType ?? undefined);
-  const status = workerStatus(record, t);
+  const standing = dispatchStanding(data, t);
+  // Where the worker cannot be dispatched, that is what the pill says; otherwise
+  // it says what the list row says, driving, assigned or available.
+  const status =
+    standing.tone === "warn"
+      ? { label: standing.label, state: "warn" as const }
+      : workerStatus(record, t);
   const state = hos.data ?? null;
-  const clocks: Clock[] = state
-    ? [
-        {
-          label: t("Drive"),
-          remainingMs: state.driveRemainingMs,
-          limitMs: state.driveLimitMs || DEFAULT_LIMITS.drive * 60 * MS_PER_MINUTE,
-        },
-        {
-          label: t("Duty window"),
-          remainingMs: state.shiftRemainingMs,
-          limitMs: state.shiftLimitMs || DEFAULT_LIMITS.shift * 60 * MS_PER_MINUTE,
-        },
-        {
-          label: t("Cycle"),
-          remainingMs: state.cycleRemainingMs,
-          limitMs: state.cycleLimitMs || DEFAULT_LIMITS.cycle * 60 * MS_PER_MINUTE,
-        },
-      ]
-    : [];
   const current = load.data?.rows[0];
   const home = [data.city, data.state?.abbreviation].filter(Boolean).join(", ");
-  const cdl = expiry(data.profile?.licenseExpiry, t);
-  const medical = expiry(data.profile?.medicalCardExpiry, t);
+  const profile = data.profile;
+  const checks = profile ? qualificationChecks(profile, now, t) : [];
 
   return (
     <>
@@ -141,7 +135,10 @@ export function WorkerPreview({ record, onNavigate }: RecordPreviewProps) {
         subtitle={[data.externalId, role].filter(Boolean).join(" · ")}
         status={status ? <StatePill label={status.label} state={status.state} /> : undefined}
       />
-      {clocks.length > 0 && <HosStrip clocks={clocks} />}
+      {standing.reason && (
+        <p className="text-foreground-muted text-base first-letter:uppercase">{standing.reason}</p>
+      )}
+      {state && <HosRings clocks={hosClocks(state, t)} />}
       {current && (
         <PreviewSection label={t("On load")}>
           <RelatedRow
@@ -154,19 +151,15 @@ export function WorkerPreview({ record, onNavigate }: RecordPreviewProps) {
           />
         </PreviewSection>
       )}
+      {checks.length > 0 && (
+        <PreviewSection label={t("Qualifications")}>
+          <PreviewFields rows={qualificationRows(checks)} />
+        </PreviewSection>
+      )}
       <PreviewFields
         rows={[
+          profile ? { label: t("License"), value: licenseLine(profile, t) } : null,
           home ? { label: t("Home terminal"), value: home } : null,
-          cdl
-            ? {
-                label: data.profile?.cdlClass
-                  ? t("CDL class {0}", data.profile.cdlClass)
-                  : t("CDL"),
-                value: cdl.value,
-                state: cdl.state,
-              }
-            : null,
-          medical ? { label: t("Medical card"), value: medical.value, state: medical.state } : null,
         ]}
       />
     </>

@@ -18,7 +18,7 @@ import type {
 import { formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { csaBasicLabel } from "@trenova/shared/lib/csa";
-import { worstFirst, type DueCheck } from "../../record-card/card-due";
+import { worstFirst, type DueCheck } from "../../record-card/due-checks";
 import type { CardCheckState, CardFact, CardStat, CardTone } from "../../record-card/record-card";
 import {
   cardDate,

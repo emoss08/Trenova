@@ -4,7 +4,7 @@ import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatClockDurationMs } from "@trenova/shared/lib/date";
 import { cn, telHref } from "@trenova/shared/lib/utils";
-import { worstFirst, type DueCheck } from "../../record-card/card-due";
+import { worstFirst, type DueCheck } from "../../record-card/due-checks";
 import {
   CardIcon,
   CardSection,

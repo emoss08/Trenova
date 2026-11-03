@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { CardDue, worstFirst, type DueCheck } from "../card-due";
+import { CardDue } from "../card-due";
+import { worstFirst, type DueCheck } from "../due-checks";
 
 const check = (key: string, state: DueCheck["state"]): DueCheck => ({
   key,

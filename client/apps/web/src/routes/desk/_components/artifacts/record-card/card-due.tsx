@@ -1,27 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { SkeletonBar } from "../skeletons/record-card-skeleton";
-import { CardCheck, CardChecks, CardSection, needsLook, type CardCheckState } from "./record-card";
-
-/** One thing a card checks on its record, drawn as a `CardCheck`. */
-export type DueCheck = {
-  key: string;
-  state: CardCheckState;
-  title: string;
-  detail: string;
-};
-
-const RANK: Record<CardCheckState, number> = { bad: 0, warn: 1, info: 2, ok: 3 };
-
-/**
- * Checks with what is wrong first, then what is close, then what is only worth
- * knowing, then what holds, each kept in its order.
- */
-export function worstFirst(checks: readonly DueCheck[]): DueCheck[] {
-  return checks
-    .map((check, index) => ({ check, index }))
-    .sort((a, b) => RANK[a.check.state] - RANK[b.check.state] || a.index - b.index)
-    .map(({ check }) => check);
-}
+import type { DueCheck } from "./due-checks";
+import { CardCheck, CardChecks, CardSection, needsLook } from "./record-card";
 
 /**
  * What falls due on a record, worst first, under a title that says how many

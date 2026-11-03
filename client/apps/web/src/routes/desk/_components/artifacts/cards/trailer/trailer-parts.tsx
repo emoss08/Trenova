@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { DueCheck } from "../../record-card/card-due";
+import type { DueCheck } from "../../record-card/due-checks";
 import { CardIcon, type CardCheckState, type CardFact } from "../../record-card/record-card";
 import { cardDay } from "../../record-card/record-card-values";
 import {
