@@ -106,13 +106,13 @@ func TestCreateTractor_DefaultsWhatTheFormDefaults(t *testing.T) {
 	}}
 	tool := NewCreateTractorTool(tractors, agenttoolstest.TexasState())
 	params := agenttoolstest.IdempotentParams(map[string]any{
-		masterdatakit.MdCode:               "T-100",
-		paramPrimaryWorkerID:               pulid.MustNew("wrk_").String(),
-		masterdatakit.MdEquipmentTypeID:    pulid.MustNew("et_").String(),
-		masterdatakit.MdManufacturerID:     pulid.MustNew("em_").String(),
-		masterdatakit.MdState:              "TX",
-		masterdatakit.MdRegistrationExpiry: "2027-03-31",
-		masterdatakit.MdVIN:                "1fuj",
+		masterdatakit.ParamCode:                    "T-100",
+		paramPrimaryWorkerID:                       pulid.MustNew("wrk_").String(),
+		masterdatakit.ParamEquipmentTypeID:         pulid.MustNew("et_").String(),
+		masterdatakit.ParamEquipmentManufacturerID: pulid.MustNew("em_").String(),
+		masterdatakit.ParamState:                   "TX",
+		masterdatakit.ParamRegistrationExpiry:      "2027-03-31",
+		masterdatakit.ParamVIN:                     "1fuj",
 	})
 
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
@@ -127,11 +127,11 @@ func TestCreateTractor_DefaultsWhatTheFormDefaults(t *testing.T) {
 	assert.Equal(t, tractorRecordEntity, result.Record.EntityType)
 
 	bad := agenttoolstest.IdempotentParams(map[string]any{
-		masterdatakit.MdCode:               "T-100",
-		paramPrimaryWorkerID:               pulid.MustNew("wrk_").String(),
-		masterdatakit.MdEquipmentTypeID:    pulid.MustNew("et_").String(),
-		masterdatakit.MdManufacturerID:     pulid.MustNew("em_").String(),
-		masterdatakit.MdRegistrationExpiry: "03/31/2027",
+		masterdatakit.ParamCode:                    "T-100",
+		paramPrimaryWorkerID:                       pulid.MustNew("wrk_").String(),
+		masterdatakit.ParamEquipmentTypeID:         pulid.MustNew("et_").String(),
+		masterdatakit.ParamEquipmentManufacturerID: pulid.MustNew("em_").String(),
+		masterdatakit.ParamRegistrationExpiry:      "03/31/2027",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), bad))
 }

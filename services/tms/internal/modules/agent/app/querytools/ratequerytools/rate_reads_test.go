@@ -141,9 +141,9 @@ func TestFuelSurchargePrograms_SaysWhyAProgramHasNoSurcharge(t *testing.T) {
 
 	items := data.(map[string]any)[graphqlread.OutcomeItems].([]map[string]any)
 	require.Len(t, items, 3)
-	assert.NotContains(t, items[0], graphqlread.OutcomeNote)
-	assert.Equal(t, noteNoFuelPrice, items[1][graphqlread.OutcomeNote])
-	assert.Equal(t, noteOutsideFuelTable, items[2][graphqlread.OutcomeNote])
+	assert.NotContains(t, items[0], graphqlread.ParamNote)
+	assert.Equal(t, noteNoFuelPrice, items[1][graphqlread.ParamNote])
+	assert.Equal(t, noteOutsideFuelTable, items[2][graphqlread.ParamNote])
 }
 
 // A row whose price or rate access withheld is not reported as having none.
@@ -163,7 +163,7 @@ func TestFuelSurchargePrograms_SaysNothingOfWhatAccessWithheld(t *testing.T) {
 
 	items := data.(map[string]any)[graphqlread.OutcomeItems].([]map[string]any)
 	for _, item := range items {
-		assert.NotContains(t, item, graphqlread.OutcomeNote)
+		assert.NotContains(t, item, graphqlread.ParamNote)
 	}
 	assert.Equal(
 		t,

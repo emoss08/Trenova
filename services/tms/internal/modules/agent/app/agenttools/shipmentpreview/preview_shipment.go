@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
@@ -33,11 +34,11 @@ type ShipmentPartnerNotices interface {
 }
 
 var UpdateShipmentRefs = map[string]permission.Resource{
-	changepreview.PreviewFieldCustomerID:     permission.ResourceCustomer,
-	changepreview.PreviewFieldServiceTypeID:  permission.ResourceServiceType,
-	changepreview.PreviewFieldShipmentTypeID: permission.ResourceShipmentType,
-	changepreview.PreviewFieldTractorTypeID:  permission.ResourceEquipmentType,
-	changepreview.PreviewFieldTrailerTypeID:  permission.ResourceEquipmentType,
+	toolparams.ParamCustomerID:              permission.ResourceCustomer,
+	changepreview.FieldServiceTypeID:        permission.ResourceServiceType,
+	changepreview.FieldShipmentTypeID:       permission.ResourceShipmentType,
+	changepreview.PreviewFieldTractorTypeID: permission.ResourceEquipmentType,
+	changepreview.PreviewFieldTrailerTypeID: permission.ResourceEquipmentType,
 }
 
 // partnerNoticeSend is one EDI message to a trading partner.

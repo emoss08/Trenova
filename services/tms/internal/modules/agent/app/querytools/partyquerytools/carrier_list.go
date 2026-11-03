@@ -37,7 +37,7 @@ func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.Age
 		Config:       listcatalog.Describe((*carrier.Carrier)(nil), carrierdb.CarriersSchema()),
 		Fields: []filtercatalog.Field{
 			{
-				Name:   querytool.ListFieldStatus,
+				Name:   querytool.ParamStatus,
 				Kind:   filtercatalog.KindEnum,
 				Values: querytool.StatusValues,
 			},

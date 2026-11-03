@@ -37,7 +37,7 @@ func CustomerUpdateComment(
 		Subject:    composed.Data.AgentSubject,
 		Body:       composed.Data.AgentBody,
 		Origin:     shipment.CommentOriginAgent,
-		Source:     customerupdateservice.SourceAgentEmail,
+		Update:     customerupdateservice.UpdateEmail,
 	})
 }
 

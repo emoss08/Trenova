@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -27,8 +28,8 @@ func TestShapeWorkerRow(t *testing.T) {
 			t.Parallel()
 
 			row := map[string]any{
-				workerAssignable:  true,
-				workerStatusField: "Active",
+				workerAssignable:      true,
+				querytool.ParamStatus: "Active",
 				workerProfileField: map[string]any{
 					workerComplianceKey: "NonCompliant",
 					"licenseExpiry":     int64(1_800_000_000),
@@ -46,10 +47,10 @@ func TestShapeWorkerRow(t *testing.T) {
 		t.Parallel()
 
 		row := map[string]any{
-			workerAssignable:   false,
-			workerStatusField:  "Active",
-			workerBlockedField: "Medical certificate expired",
-			workerProfileField: map[string]any{workerComplianceKey: "NonCompliant"},
+			workerAssignable:      false,
+			querytool.ParamStatus: "Active",
+			workerBlockedField:    "Medical certificate expired",
+			workerProfileField:    map[string]any{workerComplianceKey: "NonCompliant"},
 		}
 		shapeWorkerRow(row, nil, filtercatalog.Clock{})
 
@@ -64,9 +65,9 @@ func TestShapeWorkerRow(t *testing.T) {
 		t.Parallel()
 
 		row := map[string]any{
-			workerAssignable:   false,
-			workerStatusField:  "Inactive",
-			workerBlockedField: "Separated",
+			workerAssignable:      false,
+			querytool.ParamStatus: "Inactive",
+			workerBlockedField:    "Separated",
 		}
 		shapeWorkerRow(row, nil, filtercatalog.Clock{})
 
@@ -79,10 +80,10 @@ func TestShapeWorkerRow(t *testing.T) {
 		t.Parallel()
 
 		row := map[string]any{
-			workerAssignable:     true,
-			workerAvailableField: false,
-			workerBlockedField:   "Pending road test",
-			workerStatusField:    "Active",
+			workerAssignable:      true,
+			workerAvailableField:  false,
+			workerBlockedField:    "Pending road test",
+			querytool.ParamStatus: "Active",
 		}
 		shapeWorkerRow(row, nil, filtercatalog.Clock{})
 
@@ -96,9 +97,9 @@ func TestShapeWorkerRow(t *testing.T) {
 		t.Parallel()
 
 		row := map[string]any{
-			workerAssignable:   true,
-			workerStatusField:  "Active",
-			workerProfileField: map[string]any{workerComplianceKey: "Compliant"},
+			workerAssignable:      true,
+			querytool.ParamStatus: "Active",
+			workerProfileField:    map[string]any{workerComplianceKey: "Compliant"},
 		}
 		shapeWorkerRow(row, nil, filtercatalog.Clock{})
 
@@ -109,7 +110,7 @@ func TestShapeWorkerRow(t *testing.T) {
 	t.Run("a withheld flag leaves the standing unsaid", func(t *testing.T) {
 		t.Parallel()
 
-		row := map[string]any{workerStatusField: "Active"}
+		row := map[string]any{querytool.ParamStatus: "Active"}
 		shapeWorkerRow(row, nil, filtercatalog.Clock{})
 
 		assert.NotContains(t, row, DispatchableField)
@@ -144,9 +145,9 @@ func TestShapeCredentialWorker_SaysWhetherTheDriverIsOffDispatch(t *testing.T) {
 	row := map[string]any{
 		"id": "wcred_1",
 		fieldWorker: map[string]any{
-			workerAssignable:   false,
-			workerStatusField:  "Active",
-			workerBlockedField: "Medical certificate expired",
+			workerAssignable:      false,
+			querytool.ParamStatus: "Active",
+			workerBlockedField:    "Medical certificate expired",
 		},
 	}
 	shapeCredentialWorker(row, nil, filtercatalog.Clock{})
@@ -161,7 +162,7 @@ func TestShapeCredentialWorker_LeavesDispatchableUnsaidWithoutTheProfile(t *test
 
 	withheld := map[string]struct{}{fieldWorker + "." + workerProfileField: {}}
 	onDispatch := map[string]any{
-		fieldWorker: map[string]any{workerAssignable: true, workerStatusField: "Active"},
+		fieldWorker: map[string]any{workerAssignable: true, querytool.ParamStatus: "Active"},
 	}
 	shapeCredentialWorker(onDispatch, withheld, filtercatalog.Clock{})
 
@@ -170,7 +171,7 @@ func TestShapeCredentialWorker_LeavesDispatchableUnsaidWithoutTheProfile(t *test
 		"compliance is on the withheld profile, so the driver is not called dispatchable")
 
 	offDispatch := map[string]any{
-		fieldWorker: map[string]any{workerAssignable: false, workerStatusField: "Active"},
+		fieldWorker: map[string]any{workerAssignable: false, querytool.ParamStatus: "Active"},
 	}
 	shapeCredentialWorker(offDispatch, withheld, filtercatalog.Clock{})
 

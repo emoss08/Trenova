@@ -114,13 +114,13 @@ func alertEditFrom(params *agenttoolports.ToolExecuteParams) (*alertEdit, error)
 
 func (e *alertEdit) apply(subscription *tablechangealert.TCASubscription) error {
 	multiErr := errortypes.NewMultiError()
-	for _, key := range []string{masterdatakit.MdName, alertTableName, alertCustomMessage, "conditionMatch"} {
+	for _, key := range []string{masterdatakit.ParamName, alertTableName, alertCustomMessage, "conditionMatch"} {
 		if _, given := e.values[key]; !given {
 			continue
 		}
 		text := strings.TrimSpace(toolparams.OptionalString(e.values, key))
 		switch key {
-		case masterdatakit.MdName:
+		case masterdatakit.ParamName:
 			subscription.Name = text
 		case alertTableName:
 			subscription.TableName = text

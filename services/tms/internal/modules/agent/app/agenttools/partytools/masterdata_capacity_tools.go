@@ -226,7 +226,7 @@ func capacityFields() []masterdatakit.Field[carriercapacity.Posting] {
 		masterdatakit.Enum("source", "How the offer reached you.", capacitySources,
 			func(p *carriercapacity.Posting) *carriercapacity.Source { return &p.Source }),
 		masterdatakit.Text(
-			masterdatakit.MdNote,
+			toolparams.ParamNote,
 			"Anything else the carrier said.",
 			carriercapacity.MaxNotesLength,
 			false,

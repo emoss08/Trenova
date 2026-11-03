@@ -130,7 +130,7 @@ var unfilteredFields = map[string]struct{}{
 	tenantBusinessUnitID:    {},
 	rowVersion:              {},
 	geocodedPlaceID:         {},
-	cancelReason:            {},
+	fieldCancelReason:       {},
 }
 
 const (
@@ -138,11 +138,10 @@ const (
 	tenantBusinessUnitID = "businessUnitId"
 	rowVersion           = "version"
 	geocodedPlaceID      = "placeId"
-	cancelReason         = "cancelReason"
 	fieldNotes           = "notes"
 	fieldCancelReason    = "cancelReason"
 	paramReason          = "reason"
-	paramNote            = "note"
+	ParamNote            = "note"
 	// graphQLEnumSource names an enum parameter's values by the schema's own
 	// enum type, which is where they are declared.
 	graphQLEnumSource = "graphql."
@@ -599,7 +598,7 @@ func (r *Read) Sortable() []string {
 // field, which a parameter derived from it takes; its filter still names the
 // field.
 var conventionNames = map[string]string{
-	fieldNotes:        paramNote,
+	fieldNotes:        ParamNote,
 	fieldCancelReason: paramReason,
 }
 

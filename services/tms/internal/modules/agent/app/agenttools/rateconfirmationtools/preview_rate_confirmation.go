@@ -52,11 +52,11 @@ func (t *GenerateRateConfirmationTool) Preview(
 			"revision",
 			changepreview.FieldStatus,
 			toolparams.ParamCarrierID,
-			changepreview.PreviewFieldShipmentMoveID,
+			toolparams.ParamShipmentMoveID,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			toolparams.ParamCarrierID:                permission.ResourceCarrier,
-			changepreview.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
+			toolparams.ParamCarrierID:      permission.ResourceCarrier,
+			toolparams.ParamShipmentMoveID: permission.ResourceShipmentMove,
 		}),
 		toolpreview.Labels(carrierpreview.RateConfirmationLabels),
 	)

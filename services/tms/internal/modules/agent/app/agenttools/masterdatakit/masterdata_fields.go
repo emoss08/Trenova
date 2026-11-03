@@ -6,55 +6,51 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
-const MdCode = "code"
+const ParamCode = "code"
 
-const MdName = "name"
+const ParamName = "name"
 
-const MdDescription = "description"
+const ParamAddressLine1 = "addressLine1"
 
-const MdAddressLine1 = "addressLine1"
+const ParamAddressLine2 = "addressLine2"
 
-const MdAddressLine2 = "addressLine2"
+const ParamCity = "city"
 
-const MdCity = "city"
+const ParamState = "state"
 
-const MdState = "state"
+const ParamPostalCode = "postalCode"
 
-const MdPostalCode = "postalCode"
+const ParamPhone = "phone"
 
-const MdPhone = "phone"
+const ParamEmail = "email"
 
-const MdEmail = "email"
+const ParamDOTNumber = "dotNumber"
 
-const MdNote = "note"
+const ParamMCNumber = "mcNumber"
 
-const MdDOTNumber = "dotNumber"
+const ParamStatus = "status"
 
-const MdMCNumber = "mcNumber"
+const ParamMake = "make"
 
-const MdStatus = "status"
+const ParamModel = "model"
 
-const MdMake = "make"
+const ParamYear = "year"
 
-const MdModel = "model"
+const ParamVIN = "vin"
 
-const MdYear = "year"
+const ParamLicensePlateNumber = "licensePlateNumber"
 
-const MdVIN = "vin"
+const ParamRegistrationNumber = "registrationNumber"
 
-const MdLicensePlate = "licensePlateNumber"
+const ParamRegistrationExpiry = "registrationExpiry"
 
-const MdRegistrationNumber = "registrationNumber"
+const ParamEquipmentTypeID = "equipmentTypeId"
 
-const MdRegistrationExpiry = "registrationExpiry"
+const ParamEquipmentManufacturerID = "equipmentManufacturerId"
 
-const MdEquipmentTypeID = "equipmentTypeId"
+const ParamFleetCodeID = "fleetCodeId"
 
-const MdManufacturerID = "equipmentManufacturerId"
-
-const MdFleetCodeID = "fleetCodeId"
-
-const MdExternalID = "externalId"
+const ParamExternalID = "externalId"
 
 const ActionUpdated = "updated"
 

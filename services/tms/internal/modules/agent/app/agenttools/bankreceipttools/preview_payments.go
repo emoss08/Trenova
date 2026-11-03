@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -73,7 +74,7 @@ func (t *PostCustomerPaymentTool) Preview(
 		},
 		payment,
 		toolpreview.Only(
-			changepreview.PreviewFieldCustomerID,
+			toolparams.ParamCustomerID,
 			changepreview.PreviewFieldPaymentDate,
 			"paymentMethod",
 			"referenceNumber",
@@ -81,7 +82,7 @@ func (t *PostCustomerPaymentTool) Preview(
 			"currencyCode",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.PreviewFieldCustomerID: permission.ResourceCustomer,
+			toolparams.ParamCustomerID: permission.ResourceCustomer,
 		}),
 		toolpreview.Types(map[string]assistantartifact.DisplayType{
 			changepreview.PreviewFieldPaymentDate: assistantartifact.DisplayDate,

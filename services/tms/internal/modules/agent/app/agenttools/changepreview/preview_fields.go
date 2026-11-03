@@ -137,19 +137,9 @@ const FieldFreightChargeAmount = "freightChargeAmount"
 
 const FieldCanceledAt = "canceledAt"
 
-const PreviewFieldCustomerID = "customerId"
-
 const PreviewFieldDefinitionID = "definitionId"
 
 const PreviewFieldPaymentDate = "paymentDate"
-
-const PreviewFieldServiceTypeID = "serviceTypeId"
-
-const PreviewFieldShipmentID = "shipmentId"
-
-const PreviewFieldShipmentMoveID = "shipmentMoveId"
-
-const PreviewFieldShipmentTypeID = "shipmentTypeId"
 
 const PreviewFieldSubject = "subject"
 

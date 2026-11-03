@@ -28,7 +28,7 @@ func agentEmailComment(at int64) *shipment.ShipmentComment {
 	return &shipment.ShipmentComment{
 		CreatedAt: at,
 		Type:      shipmentvocab.CommentTypeCustomerUpdate,
-		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
+		Metadata:  map[string]any{"source": "agent", "update": "email"},
 	}
 }
 
@@ -59,7 +59,7 @@ func TestAlreadyTold(t *testing.T) {
 			items: []*shipment.ShipmentComment{{
 				CreatedAt: now - 120,
 				Type:      shipmentvocab.CommentTypeCustomerUpdate,
-				Metadata:  map[string]any{"source": "board", "tool": SourceDelayNotice},
+				Metadata:  map[string]any{"source": "board", "update": UpdateDelayNotice},
 			}},
 			want: true,
 		},
@@ -78,11 +78,11 @@ func TestAlreadyTold(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "another agent tool is not this one",
+			name: "an agent's comment that records no emailed update",
 			items: []*shipment.ShipmentComment{{
 				CreatedAt: now - 60,
 				Type:      shipmentvocab.CommentTypeCustomerUpdate,
-				Metadata:  map[string]any{"source": "agent", "tool": "shipment_add_comment"},
+				Metadata:  map[string]any{"source": "agent"},
 			}},
 			want: false,
 		},

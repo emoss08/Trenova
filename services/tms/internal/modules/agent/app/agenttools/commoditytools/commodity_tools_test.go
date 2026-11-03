@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -87,8 +88,8 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	}}
 	tool := NewCreateCommodityTool(commodities)
 	params := agenttoolstest.IdempotentParams(map[string]any{
-		masterdatakit.MdName:        "Frozen peas",
-		masterdatakit.MdDescription: "Frozen vegetables on pallets",
+		masterdatakit.ParamName:     "Frozen peas",
+		toolparams.ParamDescription: "Frozen vegetables on pallets",
 		"freightClass":              "Class70",
 		"weightPerUnit":             "42.5",
 		"minTemperature":            -10,
@@ -120,7 +121,7 @@ func TestCreateCommodity_ReadsDecimalsAndTheFreightClass(t *testing.T) {
 	assert.Equal(t, -10, *commodities.Created.MinTemperature)
 
 	bad := agenttoolstest.IdempotentParams(map[string]any{
-		masterdatakit.MdName: "Peas", masterdatakit.MdDescription: "Peas", "freightClass": "Class71",
+		masterdatakit.ParamName: "Peas", toolparams.ParamDescription: "Peas", "freightClass": "Class71",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), bad))
 

@@ -19,7 +19,7 @@ import (
 
 const (
 	loopReplayRead  = "shipment_get"
-	loopReplayWrite = "assign_move"
+	loopReplayWrite = "dispatch_assign_move"
 )
 
 func loopReplayRuntime() *agentruntime.Service {

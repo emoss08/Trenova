@@ -195,14 +195,14 @@ func carrierFields() []masterdatakit.Field[carrier.Carrier] {
 func carrierIdentityFields() []masterdatakit.Field[carrier.Carrier] {
 	return []masterdatakit.Field[carrier.Carrier]{
 		masterdatakit.Text(
-			masterdatakit.MdCode,
+			masterdatakit.ParamCode,
 			"The carrier's short code, unique in this organization.",
 			masterdatakit.MdMaxCode,
 			true,
 			func(c *carrier.Carrier) *string { return &c.Code },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdName,
+			masterdatakit.ParamName,
 			"The carrier's legal name.",
 			masterdatakit.MdMaxName,
 			true,
@@ -218,14 +218,14 @@ func carrierIdentityFields() []masterdatakit.Field[carrier.Carrier] {
 		masterdatakit.Enum("carrierType", "What kind of carrier it is. Defaults to Common.",
 			carrierTypes, func(c *carrier.Carrier) *carrier.Type { return &c.CarrierType }),
 		masterdatakit.Text(
-			masterdatakit.MdDOTNumber,
+			masterdatakit.ParamDOTNumber,
 			"The USDOT number, digits only.",
 			masterdatakit.MdMaxNumber,
 			false,
 			func(c *carrier.Carrier) *string { return &c.DOTNumber },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdMCNumber,
+			masterdatakit.ParamMCNumber,
 			"The MC docket number, digits only.",
 			masterdatakit.MdMaxNumber,
 			false,
@@ -239,46 +239,46 @@ func carrierIdentityFields() []masterdatakit.Field[carrier.Carrier] {
 func carrierContactFields() []masterdatakit.Field[carrier.Carrier] {
 	return []masterdatakit.Field[carrier.Carrier]{
 		masterdatakit.Text(
-			masterdatakit.MdAddressLine1,
+			masterdatakit.ParamAddressLine1,
 			"The street address.",
 			masterdatakit.MdMaxAddress,
 			false,
 			func(c *carrier.Carrier) *string { return &c.AddressLine1 },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdAddressLine2,
+			masterdatakit.ParamAddressLine2,
 			"Suite, building or unit.",
 			masterdatakit.MdMaxAddress,
 			false,
 			func(c *carrier.Carrier) *string { return &c.AddressLine2 },
 		),
-		masterdatakit.Text(masterdatakit.MdCity, "The city.", masterdatakit.MdMaxCity, false,
+		masterdatakit.Text(masterdatakit.ParamCity, "The city.", masterdatakit.MdMaxCity, false,
 			func(c *carrier.Carrier) *string { return &c.City }),
-		masterdatakit.StatePointer(masterdatakit.MdState, "The state of the street address.",
+		masterdatakit.StatePointer(masterdatakit.ParamState, "The state of the street address.",
 			func(c *carrier.Carrier) **pulid.ID { return &c.StateID }),
 		masterdatakit.Text(
-			masterdatakit.MdPostalCode,
+			masterdatakit.ParamPostalCode,
 			"The ZIP code.",
 			masterdatakit.MdMaxPostalCode,
 			false,
 			func(c *carrier.Carrier) *string { return &c.PostalCode },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdPhone,
+			masterdatakit.ParamPhone,
 			"The dispatch phone number.",
 			masterdatakit.MdMaxPhone,
 			false,
 			func(c *carrier.Carrier) *string { return &c.Phone },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdEmail,
+			masterdatakit.ParamEmail,
 			"The dispatch email address.",
 			masterdatakit.MdMaxName,
 			false,
 			func(c *carrier.Carrier) *string { return &c.Email },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdNote,
+			toolparams.ParamNote,
 			"Anything colleagues booking this carrier should know.",
 			masterdatakit.MdMaxNotes,
 			false,
@@ -384,7 +384,7 @@ func NewCreateCarrierTool(
 			"sent. Payment and remit-to details decide where money goes, so a call that " +
 			"sets them is money and runs only on a person's approval.",
 		Fields:      carrierFields(),
-		Required:    []string{masterdatakit.MdCode, masterdatakit.MdName},
+		Required:    []string{masterdatakit.ParamCode, masterdatakit.ParamName},
 		SearchTerms: []string{"new carrier", "add carrier", "onboard carrier", "trucking company"},
 		Policy:      carrierPolicy(),
 		States:      states,

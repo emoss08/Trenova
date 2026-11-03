@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -102,12 +101,12 @@ func (t *GenerateRateConfirmationTool) Description() string {
 
 func (t *GenerateRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		changepreview.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+		toolparams.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The carrier-covered move, from dispatch_get_board (moveId) or shipment_get "+
 				"(its moves).",
 		),
-	}, changepreview.PreviewFieldShipmentMoveID)
+	}, toolparams.ParamShipmentMoveID)
 }
 
 func (t *GenerateRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
@@ -191,7 +190,7 @@ func (t *GenerateRateConfirmationTool) moveID(
 		return pulid.Nil, err
 	}
 
-	return toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentMoveID)
+	return toolparams.RequirePulid(params.Params, toolparams.ParamShipmentMoveID)
 }
 
 func (t *GenerateRateConfirmationTool) Target(
@@ -199,7 +198,7 @@ func (t *GenerateRateConfirmationTool) Target(
 ) (agenttoolports.ToolTarget, bool) {
 	return toolparams.TargetOf(
 		params,
-		changepreview.PreviewFieldShipmentMoveID,
+		toolparams.ParamShipmentMoveID,
 		permission.ResourceShipmentMove,
 	)
 }

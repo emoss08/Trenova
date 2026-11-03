@@ -212,7 +212,7 @@ func TestAccountingSyncRecords_DocumentIDsReadTheirStatesInstead(t *testing.T) {
 
 	outcome, ok := graphqllisttool.PageRecord(data)
 	require.True(t, ok)
-	assert.Equal(t, untrackedNote, outcome[graphqlread.OutcomeNote])
+	assert.Equal(t, untrackedNote, outcome[graphqlread.ParamNote])
 	states, _ := outcome[keyAccountingStates].([]map[string]any)
 	require.Len(t, states, 1)
 	assert.Equal(t, "It is in QuickBooks Online.", states[0][accountingMeaningField])
@@ -329,7 +329,7 @@ func TestAccountingConnection_ReadsBySystemAndSaysWhatItMeans(t *testing.T) {
 	assert.Nil(t, denied.Sent("DeskAccountingSyncSummary"))
 	record, ok = data.(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, queueWithheldReason, record[graphqlread.OutcomeNote])
+	assert.Equal(t, queueWithheldReason, record[graphqlread.ParamNote])
 	assert.NotContains(t, record, keyAccountingQueue)
 }
 
@@ -341,7 +341,7 @@ func TestAccountingConnection_NeverConnected(t *testing.T) {
 		"integrationType": "Xero", "providerName": "Xero", "available": false,
 	}
 	connectionMeaning(record, nil, filtercatalog.Clock{})
-	assert.Equal(t, "NeverConnected", record[querytool.AccountingStatusField])
+	assert.Equal(t, "NeverConnected", record[querytool.ParamStatus])
 	assert.Equal(t, sendingNotStarted, record["sending"])
 	assert.Contains(t, record[accountingMeaningField], "not set up on this Trenova instance")
 }

@@ -736,7 +736,7 @@ func (t *Tool) readInstead(
 		outcome[graphqlread.OutcomeCount] = len(rows)
 	}
 	if instead.spec.Note != "" {
-		outcome[graphqlread.OutcomeNote] = instead.spec.Note
+		outcome[graphqlread.ParamNote] = instead.spec.Note
 	}
 	if withheld := graphqlread.RelativePaths(result.Withheld, prefix); len(withheld) > 0 {
 		outcome[graphqlread.OutcomeWithheld] = withheld

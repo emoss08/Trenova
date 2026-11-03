@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -94,34 +95,34 @@ var locationRecord = &masterdatakit.Record[location.Location]{
 
 func locationFields() []masterdatakit.Field[location.Location] {
 	return []masterdatakit.Field[location.Location]{
-		masterdatakit.Text(masterdatakit.MdName, "The facility or company name at the address.",
+		masterdatakit.Text(masterdatakit.ParamName, "The facility or company name at the address.",
 			maxLocationNameRunes, true, func(l *location.Location) *string { return &l.Name }),
 		masterdatakit.Text(
-			masterdatakit.MdDescription,
+			toolparams.ParamDescription,
 			"Anything drivers and dispatchers should know about it.",
 			masterdatakit.MdMaxNotes,
 			false,
 			func(l *location.Location) *string { return &l.Description },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdAddressLine1,
+			masterdatakit.ParamAddressLine1,
 			"The street address.",
 			maxLocationAddressRunes,
 			true,
 			func(l *location.Location) *string { return &l.AddressLine1 },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdAddressLine2,
+			masterdatakit.ParamAddressLine2,
 			"Suite, building or dock.",
 			maxLocationAddressRunes,
 			false,
 			func(l *location.Location) *string { return &l.AddressLine2 },
 		),
-		masterdatakit.Text(masterdatakit.MdCity, "The city.", maxLocationCityRunes, true,
+		masterdatakit.Text(masterdatakit.ParamCity, "The city.", maxLocationCityRunes, true,
 			func(l *location.Location) *string { return &l.City }),
-		masterdatakit.State(masterdatakit.MdState, "The state.", true,
+		masterdatakit.State(masterdatakit.ParamState, "The state.", true,
 			func(l *location.Location) *pulid.ID { return &l.StateID }),
-		masterdatakit.Text(masterdatakit.MdPostalCode, "The ZIP code.", maxPostalCodeRunes, true,
+		masterdatakit.Text(masterdatakit.ParamPostalCode, "The ZIP code.", maxPostalCodeRunes, true,
 			func(l *location.Location) *string { return &l.PostalCode }),
 		masterdatakit.ID(paramLocationCategoryID, permission.ResourceLocationCategory,
 			"What kind of place it is, from location_list_categories.",

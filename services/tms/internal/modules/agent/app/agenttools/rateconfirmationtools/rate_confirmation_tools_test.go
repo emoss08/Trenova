@@ -232,7 +232,7 @@ func TestGenerateRateConfirmation_GeneratesForTheMoveAsTheActor(t *testing.T) {
 	rateCons := newFakeRateCons(rateconfirmation.StatusGenerated)
 	moveID := pulid.MustNew("smv_")
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{changepreview.PreviewFieldShipmentMoveID: moveID.String()},
+		map[string]any{toolparams.ParamShipmentMoveID: moveID.String()},
 	)
 
 	require.NoError(t, NewGenerateRateConfirmationTool(rateCons).Execute(t.Context(), params))
@@ -249,7 +249,7 @@ func TestGenerateRateConfirmation_SupersedingARevisionIsAProposal(t *testing.T) 
 	t.Parallel()
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		changepreview.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
+		toolparams.ParamShipmentMoveID: pulid.MustNew("smv_").String(),
 	})
 
 	first := newFakeRateCons(rateconfirmation.StatusGenerated)
@@ -288,7 +288,7 @@ func TestGenerateRateConfirmation_PreviewShowsTheRevisionAndWhatItVoids(t *testi
 		&rateCons.guard,
 		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-				changepreview.PreviewFieldShipmentMoveID: pulid.MustNew("smv_").String(),
+				toolparams.ParamShipmentMoveID: pulid.MustNew("smv_").String(),
 			}))
 		},
 	)

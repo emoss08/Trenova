@@ -38,7 +38,7 @@ func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.
 		Config:       listcatalog.Describe((*customer.Customer)(nil), customerdb.CustomersSchema()),
 		Fields: []filtercatalog.Field{
 			{
-				Name:   querytool.ListFieldStatus,
+				Name:   querytool.ParamStatus,
 				Kind:   filtercatalog.KindEnum,
 				Values: querytool.StatusValues,
 			},
@@ -89,7 +89,7 @@ func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.
 		Config:       listcatalog.Describe((*location.Location)(nil), locationdb.LocationsSchema()),
 		Fields: []filtercatalog.Field{
 			{
-				Name:   querytool.ListFieldStatus,
+				Name:   querytool.ParamStatus,
 				Kind:   filtercatalog.KindEnum,
 				Values: querytool.StatusValues,
 			},

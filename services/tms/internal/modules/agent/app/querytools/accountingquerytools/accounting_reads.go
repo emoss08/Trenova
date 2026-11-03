@@ -172,7 +172,7 @@ func syncRecordsListSpec() readspec.List {
 		QueryNote: "Words to find in Trenova or accounting system document numbers.",
 		Names: map[string]string{
 			fieldIntegrationType:    paramSystem,
-			querytool.FieldStatuses: querytool.AccountingStatusField,
+			querytool.FieldStatuses: querytool.ParamStatus,
 			"objectTypes":           "documentType",
 			"errorCategories":       fieldErrorCategory,
 			fieldObjectIDs:          paramDocumentIDs,
@@ -181,7 +181,7 @@ func syncRecordsListSpec() readspec.List {
 			paramSystem: "Required to list records; with documentIds, only " +
 				"that system's records answer, and without it every system that syncs " +
 				"does.",
-			querytool.AccountingStatusField: "Blocked and DeadLettered need a person; " +
+			querytool.ParamStatus: "Blocked and DeadLettered need a person; " +
 				"AwaitingApproval waits to be released.",
 			paramDocumentIDs: "The filters list records instead and are left out " +
 				"with it.",
@@ -366,7 +366,7 @@ func withinTolerance(items []map[string]any, beside map[string]any) {
 // domain decides it: applied while proposed for a reason a person can act
 // on, ignored while open.
 func inboundActions(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
-	status, _ := row[querytool.AccountingStatusField].(string)
+	status, _ := row[querytool.ParamStatus].(string)
 	reason, _ := row["reason"].(string)
 	open := accountinginbound.InboundChangeStatus(status).IsOpen()
 	row["canApply"] = open && status == string(accountinginbound.InboundStatusProposed) &&
@@ -377,7 +377,7 @@ func inboundActions(row map[string]any, _ map[string]struct{}, _ filtercatalog.C
 // syncRecordActions says what can be done with a sync record, and drops the
 // next try's time unless one is still due.
 func syncRecordActions(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
-	status := accountingsync.SyncStatus(querytool.StringOf(row[querytool.AccountingStatusField]))
+	status := accountingsync.SyncStatus(querytool.StringOf(row[querytool.ParamStatus]))
 	row["canRetry"] = status.Retryable()
 	row["canSkip"] = !status.IsFinal() && status != accountingsync.SyncStatusInFlight
 	if !status.Dispatchable() {
@@ -401,7 +401,7 @@ func syncStateMeaning(row map[string]any) {
 
 // syncMeaning is what a sync record's status means, in plain words.
 func syncMeaning(record map[string]any, provider string) string {
-	switch accountingsync.SyncStatus(querytool.StringOf(record[querytool.AccountingStatusField])) {
+	switch accountingsync.SyncStatus(querytool.StringOf(record[querytool.ParamStatus])) {
 	case accountingsync.SyncStatusSynced:
 		return "It is in " + provider + "."
 	case accountingsync.SyncStatusQueued, accountingsync.SyncStatusInFlight:
@@ -455,13 +455,13 @@ func connectionMeaning(record map[string]any, _ map[string]struct{}, _ filtercat
 	record["setupPath"] = accountingprovider.SetupPath(system)
 	conn, connected := record[accountingConnectionField].(map[string]any)
 	if !connected {
-		record[querytool.AccountingStatusField] = "NeverConnected"
+		record[querytool.ParamStatus] = "NeverConnected"
 		record["sending"] = sendingNotStarted
 		record[accountingMeaningField] = connectionStatusMeaning(provider, "", available)
 		return
 	}
 	status := accountingconnection.ConnectionStatus(
-		querytool.StringOf(conn[querytool.AccountingStatusField]),
+		querytool.StringOf(conn[querytool.ParamStatus]),
 	)
 	conn["sending"] = connectionSending(conn, status)
 	record[accountingMeaningField] = connectionStatusMeaning(provider, status, available)

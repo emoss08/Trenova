@@ -89,8 +89,8 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 	}}
 	tool := NewUpdateLocationTool(locations, states)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramLocationID:              stored.ID.String(),
-		masterdatakit.MdAddressLine1: "9 Dock St",
+		paramLocationID:                 stored.ID.String(),
+		masterdatakit.ParamAddressLine1: "9 Dock St",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -106,7 +106,7 @@ func TestUpdateLocation_ChangesTheAddressAndKeepsTheCode(t *testing.T) {
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			masterdatakit.MdAddressLine1,
+			masterdatakit.ParamAddressLine1,
 		).After,
 	)
 	require.NoError(t, tool.Execute(t.Context(), params))

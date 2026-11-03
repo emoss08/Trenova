@@ -38,7 +38,6 @@ const (
 	workerAssignable      = "canBeAssigned"
 	workerBlockedField    = "assignmentBlocked"
 	workerComplianceKey   = "complianceStatus"
-	workerStatusField     = "status"
 	workerAvailableField  = "availableForDispatch"
 	workerPictureField    = "profilePicUrl"
 	DispatchableField     = "dispatchable"
@@ -113,7 +112,7 @@ var dispatchableCondition = readspec.Condition{
 		{Field: workerAssignable, Operator: dbtype.OpEqual, Value: true},
 		{Field: workerAvailableField, Operator: dbtype.OpEqual, Value: true},
 		{Field: workerBlockedField, Operator: dbtype.OpIsNull},
-		{Field: workerStatusField, Operator: dbtype.OpEqual, Value: activeWorker},
+		{Field: querytool.ParamStatus, Operator: dbtype.OpEqual, Value: activeWorker},
 		{
 			Field:    workerComplianceKeyAt,
 			Operator: dbtype.OpNotEqual,
@@ -124,7 +123,7 @@ var dispatchableCondition = readspec.Condition{
 		{Field: workerAssignable, Operator: dbtype.OpEqual, Value: false},
 		{Field: workerAvailableField, Operator: dbtype.OpEqual, Value: false},
 		{Field: workerBlockedField, Operator: dbtype.OpIsNotNull},
-		{Field: workerStatusField, Operator: dbtype.OpNotEqual, Value: activeWorker},
+		{Field: querytool.ParamStatus, Operator: dbtype.OpNotEqual, Value: activeWorker},
 		{
 			Field:    workerComplianceKeyAt,
 			Operator: dbtype.OpEqual,
@@ -168,7 +167,7 @@ func dispatchStanding(row map[string]any) {
 	if available, set := row[workerAvailableField].(bool); set && !available {
 		reasons = append(reasons, "marked unavailable for dispatch")
 	}
-	if status, _ := row[workerStatusField].(string); status != "" && status != activeWorker {
+	if status, _ := row[querytool.ParamStatus].(string); status != "" && status != activeWorker {
 		reasons = append(reasons, "not active ("+status+")")
 	}
 	if profile, ok := row[workerProfileField].(map[string]any); ok {

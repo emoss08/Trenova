@@ -301,7 +301,7 @@ func readinessChecks(row map[string]any, _ map[string]struct{}, _ filtercatalog.
 // decides it: acknowledged and not expired.
 func noaEffective(row map[string]any, _ map[string]struct{}, clk filtercatalog.Clock) {
 	expires, ends := typeutils.IntOf(row[fieldExpiresAt])
-	row["effective"] = querytool.StringOf(row[querytool.AccountingStatusField]) ==
+	row["effective"] = querytool.StringOf(row[querytool.ParamStatus]) ==
 		string(factoring.NoaStatusAcknowledged) &&
 		(!ends || clk.Instant() < int64(expires))
 }
@@ -312,7 +312,7 @@ func agreementInForce(row map[string]any, _ map[string]struct{}, clk filtercatal
 	now := clk.Instant()
 	from, started := typeutils.IntOf(row[querytool.FieldEffectiveFrom])
 	to, ends := typeutils.IntOf(row[querytool.FieldEffectiveTo])
-	row["inForce"] = querytool.StringOf(row[querytool.AccountingStatusField]) ==
+	row["inForce"] = querytool.StringOf(row[querytool.ParamStatus]) ==
 		string(factoring.AgreementStatusActive) &&
 		started && now >= int64(from) && (!ends || now < int64(to))
 	if minutes, ok := typeutils.IntOf(row[fieldSubmissionTime]); ok {

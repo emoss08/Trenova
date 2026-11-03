@@ -155,7 +155,7 @@ func TestInvoiceGet_SeveralIDsAreReadOneAtATimeAtMostTenAtOnce(t *testing.T) {
 		assert.Equal(t, 40, item[fieldLineCount])
 		assert.NotContains(t, item, graphqlread.OutcomeWithheld, "what is withheld is named once")
 	}
-	assert.Contains(t, outcome[graphqlread.OutcomeNote], stranger)
+	assert.Contains(t, outcome[graphqlread.ParamNote], stranger)
 	assert.Equal(t, []string{"lines.amount", "totalAmount"}, outcome[graphqlread.OutcomeWithheld])
 	assert.Len(t, reader.sent, 31, "one read per id")
 	assert.LessOrEqual(t, reader.most.Load(), int32(gettool.GraphQLAtOnce))

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -25,9 +26,9 @@ func (t *UpdateShipmentTool) Preview(
 		before,
 		after,
 		toolpreview.Only(
-			changepreview.PreviewFieldCustomerID,
-			changepreview.PreviewFieldServiceTypeID,
-			changepreview.PreviewFieldShipmentTypeID,
+			toolparams.ParamCustomerID,
+			changepreview.FieldServiceTypeID,
+			changepreview.FieldShipmentTypeID,
 			changepreview.PreviewFieldTractorTypeID,
 			changepreview.PreviewFieldTrailerTypeID,
 			"bol",

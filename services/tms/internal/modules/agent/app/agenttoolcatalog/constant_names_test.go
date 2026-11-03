@@ -60,7 +60,8 @@ func nameFor(word string) string {
 // for what it only reads or writes, read from the tree's shared package when
 // that package already names the word. transferId was once both paramEDITransferID
 // and argTransferID in one package, and a reader could not tell they were the
-// same argument.
+// same argument. A constant under another name (PreviewFieldCustomerID,
+// workerStatusField) that holds such a word is the same word named twice.
 func TestEveryParameterAndFieldConstantIsNamedForItsWord(t *testing.T) {
 	t.Parallel()
 
@@ -68,6 +69,9 @@ func TestEveryParameterAndFieldConstantIsNamedForItsWord(t *testing.T) {
 	var problems []string
 	for root, sharedDir := range toolPackages {
 		byPackage := map[string]map[string][]declared{}
+		// Constants under any other name that hold a camelCase word, by package.
+		others := map[string][]declared{}
+		otherWords := map[string][]string{}
 		err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
 			if err != nil || entry.IsDir() || !strings.HasSuffix(path, ".go") ||
 				strings.HasSuffix(path, "_test.go") || strings.HasSuffix(path, "_gen.go") {
@@ -94,11 +98,20 @@ func TestEveryParameterAndFieldConstantIsNamedForItsWord(t *testing.T) {
 					}
 					literal, ok := value.Values[0].(*ast.BasicLit)
 					name := value.Names[0].Name
-					if !ok || literal.Kind != token.STRING || !roleConstant.MatchString(name) {
+					if !ok || literal.Kind != token.STRING {
 						continue
 					}
 					word, err := strconv.Unquote(literal.Value)
 					if err != nil || !camelWord.MatchString(word) {
+						continue
+					}
+					if !roleConstant.MatchString(name) {
+						directory := filepath.Dir(path)
+						others[directory] = append(
+							others[directory],
+							declared{name: name, at: path},
+						)
+						otherWords[directory] = append(otherWords[directory], word)
 						continue
 					}
 					words[word] = append(words[word], declared{name: name, at: path})
@@ -110,6 +123,18 @@ func TestEveryParameterAndFieldConstantIsNamedForItsWord(t *testing.T) {
 		require.NoError(t, err)
 
 		shared := byPackage[filepath.Clean(sharedDir)]
+		for directory, names := range others {
+			for idx, other := range names {
+				word := otherWords[directory][idx]
+				_, own := byPackage[directory][word]
+				owner, inShared := shared[word]
+				if own || (inShared && ast.IsExported(owner[0].name)) {
+					problems = append(problems, fmt.Sprintf(
+						"%s: %s holds %q, a word a param or field constant already names",
+						other.at, other.name, word))
+				}
+			}
+		}
 		for directory, words := range byPackage {
 			for word, names := range words {
 				if owner, ok := shared[word]; ok && directory != filepath.Clean(sharedDir) &&

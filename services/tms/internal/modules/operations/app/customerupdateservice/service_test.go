@@ -172,7 +172,7 @@ func TestNotifyDelay_EmailsTheCustomersContactsAndRecordsIt(t *testing.T) {
 	comment := f.comments.created[0]
 	assert.Equal(t, shipmentvocab.CommentTypeCustomerUpdate, comment.Type)
 	assert.Equal(t, shipment.CommentOriginBoard, comment.Metadata[shipment.CommentMetadataOrigin])
-	assert.Equal(t, SourceDelayNotice, comment.Metadata[metadataSource])
+	assert.Equal(t, UpdateDelayNotice, comment.Metadata[metadataUpdate])
 	assert.Equal(t, f.actor.UserID.String(), comment.Metadata[metadataSentBy])
 	assert.True(
 		t,
@@ -187,7 +187,7 @@ func TestNotifyDelay_SendsNothingWhenTheCustomerWasJustTold(t *testing.T) {
 	f.comments.existing = []*shipment.ShipmentComment{{
 		CreatedAt: testNow - 300,
 		Type:      shipmentvocab.CommentTypeCustomerUpdate,
-		Metadata:  map[string]any{"source": "agent", "tool": SourceAgentEmail},
+		Metadata:  map[string]any{"source": "agent", "update": UpdateEmail},
 	}}
 
 	err := f.service.NotifyDelay(t.Context(), f.request, f.actor)

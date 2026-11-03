@@ -81,9 +81,13 @@ their notes).
 `Source`, recipe or prerequisites, a description, a preset, a starter, a policy map. There is no
 constant for a tool's name, exported or not, and no file of names: the name is the contract
 the model, saved agents and migrations read, and a search for it finds every use. A value
-stored under a tool's name by another module (a shipment comment's `tool`, a page draft's
-`Action`) is that module's own constant; the tool still writes its literal, and a test holds the
-two equal (`TestEmailCustomerTool_IsNamedAsTheCommentsItWritesRecordIt`). The command palette's
+another module keeps that matches a tool's name (a page draft's `Action`) is that module's own
+constant; the tool still writes its literal, and a test holds the two equal
+(`TestImportDraftTools_AreNamedForTheEditTheyMake`). A record that says what kind of thing
+happened keeps its own kind, not the name of the tool that did it: a customer update's comment
+records `update` (`email`, `delay_notice`) beside its origin, so renaming a tool cannot orphan
+what was saved under the old name. A record of a tool call (a proposal, a run's step) keeps the
+tool's name, and a rename migrates it (`agent_rename_tool`). The command palette's
 `get_record` opens a kind through the read whose name reads `get_<kind>`, so a kind's read is
 `<kind>_get`. `TestEveryToolATextNamesIsRegistered` fails on any word in a tool's description,
 search terms or parameter descriptions that reads as a tool name (a namespace, then a verb a
@@ -110,7 +114,9 @@ input), exported when another package reads it, with initialisms in capitals (`"
 `paramTransferID`, `"bol"` is `fieldBOL`, `"proNumber"` is `paramProNumber`). Two tools in a
 package that take the same word share its constant; there is no `arg` or `input` prefix and no
 name for what the word means to one tool (`paramEscrowDescription`). A word the shared packages
-already export (`querytool.ParamStatus`, `toolparams.ParamShipmentID`) is read from them.
+already export (`querytool.ParamStatus`, `toolparams.ParamShipmentID`) is read from them, and no
+constant under another name holds a word a parameter or field constant names (the master-data
+fields were `MdCode`, `MdStatus`; they are `masterdatakit.ParamCode`, `ParamStatus`).
 `TestEveryParameterAndFieldConstantIsNamedForItsWord` in `agenttoolcatalog` holds every package
 to it.
 

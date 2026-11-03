@@ -1,18 +1,17 @@
 package querytool
 
 const (
-	FieldStatuses         = "statuses"
-	FieldTargetType       = "targetType"
-	AccountingStatusField = "status"
-	FieldNumber           = "number"
-	FieldCreatedAt        = "createdAt"
-	ParamOffset           = "offset"
-	FieldFleetCodeID      = "fleetCodeId"
-	FieldEffectiveFrom    = "effectiveFrom"
-	FieldEffectiveTo      = "effectiveTo"
-	ParamFuelIndexID      = "fuelIndexId"
-	ParamActiveOnly       = "activeOnly"
-	GraphQLListLimit      = 25
+	FieldStatuses      = "statuses"
+	FieldTargetType    = "targetType"
+	FieldNumber        = "number"
+	FieldCreatedAt     = "createdAt"
+	ParamOffset        = "offset"
+	FieldFleetCodeID   = "fleetCodeId"
+	FieldEffectiveFrom = "effectiveFrom"
+	FieldEffectiveTo   = "effectiveTo"
+	ParamFuelIndexID   = "fuelIndexId"
+	ParamActiveOnly    = "activeOnly"
+	GraphQLListLimit   = 25
 	// GraphQLListMost is the server's own page bound (pagination.MaxLimit).
 	// A model's read of a page too long for it is cut to the rows that fit,
 	// so the bound is what a script reads a page at a time: at 50 its sixty
@@ -28,7 +27,6 @@ const (
 	MinutesPerHour    = 60
 	ListFieldName     = "name"
 	ListFieldCode     = "code"
-	ListFieldStatus   = "status"
 	ParamAfter        = "after"
 	FieldPercent      = "percent"
 	ParamAdjustmentID = "adjustmentId"

@@ -389,7 +389,7 @@ func ackHealthMeaning(record map[string]any, _ map[string]struct{}, _ filtercata
 			"waited more than %s for its acknowledgment.", record["overdueAfter"]))
 	}
 	if len(notes) > 0 {
-		record[graphqlread.OutcomeNote] = strings.Join(notes, " ")
+		record[graphqlread.ParamNote] = strings.Join(notes, " ")
 	}
 }
 

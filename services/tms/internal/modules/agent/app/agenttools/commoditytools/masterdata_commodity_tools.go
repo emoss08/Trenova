@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -125,14 +126,14 @@ var commodityRecord = &masterdatakit.Record[commodity.Commodity]{
 func commodityFields() []masterdatakit.Field[commodity.Commodity] {
 	return []masterdatakit.Field[commodity.Commodity]{
 		masterdatakit.Text(
-			masterdatakit.MdName,
+			masterdatakit.ParamName,
 			"The commodity's name, unique in this organization.",
 			masterdatakit.MdMaxShortName,
 			true,
 			func(c *commodity.Commodity) *string { return &c.Name },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdDescription,
+			toolparams.ParamDescription,
 			"What the goods are.",
 			masterdatakit.MdMaxNotes,
 			true,
@@ -195,7 +196,7 @@ func NewCreateCommodityTool(commodities CommodityKeeper) agenttoolports.AgentToo
 		Rationale: "Adds a commodity inside Trenova that shipments can name; nothing is sent " +
 			"and it can be made inactive.",
 		Fields:      commodityFields(),
-		Required:    []string{masterdatakit.MdName, masterdatakit.MdDescription},
+		Required:    []string{masterdatakit.ParamName, toolparams.ParamDescription},
 		SearchTerms: []string{"new commodity", "add commodity", "product", "freight class"},
 		Policy:      masterdatakit.MdInternalAsk,
 		Fresh: func(tenant pagination.TenantInfo) *commodity.Commodity {
@@ -405,14 +406,14 @@ type hazmatText struct {
 func hazmatFields() []masterdatakit.Field[hazardousmaterial.HazardousMaterial] {
 	fields := []masterdatakit.Field[hazardousmaterial.HazardousMaterial]{
 		masterdatakit.Text(
-			masterdatakit.MdName,
+			masterdatakit.ParamName,
 			"The material's name, unique in this organization.",
 			masterdatakit.MdMaxShortName,
 			true,
 			func(h *hazardousmaterial.HazardousMaterial) *string { return &h.Name },
 		),
 		masterdatakit.Text(
-			masterdatakit.MdDescription,
+			toolparams.ParamDescription,
 			"What the material is.",
 			masterdatakit.MdMaxNotes,
 			true,
@@ -502,8 +503,8 @@ func NewCreateHazardousMaterialTool(materials HazmatKeeper) agenttoolports.Agent
 				"person checks every one against the DOT table before it is saved.",
 			Fields: hazmatFields(),
 			Required: []string{
-				masterdatakit.MdName,
-				masterdatakit.MdDescription,
+				masterdatakit.ParamName,
+				toolparams.ParamDescription,
 				"class",
 				"packingGroup",
 			},

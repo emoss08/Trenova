@@ -716,7 +716,7 @@ func TestEDIAckHealth_ThroughTheExecutor(t *testing.T) {
 	assert.EqualValues(t, 6, record["acknowledged"])
 	assert.EqualValues(t, 2, record["awaiting"])
 	assert.Equal(t, true, record["answersEverySet"])
-	assert.Contains(t, record[graphqlread.OutcomeNote], "acknowledgments themselves")
+	assert.Contains(t, record[graphqlread.ParamNote], "acknowledgments themselves")
 	partners, _ := record["partners"].([]any)
 	require.Len(t, partners, 1)
 	assert.Equal(t, "5 of 7 came back with a 997 or 999 (5 accepted); 2 still awaiting one",

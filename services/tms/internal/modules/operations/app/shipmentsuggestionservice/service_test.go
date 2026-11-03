@@ -402,7 +402,7 @@ func TestDelayNotice_SkipsCustomersAlreadyToldThisHour(t *testing.T) {
 	h.comments.byShipment[told.ShipmentID] = []*shipment.ShipmentComment{{
 		CreatedAt: fixedNow.Add(-10 * time.Minute).Unix(),
 		Type:      shipmentvocab.CommentTypeCustomerUpdate,
-		Metadata:  map[string]any{"source": "board", "tool": "notify_shipment_delay"},
+		Metadata:  map[string]any{"source": "board", "update": "delay_notice"},
 	}}
 
 	items := h.queue(t).Items

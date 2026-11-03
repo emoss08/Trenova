@@ -43,7 +43,6 @@ const (
 	agentRunFieldDefinition  = "agentDefinitionId"
 	agentRunFieldSubjectType = "subjectType"
 	agentRunFieldSubjectID   = "subjectId"
-	agentRunFieldStatus      = "status"
 	agentRunFieldTrigger     = "trigger"
 
 	personThreadRunsNote = "Runs on a conversation are listed only to the person whose " +
@@ -101,7 +100,7 @@ func AgentRunListSpec() listtool.Spec {
 		Config:   listcatalog.Describe((*agent.AgentRun)(nil), agentdb.AgentRunsSchema()),
 		Fields: []filtercatalog.Field{
 			{
-				Name: agentRunFieldStatus,
+				Name: querytool.ParamStatus,
 				Kind: filtercatalog.KindEnum,
 				Values: []string{
 					string(agent.RunStatusPending),

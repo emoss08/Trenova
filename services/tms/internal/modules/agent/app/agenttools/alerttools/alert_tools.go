@@ -341,7 +341,7 @@ func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"required": []string{
-			masterdatakit.MdName,
+			masterdatakit.ParamName,
 			alertTableName,
 			"eventTypes",
 		},
@@ -352,7 +352,7 @@ func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 
 func alertProperties(keep string) map[string]any {
 	return map[string]any{
-		masterdatakit.MdName: map[string]any{
+		masterdatakit.ParamName: map[string]any{
 			"type":        "string",
 			"description": "What the alert is called, in the words of the thing watched." + keep,
 		},

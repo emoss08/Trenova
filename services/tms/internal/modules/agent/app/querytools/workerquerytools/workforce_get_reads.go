@@ -140,7 +140,7 @@ func shapeHoursOfService(
 		record[hosRecordedAt] = timeutils.FormatUnixDateTimeIn(recordedAt, clk.Timezone)
 	}
 	if stale {
-		record[graphqlread.OutcomeNote] = staleHoursNote
+		record[graphqlread.ParamNote] = staleHoursNote
 	}
 }
 
@@ -152,6 +152,6 @@ func unreportedHours(workerID pulid.ID) map[string]any {
 		hosDutyStatus:           dutyStatusUnknown,
 		hosRecordedAt:           "never",
 		hosStale:                true,
-		graphqlread.OutcomeNote: noELDNote,
+		graphqlread.ParamNote:   noELDNote,
 	}
 }

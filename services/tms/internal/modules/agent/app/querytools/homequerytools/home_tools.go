@@ -99,9 +99,9 @@ func labelHomeLayout(record map[string]any, _ map[string]struct{}, _ filtercatal
 	}
 	locked, _ := record["locked"].(bool)
 	customizable, _ := record["canCustomize"].(bool)
-	record[graphqlread.OutcomeNote] = homeLayoutNoteEdit
+	record[graphqlread.ParamNote] = homeLayoutNoteEdit
 	if locked || !customizable {
-		record[graphqlread.OutcomeNote] = homeLayoutNoteLocked
+		record[graphqlread.ParamNote] = homeLayoutNoteLocked
 	}
 }
 

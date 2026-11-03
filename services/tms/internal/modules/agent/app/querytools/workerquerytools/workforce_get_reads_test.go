@@ -141,7 +141,7 @@ func TestWorkerGetHOS_ReadsTheClocksByTheWorkerInMinutes(t *testing.T) {
 	assert.Equal(t, false, record[hosStale])
 	assert.Equal(t, timeutils.FormatUnixDateTimeIn(recordedAt, "America/Chicago"),
 		record[hosRecordedAt])
-	assert.NotContains(t, record, graphqlread.OutcomeNote)
+	assert.NotContains(t, record, graphqlread.ParamNote)
 }
 
 func TestWorkerGetHOS_MarksAStaleReading(t *testing.T) {
@@ -165,8 +165,8 @@ func TestWorkerGetHOS_MarksAStaleReading(t *testing.T) {
 
 	record, _ := data.(map[string]any)
 	assert.Equal(t, true, record[hosStale])
-	assert.Contains(t, record[graphqlread.OutcomeNote], "more than twelve hours old")
-	assert.Contains(t, record[graphqlread.OutcomeNote], "do not stop")
+	assert.Contains(t, record[graphqlread.ParamNote], "more than twelve hours old")
+	assert.Contains(t, record[graphqlread.ParamNote], "do not stop")
 }
 
 /*
@@ -196,9 +196,9 @@ func TestWorkerGetHOS_ADriverNoELDReportedIsUnknownNotMissing(t *testing.T) {
 	assert.Equal(t, "Unknown", record[hosDutyStatus])
 	assert.Equal(t, true, record[hosStale])
 	assert.NotContains(t, record, "driveRemainingMinutes", "an unknown clock is absent, not zero")
-	assert.Contains(t, record[graphqlread.OutcomeNote], "No ELD has reported hours of service")
-	assert.Contains(t, record[graphqlread.OutcomeNote], "do not stop")
-	assert.NotContains(t, record[graphqlread.OutcomeNote], "plan on nothing")
+	assert.Contains(t, record[graphqlread.ParamNote], "No ELD has reported hours of service")
+	assert.Contains(t, record[graphqlread.ParamNote], "do not stop")
+	assert.NotContains(t, record[graphqlread.ParamNote], "plan on nothing")
 }
 
 func TestWorkerGetDOTRandomDraw_ReadsTheRoundWithItsSelections(t *testing.T) {

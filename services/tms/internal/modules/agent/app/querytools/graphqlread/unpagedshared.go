@@ -21,7 +21,6 @@ const (
 	OutcomeSearchedFor  = "searchedFor"
 	OutcomeItems        = "items"
 	OutcomeColumns      = "columns"
-	OutcomeNote         = "note"
 	OutcomeWithheld     = "withheldByAccess"
 	OutcomeWithheldNote = "withheldNote"
 )

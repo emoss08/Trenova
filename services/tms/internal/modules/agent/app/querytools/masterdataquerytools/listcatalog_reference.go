@@ -70,7 +70,7 @@ type codedRow struct {
 func codedFields() []filtercatalog.Field {
 	return []filtercatalog.Field{
 		{
-			Name:   querytool.ListFieldStatus,
+			Name:   querytool.ParamStatus,
 			Kind:   filtercatalog.KindEnum,
 			Values: querytool.StatusValues,
 		},
@@ -241,7 +241,7 @@ func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolpo
 		),
 		Fields: []filtercatalog.Field{
 			{
-				Name:   querytool.ListFieldStatus,
+				Name:   querytool.ParamStatus,
 				Kind:   filtercatalog.KindEnum,
 				Values: querytool.StatusValues,
 			},
@@ -306,7 +306,7 @@ func NewListHazardousMaterialsTool(
 		),
 		Fields: []filtercatalog.Field{
 			{
-				Name:   querytool.ListFieldStatus,
+				Name:   querytool.ParamStatus,
 				Kind:   filtercatalog.KindEnum,
 				Values: querytool.StatusValues,
 			},
@@ -369,7 +369,7 @@ func NewListAccessorialChargesTool(
 		),
 		Fields: []filtercatalog.Field{
 			{
-				Name:   querytool.ListFieldStatus,
+				Name:   querytool.ParamStatus,
 				Kind:   filtercatalog.KindEnum,
 				Values: querytool.StatusValues,
 			},

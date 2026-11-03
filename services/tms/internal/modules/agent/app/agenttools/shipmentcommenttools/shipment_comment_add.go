@@ -47,14 +47,14 @@ func (t *AddShipmentCommentTool) Preview(
 		toolpreview.Record{Resource: permission.ResourceShipmentComment, Label: "Shipment comment"},
 		entity,
 		toolpreview.Only(
-			changepreview.PreviewFieldShipmentID,
+			toolparams.ParamShipmentID,
 			"comment",
 			"type",
 			"visibility",
 			"priority",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.PreviewFieldShipmentID: permission.ResourceShipment,
+			toolparams.ParamShipmentID: permission.ResourceShipment,
 		}),
 	)
 	if err != nil {

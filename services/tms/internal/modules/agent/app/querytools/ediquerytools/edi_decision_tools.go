@@ -29,14 +29,13 @@ import (
 )
 
 const (
-	paramTransactionSet       = "transactionSet"
-	paramShipmentLinkID       = "shipmentLinkId"
-	paramInvoiceID            = "invoiceId"
-	ediTenderChangeEntity     = "edi_tender_change"
-	ediTransferChgEntity      = "edi_transfer_change"
-	maxChangedValueRunes      = 120
-	nestedChangeDescriptor    = "changed"
-	transferChangeStatusField = "status"
+	paramTransactionSet    = "transactionSet"
+	paramShipmentLinkID    = "shipmentLinkId"
+	paramInvoiceID         = "invoiceId"
+	ediTenderChangeEntity  = "edi_tender_change"
+	ediTransferChgEntity   = "edi_transfer_change"
+	maxChangedValueRunes   = 120
+	nestedChangeDescriptor = "changed"
 )
 
 var (
@@ -346,7 +345,7 @@ func (t *listEDITransferChangesTool) Query(
 	criteria := filtercatalog.NewCriteria("EDI transfer changes").At(querytool.ClockFor(params))
 	if status != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
-			{Field: transferChangeStatusField, Operator: dbtype.OpEqual, Value: status},
+			{Field: querytool.ParamStatus, Operator: dbtype.OpEqual, Value: status},
 		}
 		criteria.Field(querytool.ParamStatus, status)
 	}

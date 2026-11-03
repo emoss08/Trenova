@@ -20,11 +20,11 @@ import (
 )
 
 const (
-	SourceAgentEmail   = shipment.CommentToolEmailCustomer
-	SourceDelayNotice  = shipment.CommentToolDelayNotice
+	UpdateEmail        = shipment.CommentUpdateEmail
+	UpdateDelayNotice  = shipment.CommentUpdateDelayNotice
 	RecentWindowSecs   = int64(3600)
 	recentPageSize     = 25
-	metadataSource     = shipment.CommentMetadataTool
+	metadataUpdate     = shipment.CommentMetadataUpdate
 	metadataRecipients = "recipients"
 	metadataSubject    = "subject"
 )
@@ -75,9 +75,9 @@ func WasEmailed(comment *shipment.ShipmentComment) bool {
 	if comment == nil || comment.Metadata == nil {
 		return false
 	}
-	source, _ := comment.Metadata[metadataSource].(string)
+	update, _ := comment.Metadata[metadataUpdate].(string)
 
-	return slices.Contains(shipment.CustomerEmailTools(), source)
+	return slices.Contains(shipment.CustomerEmailUpdates(), update)
 }
 
 func Recipients(
@@ -149,14 +149,14 @@ type CommentParams struct {
 	Subject    string
 	Body       string
 	Origin     string
-	Source     string
+	Update     string
 	Extra      map[string]any
 }
 
 func Comment(p *CommentParams) *shipmentcommentports.CreateSystemShipmentCommentRequest {
 	metadata := map[string]any{
 		shipment.CommentMetadataOrigin: p.Origin,
-		metadataSource:                 p.Source,
+		metadataUpdate:                 p.Update,
 		metadataRecipients:             p.Recipients,
 		metadataSubject:                p.Subject,
 	}

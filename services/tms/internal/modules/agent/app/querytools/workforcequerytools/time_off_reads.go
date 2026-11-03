@@ -25,7 +25,6 @@ const (
 	timeOffTo          = "startDateTo"
 	timeOffOverlapping = "overlapping"
 	timeOffIncludes    = "includeWorker"
-	timeOffWorkerID    = "workerId"
 	noteTimeOffStatus  = "Requested means still awaiting a decision."
 	noteTimeOffDefault = "Defaults to true."
 )
@@ -54,7 +53,9 @@ func TimeOffReadSpecs() []readspec.List {
 			timeOffFrom:           noteTimeOffWindow,
 			timeOffOverlapping:    noteTimeOffDefault,
 		},
-		References: map[string]readspec.Reference{timeOffWorkerID: readspec.WorkerReference},
+		References: map[string]readspec.Reference{
+			querytool.ParamWorkerID: readspec.WorkerReference,
+		},
 		Defaults:   map[string]any{timeOffOverlapping: true},
 		DefaultsAt: timeOffWindow,
 		Inputs:     map[string]any{timeOffIncludes: true},

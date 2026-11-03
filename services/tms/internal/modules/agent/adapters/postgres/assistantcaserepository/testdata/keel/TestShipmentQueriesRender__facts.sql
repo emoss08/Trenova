@@ -49,5 +49,5 @@ WHERE s.business_unit_id = $1 AND s.organization_id = $2 AND s.id = $3
 -- $6 = 'carrierName'
 -- $7 = ''
 -- $8 = 'confirmed'
--- $9 = '{tool}'
--- $10 = '{customer_send_email,notify_shipment_delay}'
+-- $9 = '{update}'
+-- $10 = '{email,delay_notice}'

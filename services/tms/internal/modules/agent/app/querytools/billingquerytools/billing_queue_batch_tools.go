@@ -19,7 +19,6 @@ const (
 	batchQueueItemsSearchFor  = "billing queue items by id"
 	noBillerLabel             = "no biller"
 	readinessSeparator        = "; "
-	columnAmount              = "amount"
 )
 
 // billingQueueBatchRow is one item as a row of the table the batch read
@@ -136,7 +135,7 @@ func columnsShown(columns, withheld []string) []string {
 	hidden := map[string]struct{}{}
 	for _, name := range withheld {
 		if name == querytool.WithheldAmounts {
-			hidden[columnAmount] = struct{}{}
+			hidden[querytool.FieldAmount] = struct{}{}
 		}
 		hidden[name] = struct{}{}
 	}

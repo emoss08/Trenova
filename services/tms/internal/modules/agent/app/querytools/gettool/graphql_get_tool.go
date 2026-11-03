@@ -246,7 +246,7 @@ func (t *GraphQLTool) one(
 		record[graphqlread.OutcomeWithheldNote] = fieldgate.WithheldNote
 	}
 	if len(notes) > 0 {
-		record[graphqlread.OutcomeNote] = strings.Join(notes, " ")
+		record[graphqlread.ParamNote] = strings.Join(notes, " ")
 	}
 	if outside := graphqlread.OutsideRecords(t.Spec.Resource, t.Spec.Outside, record); len(
 		outside,
@@ -349,7 +349,7 @@ func (t *GraphQLTool) gathered(ids []pulid.ID, records []any) any {
 		outcome[graphqlread.OutcomeColumns] = columns
 	}
 	if len(missing) > 0 {
-		outcome[graphqlread.OutcomeNote] = fmt.Sprintf(
+		outcome[graphqlread.ParamNote] = fmt.Sprintf(
 			"No %s of this organization has these ids: %s",
 			t.Spec.Entity,
 			strings.Join(missing, ", "),

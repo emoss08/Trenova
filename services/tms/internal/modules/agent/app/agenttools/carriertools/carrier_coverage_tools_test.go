@@ -189,11 +189,11 @@ func (f *fakeCarrierCoverage) coverWith(status shipmentvocab.CarrierAssignmentSt
 
 func (f *fakeCarrierCoverage) assignParams(extra map[string]any) map[string]any {
 	params := map[string]any{
-		changepreview.PreviewFieldShipmentMoveID: f.moveID().String(),
-		toolparams.ParamCarrierID:                f.carrier.ID.String(),
-		"rateMethod":                             "Flat",
-		"baseRate":                               "1800.00",
-		"fuelSurcharge":                          "120",
+		toolparams.ParamShipmentMoveID: f.moveID().String(),
+		toolparams.ParamCarrierID:      f.carrier.ID.String(),
+		"rateMethod":                   "Flat",
+		"baseRate":                     "1800.00",
+		"fuelSurcharge":                "120",
 	}
 	for key, value := range extra {
 		params[key] = value
@@ -388,8 +388,8 @@ func TestCancelCarrierAssignment_SendsTheMoveAndTheReason(t *testing.T) {
 		t,
 		NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
-				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-				toolparams.ParamReason:                   "  Carrier's truck broke down ",
+				toolparams.ParamShipmentMoveID: carriers.moveID().String(),
+				toolparams.ParamReason:         "  Carrier's truck broke down ",
 			},
 		)),
 	)
@@ -406,7 +406,7 @@ func TestCancelCarrierAssignment_RequiresAReason(t *testing.T) {
 	err := NewCancelCarrierAssignmentTool(carriers).(*CancelCarrierAssignmentTool).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String()},
+			map[string]any{toolparams.ParamShipmentMoveID: carriers.moveID().String()},
 		),
 	)
 	require.Error(t, err)
@@ -419,8 +419,8 @@ func TestCancelCarrierAssignment_AConfirmedCarrierIsAProposal(t *testing.T) {
 
 	params := func(carriers *fakeCarrierCoverage) map[string]any {
 		return map[string]any{
-			changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			toolparams.ParamReason:                   "Carrier fell off",
+			toolparams.ParamShipmentMoveID: carriers.moveID().String(),
+			toolparams.ParamReason:         "Carrier fell off",
 		}
 	}
 
@@ -459,8 +459,8 @@ func TestCancelCarrierAssignment_PreviewShowsTheCarrierComingOff(t *testing.T) {
 		&carriers.guard,
 		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-				toolparams.ParamReason:                   "Carrier fell off",
+				toolparams.ParamShipmentMoveID: carriers.moveID().String(),
+				toolparams.ParamReason:         "Carrier fell off",
 			}))
 		},
 	)

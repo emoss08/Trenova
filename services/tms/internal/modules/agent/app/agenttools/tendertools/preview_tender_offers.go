@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -29,12 +30,12 @@ func TenderPreview(
 		toolpreview.Only(
 			"mode",
 			"status",
-			changepreview.PreviewFieldShipmentMoveID,
+			toolparams.ParamShipmentMoveID,
 			"routingGuideId",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
-			"routingGuideId":                         permission.ResourceRoutingGuide,
+			toolparams.ParamShipmentMoveID: permission.ResourceShipmentMove,
+			"routingGuideId":               permission.ResourceRoutingGuide,
 		}),
 	)
 	if err != nil {

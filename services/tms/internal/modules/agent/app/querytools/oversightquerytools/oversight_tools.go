@@ -752,7 +752,7 @@ func DailyBriefingGetSpec() readspec.Get {
 			"may read; it changes nothing, not even whether the briefing was read.",
 		Absent: func(pulid.ID) map[string]any {
 			return map[string]any{
-				"found": false, "sections": []any{}, graphqlread.OutcomeNote: briefingMissingNote,
+				"found": false, "sections": []any{}, graphqlread.ParamNote: briefingMissingNote,
 			}
 		},
 		Shape: noteBriefing,
@@ -770,6 +770,6 @@ func noteBriefing(record map[string]any, _ map[string]struct{}, _ filtercatalog.
 		notes = append(notes, briefingWithheldNote)
 	}
 	if len(notes) > 0 {
-		record[graphqlread.OutcomeNote] = strings.Join(notes, " ")
+		record[graphqlread.ParamNote] = strings.Join(notes, " ")
 	}
 }

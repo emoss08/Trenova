@@ -274,7 +274,7 @@ func (t *UnpagedTool) Query(
 
 func annotateOutcome(outcome map[string]any, notes, withheld []string) {
 	if len(notes) > 0 {
-		outcome[graphqlread.OutcomeNote] = strings.Join(notes, " ")
+		outcome[graphqlread.ParamNote] = strings.Join(notes, " ")
 	}
 	if len(withheld) > 0 {
 		outcome[graphqlread.OutcomeWithheld] = withheld

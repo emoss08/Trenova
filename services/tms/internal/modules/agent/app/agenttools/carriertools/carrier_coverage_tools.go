@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -96,7 +95,7 @@ func (t *AssignMoveToCarrierTool) Description() string {
 
 func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		changepreview.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+		toolparams.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The move to cover, from dispatch_get_board (moveId) or shipment_get (its moves).",
 		),
@@ -152,7 +151,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 			"Cover the move although the carrier's insurance expires soon. A carrier that is " +
 				"blocked can never be used. Off by default.",
 		),
-	}, changepreview.PreviewFieldShipmentMoveID, toolparams.ParamCarrierID, fieldRateMethod, fieldBaseRate)
+	}, toolparams.ParamShipmentMoveID, toolparams.ParamCarrierID, fieldRateMethod, fieldBaseRate)
 }
 
 func (t *AssignMoveToCarrierTool) Policy() agenttoolports.ToolPolicy {
@@ -241,7 +240,7 @@ func (t *AssignMoveToCarrierTool) request(
 		return nil, err
 	}
 
-	moveID, err := toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentMoveID)
+	moveID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +301,7 @@ func (t *AssignMoveToCarrierTool) request(
 func (t *AssignMoveToCarrierTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return toolparams.TargetOf(
 		params,
-		changepreview.PreviewFieldShipmentMoveID,
+		toolparams.ParamShipmentMoveID,
 		permission.ResourceShipmentMove,
 	)
 }
@@ -332,7 +331,7 @@ func (t *CancelCarrierAssignmentTool) Description() string {
 
 func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		changepreview.PreviewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+		toolparams.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 			permission.ResourceShipmentMove,
 			"The move whose carrier comes off, from dispatch_get_board (moveId) or "+
 				"shipment_get (its moves).",
@@ -340,7 +339,7 @@ func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the carrier is coming off, in a sentence a person can check.",
 		),
-	}, changepreview.PreviewFieldShipmentMoveID, toolparams.ParamReason)
+	}, toolparams.ParamShipmentMoveID, toolparams.ParamReason)
 }
 
 func (t *CancelCarrierAssignmentTool) Policy() agenttoolports.ToolPolicy {
@@ -424,7 +423,7 @@ func (t *CancelCarrierAssignmentTool) request(
 		return nil, err
 	}
 
-	moveID, err := toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentMoveID)
+	moveID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
@@ -445,7 +444,7 @@ func (t *CancelCarrierAssignmentTool) Target(
 ) (agenttoolports.ToolTarget, bool) {
 	return toolparams.TargetOf(
 		params,
-		changepreview.PreviewFieldShipmentMoveID,
+		toolparams.ParamShipmentMoveID,
 		permission.ResourceShipmentMove,
 	)
 }

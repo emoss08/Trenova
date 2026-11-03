@@ -33,7 +33,7 @@ func (t *EmailCustomerTool) compose(
 		return nil, err
 	}
 
-	shipmentID, err := toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}

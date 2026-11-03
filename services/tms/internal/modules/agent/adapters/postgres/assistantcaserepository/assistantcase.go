@@ -353,7 +353,7 @@ func shipmentFactsQuery(
 	customerNotifiedAt := keel.Scalar(sc.Pick(sc.CreatedAt.Max()).Where(
 		sc.ShipmentID.EqCol(sp.ID),
 		sc.Type.Eq(shipmentvocab.CommentTypeCustomerUpdate),
-		sc.Metadata.Text(shipment.CommentMetadataTool).In(shipment.CustomerEmailTools()...),
+		sc.Metadata.Text(shipment.CommentMetadataUpdate).In(shipment.CustomerEmailUpdates()...),
 	))
 	inBillingQueue := keel.Exists(bqi.Pick(bqi.ID).Where(
 		bqi.ShipmentID.EqCol(sp.ID),

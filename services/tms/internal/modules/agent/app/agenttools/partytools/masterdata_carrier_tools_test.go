@@ -145,11 +145,11 @@ func TestCreateCarrier_PreviewsTheCarrierAndCreatesIt(t *testing.T) {
 	carriers := &fakeCarriers{guard: &agenttoolstest.WriteGuard{}}
 	tool := NewCreateCarrierTool(carriers, states)
 	params := agenttoolstest.IdempotentParams(map[string]any{
-		masterdatakit.MdCode:      "ROAD",
-		masterdatakit.MdName:      "Roadrunner Logistics",
-		masterdatakit.MdDOTNumber: "1234567",
-		"scac":                    "rrlg",
-		masterdatakit.MdState:     "tx",
+		masterdatakit.ParamCode:      "ROAD",
+		masterdatakit.ParamName:      "Roadrunner Logistics",
+		masterdatakit.ParamDOTNumber: "1234567",
+		"scac":                       "rrlg",
+		masterdatakit.ParamState:     "tx",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -188,9 +188,9 @@ func TestCreateCarrier_PaymentDetailsAreMoneyAndWaitForAPerson(t *testing.T) {
 	carriers := &fakeCarriers{guard: &agenttoolstest.WriteGuard{}}
 	tool := NewCreateCarrierTool(carriers, agenttoolstest.TexasState())
 	args := map[string]any{
-		masterdatakit.MdCode: "ROAD",
-		masterdatakit.MdName: "Roadrunner Logistics",
-		carrierRemitLine1:    "PO Box 9",
+		masterdatakit.ParamCode: "ROAD",
+		masterdatakit.ParamName: "Roadrunner Logistics",
+		carrierRemitLine1:       "PO Box 9",
 	}
 
 	call := tool.Policy().Classify(agenttoolstest.IdempotentParams(args))
@@ -213,10 +213,10 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 	t.Parallel()
 
 	for name, args := range map[string]map[string]any{
-		"no name":            {masterdatakit.MdCode: "ROAD"},
-		"an unknown state":   {masterdatakit.MdCode: "ROAD", masterdatakit.MdName: "Road", masterdatakit.MdState: "ZZ"},
-		"an unknown type":    {masterdatakit.MdCode: "ROAD", masterdatakit.MdName: "Road", "carrierType": "Tramp"},
-		"a payment term out": {masterdatakit.MdCode: "ROAD", masterdatakit.MdName: "Road", carrierPaymentTerm: 900},
+		"no name":            {masterdatakit.ParamCode: "ROAD"},
+		"an unknown state":   {masterdatakit.ParamCode: "ROAD", masterdatakit.ParamName: "Road", masterdatakit.ParamState: "ZZ"},
+		"an unknown type":    {masterdatakit.ParamCode: "ROAD", masterdatakit.ParamName: "Road", "carrierType": "Tramp"},
+		"a payment term out": {masterdatakit.ParamCode: "ROAD", masterdatakit.ParamName: "Road", carrierPaymentTerm: 900},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -227,12 +227,12 @@ func TestCreateCarrier_RefusesWhatTheServiceRefuses(t *testing.T) {
 	}
 
 	refused := NewCreateCarrierTool(&fakeCarriers{refusal: errortypes.NewValidationError(
-		masterdatakit.MdCode, errortypes.ErrDuplicate, "Carrier with this code already exists",
+		masterdatakit.ParamCode, errortypes.ErrDuplicate, "Carrier with this code already exists",
 	)}, agenttoolstest.TexasState())
 	preview, err := refused.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.IdempotentParams(
-			map[string]any{masterdatakit.MdCode: "ROAD", masterdatakit.MdName: "Road"},
+			map[string]any{masterdatakit.ParamCode: "ROAD", masterdatakit.ParamName: "Road"},
 		),
 	)
 	require.NoError(t, err)
@@ -247,7 +247,7 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 	tool := NewUpdateCarrierTool(carriers, states)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamCarrierID: carriers.stored.ID.String(),
-		masterdatakit.MdPhone:     "555-0100",
+		masterdatakit.ParamPhone:  "555-0100",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -258,7 +258,11 @@ func TestUpdateCarrier_KeepsWhatItIsNotGivenAndTheCarriersChildren(t *testing.T)
 		},
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "555-0100", agenttoolstest.FieldByPath(t, change, masterdatakit.MdPhone).After)
+	assert.Equal(
+		t,
+		"555-0100",
+		agenttoolstest.FieldByPath(t, change, masterdatakit.ParamPhone).After,
+	)
 	require.NotNil(t, change.Version)
 	assert.Equal(t, int64(4), *change.Version)
 

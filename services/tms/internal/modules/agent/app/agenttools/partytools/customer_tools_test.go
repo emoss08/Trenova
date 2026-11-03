@@ -91,12 +91,12 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	}}
 	tool := NewCreateCustomerTool(customers, states)
 	args := map[string]any{
-		masterdatakit.MdCode:         "ACME",
-		masterdatakit.MdName:         "Acme Foods",
-		masterdatakit.MdAddressLine1: "1 Main St",
-		masterdatakit.MdCity:         "Dallas",
-		masterdatakit.MdState:        "TX",
-		masterdatakit.MdPostalCode:   "75201",
+		masterdatakit.ParamCode:         "ACME",
+		masterdatakit.ParamName:         "Acme Foods",
+		masterdatakit.ParamAddressLine1: "1 Main St",
+		masterdatakit.ParamCity:         "Dallas",
+		masterdatakit.ParamState:        "TX",
+		masterdatakit.ParamPostalCode:   "75201",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -115,7 +115,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			masterdatakit.MdState,
+			masterdatakit.ParamState,
 		).After,
 	)
 	assert.Equal(
@@ -136,7 +136,7 @@ func TestCreateCustomer_StatusEmailRecipientsAreHeldAsLeavingTheOrganization(t *
 	assert.Equal(t, customer.StatusUpdateNone, customers.Created.StatusUpdatePreference)
 	assert.Equal(t, changepreview.CustomerRecordEntity, result.Record.EntityType)
 
-	delete(args, masterdatakit.MdState)
+	delete(args, masterdatakit.ParamState)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.IdempotentParams(args)))
 }
@@ -164,7 +164,7 @@ func TestUpdateCustomer_LeavesTheBillingProfileAlone(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{
 			toolparams.ParamCustomerID: stored.ID.String(),
-			masterdatakit.MdCity:       "Plano",
+			masterdatakit.ParamCity:    "Plano",
 		},
 	)
 

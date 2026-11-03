@@ -107,7 +107,7 @@ func noteFuelSurchargeRate(
 	}
 	if _, priced := row[fieldPrice]; !priced {
 		if !hidden(fieldPrice) {
-			row[graphqlread.OutcomeNote] = noteNoFuelPrice
+			row[graphqlread.ParamNote] = noteNoFuelPrice
 		}
 		return
 	}
@@ -116,7 +116,7 @@ func noteFuelSurchargeRate(
 			return
 		}
 	}
-	row[graphqlread.OutcomeNote] = noteOutsideFuelTable
+	row[graphqlread.ParamNote] = noteOutsideFuelTable
 }
 
 // RateAgreementGetSpec reads one rate agreement through the Desk's card.

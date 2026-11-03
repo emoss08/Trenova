@@ -31,18 +31,20 @@ const (
 	CommentOriginBoard     = "board"
 )
 
-// CommentMetadataTool names the agent tool that wrote a comment. A customer
-// update written by one of CustomerEmailTools was emailed to the customer.
+// CommentMetadataUpdate says what kind of customer update a comment records;
+// its origin (CommentMetadataOrigin) says who sent it. Every kind in
+// CustomerEmailUpdates was emailed to the customer: the status email an agent
+// writes, and the delay notice a dispatcher sends from the board.
 const (
-	CommentMetadataTool      = "tool"
-	CommentToolEmailCustomer = "customer_send_email"
-	CommentToolDelayNotice   = "notify_shipment_delay"
+	CommentMetadataUpdate    = "update"
+	CommentUpdateEmail       = "email"
+	CommentUpdateDelayNotice = "delay_notice"
 )
 
-var customerEmailTools = []string{CommentToolEmailCustomer, CommentToolDelayNotice}
+var customerEmailUpdates = []string{CommentUpdateEmail, CommentUpdateDelayNotice}
 
-func CustomerEmailTools() []string {
-	return customerEmailTools
+func CustomerEmailUpdates() []string {
+	return customerEmailUpdates
 }
 
 type ShipmentComment struct {

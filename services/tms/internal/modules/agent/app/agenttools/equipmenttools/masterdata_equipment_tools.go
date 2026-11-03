@@ -59,16 +59,16 @@ const manufacturerSupplier = "from equipment_list_manufacturers"
 const fleetCodeSupplier = "from masterdata_list_fleet_codes"
 
 var equipmentDates = toolpreview.Types(map[string]assistantartifact.DisplayType{
-	masterdatakit.MdRegistrationExpiry: assistantartifact.DisplayDate,
-	paramLastInspectionDate:            assistantartifact.DisplayDate,
+	masterdatakit.ParamRegistrationExpiry: assistantartifact.DisplayDate,
+	paramLastInspectionDate:               assistantartifact.DisplayDate,
 })
 
 var equipmentRefs = toolpreview.WithRefs(map[string]permission.Resource{
-	paramPrimaryWorkerID:            permission.ResourceWorker,
-	paramSecondaryWorkerID:          permission.ResourceWorker,
-	masterdatakit.MdEquipmentTypeID: permission.ResourceEquipmentType,
-	masterdatakit.MdManufacturerID:  permission.ResourceEquipmentManufacturer,
-	masterdatakit.MdFleetCodeID:     permission.ResourceFleetCode,
+	paramPrimaryWorkerID:                       permission.ResourceWorker,
+	paramSecondaryWorkerID:                     permission.ResourceWorker,
+	masterdatakit.ParamEquipmentTypeID:         permission.ResourceEquipmentType,
+	masterdatakit.ParamEquipmentManufacturerID: permission.ResourceEquipmentManufacturer,
+	masterdatakit.ParamFleetCodeID:             permission.ResourceFleetCode,
 })
 
 type TractorKeeper interface {
@@ -199,73 +199,77 @@ var tractorRecord = &masterdatakit.Record[tractor.Tractor]{
 func unitFields[T any](at unitAccess[T]) []masterdatakit.Field[T] {
 	return []masterdatakit.Field[T]{
 		masterdatakit.Text(
-			masterdatakit.MdCode,
+			masterdatakit.ParamCode,
 			"The unit number, unique in this organization.",
 			masterdatakit.MdMaxUnitText,
 			true,
 			at.code,
 		),
 		masterdatakit.Enum(
-			masterdatakit.MdStatus,
+			masterdatakit.ParamStatus,
 			"Whether it can be dispatched. "+equipmentStatusNote+
 				" Defaults to Available.",
 			equipmentStatuses,
 			at.status,
 		),
-		masterdatakit.ID(masterdatakit.MdEquipmentTypeID, permission.ResourceEquipmentType,
+		masterdatakit.ID(masterdatakit.ParamEquipmentTypeID, permission.ResourceEquipmentType,
 			"Its equipment type, "+equipmentSupplierNote+".", at.equipmentType),
-		masterdatakit.ID(masterdatakit.MdManufacturerID, permission.ResourceEquipmentManufacturer,
-			"Who made it, "+manufacturerSupplier+".", at.manufacturer),
-		masterdatakit.OptionalID(masterdatakit.MdFleetCodeID, permission.ResourceFleetCode,
+		masterdatakit.ID(
+			masterdatakit.ParamEquipmentManufacturerID,
+			permission.ResourceEquipmentManufacturer,
+			"Who made it, "+manufacturerSupplier+".",
+			at.manufacturer,
+		),
+		masterdatakit.OptionalID(masterdatakit.ParamFleetCodeID, permission.ResourceFleetCode,
 			"The fleet it belongs to, "+fleetCodeSupplier+".", at.fleetCode),
 		masterdatakit.Text(
-			masterdatakit.MdMake,
+			masterdatakit.ParamMake,
 			"The make.",
 			masterdatakit.MdMaxUnitText,
 			false,
 			at.make,
 		),
 		masterdatakit.Text(
-			masterdatakit.MdModel,
+			masterdatakit.ParamModel,
 			"The model.",
 			masterdatakit.MdMaxUnitText,
 			false,
 			at.model,
 		),
 		masterdatakit.OptionalInt(
-			masterdatakit.MdYear,
+			masterdatakit.ParamYear,
 			"The model year.",
 			masterdatakit.MdMinYear,
 			masterdatakit.MdMaxYear,
 			at.year,
 		),
 		masterdatakit.UpperText(
-			masterdatakit.MdVIN,
+			masterdatakit.ParamVIN,
 			"The 17-character VIN.",
 			masterdatakit.MdMaxUnitText,
 			at.vin,
 		),
 		masterdatakit.Text(
-			masterdatakit.MdLicensePlate,
+			masterdatakit.ParamLicensePlateNumber,
 			"The license plate.",
 			masterdatakit.MdMaxUnitText,
 			false,
 			at.plate,
 		),
 		masterdatakit.Text(
-			masterdatakit.MdRegistrationNumber,
+			masterdatakit.ParamRegistrationNumber,
 			"The registration number.",
 			masterdatakit.MdMaxUnitText,
 			false,
 			at.registration,
 		),
 		masterdatakit.Day(
-			masterdatakit.MdRegistrationExpiry,
+			masterdatakit.ParamRegistrationExpiry,
 			"When the registration expires.",
 			at.expiry,
 		),
 		masterdatakit.Text(
-			masterdatakit.MdExternalID,
+			masterdatakit.ParamExternalID,
 			"Its id in another system, such as a telematics provider.",
 			masterdatakit.MdMaxExternalID,
 			false,
@@ -315,7 +319,7 @@ func tractorFields() []masterdatakit.Field[tractor.Tractor] {
 		masterdatakit.OptionalID(paramSecondaryWorkerID, permission.ResourceWorker,
 			"A team driver, from worker_list.",
 			func(t *tractor.Tractor) *pulid.ID { return &t.SecondaryWorkerID }),
-		masterdatakit.State(masterdatakit.MdState, "The state it is registered in.", false,
+		masterdatakit.State(masterdatakit.ParamState, "The state it is registered in.", false,
 			func(t *tractor.Tractor) *pulid.ID { return &t.StateID }),
 		masterdatakit.Enum(
 			toolparams.ParamFuelType,
@@ -343,10 +347,10 @@ func NewCreateTractorTool(
 			"sent and it can be marked Sold or out of service.",
 		Fields: tractorFields(),
 		Required: []string{
-			masterdatakit.MdCode,
+			masterdatakit.ParamCode,
 			paramPrimaryWorkerID,
-			masterdatakit.MdEquipmentTypeID,
-			masterdatakit.MdManufacturerID,
+			masterdatakit.ParamEquipmentTypeID,
+			masterdatakit.ParamEquipmentManufacturerID,
 		},
 		SearchTerms: []string{"new tractor", "add truck", "power unit", "new unit"},
 		Policy:      masterdatakit.MdInternalAsk,
@@ -501,9 +505,9 @@ func NewCreateTrailerTool(
 			"sent and it can be marked Sold or out of service.",
 		Fields: trailerFields(),
 		Required: []string{
-			masterdatakit.MdCode,
-			masterdatakit.MdEquipmentTypeID,
-			masterdatakit.MdManufacturerID,
+			masterdatakit.ParamCode,
+			masterdatakit.ParamEquipmentTypeID,
+			masterdatakit.ParamEquipmentManufacturerID,
 		},
 		SearchTerms: []string{"new trailer", "add trailer", "reefer", "dry van"},
 		Policy:      masterdatakit.MdInternalAsk,

@@ -169,7 +169,7 @@ func (s *Service) NotifyDelay(
 		Subject:    data.AgentSubject,
 		Body:       body,
 		Origin:     shipment.CommentOriginBoard,
-		Source:     SourceDelayNotice,
+		Update:     UpdateDelayNotice,
 		Extra:      map[string]any{metadataSentBy: sentBy.String()},
 	})); err != nil {
 		return fmt.Errorf("the email was sent but could not be recorded on the shipment: %w", err)
