@@ -29,7 +29,7 @@ func OptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 		preds = append(preds, sp.Status.In(opts.Statuses...))
 	}
 	if opts.HasActivityWindow() {
-		preds = append(preds, activityWindowPredicate(opts))
+		preds = append(preds, activityWindowPredicates(opts)...)
 	}
 	if opts.BillingTransferEligible {
 		preds = append(preds, BillingTransferCandidateCondition())
@@ -205,20 +205,27 @@ func stopLocationPredicate(locationIDs []pulid.ID) keel.Pred {
 	)
 }
 
-func activityWindowPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
+// activityWindowPredicates keep a shipment whose live stops span the window: one is due to start
+// before the window ends and one is due to end after it starts. A load that picks up before the
+// window and delivers after it is rolling the whole time, though none of its stops falls inside.
+func activityWindowPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	m := shipmentdb.Shipments.Moves()
 	st := m.Stops()
+	liveStop := func(pred keel.Pred) keel.Pred {
+		return m.Any(
+			m.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			st.Any(
+				st.Status.Ne(shipmentvocab.StopStatusCanceled),
+				st.ScheduledWindowStart.Gt(0),
+				pred,
+			),
+		)
+	}
 
-	return m.Any(
-		m.Status.Ne(shipmentvocab.MoveStatusCanceled),
-		st.Any(
-			st.ScheduledWindowStart.Gt(0),
-			st.ScheduledWindowStart.Lte(opts.ActivityWindowEnd),
-			st.ScheduledWindowEnd.
-				Coalesce(st.ScheduledWindowStart).
-				Gte(opts.ActivityWindowStart),
-		),
-	)
+	return []keel.Pred{
+		liveStop(st.ScheduledWindowStart.Lte(opts.ActivityWindowEnd)),
+		liveStop(st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart).Gte(opts.ActivityWindowStart)),
+	}
 }
 
 func UnassignedPredicate() keel.Pred {

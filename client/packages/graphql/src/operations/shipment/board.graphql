@@ -248,3 +248,20 @@ mutation UndoShipmentSuggestionDecision($key: String!) {
 mutation NotifyShipmentDelay($input: NotifyShipmentDelayInput!) {
   notifyShipmentDelay(input: $input)
 }
+
+# The board's rows for the timeline: the board's filters, narrowed to the loads
+# active in the visible range, in the slim schedule shape the bars draw from.
+query ShipmentTimeline($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {
+  shipments(input: $input) {
+    edges {
+      node {
+        ...ShipmentScheduleFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}

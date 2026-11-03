@@ -1,60 +1,80 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { useNow } from "@trenova/shared/hooks/use-now";
-import { getTodayDate } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
-import type {
-  DataTableGraphQLSource,
-  DataTableQueryOptions,
-} from "@trenova/shared/types/data-table";
-import type { Shipment } from "@trenova/shared/types/shipment";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { fetchAllRows } from "@/lib/data-table-export";
-import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
-import { STAGE_META } from "@/lib/shipment-board/stage";
-import { resolveCoverage } from "@/lib/shipment-board/coverage";
-import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
-import { buildTimelineRows } from "@/lib/shipment-board/timeline";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { shipmentTimelineGraphQLConfig } from "@/lib/graphql/shipment";
+import { ACTIVE_STAGES, type ActiveStage } from "@/lib/shipment-board/stage";
+import {
+  buildTimelineLoads,
+  dayBoundaries,
+  dayStartOfIso,
+  isoDay,
+  overlapsRange,
+  RANGE_DAYS,
+  rangeFirstDay,
+} from "@/lib/shipment-board/timeline";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { getTodayDate } from "@trenova/shared/lib/date";
+import type { DataTableQueryOptions } from "@trenova/shared/types/data-table";
+import type { Shipment } from "@trenova/shared/types/shipment";
+import { useEffect, useState } from "react";
+import { SHIPMENT_LIST_KEY } from "../../shipment-queries";
 import { useShipmentBoardUrl } from "../url-state";
+import {
+  ShipmentTimelineBodySkeleton,
+  ShipmentTimelineSkeleton,
+} from "./shipment-timeline-skeleton";
+import { TimelineBarTooltip } from "./timeline/timeline-bar";
+import { TimelineCanvas } from "./timeline/timeline-canvas";
+import { TimelineCard } from "./timeline/timeline-card";
+import { TimelineCoverageLanes } from "./timeline/timeline-coverage-lanes";
+import { createTimelineScale } from "./timeline/timeline-scale";
+import { TimelineShipmentRows } from "./timeline/timeline-shipment-rows";
+import { TimelineToolbar } from "./timeline/timeline-toolbar";
+import "./timeline/timeline.css";
 
-const AXIS_START = 4;
-const AXIS_END = 24;
-const TICKS = [4, 8, 12, 16, 20];
-const TIMELINE_ROW_LIMIT = 300;
-const LABEL_WIDTH = 220;
-
-const pct = (hour: number) =>
-  ((Math.max(AXIS_START, Math.min(AXIS_END, hour)) - AXIS_START) / (AXIS_END - AXIS_START)) * 100;
-
-const clock = (hour: number) => {
-  const wrapped = ((hour % 24) + 24) % 24;
-  return `${String(Math.floor(wrapped)).padStart(2, "0")}:${String(Math.round((wrapped % 1) * 60) % 60).padStart(2, "0")}`;
-};
+/** The most loads one range draws; past it the timeline says so and asks for narrower filters. */
+export const TIMELINE_ROW_LIMIT = 500;
+const DAY = 86_400;
+const NOON = 12 * 3_600;
 
 type ShipmentTimelineProps = {
-  graphql: DataTableGraphQLSource<Shipment>;
   queryOptions: Omit<DataTableQueryOptions, "cursor">;
 };
 
 /**
- * Today's loads as bars across the day, from pickup to delivery, with the
- * stretch a late load will overrun hatched in red and a line at the current
- * hour. Clicking a bar opens that shipment in the table.
+ * The board as a dispatch timeline: every load active in the visible range,
+ * by shipment or by the driver or carrier hauling it, with its stop windows,
+ * what has been driven and where its ETA lands. The range, its first day and
+ * the rows live in the URL; the server returns only the loads the range shows,
+ * narrowed by the board's own search, filters and quick filters.
+ *
+ * Nothing here reads the clock: the canvas's now line, the driven part of a
+ * load under way and a driver's free time each read it themselves, so a minute
+ * passing redraws those and not the sheet.
  */
-export default function ShipmentTimeline({ graphql, queryOptions }: ShipmentTimelineProps) {
+export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps) {
   const t = useT();
   const timezone = useUserTimezone();
-  const [, setUrl] = useShipmentBoardUrl();
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      "shipment-list",
-      "timeline",
-      graphql,
-      resolveGraphQLVariableSources(graphql, TIMELINE_ROW_LIMIT, queryOptions),
-      queryOptions,
-    ],
+  const [{ tl: range, tlday, tlrows: mode, qf }, setUrl] = useShipmentBoardUrl();
+  const today = getTodayDate(timezone);
+  const anchor = (tlday ? dayStartOfIso(tlday, timezone) : null) ?? today;
+  const days = RANGE_DAYS[range];
+  const scale = createTimelineScale(
+    range,
+    dayBoundaries(rangeFirstDay(range, anchor, timezone), days, timezone),
+  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hiddenStages, setHiddenStages] = useState<ReadonlySet<ActiveStage>>(new Set());
+
+  const graphql = shipmentTimelineGraphQLConfig({
+    quickFilters: qf,
+    timezone,
+    windowStart: scale.start,
+    windowEnd: scale.end,
+  });
+  const { data, isPlaceholderData, isError, refetch } = useQuery({
+    queryKey: [SHIPMENT_LIST_KEY, "timeline", scale.start, scale.end, qf, timezone, queryOptions],
     queryFn: ({ signal }) =>
       fetchAllRows<Shipment>({
         graphql,
@@ -62,148 +82,119 @@ export default function ShipmentTimeline({ graphql, queryOptions }: ShipmentTime
         maxRows: TIMELINE_ROW_LIMIT,
         signal,
       }),
+    placeholderData: keepPreviousData,
     staleTime: 15_000,
   });
 
-  const dayStart = getTodayDate(timezone);
-  const now = useNow();
-  const nowHour = (now - dayStart) / 3600;
-  const rows = useMemo(() => buildTimelineRows(data ?? [], dayStart), [data, dayStart]);
+  useEffect(() => {
+    if (!selectedId) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      // A dialog over the timeline (assigning a load) takes its own Escape.
+      if (event.target instanceof Element && event.target.closest('[role="dialog"]')) return;
+      setSelectedId(null);
+    };
+    document.addEventListener("keydown", close);
+    return () => document.removeEventListener("keydown", close);
+  }, [selectedId]);
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-2 p-4">
-        {Array.from({ length: 8 }, (_, i) => (
-          <Skeleton key={i} className="h-7 w-full" />
-        ))}
+  if (!data) {
+    return isError ? (
+      <div className="flex h-full min-h-105 flex-col items-center justify-center gap-2 p-8 text-center">
+        <p className="text-sm font-medium">{t("The timeline could not be loaded.")}</p>
+        <Button variant="outline" size="sm" onClick={() => void refetch()}>
+          {t("Try again")}
+        </Button>
       </div>
+    ) : (
+      <ShipmentTimelineSkeleton />
     );
   }
 
-  if (rows.length === 0) {
-    return (
-      <div className="text-muted-foreground flex h-48 items-center justify-center text-sm">
-        {t("No shipments with appointments match")}
-      </div>
-    );
-  }
+  // While another range loads, the rows on hand belong to the old one: show the
+  // sheet loading rather than the old rows filtered down to nothing.
+  const loading = isPlaceholderData;
+  const inRange = loading
+    ? []
+    : buildTimelineLoads(data).filter((load) => overlapsRange(load, scale.start, scale.end));
+  const counts = Object.fromEntries(
+    ACTIVE_STAGES.map((stage) => [stage, inRange.filter((load) => load.stage === stage).length]),
+  ) as Record<ActiveStage, number>;
+  const loads = inRange.filter((load) => !hiddenStages.has(load.stage));
+  const selected = selectedId ? (inRange.find((load) => load.id === selectedId) ?? null) : null;
+  const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
+  const moveBy = (direction: -1 | 1) =>
+    void setUrl({
+      tlday: isoDay(direction < 0 ? scale.start - days * DAY + NOON : scale.end + NOON, timezone),
+    });
 
   return (
-    <div
-      className="relative h-full min-w-0 overflow-auto"
-      role="list"
-      aria-label={t("Shipment timeline")}
-    >
-      <div
-        className="bg-canvas border-border sticky top-0 z-10 grid h-(--row-head-h) border-b text-xs"
-        style={{ gridTemplateColumns: `${LABEL_WIDTH}px 1fr` }}
-      >
-        <div className="text-muted-foreground flex items-center px-3 font-medium">
-          {t("Shipment")}
-        </div>
-        <div className="relative">
-          {TICKS.map((tick) => (
-            <span
-              key={tick}
-              className="text-muted-foreground absolute top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono tabular-nums"
-              style={{ left: `${pct(tick)}%` }}
-            >
-              {clock(tick)}
-            </span>
-          ))}
-        </div>
-      </div>
-      {rows.map(({ shipment, pickup, delivery, slipped }, index) => {
-        const stage = shipment.stage ?? "NeedsCoverage";
-        const meta = STAGE_META[stage];
-        const coverage = resolveCoverage(shipment);
-        const uncovered = coverage.kind === "uncovered" || coverage.kind === "tendered";
-        const startsTomorrow = pickup >= AXIS_END;
-        const open = () => void setUrl({ view: "table", expanded: shipment.id ?? null });
-        return (
-          <div
-            key={shipment.id}
-            role="listitem"
-            className="border-border hover:bg-surface-hover animate-row-rise grid h-(--row-h) border-b"
-            style={{
-              gridTemplateColumns: `${LABEL_WIDTH}px 1fr`,
-              animationDelay: `${Math.min(index, 14) * 18}ms`,
-            }}
-          >
-            <button
-              type="button"
-              onClick={open}
-              className="ui-focus-ring flex min-w-0 flex-col justify-center px-3 text-left"
-            >
-              <span className="truncate text-sm leading-tight font-medium">
-                {getOriginStop(shipment)?.location?.city} →{" "}
-                {getDestinationStop(shipment)?.location?.city}
-              </span>
-              <span className="text-muted-foreground in-data-[density=compact]:hidden truncate font-mono text-xs">
-                {shipment.proNumber} · {"name" in coverage ? coverage.name : t("no coverage")}
-              </span>
-            </button>
-            <div className="relative">
-              {TICKS.map((tick) => (
-                <span
-                  key={tick}
-                  aria-hidden
-                  className="bg-border absolute inset-y-0 w-px"
-                  style={{ left: `${pct(tick)}%` }}
-                />
-              ))}
-              {startsTomorrow ? (
-                <span className="text-muted-foreground absolute top-1/2 right-2 -translate-y-1/2 text-xs">
-                  {t("Pickup tomorrow →")}
-                </span>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={open}
-                    aria-label={t("Open {0}", shipment.proNumber ?? "")}
-                    className={cn(
-                      "ui-focus-ring absolute top-1/2 flex h-5 -translate-y-1/2 items-center overflow-hidden rounded-sm px-1.5 font-mono text-xs whitespace-nowrap",
-                      uncovered
-                        ? "border-warning text-warning-subtle-foreground border border-dashed"
-                        : cn(meta.swatchClassName, "text-foreground-on-solid"),
-                    )}
-                    style={{
-                      left: `${pct(pickup)}%`,
-                      width: `calc(${Math.max(pct(delivery) - pct(pickup), 1.5)}% - 2px)`,
-                    }}
-                  >
-                    {delivery > AXIS_END ? `→ ${clock(delivery)}` : clock(delivery)}
-                  </button>
-                  {slipped ? (
-                    <span
-                      aria-hidden
-                      className="absolute top-1/2 h-3 -translate-y-1/2 rounded-r-sm bg-[repeating-linear-gradient(135deg,var(--danger)_0_3px,transparent_3px_6px)] opacity-70"
-                      style={{
-                        left: `${pct(delivery)}%`,
-                        width: `${pct(slipped) - pct(delivery)}%`,
-                      }}
-                    />
-                  ) : null}
-                </>
-              )}
-            </div>
-          </div>
-        );
-      })}
-      {nowHour > AXIS_START && nowHour < AXIS_END ? (
-        <div
-          aria-hidden
-          className="bg-danger pointer-events-none absolute top-0 bottom-0 w-px"
-          style={{
-            left: `calc(${LABEL_WIDTH}px + (100% - ${LABEL_WIDTH}px) * ${pct(nowHour) / 100})`,
-          }}
-        >
-          <span className="bg-danger text-foreground-on-solid absolute top-1 left-1/2 -translate-x-1/2 rounded px-1 font-mono text-2xs">
-            {clock(nowHour)}
-          </span>
-        </div>
+    <div className="@container/timeline flex h-full min-h-105 flex-col">
+      <TimelineToolbar
+        scale={scale}
+        mode={mode}
+        onModeChange={(next) => void setUrl({ tlrows: next })}
+        onRangeChange={(next) => void setUrl({ tl: next })}
+        onEarlier={() => moveBy(-1)}
+        onLater={() => moveBy(1)}
+        onNow={() => void setUrl({ tlday: null })}
+        counts={counts}
+        hiddenStages={hiddenStages}
+        onToggleStage={(stage) =>
+          setHiddenStages((current) => {
+            const next = new Set(current);
+            if (next.has(stage)) next.delete(stage);
+            else next.add(stage);
+            return next;
+          })
+        }
+      />
+      {!loading && data.length >= TIMELINE_ROW_LIMIT ? (
+        <p className="bg-warning-subtle text-warning-subtle-foreground border-warning-border shrink-0 border-b px-3 py-1.5 text-xs">
+          {t(
+            "Showing the first {0} loads in this range. Narrow the board's filters to see the rest.",
+            TIMELINE_ROW_LIMIT,
+          )}
+        </p>
       ) : null}
+      {loading ? (
+        <div className="flex min-h-0 flex-1" aria-busy="true" aria-label={t("Loading the range")}>
+          <ShipmentTimelineBodySkeleton />
+        </div>
+      ) : (
+        <div className="relative min-h-0 flex-1">
+          <TimelineBarTooltip scale={scale}>
+            <TimelineCanvas
+              scale={scale}
+              today={today}
+              labelHeading={mode === "shipments" ? t("Shipment") : t("Driver or carrier")}
+            >
+              {loads.length === 0 && mode === "shipments" ? (
+                <p className="text-muted-foreground sticky left-0 w-fit px-4 py-10 text-sm">
+                  {t("No loads are active in this range.")}
+                </p>
+              ) : mode === "shipments" ? (
+                <TimelineShipmentRows
+                  loads={loads}
+                  scale={scale}
+                  selectedId={selectedId}
+                  onSelect={toggleSelected}
+                />
+              ) : (
+                <TimelineCoverageLanes
+                  loads={loads}
+                  scale={scale}
+                  selectedId={selectedId}
+                  onSelect={toggleSelected}
+                />
+              )}
+            </TimelineCanvas>
+          </TimelineBarTooltip>
+          {selected ? (
+            <TimelineCard load={selected} scale={scale} onClose={() => setSelectedId(null)} />
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

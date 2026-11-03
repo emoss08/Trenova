@@ -1,0 +1,11 @@
+/* While a shipment is pinned or hovered, the marks not in focus step back.
+   MapDimState sets the attribute on the map body; each mark carries its own
+   data-focused, so a hover touches two marks and one attribute. */
+[data-map-mark],
+[data-map-cluster] {
+  transition: opacity 150ms;
+}
+[data-map-dim="true"] [data-map-mark]:not([data-focused="true"]),
+[data-map-dim="true"] [data-map-cluster] {
+  opacity: 0.3;
+}

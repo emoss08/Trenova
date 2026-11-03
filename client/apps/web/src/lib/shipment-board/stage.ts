@@ -13,6 +13,8 @@ type StageMeta = {
   tone: BadgeTone;
   swatchClassName: string;
   textClassName: string;
+  /** The swatch's colour token, for what a class can't paint: map lines, tinted bars. */
+  colorVar: string;
 };
 
 /* The stages read as a severity ordering, from what needs a hand now to what
@@ -23,38 +25,62 @@ export const STAGE_META: Record<ShipmentStage, StageMeta> = {
     tone: "danger",
     swatchClassName: "bg-danger",
     textClassName: "text-danger",
+    colorVar: "--danger",
   },
   NeedsCoverage: {
     label: "Needs coverage",
     tone: "warning",
     swatchClassName: "bg-warning",
     textClassName: "text-warning",
+    colorVar: "--warning",
   },
   Moving: {
     label: "Moving",
     tone: "info",
     swatchClassName: "bg-info",
     textClassName: "text-info",
+    colorVar: "--info",
   },
   Scheduled: {
     label: "Scheduled",
     tone: "neutral",
     swatchClassName: "bg-muted-foreground",
     textClassName: "text-muted-foreground",
+    colorVar: "--muted-foreground",
   },
   Delivered: {
     label: "Delivered",
     tone: "success",
     swatchClassName: "bg-success",
     textClassName: "text-success",
+    colorVar: "--success",
   },
   Canceled: {
     label: "Canceled",
     tone: "neutral",
     swatchClassName: "bg-border-strong",
     textClassName: "text-muted-foreground",
+    colorVar: "--border-strong",
   },
 };
+
+/**
+ * The stages a load moves through before it is canceled, in STAGE_META's order:
+ * what needs a hand first. Views that list or colour loads by stage outside the
+ * table (the map, the timeline) read this order.
+ */
+export const ACTIVE_STAGES = [
+  "Late",
+  "NeedsCoverage",
+  "Moving",
+  "Scheduled",
+  "Delivered",
+] as const satisfies readonly ShipmentStage[];
+export type ActiveStage = (typeof ACTIVE_STAGES)[number];
+
+export function isActiveStage(value: unknown): value is ActiveStage {
+  return typeof value === "string" && (ACTIVE_STAGES as readonly string[]).includes(value);
+}
 
 export function wholeDollars(value: string): string {
   return formatCurrency(Math.round(Number(value) || 0)).replace(/\.00$/, "");

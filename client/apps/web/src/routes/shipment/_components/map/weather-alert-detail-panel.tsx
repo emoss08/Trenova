@@ -1,19 +1,32 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Separator } from "@trenova/shared/components/ui/separator";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { weatherAlert } from "@/lib/queries/weather-alert";
+import { STAGE_META } from "@/lib/shipment-board/stage";
 import {
   ACTIVITY_TYPE_COLORS,
+  ALERT_CATEGORY_CONFIG,
   SEVERITY_BADGE_MAP,
   type WeatherAlertActivity,
   type WeatherAlertActivityType,
   type WeatherAlertFeature,
 } from "@/types/weather-alert";
 import { useQuery } from "@tanstack/react-query";
-import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
-import { ClockIcon, MarkerPin01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import { formatUnixDateTimeShort, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import { useState } from "react";
+import { useEtaDelta } from "../board/cells/eta-cell";
+import { AlertSwatch, MapCardHeader, MapCardSection } from "./map-card-parts";
+import { useMapFocusStore } from "./map-focus-store";
+import type { MapShipment } from "./map-shipment-model";
+import type { AlertHit } from "./weather-alert-matching";
+
+const ACTIVITY_LABELS = defineLabels({
+  issued: "Issued",
+  updated: "Updated",
+  expired: "Expired",
+  cancelled: "Cancelled",
+});
 
 function formatUnixTimestamp(unix: number | null | undefined): string {
   if (!unix) return "—";
@@ -30,15 +43,170 @@ function formatUnixTimestamp(unix: number | null | undefined): string {
   );
 }
 
-function formatActivityTime(unix: number): string {
-  return formatUnixDateTimeShort(unix);
+/**
+ * The open alert: what it is, which of our shipments it touches, what to do,
+ * the full text, and its history.
+ */
+export function WeatherAlertDetailCard({
+  feature,
+  hits,
+  modelsById,
+  onClose,
+}: {
+  feature: WeatherAlertFeature;
+  hits: readonly AlertHit[];
+  modelsById: ReadonlyMap<string, MapShipment>;
+  onClose: () => void;
+}) {
+  const t = useT();
+  const props = feature.properties;
+  const config = ALERT_CATEGORY_CONFIG[props.alertCategory] ?? ALERT_CATEGORY_CONFIG.other;
+  const [fullText, setFullText] = useState(false);
+  const { data, isLoading } = useQuery({
+    ...weatherAlert.detail(props.id),
+    enabled: !!props.id,
+  });
+
+  const affected = hits
+    .map((hit) => ({ hit, model: modelsById.get(hit.shipmentId) }))
+    .filter((entry): entry is { hit: AlertHit; model: MapShipment } => !!entry.model)
+    .sort(
+      (a, b) =>
+        Number(b.model.stage === "Late") - Number(a.model.stage === "Late") ||
+        Number(b.hit.at === "stop") - Number(a.hit.at === "stop"),
+    );
+
+  return (
+    <>
+      <MapCardHeader
+        leading={<AlertSwatch color={config.stroke} />}
+        title={<span className="text-sm font-semibold">{props.event}</span>}
+        badge={
+          props.severity ? (
+            <Badge variant={SEVERITY_BADGE_MAP[props.severity] ?? "neutral"}>
+              {props.severity}
+            </Badge>
+          ) : null
+        }
+        subtitle={props.headline}
+        onClose={onClose}
+      />
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-3 py-2.5 text-xs">
+        {props.areaDesc ? (
+          <>
+            <dt className="text-muted-foreground">{t("Area")}</dt>
+            <dd className="min-w-0">{props.areaDesc}</dd>
+          </>
+        ) : null}
+        <dt className="text-muted-foreground">{t("Effective")}</dt>
+        <dd className="tabular-nums">{formatUnixTimestamp(props.effective)}</dd>
+        <dt className="text-muted-foreground">{t("Expires")}</dt>
+        <dd className="tabular-nums">{formatUnixTimestamp(props.expires)}</dd>
+        {props.urgency || props.certainty ? (
+          <>
+            <dt className="text-muted-foreground">{t("Urgency")}</dt>
+            <dd>{[props.urgency, props.certainty].filter(Boolean).join(" · ")}</dd>
+          </>
+        ) : null}
+      </dl>
+
+      <MapCardSection
+        title={t("Affected shipments")}
+        aside={<span className="font-mono tabular-nums">{affected.length}</span>}
+      >
+        {affected.length > 0 ? (
+          <ul className="flex flex-col gap-1.5">
+            {affected.map(({ hit, model }) => (
+              <li key={model.id}>
+                <AffectedShipmentRow model={model} at={hit.at} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-muted-foreground text-xs">
+            {t("No active shipment is inside this area or routed through it.")}
+          </p>
+        )}
+      </MapCardSection>
+
+      {props.instruction ? (
+        <MapCardSection title={t("Recommended action")}>
+          <p className="text-xs leading-relaxed">{props.instruction}</p>
+        </MapCardSection>
+      ) : null}
+
+      {props.description ? (
+        <MapCardSection title={t("Details")}>
+          <p
+            className={cn(
+              "text-xs leading-relaxed whitespace-pre-line",
+              !fullText && "line-clamp-3",
+            )}
+          >
+            {props.description}
+          </p>
+          <button
+            type="button"
+            className="text-brand ui-focus-ring self-start rounded-sm text-xs font-medium"
+            onClick={() => setFullText((open) => !open)}
+          >
+            {fullText ? t("Show less") : t("Show full text")}
+          </button>
+        </MapCardSection>
+      ) : null}
+
+      <MapCardSection title={t("Activity")}>
+        {isLoading ? (
+          <p className="text-muted-foreground text-xs">{t("Loading activity...")}</p>
+        ) : (
+          <ActivityList activities={data?.activities ?? []} />
+        )}
+      </MapCardSection>
+    </>
+  );
 }
 
-function capitalizeFirst(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
+function AffectedShipmentRow({ model, at }: { model: MapShipment; at: AlertHit["at"] }) {
+  const t = useT();
+  const toggleShipment = useMapFocusStore((s) => s.toggleShipment);
+  const setRailTab = useMapFocusStore((s) => s.setRailTab);
+  const delta = useEtaDelta(model.shipment);
+  const lane = model.lane;
+
+  return (
+    <button
+      type="button"
+      className="border-subtle hover:bg-surface-hover ui-focus-ring flex w-full flex-col gap-0.5 rounded-md border px-2 py-1.5 text-left"
+      onClick={() => {
+        toggleShipment(model.id);
+        setRailTab("shipments");
+      }}
+    >
+      <span className="flex min-w-0 items-center gap-1.5">
+        <span
+          aria-hidden
+          className={cn("size-2 shrink-0 rounded-full", STAGE_META[model.stage].swatchClassName)}
+        />
+        <span className="font-mono text-xs font-medium tabular-nums">
+          {model.shipment.proNumber || "—"}
+        </span>
+        {model.stage === "Late" && delta ? (
+          <span className={cn("font-mono text-xs tabular-nums", delta.tone)}>{delta.text}</span>
+        ) : null}
+        <span className="text-muted-foreground ml-auto shrink-0 text-xs">
+          {at === "stop" ? t("Next stop is inside") : t("On the route ahead")}
+        </span>
+      </span>
+      {lane ? (
+        <span className="truncate text-xs">
+          {t("{0} to {1}", lane.originLabel, lane.destinationLabel)}
+        </span>
+      ) : null}
+    </button>
+  );
 }
 
-function ActivityTimeline({ activities }: { activities: WeatherAlertActivity[] }) {
+function ActivityList({ activities }: { activities: WeatherAlertActivity[] }) {
   const t = useT();
 
   if (activities.length === 0) {
@@ -46,144 +214,23 @@ function ActivityTimeline({ activities }: { activities: WeatherAlertActivity[] }
   }
 
   return (
-    <div className="flex flex-col gap-0">
-      {activities.map((activity, index) => {
-        const color = ACTIVITY_TYPE_COLORS[activity.activityType as WeatherAlertActivityType];
-        const isLast = index === activities.length - 1;
-
+    <ul className="flex flex-col gap-1 text-xs">
+      {activities.map((activity) => {
+        const type = activity.activityType as WeatherAlertActivityType;
         return (
-          <div key={activity.id} className="flex gap-2.5">
-            <div className="flex flex-col items-center">
-              <span
-                className="mt-1 inline-block size-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              {!isLast && <div className="bg-border w-px grow" />}
-            </div>
-            <div className="pb-3">
-              <span className="text-foreground text-xs font-medium">
-                {capitalizeFirst(activity.activityType)}
-              </span>
-              <p className="text-2xs text-muted-foreground">
-                {formatActivityTime(activity.timestamp)}
-              </p>
-            </div>
-          </div>
+          <li key={activity.id} className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: ACTIVITY_TYPE_COLORS[type] }}
+            />
+            {ACTIVITY_LABELS[type] ?? activity.activityType}
+            <span className="text-muted-foreground ml-auto font-mono tabular-nums">
+              {formatUnixDateTimeShort(activity.timestamp)}
+            </span>
+          </li>
         );
       })}
-    </div>
-  );
-}
-
-export function WeatherAlertDetailPanel({
-  alertId,
-  feature,
-  onClose,
-}: {
-  alertId: string;
-  feature: WeatherAlertFeature;
-  onClose: () => void;
-}) {
-  const t = useT();
-
-  const { data, isLoading } = useQuery({
-    ...weatherAlert.detail(alertId),
-    enabled: !!alertId,
-  });
-
-  const props = feature.properties;
-  const severityVariant = SEVERITY_BADGE_MAP[props.severity ?? ""] ?? "outline";
-
-  return (
-    <MapControl position={ControlPosition.LEFT_TOP}>
-      <div className="bg-background mx-3.5 my-12 w-72 overflow-hidden rounded-lg border">
-        <div className="flex items-start justify-between gap-2 p-3 pb-2">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-foreground text-sm font-semibold">{props.event}</span>
-              {props.severity && <Badge variant={severityVariant}>{props.severity}</Badge>}
-            </div>
-            {props.headline && (
-              <p className="text-muted-foreground text-xs leading-snug">{props.headline}</p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground shrink-0 rounded-sm p-0.5 transition-colors"
-          >
-            <XCloseIcon className="size-3.5" />
-          </button>
-        </div>
-
-        <ScrollArea className="h-[200px]">
-          <div className="flex flex-col">
-            {props.areaDesc && (
-              <div className="flex items-start gap-1.5 px-3 pb-2">
-                <MarkerPin01Icon className="text-muted-foreground mt-0.5 size-3 shrink-0" />
-                <span className="text-muted-foreground text-xs">{props.areaDesc}</span>
-              </div>
-            )}
-
-            <Separator className="mx-3" />
-
-            {props.description && (
-              <>
-                <div className="px-3 py-2">
-                  <p className="text-foreground text-xs leading-relaxed">{t(props.description)}</p>
-                </div>
-                <Separator className="mx-3" />
-              </>
-            )}
-
-            {props.instruction && (
-              <>
-                <div className="px-3 py-2">
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {t("Recommended action")}
-                  </span>
-                  <p className="text-foreground mt-1 text-xs leading-relaxed">
-                    {props.instruction}
-                  </p>
-                </div>
-                <Separator className="mx-3" />
-              </>
-            )}
-
-            <div className="flex items-center gap-3 px-3 pt-2">
-              <div className="text-muted-foreground flex items-center gap-1">
-                <ClockIcon className="size-3" />
-                <span className="text-2xs">{t("Effective")}</span>
-              </div>
-              <span className="text-2xs text-foreground tabular-nums">
-                {formatUnixTimestamp(props.effective)}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 px-3 pt-1 pb-2">
-              <div className="text-muted-foreground flex items-center gap-1">
-                <ClockIcon className="size-3" />
-                <span className="text-2xs">{t("Expires")}</span>
-              </div>
-              <span className="text-2xs text-foreground tabular-nums">
-                {formatUnixTimestamp(props.expires)}
-              </span>
-            </div>
-
-            <Separator className="mx-3" />
-
-            <div className="p-3">
-              <span className="text-xs text-muted-foreground font-medium">{t("Activity")}</span>
-              <div className="mt-2">
-                {isLoading ? (
-                  <p className="text-muted-foreground text-xs">{t("Loading activity...")}</p>
-                ) : (
-                  <ActivityTimeline activities={data?.activities ?? []} />
-                )}
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-    </MapControl>
+    </ul>
   );
 }

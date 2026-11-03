@@ -456,6 +456,9 @@ importers:
       remark-math:
         specifier: ^6.0.0
         version: 6.0.0(supports-color@8.1.1)
+      supercluster:
+        specifier: ^9.1.0
+        version: 9.1.0
       tailwind-merge:
         specifier: ^3.7.0
         version: 3.7.0
@@ -4345,6 +4348,9 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
+  '@types/geojson@7946.0.16':
+    resolution: {integrity: sha512-6C8nqWur3j98U6+lXDfTUWIfgvZU+EumvpHKcYjujKH7woYyLj2sUmff0tRhrqM7BohUw7Pz3ZB1jj2gW9Fvmg==}
+
   '@types/google-map-react@2.1.10':
     resolution: {integrity: sha512-8/0UllZS7tF08WNBRPQlSJCkETvz3e3sZoPxzDaWkj2iV5dmFSnOKXVtoeKo8dLZSe+RkLn479t1wj6nXmLLSA==}
 
@@ -6125,6 +6131,9 @@ packages:
     resolution: {integrity: sha512-jG8uKntjSEcm2EpQOh0XturpPuuC9r3Sq5HLHdsFdWZT27E672SF19QEi+of0/YeOy15lDgRhKvr5614uRrEfA==}
     hasBin: true
 
+  kdbush@4.1.0:
+    resolution: {integrity: sha512-e9vurzrXJQrFX6ckpHP3bvj5l+9CnYzkxDNnNQ1h2QTqdWsUAJgXiKdGNcOa1EY85dU8KbQ+z/FdQdB7P+9yfQ==}
+
   keyv@5.6.0:
     resolution: {integrity: sha512-CYDD3SOtsHtyXeEORYRx2qBtpDJFjRTGXUtmNEMGyzYOKj1TE3tycdlho7kA1Ufx9OYWZzg52QFBGALTirzDSw==}
 
@@ -7753,6 +7762,9 @@ packages:
 
   stylis@4.2.0:
     resolution: {integrity: sha512-Orov6g6BB1sDfYgzWfTHDOxamtX1bE/zo104Dh9e6fqJ3PooipYyfJ0pUmrZO2wAvO8YbEyeFrkV91XTsGMSrw==}
+
+  supercluster@9.1.0:
+    resolution: {integrity: sha512-WMhsJPm8Tf9f5mKxJ1D0mB5tbCMOFi8wTrm/LGnsJHGg8xkeNT/TWDZuFauOGRISnclbYgnxD7g3xJAfQO3FLg==}
 
   superjson@2.2.6:
     resolution: {integrity: sha512-H+ue8Zo4vJmV2nRjpx86P35lzwDT3nItnIsocgumgr0hHMQ+ZGq5vrERg9kJBo5AWGmxZDhzDo+WVIJqkB0cGA==}
@@ -11564,6 +11576,8 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
+  '@types/geojson@7946.0.16': {}
+
   '@types/google-map-react@2.1.10':
     dependencies:
       '@types/react': 19.3.0
@@ -13310,6 +13324,8 @@ snapshots:
   katex@0.19.1:
     dependencies:
       commander: 15.0.0
+
+  kdbush@4.1.0: {}
 
   keyv@5.6.0:
     dependencies:
@@ -15368,6 +15384,11 @@ snapshots:
       inline-style-parser: 0.2.7
 
   stylis@4.2.0: {}
+
+  supercluster@9.1.0:
+    dependencies:
+      '@types/geojson': 7946.0.16
+      kdbush: 4.1.0
 
   superjson@2.2.6:
     dependencies:

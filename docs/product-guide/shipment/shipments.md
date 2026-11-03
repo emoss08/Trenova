@@ -33,6 +33,19 @@ Keywords: search loads, look up pro number, filter shipments, quick filters
 3. Narrow further with **Filter** (status, tender, billing, PRO number, customer, pickup and delivery dates, and revenue), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** opens a menu to group the table by status, ship date, delivery date, customer or owner, or not at all; dates are the day of the first pickup or last delivery, and each group's header shows its loads and revenue and collapses it. The **Lane** column stays pinned while the table scrolls sideways.
 4. Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment.
 
+### Watch loads on the live map
+Keywords: live map, shipment map, where are my loads, route on map, lanes, weather on route, weather alerts
+1. Open [Shipments](/shipment-management/shipments) and switch to **Map**. Each active shipment is one mark at the stop it is at or heading to. Late loads pulse and always stand alone; loads close together fold into a count, and selecting the count zooms in, or lists them when they are all at one place.
+2. The list beside the map groups the shipments by stage, most urgent first. Hover a shipment there or on the map to preview its route, and select it to open its stops, driver and ETA. Driven legs are solid and legs still to drive are dotted. Select a stage chip above the map to hide that stage, or choose **Lanes** to see one arc per lane, sized by how many loads run it.
+3. Turn on weather alerts from the map's options. The **Weather alerts** tab lists the alerts on your routes first, with how many shipments each one affects, and selecting one zooms to its area and lists those shipments. A shipment whose next stop or route ahead is inside an alert says so in its row and its details.
+
+### Plan the day on the timeline
+Keywords: timeline, gantt, schedule, dispatch board by driver, double-booked driver, free drivers, drag to assign, late loads
+1. Open [Shipments](/shipment-management/shipments) and switch to **Timeline**. Every load active in the range is a bar from its first appointment to its last, grouped by stage, with the board's search, filters and quick filters still applied. Choose **Day**, **3 days** or **Week**, step earlier or later with the arrows, and select **Now** to come back to today.
+2. Each stop's appointment window is a strip along the bottom of the bar; the driven part is a deeper fill, and the ETA is a diamond. When the ETA lands past the window, the overrun is hatched red and the bar says how late. Hover a bar to see every stop's time, and select it to open its stops and next step: choosing coverage, telling the customer about a delay, or seeing who has it. **Show on map** opens it on the live map; **Open shipment** opens it in the table.
+3. Switch to **Drivers & carriers** for one lane per driver and carrier. Free time between loads is labeled, a double-booked driver's overlapping loads are outlined in red, and each driver shows the drive time left today. Drivers with nothing booked still get a lane.
+4. Uncovered loads sit in the Needs coverage lane on top. Drag one onto a driver: the timeline checks it against their other loads and drive time, then **Assign** (or **Assign anyway** when something needs a second look) puts it on them. A driver without a tractor can't take a load. The button beside the lane's header auto-assigns every open load in it.
+
 ### Cover loads from the capacity strip
 Keywords: available drivers, ready drivers, carrier capacity, posted trucks, best load, tender to carriers
 1. Open [Shipments](/shipment-management/shipments). The strip under the briefing shows **Drivers** or **Carriers** (both tabs when the organization does both).

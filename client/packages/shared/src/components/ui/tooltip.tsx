@@ -5,7 +5,10 @@ function TooltipProvider({ delay = 0, ...props }: TooltipPrimitive.Provider.Prop
   return <TooltipPrimitive.Provider data-slot="tooltip-provider" delay={delay} {...props} />;
 }
 
-function Tooltip({ delay, ...props }: TooltipPrimitive.Root.Props & { delay?: number }) {
+function Tooltip<Payload>({
+  delay,
+  ...props
+}: TooltipPrimitive.Root.Props<Payload> & { delay?: number }) {
   return (
     <TooltipProvider delay={delay}>
       <TooltipPrimitive.Root data-slot="tooltip" {...props} />
@@ -13,15 +16,16 @@ function Tooltip({ delay, ...props }: TooltipPrimitive.Root.Props & { delay?: nu
   );
 }
 
-function TooltipTrigger({ className, ...props }: TooltipPrimitive.Trigger.Props) {
-  return (
-    <TooltipPrimitive.Trigger
-      className={cn("cursor-help", className)}
-      data-slot="tooltip-trigger"
-      {...props}
-    />
-  );
+function TooltipTrigger<Payload>({ className, ...props }: TooltipPrimitive.Trigger.Props<Payload>) {
+  return <TooltipPrimitive.Trigger className={className} data-slot="tooltip-trigger" {...props} />;
 }
+
+/**
+ * One tooltip shared by many triggers: pass the handle to a single `Tooltip`
+ * and to each `TooltipTrigger`, with the trigger's `payload`. A list of
+ * hundreds of rows mounts one tooltip instead of one per row.
+ */
+const createTooltipHandle = TooltipPrimitive.createHandle;
 
 function TooltipContent({
   className,
@@ -57,4 +61,4 @@ function TooltipContent({
     </TooltipPrimitive.Portal>
   );
 }
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
+export { createTooltipHandle, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

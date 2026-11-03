@@ -1,6 +1,7 @@
 package shipmentpredicate
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -10,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestShipmentOptionPredicates_ActivityWindowAddsOverlapPredicate(t *testing.T) {
+func TestShipmentOptionPredicates_ActivityWindowMatchesLiveStopsSpanningIt(t *testing.T) {
 	t.Parallel()
 
 	sql, args := renderShipments(t, OptionPredicates(&shipmentports.ShipmentOptions{
@@ -18,9 +19,10 @@ func TestShipmentOptionPredicates_ActivityWindowAddsOverlapPredicate(t *testing.
 		ActivityWindowEnd:   1_700_086_400,
 	})...)
 
-	assert.Contains(t, sql, "EXISTS (SELECT 1 FROM \"shipment_moves\"")
-	assert.Contains(t, sql, `"scheduled_window_start" > $`)
-	assert.Contains(t, sql, `coalesce(s2."scheduled_window_end", s2."scheduled_window_start") >= $`)
+	assert.Equal(t, 2, strings.Count(sql, "EXISTS (SELECT 1 FROM \"shipment_moves\""),
+		"one live stop due to start before the window ends, one due to end after it starts")
+	assert.Contains(t, sql, `"scheduled_window_start" <= $`)
+	assert.Contains(t, sql, `"scheduled_window_start") >= $`)
 	assert.Contains(t, args, int64(1_700_086_400))
 	assert.Contains(t, args, int64(1_700_000_000))
 	assert.Contains(t, sql, `"status" <> 'Canceled'`)

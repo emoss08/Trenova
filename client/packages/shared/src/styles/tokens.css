@@ -32,6 +32,12 @@
    that mean something. --hue-neutral stays as a name so a grey written
    against it still resolves, but it carries no chroma.
 
+   A grey's hue is written `none`, not 0. Mixed with a colour in oklch
+   (`color-mix(in oklch, var(--info) 13%, var(--card))`), an explicit 0 is a
+   real angle, red, and the mix swings through it: a blue tint over the dark
+   card came out purple and a green one brown. A missing hue takes the other
+   colour's, so every oklch mix against a neutral keeps its hue.
+
    The product is drawn in ink. The primary action is the foreground colour,
    not a hue, so colour on screen is left to mean something: a tone is a
    severity, an accent is a category, and Geist blue marks what you can follow
@@ -104,7 +110,7 @@
 
   /* Surfaces -------------------------------------------------------------
      A real ladder, deepest to shallowest. Previously `--secondary`, `--muted`
-     and `--accent` all held oklch(0.97 0 0) in light and three different values
+     and `--accent` all held oklch(0.97 0 none) in light and three different values
      in dark, so they were used interchangeably and diverged only in dark mode.
      They are now distinct in both themes and each has one job:
 
@@ -124,11 +130,11 @@
      surfaces so a hover state never has to borrow a container's colour.
      Selected is the one fill that carries the brand blue: it says "this row is the
      one the side panel is showing", which is a place, not a severity. */
-  --canvas: oklch(0.985 0 0);
-  --card: oklch(1 0 0);
-  --sunken: oklch(0.985 0 0);
-  --raised: oklch(1 0 0);
-  --overlay: oklch(1 0 0);
+  --canvas: oklch(0.985 0 none);
+  --card: oklch(1 0 none);
+  --sunken: oklch(0.985 0 none);
+  --raised: oklch(1 0 none);
+  --overlay: oklch(1 0 none);
 
   /* The ground a form control sits on. It never shares a value with the
      canvas, so an empty form still reads as a set of slots to type into
@@ -136,36 +142,36 @@
      white in light and #0a0a0a in dark: on the page it reads as a slot by
      its fill, and on a panel the --input hairline carries it. One token so
      an input, a select and a number field cannot each pick their own. */
-  --field: oklch(1 0 0);
+  --field: oklch(1 0 none);
 
-  --surface-hover: oklch(0.961 0 0);
-  --surface-active: oklch(0.94 0 0);
+  --surface-hover: oklch(0.961 0 none);
+  --surface-active: oklch(0.94 0 none);
   --surface-selected: oklch(0.966 0.016 var(--hue-brand));
 
   /* The dim behind an overlay. Two weights: the standard one, and the light
      one the blur-backed dialogs use, where the blur does most of the work. */
-  --scrim: oklch(0 0 0 / 0.4);
-  --scrim-subtle: oklch(0 0 0 / 0.08);
+  --scrim: oklch(0 0 none / 0.4);
+  --scrim-subtle: oklch(0 0 none / 0.08);
 
   /* Content --------------------------------------------------------------
      Four weights. `subtle` is the lightest text that still clears AA on
      --sunken — the hardest ground it lands on, since column headers sit
      there; anything lighter is decoration, not content, and belongs to
      --border. */
-  --foreground: oklch(0.205 0 0);
-  --foreground-muted: oklch(0.51 0 0);
-  --foreground-subtle: oklch(0.53 0 0);
+  --foreground: oklch(0.205 0 none);
+  --foreground-muted: oklch(0.51 0 none);
+  --foreground-subtle: oklch(0.53 0 none);
   /* Faint: placeholder dashes and decoration beside a value, never the value itself. */
-  --foreground-faint: oklch(0.7 0 0);
-  --foreground-on-solid: oklch(1 0 0);
+  --foreground-faint: oklch(0.7 0 none);
+  --foreground-on-solid: oklch(1 0 none);
 
   /* Borders --------------------------------------------------------------
      subtle  dividers inside a component
      default component outlines
      strong  hover and emphasis */
-  --border-subtle: oklch(0.94 0 0);
-  --border: oklch(0.922 0 0);
-  --border-strong: oklch(0.836 0 0);
+  --border-subtle: oklch(0.94 0 none);
+  --border: oklch(0.922 0 none);
+  --border-strong: oklch(0.836 0 none);
 
   /* Ink -------------------------------------------------------------------
      The primary action. A filled button is the foreground colour, which is
@@ -175,10 +181,10 @@
      It has its own rungs rather than borrowing --foreground, because a fill
      needs a hover and a pressed state and text does not. In dark the ink is
      the light end, so hover steps down in lightness rather than up. */
-  --ink: oklch(0.205 0 0);
-  --ink-hover: oklch(0.341 0 0);
-  --ink-active: oklch(0.145 0 0);
-  --ink-foreground: oklch(1 0 0);
+  --ink: oklch(0.205 0 none);
+  --ink-hover: oklch(0.341 0 none);
+  --ink-active: oklch(0.145 0 none);
+  --ink-foreground: oklch(1 0 none);
 
   /* Brand ----------------------------------------------------------------
      Geist blue, and spent sparingly: links, focus, the first chart
@@ -190,7 +196,7 @@
      by a second blue. */
   --brand: oklch(0.56 0.207 var(--hue-brand));
   --brand-hover: oklch(0.517 0.188 var(--hue-brand));
-  --brand-foreground: oklch(1 0 0);
+  --brand-foreground: oklch(1 0 none);
   --brand-subtle: oklch(0.966 0.016 var(--hue-brand));
   --brand-subtle-foreground: oklch(0.517 0.188 var(--hue-brand));
   --brand-border: oklch(0.914 0.042 var(--hue-brand));
@@ -198,7 +204,7 @@
   /* Selected text is a solid amber (#ffab2e) in both themes, and the ink on it
      stays dark in both, because near-white text on amber reads at under 2:1. */
   --selection: oklch(0.805 0.161 71);
-  --selection-foreground: oklch(0.205 0 0);
+  --selection-foreground: oklch(0.205 0 none);
 
   /* Tones ----------------------------------------------------------------
      Five rungs each, and the reason the raw palette was reached for before:
@@ -257,13 +263,13 @@
   --info-subtle-foreground: oklch(0.533 0.188 var(--hue-brand));
   --info-border: oklch(0.914 0.042 var(--hue-brand));
 
-  --neutral: oklch(0.51 0 0);
-  --neutral-hover: oklch(0.42 0 0);
-  --neutral-foreground: oklch(0.51 0 0);
-  --neutral-subtle: oklch(0.961 0 0);
-  --neutral-subtle-hover: oklch(0.942 0 0);
-  --neutral-subtle-foreground: oklch(0.45 0 0);
-  --neutral-border: oklch(0.922 0 0);
+  --neutral: oklch(0.51 0 none);
+  --neutral-hover: oklch(0.42 0 none);
+  --neutral-foreground: oklch(0.51 0 none);
+  --neutral-subtle: oklch(0.961 0 none);
+  --neutral-subtle-hover: oklch(0.942 0 none);
+  --neutral-subtle-foreground: oklch(0.45 0 none);
+  --neutral-border: oklch(0.922 0 none);
 
   /* Focus ----------------------------------------------------------------
      One ring, everywhere. There were five treatments before — neutral/50 at
@@ -307,11 +313,11 @@
      smudge. The blur is small and the offset is smaller: a lift should be
      felt before it is seen. */
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
-  --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0.2 0 0 / 0.08);
+  --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0.2 0 none / 0.08);
   --lift-card:
-    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0 0 / 0.1), 0 6px 16px -8px oklch(0.2 0 0 / 0.12);
+    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0 none / 0.1), 0 6px 16px -8px oklch(0.2 0 none / 0.12);
   --lift-float:
-    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0 0 / 0.12), 0 16px 40px -16px oklch(0.2 0 0 / 0.18);
+    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0 none / 0.12), 0 16px 40px -16px oklch(0.2 0 none / 0.18);
 
   /* Desk ------------------------------------------------------------------
      The Desk is a room rather than a page, and it is the one surface allowed
@@ -320,9 +326,9 @@
      agent casts while it is working, and is the only place an accent becomes
      an area rather than a line. Both are near-invisible by design: the point
      is that the room has depth, not that it has colour. */
-  --desk-canvas: oklch(0.985 0 0);
-  --desk-rail: oklch(0.985 0 0);
-  --desk-column: oklch(1 0 0);
+  --desk-canvas: oklch(0.985 0 none);
+  --desk-rail: oklch(0.985 0 none);
+  --desk-column: oklch(1 0 none);
   --desk-hairline: color-mix(in oklch, var(--foreground) 7%, transparent);
   --desk-glow-opacity: 0.055;
   --desk-spine: color-mix(in oklch, var(--foreground) 11%, transparent);
@@ -361,10 +367,10 @@
   --dsk-hover: var(--surface-hover);
   --dsk-rail: var(--card);
   --dsk-fg: var(--foreground);
-  --dsk-fg2: oklch(0.301 0 0);
-  --dsk-muted: oklch(0.42 0 0);
+  --dsk-fg2: oklch(0.301 0 none);
+  --dsk-muted: oklch(0.42 0 none);
   --dsk-subtle: var(--foreground-muted);
-  --dsk-faint: oklch(0.65 0 0);
+  --dsk-faint: oklch(0.65 0 none);
   --dsk-b-sub: var(--border-subtle);
   --dsk-b: var(--border);
   --dsk-b-strong: var(--border-strong);
@@ -382,10 +388,10 @@
   --dsk-blue-fg: oklch(0.539 0.233 261);
   --dsk-agent: var(--foreground-muted);
   --dsk-agent-sub: var(--surface-hover);
-  --dsk-agent-on: oklch(0.42 0 0);
+  --dsk-agent-on: oklch(0.42 0 none);
   --dsk-lift: var(--lift-whisper);
   --dsk-lift-hi: var(--lift-float);
-  --dsk-on-solid: oklch(1 0 0);
+  --dsk-on-solid: oklch(1 0 none);
   --dsk-approve: oklch(0.627 0.17 149.2);
   --dsk-mention: oklch(0.679 0.175 251);
   --dsk-error: oklch(0.626 0.193 23);
@@ -530,10 +536,10 @@
   --accent-violet-on-subtle: oklch(0.471 0.22 var(--hue-violet));
   --accent-violet-border: oklch(0.918 0.043 var(--hue-violet));
 
-  --accent-slate: oklch(0.51 0 0);
-  --accent-slate-subtle: oklch(0.961 0 0);
-  --accent-slate-on-subtle: oklch(0.42 0 0);
-  --accent-slate-border: oklch(0.885 0 0);
+  --accent-slate: oklch(0.51 0 none);
+  --accent-slate-subtle: oklch(0.961 0 none);
+  --accent-slate-on-subtle: oklch(0.42 0 none);
+  --accent-slate-border: oklch(0.885 0 none);
 
   /* Agent identity is the accent family under its existing name. */
   --agent-indigo: var(--accent-indigo);
@@ -548,21 +554,21 @@
   /* Navigation ------------------------------------------------------------
      The active row is a grey fill with the ink on it, the way Vercel marks
      where you are; blue is kept for what you can follow. */
-  --nav-active: oklch(0.94 0 0);
-  --nav-active-foreground: oklch(0.205 0 0);
+  --nav-active: oklch(0.94 0 none);
+  --nav-active-foreground: oklch(0.205 0 none);
 
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.205 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.94 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.94 0 0);
+  --sidebar: oklch(0.985 0 none);
+  --sidebar-foreground: oklch(0.205 0 none);
+  --sidebar-primary: oklch(0.205 0 none);
+  --sidebar-primary-foreground: oklch(1 0 none);
+  --sidebar-accent: oklch(0.94 0 none);
+  --sidebar-accent-foreground: oklch(0.205 0 none);
+  --sidebar-border: oklch(0.94 0 none);
   --sidebar-ring: var(--ring);
 
   /* Trenova's yellow, #ffa31a. A search match is marked with a fill mixed from it. */
   --highlight: oklch(0.79 0.168 68.5);
-  --highlight-foreground: oklch(0.205 0 0);
+  --highlight-foreground: oklch(0.205 0 none);
   --highlight-fill: color-mix(in oklch, var(--highlight) 32%, transparent);
 
   /* Density ---------------------------------------------------------------
@@ -592,50 +598,50 @@
    --------------------------------------------------------------------------- */
 
 .dark {
-  --canvas: oklch(0 0 0);
-  --card: oklch(0.145 0 0);
-  --sunken: oklch(0 0 0);
-  --raised: oklch(0.178 0 0);
-  --overlay: oklch(0.178 0 0);
+  --canvas: oklch(0 0 none);
+  --card: oklch(0.145 0 none);
+  --sunken: oklch(0 0 none);
+  --raised: oklch(0.178 0 none);
+  --overlay: oklch(0.178 0 none);
 
-  --field: oklch(0.145 0 0);
+  --field: oklch(0.145 0 none);
 
-  --surface-hover: oklch(0.218 0 0);
-  --surface-active: oklch(0.239 0 0);
+  --surface-hover: oklch(0.218 0 none);
+  --surface-active: oklch(0.239 0 none);
   --surface-selected: oklch(0.255 0.055 var(--hue-brand));
 
-  --scrim: oklch(0 0 0 / 0.7);
-  --scrim-subtle: oklch(0 0 0 / 0.35);
+  --scrim: oklch(0 0 none / 0.7);
+  --scrim-subtle: oklch(0 0 none / 0.35);
 
-  --foreground: oklch(0.946 0 0);
-  --foreground-muted: oklch(0.709 0 0);
-  --foreground-subtle: oklch(0.65 0 0);
-  --foreground-faint: oklch(0.46 0 0);
+  --foreground: oklch(0.946 0 none);
+  --foreground-muted: oklch(0.709 0 none);
+  --foreground-subtle: oklch(0.65 0 none);
+  --foreground-faint: oklch(0.46 0 none);
 
   /* Dark tone fills are the LIGHT end of their ramp — success sits at 0.645 —
      so the near-white this held before drew 2.5:1 on a solid badge. The ink
      that reads on a dark theme's solid fill is dark. */
-  --foreground-on-solid: oklch(0.145 0 0);
+  --foreground-on-solid: oklch(0.145 0 none);
 
-  --border-subtle: oklch(0.239 0 0);
-  --border: oklch(0.26 0 0);
-  --border-strong: oklch(0.321 0 0);
+  --border-subtle: oklch(0.239 0 none);
+  --border: oklch(0.26 0 none);
+  --border-strong: oklch(0.321 0 none);
 
   /* The ink inverts: a primary button on a dark ground is the light end. */
-  --ink: oklch(0.946 0 0);
-  --ink-hover: oklch(0.845 0 0);
-  --ink-active: oklch(1 0 0);
-  --ink-foreground: oklch(0.145 0 0);
+  --ink: oklch(0.946 0 none);
+  --ink-hover: oklch(0.845 0 none);
+  --ink-active: oklch(1 0 none);
+  --ink-foreground: oklch(0.145 0 none);
 
   --brand: oklch(0.717 0.148 var(--hue-brand));
   --brand-hover: oklch(0.77 0.118 var(--hue-brand));
-  --brand-foreground: oklch(0.145 0 0);
+  --brand-foreground: oklch(0.145 0 none);
   --brand-subtle: oklch(0.255 0.055 var(--hue-brand));
   --brand-subtle-foreground: oklch(0.8 0.101 var(--hue-brand));
   --brand-border: oklch(0.36 0.1 var(--hue-brand));
 
   --selection: oklch(0.805 0.161 71);
-  --selection-foreground: oklch(0.205 0 0);
+  --selection-foreground: oklch(0.205 0 none);
 
   --danger: oklch(0.626 0.193 23);
   --danger-hover: oklch(0.67 0.19 23);
@@ -669,13 +675,13 @@
   --info-subtle-foreground: oklch(0.717 0.148 var(--hue-brand));
   --info-border: oklch(0.34 0.097 var(--hue-brand));
 
-  --neutral: oklch(0.709 0 0);
-  --neutral-hover: oklch(0.77 0 0);
-  --neutral-foreground: oklch(0.709 0 0);
-  --neutral-subtle: oklch(0.239 0 0);
-  --neutral-subtle-hover: oklch(0.27 0 0);
-  --neutral-subtle-foreground: oklch(0.86 0 0);
-  --neutral-border: oklch(0.301 0 0);
+  --neutral: oklch(0.709 0 none);
+  --neutral-hover: oklch(0.77 0 none);
+  --neutral-foreground: oklch(0.709 0 none);
+  --neutral-subtle: oklch(0.239 0 none);
+  --neutral-subtle-hover: oklch(0.27 0 none);
+  --neutral-subtle-foreground: oklch(0.86 0 none);
+  --neutral-border: oklch(0.301 0 none);
 
   --ring: oklch(0.717 0.148 var(--hue-brand));
   --ring-opacity: 0.42;
@@ -753,10 +759,10 @@
   --accent-violet-on-subtle: oklch(0.699 0.179 var(--hue-violet));
   --accent-violet-border: oklch(0.358 0.115 var(--hue-violet));
 
-  --accent-slate: oklch(0.709 0 0);
-  --accent-slate-subtle: oklch(0.239 0 0);
-  --accent-slate-on-subtle: oklch(0.86 0 0);
-  --accent-slate-border: oklch(0.35 0 0);
+  --accent-slate: oklch(0.709 0 none);
+  --accent-slate-subtle: oklch(0.239 0 none);
+  --accent-slate-on-subtle: oklch(0.86 0 none);
+  --accent-slate-border: oklch(0.35 0 none);
 
   --agent-indigo: var(--accent-indigo);
   --agent-teal: var(--accent-teal);
@@ -767,20 +773,20 @@
   --agent-violet: var(--accent-violet);
   --agent-slate: var(--accent-slate);
 
-  --nav-active: oklch(0.239 0 0);
-  --nav-active-foreground: oklch(0.946 0 0);
+  --nav-active: oklch(0.239 0 none);
+  --nav-active-foreground: oklch(0.946 0 none);
 
-  --sidebar: oklch(0 0 0);
-  --sidebar-foreground: oklch(0.946 0 0);
-  --sidebar-primary: oklch(0.946 0 0);
-  --sidebar-primary-foreground: oklch(0.145 0 0);
-  --sidebar-accent: oklch(0.239 0 0);
-  --sidebar-accent-foreground: oklch(0.946 0 0);
-  --sidebar-border: oklch(0.218 0 0);
+  --sidebar: oklch(0 0 none);
+  --sidebar-foreground: oklch(0.946 0 none);
+  --sidebar-primary: oklch(0.946 0 none);
+  --sidebar-primary-foreground: oklch(0.145 0 none);
+  --sidebar-accent: oklch(0.239 0 none);
+  --sidebar-accent-foreground: oklch(0.946 0 none);
+  --sidebar-border: oklch(0.218 0 none);
   --sidebar-ring: var(--ring);
 
   --highlight: oklch(0.79 0.168 68.5);
-  --highlight-foreground: oklch(0 0 0);
+  --highlight-foreground: oklch(0 0 none);
   --highlight-fill: color-mix(in oklch, var(--highlight) 26%, transparent);
 }
 
@@ -803,7 +809,7 @@
   --popover: var(--raised);
   --popover-foreground: var(--foreground);
 
-  /* Was oklch(0.97 0 0) for all three in light. Now: muted is the sunken
+  /* Was oklch(0.97 0 none) for all three in light. Now: muted is the sunken
      surface, accent is the interaction fill, secondary is the secondary
      control fill. */
   --muted: var(--sunken);
@@ -837,14 +843,14 @@
    light canvas, panel, hairline and ink, the dark page the dark ones. */
 :root,
 .dark {
-  --theme-preview-light-canvas: oklch(0.985 0 0);
-  --theme-preview-light-panel: oklch(0.94 0 0);
-  --theme-preview-light-line: oklch(0.922 0 0);
-  --theme-preview-light-ink: oklch(0.205 0 0);
-  --theme-preview-dark-canvas: oklch(0 0 0);
-  --theme-preview-dark-panel: oklch(0.145 0 0);
-  --theme-preview-dark-line: oklch(0.26 0 0);
-  --theme-preview-dark-ink: oklch(0.946 0 0);
+  --theme-preview-light-canvas: oklch(0.985 0 none);
+  --theme-preview-light-panel: oklch(0.94 0 none);
+  --theme-preview-light-line: oklch(0.922 0 none);
+  --theme-preview-light-ink: oklch(0.205 0 none);
+  --theme-preview-dark-canvas: oklch(0 0 none);
+  --theme-preview-dark-panel: oklch(0.145 0 none);
+  --theme-preview-dark-line: oklch(0.26 0 none);
+  --theme-preview-dark-ink: oklch(0.946 0 none);
 }
 
 /* The sign-in screen's two grounds. The form column sits on the canvas and its
@@ -867,9 +873,9 @@
    hue goes near-black so a lift reads as depth rather than as a grey halo
    on an already dark surface. */
 .dark {
-  --desk-canvas: oklch(0 0 0);
-  --desk-rail: oklch(0 0 0);
-  --desk-column: oklch(0.145 0 0);
+  --desk-canvas: oklch(0 0 none);
+  --desk-rail: oklch(0 0 none);
+  --desk-column: oklch(0.145 0 none);
   --desk-hairline: color-mix(in oklch, var(--foreground) 12%, transparent);
   --desk-glow-opacity: 0.1;
   --desk-spine: color-mix(in oklch, var(--foreground) 16%, transparent);
@@ -892,13 +898,13 @@
   --dsk-hover: var(--surface-active);
   --dsk-rail: var(--canvas);
   --dsk-fg: var(--foreground);
-  --dsk-fg2: oklch(0.87 0 0);
+  --dsk-fg2: oklch(0.87 0 none);
   --dsk-muted: var(--foreground-muted);
   --dsk-subtle: var(--foreground-muted);
-  --dsk-faint: oklch(0.545 0 0);
+  --dsk-faint: oklch(0.545 0 none);
   --dsk-b-sub: var(--border-subtle);
-  --dsk-b: oklch(0.301 0 0);
-  --dsk-b-strong: oklch(0.39 0 0);
+  --dsk-b: oklch(0.301 0 none);
+  --dsk-b-strong: oklch(0.39 0 none);
   --dsk-ink: var(--ink);
   --dsk-ink-fg: var(--ink-foreground);
   --dsk-ring: color-mix(in oklch, var(--ring) 35%, transparent);
@@ -916,7 +922,7 @@
   --dsk-agent-on: var(--foreground);
   --dsk-lift: var(--lift-ring);
   --dsk-lift-hi: var(--lift-float);
-  --dsk-on-solid: oklch(1 0 0);
+  --dsk-on-solid: oklch(1 0 none);
   --dsk-approve: oklch(0.627 0.17 149.2);
   --dsk-mention: oklch(0.679 0.175 251);
   --dsk-error: oklch(0.626 0.193 23);
@@ -945,11 +951,11 @@
   --daylight-moon: oklch(0.88 0.06 95);
 
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
-  --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0 0 0 / 0.4);
+  --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0 0 none / 0.4);
   --lift-card:
-    var(--lift-ring), 0 2px 4px -2px oklch(0 0 0 / 0.45), 0 6px 16px -8px oklch(0 0 0 / 0.5);
+    var(--lift-ring), 0 2px 4px -2px oklch(0 0 none / 0.45), 0 6px 16px -8px oklch(0 0 none / 0.5);
   --lift-float:
-    var(--lift-ring), 0 4px 8px -4px oklch(0 0 0 / 0.5), 0 16px 40px -16px oklch(0 0 0 / 0.6);
+    var(--lift-ring), 0 4px 8px -4px oklch(0 0 none / 0.5), 0 16px 40px -16px oklch(0 0 none / 0.6);
 }
 
 /* ---------------------------------------------------------------------------
@@ -2335,7 +2341,7 @@
    it falls through. */
 @utility ui-desk-mark {
   --desk-accent: var(--agent-accent, var(--brand));
-  --desk-light: color-mix(in oklch, var(--desk-accent), oklch(1 0 0) var(--desk-light-lift));
+  --desk-light: color-mix(in oklch, var(--desk-accent), oklch(1 0 none) var(--desk-light-lift));
 }
 
 /* The part of the day behind the Desk's greeting: two soft pools of light

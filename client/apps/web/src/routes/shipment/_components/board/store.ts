@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 /**
- * The shipment a pointer is resting on, shared between the table, the map
- * pins and the route overlay. It is too fleeting for the URL.
+ * The shipment a pointer is resting on, shared between the table, the map's
+ * rail, its marks and the route it previews. It is too fleeting for the URL.
  */
 interface ShipmentBoardState {
   highlightId: string | null;

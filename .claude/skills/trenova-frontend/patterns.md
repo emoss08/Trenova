@@ -168,6 +168,26 @@ useForm({
 
 A message the module returns is shown with `translateMessage(message, t)`.
 
+## A sheet of hundreds of rows (`board/views/shipment-timeline.tsx`)
+
+- **One tooltip for every row.** A `Tooltip` per row mounts a provider, a root and a trigger
+  hundreds of times. Make one handle, render one `Tooltip` with it, and give each trigger the
+  handle and its row as `payload`:
+
+  ```tsx
+  const [handle] = useState(() => createTooltipHandle<Row>());
+  <Tooltip handle={handle}>{({ payload }) => payload ? <TooltipContent>…</TooltipContent> : null}</Tooltip>
+  <TooltipTrigger handle={handle} payload={row} render={<button … />} />
+  ```
+
+- **Hover and the clock stay out of the parent.** A row reads its own hover from the store
+  (`useShipmentBoardStore((s) => s.highlightId === id)`), and only the part that moves with time
+  calls `useNow`; a parent that subscribes to either redraws every row on each change.
+- **Off-screen rows skip layout and paint** with `contentVisibility: "auto"` on the row and
+  `containIntrinsicSize` set to its known height; a sticky label column still sticks.
+- **A sticky cell's fill is opaque** (`bg-surface-selected`, never a `/10` tint), or what scrolls
+  under it shows through.
+
 ## Showing a file
 
 ```tsx

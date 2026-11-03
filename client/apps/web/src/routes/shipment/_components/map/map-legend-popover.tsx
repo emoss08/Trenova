@@ -27,16 +27,39 @@ function Ring({ color }: { color: string }) {
   return (
     <span
       className="inline-block size-3 shrink-0 rounded-full border-2"
-      style={{ borderColor: color, backgroundColor: `${color}20` }}
+      style={{
+        borderColor: color,
+        backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+      }}
     />
   );
 }
 
-function DashedLine() {
+function RouteLine({ dotted }: { dotted?: boolean }) {
   return (
-    <svg width="20" height="8" className="shrink-0">
-      <line x1="0" y1="4" x2="20" y2="4" stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="4 3" />
+    <svg width="20" height="8" className="text-info shrink-0" aria-hidden>
+      <line
+        x1="1"
+        y1="4"
+        x2="19"
+        y2="4"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeDasharray={dotted ? "1 4" : undefined}
+      />
     </svg>
+  );
+}
+
+function ClusterChip() {
+  return (
+    <span
+      className="bg-card text-foreground inline-flex size-3.5 shrink-0 items-center justify-center rounded-full font-mono text-2xs"
+      style={{ boxShadow: "0 0 0 2px var(--info)" }}
+    >
+      3
+    </span>
   );
 }
 
@@ -84,12 +107,12 @@ export function MapLegendPopover() {
       <PopoverContent side="bottom" sideOffset={8} className="w-48 gap-0.5 p-3">
         <span className="text-muted-foreground text-xs font-semibold">{t("Legend")}</span>
         <div className="mt-2 flex flex-col gap-0.5">
-          <LegendItem swatch={<Dot color="#000" />} label={t("Vehicle")} />
+          <LegendItem swatch={<Dot color="var(--info)" />} label={t("Shipment at its next stop")} />
+          <LegendItem swatch={<ClusterChip />} label={t("Shipments close together")} />
+          <LegendItem swatch={<RouteLine />} label={t("Driven")} />
+          <LegendItem swatch={<RouteLine dotted />} label={t("Still to drive")} />
           <LegendItem swatch={<TruckChip />} label={t("Live vehicle")} />
-          <LegendItem swatch={<Dot color="#3b82f6" />} label={t("Pickup stop")} />
-          <LegendItem swatch={<Dot color="#16a34a" />} label={t("Delivery stop")} />
-          <LegendItem swatch={<DashedLine />} label={t("Route")} />
-          <LegendItem swatch={<Ring color="#3b82f6" />} label={t("Geofence")} />
+          <LegendItem swatch={<Ring color="var(--info)" />} label={t("Geofence")} />
         </div>
 
         <Separator className="my-2.5" />

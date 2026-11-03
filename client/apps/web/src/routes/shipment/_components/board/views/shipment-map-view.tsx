@@ -10,7 +10,7 @@ const ShipmentMapPanel = lazy(() => import("../../map/shipment-map-panel"));
 
 const INTEGRATIONS_PATH = "/admin/integrations";
 
-/** The live map when Google Maps is configured, otherwise a way to connect it. */
+/** The live map, filling the board, when Google Maps is configured; otherwise a way to connect it. */
 export default function ShipmentMapView() {
   const t = useT();
   const { maps } = useShipmentCapabilities();
@@ -20,9 +20,13 @@ export default function ShipmentMapView() {
     return (
       <div className="flex h-full min-h-80 flex-col items-center justify-center gap-2 p-8 text-center">
         <span className="text-muted-foreground font-mono text-xs">{t("Live map")}</span>
-        <p className="text-sm font-semibold">{t("Google Maps isn't connected for this workspace")}</p>
+        <p className="text-sm font-semibold">
+          {t("Google Maps isn't connected for this workspace")}
+        </p>
         <p className="text-muted-foreground max-w-sm text-sm">
-          {t("Connect it to see trucks, lanes and geofences here. Table and Timeline work without it.")}
+          {t(
+            "Connect it to see trucks, lanes and geofences here. Table and Timeline work without it.",
+          )}
         </p>
         <Button variant="outline" size="sm" onClick={() => void navigate(INTEGRATIONS_PATH)}>
           <PlugIcon className="size-3.5" />
@@ -35,7 +39,7 @@ export default function ShipmentMapView() {
   return (
     <ShipmentMapPanelBoundary>
       <Suspense fallback={null}>
-        <ShipmentMapPanel backgroundEnabled />
+        <ShipmentMapPanel backgroundEnabled fill />
       </Suspense>
     </ShipmentMapPanelBoundary>
   );

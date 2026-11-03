@@ -1,115 +1,425 @@
-import { describe, expect, it } from "vitest";
+import type { CapacityUnit } from "@/lib/graphql/shipment-board";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { buildTimelineRows } from "../timeline";
+import { describe, expect, it } from "vitest";
+import {
+  buildCoverageLanes,
+  buildTimelineLoads,
+  checkAssignment,
+  dayBoundaries,
+  dayStartOfIso,
+  groupLoadsByStage,
+  isoDay,
+  laneGaps,
+  packLane,
+  rangeFirstDay,
+  type TimelineLoad,
+} from "../timeline";
 
-const DAY = 1_790_000_000;
-const HOUR = 3600;
+/* Fixtures follow the ShipmentFields fragment: moves carry stops and an
+   assignment, the ETA carries every open stop's projection. Times are Unix
+   seconds from a fixed Tuesday in UTC. */
+const TUE = Date.UTC(2026, 10, 3) / 1000;
+const HOUR = 3_600;
+const at = (hours: number) => TUE + hours * HOUR;
 
-type Fixture = {
+type StopSpec = {
   id: string;
-  stage: Shipment["stage"];
-  pickupHour: number | null;
-  deliveryHour: number;
-  deliveryEndHour?: number;
-  etaHour?: number;
+  city: string;
+  from: number;
+  to?: number | null;
+  status?: "New" | "InTransit" | "Completed" | "Canceled";
+  type?: "Pickup" | "Delivery";
+  arrived?: number | null;
+  departed?: number | null;
 };
 
-function shipment({
-  id,
-  stage,
-  pickupHour,
-  deliveryHour,
-  deliveryEndHour,
-  etaHour,
-}: Fixture): Shipment {
+function stop(spec: StopSpec) {
+  return {
+    id: spec.id,
+    type: spec.type ?? "Pickup",
+    status: spec.status ?? "New",
+    scheduledWindowStart: at(spec.from),
+    scheduledWindowEnd: spec.to == null ? null : at(spec.to),
+    actualArrival: spec.arrived == null ? null : at(spec.arrived),
+    actualDeparture: spec.departed == null ? null : at(spec.departed),
+    location: { city: spec.city, state: { abbreviation: "TX" } },
+  };
+}
+
+function shipment(
+  id: string | undefined,
+  stops: StopSpec[],
+  extra: Record<string, unknown> = {},
+): Shipment {
   return {
     id,
-    stage,
-    eta: etaHour === undefined ? null : { estimatedArrival: DAY + etaHour * HOUR },
+    proNumber: id ? `PRO-${id}` : undefined,
+    stage: "Moving",
+    status: "InTransit",
+    eta: null,
+    tenderStatus: null,
     moves: [
-      {
-        stops: [
-          {
-            type: "Pickup",
-            sequence: 0,
-            scheduledWindowStart: pickupHour === null ? null : DAY + pickupHour * HOUR,
-          },
-          {
-            type: "Delivery",
-            sequence: 1,
-            scheduledWindowStart: DAY + deliveryHour * HOUR,
-            scheduledWindowEnd: deliveryEndHour === undefined ? null : DAY + deliveryEndHour * HOUR,
-          },
-        ],
-      },
+      { id: `mov_${id}`, status: "InTransit", coverageType: "unassigned", stops: stops.map(stop) },
     ],
+    ...extra,
   } as unknown as Shipment;
 }
 
-const ids = (rows: ReturnType<typeof buildTimelineRows>) => rows.map((row) => row.shipment.id);
+function assigned(workerId: string, name: string, tractorId: string | null, code: string | null) {
+  return {
+    coverageType: "driver",
+    assignment: {
+      tractorId,
+      primaryWorker: { id: workerId, firstName: name.split(" ")[0], lastName: name.split(" ")[1] },
+      tractor: code ? { id: tractorId, code } : null,
+    },
+  };
+}
 
-describe("buildTimelineRows", () => {
-  it("keeps the server's stage order and runs by pickup inside each stage", () => {
-    const rows = buildTimelineRows(
-      [
-        shipment({ id: "late-10", stage: "Late", pickupHour: 10, deliveryHour: 14 }),
-        shipment({ id: "moving-5", stage: "Moving", pickupHour: 5, deliveryHour: 9 }),
-        shipment({ id: "late-8", stage: "Late", pickupHour: 8, deliveryHour: 12 }),
-        shipment({ id: "delivered-4", stage: "Delivered", pickupHour: 4, deliveryHour: 6 }),
-      ],
-      DAY,
-    );
+function withMove(s: Shipment, move: Record<string, unknown>): Shipment {
+  return { ...s, moves: [{ ...s.moves[0], ...move }] } as Shipment;
+}
 
-    expect(ids(rows)).toEqual(["late-8", "late-10", "moving-5", "delivered-4"]);
+const NOW = at(10);
+
+describe("day boundaries", () => {
+  it("starts each day at its own local midnight across a daylight-saving change", () => {
+    // America/Chicago falls back on Sunday 1 November 2026: that day is 25 hours long.
+    const satStart = dayStartOfIso("2026-10-31", "America/Chicago")!;
+    const boundaries = dayBoundaries(satStart, 3, "America/Chicago");
+
+    expect(boundaries.map((b) => isoDay(b, "America/Chicago"))).toEqual([
+      "2026-10-31",
+      "2026-11-01",
+      "2026-11-02",
+      "2026-11-03",
+    ]);
+    expect(boundaries[2] - boundaries[1]).toBe(25 * HOUR);
+    expect(boundaries[1] - boundaries[0]).toBe(24 * HOUR);
   });
 
-  it("leaves out a load with no pickup appointment, whatever its stage", () => {
-    const rows = buildTimelineRows(
-      [
-        shipment({ id: "unscheduled", stage: "NeedsCoverage", pickupHour: null, deliveryHour: 9 }),
-        shipment({ id: "moving", stage: "Moving", pickupHour: 6, deliveryHour: 9 }),
-      ],
-      DAY,
-    );
+  it("reads an ISO date back to the start of that day, and refuses anything else", () => {
+    const start = dayStartOfIso("2026-11-03", "UTC");
 
-    expect(ids(rows)).toEqual(["moving"]);
+    expect(start).toBe(TUE);
+    expect(isoDay(TUE + 5 * HOUR, "UTC")).toBe("2026-11-03");
+    expect(dayStartOfIso("next tuesday", "UTC")).toBeNull();
   });
 
-  it("measures delivery to the end of the window and hatches only a late load's overrun", () => {
-    const [late, moving] = buildTimelineRows(
-      [
-        shipment({
-          id: "late",
+  it("opens a week on its Monday", () => {
+    expect(isoDay(rangeFirstDay("week", TUE, "UTC"), "UTC")).toBe("2026-11-02");
+    expect(rangeFirstDay("day", TUE, "UTC")).toBe(TUE);
+  });
+});
+
+describe("buildTimelineLoads", () => {
+  it("spans a load from its first window to its last, reaching out to a late ETA", () => {
+    const [load] = buildTimelineLoads([
+      shipment(
+        "late",
+        [
+          { id: "p", city: "Laredo", from: -14, to: -13, status: "Completed", departed: -13.25 },
+          { id: "d", city: "Dallas", from: 8, to: 9, type: "Delivery" },
+        ],
+        {
           stage: "Late",
-          pickupHour: 6,
-          deliveryHour: 12,
-          deliveryEndHour: 13,
-          etaHour: 15.5,
-        }),
-        shipment({ id: "moving", stage: "Moving", pickupHour: 7, deliveryHour: 12, etaHour: 15 }),
-      ],
-      DAY,
-    );
+          eta: {
+            stopId: "d",
+            estimatedArrival: at(10.9),
+            stops: [{ stopId: "d", arrived: false, estimatedArrival: at(10.9), driveMinutes: 520 }],
+          },
+        },
+      ),
+    ]);
 
-    expect(late).toMatchObject({ pickup: 6, delivery: 13, slipped: 15.5 });
-    expect(moving).toMatchObject({ pickup: 7, delivery: 12, slipped: null });
+    expect(load.start).toBe(at(-14));
+    expect(load.end).toBe(at(10.9));
+    expect(load.eta).toEqual({ stopIndex: 1, at: at(10.9), lateMinutes: 114 });
+    expect(load.driven).toBe("underway");
+    expect(load.driveMinutes).toBe(520);
+    expect(load.stops.map((s) => s.place)).toEqual(["Laredo, TX", "Dallas, TX"]);
   });
 
-  it("does not hatch a late load whose projection is inside its window", () => {
-    const [row] = buildTimelineRows(
-      [
-        shipment({
-          id: "late",
+  it("takes the shipment's own ETA for the next stop when it has no per-stop projection", () => {
+    const [load] = buildTimelineLoads([
+      shipment(
+        "a",
+        [
+          { id: "p", city: "Dallas", from: 6, to: 7, status: "Completed" },
+          { id: "d", city: "Memphis", from: 15, to: 16, type: "Delivery" },
+        ],
+        { eta: { stopId: "d", estimatedArrival: at(14.5) } },
+      ),
+    ]);
+
+    expect(load.eta).toEqual({ stopIndex: 1, at: at(14.5), lateMinutes: 0 });
+    expect(load.driveMinutes).toBeNull();
+  });
+
+  it("takes lateness from the server's slack when the projection has it", () => {
+    const [load] = buildTimelineLoads([
+      shipment(
+        "slack",
+        [
+          { id: "p", city: "Dallas", from: 6, to: 7, status: "Completed" },
+          { id: "d", city: "Memphis", from: 15, to: 16, type: "Delivery" },
+        ],
+        {
           stage: "Late",
-          pickupHour: 6,
-          deliveryHour: 12,
-          deliveryEndHour: 14,
-          etaHour: 13,
-        }),
+          eta: {
+            stopId: "d",
+            estimatedArrival: at(17),
+            stops: [{ stopId: "d", arrived: false, estimatedArrival: at(17), slackMinutes: -75 }],
+          },
+        },
+      ),
+    ]);
+
+    expect(load.eta?.lateMinutes).toBe(75);
+  });
+
+  it("leaves out canceled stops, and loads with no id, no stage it draws or no appointment", () => {
+    const loads = buildTimelineLoads([
+      shipment("kept", [
+        { id: "p", city: "Dallas", from: 6, to: 7 },
+        { id: "x", city: "Waco", from: 9, to: 10, status: "Canceled" },
+        { id: "d", city: "Austin", from: 12, to: 13, type: "Delivery" },
+      ]),
+      shipment(undefined, [{ id: "p", city: "Dallas", from: 6 }]),
+      shipment("canceled", [{ id: "p", city: "Dallas", from: 6 }], { stage: "Canceled" }),
+      shipment("unscheduled", [{ id: "p", city: "Dallas", from: 6 }], {
+        moves: [
+          {
+            id: "m",
+            status: "New",
+            stops: [{ id: "p", status: "New", scheduledWindowStart: 0 }],
+          },
+        ],
+      }),
+    ]);
+
+    expect(loads.map((l) => l.id)).toEqual(["kept"]);
+    expect(loads[0].stops.map((s) => s.city)).toEqual(["Dallas", "Austin"]);
+  });
+
+  it("draws a delivered load as driven end to end and one not started as not driven", () => {
+    const [delivered, scheduled] = buildTimelineLoads([
+      shipment(
+        "done",
+        [
+          { id: "p", city: "Dallas", from: 1, to: 2, status: "Completed" },
+          {
+            id: "d",
+            city: "Waco",
+            from: 5,
+            to: 6,
+            status: "Completed",
+            type: "Delivery",
+            departed: 6.5,
+          },
+        ],
+        { stage: "Delivered" },
+      ),
+      shipment("later", [{ id: "p", city: "Dallas", from: 14, to: 15 }], { stage: "Scheduled" }),
+    ]);
+
+    expect(delivered.driven).toBe("all");
+    expect(delivered.end).toBe(at(6.5));
+    expect(scheduled.driven).toBe("none");
+  });
+});
+
+describe("groupLoadsByStage", () => {
+  it("leads with the latest load, then orders each stage by start", () => {
+    const loads = buildTimelineLoads([
+      shipment("moving-late-start", [{ id: "a", city: "A", from: 9 }]),
+      shipment("late-little", [{ id: "b", city: "B", from: 1, to: 2 }], {
+        stage: "Late",
+        eta: { stopId: "b", estimatedArrival: at(2.5) },
+      }),
+      shipment("moving-early", [{ id: "c", city: "C", from: 3 }]),
+      shipment("late-lot", [{ id: "d", city: "D", from: 4, to: 5 }], {
+        stage: "Late",
+        eta: { stopId: "d", estimatedArrival: at(8) },
+      }),
+    ]);
+
+    expect(groupLoadsByStage(loads).map((g) => [g.stage, g.loads.map((l) => l.id)])).toEqual([
+      ["Late", ["late-lot", "late-little"]],
+      ["Moving", ["moving-early", "moving-late-start"]],
+    ]);
+  });
+});
+
+function load(
+  id: string,
+  from: number,
+  to: number,
+  extra: Record<string, unknown> = {},
+): TimelineLoad {
+  return buildTimelineLoads([
+    shipment(
+      id,
+      [
+        { id: `${id}-p`, city: "Dallas", from, to: from },
+        { id: `${id}-d`, city: "Waco", from: to, to, type: "Delivery" },
       ],
-      DAY,
+      extra,
+    ),
+  ])[0];
+}
+
+describe("packLane", () => {
+  it("stacks overlapping loads into rows and marks both as double-booked", () => {
+    const packed = packLane([load("a", 8, 14), load("b", 12, 18), load("c", 15, 20)]);
+
+    expect(packed.rows).toBe(2);
+    expect(packed.placed.map((p) => [p.load.id, p.row])).toEqual([
+      ["a", 0],
+      ["b", 1],
+      ["c", 0],
+    ]);
+    expect([...packed.conflicts].sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("packs a lane that is not a driver's without calling its overlaps double-booked", () => {
+    const packed = packLane([load("a", 8, 14), load("b", 12, 18)], { flagOverlaps: false });
+
+    expect(packed.rows).toBe(2);
+    expect(packed.conflicts.size).toBe(0);
+  });
+
+  it("keeps back-to-back loads on one row with no conflict", () => {
+    const packed = packLane([load("a", 8, 12), load("b", 12, 16)]);
+
+    expect(packed.rows).toBe(1);
+    expect(packed.conflicts.size).toBe(0);
+  });
+});
+
+describe("laneGaps", () => {
+  it("labels free time between loads and the open time after the last one", () => {
+    const gaps = laneGaps([load("a", 8, 11), load("b", 15, 17)], at(10), at(24));
+
+    expect(gaps).toEqual([
+      { start: at(11), end: at(15), open: false },
+      { start: at(17), end: at(24), open: true },
+    ]);
+  });
+
+  it("leaves out free time too short to read", () => {
+    expect(laneGaps([load("a", 8, 11), load("b", 12, 23)], at(8), at(24))).toEqual([]);
+  });
+
+  it("frees a lane with no loads for the whole range", () => {
+    expect(laneGaps([], at(10), at(24))).toEqual([{ start: at(10), end: at(24), open: true }]);
+  });
+});
+
+/** A load on a driver's assignment: the worker, their tractor, its code. */
+function driven(
+  id: string,
+  from: number,
+  to: number,
+  workerId: string,
+  name: string,
+  tractorId: string,
+): TimelineLoad {
+  return buildTimelineLoads([
+    withMove(load(id, from, to).shipment, assigned(workerId, name, tractorId, `T-${tractorId}`)),
+  ])[0];
+}
+
+describe("buildCoverageLanes", () => {
+  const capacityDriver = (id: string, name: string, tractorId: string | null) =>
+    ({
+      id,
+      name,
+      initials: name.slice(0, 2).toUpperCase(),
+      tractorId,
+      unitLabel: tractorId ? `T-${id}` : null,
+      driveRemainingMs: 6 * HOUR * 1000,
+    }) as unknown as CapacityUnit;
+
+  it("puts uncovered and tendered loads in the pool and gives free drivers a lane", () => {
+    const lanes = buildCoverageLanes(
+      [
+        load("open", 14, 19),
+        load("tendered", 18, 22, { tenderStatus: "Tendered" }),
+        driven("busy", 8, 12, "wrk_1", "Marco Ortiz", "trc_1"),
+      ],
+      [capacityDriver("wrk_2", "Kim Johnson", "trc_2")],
     );
 
-    expect(row?.slipped).toBeNull();
+    expect(lanes.pool.map((l) => l.id)).toEqual(["open", "tendered"]);
+    expect(lanes.drivers.map((d) => [d.id, d.name, d.tractorId, d.loads.map((l) => l.id)])).toEqual(
+      [
+        ["wrk_1", "Marco Ortiz", "trc_1", ["busy"]],
+        ["wrk_2", "Kim Johnson", "trc_2", []],
+      ],
+    );
+  });
+
+  it("leads with double-booked drivers", () => {
+    const lanes = buildCoverageLanes(
+      [
+        driven("calm", 6, 8, "wrk_calm", "Lin Chen", "trc_c"),
+        driven("x", 9, 14, "wrk_double", "Ray Williams", "trc_d"),
+        driven("y", 12, 16, "wrk_double", "Ray Williams", "trc_d"),
+      ],
+      [],
+    );
+
+    expect(lanes.drivers.map((d) => d.id)).toEqual(["wrk_double", "wrk_calm"]);
+  });
+});
+
+describe("checkAssignment", () => {
+  const lane = (tractorId: string | null, loads: TimelineLoad[] = []) => ({
+    id: "wrk_1",
+    name: "Kim Johnson",
+    initials: "KJ",
+    tractorId,
+    tractorCode: tractorId ? "T-1031" : null,
+    driveRemainingMs: null,
+    loads,
+    packed: packLane(loads),
+  });
+  const needing = (minutes: number) => ({
+    ...load("new", 14, 19),
+    driveMinutes: minutes,
+  });
+
+  it("refuses a driver with no tractor", () => {
+    expect(checkAssignment(needing(60), lane(null), null, NOW).blocked).toBe(true);
+  });
+
+  it("lists the driver's loads the new one overlaps", () => {
+    const check = checkAssignment(
+      needing(60),
+      lane("trc_1", [load("early", 8, 12), load("late", 18, 21)]),
+      null,
+      NOW,
+    );
+
+    expect(check.blocked).toBe(false);
+    expect(check.overlaps.map((l) => l.id)).toEqual(["late"]);
+  });
+
+  it("does not weigh today's drive time against a load that picks up after a reset", () => {
+    const tomorrow = { ...load("tomorrow", 30, 36), driveMinutes: 600 };
+
+    expect(checkAssignment(tomorrow, lane("trc_1"), HOUR * 1000, NOW).driveShort).toBeNull();
+  });
+
+  it("warns when the load needs more driving than the driver has left", () => {
+    expect(checkAssignment(needing(300), lane("trc_1"), 4 * HOUR * 1000, NOW).driveShort).toEqual({
+      neededMinutes: 300,
+      remainingMs: 4 * HOUR * 1000,
+    });
+    expect(
+      checkAssignment(needing(200), lane("trc_1"), 4 * HOUR * 1000, NOW).driveShort,
+    ).toBeNull();
+    expect(checkAssignment(needing(200), lane("trc_1"), null, NOW).driveShort).toBeNull();
   });
 });

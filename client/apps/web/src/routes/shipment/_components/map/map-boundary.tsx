@@ -32,7 +32,7 @@ function MapErrorFallback() {
   const t = useT();
 
   return (
-    <div className="border-border relative h-[clamp(420px,calc(100vh-380px),540px)] w-full overflow-hidden rounded-lg border">
+    <div className="border-border relative h-full min-h-105 w-full overflow-hidden rounded-lg border">
       <img
         src="/integrations/empty-state/map-preview.webp"
         alt={t("Empty state map preview")}

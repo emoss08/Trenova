@@ -23,6 +23,7 @@ import {
   ShipmentCommentRepliesDocument,
   ShipmentCommentsDocument,
   ShipmentBoardTableDocument,
+  ShipmentTimelineDocument,
   ShipmentDetailDocument,
   ShipmentEventsDocument,
   ShipmentPageAnalyticsDocument,
@@ -125,6 +126,37 @@ export function shipmentBoardTableGraphQLConfig({
       expandShipmentDetails: true,
       quickFilters,
       timezone,
+    },
+    mapNode: (node) => node as unknown as Shipment,
+  });
+}
+
+export type ShipmentTimelineParams = ShipmentBoardTableParams & {
+  /** The visible range, in Unix seconds. */
+  windowStart: number;
+  windowEnd: number;
+};
+
+/**
+ * The timeline's rows: the board's filters, narrowed on the server to the loads
+ * active in the visible range, with every open stop's ETA.
+ */
+export function shipmentTimelineGraphQLConfig({
+  quickFilters,
+  timezone,
+  windowStart,
+  windowEnd,
+}: ShipmentTimelineParams) {
+  return defineDataTableGraphQLConfig({
+    document: ShipmentTimelineDocument,
+    operationName: "ShipmentTimeline",
+    connectionKey: "shipments",
+    inputExtraVariables: {
+      expandShipmentDetails: true,
+      quickFilters,
+      timezone,
+      activityWindowStart: windowStart,
+      activityWindowEnd: windowEnd,
     },
     mapNode: (node) => node as unknown as Shipment,
   });

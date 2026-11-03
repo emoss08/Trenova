@@ -2001,7 +2001,13 @@ input ShipmentsInput {
   sort: [SortFieldInput!]
   expandShipmentDetails: Boolean = false
   status: String
+  """
+  With activityWindowEnd, only shipments active in the window: a live stop is due to
+  start before it ends and a live stop is due to end after it starts. A load that picks
+  up before the window and delivers after it counts, though no stop falls inside.
+  """
   activityWindowStart: Timestamp
+  "The end of the activity window; see activityWindowStart."
   activityWindowEnd: Timestamp
   "Only Completed or Ready to Invoice shipments that are not in the billing queue."
   billingTransferEligible: Boolean = false

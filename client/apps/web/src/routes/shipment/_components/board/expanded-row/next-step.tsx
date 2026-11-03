@@ -17,10 +17,8 @@ import type { Shipment } from "@trenova/shared/types/shipment";
 import { useEffect, useState, type ReactNode } from "react";
 import { IdentityAvatar } from "../identity-avatar";
 import { useBoardActions } from "../use-board-actions";
-import { useDriverHos } from "../use-driver-hos";
+import { DRIVE_LIMIT_MS, LOW_HOS_MS, useDriverHos } from "../use-driver-hos";
 
-const DRIVE_LIMIT_MS = 11 * 3_600_000;
-const LOW_HOS_MS = 4 * 3_600_000;
 const COMMITTED_STATE_MS = 3_000;
 
 function Heading({ children, tone }: { children: ReactNode; tone?: string }) {

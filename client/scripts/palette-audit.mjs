@@ -66,17 +66,18 @@ function contrast(a, b) {
 /* ------------------------------------------------------------------ parsing */
 
 /**
- * Pulls `--name: oklch(L C H)` out of one block, resolving `var(--hue-*)` in
- * the hue slot. Values carrying an alpha channel are scrims and overlays, which
+ * Pulls `--name: oklch(L C H)` out of one block, resolving `var(--hue-*)` and
+ * `none` in the hue slot. Values carrying an alpha channel are scrims and overlays, which
  * are composited rather than read against a fixed ground, so they are skipped.
  */
 function parseBlock(block, hues) {
   const out = {};
   const re =
-    /^\s*(--[a-z0-9-]+):\s*oklch\(\s*([\d.]+)\s+([\d.]+)\s+(var\(--[a-z-]+\)|[\d.]+)\s*\)\s*;/gm;
+    /^\s*(--[a-z0-9-]+):\s*oklch\(\s*([\d.]+)\s+([\d.]+)\s+(var\(--[a-z-]+\)|[\d.]+|none)\s*\)\s*;/gm;
   for (const m of block.matchAll(re)) {
     const raw = m[4];
-    const hue = raw.startsWith("var(") ? hues[raw.slice(4, -1)] : Number(raw);
+    // A grey's hue is `none` (tokens.css explains why); with no chroma, any angle draws the same.
+    const hue = raw === "none" ? 0 : raw.startsWith("var(") ? hues[raw.slice(4, -1)] : Number(raw);
     if (hue === undefined || Number.isNaN(hue)) continue;
     out[m[1].slice(2)] = [Number(m[2]), Number(m[3]), hue];
   }

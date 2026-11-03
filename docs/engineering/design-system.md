@@ -198,6 +198,13 @@ content, and belongs to a border.
 `border-subtle` for dividers inside a component, `border` for component outlines,
 `border-strong` for hover and emphasis.
 
+### Mixing
+
+A grey token's hue is written `none` (`--card: oklch(1 0 none)`), never 0. In an oklch
+`color-mix`, an explicit 0 is a real angle, red, and the mix swings through it: a blue tint
+over the dark card drew purple and a green one brown. With the hue missing, the mix takes the
+colour's own. A new grey token, or a grey written inline in a mix, follows the same rule.
+
 ## Type
 
 Whole-pixel steps, each carrying its line-height. Do not write `text-[11px]`;

@@ -160,14 +160,14 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
       render: ({ queryOptions }) => (
         <Suspense fallback={null}>
           {view === "timeline" ? (
-            <ShipmentTimeline graphql={graphql} queryOptions={queryOptions} />
+            <ShipmentTimeline queryOptions={queryOptions} />
           ) : (
             <ShipmentMapView />
           )}
         </Suspense>
       ),
     }),
-    [view, graphql],
+    [view],
   );
 
   const footerLeading = useMemo(

@@ -5,6 +5,11 @@ import { useCallback } from "react";
 
 const HOS_REFRESH_MS = 60_000;
 
+/** A day's driving limit under the 11-hour rule. */
+export const DRIVE_LIMIT_MS = 11 * 3_600_000;
+/** Drive time left below which a driver reads as running low. */
+export const LOW_HOS_MS = 4 * 3_600_000;
+
 type HosState = { workerId: string; driveRemainingMs: number };
 
 const indexes = new WeakMap<readonly HosState[], Map<string, number>>();

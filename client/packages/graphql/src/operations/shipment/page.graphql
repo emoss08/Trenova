@@ -885,15 +885,14 @@ query ExceptionShipments($input: ShipmentsInput!) {
   }
 }
 
+# The live map's loads. It draws them and counts none, so it asks for no total.
 query MapShipments($input: ShipmentsInput!) {
   shipments(input: $input) {
     edges {
       node {
-        ...ShipmentFields
+        ...ShipmentScheduleFields
       }
     }
-    totalCount
-    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -1444,6 +1443,100 @@ query ShipmentProfitability($shipmentId: ID!) {
         toDate
         fleetMiles
         hasPostings
+      }
+    }
+  }
+}
+
+# Every open stop's projected arrival, for the views that draw stops on a time
+# or map axis (the live map's card, the timeline's bars).
+fragment ShipmentStopEtaFields on ShipmentEta {
+  stopId
+  stops {
+    stopId
+    arrived
+    estimatedArrival
+    windowEnd
+    slackMinutes
+    driveMinutes
+  }
+}
+
+# What the live map and the timeline draw a load from: its stage, ETA, coverage
+# and stops, without the money, rating and commodity detail the table and the
+# forms read. Both views ask for hundreds of loads at a time.
+fragment ShipmentScheduleFields on Shipment {
+  id
+  proNumber
+  bol
+  status
+  stage
+  tenderStatus
+  actualDeliveryDate
+  customer {
+    id
+    name
+    code
+  }
+  eta {
+    estimatedArrival
+    slackMinutes
+    verdict
+    reason
+    ...ShipmentStopEtaFields
+  }
+  moves {
+    id
+    status
+    sequence
+    distance
+    coverageType
+    stops {
+      id
+      status
+      type
+      sequence
+      scheduledWindowStart
+      scheduledWindowEnd
+      actualArrival
+      actualDeparture
+      location {
+        id
+        name
+        code
+        city
+        latitude
+        longitude
+        state {
+          id
+          abbreviation
+        }
+      }
+    }
+    assignment {
+      id
+      status
+      tractorId
+      primaryWorkerId
+      tractor {
+        id
+        code
+      }
+      primaryWorker {
+        id
+        firstName
+        lastName
+        wholeName
+      }
+    }
+    carrierAssignment {
+      id
+      status
+      externalDriverName
+      carrier {
+        id
+        name
+        scac
       }
     }
   }

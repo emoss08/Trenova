@@ -1,4 +1,5 @@
 import { BOARD_GROUPINGS, type BoardGrouping } from "@/lib/shipment-board/grouping";
+import { TIMELINE_RANGES, TIMELINE_ROW_MODES } from "@/lib/shipment-board/timeline";
 import { applicableQuickFilters, parseAsQuickFilters } from "@/lib/shipment-board/quick-filters";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { useMemo } from "react";
@@ -33,8 +34,10 @@ export const parseAsBoardGrouping = createParser<BoardGrouping>({
 /**
  * Everything about the board a dispatcher would want to share or come back
  * to lives in the URL: the view, grouping, the quick filters, the collapsed
- * groups and the open row. `expanded` keeps its name because record links
- * (config/record-links.ts) open a shipment through it.
+ * groups, the open row, and the timeline's range, first day and rows.
+ * `expanded` keeps its name because record links (config/record-links.ts) open
+ * a shipment through it. `tlday` is an ISO date, so a shared link opens on the
+ * same calendar day in the reader's time zone.
  */
 export const shipmentBoardParser = {
   view: parseAsStringLiteral(BOARD_VIEWS).withDefault("table"),
@@ -45,6 +48,9 @@ export const shipmentBoardParser = {
   collapsed: parseAsArrayOf(parseAsString).withDefault([]),
   expanded: parseAsString,
   capacity: parseAsStringLiteral(CAPACITY_KINDS),
+  tl: parseAsStringLiteral(TIMELINE_RANGES).withDefault("day"),
+  tlday: parseAsString,
+  tlrows: parseAsStringLiteral(TIMELINE_ROW_MODES).withDefault("shipments"),
 };
 
 /**
