@@ -30,7 +30,7 @@ permissions:
 env:
   # Matches test-tms.yml. Steps that pass -tags spell nomsgpack out
   # themselves, because -tags replaces GOFLAGS' tags.
-  GOFLAGS: -tags=nomsgpack
+  GOFLAGS: -tags=nomsgpack,devlog
   APP_ENV: test
 
 jobs:

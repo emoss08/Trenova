@@ -31,7 +31,7 @@ env:
   ASSAY_CACHE: /home/runner/.cache/assay
   # Must match GO_TAGS in services/tms/Taskfile.yml. assay shells out to go
   # test, and a differing tag set shares no build cache with the other jobs.
-  GOFLAGS: -tags=nomsgpack
+  GOFLAGS: -tags=nomsgpack,devlog
 
 jobs:
   index:

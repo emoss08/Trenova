@@ -163,6 +163,7 @@ func newValidConfig() *Config {
 		Logging: loggingconfig.Config{
 			Level:  "info",
 			Format: "json",
+			Color:  "auto",
 			Output: "stdout",
 		},
 		Monitoring: monitoringconfig.Config{
@@ -406,6 +407,42 @@ func TestValidateConfig(t *testing.T) {
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, loggingconfig.ErrOutputIsFileButFileConfigIsMissing)
+	})
+
+	t.Run("logging format pretty with every color mode is valid", func(t *testing.T) {
+		t.Parallel()
+
+		for _, color := range []string{"auto", "always", "never"} {
+			cfg := newValidConfig()
+			cfg.Logging.Format = "pretty"
+			cfg.Logging.Color = color
+
+			require.NoError(t, NewLoader().validateConfig(cfg), color)
+		}
+	})
+
+	t.Run("logging format text is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := newValidConfig()
+		cfg.Logging.Format = "text"
+
+		err := NewLoader().validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "logging.format must be one of: json pretty")
+	})
+
+	t.Run("logging color outside auto always never is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := newValidConfig()
+		cfg.Logging.Color = "rainbow"
+
+		err := NewLoader().validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "logging.color must be one of: auto always never")
 	})
 }
 
@@ -730,6 +767,7 @@ func TestSetDefaults(t *testing.T) {
 
 		assert.Equal(t, "info", l.viper.GetString("logging.level"))
 		assert.Equal(t, "json", l.viper.GetString("logging.format"))
+		assert.Equal(t, "auto", l.viper.GetString("logging.color"))
 		assert.Equal(t, "stdout", l.viper.GetString("logging.output"))
 		assert.Equal(t, false, l.viper.GetBool("logging.sampling"))
 		assert.Equal(t, false, l.viper.GetBool("logging.stacktrace"))

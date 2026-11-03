@@ -351,7 +351,8 @@ aiAudit:
 # Logging configuration
 logging:
   level: debug # Log level: debug, info, warn, error
-  format: json # Log format: json, text
+  format: pretty # Log format: json, pretty (pretty needs a devlog build: task run-watch, air)
+  color: auto # Pretty colours: auto (terminal only, off with NO_COLOR), always, never
   output: file # Log output: stdout, file
   file:
     path: logs/trenova.log # Log file path

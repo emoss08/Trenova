@@ -68,7 +68,7 @@ func newLogger(cfg loggingconfig.Config) (*zap.Logger, *LogSink, error) {
 		return nil, nil, err
 	}
 
-	encoder, err := newLogEncoder(cfg.Format)
+	encoder, err := newLogEncoder(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -102,19 +102,18 @@ func parseLogLevel(level string) (zapcore.Level, error) {
 	return zapLevel, nil
 }
 
-func newLogEncoder(format string) (zapcore.Encoder, error) {
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
-	encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-
-	switch format {
+func newLogEncoder(cfg loggingconfig.Config) (zapcore.Encoder, error) {
+	switch cfg.Format {
 	case "json":
+		encoderConfig := zap.NewProductionEncoderConfig()
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
+		encoderConfig.EncodeDuration = zapcore.StringDurationEncoder
 		return zapcore.NewJSONEncoder(encoderConfig), nil
-	case "text":
-		return zapcore.NewConsoleEncoder(encoderConfig), nil
+	case "pretty":
+		return newPrettyEncoder(cfg)
 	default:
-		return nil, fmt.Errorf("invalid log format %q", format)
+		return nil, fmt.Errorf("invalid log format %q", cfg.Format)
 	}
 }
 

@@ -47,7 +47,7 @@ errors, duplicated helpers, generic types leaking through exported APIs. Fix wha
 report what changed and why, any design you chose over the one asked for, any pattern you
 changed, and the exact checks the change needs, for example:
 
-- `go test -tags=nomsgpack ./<changed packages>/...` (add `integration` for repositories)
+- `go test -tags=nomsgpack,devlog ./<changed packages>/...` (add `integration` for repositories)
 - `task lint` (golangci-lint, archlint)
 - `task gqlgen`, `task gqlschema-diff`, `pnpm --filter @trenova/graphql codegen` (schema changed)
 - `task db-migrate`, `task db-stamp` and `task db-lint` (migration or seed changed)

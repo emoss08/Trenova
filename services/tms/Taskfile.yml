@@ -23,7 +23,9 @@ vars:
   TEST_POSTGRES_LOCAL_IMAGE: trenova-postgres:local
   # nomsgpack drops gin's MsgPack binding, which nothing here uses. It is the
   # only thing pulling in ugorji/go/codec, a 20s compile on the critical path.
-  GO_TAGS: nomsgpack
+  # devlog builds in the pretty log format (pkg/prettylog). Release builds
+  # (deploy/Dockerfile.tms) leave it out, so the encoder never ships.
+  GO_TAGS: nomsgpack,devlog
   GO_TAG_FLAG: '{{if .GO_TAGS}}-tags {{.GO_TAGS}}{{end}}'
   # Commands that pass -tags on the command line override GOFLAGS rather than
   # merging with it, so they have to spell the base tags out themselves.

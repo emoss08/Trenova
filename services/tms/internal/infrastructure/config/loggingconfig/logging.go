@@ -8,11 +8,15 @@ var (
 	ErrOutputIsFileButFileConfigIsMissing = errors.New(
 		"logging output is 'file' but file config is missing",
 	)
+	ErrPrettyFormatNotBuilt = errors.New(
+		"logging format 'pretty' is only in development builds (-tags devlog); use 'json'",
+	)
 )
 
 type Config struct {
 	Level      string      `mapstructure:"level"          validate:"required,oneof=debug info warn error"`
-	Format     string      `mapstructure:"format"         validate:"required,oneof=json text"`
+	Format     string      `mapstructure:"format"         validate:"required,oneof=json pretty"`
+	Color      string      `mapstructure:"color"          validate:"required,oneof=auto always never"`
 	Output     string      `mapstructure:"output"         validate:"required,oneof=stdout stderr file"`
 	File       *FileConfig `mapstructure:"file,omitempty"`
 	Sampling   bool        `mapstructure:"sampling"`
@@ -31,6 +35,7 @@ func Defaults() map[string]any {
 	return map[string]any{
 		"level":      "info",
 		"format":     "json",
+		"color":      "auto",
 		"output":     "stdout",
 		"sampling":   false,
 		"stacktrace": false,

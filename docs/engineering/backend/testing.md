@@ -90,9 +90,14 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
 
 ## Running them
 
-The Taskfile and CI set `GOFLAGS=-tags=nomsgpack`; a `-tags` on the command line replaces it, so
-pass both: `go test -tags=integration,nomsgpack -run TestName ./path/...`. Run only the packages you
-changed; add `KEEL_SHAPES=$PWD/build/keel-shapes.jsonl` to record shapes, or `task db-plans` for
-the whole suite and its plans. `task test` also runs the repository's lint tests (`authzlint`, `rlslint`,
+The Taskfile and CI set `GOFLAGS=-tags=nomsgpack,devlog`; a `-tags` on the command line replaces
+it, so pass them all: `go test -tags=integration,nomsgpack,devlog -run TestName ./path/...`.
+`devlog` builds in development-only code (the `pretty` log format, `pkg/prettylog`); release
+builds (`deploy/Dockerfile.tms`) leave it out, so nothing behind it ships. Code that must never
+reach production goes behind `//go:build devlog`, with a `!devlog` stub that refuses it. The
+integration steps in CI pass `-tags=integration,nomsgpack`, so they run the `!devlog` side.
+
+Run only the packages you changed; add `KEEL_SHAPES=$PWD/build/keel-shapes.jsonl` to record shapes,
+or `task db-plans` for the whole suite and its plans. `task test` also runs the repository's lint tests (`authzlint`, `rlslint`,
 `permissionlint`, `routelint`, `tenantbindlint`, `schemalint`), so name the ones your change
 touches in the handoff.

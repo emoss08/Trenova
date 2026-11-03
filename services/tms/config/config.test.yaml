@@ -71,7 +71,7 @@ security:
 
 logging:
   level: debug
-  format: text
+  format: json
 
 monitoring:
   metrics:

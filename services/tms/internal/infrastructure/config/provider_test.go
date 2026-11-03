@@ -83,27 +83,6 @@ func TestProvideLogger_UsesJSONFormat(t *testing.T) {
 	assert.Contains(t, line, `"msg":"json message"`)
 }
 
-func TestProvideLogger_UsesTextFormat(t *testing.T) {
-	t.Parallel()
-
-	cfg := newValidConfig()
-	logPath := filepath.Join(t.TempDir(), "text.log")
-	cfg.Logging.Format = "text"
-	cfg.Logging.Output = "file"
-	cfg.Logging.File = testLogFileConfig(logPath)
-
-	logger, sink, err := ProvideLogger(&cfg.Logging)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = sink.Close() })
-
-	logger.Info("text message")
-	require.NoError(t, logger.Sync())
-
-	line := readFirstLogLine(t, logPath)
-	assert.False(t, strings.HasPrefix(line, "{"))
-	assert.Contains(t, line, "text message")
-}
-
 func TestProvideLogger_RespectsLogLevel(t *testing.T) {
 	t.Parallel()
 

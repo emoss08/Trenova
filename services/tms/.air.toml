@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -tags nomsgpack -gcflags=all=-dwarf=false -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false' -ldflags='-s -w' -o ./tmp/trenova-api ./cmd/api"
+cmd = "go build -tags nomsgpack,devlog -gcflags=all=-dwarf=false -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false' -ldflags='-s -w' -o ./tmp/trenova-api ./cmd/api"
 bin = "./tmp/trenova-api"
 exclude_dir = ["assets", "tmp", "vendor", "ui", "platform", "microservices"]
 include_ext = ["go", "tpl", "tmpl", "html", "yaml"]

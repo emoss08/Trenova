@@ -68,7 +68,7 @@ From `services/tms/`: `task run-watch` (API, hot reload), `task test`, `task tes
 `task db-migrate` (`trenova-devdb up`: migrations, then every seed that changed), `task db-seed`,
 `task db-reset`, `task db-seed-volume`,
 `task db-create-migration name=…`, `task db-stamp`, `task docker-up`, `task quick-start`.
-One test: `GOFLAGS=-tags=nomsgpack go test -run TestName ./path/...`.
+One test: `GOFLAGS=-tags=nomsgpack,devlog go test -run TestName ./path/...`.
 
 From `client/`: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`; scope with
 `pnpm --filter @trenova/web …`. GraphQL client codegen: `pnpm --filter @trenova/graphql codegen`.
