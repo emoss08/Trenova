@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/samber/lo"
 	"go.temporal.io/sdk/temporal"
@@ -274,11 +275,15 @@ func domainRefusalType(err error) (ErrorType, bool) {
 	return "", false
 }
 
-// finalRefusalType names the refusals that are final whoever raised them.
+// finalRefusalType names the refusals that are final whoever raised them. A
+// statement keel refused for how it was written is among them: it is a bug,
+// and retrying it only repeats the failure.
 func finalRefusalType(err error) (ErrorType, bool) {
 	switch {
 	case errortypes.IsVersionMismatchError(err):
 		return "", false
+	case dberror.IsStatementMisuse(err):
+		return ErrorTypeNonRetryable, true
 	case errortypes.IsAuthorizationError(err):
 		return ErrorTypePermissionDenied, true
 	case errortypes.IsNotFoundError(err):

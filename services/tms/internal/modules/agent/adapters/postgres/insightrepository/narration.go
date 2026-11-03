@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
@@ -20,15 +21,7 @@ func (r *repository) ListNarrated(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
-		in := insightdb.Insights
-		entities, err := in.Where(
-			in.DetectorKey.Eq(req.DetectorKey),
-			in.DedupeKey.In(req.DedupeKeys...),
-			in.Status.Eq(insight.StatusActive),
-			in.Narrated.Eq(true),
-		).
-			Limit(len(req.DedupeKeys)).
-			List(ctx, r.db.Keel(ctx))
+		entities, err := narratedQuery(&req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list narrated insights",
 				zap.String("operation", "ListNarrated"),
@@ -40,6 +33,19 @@ func (r *repository) ListNarrated(
 
 		return entities, nil
 	})
+}
+
+// narratedQuery reads the worded active finding behind each key. At most one
+// active finding holds a key (uq_insights_active_dedupe), which bounds it.
+func narratedQuery(req *insightports.ListNarratedInsightsRequest) keel.Query[*insight.Insight] {
+	in := insightdb.Insights
+
+	return in.Where(
+		in.DetectorKey.Eq(req.DetectorKey),
+		in.DedupeKey.In(req.DedupeKeys...),
+		in.Status.Eq(insight.StatusActive),
+		in.Narrated.Eq(true),
+	).Limit(len(req.DedupeKeys))
 }
 
 func (r *repository) GetByIDs(

@@ -48,7 +48,13 @@ func (a *Activities) FinishWaitActivity(
 ) error {
 	err := a.worker.Finish(ctx, in)
 	if errors.Is(err, agentwaitcontract.ErrConversationBusy) {
-		return temporal.NewApplicationError(err.Error(), errTypeBusy)
+		// The workflow waits for the conversation itself; an expected answer,
+		// so it is neither retried nor reported as a failure.
+		return temporal.NewApplicationErrorWithOptions(err.Error(), errTypeBusy,
+			temporal.ApplicationErrorOptions{
+				NonRetryable: true,
+				Category:     temporal.ApplicationErrorCategoryBenign,
+			})
 	}
 
 	return err

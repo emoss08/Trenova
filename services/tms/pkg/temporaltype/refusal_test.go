@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -93,6 +94,16 @@ func TestToActivityFailureMakesFinalRefusalsNonRetryable(t *testing.T) {
 			name:    "refused permission",
 			err:     errortypes.NewAuthorizationError("You cannot post invoices"),
 			errType: ErrorTypePermissionDenied,
+		},
+		{
+			name:    "list without a limit",
+			err:     fmt.Errorf("list narrated insights: %w", keel.ErrUnbounded),
+			errType: ErrorTypeNonRetryable,
+		},
+		{
+			name:    "cross-tenant statement without AllTenants",
+			err:     fmt.Errorf("roll up usage: %w: carrier_intel_usage_ledger", keel.ErrAllTenantsRequired),
+			errType: ErrorTypeNonRetryable,
 		},
 		{
 			name:    "plan quota",

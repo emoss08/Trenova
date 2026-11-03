@@ -3,8 +3,8 @@ package auditjobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -82,30 +82,6 @@ func TestProcessAuditBatchResult_NoErrors(t *testing.T) {
 
 	assert.Nil(t, result.Errors)
 	assert.Nil(t, result.Metadata)
-}
-
-func TestAuditBufferStatus(t *testing.T) {
-	t.Parallel()
-
-	status := &AuditBufferStatus{
-		BufferedEntries: 100,
-		DLQEntries:      5,
-		LastFlush:       1700000000,
-	}
-
-	assert.Equal(t, 100, status.BufferedEntries)
-	assert.Equal(t, 5, status.DLQEntries)
-	assert.Equal(t, int64(1700000000), status.LastFlush)
-}
-
-func TestAuditBufferStatus_Zero(t *testing.T) {
-	t.Parallel()
-
-	status := &AuditBufferStatus{}
-
-	assert.Equal(t, 0, status.BufferedEntries)
-	assert.Equal(t, 0, status.DLQEntries)
-	assert.Equal(t, int64(0), status.LastFlush)
 }
 
 func TestDeleteAuditEntriesResult(t *testing.T) {

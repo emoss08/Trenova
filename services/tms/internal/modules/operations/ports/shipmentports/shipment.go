@@ -720,6 +720,4 @@ type ShipmentRepository interface {
 		tenantInfo pagination.TenantInfo,
 		limit int,
 	) ([]*shipment.Shipment, error)
-	AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
-	RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error)
 }

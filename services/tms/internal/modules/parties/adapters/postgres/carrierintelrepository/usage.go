@@ -181,24 +181,11 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 	ctx = dbscope.WithSystem(ctx, "roll up carrier intelligence usage across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		start := timeutils.DayStartUTC(dayStart)
-		l := carrierintelusagedb.CarrierIntelUsageRecords
 		d := carrierintelusagedb.CarrierIntelUsageDailies
-		day := keel.Int64(int64(timeutils.DayKeyUTC(start)))
 		affected, err := d.UpsertFrom(
 			ctx,
 			r.db.Keel(ctx),
-			l.AllTenants().Pick(
-				l.OrganizationID,
-				l.BusinessUnitID,
-				l.Provider,
-				l.Endpoint,
-				day,
-				keel.Count(),
-				keel.Int64Of(l.BillableUnits.Sum()).Coalesce(0),
-				keel.NumericOf(l.EstimatedCost.Sum()).Coalesce(0),
-			).
-				Where(l.CreatedAt.Gte(start), l.CreatedAt.Lt(start+timeutils.SecondsPerDay)).
-				Group(l.OrganizationID, l.BusinessUnitID, l.Provider, l.Endpoint),
+			usageRollupSource(start),
 			keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.Provider, d.Endpoint, d.Day).
 				Update(d.Calls, d.BillableUnits, d.EstimatedCost),
 			d.OrganizationID,
@@ -217,6 +204,25 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 
 		return int(affected), nil
 	})
+}
+
+// usageRollupSource totals one UTC day of every organization's usage ledger.
+func usageRollupSource(start int64) keel.Query[*carrierintelusage.CarrierIntelUsageRecord] {
+	l := carrierintelusagedb.CarrierIntelUsageRecords
+	day := keel.Int64(int64(timeutils.DayKeyUTC(start)))
+
+	return l.AllTenants().Pick(
+		l.OrganizationID,
+		l.BusinessUnitID,
+		l.Provider,
+		l.Endpoint,
+		day,
+		keel.Count(),
+		keel.Int64Of(l.BillableUnits.Sum()).Coalesce(0),
+		keel.NumericOf(l.EstimatedCost.Sum()).Coalesce(0),
+	).
+		Where(l.CreatedAt.Gte(start), l.CreatedAt.Lt(start+timeutils.SecondsPerDay)).
+		Group(l.OrganizationID, l.BusinessUnitID, l.Provider, l.Endpoint)
 }
 
 func (r *usageRepository) DeleteOlderThan(

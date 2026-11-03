@@ -50,14 +50,23 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   submission) runs with `MaximumAttempts: 1` and a fallback path.
 - An error that will never succeed on retry fails once. The worker's refusal interceptor
   (`temporaljobs/interceptors/refusal.go`, `temporaltype.ToActivityFailure`) makes a validation
-  failure, a not-found, a refused permission and a plan refusal non-retryable for every activity,
-  so raise the right `errortypes` error at the owner (a missing stored object is a not-found,
-  not a database error) rather than adding `NonRetryableErrorTypes`. A business error stays
+  failure, a not-found, a refused permission, a plan refusal and a statement keel refused for how
+  it was written (`dberror.IsStatementMisuse`: no limit, no `AllTenants`, no scope)
+  non-retryable for every activity, so raise the right `errortypes` error at the owner (a
+  missing stored object is a not-found, not a database error) rather than adding
+  `NonRetryableErrorTypes`. A business error stays
   retryable because the domain also raises one for an outage worded for a person; return
   `ToDomainRefusal` when yours is final, or a Temporal `ApplicationError` to choose either way.
 - Something wrong with the record itself (its file is gone or unreadable, its format refused) is
   recorded on the record as a failure and the activity succeeds; it is not an error to retry
   (`documentextractionjobs.readFailure`).
+- Every retry policy sets `MaximumAttempts`. Waiting for someone else's state (a conversation
+  still busy) is not a retry: the activity answers at once with a non-retryable error in the
+  benign category, and the workflow waits on a timer with backoff under a deadline
+  (`agentwaitjobs.finish`).
+- The worker's logging interceptor reports each failed attempt once, with the activity, the
+  workflow and the attempt: a Warn while a retry follows, an Error when the failure is final, a
+  Debug for a benign answer. The SDK's own per-attempt line is kept at Debug (`sdkLogger`).
 - Activities take IDs and load current state; never pass a whole entity through history.
 - Batch: an activity handles a page of records, not one.
 

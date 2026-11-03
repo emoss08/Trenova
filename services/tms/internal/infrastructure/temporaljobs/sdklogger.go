@@ -25,4 +25,16 @@ func (s sdkLogger) Info(msg string, keyvals ...any) { s.l.Infow(msg, keyvals...)
 
 func (s sdkLogger) Warn(msg string, keyvals ...any) { s.l.Warnw(msg, keyvals...) }
 
-func (s sdkLogger) Error(msg string, keyvals ...any) { s.l.Errorw(msg, keyvals...) }
+// sdkActivityError is the line the SDK writes for every failed activity
+// attempt, at Error even when a retry follows. The worker's logging interceptor
+// reports each failed attempt with the level its outcome deserves, so this
+// copy is kept at Debug.
+const sdkActivityError = "Activity error."
+
+func (s sdkLogger) Error(msg string, keyvals ...any) {
+	if msg == sdkActivityError {
+		s.l.Debugw(msg, keyvals...)
+		return
+	}
+	s.l.Errorw(msg, keyvals...)
+}

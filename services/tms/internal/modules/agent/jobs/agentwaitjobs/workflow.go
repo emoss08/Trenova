@@ -1,6 +1,7 @@
 package agentwaitjobs
 
 import (
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
@@ -28,16 +29,25 @@ var readOptions = workflow.ActivityOptions{
 	},
 }
 
+// finishOptions retry a pick-up that failed a few times. A conversation that
+// is busy is not a failure: the activity answers it at once and finish waits
+// for the conversation on a durable timer, so a busy hour costs timers, not
+// retries, and a pick-up that is broken stops after its attempts.
 var finishOptions = workflow.ActivityOptions{
-	StartToCloseTimeout:    time.Minute,
-	ScheduleToCloseTimeout: finishWindow,
-	Summary:                "Pick the parked work up",
+	StartToCloseTimeout: time.Minute,
+	Summary:             "Pick the parked work up",
 	RetryPolicy: &temporal.RetryPolicy{
 		InitialInterval:    15 * time.Second,
-		BackoffCoefficient: 1.5,
-		MaximumInterval:    5 * time.Minute,
+		BackoffCoefficient: 2,
+		MaximumInterval:    time.Minute,
+		MaximumAttempts:    5,
 	},
 }
+
+const (
+	busyWaitFirst = 15 * time.Second
+	busyWaitMax   = 5 * time.Minute
+)
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
@@ -198,10 +208,24 @@ func finish(
 ) error {
 	var a *Activities
 	finishCtx := workflow.WithActivityOptions(ctx, finishOptions)
+	input := &agentwaitcontract.FinishInput{Payload: payload, Status: status, Outcome: outcome}
+	deadline := workflow.Now(ctx).Add(finishWindow)
+	wait := busyWaitFirst
 
-	return workflow.ExecuteActivity(finishCtx, a.FinishWaitActivity, &agentwaitcontract.FinishInput{
-		Payload: payload,
-		Status:  status,
-		Outcome: outcome,
-	}).Get(ctx, nil)
+	for {
+		err := workflow.ExecuteActivity(finishCtx, a.FinishWaitActivity, input).Get(ctx, nil)
+		if !conversationBusy(err) || workflow.Now(ctx).Add(wait).After(deadline) {
+			return err
+		}
+		if err = workflow.Sleep(ctx, wait); err != nil {
+			return err
+		}
+		wait = min(wait*3/2, busyWaitMax)
+	}
+}
+
+func conversationBusy(err error) bool {
+	appErr, ok := errors.AsType[*temporal.ApplicationError](err)
+
+	return ok && appErr.Type() == errTypeBusy
 }

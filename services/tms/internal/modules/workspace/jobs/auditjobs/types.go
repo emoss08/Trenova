@@ -21,12 +21,6 @@ type ProcessAuditBatchResult struct {
 	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
-type AuditBufferStatus struct {
-	BufferedEntries int   `json:"bufferedEntries"`
-	DLQEntries      int   `json:"dlqEntries"`
-	LastFlush       int64 `json:"lastFlush"`
-}
-
 type DeleteAuditEntriesResult struct {
 	TotalDeleted      int    `json:"totalDeleted,omitempty"`
 	AuthEventsDeleted int    `json:"authEventsDeleted,omitempty"`

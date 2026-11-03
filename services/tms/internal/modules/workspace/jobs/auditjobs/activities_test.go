@@ -539,36 +539,6 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	mockAuditRepo.AssertExpectations(t)
 }
 
-func TestGetBufferStatusActivity(t *testing.T) {
-	testSuite := &testsuite.WorkflowTestSuite{}
-	env := testSuite.NewTestActivityEnvironment()
-
-	mockBufferRepo := new(mockAuditBufferRepository)
-	mockDLQRepo := new(mockAuditDLQRepository)
-
-	activities := &Activities{
-		abr:  mockBufferRepo,
-		adlq: mockDLQRepo,
-	}
-
-	mockBufferRepo.On("Size", mock.Anything).Return(int64(3), nil)
-	mockDLQRepo.On("Count", mock.Anything).Return(int64(1), nil)
-
-	env.RegisterActivity(activities.GetBufferStatusActivity)
-	result, err := env.ExecuteActivity(activities.GetBufferStatusActivity)
-
-	require.NoError(t, err)
-
-	var status *AuditBufferStatus
-	require.NoError(t, result.Get(&status))
-
-	assert.Equal(t, 3, status.BufferedEntries)
-	assert.Equal(t, 1, status.DLQEntries)
-
-	mockBufferRepo.AssertExpectations(t)
-	mockDLQRepo.AssertExpectations(t)
-}
-
 func TestRetryDLQEntriesActivity_NoPendingEntries(t *testing.T) {
 	testSuite := &testsuite.WorkflowTestSuite{}
 	env := testSuite.NewTestActivityEnvironment()

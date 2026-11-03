@@ -14,7 +14,8 @@ const (
 	ReconcileWorkflowName = "ReconcileAgentWaitsWorkflow"
 	ReconcileScheduleID   = "agent-wait-reconcile"
 	// errTypeBusy is a conversation still answering something else when its
-	// wait ended; the pick-up is tried again until the conversation is free.
+	// wait ended; finish waits and tries the pick-up again until the
+	// conversation is free or finishWindow passes.
 	errTypeBusy = "ConversationBusy"
 )
 

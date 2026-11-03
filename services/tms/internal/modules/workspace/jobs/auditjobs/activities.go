@@ -542,38 +542,6 @@ func (a *Activities) RetryDLQEntriesActivity(
 	return result, nil
 }
 
-func (a *Activities) GetBufferStatusActivity(ctx context.Context) (*AuditBufferStatus, error) {
-	logger := activity.GetLogger(ctx)
-
-	size, err := a.abr.Size(ctx)
-	if err != nil {
-		logger.Error("Failed to get buffer size", "error", err)
-		return nil, err
-	}
-
-	dlqSize, err := a.adlq.Count(ctx)
-	if err != nil {
-		logger.Error("Failed to get DLQ size", "error", err)
-		dlqSize = 0
-	}
-
-	a.metrics.Audit.SetBufferSize(size)
-	a.metrics.Audit.SetDLQSize(dlqSize)
-
-	status := &AuditBufferStatus{
-		BufferedEntries: int(size),
-		DLQEntries:      int(dlqSize),
-		LastFlush:       timeutils.NowUnix(),
-	}
-
-	logger.Info("Retrieved audit buffer status",
-		"bufferedEntries", status.BufferedEntries,
-		"dlqEntries", status.DLQEntries,
-	)
-
-	return status, nil
-}
-
 func entryToMap(entry *audit.Entry) (map[string]any, error) {
 	data, err := sonic.Marshal(entry)
 	if err != nil {

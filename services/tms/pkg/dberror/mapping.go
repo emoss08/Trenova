@@ -96,3 +96,26 @@ func violationCode(kind keel.ConstraintKind) errortypes.ErrorCode {
 func IsTenantBoundaryViolation(err error) bool {
 	return errors.Is(err, keel.ErrTenantMismatch) || IsRowLevelSecurityViolation(err)
 }
+
+// IsStatementMisuse reports a statement keel refused for how it was written:
+// no limit on a list, a cross-tenant statement that did not declare AllTenants,
+// no scope, a write in a read-only transaction. The same code refuses the same
+// way on every run, so it is a bug to fix, not a failure to retry.
+func IsStatementMisuse(err error) bool {
+	for _, misuse := range statementMisuses {
+		if errors.Is(err, misuse) {
+			return true
+		}
+	}
+
+	return false
+}
+
+var statementMisuses = []error{
+	keel.ErrUnbounded,
+	keel.ErrAllTenantsRequired,
+	keel.ErrSystemScopeRequired,
+	keel.ErrNoScope,
+	keel.ErrScopeMismatch,
+	keel.ErrReadOnly,
+}

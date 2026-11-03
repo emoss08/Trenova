@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -112,7 +113,13 @@ func (r *recordingAgentEvents) Publish(_ context.Context, event *agenteventports
 	r.events = append(r.events, *event)
 }
 
-func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
+func tenantWork(orgID, buID pulid.ID) *ShipmentTenantWorkPayload {
+	return &ShipmentTenantWorkPayload{
+		TenantWorkItem: temporaljobs.TenantWorkItem{OrganizationID: orgID, BusinessUnitID: buID},
+	}
+}
+
+func TestActivitiesAutoDelayTenantShipmentsActivity_InvalidatesEachDelayedShipment(t *testing.T) {
 	t.Parallel()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
@@ -121,9 +128,10 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	shipmentID := pulid.MustNew("shp_")
+	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 
 	repo.EXPECT().
-		AutoDelayShipments(mock.Anything).
+		RunAutoDelayShipmentsForTenant(mock.Anything, tenant, temporaljobs.DefaultTenantRecordLimit).
 		Return([]*shipment.Shipment{{
 			ID:             shipmentID,
 			OrganizationID: orgID,
@@ -135,6 +143,8 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&
 				req.Action == "delayed" &&
+				req.OrganizationID == orgID &&
+				req.BusinessUnitID == buID &&
 				req.RecordID == shipmentID
 		})).
 		Return(nil).
@@ -147,15 +157,16 @@ func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {
 		Logger:       zap.NewNop(),
 	})
 
-	result, err := activities.AutoDelayShipmentsActivity(t.Context())
+	result, err := activities.AutoDelayTenantShipmentsActivity(t.Context(), tenantWork(orgID, buID))
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, 1, result.DelayedCount)
 	assert.Equal(t, []pulid.ID{shipmentID}, result.ShipmentIDs)
+	assert.Equal(t, 1, result.RecordsProcessed)
 }
 
-func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
+func TestActivitiesAutoCancelTenantShipmentsActivity_InvalidatesTheTenantOnce(t *testing.T) {
 	t.Parallel()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
@@ -163,16 +174,16 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	shipmentID := pulid.MustNew("shp_")
+	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
+	first := pulid.MustNew("shp_")
+	second := pulid.MustNew("shp_")
 
 	repo.EXPECT().
-		RunAutoCancelShipments(mock.Anything).
-		Return([]*shipment.Shipment{{
-			ID:             shipmentID,
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			Status:         shipmentvocab.StatusCanceled,
-		}}, nil).
+		RunAutoCancelShipmentsForTenant(mock.Anything, tenant, temporaljobs.DefaultTenantRecordLimit).
+		Return([]*shipment.Shipment{
+			{ID: first, OrganizationID: orgID, BusinessUnitID: buID, Status: shipmentvocab.StatusCanceled},
+			{ID: second, OrganizationID: orgID, BusinessUnitID: buID, Status: shipmentvocab.StatusCanceled},
+		}, nil).
 		Once()
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
@@ -193,67 +204,31 @@ func TestActivitiesAutoCancelShipmentsActivity(t *testing.T) {
 		Logger:       zap.NewNop(),
 	})
 
-	result, err := activities.AutoCancelShipmentsActivity(t.Context())
+	result, err := activities.AutoCancelTenantShipmentsActivity(t.Context(), tenantWork(orgID, buID))
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, 1, result.CanceledCount)
-	assert.Equal(t, []pulid.ID{shipmentID}, result.ShipmentIDs)
+	assert.Equal(t, 2, result.CanceledCount)
+	assert.Equal(t, []pulid.ID{first, second}, result.ShipmentIDs)
+	assert.Equal(t, 2, result.RecordsProcessed)
 }
 
-func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *testing.T) {
+func TestActivitiesAutoCancelTenantShipmentsActivity_NothingCanceledPublishesNothing(t *testing.T) {
 	t.Parallel()
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 
-	orgOne := pulid.MustNew("org_")
-	buOne := pulid.MustNew("bu_")
-	orgTwo := pulid.MustNew("org_")
-	buTwo := pulid.MustNew("bu_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
 
 	repo.EXPECT().
-		RunAutoCancelShipments(mock.Anything).
-		Return([]*shipment.Shipment{
-			{
-				ID:             pulid.MustNew("shp_"),
-				OrganizationID: orgOne,
-				BusinessUnitID: buOne,
-				Status:         shipmentvocab.StatusCanceled,
-			},
-			{
-				ID:             pulid.MustNew("shp_"),
-				OrganizationID: orgOne,
-				BusinessUnitID: buOne,
-				Status:         shipmentvocab.StatusCanceled,
-			},
-			{
-				ID:             pulid.MustNew("shp_"),
-				OrganizationID: orgTwo,
-				BusinessUnitID: buTwo,
-				Status:         shipmentvocab.StatusCanceled,
-			},
-		}, nil).
-		Once()
-	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
-			return req.Resource == "shipments" &&
-				req.Action == "bulk_canceled" &&
-				req.OrganizationID == orgOne &&
-				req.BusinessUnitID == buOne &&
-				req.RecordID.IsNil()
-		})).
-		Return(nil).
-		Once()
-	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
-			return req.Resource == "shipments" &&
-				req.Action == "bulk_canceled" &&
-				req.OrganizationID == orgTwo &&
-				req.BusinessUnitID == buTwo &&
-				req.RecordID.IsNil()
-		})).
-		Return(nil).
+		RunAutoCancelShipmentsForTenant(
+			mock.Anything,
+			pagination.TenantInfo{OrgID: orgID, BuID: buID},
+			temporaljobs.DefaultTenantRecordLimit,
+		).
+		Return([]*shipment.Shipment{}, nil).
 		Once()
 
 	activities := NewActivities(ActivitiesParams{
@@ -263,10 +238,9 @@ func TestActivitiesAutoCancelShipmentsActivity_PublishesPerAffectedTenant(t *tes
 		Logger:       zap.NewNop(),
 	})
 
-	result, err := activities.AutoCancelShipmentsActivity(t.Context())
+	result, err := activities.AutoCancelTenantShipmentsActivity(t.Context(), tenantWork(orgID, buID))
 
 	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, 3, result.CanceledCount)
-	require.Len(t, result.ShipmentIDs, 3)
+	assert.Equal(t, 0, result.CanceledCount)
+	assert.Empty(t, result.ShipmentIDs)
 }

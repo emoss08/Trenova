@@ -22,13 +22,16 @@ func BuildWorkerInterceptorChain(p ChainParams) []interceptor.WorkerInterceptor 
 		p.Logger.Debug("metrics interceptor enabled")
 	}
 
+	// Failures are always reported; enableLogging adds the routine lines.
 	cfg := p.TemporalConfig.Interceptors
 	if cfg.EnableLogging {
-		loggingInterceptor := NewLoggingInterceptor(p.Logger, cfg.GetLogLevel())
-		workerInterceptors = append(workerInterceptors, loggingInterceptor)
+		workerInterceptors = append(workerInterceptors,
+			NewLoggingInterceptor(p.Logger, cfg.GetLogLevel()))
 		p.Logger.Debug("logging interceptor enabled",
 			zap.String("logLevel", cfg.GetLogLevel()),
 		)
+	} else {
+		workerInterceptors = append(workerInterceptors, NewFailureLoggingInterceptor(p.Logger))
 	}
 
 	// Innermost, so the interceptors above it see the error as Temporal will.

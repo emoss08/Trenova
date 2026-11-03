@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/app/exchangerateservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -55,63 +54,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		integrationRepo:       p.IntegrationRepo,
 		logger:                p.Logger.Named("temporal.exchange-rate"),
 	}
-}
-
-func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
-	a.logger.Info("Starting exchange rate refresh activity")
-	recordActivityHeartbeat(ctx, "refreshing-exchange-rates")
-
-	integrations, err := a.integrationRepo.ListEnabledByType(
-		ctx,
-		integration.TypeOANDAExchangeRates,
-	)
-	if err != nil {
-		a.logger.Error("Failed to list enabled OANDA exchange-rate integrations", zap.Error(err))
-		return err
-	}
-
-	if len(integrations) == 0 {
-		a.logger.Info("No enabled OANDA exchange-rate integrations found, skipping refresh")
-		return nil
-	}
-
-	for idx := range integrations {
-		recordActivityHeartbeat(ctx, "refreshing", idx+1, len(integrations))
-
-		integ := integrations[idx]
-		tenantInfo := pagination.TenantInfo{
-			OrgID: integ.OrganizationID,
-			BuID:  integ.BusinessUnitID,
-		}
-		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-
-		baseCurrency, currencyErr := a.functionalCurrency(tenantCtx, tenantInfo)
-		if currencyErr != nil {
-			a.logger.Error("Failed to resolve functional currency for tenant",
-				zap.String("orgID", integ.OrganizationID.String()),
-				zap.Error(currencyErr))
-			continue
-		}
-
-		if refreshErr := a.exchangeRateSvc.RefreshRates(
-			tenantCtx,
-			tenantInfo,
-			baseCurrency,
-		); refreshErr != nil {
-			a.logger.Error("Failed to refresh rates for tenant",
-				zap.String("orgID", integ.OrganizationID.String()),
-				zap.String("baseCurrency", baseCurrency),
-				zap.Error(refreshErr))
-			continue
-		}
-
-		a.logger.Info("Refreshed exchange rates for tenant",
-			zap.String("orgID", integ.OrganizationID.String()))
-	}
-
-	a.logger.Info("Exchange rate refresh activity completed",
-		zap.Int("tenantsProcessed", len(integrations)))
-	return nil
 }
 
 func (a *Activities) ListExchangeRateTenantsActivity(

@@ -30,10 +30,11 @@ func TestBuildWorkerInterceptorChain_BothDisabled(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
 	assertRefusalLast(t, chain)
 	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
 	assert.True(t, isTenantScope)
+	assertFailureLogging(t, chain[1])
 }
 
 func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
@@ -80,10 +81,11 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
 	assertRefusalLast(t, chain)
 	_, ok := chain[1].(*MetricsInterceptor)
 	assert.True(t, ok)
+	assertFailureLogging(t, chain[2])
 }
 
 func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
@@ -135,10 +137,11 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
 	assertRefusalLast(t, chain)
 	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
 	assert.True(t, isTenantScope)
+	assertFailureLogging(t, chain[1])
 }
 
 func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
@@ -289,4 +292,12 @@ func assertRefusalLast(t *testing.T, chain []sdkinterceptor.WorkerInterceptor) {
 
 	_, ok := chain[len(chain)-1].(*RefusalInterceptor)
 	assert.True(t, ok, "the refusal interceptor runs innermost, beside the activity")
+}
+
+func assertFailureLogging(t *testing.T, got sdkinterceptor.WorkerInterceptor) {
+	t.Helper()
+
+	logging, ok := got.(*LoggingInterceptor)
+	require.True(t, ok, "failures are reported even with routine logging off")
+	assert.True(t, logging.quiet)
 }

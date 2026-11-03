@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
@@ -159,42 +158,6 @@ func paginationTenantInfoFromPayload(
 	}
 }
 
-func (a *Activities) AutoDelayShipmentsActivity(
-	ctx context.Context,
-) (*AutoDelayShipmentsResult, error) {
-	a.logger.Info("Starting shipment auto delay activity")
-	recordActivityHeartbeat(ctx, "auto-delaying shipments")
-
-	delayedShipments, err := a.repo.AutoDelayShipments(ctx)
-	if err != nil {
-		a.logger.Error("Shipment auto delay failed", zap.Error(err))
-		return nil, err
-	}
-
-	shipmentIDs := make([]pulid.ID, 0, len(delayedShipments))
-	for _, entity := range delayedShipments {
-		shipmentIDs = append(shipmentIDs, entity.ID)
-
-		shipmentinvalidationports.InvalidateShipments(
-			ctx,
-			a.invalidator,
-			&shipmentinvalidationports.ShipmentInvalidation{
-				OrganizationID: entity.OrganizationID,
-				BusinessUnitID: entity.BusinessUnitID,
-				Action:         "delayed",
-				RecordID:       entity.ID,
-				Entity:         entity,
-			},
-		)
-	}
-
-	return &AutoDelayShipmentsResult{
-		ShipmentIDs:  shipmentIDs,
-		DelayedCount: len(delayedShipments),
-		CompletedAt:  timeutils.NowUnix(),
-	}, nil
-}
-
 func (a *Activities) ListAutoDelayShipmentTenantsActivity(
 	ctx context.Context,
 	payload *ListShipmentTenantsPayload,
@@ -257,44 +220,6 @@ func (a *Activities) AutoDelayTenantShipmentsActivity(
 			TenantsProcessed: 1,
 			RecordsProcessed: len(delayedShipments),
 		},
-	}, nil
-}
-
-func (a *Activities) AutoCancelShipmentsActivity(
-	ctx context.Context,
-) (*AutoCancelShipmentsResult, error) {
-	a.logger.Info("Starting shipment auto cancel activity")
-	recordActivityHeartbeat(ctx, "auto-canceling shipments")
-
-	canceledShipments, err := a.repo.RunAutoCancelShipments(ctx)
-	if err != nil {
-		a.logger.Error("Shipment auto cancel failed", zap.Error(err))
-		return nil, err
-	}
-
-	shipmentIDs := make([]pulid.ID, 0, len(canceledShipments))
-	for _, entity := range canceledShipments {
-		shipmentIDs = append(shipmentIDs, entity.ID)
-	}
-
-	if len(canceledShipments) > 0 {
-		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
-			shipmentinvalidationports.InvalidateShipments(
-				ctx,
-				a.invalidator,
-				&shipmentinvalidationports.ShipmentInvalidation{
-					OrganizationID: tenantInfo.OrgID,
-					BusinessUnitID: tenantInfo.BuID,
-					Action:         "bulk_canceled",
-				},
-			)
-		}
-	}
-
-	return &AutoCancelShipmentsResult{
-		ShipmentIDs:   shipmentIDs,
-		CanceledCount: len(canceledShipments),
-		CompletedAt:   timeutils.NowUnix(),
 	}, nil
 }
 
@@ -361,26 +286,6 @@ func (a *Activities) AutoCancelTenantShipmentsActivity(
 			RecordsProcessed: len(canceledShipments),
 		},
 	}, nil
-}
-
-func uniqueShipmentTenants(entities []*shipment.Shipment) []pagination.TenantInfo {
-	seen := make(map[string]struct{}, len(entities))
-	tenants := make([]pagination.TenantInfo, 0, len(entities))
-
-	for _, entity := range entities {
-		key := entity.OrganizationID.String() + ":" + entity.BusinessUnitID.String()
-		if _, exists := seen[key]; exists {
-			continue
-		}
-
-		seen[key] = struct{}{}
-		tenants = append(tenants, pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		})
-	}
-
-	return tenants
 }
 
 func recordActivityHeartbeat(ctx context.Context, details ...any) {

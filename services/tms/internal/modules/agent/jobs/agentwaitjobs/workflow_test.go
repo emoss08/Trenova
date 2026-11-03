@@ -2,6 +2,7 @@ package agentwaitjobs
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -25,6 +26,12 @@ type scriptedWorker struct {
 	checks   []agentwaitcontract.Check
 	checked  []int64
 	finished []agentwaitcontract.FinishInput
+	// busy is how many pick-ups find the conversation busy before one lands;
+	// broken fails every pick-up.
+	busy     int
+	broken   error
+	attempts []time.Time
+	now      func() time.Time
 }
 
 func (w *scriptedWorker) Schedule(context.Context, pagination.TenantInfo, pulid.ID) (*agentwaitcontract.Schedule, error) {
@@ -46,12 +53,32 @@ func (w *scriptedWorker) ReconcileOverdue(context.Context) (int, error) { return
 func (w *scriptedWorker) Finish(_ context.Context, in *agentwaitcontract.FinishInput) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	if w.now != nil {
+		w.attempts = append(w.attempts, w.now())
+	}
+	if w.broken != nil {
+		return w.broken
+	}
+	if w.busy > 0 {
+		w.busy--
+		return agentwaitcontract.ErrConversationBusy
+	}
 	w.finished = append(w.finished, *in)
 
 	return nil
 }
 
 func run(t *testing.T, worker *scriptedWorker, during func(*testsuite.TestWorkflowEnvironment)) {
+	t.Helper()
+
+	require.NoError(t, execute(t, worker, during))
+}
+
+func execute(
+	t *testing.T,
+	worker *scriptedWorker,
+	during func(*testsuite.TestWorkflowEnvironment),
+) error {
 	t.Helper()
 
 	var suite testsuite.WorkflowTestSuite
@@ -71,7 +98,8 @@ func run(t *testing.T, worker *scriptedWorker, during func(*testsuite.TestWorkfl
 	})
 
 	require.True(t, env.IsWorkflowCompleted())
-	require.NoError(t, env.GetWorkflowError())
+
+	return env.GetWorkflowError()
 }
 
 func clock(env *testsuite.TestWorkflowEnvironment, after time.Duration) int64 {
@@ -125,6 +153,38 @@ func TestAgentWaitWorkflow_AWaitThatRunsOutIsPickedUpAnyway(t *testing.T) {
 
 	require.Len(t, worker.finished, 1)
 	assert.Equal(t, agentwait.StatusTimedOut, worker.finished[0].Status)
+}
+
+func TestAgentWaitWorkflow_ABusyConversationIsPickedUpOnceItIsFree(t *testing.T) {
+	t.Parallel()
+
+	worker := &scriptedWorker{busy: 3}
+	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
+		worker.now = env.Now
+		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, time.Hour)}
+	})
+
+	require.Len(t, worker.finished, 1)
+	assert.Equal(t, agentwait.StatusTimedOut, worker.finished[0].Status)
+	require.Len(t, worker.attempts, 4, "each busy answer is one attempt, never retried by the policy")
+	assert.Equal(t, busyWaitFirst, worker.attempts[1].Sub(worker.attempts[0]))
+	assert.Greater(t, worker.attempts[3].Sub(worker.attempts[2]), worker.attempts[2].Sub(worker.attempts[1]),
+		"the wait for a busy conversation backs off")
+}
+
+func TestAgentWaitWorkflow_ABrokenPickUpStopsAfterItsAttempts(t *testing.T) {
+	t.Parallel()
+
+	worker := &scriptedWorker{broken: errors.New("connection reset by peer")}
+	err := execute(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
+		worker.now = env.Now
+		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, time.Hour)}
+	})
+
+	require.Error(t, err)
+	assert.Empty(t, worker.finished)
+	assert.Len(t, worker.attempts, int(finishOptions.RetryPolicy.MaximumAttempts),
+		"a failure that is not a busy conversation is not retried for a day")
 }
 
 func TestAgentWaitWorkflow_AClosedWaitDoesNothing(t *testing.T) {

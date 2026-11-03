@@ -47,21 +47,6 @@ func (r *repository) DelayShipments(
 	})
 }
 
-func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error) {
-	ctx = dbscope.WithSystem(ctx, "mark late shipments delayed across every organization")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		sp := shipmentdb.Shipments
-		entities, err := sp.AllTenants().
-			Where(sp.ID.InQuery(autoDelayedShipmentIDs(timeutils.NowUnix(), everyTenant))).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, err
-		}
-
-		return r.markDelayed(ctx, entities, everyTenant)
-	})
-}
-
 func (r *repository) ListAutoDelayShipmentTenants(
 	ctx context.Context,
 	limit int,

@@ -96,3 +96,16 @@ func TestMetricQueriesRender(t *testing.T) {
 		}))
 	})
 }
+
+func TestNarratedWordingIsReadOnlyForTheMeasuredFindings(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, narratedQuery(&insightports.ListNarratedInsightsRequest{
+		DetectorKey: "ontime",
+		DedupeKeys:  []string{"ontime:cus_1", "ontime:cus_2"},
+	}))
+
+	assert.Contains(t, sql, `"dedupe_key"`, sql)
+	assert.Contains(t, sql, "LIMIT 2", "one active finding per key bounds the read")
+	assert.Contains(t, args, "ontime")
+}

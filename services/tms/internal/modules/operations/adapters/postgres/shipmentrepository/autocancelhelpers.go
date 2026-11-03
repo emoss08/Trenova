@@ -50,22 +50,6 @@ func (r *repository) AutoCancelShipments(
 	})
 }
 
-func (r *repository) RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error) {
-	ctx = dbscope.WithSystem(ctx, "cancel expired shipments across every organization")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		currentTime := timeutils.NowUnix()
-		sp := shipmentdb.Shipments
-		entities, err := sp.AllTenants().
-			Where(sp.ID.InQuery(controlledAutoCancelIDs(currentTime, everyTenant))).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, err
-		}
-
-		return r.autoCancel(ctx, entities, currentTime, everyTenant)
-	})
-}
-
 func (r *repository) ListAutoCancelShipmentTenants(
 	ctx context.Context,
 	limit int,

@@ -143,9 +143,10 @@ func TestRefresh_KeepsTheWordingOfAFindingWhoseFiguresHaveNotMoved(t *testing.T)
 	nova := &answeringNova{text: `{"insights":[]}`}
 	svc := narratingService(repo, nova, nil, ontime(same, moved))
 
+	tn := tenant()
 	result, err := svc.Refresh(
 		t.Context(),
-		RefreshRequest{TenantInfo: tenant(), Now: 1_800_000_000},
+		RefreshRequest{TenantInfo: tn, Now: 1_800_000_000},
 	)
 	require.NoError(t, err)
 
@@ -158,6 +159,11 @@ func TestRefresh_KeepsTheWordingOfAFindingWhoseFiguresHaveNotMoved(t *testing.T)
 	assert.False(t, stored[1].Narrated)
 	assert.Equal(t, 1, nova.calls, "only the finding whose figures moved is narrated")
 	assert.Equal(t, 1, result.Narrated)
+	assert.Equal(t, []insightports.ListNarratedInsightsRequest{{
+		TenantInfo:  tn,
+		DetectorKey: "ontime",
+		DedupeKeys:  []string{same.DedupeKey, moved.DedupeKey},
+	}}, repo.narratedReq, "the earlier wording is read only for the findings measured now")
 }
 
 func TestRefresh_DeferredSendsNewFindingsToTheBatchAndStoresTheirOwnWording(t *testing.T) {

@@ -66,6 +66,7 @@ func (d *stubDetector) Detect(
 type stubRepo struct {
 	replaced    []insightports.ReplaceDetectorFindingsRequest
 	narrated    []*insight.Insight
+	narratedReq []insightports.ListNarratedInsightsRequest
 	applied     []insightports.InsightNarration
 	active      []*insight.Insight
 	byID        *insight.Insight
@@ -100,9 +101,11 @@ func (r *stubRepo) ReplaceDetectorFindings(
 }
 
 func (r *stubRepo) ListNarrated(
-	context.Context,
-	insightports.ListNarratedInsightsRequest,
+	_ context.Context,
+	req insightports.ListNarratedInsightsRequest,
 ) ([]*insight.Insight, error) {
+	r.narratedReq = append(r.narratedReq, req)
+
 	return r.narrated, nil
 }
 

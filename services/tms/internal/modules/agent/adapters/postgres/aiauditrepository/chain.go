@@ -86,10 +86,8 @@ func (r *repository) RecordVerification(
 			sets = append(sets, h.LastVerificationFailedSeq.ToNull())
 		}
 
-		heads, err := h.Where(
-			h.OrganizationID.Eq(req.TenantInfo.OrgID),
-			h.BusinessUnitID.Eq(req.TenantInfo.BuID),
-		).UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+		heads, err := verificationTarget(req.TenantInfo).
+			UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return nil, fmt.Errorf("record AI audit verification: %w", err)
 		}
@@ -99,6 +97,19 @@ func (r *repository) RecordVerification(
 
 		return heads[0], nil
 	})
+}
+
+// verificationTarget is the tenant's own chain head. A bulk update must name
+// the rows it changes; the tenant scope alone does not.
+func verificationTarget(
+	tenantInfo pagination.TenantInfo,
+) keel.Query[*aiaudit.AIAuditChainHead] {
+	h := aiauditdb.AIAuditChainHeads
+
+	return h.Where(
+		h.OrganizationID.Eq(tenantInfo.OrgID),
+		h.BusinessUnitID.Eq(tenantInfo.BuID),
+	)
 }
 
 func (r *repository) GetSealEndingAt(

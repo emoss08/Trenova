@@ -115,68 +115,6 @@ func (_c *MockShipmentRepository_AutoCancelShipments_Call) RunAndReturn(run func
 	return _c
 }
 
-// AutoDelayShipments provides a mock function for the type MockShipmentRepository
-func (_mock *MockShipmentRepository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AutoDelayShipments")
-	}
-
-	var r0 []*shipment.Shipment
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*shipment.Shipment, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*shipment.Shipment); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*shipment.Shipment)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentRepository_AutoDelayShipments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AutoDelayShipments'
-type MockShipmentRepository_AutoDelayShipments_Call struct {
-	*mock.Call
-}
-
-// AutoDelayShipments is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockShipmentRepository_Expecter) AutoDelayShipments(ctx any) *MockShipmentRepository_AutoDelayShipments_Call {
-	return &MockShipmentRepository_AutoDelayShipments_Call{Call: _e.mock.On("AutoDelayShipments", ctx)}
-}
-
-func (_c *MockShipmentRepository_AutoDelayShipments_Call) Run(run func(ctx context.Context)) *MockShipmentRepository_AutoDelayShipments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockShipmentRepository_AutoDelayShipments_Call) Return(shipments []*shipment.Shipment, err error) *MockShipmentRepository_AutoDelayShipments_Call {
-	_c.Call.Return(shipments, err)
-	return _c
-}
-
-func (_c *MockShipmentRepository_AutoDelayShipments_Call) RunAndReturn(run func(ctx context.Context) ([]*shipment.Shipment, error)) *MockShipmentRepository_AutoDelayShipments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // BulkDuplicate provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) BulkDuplicate(ctx context.Context, req *shipmentports.BulkDuplicateShipmentRequest) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req)
@@ -1347,68 +1285,6 @@ func (_c *MockShipmentRepository_ListRatedByFormulaTemplate_Call) Return(shipmen
 }
 
 func (_c *MockShipmentRepository_ListRatedByFormulaTemplate_Call) RunAndReturn(run func(ctx context.Context, req *shipmentports.ListRatedByFormulaTemplateRequest) ([]*shipment.Shipment, error)) *MockShipmentRepository_ListRatedByFormulaTemplate_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RunAutoCancelShipments provides a mock function for the type MockShipmentRepository
-func (_mock *MockShipmentRepository) RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error) {
-	ret := _mock.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RunAutoCancelShipments")
-	}
-
-	var r0 []*shipment.Shipment
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*shipment.Shipment, error)); ok {
-		return returnFunc(ctx)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*shipment.Shipment); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*shipment.Shipment)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentRepository_RunAutoCancelShipments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RunAutoCancelShipments'
-type MockShipmentRepository_RunAutoCancelShipments_Call struct {
-	*mock.Call
-}
-
-// RunAutoCancelShipments is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockShipmentRepository_Expecter) RunAutoCancelShipments(ctx any) *MockShipmentRepository_RunAutoCancelShipments_Call {
-	return &MockShipmentRepository_RunAutoCancelShipments_Call{Call: _e.mock.On("RunAutoCancelShipments", ctx)}
-}
-
-func (_c *MockShipmentRepository_RunAutoCancelShipments_Call) Run(run func(ctx context.Context)) *MockShipmentRepository_RunAutoCancelShipments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockShipmentRepository_RunAutoCancelShipments_Call) Return(shipments []*shipment.Shipment, err error) *MockShipmentRepository_RunAutoCancelShipments_Call {
-	_c.Call.Return(shipments, err)
-	return _c
-}
-
-func (_c *MockShipmentRepository_RunAutoCancelShipments_Call) RunAndReturn(run func(ctx context.Context) ([]*shipment.Shipment, error)) *MockShipmentRepository_RunAutoCancelShipments_Call {
 	_c.Call.Return(run)
 	return _c
 }

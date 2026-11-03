@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -115,4 +116,15 @@ func TestPendingSyncCoversEnrolAndUnenrol(t *testing.T) {
 	assert.Contains(t, sql, `cme."desired_state" = 'Enrolled'`, sql)
 	assert.Contains(t, sql, `cme."desired_state" = 'NotEnrolled'`, sql)
 	assert.Equal(t, []any{"bu_1", "org_1"}, args)
+}
+
+func TestUsageRollupReadsEveryOrganizationsLedger(t *testing.T) {
+	t.Parallel()
+
+	ctx := dbscope.WithSystem(t.Context(), "roll up carrier intelligence usage in a test")
+	sql, _ := keeltest.RenderIn(t, ctx, usageRollupSource(1_790_000_000))
+
+	assert.Contains(t, sql, `"carrier_intel_usage_ledger"`, sql)
+	assert.Contains(t, sql, "GROUP BY", sql)
+	assert.NotContains(t, sql, `"organization_id" = $`, "a system rollup is not narrowed to one tenant")
 }
