@@ -34,14 +34,23 @@ import { useBoardActions } from "../../use-board-actions";
 import { LOW_HOS_MS, useDriverHos } from "../../use-driver-hos";
 import { TimelineAssignDialog, type PendingAssignment } from "./timeline-assign-dialog";
 import { TimelineBar, type BarDragHandle } from "./timeline-bar";
-import { TimelineGroupRow, TimelineRow } from "./timeline-canvas";
+import {
+  TimelineCanvas,
+  TimelineGroupRow,
+  TimelineRow,
+  type TimelineScrollMemory,
+  type TimelineSheetItem,
+} from "./timeline-canvas";
 import { formatTimelineTime } from "./timeline-format";
-import type { TimelineScale } from "./timeline-scale";
+import {
+  BAR_HEIGHT,
+  GROUP_HEIGHT,
+  LANE_PAD,
+  LANE_ROW_STEP,
+  laneHeight,
+  type TimelineScale,
+} from "./timeline-scale";
 
-const PAD = 7;
-const ROW_STEP = 26;
-const BAR_HEIGHT = 20;
-const MIN_LANE_HEIGHT = 40;
 /** Free-time labels need this much room to be read. */
 const MIN_GAP_LABEL_PX = 64;
 /** Drive time below this reads as out. */
@@ -57,11 +66,15 @@ type LaneSelection = { selectedId: string | null; onSelect: (id: string) => void
 export function TimelineCoverageLanes({
   loads,
   scale,
+  today,
   selectedId,
   onSelect,
+  scrollMemory,
 }: {
   loads: readonly TimelineLoad[];
   scale: TimelineScale;
+  today: number;
+  scrollMemory: TimelineScrollMemory;
 } & LaneSelection) {
   const t = useT();
   const { runsAssets } = useShipmentCapabilities();
@@ -88,6 +101,124 @@ export function TimelineCoverageLanes({
   const loadById = new Map(loads.map((load) => [load.id, load]));
   const laneById = new Map(lanes.drivers.map((lane) => [lane.id, lane]));
 
+  // The sheet's lines: each group's header, then its lanes at their packed heights.
+  const items: TimelineSheetItem[] = [
+    {
+      key: "group:pool",
+      height: GROUP_HEIGHT,
+      header: true,
+      node: (
+        <TimelineGroupRow
+          scale={scale}
+          label={t("Needs coverage")}
+          count={lanes.pool.length}
+          swatchClassName={STAGE_META.NeedsCoverage.swatchClassName}
+          tail={
+            runsAssets && open.length > 0 ? (
+              <>
+                <span className="truncate">{t("Drag a load onto a driver to assign it")}</span>
+                <Button
+                  variant="outline"
+                  size="xxs"
+                  isLoading={actions.autoAssign.isPending}
+                  loadingText={t("Assigning")}
+                  onClick={() => actions.autoAssign.mutate(openMoveIds)}
+                >
+                  {t(
+                    "{0, plural, one {Auto-assign # load} other {Auto-assign # loads}}",
+                    openMoveIds.length,
+                  )}
+                </Button>
+              </>
+            ) : null
+          }
+        />
+      ),
+    },
+    {
+      key: "lane:pool",
+      height: laneHeight(lanes.poolPacked.rows),
+      node: (
+        <LaneRow
+          scale={scale}
+          packed={lanes.poolPacked}
+          draggable={runsAssets}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          label={
+            <>
+              <span
+                aria-hidden
+                className="border-warning size-5.5 shrink-0 rounded-full border-[1.5px] border-dashed"
+              />
+              <LaneLabelText
+                title={t("Uncovered")}
+                meta={t("{0} open · {1} tendered", open.length, lanes.pool.length - open.length)}
+              />
+            </>
+          }
+        />
+      ),
+    },
+  ];
+  if (runsAssets) {
+    items.push({
+      key: "group:drivers",
+      height: GROUP_HEIGHT,
+      header: true,
+      node: (
+        <TimelineGroupRow
+          scale={scale}
+          label={t("Drivers")}
+          count={lanes.drivers.length}
+          tail={
+            <span className="truncate">
+              {t("Free time is labeled; a red outline is an overlap")}
+            </span>
+          }
+        />
+      ),
+    });
+    for (const lane of lanes.drivers) {
+      items.push({
+        key: `driver:${lane.id}`,
+        height: laneHeight(lane.packed.rows),
+        node: (
+          <DriverLaneRow lane={lane} scale={scale} selectedId={selectedId} onSelect={onSelect} />
+        ),
+      });
+    }
+  }
+  if (lanes.carriers.length > 0) {
+    items.push({
+      key: "group:carriers",
+      height: GROUP_HEIGHT,
+      header: true,
+      node: <TimelineGroupRow scale={scale} label={t("Carriers")} count={lanes.carriers.length} />,
+    });
+    for (const lane of lanes.carriers) {
+      items.push({
+        key: `carrier:${lane.id}`,
+        height: laneHeight(lane.packed.rows),
+        node: (
+          <CarrierLaneRow lane={lane} scale={scale} selectedId={selectedId} onSelect={onSelect} />
+        ),
+      });
+    }
+  }
+
+  // The selected load is revealed by the lane that holds it.
+  let revealKey: string | null = null;
+  if (selectedId) {
+    if (lanes.pool.some((load) => load.id === selectedId)) revealKey = "lane:pool";
+    const driver = lanes.drivers.find((lane) => lane.loads.some((load) => load.id === selectedId));
+    if (driver) revealKey = `driver:${driver.id}`;
+    const carrier = lanes.carriers.find((lane) =>
+      lane.loads.some((load) => load.id === selectedId),
+    );
+    if (carrier) revealKey = `carrier:${carrier.id}`;
+  }
+
   const onDragStart = ({ active }: DragStartEvent) =>
     setDragging(loadById.get(String(active.id)) ?? null);
   const onDragEnd = ({ active, over }: DragEndEvent) => {
@@ -104,89 +235,14 @@ export function TimelineCoverageLanes({
       onDragEnd={onDragEnd}
       onDragCancel={() => setDragging(null)}
     >
-      <TimelineGroupRow
+      <TimelineCanvas
         scale={scale}
-        label={t("Needs coverage")}
-        count={lanes.pool.length}
-        swatchClassName={STAGE_META.NeedsCoverage.swatchClassName}
-        tail={
-          runsAssets && open.length > 0 ? (
-            <>
-              <span className="truncate">{t("Drag a load onto a driver to assign it")}</span>
-              <Button
-                variant="outline"
-                size="xxs"
-                isLoading={actions.autoAssign.isPending}
-                loadingText={t("Assigning")}
-                onClick={() => actions.autoAssign.mutate(openMoveIds)}
-              >
-                {t(
-                  "{0, plural, one {Auto-assign # load} other {Auto-assign # loads}}",
-                  openMoveIds.length,
-                )}
-              </Button>
-            </>
-          ) : null
-        }
+        today={today}
+        labelHeading={t("Driver or carrier")}
+        items={items}
+        revealKey={revealKey}
+        scrollMemory={scrollMemory}
       />
-      <LaneRow
-        scale={scale}
-        packed={lanes.poolPacked}
-        draggable={runsAssets}
-        selectedId={selectedId}
-        onSelect={onSelect}
-        label={
-          <>
-            <span
-              aria-hidden
-              className="border-warning size-5.5 shrink-0 rounded-full border-[1.5px] border-dashed"
-            />
-            <LaneLabelText
-              title={t("Uncovered")}
-              meta={t("{0} open · {1} tendered", open.length, lanes.pool.length - open.length)}
-            />
-          </>
-        }
-      />
-
-      {runsAssets ? (
-        <>
-          <TimelineGroupRow
-            scale={scale}
-            label={t("Drivers")}
-            count={lanes.drivers.length}
-            tail={
-              <span className="truncate">
-                {t("Free time is labeled; a red outline is an overlap")}
-              </span>
-            }
-          />
-          {lanes.drivers.map((lane) => (
-            <DriverLaneRow
-              key={lane.id}
-              lane={lane}
-              scale={scale}
-              selectedId={selectedId}
-              onSelect={onSelect}
-            />
-          ))}
-        </>
-      ) : null}
-
-      {lanes.carriers.length > 0 ? (
-        <>
-          <TimelineGroupRow scale={scale} label={t("Carriers")} count={lanes.carriers.length} />
-          {lanes.carriers.map((lane) => (
-            <CarrierLaneRow
-              key={lane.id}
-              lane={lane}
-              scale={scale}
-              selectedId={selectedId}
-              onSelect={onSelect}
-            />
-          ))}
-        </>
-      ) : null}
 
       <DragOverlay dropAnimation={null}>
         {dragging ? (
@@ -224,10 +280,6 @@ function LaneLabelText({
   );
 }
 
-function laneHeight(rows: number): number {
-  return Math.max(MIN_LANE_HEIGHT, PAD * 2 + rows * ROW_STEP - (ROW_STEP - BAR_HEIGHT));
-}
-
 /** A lane's bars, packed into rows; each caption may use the room up to the next bar in its row. */
 function LaneBars({
   packed,
@@ -241,17 +293,33 @@ function LaneBars({
   draggable: boolean;
 } & LaneSelection) {
   const { placed, conflicts } = packed;
+  // Where the next bar in the same row starts, found in one pass per row: the
+  // pool lane can hold hundreds of loads.
+  const nextLeft = new Map<string, number>();
+  const byRow = new Map<number, PackedLane["placed"]>();
+  for (const entry of placed) {
+    const row = byRow.get(entry.row);
+    if (row) row.push(entry);
+    else byRow.set(entry.row, [entry]);
+  }
+  for (const row of byRow.values()) {
+    row.sort((a, b) => a.load.start - b.load.start);
+    // Walking back, `after` is the first start later than the bar in hand.
+    let after: number | null = null;
+    for (let i = row.length - 1; i >= 0; i--) {
+      const start = row[i].load.start;
+      if (i < row.length - 1 && row[i + 1].load.start > start) after = row[i + 1].load.start;
+      if (after !== null) nextLeft.set(row[i].load.id, scale.x(Math.max(after, scale.start)));
+    }
+  }
   return (
     <>
       {placed.map(({ load, row }) => {
-        const next = placed
-          .filter((p) => p.row === row && p.load.start > load.start)
-          .map((p) => scale.x(Math.max(p.load.start, scale.start)))
-          .sort((a, b) => a - b)[0];
+        const next = nextLeft.get(load.id);
         const props = {
           load,
           scale,
-          top: PAD + row * ROW_STEP,
+          top: LANE_PAD + row * LANE_ROW_STEP,
           height: BAR_HEIGHT,
           caption: "lane" as const,
           nextLeft: next,
@@ -400,7 +468,7 @@ function DriverLaneRow({
                 key={gap.start}
                 aria-hidden
                 className="tl-gap pointer-events-none absolute flex -translate-y-1/2 items-center justify-center"
-                style={{ left, width: Math.min(width, 360), top: PAD + BAR_HEIGHT / 2 }}
+                style={{ left, width: Math.min(width, 360), top: LANE_PAD + BAR_HEIGHT / 2 }}
               >
                 <span className="bg-card text-muted-foreground relative px-1.5 font-mono text-2xs whitespace-nowrap">
                   {text}

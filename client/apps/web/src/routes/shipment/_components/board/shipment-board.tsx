@@ -26,6 +26,9 @@ import { useBoardActions } from "./use-board-actions";
 import { useBoardGrouping } from "./use-board-grouping";
 import { useQuickFilterSearch } from "./use-quick-filter-search";
 import { useShipmentBoardUrl } from "./url-state";
+// The timeline's skeleton is light (the canvas and its geometry), so the board
+// draws the real axis while the timeline's code loads, not a blank sheet.
+import { ShipmentTimelineSkeleton } from "./views/shipment-timeline-skeleton";
 
 const ShipmentTimeline = lazy(() => import("./views/shipment-timeline"));
 const ShipmentMapView = lazy(() => import("./views/shipment-map-view"));
@@ -157,15 +160,16 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
   const alternateView = useMemo<DataTableAlternateView>(
     () => ({
       active: view !== "table",
-      render: ({ queryOptions }) => (
-        <Suspense fallback={null}>
-          {view === "timeline" ? (
+      render: ({ queryOptions }) =>
+        view === "timeline" ? (
+          <Suspense fallback={<ShipmentTimelineSkeleton />}>
             <ShipmentTimeline queryOptions={queryOptions} />
-          ) : (
+          </Suspense>
+        ) : (
+          <Suspense fallback={null}>
             <ShipmentMapView />
-          )}
-        </Suspense>
-      ),
+          </Suspense>
+        ),
     }),
     [view],
   );

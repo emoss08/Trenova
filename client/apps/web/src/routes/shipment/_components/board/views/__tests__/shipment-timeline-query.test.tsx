@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { stubLayout } from "@/test/layout";
 import ShipmentTimeline from "../shipment-timeline";
 
 const { requestGraphQLMock, setUrlMock, urlState } = vi.hoisted(() => ({
@@ -50,11 +51,17 @@ function renderTimeline() {
   );
 }
 
+// The sheet is virtualized: a viewport that measures nothing mounts no rows.
+let restoreLayout: () => void;
 beforeEach(() => {
   requestGraphQLMock.mockReset();
   setUrlMock.mockReset();
+  restoreLayout = stubLayout(640, 1280);
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  restoreLayout();
+});
 
 describe("ShipmentTimeline", () => {
   it("asks the server only for the loads active on the day the URL names, under the board's quick filters", async () => {

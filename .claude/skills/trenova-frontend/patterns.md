@@ -214,23 +214,31 @@ useForm({
 
 A message the module returns is shown with `translateMessage(message, t)`.
 
-## A sheet of hundreds of rows (`board/views/shipment-timeline.tsx`)
+## A sheet of hundreds of rows (`board/views/timeline/timeline-canvas.tsx`)
 
-- **One tooltip for every row.** A `Tooltip` per row mounts a provider, a root and a trigger
-  hundreds of times. Make one handle, render one `Tooltip` with it, and give each trigger the
-  handle and its row as `payload`:
-
-  ```tsx
-  const [handle] = useState(() => createTooltipHandle<Row>());
-  <Tooltip handle={handle}>{({ payload }) => payload ? <TooltipContent>…</TooltipContent> : null}</Tooltip>
-  <TooltipTrigger handle={handle} payload={row} render={<button … />} />
-  ```
-
+- **Virtualize by row with TanStack Virtual.** The sheet is a list of
+  `{ key, height, header?, node }` lines, each at a known height, placed absolutely inside a
+  `ScrollArea` viewport; only the lines in view plus an overscan are mounted. Lines are measured
+  from the sticky axis's bottom edge (no `scrollMargin`) and drawn `AXIS_HEIGHT` lower, so the
+  first line in range is the first one below the axis. A `rangeExtractor` keeps that line's
+  group header mounted and renders it in flow as `sticky` (negative bottom margin): it pins the
+  moment it reaches the axis, and the next header slides over it. `scrollPaddingStart`/`End`
+  keep a revealed row clear of the pinned header and the bottom edge. The component is
+  `"use no memo"`: the virtualizer is a mutable object.
+- **Fill the width.** A range narrower than the sheet stretches to fill it
+  (`createTimelineScale(range, days, minWidth)` with the measured width), or a wide or
+  zoomed-out window shows empty sheet past the range's end.
+- **One hover card for the whole sheet, not a tooltip per row.** A per-row `Tooltip` mounts a
+  provider, root and trigger hundreds of times. `timeline-hover-card.tsx` holds one card fed by a
+  tiny external store: a bar calls `enter`/`move`/`leave` from context and holds no state, so
+  hovering redraws only the card, and following the pointer writes its position to the DOM once a
+  frame. It opens after a short rest, switches bars at once while open, opens on keyboard focus
+  only, and closes on scroll, Escape, pointer-down and when its bar unmounts (`release`).
+- **A scroll fade never covers a sticky cell.** Offset the mask (`maskClassName`) past the
+  sticky axis, the pinned header and the label column.
 - **Hover and the clock stay out of the parent.** A row reads its own hover from the store
   (`useShipmentBoardStore((s) => s.highlightId === id)`), and only the part that moves with time
-  calls `useNow`; a parent that subscribes to either redraws every row on each change.
-- **Off-screen rows skip layout and paint** with `contentVisibility: "auto"` on the row and
-  `containIntrinsicSize` set to its known height; a sticky label column still sticks.
+  calls `useNow`. A parent that subscribes to either redraws every row on each change.
 - **A sticky cell's fill is opaque** (`bg-surface-selected`, never a `/10` tint), or what scrolls
   under it shows through.
 

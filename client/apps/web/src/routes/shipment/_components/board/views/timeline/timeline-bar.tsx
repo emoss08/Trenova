@@ -1,60 +1,14 @@
 import { STAGE_META } from "@/lib/shipment-board/stage";
 import type { TimelineLoad } from "@/lib/shipment-board/timeline";
 import { useNow } from "@trenova/shared/hooks/use-now";
-import {
-  createTooltipHandle,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  createContext,
-  useContext,
-  useState,
-  type CSSProperties,
-  type HTMLAttributes,
-  type ReactNode,
-  type Ref,
-} from "react";
+import { useEffect, type CSSProperties, type HTMLAttributes, type Ref } from "react";
 import { useShipmentBoardStore } from "../../store";
 import { captionWidth, formatTimelineTime } from "./timeline-format";
+import { useBarHover } from "./timeline-hover-card";
 import type { TimelineScale } from "./timeline-scale";
-
-type BarTooltipHandle = ReturnType<typeof createTooltipHandle<TimelineLoad>>;
-
-const BarTooltipContext = createContext<BarTooltipHandle | null>(null);
-
-/**
- * The one hover detail every bar opens: each bar is a trigger on this tooltip,
- * passing its load as the payload, so a timeline of hundreds of loads mounts a
- * single tooltip rather than one per bar.
- */
-export function TimelineBarTooltip({
-  scale,
-  children,
-}: {
-  scale: TimelineScale;
-  children: ReactNode;
-}) {
-  const [handle] = useState(() => createTooltipHandle<TimelineLoad>());
-  return (
-    <BarTooltipContext.Provider value={handle}>
-      {children}
-      <Tooltip handle={handle}>
-        {({ payload }) =>
-          payload ? (
-            <TooltipContent side="top" className="max-w-72">
-              <TimelineBarDetail load={payload} scale={scale} />
-            </TooltipContent>
-          ) : null
-        }
-      </Tooltip>
-    </BarTooltipContext.Provider>
-  );
-}
 
 export type BarDragHandle = {
   ref: Ref<HTMLButtonElement>;
@@ -96,9 +50,19 @@ export function TimelineBar({
   drag,
 }: TimelineBarProps) {
   const t = useT();
-  const tooltip = useContext(BarTooltipContext);
+  const hover = useBarHover();
   const hovered = useShipmentBoardStore((s) => s.highlightId === load.id);
   const setHighlightId = useShipmentBoardStore((s) => s.setHighlightId);
+
+  // A bar that goes away under the pointer gets no pointer leave: it lets go of
+  // its card and its highlight itself.
+  useEffect(
+    () => () => {
+      hover?.release(load.id);
+      if (useShipmentBoardStore.getState().highlightId === load.id) setHighlightId(null);
+    },
+    [hover, load.id, setHighlightId],
+  );
 
   if (load.end <= scale.start || load.start >= scale.end) return null;
 
@@ -162,33 +126,46 @@ export function TimelineBar({
 
   return (
     <>
-      <TooltipTrigger
-        handle={tooltip ?? undefined}
-        payload={load}
-        disabled={!tooltip || drag?.dragging}
-        render={
-          <button
-            ref={drag?.ref}
-            type="button"
-            {...drag?.props}
-            className="tl-bar ui-focus-ring"
-            data-hovered={hovered}
-            data-selected={selected}
-            data-uncovered={uncovered}
-            data-conflict={conflict}
-            data-clip-start={load.start < scale.start}
-            data-clip-end={load.end > scale.end}
-            data-draggable={!!drag}
-            style={style}
-            aria-label={t("{0}, {1}", pro, route)}
-            aria-pressed={selected}
-            onClick={() => onSelect(load.id)}
-            onMouseEnter={() => setHighlightId(load.id)}
-            onMouseLeave={() => {
-              if (useShipmentBoardStore.getState().highlightId === load.id) setHighlightId(null);
-            }}
-          />
-        }
+      <button
+        ref={drag?.ref}
+        type="button"
+        {...drag?.props}
+        className="tl-bar ui-focus-ring"
+        data-hovered={hovered}
+        data-selected={selected}
+        data-uncovered={uncovered}
+        data-conflict={conflict}
+        data-clip-start={load.start < scale.start}
+        data-clip-end={load.end > scale.end}
+        data-draggable={!!drag}
+        style={style}
+        aria-label={t("{0}, {1}", pro, route)}
+        aria-pressed={selected}
+        onClick={() => onSelect(load.id)}
+        onPointerEnter={(event) => {
+          setHighlightId(load.id);
+          if (!drag?.dragging) hover?.enter(load, event.currentTarget, event.clientX);
+        }}
+        onPointerMove={(event) => hover?.move(event.clientX)}
+        onPointerLeave={() => {
+          if (useShipmentBoardStore.getState().highlightId === load.id) setHighlightId(null);
+          hover?.leave();
+        }}
+        onFocus={(event) => {
+          // Keyboard focus opens the card; the focus a click brings does not.
+          if (event.currentTarget.matches(":focus-visible"))
+            hover?.enter(load, event.currentTarget);
+        }}
+        onBlur={() => hover?.leave()}
+        onKeyDown={(event) => {
+          // Escape closes the card, and Space picks the load up: no card rides a drag.
+          if (event.key === "Escape" || event.key === " ") hover?.dismiss();
+          drag?.props.onKeyDown?.(event);
+        }}
+        onPointerDown={(event) => {
+          hover?.dismiss();
+          drag?.props.onPointerDown?.(event);
+        }}
       >
         {load.driven === "all" ? (
           <span aria-hidden className="tl-bar-driven" style={{ width }} />
@@ -242,7 +219,7 @@ export function TimelineBar({
             )}
           </span>
         ) : null}
-      </TooltipTrigger>
+      </button>
       {fitsBeside ? (
         <span
           aria-hidden
@@ -285,53 +262,5 @@ function DrivenUntilNow({
       className="tl-bar-driven"
       style={{ width: Math.max(0, Math.min(driven, width)) }}
     />
-  );
-}
-
-/** The hover, drawn on the inverted tooltip surface: every stop with its time, lateness, and who has it. */
-function TimelineBarDetail({ load, scale }: { load: TimelineLoad; scale: TimelineScale }) {
-  const t = useT();
-  const coverage = load.coverage;
-
-  return (
-    <div className="flex flex-col gap-1.5 text-xs">
-      <div className="flex items-center gap-2">
-        <span className="font-mono font-semibold">{load.shipment.proNumber ?? "—"}</span>
-        <span className="truncate opacity-75">{load.shipment.customer?.name}</span>
-      </div>
-      <ol className="flex flex-col gap-0.5">
-        {load.stops.map((stop, index) => {
-          let when: string;
-          if (stop.done) {
-            when = stop.departedAt
-              ? t("Left {0}", formatTimelineTime(stop.departedAt, scale))
-              : t("Arrived {0}", formatTimelineTime(stop.arrivedAt ?? stop.windowStart, scale));
-          } else if (load.eta && load.eta.stopIndex === index) {
-            when = t("ETA {0}", formatTimelineTime(load.eta.at, scale));
-          } else {
-            when = formatTimelineTime(stop.windowStart, scale);
-          }
-          return (
-            <li key={stop.id} className="grid grid-cols-[1rem_1fr_auto] gap-1.5">
-              <span className="font-mono opacity-75">{index + 1}</span>
-              <span className="truncate">{stop.place}</span>
-              <span className="font-mono tabular-nums opacity-75">{when}</span>
-            </li>
-          );
-        })}
-      </ol>
-      {load.eta && load.eta.lateMinutes > 0 ? (
-        <span className="font-semibold">
-          {t("{0} past the appointment window", formatMinutesSpan(load.eta.lateMinutes))}
-        </span>
-      ) : null}
-      <span className="opacity-75">
-        {coverage.kind === "driver" || coverage.kind === "carrier"
-          ? coverage.name
-          : coverage.kind === "tendered"
-            ? t("Tendered, waiting on the carrier")
-            : t("Not covered")}
-      </span>
-    </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { WeatherAlertFeature } from "@/types/weather-alert";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useMapFocusStore } from "./map-focus-store";
 import type { MapShipment } from "./map-shipment-model";
@@ -57,12 +58,17 @@ export function ShipmentMapCard({
     );
   }
 
+  // The whole card scrolls, header and all, once it is taller than the map
+  // allows. The section places and caps the card: the scroll area's root sets
+  // its own `position: relative`, so it cannot be the positioned element.
   return (
     <section
       aria-label={label}
-      className="ui-lift bg-card absolute top-3 right-3 z-10 flex max-h-[calc(100%-1.5rem)] w-80 flex-col overflow-y-auto rounded-lg @max-3xl/map:inset-x-3 @max-3xl/map:max-h-[55%] @max-3xl/map:w-auto"
+      className="ui-lift bg-card absolute top-3 right-3 z-10 flex max-h-[calc(100%-1.5rem)] w-80 flex-col overflow-hidden rounded-lg @max-3xl/map:inset-x-3 @max-3xl/map:max-h-[55%] @max-3xl/map:w-auto"
     >
-      {body}
+      <ScrollArea className="min-h-0" maskVariant="card">
+        {body}
+      </ScrollArea>
     </section>
   );
 }

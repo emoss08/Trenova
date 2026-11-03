@@ -1,36 +1,32 @@
-import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { fetchAllRows } from "@/lib/data-table-export";
 import { shipmentTimelineGraphQLConfig } from "@/lib/graphql/shipment";
 import { ACTIVE_STAGES, type ActiveStage } from "@/lib/shipment-board/stage";
 import {
   buildTimelineLoads,
-  dayBoundaries,
-  dayStartOfIso,
+  groupLoadsByStage,
   isoDay,
   overlapsRange,
-  RANGE_DAYS,
-  rangeFirstDay,
+  type TimelineRowMode,
 } from "@/lib/shipment-board/timeline";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { getTodayDate } from "@trenova/shared/lib/date";
 import type { DataTableQueryOptions } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useEffect, useState } from "react";
 import { SHIPMENT_LIST_KEY } from "../../shipment-queries";
-import { useShipmentBoardUrl } from "../url-state";
 import {
   ShipmentTimelineBodySkeleton,
   ShipmentTimelineSkeleton,
+  type TimelineSkeletonShape,
 } from "./shipment-timeline-skeleton";
-import { TimelineBarTooltip } from "./timeline/timeline-bar";
-import { TimelineCanvas } from "./timeline/timeline-canvas";
+import { createTimelineScrollMemory } from "./timeline/timeline-canvas";
 import { TimelineCard } from "./timeline/timeline-card";
 import { TimelineCoverageLanes } from "./timeline/timeline-coverage-lanes";
-import { createTimelineScale } from "./timeline/timeline-scale";
-import { TimelineShipmentRows } from "./timeline/timeline-shipment-rows";
+import { TimelineHoverCard } from "./timeline/timeline-hover-card";
+import { TimelineShipmentSheet } from "./timeline/timeline-shipment-rows";
 import { TimelineToolbar } from "./timeline/timeline-toolbar";
+import { useTimelineRange } from "./timeline/use-timeline-range";
 import "./timeline/timeline.css";
 
 /** The most loads one range draws; past it the timeline says so and asks for narrower filters. */
@@ -55,17 +51,15 @@ type ShipmentTimelineProps = {
  */
 export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps) {
   const t = useT();
-  const timezone = useUserTimezone();
-  const [{ tl: range, tlday, tlrows: mode, qf }, setUrl] = useShipmentBoardUrl();
-  const today = getTodayDate(timezone);
-  const anchor = (tlday ? dayStartOfIso(tlday, timezone) : null) ?? today;
-  const days = RANGE_DAYS[range];
-  const scale = createTimelineScale(
-    range,
-    dayBoundaries(rangeFirstDay(range, anchor, timezone), days, timezone),
-  );
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { timezone, mode, qf, today, days, scale, setUrl, sheetRef } = useTimelineRange();
+  // A selection belongs to the row mode it was made in: switching between
+  // shipments and drivers & carriers closes the card, and switching back
+  // brings it back.
+  const [selection, setSelection] = useState<{ id: string; mode: TimelineRowMode } | null>(null);
+  const selectedId = selection?.mode === mode ? selection.id : null;
   const [hiddenStages, setHiddenStages] = useState<ReadonlySet<ActiveStage>>(new Set());
+  // Outlives either sheet, so switching rows keeps the hours in view.
+  const [scrollMemory] = useState(createTimelineScrollMemory);
 
   const graphql = shipmentTimelineGraphQLConfig({
     quickFilters: qf,
@@ -92,7 +86,7 @@ export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps
       if (event.key !== "Escape" || event.defaultPrevented) return;
       // A dialog over the timeline (assigning a load) takes its own Escape.
       if (event.target instanceof Element && event.target.closest('[role="dialog"]')) return;
-      setSelectedId(null);
+      setSelection(null);
     };
     document.addEventListener("keydown", close);
     return () => document.removeEventListener("keydown", close);
@@ -122,14 +116,15 @@ export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps
   ) as Record<ActiveStage, number>;
   const loads = inRange.filter((load) => !hiddenStages.has(load.stage));
   const selected = selectedId ? (inRange.find((load) => load.id === selectedId) ?? null) : null;
-  const toggleSelected = (id: string) => setSelectedId((current) => (current === id ? null : id));
+  const toggleSelected = (id: string) =>
+    setSelection((current) => (current?.id === id && current.mode === mode ? null : { id, mode }));
   const moveBy = (direction: -1 | 1) =>
     void setUrl({
       tlday: isoDay(direction < 0 ? scale.start - days * DAY + NOON : scale.end + NOON, timezone),
     });
 
   return (
-    <div className="@container/timeline flex h-full min-h-105 flex-col">
+    <div ref={sheetRef} className="@container/timeline flex h-full min-h-105 flex-col">
       <TimelineToolbar
         scale={scale}
         mode={mode}
@@ -159,42 +154,58 @@ export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps
       ) : null}
       {loading ? (
         <div className="flex min-h-0 flex-1" aria-busy="true" aria-label={t("Loading the range")}>
-          <ShipmentTimelineBodySkeleton />
+          <ShipmentTimelineBodySkeleton
+            scale={scale}
+            today={today}
+            mode={mode}
+            shape={skeletonShape(data, mode)}
+          />
         </div>
       ) : (
         <div className="relative min-h-0 flex-1">
-          <TimelineBarTooltip scale={scale}>
-            <TimelineCanvas
-              scale={scale}
-              today={today}
-              labelHeading={mode === "shipments" ? t("Shipment") : t("Driver or carrier")}
-            >
-              {loads.length === 0 && mode === "shipments" ? (
-                <p className="text-muted-foreground sticky left-0 w-fit px-4 py-10 text-sm">
-                  {t("No loads are active in this range.")}
-                </p>
-              ) : mode === "shipments" ? (
-                <TimelineShipmentRows
-                  loads={loads}
-                  scale={scale}
-                  selectedId={selectedId}
-                  onSelect={toggleSelected}
-                />
-              ) : (
-                <TimelineCoverageLanes
-                  loads={loads}
-                  scale={scale}
-                  selectedId={selectedId}
-                  onSelect={toggleSelected}
-                />
-              )}
-            </TimelineCanvas>
-          </TimelineBarTooltip>
+          <TimelineHoverCard scale={scale}>
+            {mode === "shipments" ? (
+              <TimelineShipmentSheet
+                loads={loads}
+                scale={scale}
+                today={today}
+                selectedId={selectedId}
+                onSelect={toggleSelected}
+                scrollMemory={scrollMemory}
+              />
+            ) : (
+              <TimelineCoverageLanes
+                loads={loads}
+                scale={scale}
+                today={today}
+                selectedId={selectedId}
+                onSelect={toggleSelected}
+                scrollMemory={scrollMemory}
+              />
+            )}
+          </TimelineHoverCard>
           {selected ? (
-            <TimelineCard load={selected} scale={scale} onClose={() => setSelectedId(null)} />
+            <TimelineCard load={selected} scale={scale} onClose={() => setSelection(null)} />
           ) : null}
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * The shape of the sheet being replaced: its stage groups' sizes by shipment,
+ * or the pool, driver and carrier lanes by coverage. The new range's skeleton
+ * takes it, so stepping a day does not reflow the sheet into a generic one.
+ */
+function skeletonShape(rows: readonly Shipment[], mode: TimelineRowMode): TimelineSkeletonShape {
+  const loads = buildTimelineLoads(rows);
+  if (mode === "shipments") return groupLoadsByStage(loads).map((group) => group.loads.length);
+  const drivers = new Set<string>();
+  const carriers = new Set<string>();
+  for (const load of loads) {
+    if (load.coverage.kind === "driver") drivers.add(load.coverage.id);
+    if (load.coverage.kind === "carrier") carriers.add(load.coverage.id);
+  }
+  return [1, drivers.size, carriers.size];
 }

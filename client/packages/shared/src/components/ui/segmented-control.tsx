@@ -38,7 +38,10 @@ const INDICATOR_TRANSITION = {
 } as const;
 
 /**
- * A radio group rendered as a single track with a sliding indicator.
+ * A radio group rendered as a single track with a sliding indicator. The track
+ * recedes (`bg-muted`) and the indicator is a card with a hairline, as the
+ * default Tabs draw it: the field surface the indicator used to take is the
+ * card's own colour, so on a card the chosen segment could not be told apart.
  *
  * The indicator is measured rather than laid out so it survives the panel being
  * mounted while hidden — a tab that is `display: none` reports zero-width
@@ -144,7 +147,7 @@ export function SegmentedControl<TValue extends string>({
       aria-label={props["aria-label"]}
       onKeyDown={handleKeyDown}
       className={cn(
-        "border-border relative isolate flex items-stretch gap-0.5 rounded-lg border bg-muted/10 p-0.5",
+        "border-border relative isolate flex items-stretch gap-0.5 rounded-lg border bg-muted p-0.5",
         fullWidth ? "w-full" : "w-fit",
         className,
       )}
@@ -152,7 +155,7 @@ export function SegmentedControl<TValue extends string>({
       {indicator && (
         <m.div
           aria-hidden
-          className="absolute inset-y-0.5 left-0 -z-10 rounded-md bg-field"
+          className="absolute inset-y-0.5 left-0 -z-10 rounded-md bg-card ring-1 ring-border dark:bg-surface-active dark:ring-0"
           initial={false}
           animate={{ x: indicator.left, width: indicator.width }}
           transition={INDICATOR_TRANSITION}

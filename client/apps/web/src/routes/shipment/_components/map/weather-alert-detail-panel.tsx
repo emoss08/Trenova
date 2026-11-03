@@ -14,7 +14,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { formatUnixDateTimeShort, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useEtaDelta } from "../board/cells/eta-cell";
 import { AlertSwatch, MapCardHeader, MapCardSection } from "./map-card-parts";
 import { useMapFocusStore } from "./map-focus-store";
@@ -61,7 +61,6 @@ export function WeatherAlertDetailCard({
   const t = useT();
   const props = feature.properties;
   const config = ALERT_CATEGORY_CONFIG[props.alertCategory] ?? ALERT_CATEGORY_CONFIG.other;
-  const [fullText, setFullText] = useState(false);
   const { data, isLoading } = useQuery({
     ...weatherAlert.detail(props.id),
     enabled: !!props.id,
@@ -137,21 +136,7 @@ export function WeatherAlertDetailCard({
 
       {props.description ? (
         <MapCardSection title={t("Details")}>
-          <p
-            className={cn(
-              "text-xs leading-relaxed whitespace-pre-line",
-              !fullText && "line-clamp-3",
-            )}
-          >
-            {props.description}
-          </p>
-          <button
-            type="button"
-            className="text-brand ui-focus-ring self-start rounded-sm text-xs font-medium"
-            onClick={() => setFullText((open) => !open)}
-          >
-            {fullText ? t("Show less") : t("Show full text")}
-          </button>
+          <AlertDescription key={props.id} text={props.description} />
         </MapCardSection>
       ) : null}
 
@@ -162,6 +147,72 @@ export function WeatherAlertDetailCard({
           <ActivityList activities={data?.activities ?? []} />
         )}
       </MapCardSection>
+    </>
+  );
+}
+
+/**
+ * An alert's description: three lines, opening to the whole text with its
+ * height animated. Open, it settles at its natural height, so the card
+ * narrowing never clips it; the card around it scrolls.
+ */
+export function AlertDescription({ text }: { text: string }) {
+  const t = useT();
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  // The text's height while it animates; null once it has settled open.
+  const [pinned, setPinned] = useState<number | null>(null);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
+
+  const toggle = () => {
+    // Without motion there is no transition to end, so nothing is pinned.
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!open) {
+      setPinned(still ? null : (textRef.current?.offsetHeight ?? 0));
+      setOpen(true);
+      return;
+    }
+    if (still) {
+      setOpen(false);
+      return;
+    }
+    setPinned(textRef.current?.offsetHeight ?? 0);
+    // From its natural height, pin the current one for a frame so closing has
+    // a height to animate from.
+    window.requestAnimationFrame(() => {
+      void regionRef.current?.offsetHeight;
+      setOpen(false);
+    });
+  };
+
+  let height: string | number = "3lh";
+  if (open) height = pinned ?? "auto";
+
+  return (
+    <>
+      <div
+        ref={regionRef}
+        id={id}
+        className="overflow-hidden text-xs leading-relaxed transition-[height] duration-200 ease-out motion-reduce:transition-none"
+        style={{ height }}
+        onTransitionEnd={(event) => {
+          if (event.target === event.currentTarget && open) setPinned(null);
+        }}
+      >
+        <p ref={textRef} className="whitespace-pre-line">
+          {text}
+        </p>
+      </div>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        className="text-brand ui-focus-ring self-start rounded-sm text-xs font-medium"
+        onClick={toggle}
+      >
+        {open ? t("Show less") : t("Show full text")}
+      </button>
     </>
   );
 }

@@ -1,53 +1,106 @@
 import type { TimelineLoad } from "@/lib/shipment-board/timeline";
 import { groupLoadsByStage } from "@/lib/shipment-board/timeline";
-import { STAGE_META } from "@/lib/shipment-board/stage";
+import { STAGE_META, type ActiveStage } from "@/lib/shipment-board/stage";
 import { ClockIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { IdentityAvatar } from "../../identity-avatar";
 import { useShipmentBoardStore } from "../../store";
 import { TimelineBar } from "./timeline-bar";
-import { TimelineGroupRow, TimelineRow } from "./timeline-canvas";
-import type { TimelineScale } from "./timeline-scale";
+import {
+  TimelineCanvas,
+  TimelineGroupRow,
+  TimelineRow,
+  type TimelineScrollMemory,
+  type TimelineSheetItem,
+} from "./timeline-canvas";
+import { BAR_HEIGHT, GROUP_HEIGHT, ROW_HEIGHT, type TimelineScale } from "./timeline-scale";
 
-const ROW_HEIGHT = 40;
-const BAR_HEIGHT = 20;
-
-/** One row per load, grouped by stage, most urgent first. */
-export function TimelineShipmentRows({
+/** The sheet's lines for the shipments view: a header per stage, then a row per load, most urgent first. */
+function shipmentSheetItems({
   loads,
   scale,
   selectedId,
   onSelect,
+  stageLabel,
 }: {
   loads: readonly TimelineLoad[];
   scale: TimelineScale;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  stageLabel: (stage: ActiveStage) => string;
+}): TimelineSheetItem[] {
+  const items: TimelineSheetItem[] = [];
+  for (const group of groupLoadsByStage(loads)) {
+    items.push({
+      key: `stage:${group.stage}`,
+      height: GROUP_HEIGHT,
+      header: true,
+      node: (
+        <TimelineGroupRow
+          scale={scale}
+          label={stageLabel(group.stage)}
+          count={group.loads.length}
+          swatchClassName={STAGE_META[group.stage].swatchClassName}
+        />
+      ),
+    });
+    for (const load of group.loads) {
+      items.push({
+        key: load.id,
+        height: ROW_HEIGHT,
+        node: (
+          <ShipmentRow
+            load={load}
+            scale={scale}
+            selected={load.id === selectedId}
+            onSelect={onSelect}
+          />
+        ),
+      });
+    }
+  }
+  return items;
+}
+
+/** The shipments view: one row per load on the virtualized sheet. */
+export function TimelineShipmentSheet({
+  loads,
+  scale,
+  today,
+  selectedId,
+  onSelect,
+  scrollMemory,
+}: {
+  loads: readonly TimelineLoad[];
+  scale: TimelineScale;
+  today: number;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  scrollMemory: TimelineScrollMemory;
 }) {
   const t = useT();
+  const items = shipmentSheetItems({
+    loads,
+    scale,
+    selectedId,
+    onSelect,
+    stageLabel: (stage) => t(STAGE_META[stage].label),
+  });
 
   return (
-    <>
-      {groupLoadsByStage(loads).map((group) => (
-        <section key={group.stage} aria-label={t(STAGE_META[group.stage].label)}>
-          <TimelineGroupRow
-            scale={scale}
-            label={t(STAGE_META[group.stage].label)}
-            count={group.loads.length}
-            swatchClassName={STAGE_META[group.stage].swatchClassName}
-          />
-          {group.loads.map((load) => (
-            <ShipmentRow
-              key={load.id}
-              load={load}
-              scale={scale}
-              selected={load.id === selectedId}
-              onSelect={onSelect}
-            />
-          ))}
-        </section>
-      ))}
-    </>
+    <TimelineCanvas
+      scale={scale}
+      today={today}
+      labelHeading={t("Shipment")}
+      items={items}
+      revealKey={selectedId}
+      scrollMemory={scrollMemory}
+      empty={
+        <p className="text-muted-foreground sticky left-0 w-fit px-4 py-10 text-sm">
+          {t("No loads are active in this range.")}
+        </p>
+      }
+    />
   );
 }
 
