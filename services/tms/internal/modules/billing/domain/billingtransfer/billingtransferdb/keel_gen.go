@@ -45,6 +45,7 @@ var billingTransferRunsTable = schema.Table{
 		{Name: "marked_ready_to_invoice_count", Quoted: `"marked_ready_to_invoice_count"`, Field: "MarkedReadyToInvoiceCount", Kind: schema.KindInt64, Flags: 0, Label: `Marked Ready To Invoice Count`, JSON: `markedReadyToInvoiceCount`},
 		{Name: "retryable_count", Quoted: `"retryable_count"`, Field: "RetryableCount", Kind: schema.KindInt64, Flags: 0, Label: `Retryable Count`, JSON: `retryableCount`},
 		{Name: "unmatched_count", Quoted: `"unmatched_count"`, Field: "UnmatchedCount", Kind: schema.KindInt64, Flags: 0, Label: `Unmatched Count`, JSON: `unmatchedCount`},
+		{Name: "failure_counts", Quoted: `"failure_counts"`, Field: "FailureCounts", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Failure Counts`, JSON: `failureCounts`},
 		{Name: "failure_message", Quoted: `"failure_message"`, Field: "FailureMessage", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Failure Message`, JSON: `failureMessage`},
 		{Name: "cancel_requested_at", Quoted: `"cancel_requested_at"`, Field: "CancelRequestedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Cancel Requested At`, JSON: `cancelRequestedAt`},
 		{Name: "cancel_requested_by_id", Quoted: `"cancel_requested_by_id"`, Field: "CancelRequestedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Cancel Requested By ID`, JSON: `cancelRequestedById`},
@@ -62,14 +63,14 @@ var billingTransferRunsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30},
 	Returning:    nil,
-	Version:      27,
+	Version:      28,
 	AutoID:       0,
-	AutoCreate:   28,
-	AutoUpdate:   29,
+	AutoCreate:   29,
+	AutoUpdate:   30,
 	IDPrefix:     "btr_",
 	New:          newBillingTransferRun,
 	NewN:         newNBillingTransferRun,
@@ -104,6 +105,7 @@ type BillingTransferRunsTable struct {
 	MarkedReadyToInvoiceCount   keel.Int64Col
 	RetryableCount              keel.Int64Col
 	UnmatchedCount              keel.Int64Col
+	FailureCounts               keel.JSONBCol
 	FailureMessage              keel.StringCol
 	CancelRequestedAt           keel.Int64Col
 	CancelRequestedByID         keelkinds.PulidIDCol
@@ -139,17 +141,18 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 	MarkedReadyToInvoiceCount:   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 16}},
 	RetryableCount:              keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 17}},
 	UnmatchedCount:              keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 18}},
-	FailureMessage:              keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 19}},
-	CancelRequestedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 20}},
-	CancelRequestedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 21}}},
-	TemporalWorkflowID:          keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 22}},
-	TemporalRunID:               keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 23}},
-	QueuedAt:                    keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 24}},
-	StartedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 25}},
-	CompletedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 26}},
-	Version:                     keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 27}},
-	CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 28}},
-	UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 29}},
+	FailureCounts:               keel.JSONBCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 19}},
+	FailureMessage:              keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 20}},
+	CancelRequestedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 21}},
+	CancelRequestedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 22}}},
+	TemporalWorkflowID:          keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 23}},
+	TemporalRunID:               keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 24}},
+	QueuedAt:                    keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 25}},
+	StartedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 26}},
+	CompletedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 27}},
+	Version:                     keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 28}},
+	CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 29}},
+	UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 30}},
 }
 
 // BuildBillingTransferRuns builds the table of billing_transfer_runs for ref. Generated relation and alias methods call it.
@@ -175,17 +178,18 @@ func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 		MarkedReadyToInvoiceCount:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		RetryableCount:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		UnmatchedCount:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		FailureMessage:              keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		CancelRequestedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		CancelRequestedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		TemporalWorkflowID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		TemporalRunID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		QueuedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		StartedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		CompletedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		Version:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		FailureCounts:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
+		FailureMessage:              keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		CancelRequestedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		CancelRequestedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		TemporalWorkflowID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		TemporalRunID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
+		QueuedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		StartedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		CompletedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		Version:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
+		CreatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		UpdatedAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 	}
 }
 
@@ -616,26 +620,28 @@ func ptrBillingTransferRun(p unsafe.Pointer, c int32) any {
 	case 18:
 		return (*int64)(unsafe.Pointer(&r.UnmatchedCount))
 	case 19:
-		return &r.FailureMessage
+		return &r.FailureCounts
 	case 20:
-		return &r.CancelRequestedAt
+		return &r.FailureMessage
 	case 21:
-		return (*string)(unsafe.Pointer(&r.CancelRequestedByID))
+		return &r.CancelRequestedAt
 	case 22:
-		return &r.TemporalWorkflowID
+		return (*string)(unsafe.Pointer(&r.CancelRequestedByID))
 	case 23:
-		return &r.TemporalRunID
+		return &r.TemporalWorkflowID
 	case 24:
-		return &r.QueuedAt
+		return &r.TemporalRunID
 	case 25:
-		return &r.StartedAt
+		return &r.QueuedAt
 	case 26:
-		return &r.CompletedAt
+		return &r.StartedAt
 	case 27:
-		return &r.Version
+		return &r.CompletedAt
 	case 28:
-		return &r.CreatedAt
+		return &r.Version
 	case 29:
+		return &r.CreatedAt
+	case 30:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -692,47 +698,52 @@ func valueBillingTransferRun(p unsafe.Pointer, c int32) any {
 	case 18:
 		return int64(r.UnmatchedCount)
 	case 19:
+		if r.FailureCounts == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.FailureCounts
+	case 20:
 		if r.FailureMessage == "" {
 			return nil
 		}
 		return r.FailureMessage
-	case 20:
+	case 21:
 		if r.CancelRequestedAt == nil {
 			return nil
 		}
 		return *r.CancelRequestedAt
-	case 21:
+	case 22:
 		if r.CancelRequestedByID == "" {
 			return nil
 		}
 		return string(r.CancelRequestedByID)
-	case 22:
+	case 23:
 		if r.TemporalWorkflowID == "" {
 			return nil
 		}
 		return r.TemporalWorkflowID
-	case 23:
+	case 24:
 		if r.TemporalRunID == "" {
 			return nil
 		}
 		return r.TemporalRunID
-	case 24:
-		return r.QueuedAt
 	case 25:
+		return r.QueuedAt
+	case 26:
 		if r.StartedAt == nil {
 			return nil
 		}
 		return *r.StartedAt
-	case 26:
+	case 27:
 		if r.CompletedAt == nil {
 			return nil
 		}
 		return *r.CompletedAt
-	case 27:
-		return r.Version
 	case 28:
-		return r.CreatedAt
+		return r.Version
 	case 29:
+		return r.CreatedAt
+	case 30:
 		return r.UpdatedAt
 	}
 	return nil

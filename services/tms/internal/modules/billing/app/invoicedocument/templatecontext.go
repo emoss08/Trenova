@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
@@ -172,6 +173,8 @@ func invoiceContextFromPDFData(
 		ShipmentRows:  invoiceShipmentRows(data.ShipmentRows),
 		ShipmentCount: data.ShipmentCount,
 		Period:        data.Period,
+		PeriodStart:   data.PeriodStart,
+		PeriodEnd:     data.PeriodEnd,
 
 		Subtotal:   data.Subtotal,
 		Other:      data.Other,
@@ -301,14 +304,11 @@ func EmailContext(p *EmailContextParams) invoicetemplate.InvoiceEmailContext {
 	entity := p.Entity
 
 	out := invoicetemplate.InvoiceEmailContext{
-		InvoiceNumber: entity.Number,
-		InvoiceDate:   UnixDate(entity.InvoiceDate),
-		DueDate:       UnixDatePtr(entity.DueDate),
-		PaymentTerm:   string(entity.PaymentTerm),
-		Total: MoneyString(
-			entity.CurrencyCode,
-			entity.TotalAmount.StringFixed(2),
-		),
+		InvoiceNumber:          entity.Number,
+		InvoiceDate:            UnixDate(entity.InvoiceDate),
+		DueDate:                UnixDatePtr(entity.DueDate),
+		PaymentTerm:            string(entity.PaymentTerm),
+		Total:                  money.Display(entity.CurrencyCode, entity.TotalAmount),
 		CurrencyCode:           entity.CurrencyCode,
 		Memo:                   entity.Memo,
 		CustomerName:           entity.BillToName,

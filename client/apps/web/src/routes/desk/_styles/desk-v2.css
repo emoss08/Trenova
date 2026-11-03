@@ -657,7 +657,7 @@
 .dk-mp2-auto.dk-hi .dk-mp2-ai .dk-ai-p {
   animation:
     dk-aipop 420ms var(--dk-spring) 620ms forwards,
-    dk-aibeat 1.2s ease-in-out 1s infinite;
+    dk-aibeat 1.2s ease-in-out 1s 1;
 }
 .dk-ai-ring {
   position: absolute;
@@ -4269,6 +4269,7 @@ button.dk-dx-c:hover {
     var(--dsk-sunken) 100%
   );
   background-size: 200% 100%;
+  /* design-tokens-ignore: a busy button's placeholder fill, on screen only until its answer lands. */
   animation: dk-dxsh 1s linear infinite;
 }
 .dk-dx-b.dk-busy * {
@@ -6497,19 +6498,10 @@ th.dk-cb .dk-ax-cb:hover {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+/* Live tracking is a state, not work: a still halo marks it. */
 .dk-sh-live .dk-sh-ping {
-  animation: dk-sh-ping 2.4s var(--dk-settle) 1s infinite;
-}
-@keyframes dk-sh-ping {
-  0% {
-    opacity: 0.3;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  70%,
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(2.2);
-  }
+  opacity: 0.22;
+  transform: translate(-50%, -50%) scale(1.8);
 }
 .dk-sh-read {
   display: flex;

@@ -12,7 +12,7 @@ const novaBadgeVariants = cva("inline-block shrink-0 nova-badge", {
     },
     spin: {
       none: "",
-      hover: "group-hover:animate-nova-spin group-focus-visible:animate-nova-spin",
+      hover: "group-hover:animate-nova-turn group-focus-visible:animate-nova-turn",
       always: "animate-nova-spin",
     },
   },
@@ -34,9 +34,13 @@ export type NovaBadgeSize = NonNullable<VariantProps<typeof novaBadgeVariants>["
  *
  * `size` runs from `xs` (12px, beside a line of small print) to `xl` (24px,
  * heading a pane); `lg` (20px) heads a sentence Nova speaks. `spin` runs the
- * colours round the badge, which itself stays still: "hover" while the pointer
- * or focus is on the nearest `group` ancestor, "always" while Nova is working.
- * Reduced motion keeps it still.
+ * colours round the badge by turning it, which reads the same on a round badge
+ * and is composited rather than repainted each frame. "always" turns it for as
+ * long as Nova is doing something, and only then: pass it from the work's own
+ * state (a request pending, a reply being written), never from a standing state
+ * such as agents being on. "hover" turns it once when the pointer or focus
+ * reaches the nearest `group` ancestor. Reduced motion keeps it still. The turn is a `transform`, so place the badge
+ * with Tailwind's `translate-*` (the `translate` property), never a transform.
  */
 export function NovaBadge({
   size,

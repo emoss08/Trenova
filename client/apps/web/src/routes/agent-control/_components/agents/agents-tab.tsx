@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -364,7 +365,7 @@ export default function AgentsTab() {
             context={t("Agents")}
             segments={summaryQuery.data?.segments}
             loading={summaryQuery.isLoading}
-            working={working.length > 0}
+            writing={summaryQuery.data?.pending === true}
             onTarget={onTarget}
             control={
               pending > 0 ? (
@@ -393,7 +394,9 @@ export default function AgentsTab() {
                   </span>
                   <span className="lv-t">
                     <b>{agent.name}</b>
-                    <span className="shm">{going.summary.trim() || t("Working")}</span>
+                    <TextShimmer as="span" className="shm">
+                      {going.summary.trim() || t("Working")}
+                    </TextShimmer>
                   </span>
                 </button>
               ))}

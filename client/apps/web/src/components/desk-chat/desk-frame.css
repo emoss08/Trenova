@@ -375,6 +375,7 @@
     var(--dsk-sunken) 100%
   );
   background-size: 200% 100%;
+  /* design-tokens-ignore: a loading placeholder, on screen only until its data lands. */
   animation: dk-skel 1.2s ease-in-out infinite;
 }
 @keyframes dk-skel {

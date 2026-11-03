@@ -78,40 +78,60 @@ function PickerSkeleton() {
   );
 }
 
-/** A run while it is read back: the progress line, its bar, the two counts and the note. */
+/**
+ * A run while it is read back: the status line over the stage, with the delivered stack on
+ * the left, the desk and its four steps in the middle, and the two outcome stacks on the right.
+ */
 export function BulkBillingTransferRunSkeleton() {
   const t = useT();
 
   return (
-    <div className="flex flex-col gap-4 py-10" aria-busy aria-label={t("Loading the transfer")}>
+    <div className="flex flex-col gap-3.5" aria-busy aria-label={t("Loading the transfer")}>
       <div className="contents" aria-hidden>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-baseline justify-between gap-4">
-            <div className="text-sm">
-              <Skeleton className="inline-block h-3 w-64 align-middle" />
-            </div>
-            <div className="text-xs">
-              <Skeleton className="inline-block h-2.5 w-32 align-middle" />
+        <div className="flex items-baseline justify-between gap-4 text-xs">
+          <Skeleton className="inline-block h-2.5 w-48 align-middle" />
+          <Skeleton className="inline-block h-2.5 w-24 align-middle" />
+        </div>
+        <div className="relative h-75 overflow-hidden rounded-lg border [--side:min(40%,310px)] max-sm:[--side:38%]">
+          <SkeletonPile className="top-[169px] left-[calc(50%-var(--side))]" />
+          <div className="absolute top-1/2 left-1/2 flex translate-x-[-40px] -translate-y-1/2 items-center gap-6">
+            <Skeleton className="h-26 w-20 rounded-[5px]" />
+            <div className="flex w-32 flex-col gap-0.5 max-sm:w-auto">
+              {STEP_WIDTHS.map((width) => (
+                <div
+                  key={width}
+                  className="grid grid-cols-[12px_minmax(0,1fr)] items-center gap-2 px-1.5 py-1 text-xs"
+                >
+                  <Skeleton className="size-3 rounded-full" />
+                  <span className="max-sm:hidden">
+                    <Skeleton className={cn("inline-block h-2.5 align-middle", width)} />
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-          <Skeleton className="h-2 w-full rounded-full" />
-        </div>
-        <div className="grid grid-cols-2 gap-3 text-xs">
-          {[0, 1].map((index) => (
-            <div key={index} className="rounded-lg border px-3 py-2">
-              <div>
-                <Skeleton className="inline-block h-2.5 w-20 align-middle" />
-              </div>
-              <div className="text-lg">
-                <Skeleton className="inline-block h-4 w-10 align-middle" />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="text-xs">
-          <Skeleton className="inline-block h-2.5 w-96 max-w-full align-middle" />
+          <SkeletonPile className="top-[92px] left-[calc(50%+var(--side))]" />
+          <SkeletonPile className="top-[208px] left-[calc(50%+var(--side))]" />
         </div>
       </div>
+    </div>
+  );
+}
+
+const STEP_WIDTHS = ["w-10", "w-16", "w-8", "w-20"] as const;
+
+function SkeletonPile({ className }: { className: string }) {
+  return (
+    <div
+      className={cn(
+        "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2.5 px-2.5 py-1.5",
+        className,
+      )}
+    >
+      <Skeleton className="h-[58px] w-11 rounded-[3px]" />
+      <span className="text-2xs">
+        <Skeleton className="inline-block h-2 w-20 align-middle" />
+      </span>
     </div>
   );
 }

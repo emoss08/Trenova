@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -211,7 +212,9 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
                     <span className="border-border-strong border-t-foreground inline-block size-3 animate-spin rounded-full border-[1.5px]" />
                   )}
                 </span>
-                <span className="tx">{label}</span>
+                <TextShimmer as="span" className="tx" active={index === step} duration={1.6}>
+                  {label}
+                </TextShimmer>
               </div>
             ))}
           </div>

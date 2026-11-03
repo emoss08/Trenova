@@ -347,7 +347,14 @@ func (c *Client) sendCapture(
 ) error {
 	if err := stream.Send(&imagingpb.InspectCaptureRequest{
 		Part: &imagingpb.InspectCaptureRequest_Header{
-			Header: &imagingpb.InspectCaptureHeader{PageCount: u32(req.PageCount)},
+			Header: &imagingpb.InspectCaptureHeader{
+				PageCount:        u32(req.PageCount),
+				RenderDpi:        u32(req.RenderDPI),
+				ThumbnailWidth:   u32(req.ThumbnailWidth),
+				ThumbnailFormat:  captureThumbnailFormat(req.ThumbnailFormat),
+				ThumbnailQuality: u32(req.ThumbnailQuality),
+				SkipBarcodes:     req.SkipBarcodes,
+			},
 		},
 	}); err != nil {
 		return err
@@ -594,4 +601,11 @@ func (c *Client) NormalizeImage(
 		return nil, err
 	}
 	return summary, nil
+}
+
+func captureThumbnailFormat(format kernelports.ImagingFormat) imagingpb.ImageFormat {
+	if format == "" {
+		return imagingpb.ImageFormat_IMAGE_FORMAT_UNSPECIFIED
+	}
+	return formatOf(format)
 }

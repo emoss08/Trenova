@@ -46,6 +46,8 @@ const (
 var nonProjectionObjects = map[string]string{
 	"CarrierIntelRuleSetting":         "GraphQL DTO built by its resolver",
 	"BillingQueueHeadline":            "GraphQL billing queue item headline built from its review issues",
+	"BillingQueueAdjustmentRebill":    "GraphQL view of the rebill inside a queue item's adjustment context",
+	"BillingQueueAdjustmentMemo":      "GraphQL view of the memo inside a queue item's adjustment context",
 	"CustomFieldFormField":            "GraphQL form DTO over the active definitions a form draws, read whole",
 	"ShipmentCustomerBillingRules":    "GraphQL shipment form DTO built from a picked billing profile read",
 	"AIProviderModelOption":           "GraphQL provider model listing DTO",

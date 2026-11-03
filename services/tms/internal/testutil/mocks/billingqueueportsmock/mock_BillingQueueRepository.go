@@ -955,6 +955,74 @@ func (_c *MockBillingQueueRepository_ListConsolidationCandidates_Call) RunAndRet
 	return _c
 }
 
+// ListNovaBacklogTenants provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListNovaBacklogTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListNovaBacklogTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ListNovaBacklogTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListNovaBacklogTenants'
+type MockBillingQueueRepository_ListNovaBacklogTenants_Call struct {
+	*mock.Call
+}
+
+// ListNovaBacklogTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int
+func (_e *MockBillingQueueRepository_Expecter) ListNovaBacklogTenants(ctx any, limit any) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
+	return &MockBillingQueueRepository_ListNovaBacklogTenants_Call{Call: _e.mock.On("ListNovaBacklogTenants", ctx, limit)}
+}
+
+func (_c *MockBillingQueueRepository_ListNovaBacklogTenants_Call) Run(run func(ctx context.Context, limit int)) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListNovaBacklogTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListNovaBacklogTenants_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]pagination.TenantInfo, error)) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListOpenIssueCounts provides a mock function for the type MockBillingQueueRepository
 func (_mock *MockBillingQueueRepository) ListOpenIssueCounts(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*billingqueueports.OpenIssueCount, error) {
 	ret := _mock.Called(ctx, tenantInfo)
@@ -1223,6 +1291,74 @@ func (_c *MockBillingQueueRepository_ListRecommendations_Call) Return(recommenda
 }
 
 func (_c *MockBillingQueueRepository_ListRecommendations_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListRecommendationsRequest) ([]*billingqueueports.Recommendation, error)) *MockBillingQueueRepository_ListRecommendations_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListUnreviewedItems provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListUnreviewedItems(ctx context.Context, req *billingqueueports.ListUnreviewedItemsRequest) ([]*billingqueueports.UnreviewedItem, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUnreviewedItems")
+	}
+
+	var r0 []*billingqueueports.UnreviewedItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListUnreviewedItemsRequest) ([]*billingqueueports.UnreviewedItem, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListUnreviewedItemsRequest) []*billingqueueports.UnreviewedItem); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*billingqueueports.UnreviewedItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListUnreviewedItemsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ListUnreviewedItems_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUnreviewedItems'
+type MockBillingQueueRepository_ListUnreviewedItems_Call struct {
+	*mock.Call
+}
+
+// ListUnreviewedItems is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.ListUnreviewedItemsRequest
+func (_e *MockBillingQueueRepository_Expecter) ListUnreviewedItems(ctx any, req any) *MockBillingQueueRepository_ListUnreviewedItems_Call {
+	return &MockBillingQueueRepository_ListUnreviewedItems_Call{Call: _e.mock.On("ListUnreviewedItems", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_ListUnreviewedItems_Call) Run(run func(ctx context.Context, req *billingqueueports.ListUnreviewedItemsRequest)) *MockBillingQueueRepository_ListUnreviewedItems_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.ListUnreviewedItemsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.ListUnreviewedItemsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListUnreviewedItems_Call) Return(unreviewedItems []*billingqueueports.UnreviewedItem, err error) *MockBillingQueueRepository_ListUnreviewedItems_Call {
+	_c.Call.Return(unreviewedItems, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListUnreviewedItems_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListUnreviewedItemsRequest) ([]*billingqueueports.UnreviewedItem, error)) *MockBillingQueueRepository_ListUnreviewedItems_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1555,6 +1691,72 @@ func (_c *MockBillingQueueRepository_SaveBrief_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
+// SetPacketDocuments provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) SetPacketDocuments(ctx context.Context, req *billingqueueports.SetPacketDocumentsRequest) (bool, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetPacketDocuments")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.SetPacketDocumentsRequest) (bool, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.SetPacketDocumentsRequest) bool); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.SetPacketDocumentsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_SetPacketDocuments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetPacketDocuments'
+type MockBillingQueueRepository_SetPacketDocuments_Call struct {
+	*mock.Call
+}
+
+// SetPacketDocuments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.SetPacketDocumentsRequest
+func (_e *MockBillingQueueRepository_Expecter) SetPacketDocuments(ctx any, req any) *MockBillingQueueRepository_SetPacketDocuments_Call {
+	return &MockBillingQueueRepository_SetPacketDocuments_Call{Call: _e.mock.On("SetPacketDocuments", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_SetPacketDocuments_Call) Run(run func(ctx context.Context, req *billingqueueports.SetPacketDocumentsRequest)) *MockBillingQueueRepository_SetPacketDocuments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.SetPacketDocumentsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.SetPacketDocumentsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_SetPacketDocuments_Call) Return(b bool, err error) *MockBillingQueueRepository_SetPacketDocuments_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_SetPacketDocuments_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.SetPacketDocumentsRequest) (bool, error)) *MockBillingQueueRepository_SetPacketDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockBillingQueueRepository
 func (_mock *MockBillingQueueRepository) Update(ctx context.Context, entity *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error) {
 	ret := _mock.Called(ctx, entity)
@@ -1687,142 +1889,6 @@ func (_c *MockBillingQueueRepository_UpdateInvoiceDetails_Call) Return(billingQu
 }
 
 func (_c *MockBillingQueueRepository_UpdateInvoiceDetails_Call) RunAndReturn(run func(ctx context.Context, entity *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error)) *MockBillingQueueRepository_UpdateInvoiceDetails_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListUnreviewedItems provides a mock function for the type MockBillingQueueRepository
-func (_mock *MockBillingQueueRepository) ListUnreviewedItems(ctx context.Context, req *billingqueueports.ListUnreviewedItemsRequest) ([]*billingqueueports.UnreviewedItem, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUnreviewedItems")
-	}
-
-	var r0 []*billingqueueports.UnreviewedItem
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListUnreviewedItemsRequest) ([]*billingqueueports.UnreviewedItem, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListUnreviewedItemsRequest) []*billingqueueports.UnreviewedItem); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*billingqueueports.UnreviewedItem)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListUnreviewedItemsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockBillingQueueRepository_ListUnreviewedItems_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUnreviewedItems'
-type MockBillingQueueRepository_ListUnreviewedItems_Call struct {
-	*mock.Call
-}
-
-// ListUnreviewedItems is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *billingqueueports.ListUnreviewedItemsRequest
-func (_e *MockBillingQueueRepository_Expecter) ListUnreviewedItems(ctx any, req any) *MockBillingQueueRepository_ListUnreviewedItems_Call {
-	return &MockBillingQueueRepository_ListUnreviewedItems_Call{Call: _e.mock.On("ListUnreviewedItems", ctx, req)}
-}
-
-func (_c *MockBillingQueueRepository_ListUnreviewedItems_Call) Run(run func(ctx context.Context, req *billingqueueports.ListUnreviewedItemsRequest)) *MockBillingQueueRepository_ListUnreviewedItems_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *billingqueueports.ListUnreviewedItemsRequest
-		if args[1] != nil {
-			arg1 = args[1].(*billingqueueports.ListUnreviewedItemsRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockBillingQueueRepository_ListUnreviewedItems_Call) Return(unreviewedItems []*billingqueueports.UnreviewedItem, err error) *MockBillingQueueRepository_ListUnreviewedItems_Call {
-	_c.Call.Return(unreviewedItems, err)
-	return _c
-}
-
-func (_c *MockBillingQueueRepository_ListUnreviewedItems_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListUnreviewedItemsRequest) ([]*billingqueueports.UnreviewedItem, error)) *MockBillingQueueRepository_ListUnreviewedItems_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListNovaBacklogTenants provides a mock function for the type MockBillingQueueRepository
-func (_mock *MockBillingQueueRepository) ListNovaBacklogTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error) {
-	ret := _mock.Called(ctx, limit)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListNovaBacklogTenants")
-	}
-
-	var r0 []pagination.TenantInfo
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]pagination.TenantInfo, error)); ok {
-		return returnFunc(ctx, limit)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []pagination.TenantInfo); ok {
-		r0 = returnFunc(ctx, limit)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]pagination.TenantInfo)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = returnFunc(ctx, limit)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockBillingQueueRepository_ListNovaBacklogTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListNovaBacklogTenants'
-type MockBillingQueueRepository_ListNovaBacklogTenants_Call struct {
-	*mock.Call
-}
-
-// ListNovaBacklogTenants is a helper method to define mock.On call
-//   - ctx context.Context
-//   - limit int
-func (_e *MockBillingQueueRepository_Expecter) ListNovaBacklogTenants(ctx any, limit any) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
-	return &MockBillingQueueRepository_ListNovaBacklogTenants_Call{Call: _e.mock.On("ListNovaBacklogTenants", ctx, limit)}
-}
-
-func (_c *MockBillingQueueRepository_ListNovaBacklogTenants_Call) Run(run func(ctx context.Context, limit int)) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 int
-		if args[1] != nil {
-			arg1 = args[1].(int)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockBillingQueueRepository_ListNovaBacklogTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
-	_c.Call.Return(tenantInfos, err)
-	return _c
-}
-
-func (_c *MockBillingQueueRepository_ListNovaBacklogTenants_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]pagination.TenantInfo, error)) *MockBillingQueueRepository_ListNovaBacklogTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }

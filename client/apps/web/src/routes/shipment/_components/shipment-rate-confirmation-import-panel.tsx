@@ -1,7 +1,8 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
-import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
+import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
+import type { RejectedFile } from "@/lib/document-upload-files";
 import {
   ExtractionNeedsProviderAlert,
   useDocumentExtractionAvailable,

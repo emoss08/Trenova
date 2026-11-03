@@ -18,9 +18,14 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { DocumentFileTypeIcon } from "./document-file-type-icon";
-import { type RejectedFile } from "./document-upload-zone";
+import {
+  DOCUMENT_UPLOAD_ACCEPT,
+  DOCUMENT_UPLOAD_MAX_SIZE,
+  sortUploadFiles,
+  type RejectedFile,
+} from "@/lib/document-upload-files";
 
 type UploadFilter = "all" | "completed" | "failed";
 
@@ -42,12 +47,11 @@ interface UploadPanelProps {
   supportedFormatsLabel?: string;
   maxFileSizeLabel?: string;
   description?: string;
+  /** Choices that apply to the next files picked, such as the type they are filed as. */
+  options?: ReactNode;
 }
 
 const MAX_RETRIES = 3;
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
-const ACCEPTED_TYPES = ".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv";
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return "0 B";
@@ -55,37 +59,6 @@ function formatFileSize(bytes: number): string {
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
-}
-
-function isAcceptedFileType(file: File, accept: string): boolean {
-  if (!accept.trim()) {
-    return true;
-  }
-
-  const acceptedTypes = accept
-    .split(",")
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (acceptedTypes.length === 0) {
-    return true;
-  }
-
-  const lowerName = file.name.toLowerCase();
-  const lowerType = file.type.toLowerCase();
-
-  return acceptedTypes.some((entry) => {
-    if (entry.startsWith(".")) {
-      return lowerName.endsWith(entry);
-    }
-
-    if (entry.endsWith("/*")) {
-      const baseType = entry.slice(0, -1);
-      return lowerType.startsWith(baseType);
-    }
-
-    return lowerType === entry;
-  });
 }
 
 function getErrorIcon(errorType?: string) {
@@ -306,30 +279,18 @@ function FullDropzone({
     (fileList: FileList | null) => {
       if (!fileList || fileList.length === 0) return;
 
-      const validFiles: File[] = [];
-      const rejectedFiles: RejectedFile[] = [];
-
-      Array.from(fileList).forEach((file) => {
-        if (!isAcceptedFileType(file, accept)) {
-          rejectedFiles.push({ file, reason: "type" });
-          return;
-        }
-
-        if (file.size > maxFileSize) {
-          rejectedFiles.push({ file, reason: "size" });
-        } else {
-          validFiles.push(file);
-        }
+      const { accepted, rejected } = sortUploadFiles(fileList, {
+        accept,
+        maxFileSize,
+        multiple,
       });
 
-      const uploadableFiles = multiple ? validFiles : validFiles.slice(0, 1);
-
-      if (uploadableFiles.length > 0) {
-        onFilesSelected(uploadableFiles);
+      if (accepted.length > 0) {
+        onFilesSelected(accepted);
       }
 
-      if (rejectedFiles.length > 0 && onFilesRejected) {
-        onFilesRejected(rejectedFiles);
+      if (rejected.length > 0 && onFilesRejected) {
+        onFilesRejected(rejected);
       }
     },
     [accept, maxFileSize, multiple, onFilesSelected, onFilesRejected],
@@ -412,12 +373,13 @@ export function UploadPanel({
   onClearCompleted,
   disabled,
   title = "Upload documents",
-  accept = ACCEPTED_TYPES,
-  maxFileSize = MAX_FILE_SIZE,
+  accept = DOCUMENT_UPLOAD_ACCEPT,
+  maxFileSize = DOCUMENT_UPLOAD_MAX_SIZE,
   multiple = true,
   supportedFormatsLabel = "PDF, images, and documents",
   maxFileSizeLabel = "50 MB",
   description,
+  options,
 }: UploadPanelProps) {
   const t = useT();
 
@@ -460,30 +422,18 @@ export function UploadPanel({
     (fileList: FileList | null) => {
       if (!fileList || fileList.length === 0) return;
 
-      const validFiles: File[] = [];
-      const rejectedFiles: RejectedFile[] = [];
-
-      Array.from(fileList).forEach((file) => {
-        if (!isAcceptedFileType(file, accept)) {
-          rejectedFiles.push({ file, reason: "type" });
-          return;
-        }
-
-        if (file.size > maxFileSize) {
-          rejectedFiles.push({ file, reason: "size" });
-        } else {
-          validFiles.push(file);
-        }
+      const { accepted, rejected } = sortUploadFiles(fileList, {
+        accept,
+        maxFileSize,
+        multiple,
       });
 
-      const uploadableFiles = multiple ? validFiles : validFiles.slice(0, 1);
-
-      if (uploadableFiles.length > 0) {
-        onFilesSelected(uploadableFiles);
+      if (accepted.length > 0) {
+        onFilesSelected(accepted);
       }
 
-      if (rejectedFiles.length > 0 && onFilesRejected) {
-        onFilesRejected(rejectedFiles);
+      if (rejected.length > 0 && onFilesRejected) {
+        onFilesRejected(rejected);
       }
     },
     [accept, maxFileSize, multiple, onFilesSelected, onFilesRejected],
@@ -592,6 +542,7 @@ export function UploadPanel({
               {description}
             </p>
           )}
+          {options ? <div className="border-border border-b px-3 py-2">{options}</div> : null}
 
           <AnimatePresence initial={false}>
             {!isEffectivelyCollapsed && (

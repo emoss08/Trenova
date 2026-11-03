@@ -22,3 +22,14 @@ func TestWrapDocumentLeavesOutAStylesheetWithFindings(t *testing.T) {
 	clean := WrapDocument(WrapRequest{BodyHTML: "<p>Total</p>", CSS: `p { color: red }`})
 	assert.Equal(t, 1, strings.Count(clean, "p { color: red }"))
 }
+
+func TestWrapDocumentDeclaresTheAppTypefacesWithoutApplyingThem(t *testing.T) {
+	t.Parallel()
+
+	document := WrapDocument(WrapRequest{BodyHTML: "<p>Total</p>"})
+
+	assert.Equal(t, 2, strings.Count(document, `font-family:"Geist";`))
+	assert.Equal(t, 2, strings.Count(document, `font-family:"Geist Mono";`))
+	assert.Contains(t, document, "src:url(data:font/woff2;base64,")
+	assert.Contains(t, document, `font-family: -apple-system, "Segoe UI"`)
+}

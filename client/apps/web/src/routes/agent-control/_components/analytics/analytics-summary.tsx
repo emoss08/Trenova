@@ -30,7 +30,7 @@ export function AnalyticsSummary({
   return (
     <Hero
       context={t("Analytics")}
-      working={loading}
+      writing={loading}
       sentenceKey={sentenceKey}
       control={
         <>

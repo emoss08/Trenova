@@ -515,3 +515,76 @@ func TestTransferToBillingItemsReloadsAShipmentFromAnotherTenant(t *testing.T) {
 		assert.Equal(t, tenantInfo.BuID, item.BusinessUnitID)
 	}
 }
+
+type recordedRechecks struct {
+	itemIDs []pulid.ID
+}
+
+func (r *recordedRechecks) RequestRecheck(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	itemIDs ...pulid.ID,
+) {
+	r.itemIDs = append(r.itemIDs, itemIDs...)
+}
+
+func TestTransferToBillingItemsInABulkRunReusesPayersAndDefersTheReview(t *testing.T) {
+	t.Parallel()
+
+	shp, amd, tenantInfo := transferFixture(t)
+
+	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingvocab.BillTypeInvoice).
+		Return(false, nil).
+		Twice()
+	repo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*billingqueue.BillingQueueItem")).
+		RunAndReturn(func(_ context.Context, item *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error) {
+			item.ID = pulid.MustNew("bqi_")
+			return item, nil
+		}).
+		Twice()
+
+	customerRepo := customerportsmock.NewMockCustomerRepository(t)
+	rechecks := &recordedRechecks{}
+	svc := wired(&Service{
+		l:            zap.NewNop(),
+		db:           passthroughDB{},
+		repo:         repo,
+		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
+		customerRepo: customerRepo,
+		generator:    &countingGenerator{},
+		auditService: &mocks.NoopAuditService{},
+		realtime:     &mocks.NoopRealtimeService{},
+		validator:    testValidator(),
+		rechecks:     rechecks,
+	})
+
+	result, err := svc.TransferToBillingItems(
+		t.Context(),
+		&billingqueueports.TransferToBillingRequest{
+			ShipmentID:       shp.ID,
+			BillType:         billingvocab.BillTypeInvoice,
+			TenantInfo:       tenantInfo,
+			DetailedShipment: shp,
+			Payers: map[pulid.ID]*customer.Customer{
+				shp.CustomerID: {ID: shp.CustomerID, BillingProfile: &customer.CustomerBillingProfile{}},
+				amd:            {ID: amd, BillingProfile: &customer.CustomerBillingProfile{}},
+			},
+			DeferReview: true,
+		},
+		transferActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, result.Items, 2)
+	customerRepo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{result.Items[0].ID, result.Items[1].ID},
+		rechecks.itemIDs,
+		"each new item is left to the recheck workflow instead of reviewed inline",
+	)
+}

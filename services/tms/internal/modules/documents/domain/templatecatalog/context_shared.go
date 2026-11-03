@@ -155,7 +155,7 @@ const (
 	SampleCurrency             = "USD"
 	SampleInvoiceNo            = "INV-2026-1042"
 	SampleShipperName          = "Rio Grande Produce"
-	SampleTotalAmount          = "USD 2,338.74"
+	SampleTotalAmount          = "$2,338.74"
 	SampleTotalsLabel          = "Total"
 	ExpiresAtPath              = "ExpiresAt"
 	BillingCategory            = "Billing"

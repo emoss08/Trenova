@@ -511,6 +511,7 @@ export default function ProvidersTab() {
         context={t("Providers")}
         segments={summaryQuery.data?.segments}
         loading={summaryQuery.isLoading}
+        writing={summaryQuery.data?.pending === true}
         onTarget={onTarget}
         control={
           bad && canManage ? (

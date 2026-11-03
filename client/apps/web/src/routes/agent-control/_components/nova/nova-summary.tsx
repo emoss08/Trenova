@@ -3,15 +3,15 @@ import type { AIControlSegment } from "@/lib/graphql/ai-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { KeyboardEvent, ReactNode } from "react";
+import { useState, type AnimationEvent, type KeyboardEvent, type ReactNode } from "react";
 import { novaTarget, type NovaTarget } from "./use-nova-segments";
 
 type NovaSummaryProps = {
   /** The tab the sentence heads, as it is named beside Nova. */
   context: string;
   segments: readonly AIControlSegment[] | undefined;
-  /** Something is working right now, so the ring turns. */
-  working?: boolean;
+  /** Nova is still writing the sentence (the summary is pending), so the badge turns. */
+  writing?: boolean;
   loading?: boolean;
   onTarget: (target: NovaTarget) => void;
   /** The one control the tab offers beside its sentence, with its note under it. */
@@ -21,23 +21,35 @@ type NovaSummaryProps = {
 /**
  * The sentence that heads every tab of AI control: what is true now and what needs a
  * person, with links to where to act on it, and one control beside it.
+ *
+ * Nova's badge turns only while Nova is doing something: writing the sentence
+ * (loading, or the summary still pending) or saying it as it arrives. It stops once
+ * the sentence has landed; agents at work show that on their own rows.
  */
 export function NovaSummary({
   context,
   segments,
-  working = false,
+  writing = false,
   loading = false,
   onTarget,
   control,
 }: NovaSummaryProps) {
   const t = useT();
   const sentence = (segments ?? []).map((segment) => segment.text).join("");
+  // The sentence whose entrance has finished; any other is still being said.
+  const [said, setSaid] = useState<string | null>(null);
+  const saying = !loading && said !== sentence;
+  const onAnimationEnd = (event: AnimationEvent<HTMLParagraphElement>) => {
+    if (event.target === event.currentTarget) {
+      setSaid(sentence);
+    }
+  };
 
   return (
     <section className="hero rh">
       <div className="hero-s">
         <span className="who">
-          <NovaBadge size="lg" spin={working ? "always" : "none"} />
+          <NovaBadge size="lg" spin={writing || loading || saying ? "always" : "none"} />
           <b>{t("Nova")}</b>
           <span>{context}</span>
         </span>
@@ -47,7 +59,7 @@ export function NovaSummary({
             <Skeleton className="h-6 w-2/3" />
           </div>
         ) : (
-          <p key={sentence} className="say">
+          <p key={sentence} className="say" onAnimationEnd={onAnimationEnd}>
             {(segments ?? []).map((segment, index) => (
               <Segment key={index} segment={segment} onTarget={onTarget} />
             ))}

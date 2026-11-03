@@ -74,7 +74,7 @@ func (h *harness) doc(name string, size int64, resourceType string) *document.Do
 
 func (h *harness) stored(docs ...*document.Document) {
 	h.repo.EXPECT().GetByIDs(mock.Anything, mock.MatchedBy(
-		func(req documentports.BulkDeleteDocumentRequest) bool {
+		func(req documentports.GetDocumentsByIDsRequest) bool {
 			return req.TenantInfo.OrgID == h.tenant.OrgID && req.TenantInfo.BuID == h.tenant.BuID
 		},
 	)).Return(docs, nil).Once()

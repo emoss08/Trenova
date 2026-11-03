@@ -1,4 +1,5 @@
 import { deliverToDesktop } from "@/lib/desktop-notifications";
+import { announceUnlessWatched, billingTransferResultKey } from "@/lib/watched-results";
 import { leaveExpiredSession } from "@/lib/session-exit";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
@@ -265,43 +266,52 @@ export function useRealtimeConnection() {
                   ? notif.data.link
                   : null;
 
-              toast.info(notif.title, {
-                description: notif.message,
-                action: runId
-                  ? {
-                      label: t("Download"),
-                      onClick: () => downloadReportRun({ id: runId }),
-                    }
-                  : transferRunId
+              const announce = () =>
+                toast.info(notif.title, {
+                  description: notif.message,
+                  action: runId
                     ? {
-                        label: t("View report"),
-                        onClick: () =>
-                          navigateRef.current(
-                            `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
-                          ),
+                        label: t("Download"),
+                        onClick: () => downloadReportRun({ id: runId }),
                       }
-                    : auditExport?.kind === "download"
+                    : transferRunId
                       ? {
-                          label: t("Download"),
+                          label: t("View report"),
                           onClick: () =>
-                            void downloadAIAuditExport(auditExport.exportId).catch((error) => {
-                              toast.error(t("The file could not be downloaded"), {
-                                description: graphQLErrorMessage(error, t("Try again shortly.")),
-                              });
-                            }),
+                            navigateRef.current(
+                              `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
+                            ),
                         }
-                      : auditExport
+                      : auditExport?.kind === "download"
                         ? {
-                            label: t("View exports"),
-                            onClick: () => navigateRef.current(auditExport.link),
+                            label: t("Download"),
+                            onClick: () =>
+                              void downloadAIAuditExport(auditExport.exportId).catch((error) => {
+                                toast.error(t("The file could not be downloaded"), {
+                                  description: graphQLErrorMessage(error, t("Try again shortly.")),
+                                });
+                              }),
                           }
-                        : noticeLink
+                        : auditExport
                           ? {
-                              label: t("Open"),
-                              onClick: () => navigateRef.current(noticeLink),
+                              label: t("View exports"),
+                              onClick: () => navigateRef.current(auditExport.link),
                             }
-                          : undefined,
-              });
+                          : noticeLink
+                            ? {
+                                label: t("Open"),
+                                onClick: () => navigateRef.current(noticeLink),
+                              }
+                            : undefined,
+                });
+
+              // A transfer the person is watching in its dialog announces itself there; the
+              // notice waits, and interrupts only if the dialog closes before showing it.
+              if (transferRunId) {
+                announceUnlessWatched(billingTransferResultKey(transferRunId), announce);
+              } else {
+                announce();
+              }
             }
           }
         }

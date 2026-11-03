@@ -44,6 +44,7 @@ var attachmentsTable = schema.Table{
 		{Name: "document_id", Quoted: `"document_id"`, Field: "DocumentID", Kind: schema.KindString, Flags: 0, Label: `Document ID`, JSON: `documentId`},
 		{Name: "selected", Quoted: `"selected"`, Field: "Selected", Kind: schema.KindBool, Flags: 0, Label: `Selected`, JSON: `selected`},
 		{Name: "sort_order", Quoted: `"sort_order"`, Field: "SortOrder", Kind: schema.KindInt64, Flags: 0, Label: `Sort Order`, JSON: `sortOrder`},
+		{Name: "page_rotations", Quoted: `"page_rotations"`, Field: "PageRotations", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Page Rotations`, JSON: `pageRotations`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
@@ -51,23 +52,24 @@ var attachmentsTable = schema.Table{
 		{Name: "Invoice", Alias: "i", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Invoice`},
 		{Name: "Document", Alias: "d", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Document`, JSON: `document`},
 	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 6, 8},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: 8,
-	IDPrefix:   "invatt_",
-	New:        newAttachment,
-	NewN:       newNAttachment,
-	Size:       unsafe.Sizeof(invoice.Attachment{}),
-	Ptr:        ptrAttachment,
-	Value:      valueAttachment,
-	Attach:     attachAttachment,
+	PK:           []int32{0, 1, 2},
+	Tenant:       []int32{1, 2},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:       []int32{3, 4, 5, 6, 7, 9},
+	Returning:    nil,
+	Version:      -1,
+	AutoID:       0,
+	AutoCreate:   8,
+	AutoUpdate:   9,
+	IDPrefix:     "invatt_",
+	New:          newAttachment,
+	NewN:         newNAttachment,
+	Size:         unsafe.Sizeof(invoice.Attachment{}),
+	Ptr:          ptrAttachment,
+	Value:        valueAttachment,
+	Attach:       attachAttachment,
+	BeforeCreate: beforeCreateAttachment,
 }
 
 var attachmentsRef = keel.Ref{Table: &attachmentsTable}
@@ -82,6 +84,7 @@ type AttachmentsTable struct {
 	DocumentID     keelkinds.PulidIDCol
 	Selected       keel.BoolCol
 	SortOrder      keel.Int64Col
+	PageRotations  keel.JSONBCol
 	CreatedAt      keel.Int64Col
 	UpdatedAt      keel.Int64Col
 }
@@ -96,8 +99,9 @@ var Attachments = &AttachmentsTable{
 	DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 4}}},
 	Selected:       keel.BoolCol{Col: keel.Col{Ref: &attachmentsRef, Index: 5}},
 	SortOrder:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 6}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 7}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 8}},
+	PageRotations:  keel.JSONBCol{Col: keel.Col{Ref: &attachmentsRef, Index: 7}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 8}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 9}},
 }
 
 // BuildAttachments builds the table of invoice_attachments for ref. Generated relation and alias methods call it.
@@ -111,8 +115,9 @@ func BuildAttachments(r *keel.Ref) *AttachmentsTable {
 		DocumentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Selected:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		SortOrder:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		PageRotations:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 	}
 }
 
@@ -520,8 +525,10 @@ func ptrAttachment(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (*int64)(unsafe.Pointer(&r.SortOrder))
 	case 7:
-		return &r.CreatedAt
+		return &r.PageRotations
 	case 8:
+		return &r.CreatedAt
+	case 9:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -545,8 +552,13 @@ func valueAttachment(p unsafe.Pointer, c int32) any {
 	case 6:
 		return int64(r.SortOrder)
 	case 7:
-		return r.CreatedAt
+		if r.PageRotations == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.PageRotations
 	case 8:
+		return r.CreatedAt
+	case 9:
 		return r.UpdatedAt
 	}
 	return nil
@@ -560,6 +572,10 @@ func attachAttachment(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.Document = (*document.Document)(child)
 	}
+}
+
+func beforeCreateAttachment(ctx context.Context, p unsafe.Pointer) error {
+	return (*invoice.Attachment)(p).BeforeCreate(ctx)
 }
 
 // documentShareTokensTable is the schema of invoice.DocumentShareToken.

@@ -66,6 +66,8 @@ type BillingQueueItem struct {
 	PaymentTerm               string                `json:"paymentTerm"               keel:"payment_term,nullzero"`
 	InvoiceDate               *int64                `json:"invoiceDate"               keel:"invoice_date"`
 	PacketDocumentIDs         []pulid.ID            `json:"packetDocumentIds"         keel:"packet_document_ids,jsonb"`
+	PacketPicked              bool                  `json:"packetPicked"              keel:"packet_picked"`
+	PacketPageRotations       []PacketPageRotation  `json:"packetPageRotations"       keel:"packet_page_rotations,jsonb"`
 	AgentVerdict              *AgentVerdict         `json:"agentVerdict"              keel:"agent_verdict"`
 	AgentSummary              string                `json:"agentSummary"              keel:"agent_summary,nullzero"`
 	AgentReviewedAt           *int64                `json:"agentReviewedAt"           keel:"agent_reviewed_at"`
@@ -150,6 +152,9 @@ func (b *BillingQueueItem) BeforeCreate(ctx context.Context) error {
 	}
 	if b.PacketDocumentIDs == nil {
 		b.PacketDocumentIDs = []pulid.ID{}
+	}
+	if b.PacketPageRotations == nil {
+		b.PacketPageRotations = []PacketPageRotation{}
 	}
 
 	return nil

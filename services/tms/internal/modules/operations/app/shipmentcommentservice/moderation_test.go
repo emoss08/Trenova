@@ -264,7 +264,7 @@ func TestCreate_RejectsForeignAttachmentParentage(t *testing.T) {
 		Return(&shipment.Shipment{ID: shipmentID}, nil).
 		Once()
 	m.docRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req documentports.BulkDeleteDocumentRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req documentports.GetDocumentsByIDsRequest) bool {
 			return len(req.IDs) == 1 && req.IDs[0] == docID
 		})).
 		Return([]*document.Document{{

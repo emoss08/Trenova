@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,6 +29,8 @@ type TransferToBillingRequest struct {
 	// shipment is split-billed and only some payers opted in.
 	AutoApprovePayerIDs []pulid.ID
 	DetailedShipment    *shipment.Shipment
+	Payers              map[pulid.ID]*customer.Customer
+	DeferReview         bool
 }
 
 // TransferToBillingResult is every queue item a transfer created: one per payer
@@ -210,12 +213,14 @@ func (r *ReassignChargeResult) WithoutFormulaContent() *ReassignChargeResult {
 }
 
 type UpdateInvoiceDetailsRequest struct {
-	ItemID            pulid.ID
-	TenantInfo        pagination.TenantInfo
-	Version           int64
-	PONumber          string
-	InvoiceMemo       string
-	PaymentTerm       string
-	InvoiceDate       *int64
-	PacketDocumentIDs []pulid.ID
+	ItemID              pulid.ID
+	TenantInfo          pagination.TenantInfo
+	Version             int64
+	PONumber            string
+	InvoiceMemo         string
+	PaymentTerm         string
+	InvoiceDate         *int64
+	PacketDocumentIDs   []pulid.ID
+	PacketPicked        bool
+	PacketPageRotations []billingqueue.PacketPageRotation
 }

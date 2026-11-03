@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/google/uuid"
 )
 
@@ -61,7 +62,10 @@ func SanitizeDisplayFilename(name, fallback string, maxLen int) string {
 		return fallback
 	}
 	if maxLen > 0 && len(cleaned) > maxLen {
-		cleaned = cleaned[:maxLen]
+		cleaned = strings.TrimSpace(stringutils.TruncateBytes(cleaned, maxLen))
+		if cleaned == "" {
+			return fallback
+		}
 	}
 	return cleaned
 }

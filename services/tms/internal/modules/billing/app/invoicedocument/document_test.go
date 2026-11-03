@@ -1,6 +1,11 @@
 package invoicedocument
 
 import (
+	"image"
+	"image/color"
+	"strings"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -14,10 +19,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"image"
-	"image/color"
-	"strings"
-	"testing"
 )
 
 func TestBuildInvoicePDFDataMapsBillToAndRemitSeparately(t *testing.T) {
@@ -277,7 +278,7 @@ func TestBuildInvoicePDFDataUsesBillingControlInvoiceDisplayOptions(t *testing.T
 
 	defaulted := buildInvoicePDFData(entity, nil)
 	require.Equal(t, "2023-11-15", defaulted.DueDate)
-	require.Equal(t, "USD 1000.00", defaulted.BalanceDue)
+	require.Equal(t, "$1,000.00", defaulted.BalanceDue)
 	require.Contains(t, defaulted.Terms, "Due Date: 2023-11-15")
 
 	shown := buildInvoicePDFData(entity, &DeliveryProfile{
@@ -287,7 +288,7 @@ func TestBuildInvoicePDFDataUsesBillingControlInvoiceDisplayOptions(t *testing.T
 		},
 	})
 	require.Equal(t, "2023-11-15", shown.DueDate)
-	require.Equal(t, "USD 1000.00", shown.BalanceDue)
+	require.Equal(t, "$1,000.00", shown.BalanceDue)
 	require.Contains(t, shown.Terms, "Due Date: 2023-11-15")
 
 	hidden := buildInvoicePDFData(entity, &DeliveryProfile{
@@ -327,11 +328,11 @@ func TestBuildInvoicePDFDataChargesMatchInvoiceTotals(t *testing.T) {
 	data := buildInvoicePDFData(entity, nil)
 
 	require.Len(t, data.ChargeRows, 2)
-	require.Equal(t, "USD 100.00", data.Subtotal)
-	require.Equal(t, "USD 25.00", data.Other)
-	require.Equal(t, "USD 125.00", data.Total)
-	require.Equal(t, "USD 100.00", data.ChargeRows[0].Amount)
-	require.Equal(t, "USD 25.00", data.ChargeRows[1].Amount)
+	require.Equal(t, "$100.00", data.Subtotal)
+	require.Equal(t, "$25.00", data.Other)
+	require.Equal(t, "$125.00", data.Total)
+	require.Equal(t, "$100.00", data.ChargeRows[0].Amount)
+	require.Equal(t, "$25.00", data.ChargeRows[1].Amount)
 }
 
 func TestBuildInvoicePDFDataHeaderRowsOmitUnavailableMetadata(t *testing.T) {

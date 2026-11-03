@@ -86,7 +86,10 @@ func (r *repository) RecordVerification(
 			sets = append(sets, h.LastVerificationFailedSeq.ToNull())
 		}
 
-		heads, err := h.Query().UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+		heads, err := h.Where(
+			h.OrganizationID.Eq(req.TenantInfo.OrgID),
+			h.BusinessUnitID.Eq(req.TenantInfo.BuID),
+		).UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return nil, fmt.Errorf("record AI audit verification: %w", err)
 		}

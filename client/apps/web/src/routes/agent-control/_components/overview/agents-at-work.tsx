@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type { WorkingRun } from "@/lib/graphql/ai-control";
 import { aiControl } from "@/lib/queries/ai-control";
@@ -75,7 +76,9 @@ export function AgentsAtWork({ idleReason, onOpenAgent, onOpenAgents }: AgentsAt
                   </span>
                   <span className="wn-t">
                     <b>{agent.name}</b>
-                    <span className="shm">{`${run.summary.trim() || runStatusLabel(run.status, t)}…`}</span>
+                    <TextShimmer as="span" className="shm">
+                      {`${run.summary.trim() || runStatusLabel(run.status, t)}…`}
+                    </TextShimmer>
                   </span>
                 </button>
               ))}

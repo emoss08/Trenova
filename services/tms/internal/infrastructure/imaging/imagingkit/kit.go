@@ -17,6 +17,13 @@ var ErrNoOutput = errors.New("the imaging service returned no output")
 type Part struct {
 	Source   kernelports.ImagingSource
 	Rotation int
+	Spans    []Span
+}
+
+type Span struct {
+	First    int
+	Last     int
+	Rotation int
 }
 
 type Rendered struct {
@@ -83,12 +90,23 @@ func Merge(
 	ranges := make([]kernelports.ImagingPageRange, 0, len(parts))
 	for i, part := range parts {
 		sources = append(sources, part.Source)
-		ranges = append(ranges, kernelports.ImagingPageRange{
-			Source:   i,
-			First:    0,
-			Last:     ToLastPage,
-			Rotation: part.Rotation,
-		})
+		if len(part.Spans) == 0 {
+			ranges = append(ranges, kernelports.ImagingPageRange{
+				Source:   i,
+				First:    0,
+				Last:     ToLastPage,
+				Rotation: part.Rotation,
+			})
+			continue
+		}
+		for _, span := range part.Spans {
+			ranges = append(ranges, kernelports.ImagingPageRange{
+				Source:   i,
+				First:    span.First,
+				Last:     span.Last,
+				Rotation: part.Rotation + span.Rotation,
+			})
+		}
 	}
 
 	var out []byte

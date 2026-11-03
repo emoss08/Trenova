@@ -315,9 +315,11 @@
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 8%, transparent);
   --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0.2 0 none / 0.08);
   --lift-card:
-    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0 none / 0.1), 0 6px 16px -8px oklch(0.2 0 none / 0.12);
+    var(--lift-ring), 0 2px 4px -2px oklch(0.2 0 none / 0.1),
+    0 6px 16px -8px oklch(0.2 0 none / 0.12);
   --lift-float:
-    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0 none / 0.12), 0 16px 40px -16px oklch(0.2 0 none / 0.18);
+    var(--lift-ring), 0 4px 8px -4px oklch(0.2 0 none / 0.12),
+    0 16px 40px -16px oklch(0.2 0 none / 0.18);
 
   /* Desk ------------------------------------------------------------------
      The Desk is a room rather than a page, and it is the one surface allowed
@@ -1396,10 +1398,14 @@
      into the list with a small overshoot and a brand wash that fades over a
      few seconds (opacity on an overlay, never a background transition). Nova's
      colours run round its ring while the pointer is on the Briefing or while
-     Nova works, and stop when that ends; the ring itself never moves. */
+     Nova works, and stop when that ends: the badge is a disc, so turning it is
+     the same picture as running its colours round, and a turn is composited. */
   --animate-arrive: arrive 700ms var(--ease-spring) both;
   --animate-arrive-glow: arrive-glow 3.4s var(--ease-swift) both;
   --animate-nova-spin: nova-turn 1.6s linear infinite;
+  /* One turn, for a pointer that rests on something Nova offers: hovering is
+     not Nova working, so the badge answers it once and stops. */
+  --animate-nova-turn: nova-turn 1.2s cubic-bezier(0.45, 0.05, 0.35, 1) 1;
 
   /* The Desk's motion vocabulary.
 
@@ -1533,15 +1539,9 @@
   }
 }
 
-@property --nova-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 @keyframes nova-turn {
   to {
-    --nova-angle: 360deg;
+    transform: rotate(1turn);
   }
 }
 
@@ -2183,13 +2183,13 @@
 
 /* Nova's badge: a disc with a hollow centre, painted with a conic sweep of
    Nova's three colours. The centre is cut by a mask rather than filled, so the
-   badge sits on any surface. The sweep starts from --nova-angle, which
-   nova-turn animates, so the colours travel round a badge that stays where it
-   is. */
+   badge sits on any surface. nova-turn turns the whole badge: it is round, so
+   the colours seem to travel round a badge that stays where it is, and the
+   browser composites the turn instead of repainting the gradient each frame. */
 @utility nova-badge {
   border-radius: 9999px;
   background: conic-gradient(
-    from calc(200deg + var(--nova-angle)),
+    from 200deg,
     var(--nova-1),
     var(--nova-2),
     var(--nova-3),
@@ -2397,8 +2397,13 @@
 
   [class*="animate-breathe"],
   [class*="animate-desk-"],
-  [class*="animate-nova-spin"],
+  [class*="animate-nova-"],
+  .ui-spin-ring::before,
   .ui-stream-caret::after {
     animation: none !important;
+  }
+
+  .ui-text-shimmer-sweep {
+    display: none;
   }
 }

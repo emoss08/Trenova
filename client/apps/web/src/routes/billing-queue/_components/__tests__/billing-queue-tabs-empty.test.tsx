@@ -107,12 +107,7 @@ describe("billing queue documents tab", () => {
     mocks.readiness.mockResolvedValue(null);
     const user = userEvent.setup();
     renderWithin(
-      <BillingQueueDocumentsTab
-        shipmentId="shp_1"
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-        isEditable
-      />,
+      <BillingQueueDocumentsTab shipmentId="shp_1" onDocumentSelect={vi.fn()} isEditable />,
     );
 
     expect(await heading("No documents yet")).toBeInTheDocument();
@@ -127,12 +122,7 @@ describe("billing queue documents tab", () => {
     mocks.documents.mockResolvedValue([]);
     mocks.readiness.mockResolvedValue(null);
     renderWithin(
-      <BillingQueueDocumentsTab
-        shipmentId="shp_1"
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-        isEditable={false}
-      />,
+      <BillingQueueDocumentsTab shipmentId="shp_1" onDocumentSelect={vi.fn()} isEditable={false} />,
     );
 
     expect(await heading("No documents yet")).toBeInTheDocument();
@@ -146,7 +136,6 @@ describe("billing queue documents tab", () => {
     renderWithin(
       <BillingQueueDocumentsTab
         shipmentId="shp_1"
-        selectedDocumentId={null}
         onDocumentSelect={vi.fn()}
         isEditable={false}
         context="invoice"
@@ -161,12 +150,7 @@ describe("billing queue documents tab", () => {
     mocks.readiness.mockResolvedValue(null);
     await act(() => setLocale("es"));
     renderWithin(
-      <BillingQueueDocumentsTab
-        shipmentId="shp_1"
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-        isEditable
-      />,
+      <BillingQueueDocumentsTab shipmentId="shp_1" onDocumentSelect={vi.fn()} isEditable />,
     );
 
     expect(await heading("Todavía no hay documentos")).toBeInTheDocument();
@@ -242,15 +226,10 @@ describe("billing queue documents tab rows", () => {
     ]);
     mocks.readiness.mockResolvedValue(null);
     renderWithin(
-      <BillingQueueDocumentsTab
-        shipmentId="shp_1"
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-        isEditable={false}
-      />,
+      <BillingQueueDocumentsTab shipmentId="shp_1" onDocumentSelect={vi.fn()} isEditable={false} />,
     );
 
-    await screen.findByText("ratecon.pdf");
+    await screen.findByRole("button", { name: "ratecon.pdf" });
     const pages = document.querySelectorAll("img");
     expect(pages).toHaveLength(1);
     expect(pages[0]!.getAttribute("src")).toContain("/documents/doc_ratecon/preview/");

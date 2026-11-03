@@ -2,11 +2,11 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
 import { Button } from "@trenova/shared/components/ui/button";
-
-export interface RejectedFile {
-  file: File;
-  reason: "size" | "type";
-}
+import {
+  DOCUMENT_UPLOAD_ACCEPT,
+  DOCUMENT_UPLOAD_MAX_SIZE,
+  type RejectedFile,
+} from "@/lib/document-upload-files";
 
 export interface DocumentUploadZoneHandle {
   openFilePicker: () => void;
@@ -20,9 +20,6 @@ interface DocumentUploadZoneProps {
   maxSize?: number;
   className?: string;
 }
-
-const DEFAULT_ACCEPT = ".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv";
-const DEFAULT_MAX_SIZE = 50 * 1024 * 1024; // 50MB
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function formatFileSize(bytes: number): string {
@@ -39,8 +36,8 @@ export const DocumentUploadZone = forwardRef<DocumentUploadZoneHandle, DocumentU
       onFilesSelected,
       onFilesRejected,
       disabled = false,
-      accept = DEFAULT_ACCEPT,
-      maxSize = DEFAULT_MAX_SIZE,
+      accept = DOCUMENT_UPLOAD_ACCEPT,
+      maxSize = DOCUMENT_UPLOAD_MAX_SIZE,
       className,
     },
     ref,

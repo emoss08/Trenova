@@ -36,9 +36,14 @@ func (s *Service) carriedNarrations(
 		return narrations, nil
 	}
 
+	keys := make([]string, 0, len(findings))
+	for idx := range findings {
+		keys = append(keys, findings[idx].DedupeKey)
+	}
 	worded, err := s.repo.ListNarrated(ctx, insightports.ListNarratedInsightsRequest{
 		TenantInfo:  p.params.TenantInfo,
 		DetectorKey: p.detector.Key(),
+		DedupeKeys:  keys,
 	})
 	if err != nil {
 		s.l.Warn("could not read earlier insight wording; narrating afresh",

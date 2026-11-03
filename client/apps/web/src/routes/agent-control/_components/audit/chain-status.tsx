@@ -85,7 +85,6 @@ export function ChainStatusHeader() {
     <>
       <Hero
         context={t("Audit trail")}
-        working={pending}
         control={
           <>
             <Button

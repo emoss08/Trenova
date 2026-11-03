@@ -34,7 +34,8 @@ interface UseDocumentUploadOptions {
 
 interface UseDocumentUploadReturn {
   uploads: UploadState[];
-  uploadFiles: (files: File[]) => void;
+  /** Uploads files with the hook's metadata, or with `metadata` alone when it is given. */
+  uploadFiles: (files: File[], metadata?: Record<string, string>) => void;
   cancelUpload: (id: string) => void;
   retryUpload: (id: string) => void;
   removeUpload: (id: string) => void;
@@ -601,13 +602,13 @@ export function useDocumentUpload({
   }, [processQueue]);
 
   const uploadFiles = useCallback(
-    (files: File[]) => {
+    (files: File[], metadata?: Record<string, string>) => {
       const nextUploads = files.map((file) => ({
         id: nanoid(),
         file,
         progress: 0,
         status: "pending" as const,
-        metadata: { ...uploadMetadata },
+        metadata: { ...(metadata ?? uploadMetadata) },
       }));
 
       setUploads((prev) => [...prev, ...nextUploads]);

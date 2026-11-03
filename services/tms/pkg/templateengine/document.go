@@ -31,6 +31,7 @@ var documentSkeleton = template.Must(template.New("document").Parse(
 <meta charset="utf-8">
 <title>{{ .Title }}</title>
 <style>
+{{ .Fonts }}
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -72,17 +73,20 @@ func WrapDocument(req WrapRequest) string {
 	}
 
 	var b strings.Builder
-	b.Grow(len(req.BodyHTML) + len(css) + 1024)
+	b.Grow(len(documentFonts) + len(req.BodyHTML) + len(css) + 1024)
 
 	// The template's fields are typed as trusted markup, which is why the escaper
 	// leaves them alone: the body passed templatesanitize.HTML before it was rendered,
 	// and the stylesheet passed templatesanitize.CSS just above.
 	err := documentSkeleton.Execute(&b, struct {
 		Title string
+		Fonts template.CSS
 		Body  template.HTML
 		CSS   template.CSS
 	}{
 		Title: title,
+		//nolint:gosec // documentFonts is built at init from fonts embedded in this binary.
+		Fonts: template.CSS(documentFonts),
 		//nolint:gosec // Body is rendered output that already passed templatesanitize.HTML.
 		Body: template.HTML(req.BodyHTML),
 		//nolint:gosec // css passed templatesanitize.CSS above; one with findings is dropped.

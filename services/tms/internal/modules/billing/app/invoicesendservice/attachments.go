@@ -4,15 +4,19 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,6 +44,16 @@ func (s *Service) emailAttachmentsForPlan(
 ) ([]emailports.EmailAttachment, error) {
 	result := make([]emailports.EmailAttachment, 0, len(planned))
 	for _, item := range planned {
+		if len(item.PageRotations) > 0 && !item.InvoicePDF {
+			turned, err := s.turnedAttachment(ctx, tenantInfo, item)
+			if err != nil {
+				return nil, fmt.Errorf("turn the pages of attachment %s: %w", item.FileName, err)
+			}
+			if turned != nil {
+				result = append(result, *turned)
+				continue
+			}
+		}
 		content, err := s.documentService.GetDownloadContent(
 			ctx,
 			documentports.GetDocumentByIDRequest{
@@ -181,4 +195,38 @@ func providerLimit(profile *email.Profile) int64 {
 		return emailports.PostmarkMessageLimitBytes
 	}
 	return emailports.MessageLimitBytes(profile.Provider)
+}
+
+func (s *Service) turnedAttachment(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	item *invoiceports.InvoiceSendPlanAttachment,
+) (*emailports.EmailAttachment, error) {
+	doc, err := s.documentService.Get(
+		ctx,
+		documentports.GetDocumentByIDRequest{ID: item.DocumentID, TenantInfo: tenantInfo},
+	)
+	if err != nil {
+		return nil, err
+	}
+	part, err := s.packets.Part(ctx, invoicepacket.PartRequest{
+		TenantInfo: tenantInfo,
+		Document:   doc,
+		Rotations:  item.PageRotations,
+		Priority:   kernelports.ImagingBatch,
+	})
+	if err != nil || part == nil {
+		return nil, err
+	}
+	turned, _, err := s.packets.Merge(ctx, []imagingkit.Part{*part}, kernelports.ImagingBatch)
+	if err != nil {
+		return nil, err
+	}
+
+	return &emailports.EmailAttachment{
+		FileName:    strings.TrimSuffix(item.FileName, filepath.Ext(item.FileName)) + ".pdf",
+		ContentType: invoicepacket.PDFContentType,
+		Content:     turned,
+		SizeBytes:   int64(len(turned)),
+	}, nil
 }

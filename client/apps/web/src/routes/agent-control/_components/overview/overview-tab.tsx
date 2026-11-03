@@ -76,7 +76,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
         context={t("AI control")}
         segments={summary?.segments}
         loading={summaryQuery.isLoading}
-        working={Boolean(facts && facts.agents.working > 0 && !facts.paused && !noProvider)}
+        writing={summary?.pending === true}
         onTarget={onTarget}
         control={
           <OverviewControl

@@ -90,11 +90,7 @@ function renderPane(searchParams: string, onUrlUpdate?: OnUrlUpdateFunction) {
           searchParams={searchParams}
           onUrlUpdate={onUrlUpdate}
         >
-          <InvoiceDetailPane
-            selectedInvoiceId="inv_1"
-            selectedDocumentId={null}
-            onDocumentSelect={vi.fn()}
-          />
+          <InvoiceDetailPane selectedInvoiceId="inv_1" onDocumentSelect={vi.fn()} />
         </NuqsTestingAdapter>
       </QueryClientProvider>
     </MemoryRouter>,

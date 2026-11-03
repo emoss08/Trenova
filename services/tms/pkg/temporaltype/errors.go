@@ -230,7 +230,52 @@ func ToDomainRefusal(err error) error {
 	return temporal.NewNonRetryableApplicationError(err.Error(), errType.String(), err)
 }
 
+// ToActivityFailure is how every activity's error leaves the worker: the
+// worker's refusal interceptor applies it, so an activity needs no code of its
+// own to stop retrying what cannot change.
+//
+// An error the activity classified itself, as a Temporal or a temporaltype
+// ApplicationError, keeps its own retry choice. A plan refusal, a validation
+// failure, a missing record and a refused permission are final: each answers
+// the same way on every attempt. A business error is not made final here,
+// because the domain also raises one for an outage worded for a person ("try
+// again in a moment"); an activity that knows its business error is final
+// returns ToDomainRefusal. A stale version is a race and stays retryable.
+func ToActivityFailure(err error) error {
+	if err == nil {
+		return nil
+	}
+	if _, ok := errors.AsType[*temporal.ApplicationError](err); ok {
+		return err
+	}
+	if appErr, ok := errors.AsType[*ApplicationError](err); ok {
+		return appErr.ToTemporalError()
+	}
+	if refusal, ok := NewPlanRefusalError(err); ok {
+		return refusal.ToTemporalError()
+	}
+
+	errType, final := finalRefusalType(err)
+	if !final {
+		return err
+	}
+
+	return temporal.NewNonRetryableApplicationError(err.Error(), errType.String(), err)
+}
+
 func domainRefusalType(err error) (ErrorType, bool) {
+	if errType, final := finalRefusalType(err); final {
+		return errType, true
+	}
+	if errortypes.IsBusinessError(err) && !errortypes.IsVersionMismatchError(err) {
+		return ErrorTypeInvalidInput, true
+	}
+
+	return "", false
+}
+
+// finalRefusalType names the refusals that are final whoever raised them.
+func finalRefusalType(err error) (ErrorType, bool) {
 	switch {
 	case errortypes.IsVersionMismatchError(err):
 		return "", false
@@ -238,7 +283,7 @@ func domainRefusalType(err error) (ErrorType, bool) {
 		return ErrorTypePermissionDenied, true
 	case errortypes.IsNotFoundError(err):
 		return ErrorTypeResourceNotFound, true
-	case errortypes.IsError(err), errortypes.IsBusinessError(err):
+	case errortypes.IsError(err):
 		return ErrorTypeInvalidInput, true
 	default:
 		return "", false

@@ -204,6 +204,13 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetMany(
+	ctx context.Context,
+	req documentports.GetDocumentsByIDsRequest,
+) ([]*document.Document, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) GetByResource(
 	ctx context.Context,
 	req *documentports.GetDocumentsByResourceRequest,
@@ -743,15 +750,20 @@ func (s *Service) GetViewContent(
 
 func (s *Service) GetPreviewContent(
 	ctx context.Context,
-	req documentports.GetDocumentByIDRequest,
-) (*DocumentContent, error) {
-	doc, err := s.repo.GetByID(ctx, req)
+	req *documentports.GetDocumentPreviewRequest,
+) (*documentports.DocumentPageImage, error) {
+	doc, err := s.repo.GetByID(ctx, req.GetDocumentByIDRequest)
 	if err != nil {
 		return nil, err
 	}
 
 	if doc.PreviewStatus != document.PreviewStatusReady || doc.PreviewStoragePath == "" {
 		return nil, errortypes.NewNotFoundError("Preview not available for this document")
+	}
+
+	etag := previewETag(doc)
+	if etagMatches(req.IfNoneMatch, etag) {
+		return &documentports.DocumentPageImage{ETag: etag, NotModified: true}, nil
 	}
 
 	object, err := storedobject.Open(
@@ -765,12 +777,15 @@ func (s *Service) GetPreviewContent(
 		return nil, err
 	}
 
-	return &DocumentContent{
-		Document:           doc,
-		Body:               object.Body,
-		ContentType:        "image/webp",
-		ContentLength:      object.Size,
-		ContentDisposition: "inline",
+	return &documentports.DocumentPageImage{
+		DocumentContent: documentports.DocumentContent{
+			Document:           doc,
+			Body:               object.Body,
+			ContentType:        "image/webp",
+			ContentLength:      object.Size,
+			ContentDisposition: "inline",
+		},
+		ETag: etag,
 	}, nil
 }
 
@@ -792,7 +807,7 @@ func (s *Service) GetPageImage(
 	}
 
 	etag := pageImageETag(doc, req.PageNumber)
-	if req.IfNoneMatch == etag {
+	if etagMatches(req.IfNoneMatch, etag) {
 		return &documentports.DocumentPageImage{ETag: etag, NotModified: true}, nil
 	}
 
@@ -833,19 +848,40 @@ func (s *Service) GetPageImage(
 	}, nil
 }
 
-func pageImageETag(doc *document.Document, page int) string {
-	source := doc.ChecksumSHA256
-	if source == "" {
-		source = fmt.Sprintf("%s-%d", doc.ID, doc.UpdatedAt)
+func renderSource(doc *document.Document) string {
+	if doc.ChecksumSHA256 != "" {
+		return doc.ChecksumSHA256
 	}
+	return fmt.Sprintf("%s-%d", doc.ID, doc.UpdatedAt)
+}
 
+func pageImageETag(doc *document.Document, page int) string {
 	return fmt.Sprintf(
 		`"%s-%dx%d-p%d"`,
-		source,
+		renderSource(doc),
 		thumbnailservice.PageMaxWidth,
 		thumbnailservice.PageMaxHeight,
 		page,
 	)
+}
+
+func previewETag(doc *document.Document) string {
+	return fmt.Sprintf(
+		`"%s-%dx%d-preview"`,
+		renderSource(doc),
+		thumbnailservice.ThumbnailWidth,
+		thumbnailservice.ThumbnailHeight,
+	)
+}
+
+func etagMatches(ifNoneMatch, etag string) bool {
+	for candidate := range strings.SplitSeq(ifNoneMatch, ",") {
+		candidate = strings.TrimPrefix(strings.TrimSpace(candidate), "W/")
+		if candidate == "*" || candidate == etag {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) openDocumentObject(

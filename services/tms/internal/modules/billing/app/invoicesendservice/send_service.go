@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -39,6 +40,7 @@ type Params struct {
 	AuditService     auditports.AuditService
 	Realtime         realtimeports.RealtimeService
 	AppConfig        *appconfig.Config
+	Packets          *invoicepacket.Assembler
 }
 
 // Service emails invoices and serves their shared documents.
@@ -53,6 +55,7 @@ type Service struct {
 	factoringRepo    factoringcompanyports.FactoringCompanyRepository
 	l                *zap.Logger
 	organizationRepo tenantports.OrganizationRepository
+	packets          *invoicepacket.Assembler
 	rec              *invoiceaction.Recorder
 	repo             invoiceports.InvoiceRepository
 	shipmentRepo     shipmentports.ShipmentRepository
@@ -77,6 +80,7 @@ func New(p Params) *Service {
 		factoringRepo:    p.FactoringRepo,
 		l:                l,
 		organizationRepo: p.OrganizationRepo,
+		packets:          p.Packets,
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{
 				Logger:       l,

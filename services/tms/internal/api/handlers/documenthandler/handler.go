@@ -147,6 +147,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
 		h.getUploadPartURLs,
 	)
+	api.PUT(
+		"/uploads/:uploadSessionID/parts/:partNumber/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.uploadSessionPart,
+	)
 	api.POST(
 		"/uploads/:uploadSessionID/complete/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
@@ -480,12 +485,14 @@ func (h *Handler) view(c *gin.Context) {
 	c.DataFromReader(http.StatusOK, -1, content.ContentType, content.Body, nil)
 }
 
-// @Summary Get a document preview URL
+// @Summary Get a document's first page as a thumbnail
+// @Description The 240 × 320 WebP thumbnail drawn when the document was stored. Cached for a day and revalidated by ETag.
 // @ID previewDocument
 // @Tags Documents
-// @Produce json
+// @Produce image/webp
 // @Param documentID path string true "Document ID"
-// @Success 200 {object} gin.H
+// @Success 200 {file} binary
+// @Success 304 "The thumbnail the browser holds is current"
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -503,18 +510,29 @@ func (h *Handler) preview(c *gin.Context) {
 
 	content, err := h.service.GetPreviewContent(
 		c.Request.Context(),
-		documentports.GetDocumentByIDRequest{
-			ID:         id,
-			TenantInfo: pagination.FromAuth(authCtx),
+		&documentports.GetDocumentPreviewRequest{
+			GetDocumentByIDRequest: documentports.GetDocumentByIDRequest{
+				ID:         id,
+				TenantInfo: pagination.FromAuth(authCtx),
+			},
+			IfNoneMatch: c.GetHeader("If-None-Match"),
 		},
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
+
+	c.Header("Cache-Control", "private, max-age=86400")
+	c.Header("ETag", content.ETag)
+	if content.NotModified {
+		c.Status(http.StatusNotModified)
+		return
+	}
 	defer content.Body.Close()
 
 	c.Header("Content-Disposition", content.ContentDisposition)
+	c.Header("X-Content-Type-Options", "nosniff")
 	c.DataFromReader(http.StatusOK, -1, content.ContentType, content.Body, nil)
 }
 
@@ -770,6 +788,45 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, gin.H{"parts": targets})
+}
+
+// uploadSessionPart receives the bytes of one part at the URL getUploadPartURLs issued. The
+// client never names this path; it PUTs to the target's url, so a search of client code for
+// callers does not find it.
+func (h *Handler) uploadSessionPart(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	partNumber, err := strconv.Atoi(c.Param("partNumber"))
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"partNumber",
+			errortypes.ErrInvalid,
+			"Invalid part number",
+		))
+		return
+	}
+
+	session, err := h.uploadService.UploadPart(
+		c.Request.Context(),
+		&documentuploadports.UploadPartRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			SessionID:  id,
+			PartNumber: partNumber,
+			Body:       c.Request.Body,
+			Size:       c.Request.ContentLength,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, session)
 }
 
 func (h *Handler) completeUploadSession(c *gin.Context) {

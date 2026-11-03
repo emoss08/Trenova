@@ -110,10 +110,27 @@ type NoticeContextParams struct {
 	Location      *time.Location
 }
 
+// BuildFrom is the notice context an organization sends: what the occurrence
+// says, under the organization's letterhead.
 func (b *ContextBuilder) BuildFrom(
 	ctx context.Context,
 	p *NoticeContextParams,
 ) (*detentiontemplate.DetentionNoticeContext, error) {
+	out := occurrenceContext(p)
+
+	occ := p.Occurrence
+	if err := b.applyBranding(ctx, occ.OrganizationID, occ.BusinessUnitID, out); err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+// occurrenceContext is everything a notice says about the occurrence itself.
+//
+// It reads nothing but its parameters, so the built-in render can use it without
+// an organization; BuildFrom adds the letterhead on top.
+func occurrenceContext(p *NoticeContextParams) *detentiontemplate.DetentionNoticeContext {
 	occ := p.Occurrence
 	loc := p.Location
 	if loc == nil {
@@ -163,11 +180,7 @@ func (b *ContextBuilder) BuildFrom(
 		out.BillableAmount = occ.BillableAmount.StringFixed(2)
 	}
 
-	if err := b.applyBranding(ctx, occ.OrganizationID, occ.BusinessUnitID, out); err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return out
 }
 
 // applyBranding fills the company name and logo from the organization.

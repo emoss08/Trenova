@@ -1,3 +1,5 @@
+//go:build fuzz
+
 package scriptrunner
 
 import (
@@ -40,7 +42,8 @@ func FuzzHostAnswersWhateverAScriptSends(f *testing.F) {
 				t.Fatalf("%s answered an error: %v", function, err)
 			}
 			var answer codemode.Reply
-			if decodeErr := sonic.Unmarshal(reply, &answer); decodeErr != nil || answer.Status == "" {
+			if decodeErr := sonic.Unmarshal(reply, &answer); decodeErr != nil ||
+				answer.Status == "" {
 				t.Fatalf("%s answered %q, not a reply", function, reply)
 			}
 		case scriptvm.FunctionGather:

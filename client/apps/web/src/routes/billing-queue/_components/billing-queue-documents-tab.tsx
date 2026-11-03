@@ -1,89 +1,112 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
-import { UploadPanel } from "@/components/documents/upload-panel";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Checkbox } from "@trenova/shared/components/ui/checkbox";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useDocumentUpload } from "@/hooks/use-document-upload";
-import { shipment } from "@/lib/queries/shipment";
-import { cn, formatFileSize } from "@trenova/shared/lib/utils";
-import { useNow } from "@trenova/shared/hooks/use-now";
-import { formatCompactAge } from "@trenova/shared/lib/date";
-import { apiService } from "@/services/api";
-import { documentContentUrl } from "@/services/document";
-import { LazyImage } from "@/components/image";
-import type { ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
-import type { Document } from "@trenova/shared/types/document";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw02Icon, Trash01Icon, UploadCloud02Icon } from "@trenova/shared/components/icons";
-import { useMemo, useState, type ReactNode } from "react";
-import { useForm, useWatch } from "react-hook-form";
-import { toast } from "@trenova/shared/components/ui/toast";
-import { UnmetRequirementNote } from "@/components/documents/unmet-requirement-note";
 import { DocumentSignatureDialog } from "@/components/documents/document-signature-dialog";
-import { documentNeedsSignature } from "@/lib/document-signature";
+import { UploadPanel } from "@/components/documents/upload-panel";
+import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { usePermission } from "@/hooks/use-permission";
+import { documentNeedsSignature } from "@/lib/document-signature";
+import { sortUploadFiles } from "@/lib/document-upload-files";
+import { billingQueue } from "@/lib/queries/billing-queue";
+import { shipment } from "@/lib/queries/shipment";
+import { apiService } from "@/services/api";
+import type { UploadState } from "@/types/upload";
+import { SelectionDock } from "@/components/selection-dock";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CheckIcon,
+  File06Icon,
+  PlusIcon,
+  Trash01Icon,
+} from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { toast } from "@trenova/shared/components/ui/toast";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DockAction } from "@trenova/shared/types/data-table";
+import type { Document } from "@trenova/shared/types/document";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import type { ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { shipmentDocumentsQuery } from "../billing-queue-queries";
+import { BillingQueueDocumentBoard, type BoardPacket } from "./billing-queue-document-board";
+import { BillingQueueDocumentBoardSkeleton } from "./billing-queue-document-board-skeleton";
+import { DocumentDetail } from "./billing-queue-document-detail";
+import { DocumentsDeleteConfirm } from "./billing-queue-documents-delete-confirm";
 import { BillingQueueDocumentsEmpty } from "./billing-queue-documents-empty";
-import { BillingQueueLaneSkeleton } from "./billing-queue-list-skeleton";
-import { isInPacket, packetAfterToggle } from "./billing-queue-packet";
+import { packetAfterPlace, packetAfterToggle, packetDocumentIds } from "./billing-queue-packet";
 import { BillingQueuePacketPreview } from "./billing-queue-packet-preview";
 
-/** The documents an invoice packet carries; empty means the required documents. */
+/** The documents an invoice packet carries; until the biller picks, the required documents. */
 export type PacketControl = {
   documentIds: string[];
+  /** The biller has picked the packet, so it is exactly documentIds, even when empty. */
+  picked: boolean;
   editable: boolean;
-  onChange: (documentIds: string[]) => void;
+  onChange: (documentIds: string[]) => Promise<unknown>;
   /** The queue item whose packet can be previewed as the one PDF it goes out as. */
   itemId?: string;
 };
 
-type DocState = { label: string; tone: "success" | "warning" | "neutral" };
+type Translate = ReturnType<typeof useT>;
 
-function documentState(doc: Document, t: ReturnType<typeof useT>): DocState {
+/** The metadata key marking an upload started from a missing document's slot. */
+const SLOT_KEY = "packetSlot";
+
+const SETTLED_UPLOADS = new Set<UploadState["status"]>(["success", "error", "quarantined"]);
+
+/** What a document needs from the biller before it can go out, if anything. */
+function documentAttention(doc: Document, t: Translate): string | undefined {
   if (documentNeedsSignature(doc)) {
-    if (doc.signatureStatus === "Signed") return { label: t("Signed"), tone: "success" };
-    if (doc.signatureStatus === "Unsigned") return { label: t("Unsigned"), tone: "warning" };
-    return { label: t("Signature not read"), tone: "neutral" };
+    if (doc.signatureStatus === "Unsigned") return t("Unsigned");
+    if (doc.signatureStatus !== "Signed") return t("Signature not read");
   }
-  if (doc.status === "Rejected") return { label: t("Rejected"), tone: "warning" };
-  return { label: t("Received"), tone: "success" };
+  if (doc.status === "Rejected") return t("Rejected");
+  return undefined;
 }
 
 /**
- * The shipment's paperwork as the invoice will use it: every document with whether
- * the customer requires it and what state it is in, each required type that is still
- * missing, which of them go out with the invoice, and a place to add more.
+ * The shipment's paperwork as the invoice will use it, laid out as a packet board:
+ * which documents the customer requires and which of them are still missing, the
+ * packet in the order it follows the invoice, what stays behind, and the selected
+ * document's line with what can be done with it. Selecting several brings up the
+ * dock, whose actions apply to all of them.
  */
 export function BillingQueueDocumentsTab({
   shipmentId,
-  selectedDocumentId,
   onDocumentSelect,
   isEditable,
   packet,
   onRequestFromDriver,
-  customerName,
   context = "billing-queue",
 }: {
   shipmentId: string;
-  selectedDocumentId: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
   isEditable?: boolean;
-  /** Lets the biller choose which documents go out with the invoice. */
+  /** Lets the biller choose which documents go out with the invoice, and in what order. */
   packet?: PacketControl;
   /** Asks the driver for the missing paperwork. */
   onRequestFromDriver?: () => void;
-  /** Who requires the paperwork, named in the heading. */
-  customerName?: string;
   context?: "billing-queue" | "invoice";
 }) {
   const t = useT();
-  const now = useNow("minute");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [replacingLineageId, setReplacingLineageId] = useState<string | null>(null);
   const [signatureDocument, setSignatureDocument] = useState<Document | null>(null);
   const [packetOpen, setPacketOpen] = useState(false);
+  const [busy, setBusy] = useState<ReadonlySet<string>>(() => new Set());
+  const [selectionIds, setSelectionIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [deleting, setDeleting] = useState<readonly string[] | null>(null);
+  const slotInput = useRef<HTMLInputElement>(null);
+  const slotRequirement = useRef<ShipmentBillingRequirement | null>(null);
   const { allowed: canRecordSignature } = usePermission(Resource.Document, Operation.Update);
   const queryClient = useQueryClient();
   const docTypeForm = useForm<{ documentTypeId: string }>({
@@ -100,6 +123,15 @@ export function BillingQueueDocumentsTab({
     enabled: !!shipmentId,
   });
 
+  const requirements = billingReadiness?.requirements ?? [];
+  const selection: ReadonlySet<string> = new Set(
+    documents.filter((doc) => selectionIds.has(doc.id)).map((doc) => doc.id),
+  );
+  const missing = requirements.filter((requirement) => !requirement.satisfied);
+  const currentPacket = packet
+    ? packetDocumentIds(packet.documentIds, packet.picked, requirements)
+    : [];
+
   const uploadMetadata = useMemo((): Record<string, string> => {
     const metadata: Record<string, string> = {};
     if (selectedDocTypeId) metadata.documentTypeId = selectedDocTypeId;
@@ -107,15 +139,58 @@ export function BillingQueueDocumentsTab({
     return metadata;
   }, [selectedDocTypeId, replacingLineageId]);
 
-  const invalidateAll = () => {
-    void queryClient.invalidateQueries({ queryKey });
-    void queryClient.invalidateQueries({ queryKey: billingReadinessQuery.queryKey });
+  // Holds each card the request touches until it settles, and hands the request
+  // back so a control that started it can hold too.
+  const hold = (documentIds: readonly string[], work: () => Promise<unknown>) => {
+    setBusy((current) => new Set([...current, ...documentIds]));
+    return work()
+      .then(() => undefined)
+      .finally(() =>
+        setBusy((current) => {
+          const next = new Set(current);
+          for (const id of documentIds) next.delete(id);
+          return next;
+        }),
+      );
   };
 
-  const { mutate: deleteDocument } = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
-    onSuccess: invalidateAll,
-    onError: () => toast.error(t("Failed to delete document")),
+  const savePacket = (documentIds: readonly string[], next: string[]) =>
+    packet ? hold(documentIds, () => packet.onChange(next)) : Promise.resolve();
+
+  const quietly = (request: Promise<void>) => {
+    void request.catch(() => {
+      // The request has already reported why it failed.
+    });
+  };
+
+  // A file uploaded into a missing document's slot belongs in the packet. A packet
+  // still on its default takes it with the requirement it satisfies; one the biller
+  // has picked takes it last.
+  const joinPacket = useLatestCallback((doc: Document, upload: UploadState) => {
+    if (!upload.metadata?.[SLOT_KEY] || !packet?.editable || !packet.picked) {
+      return;
+    }
+    quietly(savePacket([doc.id], packetAfterToggle(doc.id, true, currentPacket)));
+  });
+
+  const { mutateAsync: deleteDocuments } = useMutation({
+    mutationFn: (documentIds: string[]) => apiService.documentService.bulkDelete(documentIds),
+    onSuccess: ({ errorCount }) => {
+      if (errorCount > 0) {
+        toast.error(
+          t("{0, plural, one {# document} other {# documents}} could not be deleted.", errorCount),
+        );
+      }
+    },
+    onError: () => toast.error(t("Failed to delete documents")),
+    // A deleted document also leaves the packet that carried it, on the server.
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: billingReadinessQuery.queryKey });
+      if (packet?.itemId) {
+        void queryClient.invalidateQueries({ queryKey: billingQueue.get(packet.itemId).queryKey });
+      }
+    },
   });
 
   const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearCompleted } =
@@ -124,62 +199,137 @@ export function BillingQueueDocumentsTab({
       resourceType: "shipment",
       uploadMetadata,
       invalidateQueryKey: queryKey,
-      onSuccess: () => {
+      onSuccess: (doc, upload) => {
         docTypeForm.setValue("documentTypeId", "");
         setReplacingLineageId(null);
         void queryClient.invalidateQueries({ queryKey: billingReadinessQuery.queryKey });
+        joinPacket(doc, upload);
       },
+      onError: () => setUploadOpen(true),
     });
 
-  const requirements = billingReadiness?.requirements ?? [];
-  const requiredTypes = new Set(requirements.map((requirement) => requirement.documentTypeId));
-  const missing = requirements.filter((requirement) => !requirement.satisfied);
-  const inPacket = (doc: Document) =>
-    packet ? isInPacket(doc, packet.documentIds, requiredTypes) : false;
-  const togglePacket = (doc: Document, include: boolean) => {
-    if (!packet) return;
-    packet.onChange(packetAfterToggle(doc, include, documents, packet.documentIds, requiredTypes));
+  const uploadable = (files: File[]) => {
+    const { accepted, rejected } = sortUploadFiles(files);
+    if (rejected.length > 0) {
+      toast.error(
+        t(
+          "{0, plural, one {# file was} other {# files were}} not uploaded: only PDFs, images and office documents up to 50 MB can be.",
+          rejected.length,
+        ),
+      );
+    }
+    return accepted;
   };
-  const packetNames = packet
-    ? documents.filter(inPacket).map((doc) => doc.documentType?.name ?? doc.originalName)
-    : [];
 
-  const uploadFor = (requirement: ShipmentBillingRequirement) => {
-    docTypeForm.setValue("documentTypeId", requirement.documentTypeId);
+  const uploadInto = (requirement: ShipmentBillingRequirement, files: File[]) => {
+    const accepted = uploadable(files);
+    if (accepted.length === 0) return;
+    uploadFiles(accepted, {
+      documentTypeId: requirement.documentTypeId,
+      [SLOT_KEY]: requirement.documentTypeId,
+    });
+  };
+
+  const uploadDropped = (files: File[]) => {
+    const accepted = uploadable(files);
+    if (accepted.length === 0) return;
     setUploadOpen(true);
+    uploadFiles(accepted, selectedDocTypeId ? { documentTypeId: selectedDocTypeId } : {});
   };
 
+  const progressFor = (requirement: ShipmentBillingRequirement) => {
+    const running = uploads.filter(
+      (upload) =>
+        upload.metadata?.[SLOT_KEY] === requirement.documentTypeId &&
+        !SETTLED_UPLOADS.has(upload.status),
+    );
+    if (running.length === 0) return undefined;
+    return Math.round(running.reduce((sum, upload) => sum + upload.progress, 0) / running.length);
+  };
+
+  const editablePacket: BoardPacket | undefined = packet
+    ? {
+        ids: currentPacket,
+        editable: packet.editable,
+        onPlace: (documentId, index) =>
+          quietly(savePacket([documentId], packetAfterPlace(documentId, index, currentPacket))),
+        onRemove: (documentId) =>
+          quietly(savePacket([documentId], packetAfterToggle(documentId, false, currentPacket))),
+        onArrange: (next, moved) => savePacket(moved, next),
+      }
+    : undefined;
+
+  const selectedDocuments = documents.filter((doc) => selection.has(doc.id));
+  const inPacket = new Set(currentPacket);
+  const selectedIn = selectedDocuments.filter((doc) => inPacket.has(doc.id));
+  const selectedOut = selectedDocuments.filter((doc) => !inPacket.has(doc.id));
+  const packetEditable = Boolean(packet?.editable);
+
+  const bulkActions: DockAction<Document>[] = [
+    ...(packetEditable && selectedOut.length > 0
+      ? [
+          {
+            id: "send",
+            label: "Send with invoice",
+            icon: ArrowUpIcon,
+            clearSelectionOnSuccess: true,
+            onClick: () =>
+              savePacket(
+                selectedOut.map((doc) => doc.id),
+                [...currentPacket, ...selectedOut.map((doc) => doc.id)],
+              ),
+          },
+        ]
+      : []),
+    ...(packetEditable && selectedIn.length > 0
+      ? [
+          {
+            id: "leave-out",
+            label: "Leave out",
+            icon: ArrowDownIcon,
+            clearSelectionOnSuccess: true,
+            onClick: () =>
+              savePacket(
+                selectedIn.map((doc) => doc.id),
+                currentPacket.filter((id) => !selection.has(id)),
+              ),
+          },
+        ]
+      : []),
+    ...(isEditable
+      ? [
+          {
+            id: "delete",
+            label: "Delete",
+            icon: Trash01Icon,
+            variant: "destructive" as const,
+            onClick: () => setDeleting(selectedDocuments.map((doc) => doc.id)),
+          },
+        ]
+      : []),
+  ];
+  const selected = selectedDocuments.length === 1 ? selectedDocuments[0] : null;
+  const selectedInPacket = selected ? inPacket.has(selected.id) : false;
   const isInvoice = context === "invoice";
-  const rule =
-    requirements.length > 0
-      ? customerName
-        ? t(
-            "{0} requires {1}",
-            customerName,
-            requirements.map((r) => r.documentTypeName).join(", "),
-          )
-        : t("Requires {0}", requirements.map((r) => r.documentTypeName).join(", "))
-      : null;
+  const canRequest = Boolean(onRequestFromDriver) && missing.length > 0;
 
   return (
-    <section aria-label={t("Documents")} className="flex flex-col gap-2 text-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-foreground font-semibold">
-          {isInvoice ? t("Supporting documents") : t("Documents")}
-        </h3>
-        {rule ? <span className="text-foreground-muted text-xs">{rule}</span> : null}
-        <span className="flex-1" />
-        {packet?.itemId ? (
-          <Button size="xs" variant="outline" onClick={() => setPacketOpen(true)}>
-            {t("Preview invoice packet")}
-          </Button>
-        ) : null}
-      </div>
+    <section aria-label={t("Documents")} className="flex flex-col gap-4 text-sm">
+      <input
+        ref={slotInput}
+        type="file"
+        multiple
+        hidden
+        onChange={(event) => {
+          const requirement = slotRequirement.current;
+          const files = [...(event.currentTarget.files ?? [])];
+          event.currentTarget.value = "";
+          if (requirement && files.length > 0) uploadInto(requirement, files);
+        }}
+      />
 
       {isLoading ? (
-        <div className="border-border rounded-md border" aria-label={t("Loading documents...")}>
-          <BillingQueueLaneSkeleton />
-        </div>
+        <BillingQueueDocumentBoardSkeleton />
       ) : documents.length === 0 && missing.length === 0 ? (
         <BillingQueueDocumentsEmpty
           title={isInvoice ? t("No supporting documents") : t("No documents yet")}
@@ -199,124 +349,134 @@ export function BillingQueueDocumentsTab({
           onUpload={isEditable ? () => setUploadOpen(true) : undefined}
         />
       ) : (
-        <div className="border-border rounded-md border">
-          {missing.map((requirement) => (
-            <DocRow
-              key={`missing-${requirement.documentTypeId}`}
-              title={requirement.documentTypeName}
-              required
-              state={{ label: t("Missing"), tone: "warning" }}
-              meta={<UnmetRequirementNote requirement={requirement} />}
-              fix={
-                isEditable ? (
-                  <Button size="xs" onClick={() => uploadFor(requirement)}>
-                    {t("Upload")}
-                  </Button>
-                ) : null
-              }
-            />
-          ))}
-          {documents.map((doc) => {
-            const state = documentState(doc, t);
-            const unsigned = documentNeedsSignature(doc) && doc.signatureStatus !== "Signed";
-            return (
-              <DocRow
-                key={doc.id}
-                selected={doc.id === selectedDocumentId}
-                previewUrl={
-                  doc.previewStatus === "Ready" ? documentContentUrl(doc.id, "preview") : undefined
-                }
-                title={doc.documentType?.name ?? doc.originalName}
-                required={Boolean(doc.documentTypeId && requiredTypes.has(doc.documentTypeId))}
-                state={state}
-                meta={t(
-                  "{0} · {1} · {2} ago",
-                  doc.originalName,
-                  formatFileSize(doc.fileSize),
-                  formatCompactAge(now - doc.createdAt),
-                )}
-                fix={
-                  unsigned && canRecordSignature ? (
-                    <Button size="xs" onClick={() => setSignatureDocument(doc)}>
-                      {t("Record a signature")}
-                    </Button>
-                  ) : null
-                }
-                packet={
-                  packet ? (
-                    <label className="text-foreground-muted flex items-center gap-1.5 text-xs whitespace-nowrap">
-                      <Checkbox
-                        checked={inPacket(doc)}
-                        disabled={!packet.editable}
-                        onCheckedChange={(checked) => togglePacket(doc, checked === true)}
-                        aria-label={t("Send {0} with the invoice", doc.originalName)}
-                      />
-                      {t("In packet")}
-                    </label>
-                  ) : null
-                }
-                actions={
-                  <>
-                    {isEditable ? (
-                      <span className="flex opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
-                        <IconAction
-                          label={t("Replace")}
-                          onClick={() => {
-                            setReplacingLineageId(doc.lineageId);
-                            setUploadOpen(true);
-                          }}
-                        >
-                          <RefreshCw02Icon className="size-3" />
-                        </IconAction>
-                        <IconAction label={t("Delete")} onClick={() => deleteDocument(doc.id)}>
-                          <Trash01Icon className="size-3" />
-                        </IconAction>
-                      </span>
-                    ) : null}
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      onClick={() => onDocumentSelect(doc.id, doc.originalName)}
+        <>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <p className="text-foreground-muted flex min-w-48 flex-1 flex-wrap items-center gap-x-3.5 gap-y-1 text-xs">
+              {requirements.length > 0 ? (
+                <>
+                  <span>{t("Requires")}</span>
+                  {requirements.map((requirement) => (
+                    <span
+                      key={requirement.documentTypeId}
+                      className={cn(
+                        "inline-flex items-center gap-1.5",
+                        !requirement.satisfied && "text-foreground",
+                      )}
                     >
-                      {t("View")}
-                    </Button>
-                  </>
-                }
-              />
-            );
-          })}
-          {isEditable ? (
-            <div className="border-border text-foreground-muted m-2.5 flex flex-wrap items-center gap-2.5 rounded-md border border-dashed p-3.5">
-              <UploadCloud02Icon className="size-4" />
-              <span className="min-w-40 flex-1">
-                {t("Add files and pick a type for each, or choose a type first.")}
-              </span>
-              <div className="w-48">
-                <DocumentTypeAutocompleteField
-                  control={docTypeForm.control}
-                  name="documentTypeId"
-                  placeholder={t("Document type (optional)")}
-                  clearable
-                />
-              </div>
-              <Button size="xs" variant="outline" onClick={() => setUploadOpen(true)}>
-                {t("Choose files")}
-              </Button>
-              {onRequestFromDriver && missing.length > 0 ? (
-                <Button size="xs" variant="ghost" onClick={onRequestFromDriver}>
-                  {t("Request from driver")}
-                </Button>
+                      {requirement.satisfied ? (
+                        <CheckIcon aria-hidden className="size-3" />
+                      ) : (
+                        <span aria-hidden className="bg-warning size-1.5 rounded-full" />
+                      )}
+                      {requirement.documentTypeName}
+                      <span className="sr-only">
+                        {requirement.satisfied ? t("received") : t("missing")}
+                      </span>
+                    </span>
+                  ))}
+                </>
               ) : null}
-            </div>
-          ) : null}
-        </div>
-      )}
+            </p>
+            {packet?.itemId ? (
+              <Button size="xs" variant="outline" onClick={() => setPacketOpen(true)}>
+                <File06Icon className="size-3.5" />
+                {t("Preview packet")}
+              </Button>
+            ) : null}
+            {isEditable && canRequest ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button size="icon-xs" variant="outline" aria-label={t("Add documents")}>
+                      <PlusIcon className="size-3.5" />
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem title={t("Upload files")} onClick={() => setUploadOpen(true)} />
+                  <DropdownMenuItem
+                    title={t("Request from driver")}
+                    onClick={onRequestFromDriver}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : isEditable ? (
+              <Button
+                size="icon-xs"
+                variant="outline"
+                aria-label={t("Upload files")}
+                onClick={() => setUploadOpen(true)}
+              >
+                <PlusIcon className="size-3.5" />
+              </Button>
+            ) : null}
+          </div>
 
-      {packet && packetNames.length > 0 ? (
-        <p className="text-foreground-muted text-xs">
-          {t("Packet goes out as one PDF: {0}", [t("Invoice"), ...packetNames].join(" · "))}
-        </p>
-      ) : null}
+          <BillingQueueDocumentBoard
+            documents={documents}
+            missing={missing}
+            packet={editablePacket}
+            selection={selection}
+            onSelectionChange={setSelectionIds}
+            multiSelect={packetEditable || Boolean(isEditable)}
+            onOpen={(doc) => onDocumentSelect(doc.id, doc.originalName)}
+            busy={busy}
+            attentionOf={(doc) => documentAttention(doc, t)}
+            progressFor={progressFor}
+            onUploadFor={
+              isEditable
+                ? (requirement) => {
+                    slotRequirement.current = requirement;
+                    slotInput.current?.click();
+                  }
+                : undefined
+            }
+            onDropFor={isEditable ? uploadInto : undefined}
+            onAddFiles={isEditable ? () => setUploadOpen(true) : undefined}
+            onDropFiles={isEditable ? uploadDropped : undefined}
+          />
+
+          {selected ? (
+            <DocumentDetail
+              doc={selected}
+              attention={documentAttention(selected, t)}
+              busy={busy.has(selected.id)}
+              inPacket={packet ? selectedInPacket : undefined}
+              onView={() => onDocumentSelect(selected.id, selected.originalName)}
+              onRecordSignature={
+                canRecordSignature &&
+                documentNeedsSignature(selected) &&
+                selected.signatureStatus !== "Signed"
+                  ? () => setSignatureDocument(selected)
+                  : undefined
+              }
+              onMove={
+                editablePacket?.editable
+                  ? () =>
+                      selectedInPacket
+                        ? editablePacket.onRemove(selected.id)
+                        : editablePacket.onPlace(selected.id, currentPacket.length)
+                  : undefined
+              }
+              onReplace={
+                isEditable
+                  ? () => {
+                      setReplacingLineageId(selected.lineageId);
+                      setUploadOpen(true);
+                    }
+                  : undefined
+              }
+              onDelete={isEditable ? () => setDeleting([selected.id]) : undefined}
+            />
+          ) : selection.size === 0 && documents.length > 0 ? (
+            <p className="border-border text-foreground-muted border-t pt-3.5 text-xs">
+              {t(
+                "Select a document to see its file and what you can do with it, or tick several to act on them together.",
+              )}
+            </p>
+          ) : null}
+        </>
+      )}
 
       {packet?.itemId ? (
         <BillingQueuePacketPreview
@@ -325,6 +485,25 @@ export function BillingQueueDocumentsTab({
           onOpenChange={setPacketOpen}
         />
       ) : null}
+      <SelectionDock
+        selectedCount={selection.size > 1 ? selection.size : 0}
+        actions={bulkActions}
+        getSelected={() => selectedDocuments}
+        onClearSelection={() => setSelectionIds(new Set())}
+      />
+      <DocumentsDeleteConfirm
+        count={deleting?.length ?? 0}
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+        onConfirm={async () => {
+          if (!deleting) return;
+          const ids = [...deleting];
+          await hold(ids, () => deleteDocuments(ids));
+          setSelectionIds((current) => new Set([...current].filter((id) => !ids.includes(id))));
+        }}
+      />
       <DocumentSignatureDialog
         document={signatureDocument}
         open={signatureDocument !== null}
@@ -352,125 +531,17 @@ export function BillingQueueDocumentsTab({
               ? t("Uploads will be classified with the selected document type.")
               : t("Select a document type to classify uploads (optional).")
         }
-      />
-    </section>
-  );
-}
-
-/**
- * A document's first page in the row, as the server drew it, so the biller sees which
- * paper it is before opening it. Until the preview exists, or for a file it cannot draw,
- * the row shows a blank page.
- */
-function DocPage({ previewUrl }: { previewUrl?: string }) {
-  const [failed, setFailed] = useState<string | null>(null);
-
-  if (previewUrl && failed !== previewUrl) {
-    return (
-      <LazyImage
-        src={previewUrl}
-        alt=""
-        onError={() => setFailed(previewUrl)}
-        wrapperClassName="flex shrink-0"
-        className="border-border bg-card h-9.5 w-7.5 rounded-xs border object-cover object-top"
-      />
-    );
-  }
-
-  return (
-    <span
-      aria-hidden
-      className="border-border bg-card flex h-9.5 w-7.5 shrink-0 flex-col gap-0.75 rounded-xs border px-1.25 py-1.5"
-    >
-      <span className="bg-border h-0.5" />
-      <span className="bg-border h-0.5 w-7/10" />
-      <span className="bg-border h-0.5" />
-      <span className="bg-border h-0.5 w-1/2" />
-    </span>
-  );
-}
-
-function DocRow({
-  title,
-  required,
-  state,
-  meta,
-  fix,
-  packet,
-  actions,
-  previewUrl,
-  selected = false,
-}: {
-  /** The document's first page, drawn by the server; absent for a document still missing. */
-  previewUrl?: string;
-  title: string;
-  required: boolean;
-  state: DocState;
-  meta: ReactNode;
-  fix?: ReactNode;
-  packet?: ReactNode;
-  actions?: ReactNode;
-  selected?: boolean;
-}) {
-  const t = useT();
-
-  return (
-    <div
-      className={cn(
-        "group border-border flex items-center gap-3 border-b px-2.5 py-2.5",
-        selected && "bg-surface-selected",
-      )}
-    >
-      <DocPage previewUrl={previewUrl} />
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex flex-wrap items-center gap-1.5">
-          <span className="text-foreground font-medium">{title}</span>
-          {required ? (
-            <span className="bg-muted text-foreground-muted rounded-xs px-1.25 text-2xs font-medium">
-              {t("Required")}
-            </span>
-          ) : null}
-          <span
-            className={cn(
-              "rounded-xs px-1.25 text-2xs font-medium",
-              state.tone === "success" && "bg-success-subtle text-success-foreground",
-              state.tone === "warning" && "bg-warning-subtle text-warning-foreground",
-              state.tone === "neutral" && "bg-muted text-foreground-muted",
-            )}
-          >
-            {state.label}
-          </span>
-        </span>
-        <span className="text-foreground-muted truncate text-xs">{meta}</span>
-      </span>
-      {fix}
-      {packet}
-      {actions}
-    </div>
-  );
-}
-
-function IconAction({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button size="icon-xs" variant="ghost" aria-label={label} onClick={onClick}>
-            {children}
-          </Button>
+        options={
+          replacingLineageId ? null : (
+            <DocumentTypeAutocompleteField
+              control={docTypeForm.control}
+              name="documentTypeId"
+              placeholder={t("Document type (optional)")}
+              clearable
+            />
+          )
         }
       />
-      <TooltipContent side="top" sideOffset={10}>
-        {label}
-      </TooltipContent>
-    </Tooltip>
+    </section>
   );
 }

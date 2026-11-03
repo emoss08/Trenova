@@ -1970,6 +1970,8 @@ type BillingTransferRun struct {
 	RetryableCount int `json:"retryableCount"`
 	// Shipments the search matched beyond the 5000 a single run carries. They were never attempted.
 	UnmatchedCount int `json:"unmatchedCount"`
+	// How many shipments each reason held back, most first. Refreshed with the other counts after every batch.
+	FailureCounts []*billingtransfer.FailureCount `json:"failureCounts"`
 	// Why the run as a whole stopped. A shipment's own reason lives on its item.
 	FailureMessage *string `json:"failureMessage,omitempty"`
 	// Set as soon as somebody asks the run to stop; the run keeps going until the batch in flight finishes.
@@ -2020,6 +2022,8 @@ type BillingTransferRunItemEdge struct {
 
 type BillingTransferRunItemsFilterInput struct {
 	Statuses []billingtransfer.ItemStatus `json:"statuses,omitempty"`
+	// Only shipments held back for one of these reasons.
+	FailureCodes []billingtransfer.FailureCode `json:"failureCodes,omitempty"`
 }
 
 type BulkAssignTrainingInput struct {
@@ -11382,8 +11386,12 @@ type ShipmentsInput struct {
 	Sort                  []*SortFieldInput   `json:"sort,omitempty"`
 	ExpandShipmentDetails *bool               `json:"expandShipmentDetails,omitempty"`
 	Status                *string             `json:"status,omitempty"`
-	ActivityWindowStart   *int                `json:"activityWindowStart,omitempty"`
-	ActivityWindowEnd     *int                `json:"activityWindowEnd,omitempty"`
+	// With activityWindowEnd, only shipments active in the window: a live stop is due to
+	// start before it ends and a live stop is due to end after it starts. A load that picks
+	// up before the window and delivers after it counts, though no stop falls inside.
+	ActivityWindowStart *int `json:"activityWindowStart,omitempty"`
+	// The end of the activity window; see activityWindowStart.
+	ActivityWindowEnd *int `json:"activityWindowEnd,omitempty"`
 	// Only Completed or Ready to Invoice shipments that are not in the billing queue.
 	BillingTransferEligible *bool `json:"billingTransferEligible,omitempty"`
 	// Load each shipment's customer without expanding the rest of its details.

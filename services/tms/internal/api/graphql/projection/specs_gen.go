@@ -5395,6 +5395,10 @@ func init() {
 				Column: "unmatched_count",
 			},
 			{
+				Name:   "failureCounts",
+				Column: "failure_counts",
+			},
+			{
 				Name:   "failureMessage",
 				Column: "failure_message",
 			},

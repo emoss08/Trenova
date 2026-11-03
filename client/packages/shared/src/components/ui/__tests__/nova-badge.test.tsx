@@ -44,7 +44,7 @@ describe("NovaBadge", () => {
     expect(badge(container).classList).toContain("size-4");
   });
 
-  it("stays still at rest and turns only while asked to", () => {
+  it("stays still at rest, turns while working and turns once on hover", () => {
     const still = badge(render(<NovaBadge />).container);
     expect(still.className).not.toContain("animate-nova-spin");
     cleanup();
@@ -54,8 +54,8 @@ describe("NovaBadge", () => {
     cleanup();
 
     const hovered = badge(render(<NovaBadge spin="hover" />).container);
-    expect(hovered.classList).toContain("group-hover:animate-nova-spin");
-    expect(hovered.classList).not.toContain("animate-nova-spin");
+    expect(hovered.classList).toContain("group-hover:animate-nova-turn");
+    expect(hovered.className).not.toContain("animate-nova-spin");
   });
 
   it("lets a caller's class win over its own size", () => {

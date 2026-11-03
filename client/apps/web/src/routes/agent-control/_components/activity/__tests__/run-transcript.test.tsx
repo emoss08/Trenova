@@ -221,13 +221,28 @@ describe("AgentRunPanel", () => {
   it("shows what the run did as soon as it opens", async () => {
     renderPanel(client(deniedRun()));
 
-    const sheet = await screen.findByRole("complementary", {
-      name: "I could not reassign the driver.",
-    });
+    const sheet = await screen.findByRole("complementary", { name: "Assistant chat" });
     expect(within(sheet).getByText("What it did")).toBeTruthy();
     expect(await within(sheet).findByText("Checking the driver first.")).toBeTruthy();
     expect(within(sheet).getByText("Not permitted")).toBeTruthy();
     expect(within(sheet).getByText("test-model")).toBeTruthy();
+  });
+
+  it("names the sheet by its agent and reads a long markdown summary in the body", async () => {
+    const reported = {
+      ...row,
+      summary:
+        "I worked the 10 open failures and resolved none.\n\n**Pinnacle Metals, Dallas:** Cause found.\n\n- **Freeman & Dixon, Long Beach:** Arrived 6h26m late.",
+    } as AgentRunRow;
+    renderPanel(client(null, reported), reported);
+
+    const sheet = await screen.findByRole("complementary", { name: "Assistant chat" });
+    const header = sheet.querySelector("header");
+    expect(header?.textContent).toBe(`Assistant chat${RUN}Completed`);
+    expect(within(sheet).getByText("Summary")).toBeTruthy();
+    expect(within(sheet).getByText("Pinnacle Metals, Dallas:").tagName).toBe("STRONG");
+    expect(within(sheet).getByText("Freeman & Dixon, Long Beach:").closest("li")).toBeTruthy();
+    expect(within(sheet).queryByText(/\*\*/)).toBeNull();
   });
 
   it("downloads the run's transcript from its sheet", async () => {

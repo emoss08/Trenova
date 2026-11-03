@@ -7,6 +7,7 @@ run:
   # the build cache the other commands share.
   build-tags:
     - nomsgpack
+    - fuzz
 linters:
   default: none
   enable:

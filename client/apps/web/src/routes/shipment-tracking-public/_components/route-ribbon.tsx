@@ -5,7 +5,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { stopTypeLabel } from "@trenova/shared/lib/stop-type";
 import { cn } from "@trenova/shared/lib/utils";
-import type { PublicShipmentStop, PublicShipmentView } from "@trenova/shared/types/shipment-tracking";
+import type {
+  PublicShipmentStop,
+  PublicShipmentView,
+} from "@trenova/shared/types/shipment-tracking";
 
 function stopTime(t: ReturnType<typeof useT>, stop: PublicShipmentStop, now: number) {
   if (stop.departedAt != null) {
@@ -93,7 +96,7 @@ export function RouteRibbon({
               {whereNow}
             </span>
             <span className="relative flex size-9 items-center justify-center">
-              <span className="st-halo absolute inset-0 animate-live-ping rounded-full" />
+              <span className="st-halo absolute -inset-1.5 rounded-full" />
               <span className="relative flex size-9 items-center justify-center rounded-full bg-ink text-background ring-4 ring-canvas">
                 <Truck01Icon className="size-4" aria-hidden />
               </span>

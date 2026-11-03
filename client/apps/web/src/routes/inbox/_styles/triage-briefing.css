@@ -7,12 +7,6 @@
    or the tab is hidden ([data-paused], set by the view) and under reduced
    motion. */
 
-@property --tb-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .tb-briefing {
   --tb-nova-a: var(--accent-indigo);
   --tb-nova-b: var(--accent-violet);
@@ -122,7 +116,8 @@
 }
 
 .tb-over-ring {
-  animation: tb-ping 2s var(--ease-swift) infinite;
+  /* An overdue point is a state: the ring pings three times as it appears, then holds. */
+  animation: tb-ping 2s var(--ease-swift) 3;
 }
 
 /* The deck: a stack of cards, the front one in hand. */
@@ -182,20 +177,20 @@
   border-radius: inherit;
   padding: 1.5px;
   pointer-events: none;
-  background: conic-gradient(
-    from var(--tb-angle),
+  /* The gradient turns in ui-spin-ring's ::before, behind this static mask. */
+  --spin-gradient: conic-gradient(
     var(--tb-nova-a),
     var(--tb-nova-b),
     var(--tb-nova-c),
     var(--tb-nova-b),
     var(--tb-nova-a)
   );
+  --spin-duration: 6s;
   mask:
     linear-gradient(black 0 0) content-box,
     linear-gradient(black 0 0);
   mask-composite: exclude;
   opacity: 0.35;
-  animation: tb-angle 6s linear infinite;
   transition: opacity 500ms var(--ease-settle);
 }
 
@@ -203,9 +198,14 @@
   opacity: 0.9;
 }
 
+/* Nova's colours run round the edge only while Nova works on the card. */
+.tb-nova-card:not([data-working="true"]) .tb-nova-edge::before {
+  animation: none;
+}
+
 .tb-nova-card[data-working="true"] .tb-nova-edge {
   opacity: 1;
-  animation-duration: 1.4s;
+  --spin-duration: 1.4s;
 }
 
 .tb-nova-aura {
@@ -225,7 +225,6 @@
   filter: blur(18px);
   opacity: 0;
   transition: opacity 600ms var(--ease-settle);
-  animation: tb-aura 9s ease-in-out infinite;
 }
 
 .tb-nova-card[data-front="true"] .tb-nova-aura {
@@ -234,7 +233,7 @@
 
 .tb-nova-card[data-working="true"] .tb-nova-aura {
   opacity: 1;
-  animation-duration: 3s;
+  animation: tb-aura 3s ease-in-out infinite;
 }
 
 .tb-nova-tile {
@@ -274,12 +273,14 @@
 }
 
 .tb-briefing[data-paused="true"] *,
+.tb-briefing[data-paused="true"] *::before,
 .tb-briefing[data-paused="true"]::before {
   animation-play-state: paused !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tb-briefing *,
+  .tb-briefing *::before,
   .tb-briefing::before {
     animation: none !important;
   }
@@ -300,12 +301,6 @@
 @keyframes tb-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes tb-angle {
-  to {
-    --tb-angle: 360deg;
   }
 }
 

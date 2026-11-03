@@ -106,6 +106,7 @@ export type BillingTransferRunItemConnection =
 export type BillingTransferRunItem = BillingTransferRunItemConnection["edges"][number]["node"];
 export type BillingTransferRunStatus = BillingTransferRun["status"];
 export type BillingTransferItemStatus = BillingTransferRunItem["status"];
+export type BillingTransferFailureCount = BillingTransferRun["failureCounts"][number];
 
 export type StartBillingTransferRunVariables = {
   scope: BillingTransferRunScope;
@@ -193,6 +194,7 @@ export async function listBillingTransferRunItemsGraphQL(
     first: number;
     after?: string | null;
     statuses?: BillingTransferItemStatus[];
+    failureCodes?: BillingTransferFailureCode[];
   },
   options?: RequestOptions,
 ): Promise<BillingTransferRunItemConnection> {
@@ -202,7 +204,13 @@ export async function listBillingTransferRunItemsGraphQL(
     variables: {
       runId: req.runId,
       input: { first: req.first, after: req.after ?? undefined },
-      filter: req.statuses?.length ? { statuses: req.statuses } : undefined,
+      filter:
+        req.statuses?.length || req.failureCodes?.length
+          ? {
+              statuses: req.statuses?.length ? req.statuses : undefined,
+              failureCodes: req.failureCodes?.length ? req.failureCodes : undefined,
+            }
+          : undefined,
       includeTotalCount: !req.after,
     },
     signal: options?.signal,

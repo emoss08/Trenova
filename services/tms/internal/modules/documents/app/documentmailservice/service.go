@@ -189,7 +189,7 @@ func (s *Service) documents(
 		ids = append(ids, want.id)
 	}
 
-	found, err := s.repo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+	found, err := s.repo.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenantInfo,
 	})

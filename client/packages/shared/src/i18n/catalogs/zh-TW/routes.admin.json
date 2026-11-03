@@ -1110,6 +1110,7 @@
   "Role name": "角色名稱",
   "Role not found": "找不到角色",
   "Roles & permissions": "角色與權限",
+  "Rotate": "輪替",
   "Rotate URL": "輪替網址",
   "Rotate secret": "輪替密鑰",
   "Rotate the webhook URL?": "要輪替 Webhook 網址嗎？",

@@ -66,7 +66,6 @@ export function InvoicesPage() {
           >
             <InvoiceDetailPane
               selectedInvoiceId={selectedInvoiceId}
-              selectedDocumentId={selectedDocumentId}
               onDocumentSelect={handleDocumentSelect}
             />
           </LazyComponent>

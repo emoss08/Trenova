@@ -37,7 +37,7 @@ type mockDocRepo struct {
 	SelectOptionsFn                    func(ctx context.Context, req *documentports.DocumentSelectOptionsRequest) (*pagination.ListResult[*document.Document], error)
 	GetByIDFn                          func(ctx context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error)
 	GetByStoragePathFn                 func(ctx context.Context, req documentports.GetDocumentByStoragePathRequest) (*document.Document, error)
-	GetByIDsFn                         func(ctx context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error)
+	GetByIDsFn                         func(ctx context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error)
 	ListVersionsFn                     func(ctx context.Context, req documentports.ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResFn                         func(ctx context.Context, req *documentports.GetDocumentsByResourceRequest) ([]*document.Document, error)
 	GetByResIDsFn                      func(ctx context.Context, req *documentports.GetDocumentsByResourceIDsRequest) ([]*document.Document, error)
@@ -89,7 +89,7 @@ func (m *mockDocRepo) GetByStoragePath(
 
 func (m *mockDocRepo) GetByIDs(
 	ctx context.Context,
-	req documentports.BulkDeleteDocumentRequest,
+	req documentports.GetDocumentsByIDsRequest,
 ) ([]*document.Document, error) {
 	return m.GetByIDsFn(ctx, req)
 }
@@ -1165,7 +1165,7 @@ func TestUnit_BulkDelete_Success(t *testing.T) {
 	}
 	var storageDeletions []string
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
 		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
@@ -1220,7 +1220,7 @@ func TestUnit_BulkDelete_GetByIDsError(t *testing.T) {
 	t.Parallel()
 
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return nil, errors.New("db error")
 		},
 	}
@@ -1244,7 +1244,7 @@ func TestUnit_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 		{ID: pulid.MustNew("doc_"), StoragePath: "path/a.pdf", OriginalName: "a.pdf"},
 	}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
 		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
@@ -1286,7 +1286,7 @@ func TestUnit_BulkDelete_StorageDeleteErrors(t *testing.T) {
 		},
 	}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
 		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
@@ -1587,7 +1587,7 @@ func TestUnit_BulkDelete_WithPreviewPaths(t *testing.T) {
 	}
 	var deletedPaths []string
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return docs, nil
 		},
 		BulkDeleteFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) error {
@@ -1622,7 +1622,7 @@ func TestUnit_PlanDelete_RefusesADocumentThatIsNotHere(t *testing.T) {
 
 	known := &document.Document{ID: pulid.MustNew("doc_"), StoragePath: "path/a.pdf"}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return []*document.Document{known}, nil
 		},
 	}
@@ -1642,7 +1642,7 @@ func TestUnit_PlanDelete_CountsEveryVersionOfALineage(t *testing.T) {
 	lineage := pulid.MustNew("doc_")
 	current := &document.Document{ID: pulid.MustNew("doc_"), LineageID: lineage}
 	repo := &mockDocRepo{
-		GetByIDsFn: func(_ context.Context, _ documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		GetByIDsFn: func(_ context.Context, _ documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			return []*document.Document{current}, nil
 		},
 		ListVersionsFn: func(

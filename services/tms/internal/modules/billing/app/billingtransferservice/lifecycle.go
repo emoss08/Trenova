@@ -110,6 +110,7 @@ func (s *Service) Retry(
 	created.TransferredCount = seeded.TransferredCount
 	created.NotTransferredCount = seeded.NotTransferredCount
 	created.MarkedReadyToInvoiceCount = seeded.MarkedReadyToInvoiceCount
+	created.FailureCounts = seeded.FailureCounts
 	if _, err = s.runRepo.Update(ctx, created); err != nil {
 		log.Error("failed to seed retry run counters", zap.Error(err))
 		return nil, err

@@ -5,7 +5,9 @@ import type {
   BillingTransferRunItem,
 } from "@/lib/graphql/billing-transfer";
 import { listBillingTransferRunItemsGraphQL } from "@/lib/graphql/billing-transfer";
+import { billingTransferResultKey, markResultSeen, watchResult } from "@/lib/watched-results";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { AnimatePresence, m, useReducedMotionConfig } from "motion/react";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -16,11 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
+import { cn } from "@trenova/shared/lib/utils";
 import { Download01Icon, RefreshCcw01Icon, Send01Icon } from "@trenova/shared/components/icons";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { billingTransferCandidatesQuery } from "../../billing-queue-queries";
 import { BulkBillingTransferCandidates } from "./bulk-billing-transfer-candidates";
 import { BulkBillingTransferRunSkeleton } from "./bulk-billing-transfer-dialog-skeleton";
@@ -38,6 +42,9 @@ import { useBulkBillingTransfer } from "./use-bulk-billing-transfer";
 const EMPTY_FILTERS: BillingTransferCandidateFilters = { query: "", status: null };
 
 const REPORT_PAGE_SIZE = 250;
+
+/** The stage folding away and the results opening in its place: one eased height change each. */
+const HANDOVER = { duration: 0.56, ease: [0.65, 0, 0.35, 1] } as const;
 
 type BulkBillingTransferDialogProps = {
   open: boolean;
@@ -83,6 +90,35 @@ export function BulkBillingTransferDialog({
   const showPicker = !runId && !run;
   const finished = run !== null && isRunTerminal(run);
 
+  // A run that finishes while its stage is on screen keeps the stage until the last bill
+  // lands, then hands over to the results. A run that had already finished when the dialog
+  // opened goes straight to its results.
+  const [stagedRunId, setStagedRunId] = useState<string | null>(null);
+  const [settledRunId, setSettledRunId] = useState<string | null>(null);
+  if (open && run !== null && !finished && stagedRunId !== run.id) {
+    setStagedRunId(run.id);
+  }
+  const staged = run !== null && stagedRunId === run.id;
+  const act: "stage" | "results" | null =
+    run === null ? null : !finished || (staged && settledRunId !== run.id) ? "stage" : "results";
+  const activeRunId = run?.id ?? null;
+  const handOver = useCallback(() => setSettledRunId(activeRunId), [activeRunId]);
+  // While the dialog shows a run, the run's finished notice is not news: it waits, and is
+  // dropped once the results are on screen. Closing before then lets it through.
+  useEffect(() => {
+    if (!open || activeRunId === null) return;
+    return watchResult(billingTransferResultKey(activeRunId));
+  }, [open, activeRunId]);
+
+  useEffect(() => {
+    if (open && act === "results" && activeRunId !== null) {
+      markResultSeen(billingTransferResultKey(activeRunId));
+    }
+  }, [open, act, activeRunId]);
+
+  const reduceMotion = useReducedMotionConfig() ?? false;
+  const handover = reduceMotion ? { duration: 0 } : HANDOVER;
+
   const candidatesQuery = useInfiniteQuery({
     ...billingTransferCandidatesQuery(listFilters),
     enabled: open && showPicker,
@@ -121,6 +157,7 @@ export function BulkBillingTransferDialog({
         setFilters(EMPTY_FILTERS);
         setSelectedIds(new Set());
         setConfirmingAll(false);
+        setStagedRunId(null);
       }
     },
     [onOpenChange],
@@ -158,6 +195,8 @@ export function BulkBillingTransferDialog({
         buildBulkBillingTransferReportCsv(rows, t),
         exportFilename("billing-transfer-report"),
       );
+    } catch {
+      toast.error(t("The transfer report could not be downloaded. Try again."));
     } finally {
       setDownloading(false);
     }
@@ -176,49 +215,83 @@ export function BulkBillingTransferDialog({
         <DialogHeader>
           <DialogTitle>{t("Transfer to billing")}</DialogTitle>
           <DialogDescription>
-            {t(
-              "Each shipment runs the billing readiness check before it moves into the queue. Completed shipments that pass are marked Ready to Invoice first.",
-            )}
+            {act === "stage"
+              ? t(
+                  "The transfer runs in the background. You can close this window and you'll be notified when it finishes.",
+                )
+              : act === "results"
+                ? t("What moved into the billing queue, and what is still holding the rest back.")
+                : t(
+                    "Each shipment runs the billing readiness check before it moves into the queue. Completed shipments that pass are marked Ready to Invoice first.",
+                  )}
           </DialogDescription>
         </DialogHeader>
+
+        {startError ? (
+          <Alert variant="destructive" size="sm">
+            <AlertTitle>
+              {finished
+                ? t("The retry could not be started")
+                : t("The transfer could not be started")}
+            </AlertTitle>
+            {startError instanceof Error && startError.message ? (
+              <AlertDescription>{startError.message}</AlertDescription>
+            ) : null}
+          </Alert>
+        ) : null}
 
         {run === null ? (
           loadingRun ? (
             <BulkBillingTransferRunSkeleton />
           ) : (
-            <>
-              {startError ? (
-                <Alert variant="destructive" size="sm">
-                  <AlertTitle>{t("The transfer could not be started")}</AlertTitle>
-                  {startError instanceof Error && startError.message ? (
-                    <AlertDescription>{startError.message}</AlertDescription>
-                  ) : null}
-                </Alert>
-              ) : null}
-              <BulkBillingTransferCandidates
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                candidates={candidates}
-                totalCount={totalCount}
-                totalCountExact={totalCountExact}
-                isLoading={candidatesQuery.isPending || isReattaching}
-                isError={candidatesQuery.isError}
-                onRetryLoad={() => void candidatesQuery.refetch()}
-                hasNextPage={candidatesQuery.hasNextPage}
-                isFetchingNextPage={candidatesQuery.isFetchingNextPage}
-                onLoadMore={() => void candidatesQuery.fetchNextPage()}
-                selectedIds={selectedIds}
-                onSelectionChange={handleSelectionChange}
-              />
-            </>
+            <BulkBillingTransferCandidates
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              candidates={candidates}
+              totalCount={totalCount}
+              totalCountExact={totalCountExact}
+              isLoading={candidatesQuery.isPending || isReattaching}
+              isError={candidatesQuery.isError}
+              onRetryLoad={() => void candidatesQuery.refetch()}
+              hasNextPage={candidatesQuery.hasNextPage}
+              isFetchingNextPage={candidatesQuery.isFetchingNextPage}
+              onLoadMore={() => void candidatesQuery.fetchNextPage()}
+              selectedIds={selectedIds}
+              onSelectionChange={handleSelectionChange}
+            />
           )
-        ) : finished ? (
-          <BulkBillingTransferResults run={run} />
-        ) : (
-          <BulkBillingTransferProgress run={run} />
-        )}
+        ) : null}
 
-        <DialogFooter className="flex-wrap items-center gap-2 sm:justify-between">
+        <AnimatePresence mode="wait" initial={false}>
+          {run !== null && act === "stage" ? (
+            <m.div
+              key={`stage-${run.id}`}
+              className="overflow-hidden"
+              exit={{ height: 0, opacity: 0 }}
+              transition={handover}
+            >
+              <BulkBillingTransferProgress run={run} onSettled={handOver} />
+            </m.div>
+          ) : null}
+          {run !== null && act === "results" ? (
+            <m.div
+              key={`results-${run.id}`}
+              className="flex min-h-0 flex-col overflow-hidden"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              transition={handover}
+            >
+              <BulkBillingTransferResults run={run} animateIn={staged} />
+            </m.div>
+          ) : null}
+        </AnimatePresence>
+
+        <DialogFooter
+          className={cn(
+            "flex-wrap items-center gap-2",
+            act === "stage" ? "sm:justify-end" : "sm:justify-between",
+          )}
+        >
           {loadingRun ? null : showPicker && confirmingAll && totalCount !== null ? (
             <>
               <div className="flex flex-col text-xs">
@@ -279,7 +352,7 @@ export function BulkBillingTransferDialog({
                 </Button>
               </div>
             </>
-          ) : finished ? (
+          ) : act === "results" && run !== null ? (
             <>
               <Button
                 variant="outline"
@@ -303,21 +376,16 @@ export function BulkBillingTransferDialog({
               </div>
             </>
           ) : (
-            <>
-              <span className="text-muted-foreground text-xs">
-                {t("This transfer keeps running if you close this window.")}
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={stop}
-                  disabled={isStopping || isRunStopping(run)}
-                >
-                  {isRunStopping(run) ? t("Stopping after this batch...") : t("Stop")}
-                </Button>
-                <Button onClick={() => handleOpenChange(false)}>{t("Run in background")}</Button>
-              </div>
-            </>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={stop}
+                disabled={finished || isStopping || isRunStopping(run)}
+              >
+                {isRunStopping(run) ? t("Stopping after this batch...") : t("Stop transfer")}
+              </Button>
+              <Button onClick={() => handleOpenChange(false)}>{t("Run in background")}</Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>

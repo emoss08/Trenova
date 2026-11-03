@@ -18,6 +18,7 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "billingtransfer",
 	Objects: []*gqlexec.Object{
+		{Name: "BillingTransferFailureCount", Implementors: []string{"BillingTransferFailureCount"}},
 		{Name: "BillingTransferRequirement", Implementors: []string{"BillingTransferRequirement"}},
 		{Name: "BillingTransferRun", Implementors: []string{"BillingTransferRun"}},
 		{Name: "BillingTransferRunItem", Implementors: []string{"BillingTransferRunItem"}},
@@ -26,11 +27,44 @@ var Shard = &gqlexec.Shard{
 		{Name: "BillingTransferValidation", Implementors: []string{"BillingTransferValidation"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "BillingTransferFailureCount", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*billingtransfer.FailureCount)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentBillingTransferFailureCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*billingtransfer.FailureCount)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "retryable",
+				NonNull:  true,
+				IsMethod: true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*billingtransfer.FailureCount)
+					return obj.Retryable(), nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "BillingTransferRequirement", Fields: []*gqlexec.Field{
 			{
 				Name:     "documentTypeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*billingtransfer.MissingRequirement)
 					return obj.DocumentTypeID, nil
@@ -40,7 +74,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentTypeCode",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*billingtransfer.MissingRequirement)
 					return obj.DocumentTypeCode, nil
@@ -50,7 +84,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "documentTypeName",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*billingtransfer.MissingRequirement)
 					return obj.DocumentTypeName, nil
@@ -62,7 +96,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.ID, nil
@@ -72,7 +106,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.Status, nil
@@ -82,7 +116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scope",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.Scope, nil
@@ -92,7 +126,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billType",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.BillType, nil
@@ -102,7 +136,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "markCompletedReadyToInvoice",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.MarkCompletedReadyToInvoice, nil
@@ -111,7 +145,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "searchQuery",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.SearchQuery, nil
@@ -120,7 +154,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "shipmentStatus",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.ShipmentStatus, nil
@@ -129,7 +163,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sourceRunId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.SourceRunID, nil
@@ -139,7 +173,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requestedById",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.RequestedByID, nil
@@ -149,7 +183,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.TotalCount, nil
@@ -159,7 +193,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "processedCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.ProcessedCount, nil
@@ -169,7 +203,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "transferredCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.TransferredCount, nil
@@ -179,7 +213,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notTransferredCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.NotTransferredCount, nil
@@ -189,7 +223,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "skippedCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.SkippedCount, nil
@@ -199,7 +233,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "markedReadyToInvoiceCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.MarkedReadyToInvoiceCount, nil
@@ -209,7 +243,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "retryableCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.RetryableCount, nil
@@ -219,7 +253,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unmatchedCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.UnmatchedCount, nil
@@ -227,8 +261,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
+				Name:      "failureCounts",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BillingTransferFailureCount",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.BillingTransferRun)
+					return obj.FailureCounts, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBillingTransferFailureCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCountᚄ),
+			},
+			{
 				Name:     "failureMessage",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.FailureMessage, nil
@@ -237,7 +282,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "cancelRequestedAt",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.CancelRequestedAt, nil
@@ -246,7 +291,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "cancelRequestedById",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.CancelRequestedByID, nil
@@ -256,7 +301,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "queuedAt",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.QueuedAt, nil
@@ -265,7 +310,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "startedAt",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.StartedAt, nil
@@ -274,7 +319,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedAt",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.CompletedAt, nil
@@ -284,7 +329,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.CreatedAt, nil
@@ -294,7 +339,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRun)
 					return obj.UpdatedAt, nil
@@ -306,7 +351,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.ID, nil
@@ -316,7 +361,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.RunID, nil
@@ -326,7 +371,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.ShipmentID, nil
@@ -336,7 +381,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sequence",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.Sequence, nil
@@ -345,7 +390,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proNumber",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.ProNumber, nil
@@ -355,7 +400,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.Status, nil
@@ -364,7 +409,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "failureCode",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.FailureCode, nil
@@ -373,7 +418,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "errorMessage",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.ErrorMessage, nil
@@ -383,7 +428,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "markedReadyToInvoice",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.MarkedReadyToInvoice, nil
@@ -392,7 +437,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billingQueueItemId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.BillingQueueItemID, nil
@@ -401,7 +446,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "billingQueueNumber",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.BillingQueueNumber, nil
@@ -441,7 +486,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "processedAt",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.ProcessedAt, nil
@@ -451,7 +496,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItem)
 					return obj.CreatedAt, nil
@@ -485,7 +530,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItemConnection)
 					return obj.TotalCount, nil
@@ -495,7 +540,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItemConnection)
 					return obj.TotalCountExact, nil
@@ -518,7 +563,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.BillingTransferRunItemEdge)
 					return obj.Cursor, nil
@@ -530,7 +575,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "field",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*billingtransfer.ValidationFailure)
 					return obj.Field, nil
@@ -540,7 +585,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "code",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*billingtransfer.ValidationFailure)
 					return obj.Code, nil
@@ -550,7 +595,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "message",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*billingtransfer.ValidationFailure)
 					return obj.Message, nil
@@ -664,17 +709,17 @@ type QueryResolver interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type String does not have child fields")
-	errNoChild1  = errors.New("field of type ID does not have child fields")
-	errNoChild2  = errors.New("field of type BillingTransferRunStatus does not have child fields")
-	errNoChild3  = errors.New("field of type BillingTransferRunScope does not have child fields")
-	errNoChild4  = errors.New("field of type BillType does not have child fields")
-	errNoChild5  = errors.New("field of type Boolean does not have child fields")
-	errNoChild6  = errors.New("field of type ShipmentStatus does not have child fields")
-	errNoChild7  = errors.New("field of type Int does not have child fields")
-	errNoChild8  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild9  = errors.New("field of type BillingTransferItemStatus does not have child fields")
-	errNoChild10 = errors.New("field of type ShipmentBillingTransferFailureCode does not have child fields")
+	errNoChild0  = errors.New("field of type ShipmentBillingTransferFailureCode does not have child fields")
+	errNoChild1  = errors.New("field of type Int does not have child fields")
+	errNoChild2  = errors.New("field of type Boolean does not have child fields")
+	errNoChild3  = errors.New("field of type String does not have child fields")
+	errNoChild4  = errors.New("field of type ID does not have child fields")
+	errNoChild5  = errors.New("field of type BillingTransferRunStatus does not have child fields")
+	errNoChild6  = errors.New("field of type BillingTransferRunScope does not have child fields")
+	errNoChild7  = errors.New("field of type BillType does not have child fields")
+	errNoChild8  = errors.New("field of type ShipmentStatus does not have child fields")
+	errNoChild9  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild10 = errors.New("field of type BillingTransferItemStatus does not have child fields")
 	errNoChild11 = errors.New("field of type BillingQueueStatus does not have child fields")
 )
 
@@ -770,7 +815,7 @@ func unmarshalInputBillingTransferRunItemsFilterInput(ctx context.Context, ec *g
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"statuses"}
+	fieldsInOrder := [...]string{"statuses", "failureCodes"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -784,6 +829,13 @@ func unmarshalInputBillingTransferRunItemsFilterInput(ctx context.Context, ec *g
 				return it, err
 			}
 			it.Statuses = data
+		case "failureCodes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("failureCodes"))
+			data, err := unmarshalOShipmentBillingTransferFailureCode2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCodeᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.FailureCodes = data
 		}
 	}
 	return it, nil
@@ -886,6 +938,12 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNShipmentBillingTransferFailureCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode(ctx context.Context, ec *gqlexec.Exec, v any) (billingtransfer.FailureCode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := billingtransfer.FailureCode(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNStartBillingTransferRunInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStartBillingTransferRunInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.StartBillingTransferRunInput, error) {
 	res, err := unmarshalInputStartBillingTransferRunInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -930,6 +988,13 @@ func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
+func unmarshalOShipmentBillingTransferFailureCode2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCodeᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]billingtransfer.FailureCode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNShipmentBillingTransferFailureCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode)
+}
+
 func unmarshalOShipmentStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.ShipmentStatus, error) {
 	if v == nil {
 		return nil, nil
@@ -953,6 +1018,22 @@ func marshalNBillType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbi
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNBillingTransferFailureCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*billingtransfer.FailureCount) graphql.Marshaler {
+	return gqlexec.List[*billingtransfer.FailureCount]{
+		Elem:        marshalNBillingTransferFailureCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCount,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNBillingTransferFailureCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *billingtransfer.FailureCount) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "BillingTransferFailureCount", v)
 }
 
 func marshalNBillingTransferItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.ItemStatus) graphql.Marshaler {
@@ -1081,6 +1162,14 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
+}
+
+func marshalNShipmentBillingTransferFailureCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋbillingtransferᚐFailureCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v billingtransfer.FailureCode) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

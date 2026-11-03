@@ -6,6 +6,7 @@ import type { DockAction } from "@trenova/shared/types/data-table";
 import { ChevronDownIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m } from "motion/react";
 import { useCallback, useState } from "react";
+import { SELECTION_DOCK_STEP_PX, useSelectionDockSlot } from "./selection-dock-stack";
 import {
   Command,
   CommandGroup,
@@ -34,7 +35,8 @@ type SelectionDockProps<TData> = {
  * The floating bar that appears over a list once rows are selected: how many,
  * a way to clear them, and what can be done to all of them at once. Data
  * tables and the billing work lists share it, so a bulk action looks and
- * behaves the same wherever it is offered.
+ * behaves the same wherever it is offered. Two lists with selections show two
+ * docks, one above the other.
  */
 export function SelectionDock<TData>({
   selectedCount,
@@ -44,6 +46,7 @@ export function SelectionDock<TData>({
   onClearSelection,
 }: SelectionDockProps<TData>) {
   const t = useT();
+  const slot = useSelectionDockSlot(selectedCount > 0);
 
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const [openSelectId, setOpenSelectId] = useState<string | null>(null);
@@ -117,8 +120,8 @@ export function SelectionDock<TData>({
     <AnimatePresence>
       {selectedCount > 0 && (
         <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 20 - slot * SELECTION_DOCK_STEP_PX }}
+          animate={{ opacity: 1, y: -slot * SELECTION_DOCK_STEP_PX }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"

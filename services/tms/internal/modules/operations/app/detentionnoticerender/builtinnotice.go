@@ -30,11 +30,9 @@ func RenderBuiltInNotice(
 	ctx context.Context,
 	p *BuildNoticeParams,
 ) (NoticeContent, error) {
-	// No repositories: branding is skipped, which is right here. A built-in
-	// render has no organization to take a letterhead from.
-	builder := &ContextBuilder{}
-
-	data, err := builder.BuildFrom(ctx, &NoticeContextParams{
+	// The occurrence context alone, with no letterhead: a built-in render has no
+	// organization to take one from.
+	data := occurrenceContext(&NoticeContextParams{
 		Occurrence:    p.Occurrence,
 		Kind:          p.Kind,
 		FacilityName:  p.FacilityName,
@@ -43,9 +41,6 @@ func RenderBuiltInNotice(
 		ArrivalSource: p.ArrivalSource,
 		Location:      p.Location,
 	})
-	if err != nil {
-		return NoticeContent{}, err
-	}
 
 	starter, err := starters.For(documenttemplate.KindDetentionNoticeEmail)
 	if err != nil {

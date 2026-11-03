@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	sdkinterceptor "go.temporal.io/sdk/interceptor"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +30,8 @@ func TestBuildWorkerInterceptorChain_BothDisabled(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 1)
+	require.Len(t, chain, 2)
+	assertRefusalLast(t, chain)
 	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
 	assert.True(t, isTenantScope)
 }
@@ -52,7 +54,8 @@ func TestBuildWorkerInterceptorChain_LoggingOnly(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
+	assertRefusalLast(t, chain)
 	_, ok := chain[1].(*LoggingInterceptor)
 	assert.True(t, ok)
 }
@@ -77,7 +80,8 @@ func TestBuildWorkerInterceptorChain_MetricsOnly(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
+	assertRefusalLast(t, chain)
 	_, ok := chain[1].(*MetricsInterceptor)
 	assert.True(t, ok)
 }
@@ -103,7 +107,8 @@ func TestBuildWorkerInterceptorChain_BothEnabled(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
+	assertRefusalLast(t, chain)
 	_, ok := chain[1].(*MetricsInterceptor)
 	assert.True(t, ok)
 	_, ok = chain[2].(*LoggingInterceptor)
@@ -130,7 +135,8 @@ func TestBuildWorkerInterceptorChain_MetricsDisabledViaHandler(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 1)
+	require.Len(t, chain, 2)
+	assertRefusalLast(t, chain)
 	_, isTenantScope := chain[0].(*TenantScopeInterceptor)
 	assert.True(t, isTenantScope)
 }
@@ -153,7 +159,8 @@ func TestBuildWorkerInterceptorChain_DefaultLogLevel(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
+	assertRefusalLast(t, chain)
 	loggingInt, ok := chain[1].(*LoggingInterceptor)
 	require.True(t, ok)
 	assert.Equal(t, "info", loggingInt.logLevel)
@@ -243,7 +250,8 @@ func TestBuildWorkerInterceptorChain_OrderMetricsThenLogging(t *testing.T) {
 		MetricsHandler: metricsHandler,
 	})
 
-	require.Len(t, chain, 3)
+	require.Len(t, chain, 4)
+	assertRefusalLast(t, chain)
 
 	_, firstIsMetrics := chain[1].(*MetricsInterceptor)
 	assert.True(t, firstIsMetrics)
@@ -270,7 +278,15 @@ func TestBuildWorkerInterceptorChain_NilNilMetricsHandler(t *testing.T) {
 		MetricsHandler: nil,
 	})
 
-	require.Len(t, chain, 2)
+	require.Len(t, chain, 3)
+	assertRefusalLast(t, chain)
 	_, ok := chain[1].(*LoggingInterceptor)
 	assert.True(t, ok)
+}
+
+func assertRefusalLast(t *testing.T, chain []sdkinterceptor.WorkerInterceptor) {
+	t.Helper()
+
+	_, ok := chain[len(chain)-1].(*RefusalInterceptor)
+	assert.True(t, ok, "the refusal interceptor runs innermost, beside the activity")
 }

@@ -89,13 +89,7 @@ describe("invoice empty states", () => {
   });
 
   it("draws the invoice it is waiting to show when nothing is open", () => {
-    renderWithin(
-      <InvoiceDetailPane
-        selectedInvoiceId={null}
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-      />,
-    );
+    renderWithin(<InvoiceDetailPane selectedInvoiceId={null} onDocumentSelect={vi.fn()} />);
 
     expect(screen.getByText("Nothing open")).toBeInTheDocument();
     expect(screen.getByText(/Pick an invoice/)).toBeInTheDocument();

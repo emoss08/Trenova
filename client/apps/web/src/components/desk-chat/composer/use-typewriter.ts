@@ -8,8 +8,10 @@ const GAP_MS = 300;
 type Typing = { index: number; shown: number; erasing: boolean };
 
 /**
- * Types each line in turn, holds it, erases it and moves to the next, for as
- * long as it is active. Returns what is on screen and the line it belongs to.
+ * Types each line in turn, holds it, erases it and moves to the next, once
+ * through the list, then rests on the last line: an empty composer is not work,
+ * so its placeholder does not keep typing. Returns what is on screen and the line
+ * it belongs to.
  */
 export function useTypewriter(lines: readonly string[], active: boolean) {
   const [state, setState] = useState<Typing>({ index: 0, shown: 0, erasing: false });
@@ -19,6 +21,10 @@ export function useTypewriter(lines: readonly string[], active: boolean) {
 
   useEffect(() => {
     if (!active || count === 0) {
+      return;
+    }
+    // The last line, typed out, is where it rests.
+    if (!state.erasing && state.index >= count - 1 && state.shown === full.length) {
       return;
     }
     let delay = state.erasing ? ERASE_MS : TYPE_MS;
@@ -46,5 +52,13 @@ export function useTypewriter(lines: readonly string[], active: boolean) {
     return () => window.clearTimeout(timer);
   }, [active, count, full.length, state]);
 
-  return { text: full.slice(0, state.shown), full, index, done: state.shown === full.length };
+  const done = state.shown === full.length;
+  return {
+    text: full.slice(0, state.shown),
+    full,
+    index,
+    done,
+    /** The last line is typed out and stays: nothing moves any more, the caret included. */
+    resting: count > 0 && done && !state.erasing && state.index >= count - 1,
+  };
 }

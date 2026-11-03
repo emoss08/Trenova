@@ -310,6 +310,8 @@ func (r *repository) UpdateInvoiceDetails(
 			bq.PaymentTerm,
 			bq.InvoiceDate,
 			bq.PacketDocumentIDs,
+			bq.PacketPicked,
+			bq.PacketPageRotations,
 		); err != nil {
 			return nil, itemErrors.Map(err, entity.ID.String())
 		}
@@ -569,6 +571,33 @@ func (r *repository) ExistsByShipmentPayerAndType(
 			bq.BillType.Eq(billType),
 			bq.Status.Ne(billingqueue.StatusCanceled),
 		).Exists(ctx, r.db.Keel(ctx))
+	})
+}
+
+func (r *repository) SetPacketDocuments(
+	ctx context.Context,
+	req *billingqueueports.SetPacketDocumentsRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		bq := billingqueuedb.BillingQueueItems
+		packet := req.Packet
+		if packet == nil {
+			packet = []pulid.ID{}
+		}
+		rotations := req.Rotations
+		if rotations == nil {
+			rotations = []billingqueue.PacketPageRotation{}
+		}
+		n, err := bq.Where(bq.ID.Eq(req.ItemID), bq.Version.Eq(req.Version)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			bq.PacketDocumentIDs.To(packet),
+			bq.PacketPageRotations.To(rotations),
+		)
+		if err != nil {
+			return false, itemErrors.Map(err, req.ItemID.String())
+		}
+		return n > 0, nil
 	})
 }
 

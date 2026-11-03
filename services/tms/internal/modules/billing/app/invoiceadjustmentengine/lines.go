@@ -50,7 +50,7 @@ func (s *Engine) validateAttachments(
 		return
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 		IDs:        req.AttachmentIDs,
 		TenantInfo: req.TenantInfo,
 	})
@@ -143,7 +143,7 @@ func (s *Engine) BuildDocumentReferences(
 		return nil, nil
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 		IDs:        documentIDs,
 		TenantInfo: tenantInfo,
 	})

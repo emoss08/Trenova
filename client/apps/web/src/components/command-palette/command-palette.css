@@ -6,12 +6,6 @@
   spends.
 */
 
-@property --cp-ang {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .cp-dialog[data-open] {
   animation: cp-in 280ms var(--ease-settle) both;
 }
@@ -32,8 +26,7 @@
   isolation: isolate;
 }
 
-.cp-spectrum::before {
-  content: "";
+.cp-spectrum-ring {
   position: absolute;
   inset: -1px;
   z-index: -1;
@@ -50,8 +43,8 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  background: conic-gradient(
-    from var(--cp-ang),
+  /* The gradient turns in ui-spin-ring's ::before, behind this static mask. */
+  --spin-gradient: conic-gradient(
     transparent 0deg,
     transparent 150deg,
     oklch(0.72 0.15 225 / 0.5) 190deg,
@@ -62,17 +55,16 @@
     oklch(0.85 0.17 85) 342deg,
     transparent 360deg
   );
-  animation: cp-ang 2.6s linear infinite;
+  --spin-duration: 2.6s;
 }
 
-.cp-spectrum[data-busy="true"]::before {
+.cp-spectrum[data-busy="true"] .cp-spectrum-ring {
   opacity: 1;
 }
 
-@keyframes cp-ang {
-  to {
-    --cp-ang: 360deg;
-  }
+/* A ring nobody can see does not turn. */
+.cp-spectrum:not([data-busy="true"]) .cp-spectrum-ring::before {
+  animation-play-state: paused;
 }
 
 .cp-grow-x {

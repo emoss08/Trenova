@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
@@ -792,6 +793,14 @@ func (g *Ledger) Write(ctx context.Context, tx *keel.DB, rows *Rows) error {
 		func(r *customerledger.CustomerLedgerEntry) volumegen.Stamp {
 			return volumegen.Stamp{Id: r.ID, Created: r.CreatedAt}
 		}, true); err != nil {
+		return err
+	}
+
+	itemIDs := make([]pulid.ID, 0, len(rows.Items))
+	for _, item := range rows.Items {
+		itemIDs = append(itemIDs, item.ID)
+	}
+	if err := billingqueueprojection.Refresh(ctx, tx, itemIDs...); err != nil {
 		return err
 	}
 

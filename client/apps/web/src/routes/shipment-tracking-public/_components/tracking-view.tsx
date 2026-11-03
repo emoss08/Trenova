@@ -87,7 +87,7 @@ export function TrackingTopBar({
       {mode?.kind === "link" && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <span className="relative flex size-2">
-            <span className="st-halo absolute inset-0 animate-live-ping rounded-full" />
+            <span className="st-halo absolute -inset-0.75 rounded-full" />
             <span className="st-dot relative size-2 rounded-full" />
           </span>
           <span className="ml-1.5 hidden tabular-nums sm:inline">

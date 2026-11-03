@@ -395,6 +395,7 @@ func (s *Service) planShipmentDrafts(
 				OffCycleReason:     offCycleReasonFor(cus, req.OffCycleReason),
 			},
 			anchor,
+			draftToCreate,
 		)
 		if draftErr != nil {
 			return nil, draftErr

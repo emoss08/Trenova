@@ -128,9 +128,8 @@ describe("ProposalSheet", () => {
     );
 
     await userEvent.click(await screen.findByRole("button", { name: "Open the run" }));
-    expect(
-      await screen.findByRole("complementary", { name: "Looked at the held invoices" }),
-    ).toBeTruthy();
+    const sheet = await screen.findByRole("complementary", { name: "Assistant chat" });
+    expect(within(sheet).getByText("Looked at the held invoices")).toBeTruthy();
     expect(fetchAgentRunDetail).toHaveBeenCalledWith("arun_1", expect.anything());
   });
 });

@@ -27,7 +27,6 @@ export function ActivityHero({
   return (
     <Hero
       context={t("Activity")}
-      working={facts.working > 0}
       control={
         pending > 0 && (
           <>

@@ -7617,6 +7617,16 @@ input BillingQueueUpdateStatusInput {
   status: BillingQueueStatus!
 }
 
+"""How many of a run's shipments one reason held back."""
+type BillingTransferFailureCount {
+  code: ShipmentBillingTransferFailureCode!
+  count: Int!
+  """
+  Whether a retry could move these shipments once the reason is dealt with.
+  """
+  retryable: Boolean!
+}
+
 enum BillingTransferItemStatus {
   NotTransferred
   """Not reached yet."""
@@ -7644,6 +7654,10 @@ type BillingTransferRun {
   cancelRequestedById: ID
   completedAt: Timestamp
   createdAt: Timestamp!
+  """
+  How many shipments each reason held back, most first. Refreshed with the other counts after every batch.
+  """
+  failureCounts: [BillingTransferFailureCount!]!
   """
   Why the run as a whole stopped. A shipment's own reason lives on its item.
   """
@@ -7723,6 +7737,8 @@ type BillingTransferRunItemEdge {
 }
 
 input BillingTransferRunItemsFilterInput {
+  """Only shipments held back for one of these reasons."""
+  failureCodes: [ShipmentBillingTransferFailureCode!]
   statuses: [BillingTransferItemStatus!]
 }
 
@@ -31614,7 +31630,13 @@ type ShipmentWatchlist {
 }
 
 input ShipmentsInput {
+  """The end of the activity window; see activityWindowStart."""
   activityWindowEnd: Timestamp
+  """
+  With activityWindowEnd, only shipments active in the window: a live stop is due to
+  start before it ends and a live stop is due to end after it starts. A load that picks
+  up before the window and delivers after it counts, though no stop falls inside.
+  """
   activityWindowStart: Timestamp
   after: String
   """

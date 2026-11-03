@@ -172,6 +172,7 @@ func (r *QueryResolver) BillingTransferRunItems(ctx context.Context, runID strin
 	}
 	if filter != nil {
 		req.Statuses = append(req.Statuses, filter.Statuses...)
+		req.FailureCodes = append(req.FailureCodes, filter.FailureCodes...)
 	}
 
 	result, err := r.BillingTransferService.ListRunItems(ctx, req)

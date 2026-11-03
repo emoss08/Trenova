@@ -66,12 +66,10 @@ type DetailTab = "charges" | "shipment" | "documents" | "invoice" | "activity";
 
 export default function BillingQueueDetailPane({
   selectedItemId,
-  selectedDocumentId,
   onDocumentSelect,
   onAutoAdvance,
 }: {
   selectedItemId: string | null;
-  selectedDocumentId?: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
   onAutoAdvance?: () => void;
 }) {
@@ -120,7 +118,6 @@ export default function BillingQueueDetailPane({
               item={item}
               tab={tab}
               onTabChange={setTab}
-              selectedDocumentId={selectedDocumentId ?? null}
               onDocumentSelect={onDocumentSelect}
             />
           </div>
@@ -315,13 +312,11 @@ function DetailTabs({
   item,
   tab,
   onTabChange,
-  selectedDocumentId,
   onDocumentSelect,
 }: {
   item: BillingQueueItem;
   tab: DetailTab;
   onTabChange: (tab: DetailTab) => void;
-  selectedDocumentId: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
 }) {
   const t = useT();
@@ -367,18 +362,18 @@ function DetailTabs({
         <TabsContent value="documents" className="mt-4">
           <BillingQueueDocumentsTab
             shipmentId={shipmentId}
-            selectedDocumentId={selectedDocumentId}
             onDocumentSelect={onDocumentSelect}
             isEditable={item.status === "InReview"}
-            customerName={item.billToCustomer?.name ?? item.shipment?.customer?.name}
             onRequestFromDriver={() => void bulk.start("RequestPaperwork", [item.id])}
             packet={
               item.billType === "Invoice"
                 ? {
                     documentIds: item.packetDocumentIds,
+                    picked: item.packetPicked,
                     editable,
                     itemId: item.id,
-                    onChange: (packetDocumentIds) => void save({ packetDocumentIds }),
+                    onChange: (packetDocumentIds) =>
+                      save({ packetDocumentIds, packetPicked: true }),
                   }
                 : undefined
             }

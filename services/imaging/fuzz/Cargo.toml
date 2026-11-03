@@ -1,6 +1,10 @@
 # cargo-fuzz targets for the imaging worker's own parsers: the image decoders (format
-# sniffing, the pixel budget, EXIF orientation) and the job a child decodes. Outside the
-# services workspace; run with `cargo +nightly fuzz run image_decode -- -max_total_time=60`.
+# sniffing, the pixel budget, EXIF orientation), the job a child decodes, and PDFium behind
+# the engine (probe, render, assemble with arbitrary ranges and turns). Outside the services
+# workspace; run with `cargo +nightly fuzz run image_decode -- -max_total_time=60`. The PDF
+# targets load PDFium from `TRENOVA_PDFIUM_LIBRARY` and take `../tests/fixtures` as seeds:
+# `cargo +nightly fuzz run pdf_probe corpus/pdf_probe ../tests/fixtures`; `pdf_assemble` takes
+# `seeds/pdf_assemble`, fixtures behind the twelve bytes that choose its ranges.
 [package]
 name = "trenova-imaging-fuzz"
 version = "0.0.0"
@@ -15,6 +19,7 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 prost = "0.14"
 trenova-imaging = { path = ".." }
+trenova-proto = { path = "../../crates/proto" }
 
 [workspace]
 
@@ -35,6 +40,27 @@ bench = false
 [[bin]]
 name = "worker_job"
 path = "fuzz_targets/worker_job.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pdf_probe"
+path = "fuzz_targets/pdf_probe.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pdf_render"
+path = "fuzz_targets/pdf_render.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pdf_assemble"
+path = "fuzz_targets/pdf_assemble.rs"
 test = false
 doc = false
 bench = false

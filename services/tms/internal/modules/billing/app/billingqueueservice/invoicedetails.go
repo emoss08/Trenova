@@ -2,9 +2,11 @@ package billingqueueservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -21,6 +23,7 @@ const (
 	maxPONumberLength    = 100
 	maxInvoiceMemoChars  = 2000
 	maxPacketDocuments   = 25
+	maxPacketRotations   = 500
 	shipmentResourceType = "shipment"
 )
 
@@ -48,7 +51,11 @@ func (s *Service) UpdateInvoiceDetails(
 	if multiErr := validateInvoiceDetails(req, packet); multiErr != nil {
 		return nil, multiErr
 	}
-	if err = s.ensurePacketDocuments(ctx, item, packet); err != nil {
+	if packet, err = s.ensurePacketDocuments(ctx, item, packet); err != nil {
+		return nil, err
+	}
+	rotations, err := packetRotations(req.PacketPageRotations, packet)
+	if err != nil {
 		return nil, err
 	}
 
@@ -57,7 +64,8 @@ func (s *Service) UpdateInvoiceDetails(
 	item.InvoiceMemo = strings.TrimSpace(req.InvoiceMemo)
 	item.PaymentTerm = req.PaymentTerm
 	item.InvoiceDate = req.InvoiceDate
-	item.PacketDocumentIDs = packet
+	item.PickPacket(packet, req.PacketPicked)
+	item.PacketPageRotations = rotations
 	if req.Version > 0 {
 		item.Version = req.Version
 	}
@@ -132,12 +140,12 @@ func (s *Service) ensurePacketDocuments(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	packet []pulid.ID,
-) error {
+) ([]pulid.ID, error) {
 	if len(packet) == 0 {
-		return nil
+		return packet, nil
 	}
 	if item.ShipmentID.IsNil() {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"packetDocumentIds",
 			errortypes.ErrInvalid,
 			"This item has no shipment documents to send",
@@ -153,9 +161,16 @@ func (s *Service) ensurePacketDocuments(
 		ResourceType: shipmentResourceType,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	return carriedPacket(packet, item.PacketDocumentIDs, docs)
+}
+
+func carriedPacket(
+	packet, carried []pulid.ID,
+	docs []*document.Document,
+) ([]pulid.ID, error) {
 	current := make(map[pulid.ID]struct{}, len(docs))
 	for _, doc := range docs {
 		if doc != nil && doc.IsCurrentVersion && doc.Status != document.StatusRejected &&
@@ -163,15 +178,83 @@ func (s *Service) ensurePacketDocuments(
 			current[doc.ID] = struct{}{}
 		}
 	}
+	kept := make([]pulid.ID, 0, len(packet))
 	for _, id := range packet {
-		if _, ok := current[id]; !ok {
-			return errortypes.NewValidationError(
-				"packetDocumentIds",
-				errortypes.ErrInvalid,
-				"Only the shipment's current documents can go in the invoice packet",
-			)
+		if _, ok := current[id]; ok {
+			kept = append(kept, id)
+			continue
 		}
+		if slices.Contains(carried, id) {
+			continue
+		}
+		return nil, errortypes.NewValidationError(
+			"packetDocumentIds",
+			errortypes.ErrInvalid,
+			"Only the shipment's current documents can go in the invoice packet",
+		)
 	}
 
-	return nil
+	return kept, nil
+}
+
+func packetRotations(
+	turns []billingqueue.PacketPageRotation,
+	packet []pulid.ID,
+) ([]billingqueue.PacketPageRotation, error) {
+	if len(turns) > maxPacketRotations {
+		return nil, errortypes.NewValidationError(
+			"packetPageRotations",
+			errortypes.ErrInvalid,
+			"A packet keeps at most {0} turned pages",
+			maxPacketRotations,
+		)
+	}
+	order := make(map[pulid.ID]int, len(packet))
+	for idx, id := range packet {
+		order[id] = idx
+	}
+	latest := make(map[billingqueue.PacketPageRotation]int, len(turns))
+	for _, turn := range turns {
+		rotation, ok := billingvocab.QuarterTurn(turn.Rotation)
+		if !ok {
+			return nil, errortypes.NewValidationError(
+				"packetPageRotations",
+				errortypes.ErrInvalid,
+				"Pages turn in quarter turns",
+			)
+		}
+		if turn.Page < 1 || turn.Page > billingvocab.MaxRotatedPage {
+			return nil, errortypes.NewValidationError(
+				"packetPageRotations",
+				errortypes.ErrInvalid,
+				"Choose a page from 1 to {0}",
+				billingvocab.MaxRotatedPage,
+			)
+		}
+		if _, carried := order[turn.DocumentID]; !carried {
+			continue
+		}
+		key := billingqueue.PacketPageRotation{DocumentID: turn.DocumentID, Page: turn.Page}
+		latest[key] = rotation
+	}
+
+	out := make([]billingqueue.PacketPageRotation, 0, len(latest))
+	for key, rotation := range latest {
+		if rotation == 0 {
+			continue
+		}
+		out = append(out, billingqueue.PacketPageRotation{
+			DocumentID: key.DocumentID,
+			Page:       key.Page,
+			Rotation:   rotation,
+		})
+	}
+	slices.SortFunc(out, func(a, b billingqueue.PacketPageRotation) int {
+		if byDocument := order[a.DocumentID] - order[b.DocumentID]; byDocument != 0 {
+			return byDocument
+		}
+		return a.Page - b.Page
+	})
+
+	return out, nil
 }

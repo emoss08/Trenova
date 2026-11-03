@@ -1952,6 +1952,8 @@ export type BillingTransferItemStatus =
   | 'Transferred';
 
 export type BillingTransferRunItemsFilterInput = {
+  /** Only shipments held back for one of these reasons. */
+  failureCodes?: Array<ShipmentBillingTransferFailureCode> | null | undefined;
   statuses?: Array<BillingTransferItemStatus> | null | undefined;
 };
 
@@ -8167,7 +8169,13 @@ export type ShipmentTransferToBillingInput = {
 };
 
 export type ShipmentsInput = {
+  /** The end of the activity window; see activityWindowStart. */
   activityWindowEnd?: number | null | undefined;
+  /**
+   * With activityWindowEnd, only shipments active in the window: a live stop is due to
+   * start before it ends and a live stop is due to end after it starts. A load that picks
+   * up before the window and delivers after it counts, though no stop falls inside.
+   */
   activityWindowStart?: number | null | undefined;
   after?: string | null | undefined;
   /** Only Completed or Ready to Invoice shipments that are not in the billing queue. */
@@ -11824,12 +11832,12 @@ export type BillingTransferRunQueryVariables = Exact<{
 }>;
 
 
-export type BillingTransferRunQuery = { billingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+export type BillingTransferRunQuery = { billingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null, failureCounts: Array<{ code: ShipmentBillingTransferFailureCode, count: number, retryable: boolean }> } };
 
 export type MyActiveBillingTransferRunQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyActiveBillingTransferRunQuery = { myActiveBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } | null };
+export type MyActiveBillingTransferRunQuery = { myActiveBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null, failureCounts: Array<{ code: ShipmentBillingTransferFailureCode, count: number, retryable: boolean }> } | null };
 
 export type BillingTransferRunItemsQueryVariables = Exact<{
   runId: string | number;
@@ -11846,21 +11854,21 @@ export type StartBillingTransferRunMutationVariables = Exact<{
 }>;
 
 
-export type StartBillingTransferRunMutation = { startBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+export type StartBillingTransferRunMutation = { startBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null, failureCounts: Array<{ code: ShipmentBillingTransferFailureCode, count: number, retryable: boolean }> } };
 
 export type CancelBillingTransferRunMutationVariables = Exact<{
   id: string | number;
 }>;
 
 
-export type CancelBillingTransferRunMutation = { cancelBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+export type CancelBillingTransferRunMutation = { cancelBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null, failureCounts: Array<{ code: ShipmentBillingTransferFailureCode, count: number, retryable: boolean }> } };
 
 export type RetryBillingTransferRunMutationVariables = Exact<{
   id: string | number;
 }>;
 
 
-export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
+export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null, failureCounts: Array<{ code: ShipmentBillingTransferFailureCode, count: number, retryable: boolean }> } };
 
 export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, withheldSections: Array<{ key: BriefingSectionKey, title: string, partial: boolean }>, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
 
@@ -18404,6 +18412,14 @@ export type NotifyShipmentDelayMutationVariables = Exact<{
 
 export type NotifyShipmentDelayMutation = { notifyShipmentDelay: boolean };
 
+export type ShipmentTimelineQueryVariables = Exact<{
+  input: ShipmentsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type ShipmentTimelineQuery = { shipments: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentScheduleFieldsFragment': ShipmentScheduleFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+
 export type CheckCallFieldsFragment = { id: string, shipmentId: string, shipmentMoveId: string, stopId: string | null, source: CheckCallSource, kind: CheckCallKind, reportedAt: number, receivedAt: number, latitude: number | null, longitude: number | null, city: string | null, stateCode: string | null, delayed: boolean, delayReason: string | null, estimatedArrival: number | null, note: string | null, contactName: string | null, reportedById: string | null, trackingEventId: string | null } & { ' $fragmentName'?: 'CheckCallFieldsFragment' };
 
 export type CarrierTrackingLinkFieldsFragment = { id: string, shipmentMoveId: string, carrierId: string, recipientEmail: string | null, expiresAt: number, lastUsedAt: number | null, createdById: string | null, createdAt: number } & { ' $fragmentName'?: 'CarrierTrackingLinkFieldsFragment' };
@@ -18601,7 +18617,7 @@ export type MapShipmentsQueryVariables = Exact<{
 }>;
 
 
-export type MapShipmentsQuery = { shipments: { totalCount: number | null, totalCountExact: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentFieldsFragment': ShipmentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
+export type MapShipmentsQuery = { shipments: { edges: Array<{ node: { ' $fragmentRefs'?: { 'ShipmentScheduleFieldsFragment': ShipmentScheduleFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'ShipmentPageInfoFieldsFragment': ShipmentPageInfoFieldsFragment } } } };
 
 export type ShipmentCommentsQueryVariables = Exact<{
   shipmentId: string | number;
@@ -18860,6 +18876,13 @@ export type ShipmentProfitabilityQueryVariables = Exact<{
 
 
 export type ShipmentProfitabilityQuery = { shipmentProfitability: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, revenue: string, estimatedCost: string, profit: string, marginPercent: string | null, revenuePerLoadedMile: string | null, breakEvenRpm: string | null, missingDistance: boolean, breakdown: Array<{ category: CostCategoryType, name: string, costBehavior: CostBehavior, ratePerMile: string, amount: string, effectiveSource: EffectiveRateSource }>, profile: { totalCpm: string, variableCpm: string, fixedCpm: string, targetMarginPercent: string | null, includeDeadheadMiles: boolean, asOfDate: string, fuel: { pricePerGallon: string | null, priceDate: string, fuelIndexId: string | null, milesPerGallon: string, source: EffectiveRateSource } | null, glWindow: { fromDate: number, toDate: number, fleetMiles: number, hasPostings: boolean } | null } } | null };
+
+export type ShipmentStopEtaFieldsFragment = { stopId: string | null, stops: Array<{ stopId: string, arrived: boolean, estimatedArrival: number | null, windowEnd: number | null, slackMinutes: number | null, driveMinutes: number }> } & { ' $fragmentName'?: 'ShipmentStopEtaFieldsFragment' };
+
+export type ShipmentScheduleFieldsFragment = { id: string, proNumber: string, bol: string | null, status: ShipmentStatus, stage: ShipmentStage, tenderStatus: ShipmentTenderStatus | null, actualDeliveryDate: number | null, customer: { id: string, name: string, code: string } | null, eta: (
+    { estimatedArrival: number | null, slackMinutes: number | null, verdict: EtaVerdict, reason: string | null }
+    & { ' $fragmentRefs'?: { 'ShipmentStopEtaFieldsFragment': ShipmentStopEtaFieldsFragment } }
+  ) | null, moves: Array<{ id: string | null, status: MoveStatus, sequence: number, distance: number | null, coverageType: MoveCoverageType, stops: Array<{ id: string | null, status: StopStatus, type: StopType, sequence: number, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null, location: { id: string, name: string, code: string, city: string, latitude: number | null, longitude: number | null, state: { id: string, abbreviation: string } | null } | null }>, assignment: { id: string | null, status: AssignmentStatus, tractorId: string | null, primaryWorkerId: string | null, tractor: { id: string, code: string } | null, primaryWorker: { id: string, firstName: string, lastName: string, wholeName: string } | null } | null, carrierAssignment: { id: string, status: CarrierAssignmentStatus, externalDriverName: string | null, carrier: { id: string, name: string, scac: string | null } | null } | null }> } & { ' $fragmentName'?: 'ShipmentScheduleFieldsFragment' };
 
 export type UpdateSidebarPreferencesMutationVariables = Exact<{
   input: SidebarPreferencesInput;
@@ -20646,11 +20669,11 @@ export { DeskServiceFailureCardDocument, DeskRecordFailuresDocument } from "./do
 export { ServiceFailureTableRowFieldsFragmentDoc, ServiceFailureTableDocument } from "./documents/service-failure/table";
 export { ServiceTypeTableRowFieldsFragmentDoc, ServiceTypeTableDocument } from "./documents/service-type/table";
 export { ShipmentTypeTableRowFieldsFragmentDoc, ShipmentTypeTableDocument } from "./documents/shipment-type/table";
-export { ShipmentBoardCapabilitiesDocument, ShipmentStageSummaryDocument, ShipmentBoardGroupsDocument, ShipmentQuickFilterCountsDocument, ShipmentBriefingDocument, ShipmentCapacityDocument, CapacityUnitMatchesDocument, ShipmentCoverageSuggestionsDocument, ShipmentSuggestionsDocument, ShipmentWatchlistDocument, TenderShipmentsDocument, DecideShipmentSuggestionDocument, UndoShipmentSuggestionDecisionDocument, NotifyShipmentDelayDocument } from "./documents/shipment/board";
+export { ShipmentBoardCapabilitiesDocument, ShipmentStageSummaryDocument, ShipmentBoardGroupsDocument, ShipmentQuickFilterCountsDocument, ShipmentBriefingDocument, ShipmentCapacityDocument, CapacityUnitMatchesDocument, ShipmentCoverageSuggestionsDocument, ShipmentSuggestionsDocument, ShipmentWatchlistDocument, TenderShipmentsDocument, DecideShipmentSuggestionDocument, UndoShipmentSuggestionDecisionDocument, NotifyShipmentDelayDocument, ShipmentTimelineDocument } from "./documents/shipment/board";
 export { CheckCallFieldsFragmentDoc, CarrierTrackingLinkFieldsFragmentDoc, ShipmentCheckCallsDocument, CarrierTrackingLinkDocument, LogCheckCallDocument, IssueCarrierTrackingLinkDocument, RevokeCarrierTrackingLinkDocument } from "./documents/shipment/check-calls";
 export { CustomerTrackingLinkFieldsFragmentDoc, CustomerStatusNotificationFieldsFragmentDoc, CustomerTrackingLinksDocument, CustomerStatusNotificationsDocument, IssueCustomerTrackingLinkDocument, RevokeCustomerTrackingLinkDocument } from "./documents/shipment/customer-tracking";
 export { DeskRecordShipmentsDocument } from "./documents/shipment/desk-record";
-export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, ApproveShipmentRatingReviewDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
+export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDoc, ShipmentStopFieldsFragmentDoc, ShipmentTractorFieldsFragmentDoc, ShipmentTrailerFieldsFragmentDoc, ShipmentWorkerFieldsFragmentDoc, ShipmentAssignmentFieldsFragmentDoc, ShipmentCarrierAssignmentFieldsFragmentDoc, ShipmentMoveFieldsFragmentDoc, ShipmentAdditionalChargeFieldsFragmentDoc, ShipmentCommodityFieldsFragmentDoc, ChargeAllocationFieldsFragmentDoc, ShipmentUserFieldsFragmentDoc, ShipmentFieldsFragmentDoc, ShipmentPageInfoFieldsFragmentDoc, ShipmentCommentMentionFieldsFragmentDoc, ShipmentCommentAcknowledgmentFieldsFragmentDoc, ShipmentCommentAttachmentFieldsFragmentDoc, ShipmentCommentFieldsFragmentDoc, ShipmentEventFieldsFragmentDoc, ShipmentContractRateFieldsFragmentDoc, ShipmentStopEtaFieldsFragmentDoc, ShipmentScheduleFieldsFragmentDoc, ShipmentBoardTableDocument, ShipmentDetailDocument, ShipmentPageAnalyticsDocument, ShipmentTomorrowsPickupsDocument, UnassignedShipmentsDocument, ExceptionShipmentsDocument, MapShipmentsDocument, ShipmentCommentsDocument, ShipmentCommentRepliesDocument, ShipmentCommentCountDocument, ShipmentEventsDocument, ShipmentBillingReadinessDocument, ShipmentUiPolicyDocument, ShipmentPreviousRatesDocument, CreateShipmentDocument, UpdateShipmentDocument, CancelShipmentDocument, UncancelShipmentDocument, ApproveShipmentRatingReviewDocument, DuplicateShipmentDocument, TransferShipmentOwnershipDocument, TransferShipmentToBillingItemsDocument, BulkTransferShipmentsToBillingDocument, CalculateShipmentTotalsDocument, PreviewShipmentContractRateDocument, AutoRateShipmentDocument, CalculateShipmentDistanceDocument, RecalculateShipmentDistanceDocument, CheckShipmentDuplicateBolDocument, CheckShipmentHazmatSegregationDocument, CalculateShipmentLoadingOptimizationDocument, CreateShipmentCommentDocument, UpdateShipmentCommentDocument, DeleteShipmentCommentDocument, PinShipmentCommentDocument, UnpinShipmentCommentDocument, ResolveShipmentCommentDocument, UnresolveShipmentCommentDocument, AcknowledgeShipmentCommentDocument, ShipmentProfitabilityDocument } from "./documents/shipment/page";
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";

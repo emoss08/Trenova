@@ -319,6 +319,8 @@
     transparent 70%
   );
   background-size: 200% 100%;
+  /* design-tokens-ignore: a loading placeholder, on screen only until its data lands; a transform band would need
+     every host positioned and clipped, and ui-shimmer sits on text, frames and images. */
   animation: shimmer 1.6s linear infinite;
 }
 
@@ -329,15 +331,102 @@
   }
 }
 
-@property --border-beam-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
+/* Loops that run while something works move only by transform, so the browser
+   composites each frame instead of repainting it. Animating an @property angle
+   inside a conic-gradient, or the background-position of text clipped to its
+   background, repaints on the main thread every frame for as long as the loop
+   is on screen; six such loops on AI control held a core near 90% at idle. */
+
+/* A ring or edge whose colours travel round it. The element draws its own shape
+   (position, inset, radius, padding and a static mask) and sets
+   --spin-gradient to a conic gradient without a start angle; its ::before is a
+   square of that gradient wide enough to cover the element's corners, turned
+   about the element's centre. A conic gradient is drawn by angle from the
+   centre alone, so turning it there paints the same ring as moving its start
+   angle, on a rectangle as on a circle. --spin-duration sets the pace and
+   --spin-iterations stops a ring that fades out. The element must be
+   positioned. */
+@utility ui-spin-ring {
+  container-type: size;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(max(100cqw, 100cqh) * 1.5);
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    background: var(--spin-gradient);
+    pointer-events: none;
+    animation: ui-spin var(--spin-duration, 2.6s) linear var(--spin-iterations, infinite);
+  }
 }
 
-@keyframes border-beam-spin {
+@keyframes ui-spin {
   to {
-    --border-beam-angle: 360deg;
+    transform: rotate(1turn);
+  }
+}
+
+/* Text something is working on: a lighter band crosses it, left to right, on a
+   loop. TextShimmer renders the markup: the text, then a soft-edged window
+   holding a copy of it. The window slides across while the copy inside slides
+   back by the same distance, so the copy always lies exactly over the text and
+   only the window's mask moves. The copy inherits the host's wrapping and
+   truncation, so a label that ends in an ellipsis keeps it. At rest (reduced
+   motion, a calm surface, any `animation: none`) the window sits off the text
+   and nothing shows. Colours come from --shimmer-base and --shimmer-highlight,
+   the pace from --shimmer-duration. */
+@utility ui-text-shimmer {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  color: var(--shimmer-base, var(--foreground-subtle));
+}
+
+@utility ui-text-shimmer-sweep {
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  overflow: inherit;
+  text-overflow: inherit;
+  color: var(--shimmer-highlight, var(--foreground));
+  pointer-events: none;
+  user-select: none;
+  mask-image: linear-gradient(90deg, transparent, black 35%, black 65%, transparent);
+  transform: translateX(-100%);
+  animation: text-shimmer-window var(--shimmer-duration, 2s) linear infinite;
+
+  & > span {
+    display: block;
+    overflow: inherit;
+    text-overflow: inherit;
+    transform: translateX(100%);
+    animation: text-shimmer-copy var(--shimmer-duration, 2s) linear infinite;
+  }
+
+  & > span[data-text]::before {
+    content: attr(data-text);
+  }
+}
+
+@keyframes text-shimmer-window {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes text-shimmer-copy {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
   }
 }
 
@@ -500,51 +589,18 @@
   overflow: hidden;
 }
 
-@keyframes cc-pulse-pin-rest {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 3px color-mix(in oklch, currentColor 22%, transparent),
-      0 0 0 3px color-mix(in oklch, currentColor 38%, transparent);
-  }
-
-  70% {
-    box-shadow:
-      0 0 0 3px color-mix(in oklch, currentColor 22%, transparent),
-      0 0 0 11px color-mix(in oklch, currentColor 0%, transparent);
-  }
-}
-
-@keyframes cc-pulse-pin-active {
-  0%,
-  100% {
-    box-shadow:
-      0 0 0 5px color-mix(in oklch, currentColor 28%, transparent),
-      0 0 0 5px color-mix(in oklch, currentColor 50%, transparent);
-  }
-
-  70% {
-    box-shadow:
-      0 0 0 5px color-mix(in oklch, currentColor 28%, transparent),
-      0 0 0 16px color-mix(in oklch, currentColor 0%, transparent);
-  }
-}
-
+/* A live pin: a still halo round the dot, wider when the pin is highlighted.
+   Being live or moving is a state, not work, so the pin does not pulse; a map
+   of pulsing pins never stopped moving. */
 .cc-pulse-pin {
   border-radius: 9999px;
-  animation: cc-pulse-pin-rest 2.2s ease-out infinite;
+  box-shadow: 0 0 0 3px color-mix(in oklch, currentColor 22%, transparent);
 }
 
 .cc-pulse-pin.is-highlighted {
-  animation: cc-pulse-pin-active 2.2s ease-out infinite;
+  box-shadow: 0 0 0 5px color-mix(in oklch, currentColor 28%, transparent);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .cc-pulse-pin,
-  .cc-pulse-pin.is-highlighted {
-    animation: none;
-  }
-}
 .tiptap p.is-editor-empty:first-child::before {
   color: var(--muted-foreground);
   content: attr(data-placeholder);

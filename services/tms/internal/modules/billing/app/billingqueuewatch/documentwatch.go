@@ -2,8 +2,10 @@ package billingqueuewatch
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -75,11 +77,17 @@ func (o *DocumentObserver) DocumentsChanged(
 		return
 	}
 
+	retired := make(map[pulid.ID]pulid.ID, len(change.Retired))
+	for _, gone := range change.Retired {
+		retired[gone.ID] = gone.ReplacedBy
+	}
+
 	for _, items := range byShipment {
 		for _, item := range items {
 			if item == nil {
 				continue
 			}
+			o.retirePacketDocuments(ctx, change, item, retired)
 			o.rechecks.RequestRecheck(ctx, change.TenantInfo, item.ID)
 
 			if err = realtimeinvalidation.Publish(
@@ -103,4 +111,69 @@ func (o *DocumentObserver) DocumentsChanged(
 			}
 		}
 	}
+}
+
+func (o *DocumentObserver) retirePacketDocuments(
+	ctx context.Context,
+	change *documentports.DocumentChange,
+	item *billingqueue.BillingQueueItem,
+	retired map[pulid.ID]pulid.ID,
+) {
+	packet, rotations, changed := withoutRetired(item, retired)
+	if !changed {
+		return
+	}
+	kept, err := o.repo.SetPacketDocuments(ctx, &billingqueueports.SetPacketDocumentsRequest{
+		TenantInfo: change.TenantInfo,
+		ItemID:     item.ID,
+		Version:    item.Version,
+		Packet:     packet,
+		Rotations:  rotations,
+	})
+	if err != nil {
+		o.l.Warn("could not take retired documents out of an invoice packet",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
+		return
+	}
+	if !kept {
+		o.l.Debug("an invoice packet changed while its retired documents were taken out",
+			zap.String("billingQueueItemId", item.ID.String()),
+		)
+	}
+}
+
+func withoutRetired(
+	item *billingqueue.BillingQueueItem,
+	retired map[pulid.ID]pulid.ID,
+) ([]pulid.ID, []billingqueue.PacketPageRotation, bool) {
+	if len(retired) == 0 || len(item.PacketDocumentIDs) == 0 {
+		return item.PacketDocumentIDs, item.PacketPageRotations, false
+	}
+	changed := false
+	packet := make([]pulid.ID, 0, len(item.PacketDocumentIDs))
+	for _, id := range item.PacketDocumentIDs {
+		replacement, gone := retired[id]
+		if !gone {
+			packet = append(packet, id)
+			continue
+		}
+		changed = true
+		if !replacement.IsNil() && !slices.Contains(item.PacketDocumentIDs, replacement) &&
+			!slices.Contains(packet, replacement) {
+			packet = append(packet, replacement)
+		}
+	}
+	if !changed {
+		return item.PacketDocumentIDs, item.PacketPageRotations, false
+	}
+	rotations := make([]billingqueue.PacketPageRotation, 0, len(item.PacketPageRotations))
+	for _, turn := range item.PacketPageRotations {
+		if _, gone := retired[turn.DocumentID]; !gone {
+			rotations = append(rotations, turn)
+		}
+	}
+
+	return packet, rotations, true
 }

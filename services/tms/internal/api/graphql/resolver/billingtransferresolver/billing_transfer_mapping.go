@@ -32,6 +32,7 @@ func billingTransferRunToModel(
 		MarkedReadyToInvoiceCount:   run.MarkedReadyToInvoiceCount,
 		RetryableCount:              run.RetryableCount,
 		UnmatchedCount:              run.UnmatchedCount,
+		FailureCounts:               make([]*billingtransfer.FailureCount, 0, len(run.FailureCounts)),
 		QueuedAt:                    int(run.QueuedAt),
 		StartedAt:                   unixPtr(run.StartedAt),
 		CompletedAt:                 unixPtr(run.CompletedAt),
@@ -40,6 +41,9 @@ func billingTransferRunToModel(
 		CancelRequestedAt:           unixPtr(run.CancelRequestedAt),
 	}
 
+	for i := range run.FailureCounts {
+		model.FailureCounts = append(model.FailureCounts, &run.FailureCounts[i])
+	}
 	if run.SearchQuery != "" {
 		model.SearchQuery = &run.SearchQuery
 	}

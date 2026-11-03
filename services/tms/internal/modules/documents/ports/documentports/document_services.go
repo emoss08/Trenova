@@ -34,6 +34,7 @@ type InvoiceDocumentService interface {
 		ctx context.Context,
 		req GetDocumentByIDRequest,
 	) (*document.Document, error)
+	GetMany(ctx context.Context, req GetDocumentsByIDsRequest) ([]*document.Document, error)
 	GetDownloadContent(
 		ctx context.Context,
 		req GetDocumentByIDRequest,

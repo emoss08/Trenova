@@ -17,14 +17,7 @@ func FormatWholeDollars(value decimal.Decimal) string {
 }
 
 func FormatDollars(value decimal.Decimal) string {
-	rounded := value.Round(2)
-	whole := rounded.Abs().Truncate(0)
-	cents := rounded.Abs().Sub(whole).Shift(2).IntPart()
-	formatted := "$" + intutils.FormatWithCommas(whole.IntPart()) + "." + twoDigits(cents)
-	if rounded.IsNegative() {
-		return "-" + formatted
-	}
-	return formatted
+	return Display("USD", value)
 }
 
 func twoDigits(value int64) string {

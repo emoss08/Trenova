@@ -48,8 +48,16 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   retry takes an id derived from what it records (`pulid.Derived`) and is written with
   `CreateOrSkip`. An outbound call with no idempotency key that must not run twice (a batch
   submission) runs with `MaximumAttempts: 1` and a fallback path.
-- An error that will never succeed on retry (validation, not found, refused) is
-  `temporaltype.NewNonRetryableError` or `ToDomainRefusal`.
+- An error that will never succeed on retry fails once. The worker's refusal interceptor
+  (`temporaljobs/interceptors/refusal.go`, `temporaltype.ToActivityFailure`) makes a validation
+  failure, a not-found, a refused permission and a plan refusal non-retryable for every activity,
+  so raise the right `errortypes` error at the owner (a missing stored object is a not-found,
+  not a database error) rather than adding `NonRetryableErrorTypes`. A business error stays
+  retryable because the domain also raises one for an outage worded for a person; return
+  `ToDomainRefusal` when yours is final, or a Temporal `ApplicationError` to choose either way.
+- Something wrong with the record itself (its file is gone or unreadable, its format refused) is
+  recorded on the record as a failure and the activity succeeds; it is not an error to retry
+  (`documentextractionjobs.readFailure`).
 - Activities take IDs and load current state; never pass a whole entity through history.
 - Batch: an activity handles a page of records, not one.
 

@@ -44,6 +44,13 @@ Keywords: unsigned POD, signed proof of delivery, POD not signed, receiver signa
 3. Select **Save**. The item's proof of delivery check updates straight away, and an unsigned POD raises an issue to ask the driver or bill without it.
 4. To have document intelligence read the queued PODs nobody has checked yet, select **Read POD signatures** in the header, then **Read signatures**.
 
+### Preview and fix the invoice packet
+Keywords: invoice packet, packet preview, blank page, missing signature, reorder documents, remove document from packet
+1. Open [Billing queue](/billing/queue), select the item, open the **Documents** tab and select **Preview invoice packet**. The packet opens as approving would send it: the invoice, then each document, with every page down the left. Scroll the pages, select a page on the left, or select the page count in the toolbar and type a page number to jump to it.
+2. Pages to look at carry a mark: a page that looks blank, or the first page of a document whose type needs a signature it doesn't have. Select **to check** at the top of the page list to go to the next one.
+3. While the item can still be approved, hover a document's name on the left to change the packet: drag its handle (or focus it and use the arrow keys) to move it, or select the cross to take it out. The packet is saved and rebuilt straight away, and **Undo** puts a removed document back. The invoice always comes first, and the last document can't be removed.
+4. Use **Fit width**, **Fit page**, the zoom buttons or Ctrl + scroll to size the pages. To fix a sideways page, hover it and select **Rotate page**: while the item can still be approved, the page is turned in the packet itself, so the invoice's email, its factoring submission and every later preview send it upright. The invoice's own pages don't turn. Once the invoice is made, **Rotate page** and **Rotate all** turn pages only for reading.
+
 ### Correct charges before approval
 Keywords: add accessorial, edit charge, re-rate, change formula template, tariff inputs, terms
 1. Open [Billing queue](/billing/queue), select the item and open the **Charges** tab. Each freight line of the shipment's bill is listed with its quantity and rate, and each charge the tariff billed itself under its own label.
@@ -62,7 +69,7 @@ Keywords: bulk transfer, move shipments to billing, mark ready to invoice
 1. Open [Billing queue](/billing/queue) and select **Transfer to billing** in the header.
 2. Search or filter the shipment list, then tick the shipments to move, or use the transfer-all button to take everything that matches.
 3. Select **Start transfer**. Each shipment runs the billing readiness check; completed shipments that pass are marked Ready to Invoice and moved into the queue.
-4. Close with **Run in background** to keep working while it runs, or wait for the results and use **Download report** to get a CSV of what moved and what failed.
+4. Close with **Run in background** to keep working while it runs, or wait for the results. They list what moved and what needs attention, which you can narrow to one reason at a time, and **Download report** gets a CSV of both.
 
 ### Bill a customer's statement
 Keywords: consolidated invoice, statement cycle, bill period, bill early

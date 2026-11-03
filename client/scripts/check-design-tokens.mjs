@@ -88,22 +88,14 @@ const RULES = [
   },
   {
     id: "legacy-badge-variant",
-    pattern:
-      /\bvariant\s*[:=]\s*["'](?:active|inactive|purple|orange|teal|pink|indigo)["']/g,
+    pattern: /\bvariant\s*[:=]\s*["'](?:active|inactive|purple|orange|teal|pink|indigo)["']/g,
     message: (m) =>
       `\`${m}\` is a retired Badge variant. Badge takes a tone (neutral/brand/info/success/warning/danger) or a categorical accent (accent-*), crossed with an appearance (subtle/solid/outline).`,
   },
 ];
 
 const IGNORE = /design-tokens-ignore/;
-const SKIP_DIRS = [
-  "node_modules",
-  "dist",
-  "storybook-static",
-  "/generated/",
-  "/logos/",
-  ".turbo",
-];
+const SKIP_DIRS = ["node_modules", "dist", "storybook-static", "/generated/", "/logos/", ".turbo"];
 
 const files = [];
 for await (const f of glob(["apps/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"], { cwd: ROOT })) {
@@ -132,6 +124,86 @@ for (const rel of files.sort()) {
         console.log(`${rel}:${i + 1}:${col}\n  ${rule.id}: ${text}\n`);
       }
     }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Loops that repaint.
+
+   A loop that animates anything but transform or opacity repaints on the main
+   thread every frame for as long as it is on screen. Six of them on AI control
+   (Nova's badge and the "Working…" labels, animating a conic gradient's
+   @property angle and a background-position clipped to text) held a core near
+   90% at idle while no script ran. A turning ring is ui-spin-ring, working text
+   is TextShimmer, a pulse is a pseudo-element that scales and fades
+   (docs/engineering/design-system.md, "Motion").
+   --------------------------------------------------------------------------- */
+
+const COMPOSITED = new Set(["transform", "translate", "rotate", "scale", "opacity"]);
+
+/** Splits an `animation` value on its top-level commas, leaving var() and calc() whole. */
+function animationLayers(value) {
+  const layers = [];
+  let depth = 0;
+  let start = 0;
+  for (const [i, ch] of [...value].entries()) {
+    if (ch === "(") depth += 1;
+    else if (ch === ")") depth -= 1;
+    else if (ch === "," && depth === 0) {
+      layers.push(value.slice(start, i));
+      start = i + 1;
+    }
+  }
+  layers.push(value.slice(start));
+  return layers;
+}
+
+async function auditLoops() {
+  const sheets = [];
+  for await (const f of glob(["apps/**/*.css", "packages/**/*.css"], { cwd: ROOT })) {
+    if (!SKIP_DIRS.some((d) => `/${f}`.includes(d)))
+      sheets.push([f, readFileSync(join(ROOT, f), "utf8")]);
+  }
+
+  // Keyframes by name, with the properties they animate that are not composited.
+  const painted = new Map();
+  for (const [, src] of sheets) {
+    const css = src.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of css.matchAll(/@keyframes\s+([\w-]+)\s*\{((?:[^{}]*\{[^{}]*\})*[^{}]*)\}/g)) {
+      const props = [...new Set([...m[2].matchAll(/([a-z-]+)\s*:/g)].map((p) => p[1]))];
+      const repainting = props.filter((p) => !COMPOSITED.has(p));
+      if (repainting.length > 0) painted.set(m[1], repainting);
+    }
+  }
+
+  const problems = [];
+  for (const [rel, src] of sheets.sort((a, b) => a[0].localeCompare(b[0]))) {
+    const lines = src.split("\n");
+    for (const m of src.matchAll(/animation\s*:\s*([^;}]*)/g)) {
+      const line = src.slice(0, m.index).split("\n").length;
+      if (lines.slice(Math.max(0, line - 5), line).some((l) => IGNORE.test(l))) continue;
+      for (const layer of animationLayers(m[1])) {
+        if (!/\binfinite\b/.test(layer.replace(/var\([^)]*\)/g, ""))) continue;
+        const name = layer.match(/[\w-]+/g)?.find((word) => painted.has(word));
+        if (!name) continue;
+        problems.push({
+          rel,
+          line,
+          text: `animation \`${name}\` loops forever and animates ${painted.get(name).join(", ")}, which repaints every frame. A loop animates only transform and opacity: ui-spin-ring for a turning ring, TextShimmer for working text, a scaling pseudo-element for a pulse.`,
+        });
+      }
+    }
+  }
+  return problems;
+}
+
+for (const { rel, line, text } of await auditLoops()) {
+  violations += 1;
+  byRule.set("repainting-loop", (byRule.get("repainting-loop") ?? 0) + 1);
+  if (GITHUB) {
+    console.log(`::error file=client/${rel},line=${line}::${text}`);
+  } else {
+    console.log(`${rel}:${line}\n  repainting-loop: ${text}\n`);
   }
 }
 
@@ -176,11 +248,12 @@ async function auditTokenLayer() {
     const dark = names(stripped.slice(darkAt));
     // Geometry and the hue plan are the same in both themes by definition; a
     // corner radius does not get darker.
-    const themeIndependent =
-      /^--(hue-|radius|ring-width|ring-opacity|kpi-|row-|cell-|elevation-)/;
+    const themeIndependent = /^--(hue-|radius|ring-width|ring-opacity|kpi-|row-|cell-|elevation-)/;
     for (const name of names(stripped.slice(0, darkAt))) {
       if (!dark.has(name) && !themeIndependent.test(name)) {
-        problems.push(`${name} is defined for light only; a themed token needs a value in .dark too.`);
+        problems.push(
+          `${name} is defined for light only; a themed token needs a value in .dark too.`,
+        );
       }
     }
   }
@@ -239,7 +312,9 @@ for (const problem of tokenProblems) {
 }
 
 if (violations === 0) {
-  console.log(`design tokens: clean (${files.length} files, ${declaredUtilities(readFileSync(TOKENS, "utf8")).length} utilities verified)`);
+  console.log(
+    `design tokens: clean (${files.length} files, ${declaredUtilities(readFileSync(TOKENS, "utf8")).length} utilities verified)`,
+  );
   process.exit(0);
 }
 

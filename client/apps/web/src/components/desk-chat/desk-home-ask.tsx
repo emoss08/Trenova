@@ -331,7 +331,7 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
 /**
  * The block a front page opens with: the date in mono, a heading and one line
  * under it. The Desk greets the person by the time of day; the assistant says
- * what it can do. `pulse` breathes a dot beside the date.
+ * what it can do. `pulse` marks the date with a still dot.
  */
 export function DeskGreeting({
   date,

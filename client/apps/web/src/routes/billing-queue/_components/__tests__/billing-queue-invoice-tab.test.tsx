@@ -31,6 +31,7 @@ function item(overrides: Partial<BillingQueueItem> = {}): BillingQueueItem {
     paymentTerm: "Net15",
     invoiceDate: null,
     packetDocumentIds: ["doc_pod"],
+    packetPicked: true,
     shipment: {
       id: "shp_1",
       customer: { id: "cus_1", name: "Acme Foods", billingProfile: { paymentTerm: "Net30" } },
@@ -67,6 +68,8 @@ describe("BillingQueueInvoiceTab", () => {
           paymentTerm: "Net15",
           invoiceDate: null,
           packetDocumentIds: ["doc_pod"],
+          packetPicked: true,
+          packetPageRotations: [],
         }),
       { timeout: 3000 },
     );

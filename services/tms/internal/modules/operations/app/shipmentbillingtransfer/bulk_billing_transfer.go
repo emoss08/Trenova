@@ -4,9 +4,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingreadiness"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -18,10 +18,8 @@ type billingTransferAttemptParams struct {
 	MarkCompletedReadyToInvoice bool
 	Actor                       *permissionports.RequestActor
 	SuppressExceptionNotices    bool
-	// Cache holds the answers that do not vary by shipment, so a run of five
-	// thousand does not ask the same organization-level question five thousand
-	// times. It lives for exactly one bulk call.
-	Cache *shipmentbillingreadiness.BillingReadinessCache
+	Payers                      map[pulid.ID]*customer.Customer
+	DeferReview                 bool
 }
 
 type billingTransferAttempt struct {
@@ -75,8 +73,10 @@ func newBulkTransferResult(
 	if attempt.entity != nil {
 		result.ProNumber = attempt.entity.ProNumber
 	}
-	result.MissingRequirements = attempt.readiness.MissingRequirements
-	result.ValidationFailures = attempt.readiness.ValidationFailures
+	if attempt.readiness != nil {
+		result.MissingRequirements = attempt.readiness.MissingRequirements
+		result.ValidationFailures = attempt.readiness.ValidationFailures
+	}
 
 	if attempt.err == nil {
 		result.Success = true

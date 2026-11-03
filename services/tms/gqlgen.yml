@@ -1682,6 +1682,9 @@ models:
   BillingTransferValidation:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer.ValidationFailure
+  BillingTransferFailureCount:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer.FailureCount
   BillType:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab.BillType

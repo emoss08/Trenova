@@ -1,7 +1,9 @@
 package billingqueuehandler
 
 import (
+	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/formulavisibility"
@@ -132,6 +134,38 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 			permission.OpRead,
 		),
 		h.packetPreview,
+	)
+	api.GET(
+		"/:itemID/packet-preview/summary/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpRead,
+		),
+		h.packetPreviewSummary,
+	)
+	api.GET(
+		"/:itemID/packet-preview/pages/:page/image/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpRead,
+		),
+		h.packetPreviewPage,
+	)
+	api.GET(
+		"/:itemID/packet-preview/pages/:page/thumbnail/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpRead,
+		),
+		h.packetPreviewThumbnail,
+	)
+	api.GET(
+		"/:itemID/packet-preview/checks/",
+		h.pm.RequirePermission(
+			permission.ResourceBillingQueue.String(),
+			permission.OpRead,
+		),
+		h.packetPreviewChecks,
 	)
 	api.PUT(
 		"/:itemID/invoice-details/",
@@ -807,16 +841,18 @@ func laneParams(c *gin.Context) ([]billingqueue.Lane, error) {
 }
 
 type invoiceDetailsRequest struct {
-	Version           int64      `json:"version"`
-	PONumber          string     `json:"poNumber"`
-	InvoiceMemo       string     `json:"invoiceMemo"`
-	PaymentTerm       string     `json:"paymentTerm"`
-	InvoiceDate       *int64     `json:"invoiceDate"`
-	PacketDocumentIDs []pulid.ID `json:"packetDocumentIds"`
+	Version             int64                             `json:"version"`
+	PONumber            string                            `json:"poNumber"`
+	InvoiceMemo         string                            `json:"invoiceMemo"`
+	PaymentTerm         string                            `json:"paymentTerm"`
+	InvoiceDate         *int64                            `json:"invoiceDate"`
+	PacketDocumentIDs   []pulid.ID                        `json:"packetDocumentIds"`
+	PacketPicked        bool                              `json:"packetPicked"`
+	PacketPageRotations []billingqueue.PacketPageRotation `json:"packetPageRotations"`
 }
 
 // @Summary Set what the invoice will say before it is made
-// @Description The customer's PO, the note printed under the charges, a payment term and invoice date that override the customer's defaults, and the shipment documents sent with the invoice as one packet. Only before approval; after it, change the invoice itself.
+// @Description The customer's PO, the note printed under the charges, a payment term and invoice date that override the customer's defaults, the shipment documents sent with the invoice as one packet, and the quarter turns given to their pages. Only before approval; after it, change the invoice itself.
 // @ID updateBillingQueueInvoiceDetails
 // @Tags Billing Queue
 // @Accept json
@@ -844,14 +880,16 @@ func (h *Handler) updateInvoiceDetails(c *gin.Context) {
 	item, err := h.service.UpdateInvoiceDetails(
 		c.Request.Context(),
 		&billingqueueports.UpdateInvoiceDetailsRequest{
-			ItemID:            itemID,
-			TenantInfo:        pagination.FromAuth(authCtx),
-			Version:           body.Version,
-			PONumber:          body.PONumber,
-			InvoiceMemo:       body.InvoiceMemo,
-			PaymentTerm:       body.PaymentTerm,
-			InvoiceDate:       body.InvoiceDate,
-			PacketDocumentIDs: body.PacketDocumentIDs,
+			ItemID:              itemID,
+			TenantInfo:          pagination.FromAuth(authCtx),
+			Version:             body.Version,
+			PONumber:            body.PONumber,
+			InvoiceMemo:         body.InvoiceMemo,
+			PaymentTerm:         body.PaymentTerm,
+			InvoiceDate:         body.InvoiceDate,
+			PacketDocumentIDs:   body.PacketDocumentIDs,
+			PacketPicked:        body.PacketPicked,
+			PacketPageRotations: body.PacketPageRotations,
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -919,4 +957,198 @@ func (h *Handler) packetPreview(c *gin.Context) {
 
 	c.Header("Content-Disposition", `inline; filename="`+preview.FileName+`"`)
 	c.Data(http.StatusOK, "application/pdf", preview.Content)
+}
+
+type packetPreviewSummary struct {
+	FileName  string              `json:"fileName"`
+	PageCount int                 `json:"pageCount"`
+	Documents int                 `json:"documents"`
+	Build     string              `json:"build"`
+	Parts     []packetPreviewPart `json:"parts"`
+}
+
+type packetPreviewPart struct {
+	Kind       billingqueueports.PacketPartKind `json:"kind"`
+	DocumentID *string                          `json:"documentId"`
+	Name       string                           `json:"name"`
+	FirstPage  int                              `json:"firstPage"`
+	LastPage   int                              `json:"lastPage"`
+	Unsigned   bool                             `json:"unsigned"`
+}
+
+type packetPreviewChecks struct {
+	Build      string `json:"build"`
+	BlankPages []int  `json:"blankPages"`
+}
+
+func packetPartsOf(parts []billingqueueports.PacketPart) []packetPreviewPart {
+	out := make([]packetPreviewPart, 0, len(parts))
+	for _, part := range parts {
+		var documentID *string
+		if !part.DocumentID.IsNil() {
+			id := part.DocumentID.String()
+			documentID = &id
+		}
+		out = append(out, packetPreviewPart{
+			Kind:       part.Kind,
+			DocumentID: documentID,
+			Name:       part.Name,
+			FirstPage:  part.FirstPage,
+			LastPage:   part.LastPage,
+			Unsigned:   part.Unsigned,
+		})
+	}
+	return out
+}
+
+// @Summary Assemble an item's invoice packet for viewing
+// @Description Builds the packet approving the item would send and describes it, so its pages can be drawn one at a time. Nothing is saved.
+// @ID summarizeBillingQueuePacket
+// @Tags Billing Queue
+// @Produce json
+// @Param itemID path string true "Billing queue item ID"
+// @Success 200 {object} packetPreviewSummary
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/packet-preview/summary/ [get]
+func (h *Handler) packetPreviewSummary(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	itemID, err := pulid.MustParse(c.Param("itemID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	preview, err := h.packets.PreviewPacket(
+		c.Request.Context(),
+		&billingqueueports.PacketPreviewRequest{
+			ItemID:     itemID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "no-store")
+	helpers.JSON(c, http.StatusOK, packetPreviewSummary{
+		FileName:  preview.FileName,
+		PageCount: preview.Pages,
+		Documents: preview.Documents,
+		Build:     preview.Build,
+		Parts:     packetPartsOf(preview.Parts),
+	})
+}
+
+// @Summary Draw a page of an item's invoice packet
+// @Description One page of the packet approving the item would send, as an image. Nothing is saved.
+// @ID drawBillingQueuePacketPage
+// @Tags Billing Queue
+// @Produce image/webp
+// @Param itemID path string true "Billing queue item ID"
+// @Param page path int true "Page number, from 1"
+// @Success 200 {file} binary
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/packet-preview/pages/{page}/image/ [get]
+func (h *Handler) packetPreviewPage(c *gin.Context) {
+	h.packetPageImage(c, h.packets.PreviewPacketPage)
+}
+
+// @Summary Draw a page of an item's invoice packet as a thumbnail
+// @Description One page of the packet approving the item would send, as a small image for the page rail. Nothing is saved.
+// @ID drawBillingQueuePacketThumbnail
+// @Tags Billing Queue
+// @Produce image/webp
+// @Param itemID path string true "Billing queue item ID"
+// @Param page path int true "Page number, from 1"
+// @Success 200 {file} binary
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/packet-preview/pages/{page}/thumbnail/ [get]
+func (h *Handler) packetPreviewThumbnail(c *gin.Context) {
+	h.packetPageImage(c, h.packets.PreviewPacketThumbnail)
+}
+
+func (h *Handler) packetPageImage(
+	c *gin.Context,
+	draw func(context.Context, *billingqueueports.PacketPageRequest) (*billingqueueports.PacketPage, error),
+) {
+	authCtx := authctx.GetAuthContext(c)
+	itemID, err := pulid.MustParse(c.Param("itemID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	page, err := strconv.Atoi(c.Param("page"))
+	if err != nil || page < 1 {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"page",
+				errortypes.ErrInvalid,
+				"Page number must be a whole number from 1",
+			),
+		)
+		return
+	}
+
+	image, err := draw(
+		c.Request.Context(),
+		&billingqueueports.PacketPageRequest{
+			ItemID:     itemID,
+			TenantInfo: pagination.FromAuth(authCtx),
+			Page:       page,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "no-store")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Data(http.StatusOK, image.ContentType, image.Content)
+}
+
+// @Summary Check the pages of an item's invoice packet
+// @Description Which document pages of the packet approving the item would send look blank. Nothing is saved.
+// @ID checkBillingQueuePacket
+// @Tags Billing Queue
+// @Produce json
+// @Param itemID path string true "Billing queue item ID"
+// @Success 200 {object} packetPreviewChecks
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /billing-queue/{itemID}/packet-preview/checks/ [get]
+func (h *Handler) packetPreviewChecks(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	itemID, err := pulid.MustParse(c.Param("itemID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	checks, err := h.packets.PreviewPacketChecks(
+		c.Request.Context(),
+		&billingqueueports.PacketChecksRequest{
+			ItemID:     itemID,
+			TenantInfo: pagination.FromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "no-store")
+	helpers.JSON(c, http.StatusOK, packetPreviewChecks{
+		Build:      checks.Build,
+		BlankPages: checks.BlankPages,
+	})
 }

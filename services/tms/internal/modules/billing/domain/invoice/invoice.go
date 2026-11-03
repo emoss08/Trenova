@@ -178,15 +178,16 @@ type InvoiceLine struct {
 type Attachment struct {
 	keel.Table `keel:"invoice_attachments"`
 
-	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:invatt_"`
-	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
-	InvoiceID      pulid.ID `json:"invoiceId"      keel:"invoice_id"`
-	DocumentID     pulid.ID `json:"documentId"     keel:"document_id"`
-	Selected       bool     `json:"selected"       keel:"selected"`
-	SortOrder      int      `json:"sortOrder"      keel:"sort_order"`
-	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
-	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
+	ID             pulid.ID                    `json:"id"             keel:"id,pk,autoid:invatt_"`
+	OrganizationID pulid.ID                    `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID                    `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	InvoiceID      pulid.ID                    `json:"invoiceId"      keel:"invoice_id"`
+	DocumentID     pulid.ID                    `json:"documentId"     keel:"document_id"`
+	Selected       bool                        `json:"selected"       keel:"selected"`
+	SortOrder      int                         `json:"sortOrder"      keel:"sort_order"`
+	PageRotations  []billingvocab.PageRotation `json:"pageRotations"  keel:"page_rotations,jsonb"`
+	CreatedAt      int64                       `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                       `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
 	Invoice  *Invoice           `json:"-"                  keel:"belongs:invoice_id"`
 	Document *document.Document `json:"document,omitempty" keel:"belongs:document_id"`
@@ -775,6 +776,13 @@ func (i *Invoice) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			{Field: "shipperCustomer", Queryable: true},
 		},
 	}
+}
+
+func (a *Attachment) BeforeCreate(context.Context) error {
+	if a.PageRotations == nil {
+		a.PageRotations = []billingvocab.PageRotation{}
+	}
+	return nil
 }
 
 func (a *Attachment) Validate(multiErr *errortypes.MultiError) {

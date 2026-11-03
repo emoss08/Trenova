@@ -132,6 +132,52 @@ const save = useApiMutation({
 });
 ```
 
+## A button that waits for the server
+
+The control shows its work and cannot fire twice; the write it calls refuses to run on top
+of itself. `useApiMutation` reports a failure, so the handler only has to hold and let go.
+
+```tsx
+const remove = useApiMutation({
+  scope: { id: `thing-remove:${thing.id}` },   // a second call waits instead of racing
+  resourceName: "Thing",
+  mutationFn: () => apiService.thingService.remove(thing.id),
+  onSuccess: () => void queryClient.invalidateQueries({ queryKey: thingQueries._def }),
+});
+
+<Button
+  isLoading={remove.isPending}                  // spinner, and disabled while pending
+  onClick={() => void remove.mutateAsync().catch(() => undefined)}
+>
+  {t("Remove")}
+</Button>
+```
+
+When the work is a chain (save, then refetch, then a toast), keep one in-flight guard where
+the chain starts and let the caller await it:
+
+```tsx
+const changing = useRef(false);
+const keep = async (changes: Changes) => {
+  if (changing.current) return false;          // two clicks can land before a re-render
+  changing.current = true;
+  try {
+    await save(changes);
+    await queryClient.invalidateQueries({ queryKey: thingQueries.detail(id).queryKey });
+    return true;
+  } catch {
+    return false;                               // the save already reported it
+  } finally {
+    changing.current = false;
+  }
+};
+```
+
+A control that has no label to swap (a checkbox, an icon button, a toggle) is replaced by a
+`Spinner` in a box of the same size while it saves, so the row does not move
+(`billing-queue-documents-tab.tsx`, the "In packet" checkbox). Tests click it twice and
+assert one request (`billing-queue-packet-preview.test.tsx`, "removes a document once").
+
 ## A heavy library, loaded at the moment of use
 
 ```ts
@@ -187,6 +233,29 @@ A message the module returns is shown with `translateMessage(message, t)`.
   `containIntrinsicSize` set to its known height; a sticky label column still sticks.
 - **A sticky cell's fill is opaque** (`bg-surface-selected`, never a `/10` tint), or what scrolls
   under it shows through.
+
+## Dragging cards between lanes (`billing-queue-document-board.tsx`)
+
+- **dnd-kit, never native drag.** HTML5 drag gives no live preview, drags nothing in Firefox
+  from a `<button>`, and drops "before the card under the pointer", so a card can never move
+  one place right. One `DndContext` holds every lane; each lane is a `SortableContext` plus a
+  `useDroppable` for its empty space.
+- **Clicks still select.** `MouseSensor` with `activationConstraint: { distance: 6 }` and
+  `TouchSensor` with a short `delay`; spread only `listeners` on the activator, never
+  `attributes`, which overwrite your own `aria-pressed` and role.
+- **Show the landing before the drop.** The card crosses lanes in local state in `onDragOver`
+  (pure helpers in `billing-queue-board-lanes.ts`), the dragged card's own spot is a dashed
+  placeholder, and a `DragOverlay` carries a lifted copy. Save once in `onDragEnd`, and only if
+  the order changed. A lane whose order isn't kept uses a no-op strategy (`() => null`) so its
+  cards hold still.
+- **A selected card carries the selection.** Fold the rest of the group out of the lanes on
+  drag start, show the count on the lifted card, and land them after it on drop
+  (`lanesWithoutGroup`/`lanesWithGroup`). A drop over nothing changes nothing.
+- **Name the drag for screen readers** through `accessibility.announcements` with `t()`; the
+  library's defaults are English.
+- **Two docks at once stack.** `SelectionDock` takes a slot from `useSelectionDockSlot`
+  (`components/selection-dock-stack.tsx`) and rises one step per open dock below it; it stays
+  where it renders, so a dock inside a modal sheet is still inside it.
 
 ## Showing a file
 

@@ -12,6 +12,8 @@ import {
   billingQueueFilterPresetSchema,
   billingQueueItemSchema,
   billingQueueNeighborsSchema,
+  billingQueuePacketChecksSchema,
+  billingQueuePacketPreviewSchema,
   billingQueuePostResultSchema,
   billingQueueSummarySchema,
   billingQueueStatsSchema,
@@ -32,6 +34,8 @@ import {
   type BillingQueueFilterPresetInput,
   type BillingQueueItem,
   type BillingQueueNeighbors,
+  type BillingQueuePacketChecks,
+  type BillingQueuePacketPreview,
   type BillingQueuePostResult,
   type BillingQueueSummary,
   type BillingQueueStats,
@@ -41,6 +45,19 @@ import {
   type ReassignChargeInput,
   type ReassignChargeResult,
 } from "@trenova/shared/types/billing-queue";
+
+/** The packet approving the item would send, as one PDF. */
+export function billingQueuePacketEndpoint(itemId: string): string {
+  return `/billing-queue/${encodeURIComponent(itemId)}/packet-preview/`;
+}
+
+export function billingQueuePacketPageEndpoint(itemId: string, page: number): string {
+  return `${billingQueuePacketEndpoint(itemId)}pages/${page}/image/`;
+}
+
+export function billingQueuePacketThumbnailEndpoint(itemId: string, page: number): string {
+  return `${billingQueuePacketEndpoint(itemId)}pages/${page}/thumbnail/`;
+}
 
 export class BillingQueueService {
   /** Lane counts, plus the pulse of the caller's day when `dayStart` is given. */
@@ -234,6 +251,24 @@ export class BillingQueueService {
       params,
     });
     return safeParse(billingQueueApprovalRunSchema, response, "BillingQueueBulkRun");
+  }
+
+  /** Assembles the packet approving the item would send and says how many pages it has. */
+  public async getPacketPreview(itemId: string, options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueuePacketPreview>(
+      `${billingQueuePacketEndpoint(itemId)}summary/`,
+      { signal: options.signal },
+    );
+    return safeParse(billingQueuePacketPreviewSchema, response, "BillingQueuePacketPreview");
+  }
+
+  /** Which document pages of the packet look blank, measured once per assembly. */
+  public async getPacketChecks(itemId: string, options: { signal?: AbortSignal } = {}) {
+    const response = await api.get<BillingQueuePacketChecks>(
+      `${billingQueuePacketEndpoint(itemId)}checks/`,
+      { signal: options.signal },
+    );
+    return safeParse(billingQueuePacketChecksSchema, response, "BillingQueuePacketChecks");
   }
 
   public async getBulk(runId: string, options: { signal?: AbortSignal } = {}) {

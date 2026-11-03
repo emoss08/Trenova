@@ -45,7 +45,7 @@ func TestSearchDocuments_KeepsAQuotedResourceInsideItsOwnFilterCondition(t *test
 
 	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().
-		GetByIDs(mock.Anything, documentports.BulkDeleteDocumentRequest{
+		GetByIDs(mock.Anything, documentports.GetDocumentsByIDsRequest{
 			IDs:        []pulid.ID{documentID},
 			TenantInfo: tenantInfo,
 		}).

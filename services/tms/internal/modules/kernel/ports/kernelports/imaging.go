@@ -131,9 +131,14 @@ type ImagingCapturePage struct {
 }
 
 type ImagingCaptureRequest struct {
-	PageCount int
-	Pages     func() iter.Seq2[ImagingCapturePage, error]
-	Priority  ImagingPriority
+	PageCount        int
+	Pages            func() iter.Seq2[ImagingCapturePage, error]
+	Priority         ImagingPriority
+	RenderDPI        int
+	ThumbnailWidth   int
+	ThumbnailFormat  ImagingFormat
+	ThumbnailQuality int
+	SkipBarcodes     bool
 }
 
 type ImagingBarcode struct {

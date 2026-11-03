@@ -56,7 +56,9 @@ type InvoiceContext struct {
 	// than one.
 	ShipmentCount string
 	// Period is the billing window a consolidated invoice covers, blank otherwise.
-	Period string
+	Period      string
+	PeriodStart string
+	PeriodEnd   string
 
 	Subtotal   string
 	Other      string
@@ -271,8 +273,10 @@ func newInvoiceSampleContext() any {
 		},
 		ShipmentCount: "2",
 		Period:        "2026-07-01 - 2026-08-01",
-		Subtotal:      "USD 2,001.24",
-		Other:         "USD 337.50",
+		PeriodStart:   "2026-07-01",
+		PeriodEnd:     "2026-08-01",
+		Subtotal:      "$2,001.24",
+		Other:         "$337.50",
 		Total:         templatecatalog.SampleTotalAmount,
 		BalanceDue:    templatecatalog.SampleTotalAmount,
 		Terms: []string{
@@ -522,6 +526,16 @@ func RegisterBillingKinds(r *templatecatalog.Registry) {
 				Path:        "Period",
 				Type:        templatecatalog.VariableString,
 				Description: "The billing period a consolidated invoice covers. Blank on an invoice that is not billed on a cycle.",
+			},
+			{
+				Path:        "PeriodStart",
+				Type:        templatecatalog.VariableString,
+				Description: "The first day of the billing period, as YYYY-MM-DD; write it with day. Blank when Period is.",
+			},
+			{
+				Path:        "PeriodEnd",
+				Type:        templatecatalog.VariableString,
+				Description: "The day the billing period ends before, as YYYY-MM-DD; write it with day. Blank when Period is.",
 			},
 			{
 				Path:        "Terms",

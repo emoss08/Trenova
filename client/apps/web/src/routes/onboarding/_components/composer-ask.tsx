@@ -39,7 +39,7 @@ export function ComposerAsk({ onSubmit }: { onSubmit: () => Promise<boolean> }) 
         return (
           <div>
             <div className="nv-cmp" data-bad={shaking}>
-              <span className="nv-cmp-ring" aria-hidden="true" />
+              <span className="nv-cmp-ring ui-spin-ring" aria-hidden="true" />
               <input
                 ref={(node) => {
                   inputRef.current = node;

@@ -42,6 +42,7 @@ type SeedBillingTransferRetryItemsResult struct {
 	TransferredCount          int
 	NotTransferredCount       int
 	MarkedReadyToInvoiceCount int
+	FailureCounts             []billingtransfer.FailureCount
 }
 
 type MarkBillingTransferRunRunningRequest struct {
@@ -110,10 +111,11 @@ type FinalizeBillingTransferRunRequest struct {
 }
 
 type ListBillingTransferRunItemsRequest struct {
-	Filter   *pagination.QueryOptions
-	Cursor   pagination.CursorInfo
-	RunID    pulid.ID
-	Statuses []billingtransfer.ItemStatus
+	Filter       *pagination.QueryOptions
+	Cursor       pagination.CursorInfo
+	RunID        pulid.ID
+	Statuses     []billingtransfer.ItemStatus
+	FailureCodes []billingtransfer.FailureCode
 }
 
 type LastBillingTransferRunQueuedAtRequest struct {

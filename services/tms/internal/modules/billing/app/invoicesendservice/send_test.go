@@ -50,6 +50,13 @@ func (f *fakeInvoiceDocumentService) Get(
 	return &document.Document{ID: req.ID, LineageID: req.ID}, nil
 }
 
+func (f *fakeInvoiceDocumentService) GetMany(
+	context.Context,
+	documentports.GetDocumentsByIDsRequest,
+) ([]*document.Document, error) {
+	return nil, nil
+}
+
 func (f *fakeInvoiceDocumentService) GetDownloadContent(
 	context.Context,
 	documentports.GetDocumentByIDRequest,
@@ -575,7 +582,7 @@ func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {
 	require.Contains(t, body, "Shipment Detail")
 	require.Contains(t, body, "Route: Origin DC Nashville 37201 -> Destination DC Atlanta 30301")
 	require.Contains(t, body, "Pieces: 12")
-	require.Contains(t, body, "- Freight: USD 100.00")
+	require.Contains(t, body, "- Freight: $100.00")
 }
 
 func TestRefuseSendInFlight(t *testing.T) {

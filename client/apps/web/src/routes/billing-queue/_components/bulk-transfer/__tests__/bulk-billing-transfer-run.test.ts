@@ -4,9 +4,10 @@ import {
   canRetryRun,
   isRunStopping,
   isRunTerminal,
-  runProgress,
+  runElapsedSeconds,
+  runOutcome,
+  runSecondsLeft,
   shouldPollRun,
-  summarizeRun,
 } from "../bulk-billing-transfer-run";
 
 function run(overrides: Partial<BillingTransferRun> = {}): BillingTransferRun {
@@ -26,6 +27,7 @@ function run(overrides: Partial<BillingTransferRun> = {}): BillingTransferRun {
     markedReadyToInvoiceCount: 0,
     retryableCount: 0,
     unmatchedCount: 0,
+    failureCounts: [],
     failureMessage: null,
     cancelRequestedAt: null,
     queuedAt: 1_788_000_000,
@@ -34,30 +36,6 @@ function run(overrides: Partial<BillingTransferRun> = {}): BillingTransferRun {
     ...overrides,
   };
 }
-
-describe("runProgress", () => {
-  // A run that has not been told how much there is to do reports nothing. An
-  // empty bar says "no progress", which is the opposite of "still counting".
-  it("answers nothing while the total is unknown", () => {
-    expect(runProgress(run({ totalCount: 0, processedCount: 0 }))).toBeNull();
-    expect(runProgress(undefined)).toBeNull();
-    expect(runProgress(null)).toBeNull();
-  });
-
-  it("distinguishes an unknown total from a genuine zero", () => {
-    expect(runProgress(run({ totalCount: 10, processedCount: 0 }))).toBe(0);
-  });
-
-  it("reports the fraction processed", () => {
-    expect(runProgress(run({ totalCount: 8, processedCount: 2 }))).toBe(0.25);
-  });
-
-  // Counters are recomputed from rows, so a retried batch cannot push them past
-  // the total — but a bar that renders over 100% would be worse than clamping.
-  it("never exceeds one", () => {
-    expect(runProgress(run({ totalCount: 4, processedCount: 9 }))).toBe(1);
-  });
-});
 
 describe("shouldPollRun", () => {
   it("keeps asking while the run is working", () => {
@@ -116,28 +94,99 @@ describe("canRetryRun", () => {
   });
 });
 
-describe("summarizeRun", () => {
-  it("reads the counters the server settled on rather than recomputing them", () => {
+describe("runOutcome", () => {
+  it("names a run that moved every shipment", () => {
+    expect(runOutcome(run({ status: "Completed", transferredCount: 10 }))).toBe("transferred");
+  });
+
+  it("names a run that moved some and held back the rest", () => {
     expect(
-      summarizeRun(
-        run({
-          totalCount: 10,
-          transferredCount: 6,
-          notTransferredCount: 3,
-          skippedCount: 1,
-          markedReadyToInvoiceCount: 2,
-          retryableCount: 3,
-          unmatchedCount: 25,
-        }),
+      runOutcome(run({ status: "Completed", transferredCount: 7, notTransferredCount: 3 })),
+    ).toBe("partial");
+  });
+
+  it("names a run that moved none", () => {
+    expect(runOutcome(run({ status: "Completed", notTransferredCount: 10 }))).toBe("blocked");
+  });
+
+  it("names a run that matched nothing", () => {
+    expect(runOutcome(run({ status: "Completed", totalCount: 0 }))).toBe("empty");
+  });
+
+  // How a run ended outranks what it moved before it ended: a stopped or failed run
+  // is reported as stopped even when every shipment it reached transferred.
+  it("names how an interrupted run ended before what it moved", () => {
+    expect(runOutcome(run({ status: "Canceled", transferredCount: 10 }))).toBe("canceled");
+    expect(runOutcome(run({ status: "Failed", transferredCount: 10 }))).toBe("failed");
+  });
+});
+
+describe("runElapsedSeconds", () => {
+  it("counts nothing before the run starts", () => {
+    expect(runElapsedSeconds(run({ startedAt: null }), 1_788_000_500)).toBeNull();
+  });
+
+  it("counts up to now while the run is going", () => {
+    expect(runElapsedSeconds(run({ startedAt: 1_788_000_000 }), 1_788_000_045)).toBe(45);
+  });
+
+  it("stops the clock when the run completes", () => {
+    expect(
+      runElapsedSeconds(
+        run({ status: "Completed", startedAt: 1_788_000_000, completedAt: 1_788_000_120 }),
+        1_788_009_999,
       ),
-    ).toEqual({
-      transferred: 6,
-      notTransferred: 3,
-      notProcessed: 1,
-      markedReadyToInvoice: 2,
-      retryable: 3,
-      unmatched: 25,
-      total: 10,
-    });
+    ).toBe(120);
+  });
+});
+
+describe("runSecondsLeft", () => {
+  // 75 shipments left at 2s each is 150s, which reads as three minutes rather than a
+  // figure that ticks down with the clock and jumps back up at the next poll.
+  it("projects the rest of the run from its pace so far, to the minute", () => {
+    expect(
+      runSecondsLeft(
+        run({ startedAt: 1_788_000_000, totalCount: 100, processedCount: 25 }),
+        1_788_000_050,
+      ),
+    ).toBe(180);
+  });
+
+  it("rounds a last minute to ten seconds", () => {
+    expect(
+      runSecondsLeft(
+        run({ startedAt: 1_788_000_000, totalCount: 100, processedCount: 80 }),
+        1_788_000_100,
+      ),
+    ).toBe(30);
+  });
+
+  // A handful of shipments, or a handful of seconds, is no pace to project from:
+  // the estimate would swing from seconds to hours between polls.
+  it("promises nothing before the pace settles", () => {
+    expect(
+      runSecondsLeft(
+        run({ startedAt: 1_788_000_000, totalCount: 100, processedCount: 9 }),
+        1_788_000_050,
+      ),
+    ).toBeNull();
+    expect(
+      runSecondsLeft(
+        run({ startedAt: 1_788_000_000, totalCount: 100, processedCount: 40 }),
+        1_788_000_004,
+      ),
+    ).toBeNull();
+  });
+
+  it("promises nothing once the run has ended or before it knows its size", () => {
+    expect(
+      runSecondsLeft(
+        run({ status: "Canceled", startedAt: 1_788_000_000, processedCount: 40 }),
+        1_788_000_050,
+      ),
+    ).toBeNull();
+    expect(
+      runSecondsLeft(run({ startedAt: 1_788_000_000, totalCount: 0 }), 1_788_000_050),
+    ).toBeNull();
   });
 });

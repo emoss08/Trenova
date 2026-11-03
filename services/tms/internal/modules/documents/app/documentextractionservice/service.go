@@ -358,7 +358,7 @@ func (s *Service) searchDocumentsViaSearchIndex(
 		return []*document.Document{}, nil
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 		IDs:        ids,
 		TenantInfo: tenantInfo,
 	})

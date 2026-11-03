@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatFileSize, type RejectedFile } from "@/components/documents/document-upload-zone";
+import { formatFileSize } from "@/components/documents/document-upload-zone";
+import type { RejectedFile } from "@/lib/document-upload-files";
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDocumentUpload } from "@/hooks/use-document-upload";

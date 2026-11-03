@@ -60,6 +60,13 @@ func (b *openedBody) Close() error {
 	return b.closer.Close()
 }
 
+// missingObject is a stored object that is not there. It is a not-found error,
+// so a retry is not spent on it: the object will not appear on a later attempt.
+func missingObject() error {
+	return errortypes.NewNotFoundError("The document's file could not be found in storage").
+		WithInternal(kernelports.ErrObjectNotFound)
+}
+
 // Open downloads the object at key and opens it under aad as it is read.
 func Open(
 	ctx context.Context,
@@ -73,8 +80,7 @@ func Open(
 		return nil, err
 	}
 	if !found {
-		return nil, errortypes.NewDatabaseError("Failed to download document").
-			WithInternal(kernelports.ErrObjectNotFound)
+		return nil, missingObject()
 	}
 	return object, nil
 }
@@ -146,8 +152,7 @@ func Read(
 		return nil, err
 	}
 	if !found {
-		return nil, errortypes.NewDatabaseError("Failed to download document").
-			WithInternal(kernelports.ErrObjectNotFound)
+		return nil, missingObject()
 	}
 	return data, nil
 }

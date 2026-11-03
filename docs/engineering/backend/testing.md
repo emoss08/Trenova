@@ -49,6 +49,22 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
 - The imaging worker runs from its image through `internal/testutil/imagingtest`; unit tests use
   `imaging/imagingfake`.
 
+## Fuzz tests
+
+- `//go:build fuzz`, in the package under test (`<name>_fuzz_test.go`), one `FuzzX` per
+  property. Fuzz code that takes untrusted input (a file name, a scanned code, a CSV cell) or
+  does arithmetic that must always balance (minor units, payments against an invoice, a
+  packet's pages and turns). Assert a property every input must keep (a header that parses,
+  shares that add up, pages numbered without gaps), not one output; seed the corpus with the
+  cases the unit tests already name and the hostile ones they don't.
+- The tag keeps them out of `task test`. `task test-fuzz` runs every target's seeds as ordinary
+  tests (CI does on every change); `task fuzz` fuzzes each target for 30 seconds, one at a time,
+  and `task fuzz name=FuzzX time=5m` one target for longer (CI fuzzes every target after each
+  merge to master and weekly). Both cover `shared` too (`scripts/gofuzz.sh`). A failing input
+  lands in the package's `testdata/fuzz/FuzzX/`; commit it with the fix, so it stays a seed.
+- Parsers in Rust (the imaging worker's decoders and PDF engine, X12, Tariff, charge splits)
+  have `cargo-fuzz` targets instead ([rust.md](../rust.md)).
+
 ## Shapes and budgets
 
 - **Plan guard.** Every database an integration test opens through `seedtest`, `dbtest` or a test

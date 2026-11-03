@@ -256,10 +256,7 @@ export function TimeClockPanel({
                     )}
                   >
                     {entry ? (
-                      <>
-                        <span className="bg-success-subtle absolute inset-0 animate-ping rounded-full motion-reduce:hidden" />
-                        <span className="bg-success size-2.5 rounded-full" />
-                      </>
+                      <span className="bg-success size-2.5 rounded-full" />
                     ) : (
                       <ClockIcon className="text-muted-foreground size-5" />
                     )}

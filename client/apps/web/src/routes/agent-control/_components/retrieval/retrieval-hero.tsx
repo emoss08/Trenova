@@ -48,7 +48,8 @@ export function RetrievalHero({
           (status.settings.paused ? (
             <Button
               type="button"
-              variant="default" size="lg"
+              variant="default"
+              size="lg"
               disabled={busy}
               onClick={() => onPause(false)}
             >
@@ -56,7 +57,13 @@ export function RetrievalHero({
               {t("Resume indexing")}
             </Button>
           ) : (
-            <Button type="button" variant="outline" size="lg" disabled={busy} onClick={() => onPause(true)}>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              disabled={busy}
+              onClick={() => onPause(true)}
+            >
               <Ic n="pause" s={13} w={2.2} />
               {t("Pause indexing")}
             </Button>
@@ -66,12 +73,7 @@ export function RetrievalHero({
     );
 
   return (
-    <Hero
-      context={t("Retrieval")}
-      working={sentence.kind === "indexing"}
-      sentenceKey={sentence.kind}
-      control={control}
-    >
+    <Hero context={t("Retrieval")} sentenceKey={sentence.kind} control={control}>
       {sentence.kind === "unrouted" &&
         rt(
           "Agents search by <b>keyword only</b>. Nothing handles the Embedding task, so <b>{0, plural, one {# item is} other {# items are}}</b> waiting to be searchable by meaning.",

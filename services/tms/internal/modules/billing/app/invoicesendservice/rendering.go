@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -24,23 +25,17 @@ func invoiceTemplateContext(
 	deliveryProfile *invoicedocument.DeliveryProfile,
 ) map[string]string {
 	values := map[string]string{
-		"number":              entity.Number,
-		"invoice.number":      entity.Number,
-		"invoiceNumber":       entity.Number,
-		"invoice.date":        invoicedocument.UnixDate(entity.InvoiceDate),
-		"invoiceDate":         invoicedocument.UnixDate(entity.InvoiceDate),
-		"invoice.dueDate":     invoicedocument.UnixDatePtr(entity.DueDate),
-		"dueDate":             invoicedocument.UnixDatePtr(entity.DueDate),
-		"invoice.paymentTerm": string(entity.PaymentTerm),
-		"paymentTerm":         string(entity.PaymentTerm),
-		"invoice.total": invoicedocument.MoneyString(
-			entity.CurrencyCode,
-			entity.TotalAmount.StringFixed(2),
-		),
-		"invoiceTotal": invoicedocument.MoneyString(
-			entity.CurrencyCode,
-			entity.TotalAmount.StringFixed(2),
-		),
+		"number":                  entity.Number,
+		"invoice.number":          entity.Number,
+		"invoiceNumber":           entity.Number,
+		"invoice.date":            invoicedocument.UnixDate(entity.InvoiceDate),
+		"invoiceDate":             invoicedocument.UnixDate(entity.InvoiceDate),
+		"invoice.dueDate":         invoicedocument.UnixDatePtr(entity.DueDate),
+		"dueDate":                 invoicedocument.UnixDatePtr(entity.DueDate),
+		"invoice.paymentTerm":     string(entity.PaymentTerm),
+		"paymentTerm":             string(entity.PaymentTerm),
+		"invoice.total":           money.Display(entity.CurrencyCode, entity.TotalAmount),
+		"invoiceTotal":            money.Display(entity.CurrencyCode, entity.TotalAmount),
 		"invoice.currency":        entity.CurrencyCode,
 		"currency":                entity.CurrencyCode,
 		"customer":                entity.BillToName,
@@ -227,7 +222,7 @@ func shipmentDetailBlock(entity *invoice.Invoice, shp *shipment.Shipment) string
 			lines = append(lines, fmt.Sprintf(
 				"- %s: %s",
 				line.Description,
-				invoicedocument.MoneyString(entity.CurrencyCode, line.Amount.StringFixed(2)),
+				money.Display(entity.CurrencyCode, line.Amount),
 			))
 		}
 	}

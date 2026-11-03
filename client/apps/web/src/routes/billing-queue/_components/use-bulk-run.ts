@@ -30,12 +30,16 @@ export type StartBulkRun = (
  * waits out a short undo window before it writes, and the server checks each item
  * again when it does, so the toast offers Undo until the commit and then reports
  * what the run did, read from the run rather than from the list on screen.
+ * `revertedRunIds` names the runs this hook saw undone or fail, so whatever was
+ * set aside for one of them can come back.
  */
 export function useBulkRun() {
   const t = useT();
   const invalidate = useInvalidateBillingQueue();
   const [runId, setRunId] = useState<string | null>(null);
+  const [revertedRunIds, setRevertedRunIds] = useState<ReadonlySet<string>>(() => new Set());
   const announced = useRef(new Set<string>());
+  const markReverted = (id: string) => setRevertedRunIds((current) => new Set([...current, id]));
 
   const undo = useApiMutation({
     mutationFn: (id: string) => apiService.billingQueueService.undoBulk(id),
@@ -43,6 +47,7 @@ export function useBulkRun() {
     onSuccess: (run) => {
       announced.current.add(run.id);
       setRunId(null);
+      markReverted(run.id);
       toast.info(t("Undone; nothing was changed"));
     },
     onSettled: invalidate,
@@ -88,9 +93,11 @@ export function useBulkRun() {
     invalidate();
 
     if (run.status === "Undone") {
+      markReverted(run.id);
       return;
     }
     if (run.status === "Failed") {
+      markReverted(run.id);
       toast.error(t("The bulk run failed"), { description: run.failureMessage ?? undefined });
       return;
     }
@@ -111,5 +118,5 @@ export function useBulkRun() {
   const run_: StartBulkRun = (action, itemIds, params = {}) =>
     start.mutateAsync({ action, itemIds, params });
 
-  return { start: run_, isStarting: start.isPending };
+  return { start: run_, isStarting: start.isPending, revertedRunIds };
 }

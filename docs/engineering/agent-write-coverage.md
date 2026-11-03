@@ -86,10 +86,10 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 245 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 48 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 112 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1122 writes: 670 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1114 writes: 662 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 677 |
+| Exempt | 669 |
 | — Security | 85 |
-| — Configuration | 246 |
+| — Configuration | 245 |
 | — User preference | 40 |
-| — Infrastructure | 48 |
-| — Agent administration | 112 |
+| — Infrastructure | 49 |
+| — Agent administration | 104 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1122 |
+| Total | 1114 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -187,7 +187,7 @@ The writes no tool performs yet, and what the tool would do.
 | distancecontrol | 1 | 0 | 1 | 0 |
 | distanceoverride | 4 | 0 | 4 | 0 |
 | distanceprofile | 5 | 0 | 5 | 0 |
-| document | 16 | 4 | 12 | 0 |
+| document | 17 | 4 | 13 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
 | documenttemplate | 12 | 0 | 12 | 0 |
@@ -202,9 +202,6 @@ The writes no tool performs yet, and what the tool would do.
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 2 | 0 |
-| extractioneval | 6 | 0 | 6 | 0 |
-| extractionrollout | 1 | 0 | 1 | 0 |
-| extractionshadow | 1 | 0 | 1 | 0 |
 | factoring | 25 | 17 | 8 | 0 |
 | factoringcompany | 2 | 0 | 2 | 0 |
 | fiscalperiod | 5 | 5 | 0 | 0 |
@@ -244,7 +241,6 @@ The writes no tool performs yet, and what the tool would do.
 | manualjournal | 7 | 5 | 2 | 0 |
 | notification | 5 | 0 | 5 | 0 |
 | notificationpreference | 1 | 0 | 1 | 0 |
-| onboarding | 1 | 0 | 1 | 0 |
 | order | 10 | 10 | 0 | 0 |
 | organization | 4 | 0 | 4 | 0 |
 | orgholiday | 3 | 0 | 3 | 0 |
@@ -967,6 +963,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/documents/uploads/:uploadSessionID/cancel/`<br>documenthandler.cancelUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/uploads/:uploadSessionID/complete/`<br>documenthandler.completeUploadSession | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 | `POST /api/v1/documents/uploads/:uploadSessionID/parts/`<br>documenthandler.getUploadPartURLs | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
+| `PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/`<br>documenthandler.uploadSessionPart | Exempt, infrastructure: Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document). |
 
 ### documentcontrol
 
@@ -1187,29 +1184,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/exchange-rates/refresh`<br>exchangeratehandler.refresh | Exempt, infrastructure: Fetches exchange rates from the provider now; the scheduler refreshes them on its own. |
 | `POST /api/v1/exchange-rates/settlement-quotes`<br>exchangeratehandler.createSettlementQuote | Exempt, infrastructure: Fetches a live rate from the rate provider and keeps a short-lived quote for the screen that asked; it books nothing, and nothing uses the quote unless a person settles a payment with it. |
-
-### extractioneval
-
-| Write | Decision |
-| --- | --- |
-| `mutation cancelExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
-| `mutation deleteExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
-| `mutation promoteAICorrection` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
-| `mutation refreezeExtractionEvalCases` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
-| `mutation startExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
-| `mutation updateExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
-
-### extractionrollout
-
-| Write | Decision |
-| --- | --- |
-| `mutation updateExtractionRollout` | Exempt, agent-administration: Choosing which AI provider serves real document extractions, how much of them, and when its guards stop it is oversight of the agents; an agent must not promote or protect the model it is measured against. |
-
-### extractionshadow
-
-| Write | Decision |
-| --- | --- |
-| `mutation updateExtractionShadowSettings` | Exempt, agent-administration: Choosing which AI provider shadows document extraction, and how much it is sent, is oversight of the agents; an agent must not pick or tune the model it is measured against. |
 
 ### factoring
 
@@ -1658,11 +1632,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `PUT /api/v1/users/me/notification-preferences/`<br>notificationpreferencehandler.update | Exempt, user-preference: What reaches a person outside the bell, and when, is their own choice; it changes nothing anyone else sees. |
-
-### onboarding
-
-| Write | Decision |
-| --- | --- |
 
 ### order
 

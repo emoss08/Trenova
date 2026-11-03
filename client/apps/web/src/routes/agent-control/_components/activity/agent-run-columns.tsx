@@ -89,6 +89,9 @@ export function getRunColumns(t: TranslateFn): ColumnDef<AgentRunRow>[] {
       accessorKey: "summary",
       header: t("Summary"),
       cell: ({ row }) => (
+        // <p className="text-muted-foreground">
+        //
+        // </p>
         <DataTableDescription
           description={row.original.summary || row.original.errorMessage}
           truncateLength={80}

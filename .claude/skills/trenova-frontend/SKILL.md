@@ -103,6 +103,16 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   invalidate with the factory's keys. A screen that holds in-memory work a reload would lose
   registers a reload guard (`lib/reload-guards.ts`); forms get one from
   `UnsavedChangesGuard`.
+- **Every control that starts a request holds until it settles.** A button, menu item,
+  toggle or checkbox that calls the server shows it is working and cannot fire again until
+  the request ends: give `Button` `isLoading` (a spinner, and it disables itself), or swap a
+  checkbox or icon button for a `Spinner` in the same box so nothing shifts. The handler
+  returns the promise (`mutateAsync`, `async` callbacks typed `() => Promise<void>`) so the
+  control knows when to let go, and the code that sends the write refuses a second one while
+  the first is in flight (a ref, or a mutation `scope`), because two clicks can land before
+  the button re-renders. On failure the control comes back enabled. This holds for every
+  surface: dialogs, row actions, inline notes, toolbars, rails and suggestions, not just
+  form footers. See "A button that waits for the server" in patterns.md.
 - A file the API serves is fetched with `api.download(endpoint, …)` so it carries the
   session's credentials, CSRF and error handling. `apiEndpoint(path)` turns a server path into
   that endpoint.

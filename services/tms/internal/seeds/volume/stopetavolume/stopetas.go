@@ -114,7 +114,7 @@ func (g *etaPhase) seed(ctx context.Context) error {
 		end := min(begin+etaChunk, total)
 		chunk := b.rows[begin:end]
 		if err = g.InTx(ctx, func(ctx context.Context, tx *keel.DB) error {
-			return volumegen.InsertRows(ctx, tx, stopetadb.StopETAs, chunk)
+			return replaceETAs(ctx, tx, chunk)
 		}); err != nil {
 			return err
 		}
@@ -128,6 +128,25 @@ func (g *etaPhase) seed(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// replaceETAs writes the chunk over any ETA its stops already have.
+//
+// The worker's ETA sweep projects tracked shipments every few minutes, so when it
+// runs during a volume seed it has already written rows for stops this phase
+// projects once the shipments phase commits. The copy has no conflict clause,
+// so those rows go first; the seeded scenario is the one the volume run means.
+func replaceETAs(ctx context.Context, tx *keel.DB, rows []*stopeta.StopETA) error {
+	stopIDs := make([]pulid.ID, 0, len(rows))
+	for _, row := range rows {
+		stopIDs = append(stopIDs, row.StopID)
+	}
+	e := stopetadb.StopETAs
+	if _, err := e.Where(e.StopID.In(stopIDs...)).Delete(ctx, tx); err != nil {
+		return fmt.Errorf("delete projected stop ETAs: %w", err)
+	}
+
+	return volumegen.InsertRows(ctx, tx, e, rows)
 }
 
 func (b *etaBuilder) loadPositions(ctx context.Context) error {

@@ -184,3 +184,23 @@ func TestASourceStreamsTheObjectAgainForEachAttempt(t *testing.T) {
 	_, err := wrong.Open(t.Context())
 	require.ErrorIs(t, err, kernelports.ErrImagingInvalidDocument)
 }
+
+func TestAMissingObjectIsNotFoundSoNoRetryWaitsForIt(t *testing.T) {
+	t.Parallel()
+
+	store := objectstoretest.New()
+	enc := encryption()
+	key := "org/documents/gone.pdf"
+	aad := storedobject.AAD(tenant(), key)
+
+	_, openErr := storedobject.Open(t.Context(), store, enc, key, aad)
+	_, readErr := storedobject.Read(t.Context(), store, enc, key, aad, 1<<20)
+	_, sourceErr := storedobject.Source(store, enc, key, aad, "application/pdf", 10).
+		Open(t.Context())
+
+	for name, err := range map[string]error{"open": openErr, "read": readErr, "source": sourceErr} {
+		assert.True(t, errortypes.IsNotFoundError(err), name)
+		assert.ErrorIs(t, err, kernelports.ErrObjectNotFound, name)
+		assert.Equal(t, "The document's file could not be found in storage", err.Error(), name)
+	}
+}

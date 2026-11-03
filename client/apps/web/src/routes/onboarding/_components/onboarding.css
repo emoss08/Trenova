@@ -5,12 +5,6 @@
   through, and appear nowhere else on the screen.
 */
 
-@property --nv-ang {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 .nv {
   --nv-subtle: var(--foreground-muted);
   --nv-ring: color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
@@ -161,21 +155,9 @@
   display: inline-block;
   margin-top: 10px;
   font-size: 14px;
-  background: linear-gradient(
-    90deg,
-    var(--nv-subtle) 0%,
-    var(--nv-subtle) 40%,
-    var(--foreground) 50%,
-    var(--nv-subtle) 60%,
-    var(--nv-subtle) 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation:
-    nv-shimmer 1.8s linear infinite,
-    nv-fade 300ms both;
+  --shimmer-base: var(--nv-subtle);
+  --shimmer-highlight: var(--foreground);
+  animation: nv-fade 300ms both;
 }
 
 .nv-prose {
@@ -319,8 +301,9 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  background: conic-gradient(
-    from var(--nv-ang),
+  /* The gradient turns in ui-spin-ring's ::before, behind this static mask,
+     for two turns: the ring has faded out by then. */
+  --spin-gradient: conic-gradient(
     transparent 0deg,
     transparent 150deg,
     oklch(0.72 0.15 225 / 0.5) 190deg,
@@ -331,9 +314,9 @@
     oklch(0.85 0.17 85) 342deg,
     transparent 360deg
   );
-  animation:
-    nv-ang 2.6s linear infinite,
-    nv-fadeout 1.2s var(--ease-swift) 1.6s forwards;
+  --spin-duration: 2.6s;
+  --spin-iterations: 2;
+  animation: nv-fadeout 1.2s var(--ease-swift) 1.6s forwards;
 }
 
 .nv-cmp input {
@@ -870,19 +853,8 @@
 }
 
 .nv-nl[data-state="current"] .nv-tx {
-  background: linear-gradient(
-    90deg,
-    var(--foreground) 0%,
-    var(--foreground) 40%,
-    var(--dsk-faint) 50%,
-    var(--foreground) 60%,
-    var(--foreground) 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: nv-shimmer 2s linear infinite;
+  --shimmer-base: var(--foreground);
+  --shimmer-highlight: var(--dsk-faint);
 }
 
 .nv-nl[data-state="failed"] {
@@ -1066,11 +1038,11 @@
 }
 
 .nv-bk:hover .nv-bk-a {
-  animation: nv-sbkc 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) infinite;
+  animation: nv-sbkc 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
 }
 
 .nv-bk:hover .nv-bk-l {
-  animation: nv-sbkl 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) infinite;
+  animation: nv-sbkl 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
 }
 
 .nv-live {
@@ -1166,15 +1138,6 @@
   }
 }
 
-@keyframes nv-shimmer {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -150% 0;
-  }
-}
-
 @keyframes nv-confirm {
   from {
     transform: scale(0.3);
@@ -1225,12 +1188,6 @@
   100% {
     opacity: 0;
     transform: rotate(var(--nv-a)) translateY(calc(var(--nv-d) * -1)) rotate(140deg) scale(1);
-  }
-}
-
-@keyframes nv-ang {
-  to {
-    --nv-ang: 360deg;
   }
 }
 

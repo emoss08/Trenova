@@ -220,6 +220,16 @@ tasks:
     desc: Alias for test
     deps: [test]
 
+  test-fuzz:
+    desc: Run the seed inputs of every Go fuzz test (the `fuzz` build tag), here and in shared
+    cmds:
+      - scripts/gofuzz.sh seeds
+
+  fuzz:
+    desc: "Fuzz every Go target, or one: task fuzz [time=30s] [name=FuzzX]"
+    cmds:
+      - scripts/gofuzz.sh run {{.time | default "30s"}} {{.name}}
+
   test-integration:
     desc: Run integration tests only
     deps: [test-db-up]

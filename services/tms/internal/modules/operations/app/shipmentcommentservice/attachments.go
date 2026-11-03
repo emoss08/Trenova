@@ -27,7 +27,7 @@ func (s *service) validateAttachmentDocuments(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	docs, err := s.documentRepo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+	docs, err := s.documentRepo.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 		IDs:        entity.AttachmentDocumentIDs,
 		TenantInfo: tenantInfo,
 	})

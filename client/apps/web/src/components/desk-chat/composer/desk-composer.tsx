@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import {
   activeMentions,
   readyAttachments,
@@ -419,7 +420,7 @@ export function DeskComposer({
               {full ? t("Message full") : drag?.hot ? t("Release to attach") : t("Drop here")}
             </span>
           )}
-          <span className="dk-cmp-ring" aria-hidden />
+          <span className="dk-cmp-ring ui-spin-ring" aria-hidden />
           {/* One region that is always there, so what the agent is doing is read
             out as it settles: a step that flashes past is not, and neither is
             a countdown's every second. */}
@@ -441,7 +442,13 @@ export function DeskComposer({
               ) : (
                 <span className="dk-cmp-st-d" />
               )}
-              <span className={status.pose === "retry" ? undefined : "dk-shim"}>{status.text}</span>
+              <TextShimmer
+                as="span"
+                className={status.pose === "retry" ? undefined : "dk-shim"}
+                active={status.pose !== "retry"}
+              >
+                {status.text}
+              </TextShimmer>
               {(status.extra || status.action) && <span className="dk-ec-sp" />}
               {status.extra && <span className="dk-ec-att">{status.extra}</span>}
               {status.action && (
@@ -463,11 +470,11 @@ export function DeskComposer({
                 to={compacting.after}
                 window={compacting.window}
               />
-              <span className="dk-shim dk-cx-stt">
+              <TextShimmer as="span" className="dk-shim dk-cx-stt">
                 {compacting.auto
                   ? t("Context is nearly full · compacting…")
                   : t("Compacting the conversation…")}
-              </span>
+              </TextShimmer>
               <span className="dk-ec-sp" />
               {onCancelCompact && (
                 <Button
@@ -561,7 +568,7 @@ export function DeskComposer({
               {typing && (
                 <div className="dk-tw" aria-hidden>
                   <span>{typed.text}</span>
-                  <i className="dk-tw-c" />
+                  {!typed.resting && <i className="dk-tw-c" />}
                   {typed.done && (
                     <span className="dk-tw-tab">
                       <span className="dk-kbd">Tab</span>{" "}

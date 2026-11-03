@@ -1033,6 +1033,9 @@ writes:
   "POST /api/v1/documents/uploads/:uploadSessionID/parts/":
     exempt: infrastructure
     reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
+  "PUT /api/v1/documents/uploads/:uploadSessionID/parts/:partNumber/":
+    exempt: infrastructure
+    reason: "Moves file bytes from a browser into storage; an agent attaches documents that already exist (shipment_attach_document)."
 
   # documentcontrol
   "PUT /api/v1/document-controls/":

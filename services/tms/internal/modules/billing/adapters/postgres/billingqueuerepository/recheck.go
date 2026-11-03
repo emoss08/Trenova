@@ -45,7 +45,7 @@ func recheckCandidates(
 
 	return bq.Pick(bq.ID, bq.OrganizationID, bq.BusinessUnitID).
 		Where(
-			bq.Lane.In(billingqueue.ReviewLanes()...),
+			bq.Status.In(billingqueue.ReviewStatuses()...),
 			keel.Or(bq.CheckedAt.IsNull(), bq.CheckedAt.Lt(req.StaleBefore)),
 		).
 		Order(bq.CheckedAt.Asc().NullsFirst(), bq.ID.Asc()).

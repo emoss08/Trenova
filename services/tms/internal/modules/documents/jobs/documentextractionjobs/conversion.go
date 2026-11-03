@@ -544,7 +544,10 @@ func (a *Activities) documentSource(
 	)
 }
 
-const decryptFailedMessage = "Failed to decrypt document bytes"
+const (
+	decryptFailedMessage = "Failed to decrypt document bytes"
+	missingFileMessage   = "The document's file could not be found in storage"
+)
 
 func unreadable(err error) bool {
 	return errors.Is(err, encryptionservice.ErrBlobTampered) ||
@@ -553,17 +556,35 @@ func unreadable(err error) bool {
 		errors.Is(err, storedobject.ErrNotSealed)
 }
 
+// readFailure is the verdict on bytes no attempt can read: an object that is
+// gone from storage, or one that does not open under its tenant's key. It is
+// recorded on the document instead of failing the activity, so no retry is
+// spent on it.
+func readFailure(err error) *conversionFailure {
+	switch {
+	case errors.Is(err, kernelports.ErrObjectNotFound):
+		return &conversionFailure{
+			code:    documentupload.FailureDownloadFailed,
+			message: missingFileMessage,
+		}
+	case unreadable(err):
+		return &conversionFailure{
+			code:    documentupload.FailureReadFailed,
+			message: decryptFailedMessage,
+		}
+	default:
+		return nil
+	}
+}
+
 func (a *Activities) readPlainText(
 	ctx context.Context,
 	source kernelports.ImagingSource,
 ) ([]byte, *conversionFailure, error) {
 	body, err := source.Open(ctx)
 	if err != nil {
-		if unreadable(err) {
-			return nil, &conversionFailure{
-				code:    documentupload.FailureReadFailed,
-				message: decryptFailedMessage,
-			}, nil
+		if failure := readFailure(err); failure != nil {
+			return nil, failure, nil
 		}
 		return nil, nil, err
 	}
@@ -571,11 +592,8 @@ func (a *Activities) readPlainText(
 
 	data, err := io.ReadAll(io.LimitReader(body, int64(a.cfg.GetMaxExtractedChars())))
 	if err != nil {
-		if unreadable(err) {
-			return nil, &conversionFailure{
-				code:    documentupload.FailureReadFailed,
-				message: decryptFailedMessage,
-			}, nil
+		if failure := readFailure(err); failure != nil {
+			return nil, failure, nil
 		}
 		return nil, nil, err
 	}
@@ -615,6 +633,9 @@ func (a *Activities) convertDocument(
 	var nativePages map[int]bool
 	if format == formatPDF {
 		pageCount, native, err := a.pdfTextProfile(ctx, source)
+		if failure := readFailure(err); failure != nil {
+			return nil, failure, nil
+		}
 		if err != nil {
 			return nil, nil, err
 		}
@@ -641,12 +662,10 @@ func (a *Activities) convertDocument(
 		Size:        doc.FileSize,
 		OCR:         ocr,
 	}, true)
+	if failure := readFailure(err); failure != nil {
+		return nil, failure, nil
+	}
 	switch {
-	case unreadable(err):
-		return nil, &conversionFailure{
-			code:    documentupload.FailureReadFailed,
-			message: decryptFailedMessage,
-		}, nil
 	case errors.Is(err, kernelports.ErrDocumentNotConvertible):
 		return nil, &conversionFailure{
 			code:    documentupload.FailureExtractionFailed,

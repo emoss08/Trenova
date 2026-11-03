@@ -812,6 +812,77 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 	assert.Empty(t, ginCtx.Recorder.Header().Get("Content-Length"))
 }
 
+func previewDocument(id pulid.ID) *document.Document {
+	return &document.Document{
+		ID:                 id,
+		FileName:           "preview.pdf",
+		OriginalName:       "preview.pdf",
+		StoragePath:        "org/trailer/preview.pdf",
+		ChecksumSHA256:     "abc123",
+		PreviewStoragePath: "org/trailer/preview-thumb.webp",
+		PreviewStatus:      document.PreviewStatusReady,
+		Status:             document.StatusActive,
+	}
+}
+
+func TestDocumentHandler_Preview_TellsTheBrowserToKeepIt(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(previewDocument(docID), nil)
+	storageClient := &mockStorageClient{
+		downloadFunc: func(_ context.Context, key string) (*kernelports.DownloadResult, error) {
+			body := encryptedPreviewBody(t, "preview-body", key)
+			return &kernelports.DownloadResult{
+				Body:        io.NopCloser(strings.NewReader(body)),
+				ContentType: "image/webp",
+				Size:        int64(len(body)),
+			}, nil
+		},
+	}
+	deps := setupHandler(t, repo, storageClient)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/documents/" + docID.String() + "/preview/").
+		WithDefaultAuthContext()
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	assert.Equal(t, "private, max-age=86400", ginCtx.ResponseHeader("Cache-Control"))
+	assert.Equal(t, `"abc123-240x320-preview"`, ginCtx.ResponseHeader("ETag"))
+	assert.Equal(t, "nosniff", ginCtx.ResponseHeader("X-Content-Type-Options"))
+}
+
+func TestDocumentHandler_Preview_AnswersNotModifiedWithoutReadingStorage(t *testing.T) {
+	t.Parallel()
+
+	docID := pulid.MustNew("doc_")
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(previewDocument(docID), nil)
+	storageClient := &mockStorageClient{
+		downloadFunc: func(context.Context, string) (*kernelports.DownloadResult, error) {
+			t.Fatal("a preview the browser already holds is not read from storage")
+			return nil, nil
+		},
+	}
+	deps := setupHandler(t, repo, storageClient)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/documents/"+docID.String()+"/preview/").
+		WithHeader("If-None-Match", `W/"other", "abc123-240x320-preview"`).
+		WithDefaultAuthContext()
+	deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusNotModified, ginCtx.ResponseCode())
+	assert.Equal(t, `"abc123-240x320-preview"`, ginCtx.ResponseHeader("ETag"))
+	assert.Empty(t, ginCtx.Recorder.Body.String())
+}
+
 func TestDocumentHandler_Preview_NoPreviewAvailable(t *testing.T) {
 	t.Parallel()
 
@@ -1569,7 +1640,7 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByIDs(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
@@ -1926,7 +1997,7 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByIDs(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+		RunAndReturn(func(_ context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{

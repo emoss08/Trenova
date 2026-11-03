@@ -350,13 +350,7 @@ describe("invoice detail pane scope", () => {
 
   it("names a consolidated invoice, its period, and every shipment it bills", async () => {
     mocks.getById.mockResolvedValue(invoice());
-    renderWithin(
-      <InvoiceDetailPane
-        selectedInvoiceId="inv_2"
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-      />,
-    );
+    renderWithin(<InvoiceDetailPane selectedInvoiceId="inv_2" onDocumentSelect={vi.fn()} />);
 
     expect(await screen.findByRole("heading", { name: "INV-2" })).toBeInTheDocument();
     expect(screen.getByText("Consolidated")).toBeInTheDocument();
@@ -381,13 +375,7 @@ describe("invoice detail pane scope", () => {
         shipmentCount: 1,
       }),
     );
-    renderWithin(
-      <InvoiceDetailPane
-        selectedInvoiceId="inv_1"
-        selectedDocumentId={null}
-        onDocumentSelect={vi.fn()}
-      />,
-    );
+    renderWithin(<InvoiceDetailPane selectedInvoiceId="inv_1" onDocumentSelect={vi.fn()} />);
 
     expect(await screen.findByRole("heading", { name: "INV-1" })).toBeInTheDocument();
     expect(screen.getByText("SEED-DET-011")).toBeInTheDocument();

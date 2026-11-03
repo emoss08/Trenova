@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
@@ -193,4 +194,21 @@ func TestNl2brEscapesThenAddsBreaks(t *testing.T) {
 
 	assert.Equal(t, "a<br>&lt;b&gt;", got)
 	assert.Equal(t, stringutils.TextToHTMLBreaks("a\n<b>"), got)
+}
+
+func TestDayWritesAnISODateInTheTemplatesLanguage(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Nov 3, 2026", FuncMapFor(i18n.EN)["day"].(func(string) string)("2026-11-03"))
+	assert.Equal(t, "3 nov 2026", FuncMapFor(i18n.ES)["day"].(func(string) string)(" 2026-11-03 "))
+	assert.Equal(t, "2026年11月3日", FuncMapFor(i18n.ZhCN)["day"].(func(string) string)("2026-11-03"))
+}
+
+func TestDayLeavesWhatIsNotADateAsItIs(t *testing.T) {
+	t.Parallel()
+
+	day := FuncMap()["day"].(func(string) string)
+	for _, value := range []string{"", "Net30", "2026-13-40", "Nov 3, 2026"} {
+		assert.Equal(t, value, day(value))
+	}
 }

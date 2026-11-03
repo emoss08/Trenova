@@ -28,11 +28,7 @@ function renderPane(selectedInvoiceId: string | null) {
     <MemoryRouter>
       <QueryClientProvider client={client}>
         <NuqsTestingAdapter>
-          <InvoiceDetailPane
-            selectedInvoiceId={selectedInvoiceId}
-            selectedDocumentId={null}
-            onDocumentSelect={vi.fn()}
-          />
+          <InvoiceDetailPane selectedInvoiceId={selectedInvoiceId} onDocumentSelect={vi.fn()} />
         </NuqsTestingAdapter>
       </QueryClientProvider>
     </MemoryRouter>,

@@ -77,6 +77,7 @@ func (r *repository) SeedRetryItems(
 			}
 
 			out := &billingtransferports.SeedBillingTransferRetryItemsResult{}
+			failures := make(map[billingtransfer.FailureCode]int)
 			rows := make([]*billingtransfer.BillingTransferRunItem, 0, len(source))
 			for i, item := range source {
 				row := &billingtransfer.BillingTransferRunItem{
@@ -110,6 +111,7 @@ func (r *repository) SeedRetryItems(
 						out.TransferredCount++
 					case billingtransfer.ItemStatusNotTransferred:
 						out.NotTransferredCount++
+						failures[item.FailureCode]++
 					case billingtransfer.ItemStatusPending, billingtransfer.ItemStatusSkipped:
 					}
 					if item.MarkedReadyToInvoice {
@@ -121,6 +123,7 @@ func (r *repository) SeedRetryItems(
 			}
 
 			out.TotalCount = len(rows)
+			out.FailureCounts = billingtransfer.TallyFailureCounts(failures)
 			if len(rows) == 0 {
 				return out, nil
 			}
@@ -368,13 +371,38 @@ func runItemCounts(runID pulid.ID) keel.Query[*billingtransfer.BillingTransferRu
 	).Where(item.RunID.Eq(runID))
 }
 
+func runFailureCounts(runID pulid.ID) keel.Query[*billingtransfer.BillingTransferRunItem] {
+	item := billingtransferdb.BillingTransferRunItems
+	return item.Group(item.FailureCode).
+		Pick(item.FailureCode, keel.Count()).
+		Where(
+			item.RunID.Eq(runID),
+			item.Status.Eq(billingtransfer.ItemStatusNotTransferred),
+		)
+}
+
 func (r *repository) refreshRunCounters(
 	ctx context.Context,
 	runID pulid.ID,
 	out *billingtransferports.BillingTransferRunProgress,
 ) error {
 	db := r.db.Keel(ctx)
-	counts, err := keel.IntoOne[itemCounts](ctx, db, runItemCounts(runID))
+	var (
+		counts   itemCounts
+		failures []billingtransfer.FailureCount
+	)
+	if err := keel.Batch(ctx, db,
+		keel.IntoValue(runItemCounts(runID), &counts),
+		keel.IntoSlice(runFailureCounts(runID), &failures),
+	); err != nil {
+		return err
+	}
+
+	if failures == nil {
+		failures = []billingtransfer.FailureCount{}
+	}
+	billingtransfer.SortFailureCounts(failures)
+	encodedFailures, err := sonic.MarshalString(failures)
 	if err != nil {
 		return err
 	}
@@ -387,6 +415,7 @@ func (r *repository) refreshRunCounters(
 		run.SkippedCount.To(int64(counts.Skipped)),
 		run.MarkedReadyToInvoiceCount.To(int64(counts.MarkedReady)),
 		run.RetryableCount.To(int64(counts.Retryable)),
+		run.FailureCounts.ToExpr(keel.CastJSONB(keel.Val(encodedFailures))),
 	)
 	if err != nil {
 		return runErrors.Map(err, runID.String())

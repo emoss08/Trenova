@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import type { NovaSegment } from "@/lib/onboarding-copy";
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -111,7 +112,7 @@ export function BuildNarration({
                 <span className="nv-spn" />
               )}
             </span>
-            <span className="nv-tx">
+            <TextShimmer as="span" className="nv-tx" active={state === "current"}>
               {line.map((segment, segmentIndex) =>
                 segment.bold ? (
                   <b key={segmentIndex}>{segment.text}</b>
@@ -119,7 +120,7 @@ export function BuildNarration({
                   <Fragment key={segmentIndex}>{segment.text}</Fragment>
                 ),
               )}
-            </span>
+            </TextShimmer>
             {state === "done" ? <span className="nv-el">{time}</span> : null}
           </div>
         );

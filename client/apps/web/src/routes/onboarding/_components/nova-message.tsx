@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { segmentsText, type NovaSegment } from "@/lib/onboarding-copy";
@@ -43,9 +44,9 @@ export function NovaMessage({
         <span>{t("Setup guide")}</span>
       </div>
       {thinking ? (
-        <div className="nv-thk" aria-hidden="true">
+        <TextShimmer as="div" className="nv-thk" duration={1.8} aria-hidden="true">
           {t("Typing")}
-        </div>
+        </TextShimmer>
       ) : (
         <p className="nv-prose" aria-hidden={typing || undefined}>
           {revealSegments(segments, revealed)}

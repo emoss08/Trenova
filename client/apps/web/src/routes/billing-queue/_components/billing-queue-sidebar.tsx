@@ -284,6 +284,7 @@ export function BillingQueueSidebar({
     <BillingQueueSuggestions
       run={bulk.start}
       isStarting={bulk.isStarting}
+      revertedRunIds={bulk.revertedRunIds}
       onOpenItem={onSelectItem}
       onHoldItems={(ids, note) =>
         setHoldRequest({ targets: ids.map((id) => ({ id, label: id })), note })

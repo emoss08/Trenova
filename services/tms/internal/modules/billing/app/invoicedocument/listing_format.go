@@ -25,10 +25,3 @@ func UnixDatePtr(value *int64) string {
 	}
 	return UnixDate(*value)
 }
-
-func MoneyString(currency, amount string) string {
-	if currency == "" {
-		currency = "USD"
-	}
-	return currency + " " + amount
-}

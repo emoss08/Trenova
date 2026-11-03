@@ -4,6 +4,7 @@ import {
   listBillingTransferCandidatesGraphQL,
   listBillingTransferRunItemsGraphQL,
   type BillingTransferCandidateFilters,
+  type BillingTransferFailureCode,
   type BillingTransferItemStatus,
 } from "@/lib/graphql/billing-transfer";
 import { billingQueue } from "@/lib/queries/billing-queue";
@@ -246,13 +247,19 @@ export function myActiveBillingTransferRunQuery() {
   });
 }
 
-/** One run's per-shipment report, a page at a time. */
+/** One run's per-shipment report, a page at a time, narrowed by outcome and by reason. */
 export function billingTransferRunItemsQuery(
   runId: string | null,
   statuses?: BillingTransferItemStatus[],
+  failureCodes?: BillingTransferFailureCode[],
 ) {
   return infiniteQueryOptions({
-    queryKey: [BILLING_TRANSFER_RUN_ITEMS_KEY, runId, statuses ?? null] as const,
+    queryKey: [
+      BILLING_TRANSFER_RUN_ITEMS_KEY,
+      runId,
+      statuses ?? null,
+      failureCodes ?? null,
+    ] as const,
     queryFn: ({ pageParam, signal }) =>
       listBillingTransferRunItemsGraphQL(
         {
@@ -260,6 +267,7 @@ export function billingTransferRunItemsQuery(
           first: BILLING_TRANSFER_RUN_ITEMS_PAGE_SIZE,
           after: pageParam,
           statuses,
+          failureCodes,
         },
         { signal },
       ),

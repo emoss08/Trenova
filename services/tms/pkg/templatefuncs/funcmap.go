@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -78,6 +79,9 @@ func FuncMapFor(locale i18n.Locale) template.FuncMap {
 
 	fm["t"] = func(message string, args ...any) string {
 		return i18n.Translate(locale, message, args...)
+	}
+	fm["day"] = func(value string) string {
+		return longDay(locale, value)
 	}
 
 	return fm
@@ -198,4 +202,12 @@ func ForbiddenFunctionNames() []string {
 	out := make([]string, len(forbiddenFunctionNames))
 	copy(out, forbiddenFunctionNames)
 	return out
+}
+
+func longDay(locale i18n.Locale, value string) string {
+	day, err := time.Parse(time.DateOnly, strings.TrimSpace(value))
+	if err != nil {
+		return value
+	}
+	return i18n.LongDate(locale, day)
 }

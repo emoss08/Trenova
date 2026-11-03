@@ -112,8 +112,8 @@ func TestLiveInvoiceStarterProducesALegibleInvoice(t *testing.T) {
 		"PO Box 41220",     // remit to
 		"Linehaul",         // a charge line
 		"Fuel surcharge",   // another
-		"2,338.74",         // the total
-		"Net30",            // payment terms
+		"$2,338.74",        // the total
+		"Aug 14, 2026",     // the due date, written for a reader
 	} {
 		assert.Contains(t, text, want, "the rendered invoice omits %q", want)
 	}

@@ -7,6 +7,7 @@ import {
   type AssistantDock,
 } from "@/lib/assistant-dock";
 import { Button } from "@trenova/shared/components/ui/button";
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { EyeOffIcon } from "@trenova/shared/components/icons";
@@ -184,7 +185,9 @@ function BeaconLabel({ beacon, dragging }: { beacon: BeaconState; dragging: bool
     case "writing":
       return beacon.writing ? (
         <>
-          <span className="as-beacon-t as-shim">{beacon.writing.title || t("Writing")}</span>
+          <TextShimmer as="span" className="as-beacon-t as-shim">
+            {beacon.writing.title || t("Writing")}
+          </TextShimmer>
           <Elapsed since={beacon.writing.startedAt} />
         </>
       ) : (

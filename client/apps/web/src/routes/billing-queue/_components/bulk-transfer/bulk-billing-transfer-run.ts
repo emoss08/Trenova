@@ -33,19 +33,6 @@ export function shouldPollRun(run: BillingTransferRun | null | undefined): boole
 }
 
 /**
- * How far through the run is, as a fraction.
- *
- * A run that has not been told how much there is to do reports nothing rather
- * than zero. An empty bar reads as "no progress", which is the wrong statement
- * about a run that is still working out which shipments it has to touch.
- */
-export function runProgress(run: BillingTransferRun | null | undefined): number | null {
-  if (!run || run.totalCount <= 0) return null;
-
-  return Math.min(1, run.processedCount / run.totalCount);
-}
-
-/**
  * Whether a stop has been asked for but has not taken effect yet.
  *
  * The batch in flight always finishes, so there is a stretch where the run is
@@ -65,27 +52,58 @@ export function canRetryRun(run: BillingTransferRun | null | undefined): boolean
   return run.retryableCount > 0 || run.skippedCount > 0;
 }
 
-export type BillingTransferRunSummary = {
-  transferred: number;
-  markedReadyToInvoice: number;
-  notTransferred: number;
-  notProcessed: number;
-  total: number;
-  retryable: number;
-  unmatched: number;
-};
+/**
+ * What a finished run amounts to, which decides the tone and the headline of its report.
+ *
+ * - `empty`: nothing matched, so there was nothing to move.
+ * - `failed` and `canceled`: the run ended before it was done, whatever it moved first.
+ * - `transferred`: every shipment moved.
+ * - `partial`: some moved and some were held back or never reached.
+ * - `blocked`: none moved.
+ */
+export type RunOutcome = "empty" | "failed" | "canceled" | "transferred" | "partial" | "blocked";
 
-export function summarizeRun(run: BillingTransferRun): BillingTransferRunSummary {
-  return {
-    transferred: run.transferredCount,
-    markedReadyToInvoice: run.markedReadyToInvoiceCount,
-    notTransferred: run.notTransferredCount,
-    notProcessed: run.skippedCount,
-    total: run.totalCount,
-    retryable: run.retryableCount,
-    unmatched: run.unmatchedCount,
-  };
+export function runOutcome(run: BillingTransferRun): RunOutcome {
+  if (run.status === "Failed") return "failed";
+  if (run.status === "Canceled") return "canceled";
+  if (run.totalCount === 0) return "empty";
+  if (run.transferredCount === 0) return "blocked";
+  if (run.transferredCount < run.totalCount) return "partial";
+  return "transferred";
 }
+
+/**
+ * How long the run has been working, or worked, in seconds. A run that has not started
+ * has spent no time; a finished one stops the clock at its completion.
+ */
+export function runElapsedSeconds(run: BillingTransferRun, nowSeconds: number): number | null {
+  if (!run.startedAt) return null;
+
+  const end = run.completedAt ?? nowSeconds;
+  return Math.max(0, end - run.startedAt);
+}
+
+/**
+ * Roughly how long the rest of the run will take, from the pace so far. Nothing is promised
+ * until the run has a pace worth projecting: a few shipments in, or a few seconds, the rate
+ * swings too far to be a useful answer. The answer is rounded up to the minute, or to ten
+ * seconds under a minute, so it holds still between polls instead of ticking with the clock.
+ */
+export function runSecondsLeft(run: BillingTransferRun, nowSeconds: number): number | null {
+  if (isRunTerminal(run) || run.totalCount <= 0) return null;
+
+  const elapsed = runElapsedSeconds(run, nowSeconds);
+  if (elapsed === null || elapsed < MIN_PACE_SECONDS || run.processedCount < MIN_PACE_SHIPMENTS) {
+    return null;
+  }
+
+  const remaining = Math.max(0, run.totalCount - run.processedCount);
+  const seconds = (remaining * elapsed) / run.processedCount;
+  return seconds < 60 ? Math.ceil(seconds / 10) * 10 : Math.ceil(seconds / 60) * 60;
+}
+
+const MIN_PACE_SECONDS = 5;
+const MIN_PACE_SHIPMENTS = 10;
 
 /**
  * The most shipments one run carries. A search matching more than this reports

@@ -5,6 +5,16 @@ package invoicedocument
 import (
 	"bytes"
 	"context"
+	"image"
+	"image/color"
+	"image/png"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
@@ -19,15 +29,6 @@ import (
 	storagetest "github.com/emoss08/trenova/shared/testutil/storage"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"image"
-	"image/color"
-	"image/png"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestWriteInvoicePDFPreview(t *testing.T) {

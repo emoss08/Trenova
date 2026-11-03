@@ -1,62 +1,57 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { m } from "motion/react";
-import React, { useMemo, type JSX } from "react";
+import React, { type CSSProperties, type ReactNode } from "react";
 
-export type TextShimmerProps = {
-  children: string;
+export type TextShimmerProps = Omit<React.HTMLAttributes<HTMLElement>, "children"> & {
+  children: ReactNode;
   as?: React.ElementType;
   className?: string;
+  /** Seconds for the band to cross the text once. */
   duration?: number;
-  spread?: number;
+  /** Off, the text renders plain in the same element, so a step can stop shimmering when it finishes. */
+  active?: boolean;
 };
 
+/**
+ * Text something is working on, with a lighter band crossing it on a loop.
+ *
+ * The band is a copy of the text in a soft-edged window (`ui-text-shimmer-sweep`
+ * in app.css): the window slides across while the copy slides back, so only
+ * transforms animate and the browser never repaints the text. The copy is hidden
+ * from assistive technology, which reads the text once, and plain text is copied
+ * by CSS, so the element's text content is the text once. The colours default to
+ * subtle text with a full-strength band; a surface sets `--shimmer-base` and
+ * `--shimmer-highlight` on the element to use its own.
+ */
 function TextShimmerComponent({
   children,
   as: Component = "p",
   className,
   duration = 2,
-  spread = 2,
+  active = true,
+  style,
+  ...props
 }: TextShimmerProps) {
-  const MotionComponent = useMemo(() => {
-    const tag = Component as keyof JSX.IntrinsicElements;
-
-    if (tag === "p") return m.p;
-    if (tag === "span") return m.span;
-    if (tag === "div") return m.div;
-    if (tag === "strong") return m.strong;
-    if (tag === "em") return m.em;
-
-    return m.p;
-  }, [Component]);
-
-  const dynamicSpread = useMemo(() => {
-    return children.length * spread;
-  }, [children, spread]);
+  if (!active) {
+    return (
+      <Component className={className} style={style} {...props}>
+        {children}
+      </Component>
+    );
+  }
 
   return (
-    <MotionComponent
-      className={cn(
-        "relative inline-block bg-[length:250%_100%,auto] bg-clip-text",
-        "text-transparent [--base-color:var(--foreground-subtle)] [--base-gradient-color:var(--foreground)]",
-        "[background-repeat:no-repeat,padding-box] [--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--base-gradient-color),#0000_calc(50%+var(--spread)))]",
-        className,
-      )}
-      initial={{ backgroundPosition: "100% center" }}
-      animate={{ backgroundPosition: "0% center" }}
-      transition={{
-        repeat: Infinity,
-        duration,
-        ease: "linear",
-      }}
-      style={
-        {
-          "--spread": `${dynamicSpread}px`,
-          backgroundImage: `var(--bg), linear-gradient(var(--base-color), var(--base-color))`,
-        } as React.CSSProperties
-      }
+    <Component
+      className={cn("ui-text-shimmer", className)}
+      style={{ "--shimmer-duration": `${duration}s`, ...style } as CSSProperties}
+      {...props}
     >
       {children}
-    </MotionComponent>
+      <span aria-hidden="true" className="ui-text-shimmer-sweep">
+        {/* Plain text is copied by CSS from data-text, so the element's text
+            stays the text once; rich children are copied as elements. */}
+        {typeof children === "string" ? <span data-text={children} /> : <span>{children}</span>}
+      </span>
+    </Component>
   );
 }
 

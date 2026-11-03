@@ -117,6 +117,33 @@ export function formatRelativeTime(
   return formatter.format(Math.round(deltaSeconds), "second");
 }
 
+const DURATION_UNITS: [Intl.NumberFormatOptions["unit"], number][] = [
+  ["day", 86_400],
+  ["hour", 3_600],
+  ["minute", 60],
+  ["second", 1],
+];
+
+/**
+ * formatDuration writes a span of seconds in the reader's language at the two largest units it
+ * spans: "2 min, 14 sec", "1 hr, 5 min", "38 sec". A span under a second reads as zero seconds.
+ */
+export function formatDuration(seconds: number): string {
+  let remaining = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0;
+  const parts: string[] = [];
+  for (const [unit, size] of DURATION_UNITS) {
+    const amount = Math.floor(remaining / size);
+    remaining -= amount * size;
+    if (amount > 0 || (parts.length === 0 && unit === "second")) {
+      parts.push(formatNumber(amount, { style: "unit", unit, unitDisplay: "short" }));
+    }
+    if (parts.length === 2) break;
+    if (parts.length === 1 && amount === 0) break;
+  }
+
+  return formatList(parts, "unit");
+}
+
 const ordinalRules = new Map<string, Intl.PluralRules>();
 const ENGLISH_ORDINAL_SUFFIX: Partial<Record<Intl.LDMLPluralRule, string>> = {
   one: "st",

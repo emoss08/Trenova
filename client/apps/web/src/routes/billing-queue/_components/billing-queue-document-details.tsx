@@ -14,6 +14,7 @@ import { documentReading } from "@/lib/queries/document-reading";
 import { apiService } from "@/services/api";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Form } from "@trenova/shared/components/ui/form";
@@ -166,7 +167,12 @@ export function BillingQueueDocumentDetails({
   hot: string | null;
   onPoint: (key: string | null) => void;
   onSelectField: (key: string) => void;
-  packet?: { included: boolean; editable: boolean; onToggle: (include: boolean) => void };
+  packet?: {
+    included: boolean;
+    editable: boolean;
+    saving: boolean;
+    onToggle: (include: boolean) => void;
+  };
   /** Told once a read was asked for, so the review watches for it to finish. */
   onReadStarted: () => void;
   onNext?: () => void;
@@ -589,11 +595,21 @@ export function BillingQueueDocumentDetails({
           {packet ? (
             <div className="border-border flex flex-col gap-2 border-t pt-3.5">
               <label className="flex items-center gap-2">
-                <Checkbox
-                  checked={packet.included}
-                  disabled={!packet.editable}
-                  onCheckedChange={(checked) => packet.onToggle(checked === true)}
-                />
+                {packet.saving ? (
+                  <span
+                    role="status"
+                    aria-label={t("Saving")}
+                    className="grid size-4 shrink-0 place-items-center"
+                  >
+                    <Spinner className="size-3.5" />
+                  </span>
+                ) : (
+                  <Checkbox
+                    checked={packet.included}
+                    disabled={!packet.editable}
+                    onCheckedChange={(checked) => packet.onToggle(checked === true)}
+                  />
+                )}
                 {t("Send with the invoice packet")}
               </label>
             </div>

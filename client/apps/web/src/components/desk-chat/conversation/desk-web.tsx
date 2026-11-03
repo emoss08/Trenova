@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { MarkdownLinkContext, type MarkdownLinkRenderer } from "@/components/elements/ai-markdown";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -156,7 +157,9 @@ export function DeskWebLive({
     <div className="dk-wl" role="status">
       <div className="dk-wl-h">
         <DeskIcon name="globe" size={13} />
-        <span className="dk-wl-l">{label}</span>
+        <TextShimmer as="span" className="dk-wl-l" duration={1.6}>
+          {label}
+        </TextShimmer>
       </div>
       {query !== "" && <div className="dk-wl-q">{query}</div>}
       {sources.length > 0 && (

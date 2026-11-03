@@ -489,7 +489,7 @@ func (r *repository) Delete(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req documentports.BulkDeleteDocumentRequest,
+	req documentports.GetDocumentsByIDsRequest,
 ) ([]*document.Document, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		if len(req.IDs) == 0 {
@@ -497,9 +497,11 @@ func (r *repository) GetByIDs(
 		}
 
 		d := documentdb.Documents
-		entities, err := d.Where(d.ID.In(req.IDs...)).
-			Limit(len(req.IDs)).
-			List(ctx, r.db.Keel(ctx))
+		q := d.Where(d.ID.In(req.IDs...)).Limit(len(req.IDs))
+		if req.IncludeDocumentType {
+			q = q.Load(d.DocumentType())
+		}
+		entities, err := q.List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get documents by IDs", zap.Error(err))
 			return nil, err

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { BillingQueueRecommendation } from "@trenova/shared/types/billing-queue";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -28,22 +28,32 @@ function recommendation(
   return { kind, source, count: itemIds.length, total: itemIds.length * 1000, itemIds };
 }
 
-function renderSuggestions(recommendations: BillingQueueRecommendation[]) {
+function renderSuggestions(
+  recommendations: BillingQueueRecommendation[],
+  run = vi.fn().mockResolvedValue({ id: "run_1" }),
+) {
   mocks.recommendations.mockResolvedValue(recommendations);
-  const run = vi.fn().mockResolvedValue({});
   const onOpenItem = vi.fn();
   const onHoldItems = vi.fn();
-  render(
-    <QueryClientProvider client={new QueryClient()}>
+  const client = new QueryClient();
+  const view = (revertedRunIds: ReadonlySet<string>) => (
+    <QueryClientProvider client={client}>
       <BillingQueueSuggestions
         run={run}
         onOpenItem={onOpenItem}
         onHoldItems={onHoldItems}
         isStarting={false}
+        revertedRunIds={revertedRunIds}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
-  return { run, onOpenItem, onHoldItems };
+  const { rerender } = render(view(new Set()));
+  return {
+    run,
+    onOpenItem,
+    onHoldItems,
+    revert: (...runIds: string[]) => rerender(view(new Set(runIds))),
+  };
 }
 
 describe("BillingQueueSuggestions", () => {
@@ -90,5 +100,69 @@ describe("BillingQueueSuggestions", () => {
   it("shows nothing when there is nothing to batch", () => {
     renderSuggestions([]);
     expect(screen.queryByRole("region", { name: "Suggested" })).not.toBeInTheDocument();
+  });
+
+  // The batch's items now belong to its run; offering them again would start a
+  // second run over the same freight.
+  it("takes a suggestion away once its batch has started", async () => {
+    const { run } = renderSuggestions([
+      recommendation("ApproveReady", ["bqi_1"]),
+      recommendation("AssignToMe", ["bqi_2"]),
+    ]);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Approve 1" }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Approve 1" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Assign 1" })).toBeEnabled();
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the pressed button working and holds the others while the batch starts", async () => {
+    let accept: (run: { id: string }) => void = () => {};
+    const run = vi.fn(
+      () =>
+        new Promise<{ id: string }>((resolve) => {
+          accept = resolve;
+        }),
+    );
+    renderSuggestions(
+      [recommendation("ApproveReady", ["bqi_1"]), recommendation("AssignToMe", ["bqi_2"])],
+      run,
+    );
+
+    const approve = await screen.findByRole("button", { name: "Approve 1" });
+    await userEvent.click(approve);
+
+    expect(approve).toHaveAttribute("aria-busy", "true");
+    expect(approve).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Assign 1" })).toBeDisabled();
+
+    accept({ id: "run_1" });
+    await waitFor(() => expect(approve).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Assign 1" })).toBeEnabled();
+  });
+
+  it("brings a suggestion back when its batch is undone", async () => {
+    const { revert } = renderSuggestions([recommendation("ApproveReady", ["bqi_1"])]);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Approve 1" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Approve 1" })).not.toBeInTheDocument(),
+    );
+
+    revert("run_1");
+
+    expect(await screen.findByRole("button", { name: "Approve 1" })).toBeEnabled();
+  });
+
+  it("keeps a suggestion whose batch could not start, so it can be tried again", async () => {
+    const run = vi.fn().mockRejectedValue(new Error("Conflict"));
+    renderSuggestions([recommendation("PostApproved", ["bqi_1"])], run);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Post 1" }));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "Post 1" })).toBeEnabled());
   });
 });

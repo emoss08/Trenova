@@ -2,6 +2,7 @@ package invoiceports
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -276,12 +277,13 @@ type InvoiceSendPlanPart struct {
 }
 
 type InvoiceSendPlanAttachment struct {
-	DocumentID   pulid.ID `json:"documentId"`
-	FileName     string   `json:"fileName"`
-	ContentType  string   `json:"contentType"`
-	SizeBytes    int64    `json:"sizeBytes"`
-	EncodedBytes int64    `json:"encodedBytes"`
-	InvoicePDF   bool     `json:"invoicePdf"`
+	DocumentID    pulid.ID                    `json:"documentId"`
+	FileName      string                      `json:"fileName"`
+	ContentType   string                      `json:"contentType"`
+	SizeBytes     int64                       `json:"sizeBytes"`
+	EncodedBytes  int64                       `json:"encodedBytes"`
+	InvoicePDF    bool                        `json:"invoicePdf"`
+	PageRotations []billingvocab.PageRotation `json:"pageRotations,omitempty"`
 }
 
 type InvoiceSendPlanDocumentLink struct {

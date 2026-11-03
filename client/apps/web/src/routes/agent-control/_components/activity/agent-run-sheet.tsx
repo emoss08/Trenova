@@ -1,3 +1,4 @@
+import { DeskProse } from "@/components/desk-chat/conversation/desk-turns";
 import type { AgentRunDetail, AgentRunRow } from "@/lib/graphql/agent-activity-tables";
 import { AGENT_EVALUATION_LIST_KEY, replayAgentRun } from "@/lib/graphql/agent-evaluations";
 import { usePermission } from "@/hooks/use-permission";
@@ -39,7 +40,9 @@ export function AgentRunSheet({ runId, row, onClose }: AgentRunSheetProps) {
     enabled: runId !== null,
   });
   const run = detail.data?.run ?? row ?? null;
-  const title = run ? run.summary || agentTypeLabel(run.agentType, t) : t("Agent run");
+  // The summary is the run's whole report, often paragraphs of markdown, so it reads in
+  // the body; the header names the run by its agent.
+  const title = run ? agentTypeLabel(run.agentType, t) : t("Agent run");
 
   return (
     <ReadSheet
@@ -103,6 +106,12 @@ function RunBody({
       {run.errorMessage && (
         <div className="sh-p">
           <code className="sh-code">{run.errorMessage}</code>
+        </div>
+      )}
+      {run.summary && (
+        <div className="sh-p">
+          <h4 className="sh-k">{t("Summary")}</h4>
+          <DeskProse content={run.summary} />
         </div>
       )}
       <KV

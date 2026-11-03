@@ -1,40 +1,56 @@
-import type { Document } from "@trenova/shared/types/document";
+import type { ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
 
-type PacketDocument = Pick<Document, "id" | "documentTypeId">;
+type PacketRequirement = Pick<ShipmentBillingRequirement, "documentIds">;
 
 /**
- * Whether a document goes out with the invoice. An item that names no packet sends
- * the documents its customer requires; once the biller picks, the pick is the packet.
+ * The documents an invoice packet carries, in the order they follow the invoice.
+ * Until the biller picks, the item sends each document satisfying one of the
+ * customer's required types, requirement by requirement, which is how approval
+ * assembles it; once they pick, the pick and its order are the packet, even empty.
  */
-export function isInPacket(
-  doc: PacketDocument,
+export function packetDocumentIds(
   packetIds: readonly string[],
-  requiredTypes: ReadonlySet<string>,
-): boolean {
-  if (packetIds.length > 0) {
-    return packetIds.includes(doc.id);
+  picked: boolean,
+  requirements: readonly PacketRequirement[],
+): string[] {
+  if (picked || packetIds.length > 0) {
+    return [...packetIds];
   }
-  return Boolean(doc.documentTypeId && requiredTypes.has(doc.documentTypeId));
+  const ids: string[] = [];
+  for (const requirement of requirements) {
+    for (const id of requirement.documentIds) {
+      if (!ids.includes(id)) ids.push(id);
+    }
+  }
+  return ids;
 }
 
 /**
- * The packet after one document is ticked or unticked. The first change starts from
- * the default the biller was looking at, so unticking one required document never
- * silently drops the others.
+ * The packet after one document is added or taken out. It starts from the packet
+ * the biller was looking at, so taking out one required document never silently
+ * drops the others, and an added document goes last.
  */
 export function packetAfterToggle(
-  doc: PacketDocument,
+  documentId: string,
   include: boolean,
-  documents: readonly PacketDocument[],
-  packetIds: readonly string[],
-  requiredTypes: ReadonlySet<string>,
+  current: readonly string[],
 ): string[] {
-  const current =
-    packetIds.length > 0
-      ? [...packetIds]
-      : documents.filter((entry) => isInPacket(entry, [], requiredTypes)).map((entry) => entry.id);
   if (include) {
-    return current.includes(doc.id) ? current : [...current, doc.id];
+    return current.includes(documentId) ? [...current] : [...current, documentId];
   }
-  return current.filter((id) => id !== doc.id);
+  return current.filter((id) => id !== documentId);
+}
+
+/**
+ * The packet with one document at `index`: moved there if it was already in the
+ * packet, put there if it was not. An index past the end puts it last.
+ */
+export function packetAfterPlace(
+  documentId: string,
+  index: number,
+  current: readonly string[],
+): string[] {
+  const rest = current.filter((id) => id !== documentId);
+  rest.splice(Math.max(0, Math.min(index, rest.length)), 0, documentId);
+  return rest;
 }

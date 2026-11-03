@@ -36,7 +36,6 @@
 .aic .stp{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:var(--radius-label);font:500 11px var(--font-mono);letter-spacing:0;border:1px solid}
 .aic .stp i{width:6px;height:6px;border-radius:50%;background:currentColor}
 .aic .stp.k{color:var(--ok-fg);border-color:color-mix(in oklch,var(--ok) 35%,transparent);background:var(--ok-sub)}
-.aic .stp.k i{animation:aic-breathe 2.4s ease-in-out infinite}
 .aic .stp.w{color:var(--warn-fg);border-color:color-mix(in oklch,var(--warn) 40%,transparent);background:var(--warn-sub)}
 .aic .stp.n{color:var(--muted);border-color:var(--b)}
 .aic .stp.n i{background:var(--faint)}
@@ -822,13 +821,12 @@
 .aic .dnl .spn{width:10px!important;height:10px!important}
 .aic .dnl .tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .aic .dnl .tx em{font-style:normal;color:var(--subtle);margin-left:6px}
-.aic .dnl.cur .tx{background:linear-gradient(90deg,var(--fg) 0%,var(--fg) 40%,var(--faint) 50%,var(--fg) 60%,var(--fg) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aic-shimmer 1.6s linear infinite}
-.aic .dnl.cur .tx em{color:transparent}
+.aic .dnl.cur .tx{--shimmer-base:var(--fg);--shimmer-highlight:var(--faint)}
+.aic .dnl.cur .tx em{color:inherit}
 .aic .dnl.past{color:var(--faint)}
 .aic .dnl.past .ck{color:var(--ok)}
 .aic .dnl.past .tx em{color:var(--faint)}
 .aic .dnl .el{font-size:10.5px;color:var(--faint)}
-@keyframes aic-shimmer{from{background-position:100% 0}to{background-position:-150% 0}}
 .aic .dp{margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--fg);text-wrap:pretty}
 .aic .dw{animation:aic-dw 380ms var(--swift) both}
 @keyframes aic-dw{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:none}}
@@ -919,9 +917,13 @@
 .aic .pc-mk{position:relative;flex:none}
 .aic .pc-dot{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;border:2.5px solid var(--canvas);background:var(--faint)}
 .aic .pc-dot.ok{background:var(--ok)}
-.aic .pc-dot.fail{background:var(--danger);animation:aic-ribp 2s var(--swift) infinite}
+.aic .pc-dot.fail{background:var(--danger)}
 .aic .pc-dot.run{background:var(--brand);animation:aic-breathe 1s infinite}
-@keyframes aic-ribp{0%{box-shadow:0 0 0 0 color-mix(in oklch,var(--danger) 50%,transparent)}100%{box-shadow:0 0 0 8px transparent}}
+/* A failure ripples out from its dot three times when it appears, then the red dot
+   holds still: a failure is a state, not work. The ripple is a disc that grows and
+   fades, a transform and an opacity. */
+.aic .pc-dot.fail::after,.aic .ovb-i i::after{content:'';position:absolute;inset:-2.5px;border-radius:50%;background:color-mix(in oklch,var(--danger) 50%,transparent);opacity:0;pointer-events:none;animation:aic-ribp 2s var(--swift) 3}
+@keyframes aic-ribp{from{transform:scale(1);opacity:1}to{transform:scale(2.3);opacity:0}}
 .aic .pc-t{min-width:0;display:flex;flex-direction:column;gap:2px}
 .aic .pc-h{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .aic .pc-h b{font-size:15px;font-weight:600;letter-spacing:-0.015em}
@@ -950,11 +952,11 @@
 .aic .pc-tl:not(:first-child){margin-left:10px}
 .aic .pc-flow{grid-column:2;display:flex;align-items:center;gap:0;height:30px;padding-left:38px;position:relative}
 .aic .pc-flow::before{content:'';position:absolute;left:39px;top:0;bottom:0;width:1px;background:repeating-linear-gradient(var(--b-strong) 0 3px,transparent 3px 6px)}
-.aic .pc-flow i{position:absolute;left:37px;width:5px;height:5px;border-radius:50%;background:var(--brand);opacity:0}
+.aic .pc-flow i{position:absolute;left:37px;top:-2px;width:5px;height:5px;border-radius:50%;background:var(--brand);opacity:0}
 .aic .pc-flow.on i{animation:aic-drip 1.8s linear infinite}
 .aic .pc-flow.on i:nth-child(2){animation-delay:.6s}
 .aic .pc-flow.on i:nth-child(3){animation-delay:1.2s}
-@keyframes aic-drip{0%{top:-2px;opacity:0}15%{opacity:1}85%{opacity:1}100%{top:28px;opacity:0}}
+@keyframes aic-drip{0%{transform:translateY(0);opacity:0}15%{opacity:1}85%{opacity:1}100%{transform:translateY(30px);opacity:0}}
 .aic .pc-flow em{font-style:normal;margin-left:16px;font-size:11px;color:var(--faint)}
 .aic .pc-flow.on em{color:var(--subtle)}
 .aic .pc-w.add{margin-top:6px}
@@ -1026,7 +1028,7 @@
 .aic .ar-r>.pc-mk .pc-dot{width:11px;height:11px}
 .aic .pc-dot.w{background:var(--warn)}
 .aic .ar-live{color:var(--muted)!important}
-.aic .shm{background:linear-gradient(90deg,var(--muted) 0%,var(--muted) 40%,var(--fg) 50%,var(--muted) 60%,var(--muted) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aic-shimmer 2s linear infinite}
+.aic .shm{--shimmer-base:var(--muted);--shimmer-highlight:var(--fg)}
 .aic .ar-ap{display:inline-flex;align-items:center;gap:5px}
 .aic .ar-ap .mono{font-size:11px;color:var(--muted)}
 .aic .ar-ap .rng-b,.aic .ar-ap .rng-f{stroke-width:3}
@@ -1231,7 +1233,7 @@
 .aic .tr-s .tx{display:flex;flex-direction:column;min-width:0;line-height:1.3}
 .aic .tr-s .tx b{font-weight:500;font-size:12.5px}
 .aic .tr-s .tx em{font-style:normal;font-size:10.5px;color:var(--faint)}
-.aic .tr-s.cur .tx b{background:linear-gradient(90deg,var(--fg) 0%,var(--fg) 40%,var(--faint) 50%,var(--fg) 60%,var(--fg) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aic-shimmer 1.6s linear infinite}
+.aic .tr-s.cur .tx b{--shimmer-base:var(--fg);--shimmer-highlight:var(--faint)}
 .aic .oc{height:20px;padding:0 7px;border-radius:var(--radius-label);font-size:11px;font-weight:500;line-height:20px;white-space:nowrap;animation:aic-okin 320ms var(--spring)}
 .aic .oc.r{color:var(--ok-fg);background:var(--ok-sub)}
 .aic .oc.w{color:var(--warn-fg);background:var(--warn-sub)}
@@ -1538,7 +1540,7 @@
 .aic .ci-st .ck{width:18px;display:grid;place-items:center;color:var(--ok)}
 .aic .ci-st .spn{width:12px!important;height:12px!important}
 .aic .ci-st:not(.cur){color:var(--subtle)}
-.aic .ci-st.cur .tx{background:linear-gradient(90deg,var(--fg) 0%,var(--fg) 40%,var(--faint) 50%,var(--fg) 60%,var(--fg) 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aic-shimmer 1.6s linear infinite}
+.aic .ci-st.cur .tx{--shimmer-base:var(--fg);--shimmer-highlight:var(--faint)}
 @media (max-width:1180px){
 .aic .ab.ab-try .ab-m{grid-template-columns:minmax(0,1fr) 380px}
 .aic .ab-r{display:none}
@@ -1770,7 +1772,7 @@
 }
 .aic .ovb{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;margin-top:16px;padding:12px 10px 12px 14px;border-radius:12px;border:1px solid color-mix(in oklch,var(--danger) 28%,transparent);background:color-mix(in oklch,var(--danger) 6%,var(--canvas));animation:aic-rise 280ms var(--settle)}
 .aic .ovb-i{position:relative;display:block}
-.aic .ovb-i i{position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;background:var(--danger);border:2px solid var(--canvas);animation:aic-ribp 2s var(--swift) infinite}
+.aic .ovb-i i{position:absolute;right:-3px;bottom:-3px;width:11px;height:11px;border-radius:50%;background:var(--danger);border:2px solid var(--canvas)}
 .aic .ovb-t{display:flex;flex-direction:column;gap:1px;min-width:0}
 .aic .ovb-t b{font-size:13px;font-weight:500;color:var(--fg)}
 .aic .ovb-t span{font-size:12px;color:var(--subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

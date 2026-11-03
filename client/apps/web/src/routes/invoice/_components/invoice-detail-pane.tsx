@@ -82,11 +82,9 @@ const INVOICE_SEND_HISTORY_PAGE_SIZE = 20;
 
 export default function InvoiceDetailPane({
   selectedInvoiceId,
-  selectedDocumentId,
   onDocumentSelect,
 }: {
   selectedInvoiceId: string | null;
-  selectedDocumentId: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
 }) {
   const t = useT();
@@ -289,7 +287,6 @@ export default function InvoiceDetailPane({
                   <div className="p-4">
                     <BillingQueueDocumentsTab
                       shipmentId={invoice.shipmentId ?? ""}
-                      selectedDocumentId={selectedDocumentId}
                       onDocumentSelect={onDocumentSelect}
                       isEditable={false}
                       context="invoice"

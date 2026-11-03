@@ -3,6 +3,7 @@ package fileutils
 import (
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
 )
@@ -25,4 +26,15 @@ func TestContentDispositionDefaultsFilename(t *testing.T) {
 	header := ContentDisposition("", "")
 
 	require.Equal(t, `attachment; filename=download`, header)
+}
+
+func TestSanitizeDisplayFilenameNeverCutsACharacterInHalf(t *testing.T) {
+	name := SanitizeDisplayFilename("Relevé de compte", "report", 6)
+
+	require.Equal(t, "Relev", name)
+	require.True(t, utf8.ValidString(name))
+}
+
+func TestSanitizeDisplayFilenameFallsBackWhenTheCutLeavesNothing(t *testing.T) {
+	require.Equal(t, "report", SanitizeDisplayFilename("日本", "report", 2))
 }

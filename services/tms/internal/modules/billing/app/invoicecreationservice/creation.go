@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -76,7 +77,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 
-	draft, err := s.planDraftFromItem(ctx, req, item)
+	draft, err := s.planDraftFromItem(ctx, req, item, draftToCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -121,8 +122,10 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 // PreviewApprovalInvoice is the invoice approving the item would make: the
 // draft CreateFromApprovedBillingQueueItem would save, planned by the same
 // code from the item as it stands, and whether it would then post on its
-// own. It saves nothing. An item that already has its invoice returns that
-// one, and a statement customer's item returns DeferredToStatement.
+// own. It saves nothing, so it asks no off-cycle reason: that acknowledges
+// saving an invoice, not looking at one. An item that already has its invoice
+// returns that one, and a statement customer's item asked to defer returns
+// DeferredToStatement.
 func (s *Service) PreviewApprovalInvoice(
 	ctx context.Context,
 	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
@@ -155,7 +158,7 @@ func (s *Service) PreviewApprovalInvoice(
 		)
 	}
 
-	draft, err := s.planDraftFromItem(ctx, req, item)
+	draft, err := s.planDraftFromItem(ctx, req, item, draftToPreview)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +175,13 @@ func (s *Service) PreviewApprovalInvoice(
 }
 
 // invoiceDraft is the invoice an approved item bills, before it is saved.
+type draftPurpose int
+
+const (
+	draftToCreate draftPurpose = iota
+	draftToPreview
+)
+
 type invoiceDraft struct {
 	entity       *invoice.Invoice
 	dependencies *invoiceDependencies
@@ -184,6 +194,7 @@ func (s *Service) planDraftFromItem(
 	ctx context.Context,
 	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
 	item *billingqueue.BillingQueueItem,
+	purpose draftPurpose,
 ) (*invoiceDraft, error) {
 	dependencies, err := s.getInvoiceDependencies(ctx, req, item)
 	if err != nil {
@@ -197,10 +208,12 @@ func (s *Service) planDraftFromItem(
 		return &invoiceDraft{dependencies: dependencies, deferred: true}, nil
 	}
 
-	// The last gate before an invoice exists, so it cannot be bypassed by any of
-	// the paths that reach this one.
-	if err = guardStatementCadence(dependencies.Customer, req.OffCycleReason); err != nil {
-		return nil, err
+	// The last gate before an invoice exists, so every path that saves one passes
+	// it. A preview saves nothing and plans the draft without the acknowledgement.
+	if purpose == draftToCreate {
+		if err = guardStatementCadence(dependencies.Customer, req.OffCycleReason); err != nil {
+			return nil, err
+		}
 	}
 	if err = s.guardItemDetentionHolds(ctx, req.TenantInfo, item); err != nil {
 		return nil, err
@@ -574,7 +587,7 @@ func (s *Service) buildInvoiceEntity(
 		RatingNotes:        invoicelines.RatingNotes(p.Legs...),
 		PONumber:           p.Anchor.PONumber,
 		Memo:               p.Anchor.InvoiceMemo,
-		Attachments:        packetAttachments(s.packetDocuments(ctx, p.Anchor)),
+		Attachments:        packetAttachments(s.packetDocuments(ctx, p.Anchor), p.Anchor),
 	}
 
 	invoiceassembly.ApplyInvoiceDetail(entity, p.Customer)
@@ -881,8 +894,8 @@ func (s *Service) resolveAutoPost(cus *customer.Customer) bool {
 }
 
 // packetDocuments are the documents an item's invoice carries: the biller's pick,
-// or, when they picked none, every document satisfying one of the customer's
-// required types, which is what the queue shows as the packet.
+// which may be empty, or, while they have not picked, every document satisfying
+// one of the customer's required types, which is what the queue shows as the packet.
 func (s *Service) packetDocuments(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
@@ -890,8 +903,8 @@ func (s *Service) packetDocuments(
 	if item == nil {
 		return nil
 	}
-	if len(item.PacketDocumentIDs) > 0 {
-		return item.PacketDocumentIDs
+	if packet, picked := item.PickedPacket(); picked {
+		return packet
 	}
 	if item.ShipmentID.IsNil() {
 		return nil
@@ -909,14 +922,25 @@ func (s *Service) packetDocuments(
 	return invoicepacket.RequiredDocumentIDs(readiness)
 }
 
-func packetAttachments(documentIDs []pulid.ID) []*invoice.Attachment {
+func packetAttachments(
+	documentIDs []pulid.ID,
+	item *billingqueue.BillingQueueItem,
+) []*invoice.Attachment {
 	if len(documentIDs) == 0 {
 		return nil
 	}
 
 	out := make([]*invoice.Attachment, 0, len(documentIDs))
 	for _, documentID := range documentIDs {
-		out = append(out, &invoice.Attachment{DocumentID: documentID, Selected: true})
+		rotations := []billingvocab.PageRotation{}
+		if item != nil {
+			rotations = item.PageRotationsFor(documentID)
+		}
+		out = append(out, &invoice.Attachment{
+			DocumentID:    documentID,
+			Selected:      true,
+			PageRotations: rotations,
+		})
 	}
 
 	return out

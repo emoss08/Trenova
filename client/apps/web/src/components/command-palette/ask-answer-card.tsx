@@ -155,6 +155,7 @@ export function AskAnswerCard({
         className,
       )}
     >
+      <span aria-hidden className="cp-spectrum-ring ui-spin-ring" />
       <header className="flex h-5 items-center gap-1.5 text-sm">
         <NovaBadge size="sm" spin={busy ? "always" : "none"} className="shrink-0 translate-y-px" />
         <span className="text-foreground font-semibold">{t("Nova")}</span>

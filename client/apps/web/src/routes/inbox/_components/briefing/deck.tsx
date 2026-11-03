@@ -201,7 +201,7 @@ const DeckCard = memo(function DeckCard({
       {nova && (
         <>
           <span aria-hidden className="tb-nova-aura" />
-          <span aria-hidden className="tb-nova-edge" />
+          <span aria-hidden className="tb-nova-edge ui-spin-ring" />
         </>
       )}
       <div className="flex items-center justify-between">

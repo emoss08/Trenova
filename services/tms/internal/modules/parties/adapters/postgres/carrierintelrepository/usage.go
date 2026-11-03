@@ -187,7 +187,7 @@ func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, e
 		affected, err := d.UpsertFrom(
 			ctx,
 			r.db.Keel(ctx),
-			l.Pick(
+			l.AllTenants().Pick(
 				l.OrganizationID,
 				l.BusinessUnitID,
 				l.Provider,

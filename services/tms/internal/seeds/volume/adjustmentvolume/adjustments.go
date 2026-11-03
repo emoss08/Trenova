@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
@@ -2131,6 +2132,13 @@ func (g *adjustmentPhase) adjApplyReversals(ctx context.Context, tx *keel.DB, ro
 		bq.UpdatedAt.ToExpr(items.Col("at")),
 	); err != nil {
 		return fmt.Errorf("cancel reversed billing queue items: %w", err)
+	}
+	reversedIDs := make([]pulid.ID, 0, len(rows.reversals))
+	for _, r := range rows.reversals {
+		reversedIDs = append(reversedIDs, r.itemID)
+	}
+	if err := billingqueueprojection.Refresh(ctx, tx, reversedIDs...); err != nil {
+		return err
 	}
 	sh := shipmentdb.Shipments
 	restored := keel.Unnest("d", []string{"id", "at"}, shipments, ats)

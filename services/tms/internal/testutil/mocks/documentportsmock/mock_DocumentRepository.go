@@ -19,10 +19,19 @@ func NewMockDocumentRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockDocumentRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockDocumentRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -64,7 +73,7 @@ type MockDocumentRepository_BulkDelete_Call struct {
 
 // BulkDelete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.BulkDeleteDocumentRequest
+//   - req documentports.BulkDeleteDocumentRequest
 func (_e *MockDocumentRepository_Expecter) BulkDelete(ctx any, req any) *MockDocumentRepository_BulkDelete_Call {
 	return &MockDocumentRepository_BulkDelete_Call{Call: _e.mock.On("BulkDelete", ctx, req)}
 }
@@ -189,7 +198,7 @@ type MockDocumentRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.DeleteDocumentRequest
+//   - req documentports.DeleteDocumentRequest
 func (_e *MockDocumentRepository_Expecter) Delete(ctx any, req any) *MockDocumentRepository_Delete_Call {
 	return &MockDocumentRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
@@ -246,7 +255,7 @@ type MockDocumentRepository_DeleteByLineageIDs_Call struct {
 
 // DeleteByLineageIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.DeleteDocumentLineageRequest
+//   - req documentports.DeleteDocumentLineageRequest
 func (_e *MockDocumentRepository_Expecter) DeleteByLineageIDs(ctx any, req any) *MockDocumentRepository_DeleteByLineageIDs_Call {
 	return &MockDocumentRepository_DeleteByLineageIDs_Call{Call: _e.mock.On("DeleteByLineageIDs", ctx, req)}
 }
@@ -314,7 +323,7 @@ type MockDocumentRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetDocumentByIDRequest
+//   - req documentports.GetDocumentByIDRequest
 func (_e *MockDocumentRepository_Expecter) GetByID(ctx any, req any) *MockDocumentRepository_GetByID_Call {
 	return &MockDocumentRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -348,7 +357,7 @@ func (_c *MockDocumentRepository_GetByID_Call) RunAndReturn(run func(ctx context
 }
 
 // GetByIDs provides a mock function for the type MockDocumentRepository
-func (_mock *MockDocumentRepository) GetByIDs(ctx context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error) {
+func (_mock *MockDocumentRepository) GetByIDs(ctx context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -357,17 +366,17 @@ func (_mock *MockDocumentRepository) GetByIDs(ctx context.Context, req documentp
 
 	var r0 []*document.Document
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, documentports.BulkDeleteDocumentRequest) ([]*document.Document, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, documentports.GetDocumentsByIDsRequest) ([]*document.Document, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, documentports.BulkDeleteDocumentRequest) []*document.Document); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, documentports.GetDocumentsByIDsRequest) []*document.Document); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*document.Document)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, documentports.BulkDeleteDocumentRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, documentports.GetDocumentsByIDsRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -382,20 +391,20 @@ type MockDocumentRepository_GetByIDs_Call struct {
 
 // GetByIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.BulkDeleteDocumentRequest
+//   - req documentports.GetDocumentsByIDsRequest
 func (_e *MockDocumentRepository_Expecter) GetByIDs(ctx any, req any) *MockDocumentRepository_GetByIDs_Call {
 	return &MockDocumentRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
 }
 
-func (_c *MockDocumentRepository_GetByIDs_Call) Run(run func(ctx context.Context, req documentports.BulkDeleteDocumentRequest)) *MockDocumentRepository_GetByIDs_Call {
+func (_c *MockDocumentRepository_GetByIDs_Call) Run(run func(ctx context.Context, req documentports.GetDocumentsByIDsRequest)) *MockDocumentRepository_GetByIDs_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 documentports.BulkDeleteDocumentRequest
+		var arg1 documentports.GetDocumentsByIDsRequest
 		if args[1] != nil {
-			arg1 = args[1].(documentports.BulkDeleteDocumentRequest)
+			arg1 = args[1].(documentports.GetDocumentsByIDsRequest)
 		}
 		run(
 			arg0,
@@ -410,7 +419,7 @@ func (_c *MockDocumentRepository_GetByIDs_Call) Return(documents []*document.Doc
 	return _c
 }
 
-func (_c *MockDocumentRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req documentports.BulkDeleteDocumentRequest) ([]*document.Document, error)) *MockDocumentRepository_GetByIDs_Call {
+func (_c *MockDocumentRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error)) *MockDocumentRepository_GetByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -450,7 +459,7 @@ type MockDocumentRepository_GetByResourceID_Call struct {
 
 // GetByResourceID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetDocumentsByResourceRequest
+//   - req *documentports.GetDocumentsByResourceRequest
 func (_e *MockDocumentRepository_Expecter) GetByResourceID(ctx any, req any) *MockDocumentRepository_GetByResourceID_Call {
 	return &MockDocumentRepository_GetByResourceID_Call{Call: _e.mock.On("GetByResourceID", ctx, req)}
 }
@@ -518,7 +527,7 @@ type MockDocumentRepository_GetByResourceIDs_Call struct {
 
 // GetByResourceIDs is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetDocumentsByResourceIDsRequest
+//   - req *documentports.GetDocumentsByResourceIDsRequest
 func (_e *MockDocumentRepository_Expecter) GetByResourceIDs(ctx any, req any) *MockDocumentRepository_GetByResourceIDs_Call {
 	return &MockDocumentRepository_GetByResourceIDs_Call{Call: _e.mock.On("GetByResourceIDs", ctx, req)}
 }
@@ -586,7 +595,7 @@ type MockDocumentRepository_GetByStoragePath_Call struct {
 
 // GetByStoragePath is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetDocumentByStoragePathRequest
+//   - req documentports.GetDocumentByStoragePathRequest
 func (_e *MockDocumentRepository_Expecter) GetByStoragePath(ctx any, req any) *MockDocumentRepository_GetByStoragePath_Call {
 	return &MockDocumentRepository_GetByStoragePath_Call{Call: _e.mock.On("GetByStoragePath", ctx, req)}
 }
@@ -654,7 +663,7 @@ type MockDocumentRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListDocumentsRequest
+//   - req *documentports.ListDocumentsRequest
 func (_e *MockDocumentRepository_Expecter) List(ctx any, req any) *MockDocumentRepository_List_Call {
 	return &MockDocumentRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -722,7 +731,7 @@ type MockDocumentRepository_ListPendingPreviewReconciliation_Call struct {
 
 // ListPendingPreviewReconciliation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListPendingPreviewReconciliationRequest
+//   - req *documentports.ListPendingPreviewReconciliationRequest
 func (_e *MockDocumentRepository_Expecter) ListPendingPreviewReconciliation(ctx any, req any) *MockDocumentRepository_ListPendingPreviewReconciliation_Call {
 	return &MockDocumentRepository_ListPendingPreviewReconciliation_Call{Call: _e.mock.On("ListPendingPreviewReconciliation", ctx, req)}
 }
@@ -790,7 +799,7 @@ type MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call struct 
 
 // ListPendingPreviewReconciliationTenants is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListPendingPreviewReconciliationRequest
+//   - req *documentports.ListPendingPreviewReconciliationRequest
 func (_e *MockDocumentRepository_Expecter) ListPendingPreviewReconciliationTenants(ctx any, req any) *MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call {
 	return &MockDocumentRepository_ListPendingPreviewReconciliationTenants_Call{Call: _e.mock.On("ListPendingPreviewReconciliationTenants", ctx, req)}
 }
@@ -858,7 +867,7 @@ type MockDocumentRepository_ListVersions_Call struct {
 
 // ListVersions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ListDocumentVersionsRequest
+//   - req documentports.ListDocumentVersionsRequest
 func (_e *MockDocumentRepository_Expecter) ListVersions(ctx any, req any) *MockDocumentRepository_ListVersions_Call {
 	return &MockDocumentRepository_ListVersions_Call{Call: _e.mock.On("ListVersions", ctx, req)}
 }
@@ -915,7 +924,7 @@ type MockDocumentRepository_MoveLineageToResource_Call struct {
 
 // MoveLineageToResource is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.MoveDocumentLineageRequest
+//   - req *documentports.MoveDocumentLineageRequest
 func (_e *MockDocumentRepository_Expecter) MoveLineageToResource(ctx any, req any) *MockDocumentRepository_MoveLineageToResource_Call {
 	return &MockDocumentRepository_MoveLineageToResource_Call{Call: _e.mock.On("MoveLineageToResource", ctx, req)}
 }
@@ -972,7 +981,7 @@ type MockDocumentRepository_PromoteVersion_Call struct {
 
 // PromoteVersion is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.PromoteDocumentVersionRequest
+//   - req *documentports.PromoteDocumentVersionRequest
 func (_e *MockDocumentRepository_Expecter) PromoteVersion(ctx any, req any) *MockDocumentRepository_PromoteVersion_Call {
 	return &MockDocumentRepository_PromoteVersion_Call{Call: _e.mock.On("PromoteVersion", ctx, req)}
 }
@@ -1129,8 +1138,8 @@ func (_c *MockDocumentRepository_RecordDetectedSignature_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockDocumentRepository_RecordDetectedSignature_Call) Return(changed bool, err error) *MockDocumentRepository_RecordDetectedSignature_Call {
-	_c.Call.Return(changed, err)
+func (_c *MockDocumentRepository_RecordDetectedSignature_Call) Return(b bool, err error) *MockDocumentRepository_RecordDetectedSignature_Call {
+	_c.Call.Return(b, err)
 	return _c
 }
 
@@ -1174,7 +1183,7 @@ type MockDocumentRepository_SelectOptions_Call struct {
 
 // SelectOptions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.DocumentSelectOptionsRequest
+//   - req *documentports.DocumentSelectOptionsRequest
 func (_e *MockDocumentRepository_Expecter) SelectOptions(ctx any, req any) *MockDocumentRepository_SelectOptions_Call {
 	return &MockDocumentRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
 }
@@ -1299,7 +1308,7 @@ type MockDocumentRepository_UpdateIntelligence_Call struct {
 
 // UpdateIntelligence is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.UpdateDocumentIntelligenceRequest
+//   - req *documentports.UpdateDocumentIntelligenceRequest
 func (_e *MockDocumentRepository_Expecter) UpdateIntelligence(ctx any, req any) *MockDocumentRepository_UpdateIntelligence_Call {
 	return &MockDocumentRepository_UpdateIntelligence_Call{Call: _e.mock.On("UpdateIntelligence", ctx, req)}
 }
@@ -1356,7 +1365,7 @@ type MockDocumentRepository_UpdatePreview_Call struct {
 
 // UpdatePreview is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.UpdateDocumentPreviewRequest
+//   - req *documentports.UpdateDocumentPreviewRequest
 func (_e *MockDocumentRepository_Expecter) UpdatePreview(ctx any, req any) *MockDocumentRepository_UpdatePreview_Call {
 	return &MockDocumentRepository_UpdatePreview_Call{Call: _e.mock.On("UpdatePreview", ctx, req)}
 }

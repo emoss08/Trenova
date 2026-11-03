@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
@@ -45,7 +46,9 @@ type invoicePDFData struct {
 	// unless there is more than one.
 	ShipmentCount string
 	// Period is the billing window a consolidated invoice covers, blank otherwise.
-	Period string
+	Period      string
+	PeriodStart string
+	PeriodEnd   string
 
 	Subtotal      string
 	Other         string
@@ -147,9 +150,11 @@ func buildInvoicePDFData(
 		RemitTo:       remitPDFAddressBlock(org, entity.RemittanceInstructions),
 		ChargeRows:    chargePDFRows(entity),
 		Period:        invoicePDFPeriod(entity),
-		Subtotal:      MoneyString(entity.CurrencyCode, entity.SubtotalAmount.StringFixed(2)),
-		Other:         MoneyString(entity.CurrencyCode, entity.OtherAmount.StringFixed(2)),
-		Total:         MoneyString(entity.CurrencyCode, entity.TotalAmount.StringFixed(2)),
+		PeriodStart:   periodBound(entity, entity.PeriodStart),
+		PeriodEnd:     periodBound(entity, entity.PeriodEnd),
+		Subtotal:      money.Display(entity.CurrencyCode, entity.SubtotalAmount),
+		Other:         money.Display(entity.CurrencyCode, entity.OtherAmount),
+		Total:         money.Display(entity.CurrencyCode, entity.TotalAmount),
 		BalanceDue:    invoicePDFBalanceDue(entity, control),
 		Terms:         invoicePDFTerms(entity, control),
 		InvoiceTerms:  billingControlPDFInvoiceTerms(control),
@@ -206,6 +211,13 @@ func invoicePDFPeriod(entity *invoice.Invoice) string {
 	return UnixDate(*entity.PeriodStart) + " - " + UnixDate(*entity.PeriodEnd)
 }
 
+func periodBound(entity *invoice.Invoice, bound *int64) string {
+	if entity.PeriodStart == nil || entity.PeriodEnd == nil {
+		return ""
+	}
+	return UnixDatePtr(bound)
+}
+
 func shipmentPDFRows(
 	entity *invoice.Invoice,
 	summaries []*shipmentports.ShipmentSummary,
@@ -226,10 +238,7 @@ func shipmentPDFRows(
 			ServiceDate: UnixDatePtr(summary.ServiceDate),
 			Origin:      cityState(summary.OriginCity, summary.OriginState),
 			Destination: cityState(summary.DestinationCity, summary.DestinationState),
-			Amount: MoneyString(
-				entity.CurrencyCode,
-				summary.TotalCharge.Decimal.StringFixed(2),
-			),
+			Amount:      money.Display(entity.CurrencyCode, summary.TotalCharge.Decimal),
 		})
 	}
 
@@ -384,7 +393,7 @@ func invoicePDFBalanceDue(entity *invoice.Invoice, control *billingcontrol.Billi
 	if !invoicePDFShowBalanceDue(control) {
 		return ""
 	}
-	return MoneyString(entity.CurrencyCode, entity.OpenBalanceAmount().StringFixed(2))
+	return money.Display(entity.CurrencyCode, entity.OpenBalanceAmount())
 }
 
 func invoicePDFShowDueDate(control *billingcontrol.BillingControl) bool {
@@ -470,8 +479,8 @@ func chargePDFRows(entity *invoice.Invoice) []invoicePDFChargeRow {
 			Line:        strconv.Itoa(line.LineNumber),
 			Description: line.Description,
 			Quantity:    line.Quantity.StringFixed(2),
-			UnitPrice:   MoneyString(entity.CurrencyCode, line.UnitPrice.StringFixed(2)),
-			Amount:      MoneyString(entity.CurrencyCode, line.Amount.StringFixed(2)),
+			UnitPrice:   money.Display(entity.CurrencyCode, line.UnitPrice),
+			Amount:      money.Display(entity.CurrencyCode, line.Amount),
 			// Attribution rides on the row itself so a template that prints no
 			// manifest still says which shipment a charge came from. Blank on a
 			// single-shipment invoice, where the header already answers it.
@@ -482,8 +491,8 @@ func chargePDFRows(entity *invoice.Invoice) []invoicePDFChargeRow {
 		rows = append(rows, invoicePDFChargeRow{
 			Description: "Invoice Total",
 			Quantity:    "1.00",
-			UnitPrice:   MoneyString(entity.CurrencyCode, entity.TotalAmount.StringFixed(2)),
-			Amount:      MoneyString(entity.CurrencyCode, entity.TotalAmount.StringFixed(2)),
+			UnitPrice:   money.Display(entity.CurrencyCode, entity.TotalAmount),
+			Amount:      money.Display(entity.CurrencyCode, entity.TotalAmount),
 		})
 	}
 	return rows
@@ -512,8 +521,8 @@ func summaryChargePDFRows(entity *invoice.Invoice) []invoicePDFChargeRow {
 			rows = append(rows, invoicePDFChargeRow{
 				Description: line.Description,
 				Quantity:    line.Quantity.StringFixed(2),
-				UnitPrice:   MoneyString(entity.CurrencyCode, line.UnitPrice.StringFixed(2)),
-				Amount:      MoneyString(entity.CurrencyCode, line.Amount.StringFixed(2)),
+				UnitPrice:   money.Display(entity.CurrencyCode, line.UnitPrice),
+				Amount:      money.Display(entity.CurrencyCode, line.Amount),
 			})
 			continue
 		}
@@ -532,8 +541,8 @@ func summaryChargePDFRows(entity *invoice.Invoice) []invoicePDFChargeRow {
 		grouped = append(grouped, invoicePDFChargeRow{
 			Description: summaryLineDescription(entity, key, counts[key]),
 			Quantity:    "1.00",
-			UnitPrice:   MoneyString(entity.CurrencyCode, amount.StringFixed(2)),
-			Amount:      MoneyString(entity.CurrencyCode, amount.StringFixed(2)),
+			UnitPrice:   money.Display(entity.CurrencyCode, amount),
+			Amount:      money.Display(entity.CurrencyCode, amount),
 			ProNumber:   shipmentProNumber(entity, key),
 		})
 	}

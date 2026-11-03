@@ -31,6 +31,8 @@ export function NovaButton({
       aria-busy={busy || undefined}
       {...props}
     >
+      <span aria-hidden className="fs-nova-wash ui-spin-ring" />
+      <span aria-hidden className="fs-nova-edge ui-spin-ring" />
       <NovaBadge size="xs" spin={busy ? "always" : "none"} className="fs-nova-badge" />
       {children}
     </Button>

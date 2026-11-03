@@ -393,6 +393,46 @@ Motion answers an action. Nothing on a working screen moves on its own: no
 looping shimmer on a badge, no pulsing glow, no floating sparkle. A global
 `prefers-reduced-motion` rule collapses every animation and transition to a cut.
 
+Nothing loops unless something is being done. A loop runs while work runs and
+stops when it ends: a reply being written, a brief generating, a document being
+read, a request pending, a run in progress, a recording. A state is drawn still,
+however long it lasts: live, present, clocked in, moving, waiting on the person,
+failed, agents being on. A state may announce itself a few times as it appears
+(three ripples on a failure) and then hold. A pointer resting on something is not
+work either: a hover effect plays once per arrival, never on a loop. Nova's badge
+turns only while Nova itself is working: generating a brief, writing or typing in
+a sentence, answering.
+
+A loop (anything `infinite`) animates only `transform` and `opacity`, which the
+browser composites. Animating an `@property` angle inside a conic gradient, a
+`background-position` on clipped text, a `box-shadow`, `top`/`left` or a colour
+repaints on the main thread every frame for as long as the loop is on screen:
+six such loops on AI control held a core near 90% at idle. Use the primitives:
+
+- A ring or edge whose colours travel round it is `ui-spin-ring` (app.css): the
+  element keeps its static mask and sets `--spin-gradient` (a conic gradient
+  with no start angle) and `--spin-duration`; the gradient turns behind the
+  mask. A ring that rests invisible pauses its `::before`. A round mark (the
+  Nova badge, the assistant orb) simply turns.
+- Text something is working on is `TextShimmer`
+  (`@trenova/shared/components/ui/text-shimmer`), coloured with
+  `--shimmer-base` and `--shimmer-highlight`; `active` turns it off when the
+  step finishes. Never clip a moving gradient to text.
+- A pulse that swells from a dot is a pseudo-element that scales and fades,
+  not a spreading `box-shadow` (`cc-pulse-pin`, AI control's failure ripple).
+
+A job the person started and is watching may draw its progress as a worked scene, on the
+same terms as `breathe`: it moves only when the job's own progress arrives, and it stops
+when the job does. The billing transfer stage (`bulk-billing-transfer-stage.tsx`) is the
+one: bills move only as the run answers, are read on a desk beside the readiness checklist
+and land on a stack per outcome. A scene like that takes four things from it:
+- it starts from the job's counts when it mounts, so reopening it never replays the past;
+- it never trails the job by more than a poll, by letting one moving piece carry many items;
+- anything that scales is drawn at its largest size and only scaled down, and its end state
+  is committed on whole pixels, so it is sharp at rest;
+- it checks `useReducedMotionConfig()` itself, because Web Animations ignore the CSS rule,
+  and under it the counts change in place.
+
 A keyed list whose items swap what they render (a row turning into its editor) never
 takes `<AnimatePresence initial={false}>`: motion keeps that `false` in the presence of
 every key from the first render, so anything mounted under those keys later skips its
@@ -747,9 +787,14 @@ suggestion that is not Nova speaking keeps `AssistMark`.
 | `lg` | 20 | heading a sentence Nova speaks |
 | `xl` | 24 | heading a pane |
 
-`spin` runs the colours round the badge, which stays still: `"always"` while Nova is
-working, `"hover"` while the pointer or focus is on the nearest `group`, `"none"` at
-rest. Nothing spins at rest, and reduced motion stops it.
+`spin` runs the colours round the badge by turning it, which reads the same on a round
+mark and is composited: `"always"` while Nova itself is working (a brief generating, a
+sentence being written or typing in, an answer on its way), `"hover"` turns it once when
+the pointer or focus reaches the nearest `group`, `"none"` at rest. Pass `"always"` from
+the work's own state, never from a standing one such as agents being on or a provider
+being live: AI control's heading badge turns while its sentence is written and types in,
+then stops. Nothing spins at rest, and reduced motion stops it. The turn is a `transform`, so the badge is placed with Tailwind's
+`translate-*`, never a transform of its own.
 
 ## Badge
 

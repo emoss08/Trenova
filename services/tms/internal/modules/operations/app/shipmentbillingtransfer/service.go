@@ -2,7 +2,9 @@ package shipmentbillingtransfer
 
 import (
 	"context"
+	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -12,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingreadiness"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
@@ -472,64 +473,22 @@ func (s *Service) planTransfers(
 	ids []pulid.ID,
 	markCompleted bool,
 ) (*shipmentbillingports.BillingTransferPlan, error) {
-	shipments, err := s.repo.GetByIDs(ctx, &shipmentports.GetShipmentsByIDsRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentIDs:    ids,
-		IncludeCharges: true,
-	})
+	batch, err := s.readTransferBatch(ctx, tenantInfo, ids, markCompleted)
 	if err != nil {
 		return nil, err
-	}
-	byID := make(map[pulid.ID]*shipment.Shipment, len(shipments))
-	for _, entity := range shipments {
-		if entity != nil {
-			byID[entity.ID] = entity
-		}
 	}
 
 	decisions := make([]shipmentbillingports.BillingTransferDecision, len(ids))
-	pending := make([]shipmentbillingreadiness.PendingReadiness, 0, len(ids))
 	for idx, id := range ids {
-		entity := byID[id]
-		decisions[idx] = decisionFor(id, entity)
-		if entity == nil {
-			refuse(&decisions[idx], shipmentbillingports.BillingTransferFailureNotFound,
-				errortypes.NewNotFoundError("Shipment not found"))
+		entry := &batch.entries[idx]
+		decisions[idx] = decisionFor(id, entry.entity)
+		if entry.err != nil {
+			refuse(&decisions[idx], entry.failure, entry.err)
 			continue
 		}
-
-		markReady, code, gateErr := transferGate(entity, markCompleted)
-		if gateErr != nil {
-			refuse(&decisions[idx], code, gateErr)
-			continue
-		}
-
-		resolution, shareErr := chargeallocation.ResolveShares(
-			ctx,
-			entity,
-			entity.ChargeAllocations,
-		)
-		if shareErr != nil {
-			refuse(&decisions[idx], shipmentbillingports.BillingTransferFailureUnexpected, shareErr)
-			continue
-		}
-		pending = append(pending, shipmentbillingreadiness.PendingReadiness{
-			Index:      idx,
-			Entity:     entity,
-			Resolution: resolution,
-			MarkReady:  markReady,
-		})
+		decide(&decisions[idx], entry.readiness, entry.markReady)
 	}
-
-	sources, err := s.readiness.ReadinessSourcesFor(ctx, tenantInfo, pending)
-	if err != nil {
-		return nil, err
-	}
-	for _, entry := range pending {
-		readiness := s.readiness.ReadinessFrom(entry.Entity, entry.Resolution, sources)
-		decide(&decisions[entry.Index], readiness, entry.MarkReady)
-	}
-	if err = s.stampCurrencies(ctx, tenantInfo, decisions, pending, sources.Payers); err != nil {
+	if err = s.stampCurrencies(ctx, tenantInfo, decisions, batch.pending, batch.payers); err != nil {
 		return nil, err
 	}
 
@@ -591,25 +550,38 @@ func (s *Service) BulkTransferToBilling(
 		return nil, multiErr
 	}
 
+	started := time.Now()
 	shipmentIDs := sliceutils.Dedupe(req.ShipmentIDs)
-	cache := new(shipmentbillingreadiness.BillingReadinessCache)
+	tenantInfo := pagination.TenantInfo{OrgID: actor.OrganizationID, BuID: actor.BusinessUnitID}
+	batch, err := observability.RunWithSpanReturn(
+		ctx,
+		"shipmentbillingtransfer.readTransferBatch",
+		func(ctx context.Context) (*transferBatch, error) {
+			return s.readTransferBatch(ctx, tenantInfo, shipmentIDs, req.MarkCompletedReadyToInvoice)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	read := time.Since(started)
+
 	response := &shipmentbillingports.BulkTransferToBillingResponse{
 		Results:    make([]shipmentbillingports.BulkTransferToBillingResult, 0, len(shipmentIDs)),
 		TotalCount: len(shipmentIDs),
 	}
-
-	for _, shipmentID := range shipmentIDs {
-		if err := ctx.Err(); err != nil {
+	for idx, shipmentID := range shipmentIDs {
+		if err = ctx.Err(); err != nil {
 			return nil, err
 		}
 
-		attempt := s.attemptBillingTransfer(ctx, &billingTransferAttemptParams{
+		attempt := s.transferFromBatch(ctx, &batch.entries[idx], &billingTransferAttemptParams{
 			ShipmentID:                  shipmentID,
 			BillType:                    req.BillType,
 			MarkCompletedReadyToInvoice: req.MarkCompletedReadyToInvoice,
 			Actor:                       actor,
 			SuppressExceptionNotices:    req.SuppressExceptionNotifications,
-			Cache:                       cache,
+			Payers:                      batch.payers,
+			DeferReview:                 true,
 		})
 
 		result := newBulkTransferResult(shipmentID, attempt)
@@ -627,8 +599,33 @@ func (s *Service) BulkTransferToBilling(
 	}
 
 	response.ErrorCount = response.TotalCount - response.SuccessCount
+	s.l.Info("billing transfer batch finished",
+		zap.Int("shipments", len(shipmentIDs)),
+		zap.Int("transferred", response.SuccessCount),
+		zap.Duration("readTook", read),
+		zap.Duration("took", time.Since(started)),
+	)
 
 	return response, nil
+}
+
+func (s *Service) transferFromBatch(
+	ctx context.Context,
+	entry *transferBatchEntry,
+	p *billingTransferAttemptParams,
+) *billingTransferAttempt {
+	attempt := &billingTransferAttempt{entity: entry.entity, readiness: entry.readiness}
+	if entry.err != nil {
+		return attempt.fail(entry.failure, entry.err)
+	}
+	if !p.SuppressExceptionNotices {
+		s.notifyBillingExceptions(ctx, entry.entity, entry.readiness)
+	}
+	if code, policyErr := billingTransferPolicyViolation(entry.readiness); policyErr != nil {
+		return attempt.fail(code, policyErr)
+	}
+
+	return s.completeBillingTransfer(ctx, attempt, p, entry.markReady)
 }
 
 func (s *Service) ListBillingTransferCandidateIDs(
@@ -698,7 +695,7 @@ func (s *Service) attemptBillingTransfer(
 		return attempt.fail(code, gateErr)
 	}
 
-	readiness, err := s.readiness.EvaluateBillingReadinessCached(ctx, entity, p.Cache, true)
+	readiness, err := s.readiness.EvaluateBillingReadinessCached(ctx, entity, nil, true)
 	if err != nil {
 		log.Error("failed to evaluate billing readiness for transfer", zap.Error(err))
 		return attempt.fail(shipmentbillingports.BillingTransferFailureUnexpected, err)
@@ -711,6 +708,26 @@ func (s *Service) attemptBillingTransfer(
 	if policyCode, policyErr := billingTransferPolicyViolation(readiness); policyErr != nil {
 		return attempt.fail(policyCode, policyErr)
 	}
+
+	return s.completeBillingTransfer(ctx, attempt, p, markReady)
+}
+
+func (s *Service) completeBillingTransfer(
+	ctx context.Context,
+	attempt *billingTransferAttempt,
+	p *billingTransferAttemptParams,
+	markReady bool,
+) *billingTransferAttempt {
+	tenantInfo := pagination.TenantInfo{
+		OrgID: p.Actor.OrganizationID,
+		BuID:  p.Actor.BusinessUnitID,
+	}
+	log := s.l.With(
+		zap.String("operation", "TransferToBilling"),
+		zap.String("shipmentID", p.ShipmentID.String()),
+	)
+	entity := attempt.entity
+	readiness := attempt.readiness
 
 	if markReady {
 		updated, marked, markErr := s.markReadyToInvoice(ctx, &markReadyToInvoiceParams{
@@ -750,6 +767,8 @@ func (s *Service) attemptBillingTransfer(
 			AutoApprovePayerIDs: autoApprovePayerIDs(readiness),
 			TenantInfo:          tenantInfo,
 			DetailedShipment:    entity,
+			Payers:              p.Payers,
+			DeferReview:         p.DeferReview,
 		},
 		p.Actor,
 	)

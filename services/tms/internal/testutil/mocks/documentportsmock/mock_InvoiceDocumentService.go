@@ -18,10 +18,19 @@ func NewMockInvoiceDocumentService(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockInvoiceDocumentService {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockInvoiceDocumentService{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -74,7 +83,7 @@ type MockInvoiceDocumentService_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetDocumentByIDRequest
+//   - req documentports.GetDocumentByIDRequest
 func (_e *MockInvoiceDocumentService_Expecter) Get(ctx any, req any) *MockInvoiceDocumentService_Get_Call {
 	return &MockInvoiceDocumentService_Get_Call{Call: _e.mock.On("Get", ctx, req)}
 }
@@ -142,7 +151,7 @@ type MockInvoiceDocumentService_GetDownloadContent_Call struct {
 
 // GetDownloadContent is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.GetDocumentByIDRequest
+//   - req documentports.GetDocumentByIDRequest
 func (_e *MockInvoiceDocumentService_Expecter) GetDownloadContent(ctx any, req any) *MockInvoiceDocumentService_GetDownloadContent_Call {
 	return &MockInvoiceDocumentService_GetDownloadContent_Call{Call: _e.mock.On("GetDownloadContent", ctx, req)}
 }
@@ -171,6 +180,74 @@ func (_c *MockInvoiceDocumentService_GetDownloadContent_Call) Return(documentCon
 }
 
 func (_c *MockInvoiceDocumentService_GetDownloadContent_Call) RunAndReturn(run func(ctx context.Context, req documentports.GetDocumentByIDRequest) (*documentports.DocumentContent, error)) *MockInvoiceDocumentService_GetDownloadContent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetMany provides a mock function for the type MockInvoiceDocumentService
+func (_mock *MockInvoiceDocumentService) GetMany(ctx context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMany")
+	}
+
+	var r0 []*document.Document
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, documentports.GetDocumentsByIDsRequest) ([]*document.Document, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, documentports.GetDocumentsByIDsRequest) []*document.Document); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*document.Document)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, documentports.GetDocumentsByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceDocumentService_GetMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMany'
+type MockInvoiceDocumentService_GetMany_Call struct {
+	*mock.Call
+}
+
+// GetMany is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req documentports.GetDocumentsByIDsRequest
+func (_e *MockInvoiceDocumentService_Expecter) GetMany(ctx any, req any) *MockInvoiceDocumentService_GetMany_Call {
+	return &MockInvoiceDocumentService_GetMany_Call{Call: _e.mock.On("GetMany", ctx, req)}
+}
+
+func (_c *MockInvoiceDocumentService_GetMany_Call) Run(run func(ctx context.Context, req documentports.GetDocumentsByIDsRequest)) *MockInvoiceDocumentService_GetMany_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 documentports.GetDocumentsByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(documentports.GetDocumentsByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceDocumentService_GetMany_Call) Return(documents []*document.Document, err error) *MockInvoiceDocumentService_GetMany_Call {
+	_c.Call.Return(documents, err)
+	return _c
+}
+
+func (_c *MockInvoiceDocumentService_GetMany_Call) RunAndReturn(run func(ctx context.Context, req documentports.GetDocumentsByIDsRequest) ([]*document.Document, error)) *MockInvoiceDocumentService_GetMany_Call {
 	_c.Call.Return(run)
 	return _c
 }

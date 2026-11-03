@@ -168,6 +168,7 @@ func (s *Service) PlanSend(
 			continue
 		}
 		attachment := planAttachment(selected.Document, false)
+		attachment.PageRotations = selected.PageRotations
 		if plan.EstimatedBodyBytes+attachment.EncodedBytes > plan.ProviderLimitBytes {
 			link := &invoiceports.InvoiceSendPlanDocumentLink{
 				DocumentID: selected.Document.ID,

@@ -145,6 +145,20 @@ func TestConsolidatedInvoiceNamesItsBillingPeriod(t *testing.T) {
 
 	assert.NotEmpty(t, data.Period)
 	assert.Contains(t, data.Period, " - ")
+	assert.Equal(t, "2026-02-25", data.PeriodStart)
+	assert.Equal(t, "2026-03-20", data.PeriodEnd)
+}
+
+func TestAnInvoiceMissingEitherBoundOfItsPeriodGivesNeither(t *testing.T) {
+	t.Parallel()
+
+	entity := consolidatedInvoice(func(e *invoice.Invoice) {
+		e.PeriodEnd = nil
+	})
+	data := buildInvoicePDFData(entity, consolidatedProfile(entity))
+
+	assert.Empty(t, data.PeriodStart)
+	assert.Empty(t, data.PeriodEnd)
 }
 
 // A period is only meaningful on an invoice billed on a cycle, and an empty

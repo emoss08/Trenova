@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -475,7 +476,7 @@ func (s *Service) TransferToBillingItems(
 	}
 	auditActor := actor.AuditActor()
 	for _, item := range created {
-		s.autoAssignDefaultBiller(ctx, item, item.BillToCustomerID, req.TenantInfo, actor)
+		s.autoAssignDefaultBiller(ctx, item, req.Payers[item.BillToCustomerID], req.TenantInfo, actor)
 
 		if s.shouldAutoApprove(req, item.BillToCustomerID) {
 			item = s.autoApprove(ctx, item, req.TenantInfo, actor)
@@ -491,7 +492,11 @@ func (s *Service) TransferToBillingItems(
 			actor,
 			nil,
 		)
-		s.syncReview(ctx, item.ID, req.TenantInfo)
+		if req.DeferReview {
+			s.rechecks.RequestRecheck(ctx, req.TenantInfo, item.ID)
+		} else {
+			s.syncReview(ctx, item.ID, req.TenantInfo)
+		}
 
 		s.logAction(
 			item,
@@ -701,18 +706,26 @@ func (s *Service) autoApprove(
 func (s *Service) autoAssignDefaultBiller(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	customerID pulid.ID,
+	payer *customer.Customer,
 	tenantInfo pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) {
-	cust, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
-		ID:         customerID,
-		TenantInfo: tenantInfo,
-		CustomerFilterOptions: customerports.CustomerFilterOptions{
-			IncludeBillingProfile: true,
-		},
-	})
-	if err != nil || cust.BillingProfile == nil || cust.BillingProfile.DefaultBillerID == nil ||
+	customerID := item.BillToCustomerID
+	cust := payer
+	if cust == nil || cust.ID != customerID {
+		loaded, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
+			ID:         customerID,
+			TenantInfo: tenantInfo,
+			CustomerFilterOptions: customerports.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+			},
+		})
+		if err != nil {
+			return
+		}
+		cust = loaded
+	}
+	if cust.BillingProfile == nil || cust.BillingProfile.DefaultBillerID == nil ||
 		cust.BillingProfile.DefaultBillerID.IsNil() {
 		return
 	}
@@ -723,7 +736,7 @@ func (s *Service) autoAssignDefaultBiller(
 		zap.String("defaultBillerId", cust.BillingProfile.DefaultBillerID.String()),
 	)
 
-	if _, err = s.AssignBiller(
+	if _, err := s.AssignBiller(
 		billingqueueactivity.SystemEvents(ctx),
 		&billingqueueports.AssignBillerRequest{
 			ItemID:     item.ID,

@@ -7530,6 +7530,8 @@ type BillingTransferRun {
   retryableCount: Int!
   "Shipments the search matched beyond the 5000 a single run carries. They were never attempted."
   unmatchedCount: Int!
+  "How many shipments each reason held back, most first. Refreshed with the other counts after every batch."
+  failureCounts: [BillingTransferFailureCount!]!
 
   "Why the run as a whole stopped. A shipment's own reason lives on its item."
   failureMessage: String
@@ -7595,6 +7597,14 @@ type BillingTransferRunItem {
   createdAt: Timestamp!
 }
 
+"How many of a run's shipments one reason held back."
+type BillingTransferFailureCount {
+  code: ShipmentBillingTransferFailureCode!
+  count: Int!
+  "Whether a retry could move these shipments once the reason is dealt with."
+  retryable: Boolean!
+}
+
 type BillingTransferRequirement {
   documentTypeId: String!
   documentTypeCode: String!
@@ -7635,6 +7645,8 @@ input StartBillingTransferRunInput {
 
 input BillingTransferRunItemsFilterInput {
   statuses: [BillingTransferItemStatus!]
+  "Only shipments held back for one of these reasons."
+  failureCodes: [ShipmentBillingTransferFailureCode!]
 }
 
 extend type Query {
@@ -29253,7 +29265,13 @@ input ShipmentsInput {
   sort: [SortFieldInput!]
   expandShipmentDetails: Boolean = false
   status: String
+  """
+  With activityWindowEnd, only shipments active in the window: a live stop is due to
+  start before it ends and a live stop is due to end after it starts. A load that picks
+  up before the window and delivers after it counts, though no stop falls inside.
+  """
   activityWindowStart: Timestamp
+  "The end of the activity window; see activityWindowStart."
   activityWindowEnd: Timestamp
   "Only Completed or Ready to Invoice shipments that are not in the billing queue."
   billingTransferEligible: Boolean = false

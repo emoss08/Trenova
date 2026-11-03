@@ -2,15 +2,27 @@ package invoicepacket
 
 import (
 	"context"
+	"errors"
+	"sync"
+	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
+	"golang.org/x/sync/semaphore"
+)
+
+const (
+	maxWarming    = 8
+	warmTimeout   = 2 * time.Minute
+	pageChunkSize = 8
 )
 
 // ApprovalPlanner builds, without saving it, the invoice approving an item makes.
@@ -35,21 +47,32 @@ type PreviewService struct {
 	renderer  DraftRenderer
 	assembler *Assembler
 	documents documentports.InvoiceDocumentService
+	previews  PreviewCache
+	warming   *semaphore.Weighted
+	warms     sync.WaitGroup
+	l         *zap.Logger
 }
 
 var _ billingqueueports.PacketPreviewer = (*PreviewService)(nil)
 
-func NewPreviewService(
-	planner ApprovalPlanner,
-	renderer DraftRenderer,
-	assembler *Assembler,
-	documents documentports.InvoiceDocumentService,
-) billingqueueports.PacketPreviewer {
+type PreviewParams struct {
+	Planner   ApprovalPlanner
+	Renderer  DraftRenderer
+	Assembler *Assembler
+	Documents documentports.InvoiceDocumentService
+	Previews  PreviewCache
+	Logger    *zap.Logger
+}
+
+func NewPreviewService(p PreviewParams) billingqueueports.PacketPreviewer {
 	return &PreviewService{
-		planner:   planner,
-		renderer:  renderer,
-		assembler: assembler,
-		documents: documents,
+		planner:   p.Planner,
+		renderer:  p.Renderer,
+		assembler: p.Assembler,
+		documents: p.Documents,
+		previews:  p.Previews,
+		warming:   semaphore.NewWeighted(maxWarming),
+		l:         p.Logger.Named("invoice-packet-preview"),
 	}
 }
 
@@ -59,62 +82,198 @@ func (s *PreviewService) PreviewPacket(
 	ctx context.Context,
 	req *billingqueueports.PacketPreviewRequest,
 ) (*billingqueueports.PacketPreview, error) {
-	planned, err := s.planner.PreviewApprovalInvoice(
-		ctx,
-		&invoiceports.CreateInvoiceFromBillingQueueRequest{
-			BillingQueueItemID: req.ItemID,
-			TenantInfo:         req.TenantInfo,
-		},
-	)
+	preview, err := s.build(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if planned.DeferredToStatement || planned.Invoice == nil {
-		return nil, errortypes.NewBusinessError(
-			"This customer is billed on a statement; its packet is built when the statement closes",
-		)
-	}
+	key := previewKeyOf(req.ItemID, req.TenantInfo)
+	s.previews.Put(key, preview)
+	s.warm(ctx, key, preview)
 
-	rendered, err := s.renderer.RenderDraftPreview(ctx, planned.Invoice, req.TenantInfo)
+	return preview, nil
+}
+
+func (s *PreviewService) PreviewPacketPage(
+	ctx context.Context,
+	req *billingqueueports.PacketPageRequest,
+) (*billingqueueports.PacketPage, error) {
+	key, preview, err := s.pageOf(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	parts := []imagingkit.Part{{Source: kernelports.ImagingBytes(PDFContentType, rendered.Content)}}
+	chunk := (req.Page - 1) / pageChunkSize
+	pages, err := s.chunk(ctx, key, preview, chunk)
+	if errors.Is(err, kernelports.ErrImagingPageOutOfRange) {
+		return nil, noSuchPage(req.Page)
+	}
+	if err != nil {
+		return nil, err
+	}
+	at := req.Page - 1 - chunk*pageChunkSize
+	if at >= len(pages) || pages[at].Content == nil {
+		return nil, noSuchPage(req.Page)
+	}
 
-	carried := 0
-	for _, attachment := range planned.Invoice.Attachments {
-		if attachment == nil || !attachment.Selected {
+	return &pages[at], nil
+}
+
+func (s *PreviewService) PreviewPacketThumbnail(
+	ctx context.Context,
+	req *billingqueueports.PacketPageRequest,
+) (*billingqueueports.PacketPage, error) {
+	key, preview, err := s.pageOf(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	index, err := s.index(ctx, key, preview)
+	if err != nil {
+		return nil, err
+	}
+	thumbnail := index.Thumbnails[req.Page-1]
+	if thumbnail.Content == nil {
+		return nil, noSuchPage(req.Page)
+	}
+
+	return &thumbnail, nil
+}
+
+func (s *PreviewService) PreviewPacketChecks(
+	ctx context.Context,
+	req *billingqueueports.PacketChecksRequest,
+) (*billingqueueports.PacketChecks, error) {
+	key := previewKeyOf(req.ItemID, req.TenantInfo)
+	preview, err := s.load(ctx, key, req.ItemID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	index, err := s.index(ctx, key, preview)
+	if err != nil {
+		return nil, err
+	}
+
+	return &billingqueueports.PacketChecks{
+		Build:      preview.Build,
+		BlankPages: blankDocumentPages(preview.Parts, index.Ink),
+	}, nil
+}
+
+func blankDocumentPages(parts []billingqueueports.PacketPart, ink []float64) []int {
+	blank := make([]int, 0)
+	for _, part := range parts {
+		if part.Kind != billingqueueports.PacketPartDocument {
 			continue
 		}
-		doc, getErr := s.documents.Get(ctx, documentports.GetDocumentByIDRequest{
-			ID:         attachment.DocumentID,
-			TenantInfo: req.TenantInfo,
-		})
-		if getErr != nil {
-			return nil, getErr
-		}
-		part, partErr := s.assembler.Part(ctx, req.TenantInfo, doc)
-		if partErr != nil {
-			return nil, errortypes.NewBusinessError(
-				"{0} could not be added to the packet: {1}",
-				doc.OriginalName,
-				partErr.Error(),
-			)
-		}
-		if part != nil {
-			parts = append(parts, *part)
-			carried++
+		for page := part.FirstPage; page <= part.LastPage && page <= len(ink); page++ {
+			coverage := ink[page-1]
+			if coverage >= 0 && coverage < capture.BlankThreshold {
+				blank = append(blank, page)
+			}
 		}
 	}
 
-	packet, err := s.assembler.Merge(ctx, parts, kernelports.ImagingInteractive)
+	return blank
+}
+
+func noSuchPage(page int) error {
+	return errortypes.NewNotFoundError("The packet has no page {0}", page)
+}
+
+func previewKeyOf(itemID pulid.ID, tenantInfo pagination.TenantInfo) PreviewKey {
+	return PreviewKey{OrgID: tenantInfo.OrgID, BuID: tenantInfo.BuID, ItemID: itemID}
+}
+
+func (s *PreviewService) pageOf(
+	ctx context.Context,
+	req *billingqueueports.PacketPageRequest,
+) (PreviewKey, *billingqueueports.PacketPreview, error) {
+	key := previewKeyOf(req.ItemID, req.TenantInfo)
+	if req.Page < 1 {
+		return key, nil, errortypes.NewValidationError(
+			"page",
+			errortypes.ErrInvalid,
+			"Page number must be a whole number from 1",
+		)
+	}
+	preview, err := s.load(ctx, key, req.ItemID, req.TenantInfo)
 	if err != nil {
-		return nil, err
+		return key, nil, err
+	}
+	if req.Page > preview.Pages {
+		return key, nil, noSuchPage(req.Page)
 	}
 
-	return &billingqueueports.PacketPreview{
-		FileName:  rendered.FileName,
-		Content:   packet,
-		Documents: carried,
-	}, nil
+	return key, preview, nil
+}
+
+func (s *PreviewService) load(
+	ctx context.Context,
+	key PreviewKey,
+	itemID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*billingqueueports.PacketPreview, error) {
+	return s.previews.Load(
+		ctx,
+		key,
+		func(ctx context.Context) (*billingqueueports.PacketPreview, error) {
+			return s.build(ctx, &billingqueueports.PacketPreviewRequest{
+				ItemID:     itemID,
+				TenantInfo: tenantInfo,
+			})
+		},
+	)
+}
+
+func (s *PreviewService) chunk(
+	ctx context.Context,
+	key PreviewKey,
+	preview *billingqueueports.PacketPreview,
+	chunk int,
+) ([]billingqueueports.PacketPage, error) {
+	first := chunk*pageChunkSize + 1
+	last := min(first+pageChunkSize-1, preview.Pages)
+
+	return s.previews.LoadPages(
+		ctx,
+		PageChunkKey{Preview: key, Build: preview.Build, Chunk: chunk},
+		func(ctx context.Context) ([]billingqueueports.PacketPage, error) {
+			return s.assembler.RenderPages(ctx, preview.Content, first, last)
+		},
+	)
+}
+
+func (s *PreviewService) index(
+	ctx context.Context,
+	key PreviewKey,
+	preview *billingqueueports.PacketPreview,
+) (*PageIndex, error) {
+	return s.previews.LoadIndex(
+		ctx,
+		PageIndexKey{Preview: key, Build: preview.Build},
+		func(ctx context.Context) (*PageIndex, error) {
+			return s.assembler.IndexPages(ctx, preview.Content, preview.Pages)
+		},
+	)
+}
+
+func (s *PreviewService) warm(
+	ctx context.Context,
+	key PreviewKey,
+	preview *billingqueueports.PacketPreview,
+) {
+	if !s.warming.TryAcquire(1) {
+		return
+	}
+	s.warms.Go(func() {
+		defer s.warming.Release(1)
+		warmCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), warmTimeout)
+		defer cancel()
+		if _, err := s.chunk(warmCtx, key, preview, 0); err != nil {
+			s.l.Warn("could not draw a packet's first pages ahead of the viewer",
+				zap.String("billingQueueItemId", key.ItemID.String()), zap.Error(err))
+		}
+		if _, err := s.index(warmCtx, key, preview); err != nil {
+			s.l.Warn("could not index a packet's pages ahead of the viewer",
+				zap.String("billingQueueItemId", key.ItemID.String()), zap.Error(err))
+		}
+	})
 }

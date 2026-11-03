@@ -178,6 +178,14 @@ type HeldForPeriod struct {
 	TotalAmount   decimal.Decimal `db:"total_amount"`
 }
 
+type SetPacketDocumentsRequest struct {
+	TenantInfo pagination.TenantInfo
+	ItemID     pulid.ID
+	Version    int64
+	Packet     []pulid.ID
+	Rotations  []billingqueue.PacketPageRotation
+}
+
 type BillingQueueRepository interface {
 	List(
 		ctx context.Context,
@@ -206,6 +214,7 @@ type BillingQueueRepository interface {
 		payerID pulid.ID,
 		billType billingvocab.BillType,
 	) (bool, error)
+	SetPacketDocuments(ctx context.Context, req *SetPacketDocumentsRequest) (bool, error)
 	ListActiveInvoiceItemsByShipmentIDs(
 		ctx context.Context,
 		req *ListActiveInvoiceItemsRequest,
@@ -256,7 +265,10 @@ type BillingQueueRepository interface {
 		customerID pulid.ID,
 		limit int,
 	) ([]*RecentInvoice, error)
-	ListUnreviewedItems(ctx context.Context, req *ListUnreviewedItemsRequest) ([]*UnreviewedItem, error)
+	ListUnreviewedItems(
+		ctx context.Context,
+		req *ListUnreviewedItemsRequest,
+	) ([]*UnreviewedItem, error)
 	// ListNovaBacklogTenants names the organizations with items Nova has not
 	// reviewed, across every organization.
 	ListNovaBacklogTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)

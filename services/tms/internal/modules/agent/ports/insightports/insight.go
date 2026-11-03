@@ -118,10 +118,12 @@ type ReplaceDetectorFindingsResult struct {
 
 // ListNarratedInsightsRequest reads one detector's active findings that a
 // model has worded, so a refresh that measures the same figures again keeps
-// that wording rather than paying for it twice.
+// that wording rather than paying for it twice. DedupeKeys names the findings
+// the refresh measured; at most one active finding holds each key.
 type ListNarratedInsightsRequest struct {
 	TenantInfo  pagination.TenantInfo
 	DetectorKey string
+	DedupeKeys  []string
 }
 
 type GetInsightsByIDsRequest struct {

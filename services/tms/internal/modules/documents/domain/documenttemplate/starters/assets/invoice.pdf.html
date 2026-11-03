@@ -1,103 +1,108 @@
 <header class="masthead">
   <div class="issuer">
     {{ if .LogoDataURI }}<img class="logo" src="{{ .LogoDataURI }}" alt="{{ .Organization.Name }}">{{ end }}
-    <div class="issuer-name">{{ .Organization.Name }}</div>
-    {{ range .Organization.Lines }}<div class="issuer-line">{{ . }}</div>{{ end }}
-    {{ range .Organization.Details }}<div class="issuer-line">{{ .Label }}: {{ .Value }}</div>{{ end }}
+    <div>
+      <div class="issuer-name">{{ .Organization.Name }}</div>
+      <div class="issuer-lines">{{ join " · " .Organization.Lines }}</div>
+    </div>
   </div>
 
   <div class="invoice-id">
-    <div class="doc-type">{{ t "Invoice" }}</div>
+    <div class="tag">[ {{ t "Invoice" }} ]</div>
     <div class="invoice-number">{{ .InvoiceNumber }}</div>
-    <dl class="meta">
-      {{ if .InvoiceDate }}<dt>{{ t "Issued" }}</dt><dd>{{ .InvoiceDate }}</dd>{{ end }}
-      {{ if .DueDate }}<dt>{{ t "Due" }}</dt><dd>{{ .DueDate }}</dd>{{ end }}
-      {{ if .PaymentTerm }}<dt>{{ t "Terms" }}</dt><dd>{{ .PaymentTerm }}</dd>{{ end }}
-      {{ if .Period }}<dt>{{ t "Period" }}</dt><dd>{{ .Period }}</dd>{{ end }}
-      {{ if .ShipmentCount }}<dt>{{ t "Shipments" }}</dt><dd>{{ .ShipmentCount }}</dd>{{ end }}
-      {{ range .HeaderRows }}<dt>{{ .Label }}</dt><dd>{{ .Value }}</dd>{{ end }}
+    <dl class="dates">
+      {{ if .InvoiceDate }}<dt>{{ t "Issued" }}</dt><dd>{{ day .InvoiceDate }}</dd>{{ end }}
+      {{ if .DueDate }}<dt>{{ t "Due" }}</dt><dd>{{ day .DueDate }}</dd>{{ end }}
+      {{ if .PeriodStart }}<dt>{{ t "Period" }}</dt><dd>{{ day .PeriodStart }} – {{ day .PeriodEnd }}</dd>{{ else if .Period }}<dt>{{ t "Period" }}</dt><dd>{{ .Period }}</dd>{{ end }}
     </dl>
+    <div class="owed">
+      <span class="tag">{{ t "Amount due" }}</span>
+      <span class="owed-amount">{{ if .BalanceDue }}{{ .BalanceDue }}{{ else }}{{ .Total }}{{ end }}</span>
+    </div>
   </div>
 </header>
 
 <section class="parties">
   <div class="party">
-    <h2>{{ t "Bill To" }}</h2>
+    <div class="tag">[ {{ t "Bill To" }} ]</div>
     <div class="party-name">{{ .BillTo.Name }}</div>
-    {{ range .BillTo.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .BillTo.Lines }}<div class="party-line">{{ . }}</div>{{ end }}
     {{ range .BillTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
   </div>
 
   <div class="party">
-    <h2>{{ t "Remit To" }}</h2>
+    <div class="tag">[ {{ t "Remit To" }} ]</div>
     <div class="party-name">{{ .RemitTo.Name }}</div>
-    {{ range .RemitTo.Lines }}<div>{{ . }}</div>{{ end }}
+    {{ range .RemitTo.Lines }}<div class="party-line">{{ . }}</div>{{ end }}
     {{ range .RemitTo.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
   </div>
 </section>
 
 {{ if .NoticeOfAssignment }}
 <section class="assignment">
-  <h2>{{ t "Notice of assignment" }}</h2>
+  <div class="tag">[ {{ t "Notice of assignment" }} ]</div>
   <p>{{ .NoticeOfAssignment }}</p>
-</section>
-{{ end }}
-
-{{ if not .ShipmentRows }}
-<section class="parties">
-  <div class="party">
-    <h2>{{ t "Shipper" }}</h2>
-    <div class="party-name">{{ .Shipper.Name }}</div>
-    {{ range .Shipper.Lines }}<div>{{ . }}</div>{{ end }}
-    {{ range .Shipper.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
-  </div>
-
-  <div class="party">
-    <h2>{{ t "Consignee" }}</h2>
-    <div class="party-name">{{ .Consignee.Name }}</div>
-    {{ range .Consignee.Lines }}<div>{{ . }}</div>{{ end }}
-    {{ range .Consignee.Details }}<div class="party-detail">{{ .Label }}: {{ .Value }}</div>{{ end }}
-  </div>
 </section>
 {{ end }}
 
 {{ if .ShipmentRows }}
 <section class="block">
-  <h2>Shipments</h2>
+  <div class="tag">[ {{ t "Shipments" }}{{ if .ShipmentCount }} · {{ .ShipmentCount }}{{ end }} ]</div>
   <table class="grid">
     <thead>
       <tr>
-        <th>Pro Number</th>
-        <th>BOL</th>
-        <th>PO</th>
-        <th>Delivered</th>
-        <th>Lane</th>
-        <th class="num">Amount</th>
+        <th>{{ t "PRO" }}</th>
+        <th>{{ t "BOL" }}</th>
+        <th>{{ t "PO" }}</th>
+        <th>{{ t "Delivered" }}</th>
+        <th>{{ t "Lane" }}</th>
+        <th class="num">{{ t "Amount" }}</th>
       </tr>
     </thead>
     <tbody>
       {{ range .ShipmentRows }}
       <tr>
-        <td>{{ .ProNumber }}</td>
+        <td class="mono">{{ .ProNumber }}</td>
         <td>{{ .BOL }}</td>
         <td>{{ .PONumber }}</td>
-        <td>{{ .ServiceDate }}</td>
-        <td>{{ .Origin }}{{ if .Destination }} &rarr; {{ .Destination }}{{ end }}</td>
+        <td class="nowrap">{{ day .ServiceDate }}</td>
+        <td>{{ .Origin }}{{ if .Destination }} → {{ .Destination }}{{ end }}</td>
         <td class="num">{{ .Amount }}</td>
       </tr>
       {{ end }}
     </tbody>
   </table>
 </section>
+{{ else }}
+<section class="route">
+  <div class="stop">
+    <div class="tag">[ {{ t "Shipper" }} ]</div>
+    <div class="party-name">{{ .Shipper.Name }}</div>
+    {{ range .Shipper.Lines }}<div class="party-line">{{ . }}</div>{{ end }}
+    {{ range .Shipper.Details }}<div class="stop-when">{{ .Label }} {{ day .Value }}</div>{{ end }}
+  </div>
+  <div class="stop">
+    <div class="tag">[ {{ t "Consignee" }} ]</div>
+    <div class="party-name">{{ .Consignee.Name }}</div>
+    {{ range .Consignee.Lines }}<div class="party-line">{{ . }}</div>{{ end }}
+    {{ range .Consignee.Details }}<div class="stop-when">{{ .Label }} {{ day .Value }}</div>{{ end }}
+  </div>
+</section>
+{{ end }}
+
+{{ if .HeaderRows }}
+<div class="refs">
+  {{ range .HeaderRows }}<span class="ref"><span class="ref-label">{{ .Label }}</span> <span class="ref-value">{{ .Value }}</span></span>{{ end }}
+</div>
 {{ end }}
 
 {{ if .CommodityRows }}
 <section class="block">
-  <h2>{{ t "Freight" }}</h2>
+  <div class="tag">[ {{ t "Freight" }} ]</div>
   <table class="grid">
     <thead>
       <tr>
-        <th class="num">{{ t "Qty" }}</th>
+        <th class="num qty">{{ t "Qty" }}</th>
         <th>{{ t "Type" }}</th>
         <th>{{ t "Description" }}</th>
         <th class="num">{{ t "Weight" }}</th>
@@ -110,7 +115,7 @@
       <tr>
         <td class="num">{{ .Quantity }}</td>
         <td>{{ .Type }}</td>
-        <td>{{ range .DescriptionLines }}<div>{{ . }}</div>{{ end }}</td>
+        <td>{{ range $i, $line := .DescriptionLines }}{{ if eq $i 0 }}<div>{{ $line }}</div>{{ else }}<div class="sub">{{ $line }}</div>{{ end }}{{ end }}</td>
         <td class="num">{{ .Weight }}</td>
         <td class="num">{{ .NMFC }}</td>
         <td class="num">{{ .Class }}</td>
@@ -122,7 +127,7 @@
 {{ end }}
 
 <section class="block">
-  <h2>{{ t "Charges" }}</h2>
+  <div class="tag">[ {{ t "Charges" }} ]</div>
   <table class="grid">
     <thead>
       <tr>
@@ -137,7 +142,7 @@
       {{ range .ChargeRows }}
       <tr>
         <td class="line-col">{{ .Line }}</td>
-        <td>{{ .Description }}{{ if .ProNumber }}<div class="party-detail">{{ .ProNumber }}</div>{{ end }}</td>
+        <td>{{ .Description }}{{ if .ProNumber }}<div class="sub mono">{{ .ProNumber }}</div>{{ end }}</td>
         <td class="num">{{ .Quantity }}</td>
         <td class="num">{{ .UnitPrice }}</td>
         <td class="num">{{ .Amount }}</td>
@@ -145,39 +150,44 @@
       {{ end }}
     </tbody>
   </table>
+</section>
 
-  <div class="totals">
-    <dl>
-      <dt>{{ t "Subtotal" }}</dt><dd>{{ .Subtotal }}</dd>
-      {{ if .Other }}<dt>{{ t "Other" }}</dt><dd>{{ .Other }}</dd>{{ end }}
-      <dt class="grand">{{ t "Total" }}</dt><dd class="grand">{{ .Total }}</dd>
-      {{ if .BalanceDue }}<dt class="due">{{ t "Balance Due" }}</dt><dd class="due">{{ .BalanceDue }}</dd>{{ end }}
-    </dl>
+<section class="settle">
+  <div class="pay">
+    <div class="tag">[ {{ t "How to pay" }} ]</div>
+    <div class="party-name">{{ .RemitTo.Name }}</div>
+    <div class="party-line">{{ join ", " .RemitTo.Lines }}</div>
+    <p>{{ t "Write {0} on your payment so it is applied to this invoice." .InvoiceNumber }}</p>
+    {{ if .Attachments }}<p>{{ t "Enclosed: {0}" (join ", " .Attachments) }}</p>{{ end }}
   </div>
+
+  <dl class="totals">
+    <dt>{{ t "Subtotal" }}</dt><dd>{{ .Subtotal }}</dd>
+    {{ if .Other }}<dt>{{ t "Other" }}</dt><dd>{{ .Other }}</dd>{{ end }}
+    <dt class="grand">{{ t "Total" }}</dt><dd class="grand">{{ .Total }}</dd>
+    {{ if .BalanceDue }}<dt class="due">{{ t "Balance due" }}</dt><dd class="due">{{ .BalanceDue }}</dd>{{ end }}
+  </dl>
 </section>
 
 {{ if .Notes }}
 <section class="block notes">
-  <h2>{{ t "Notes" }}</h2>
+  <div class="tag">[ {{ t "Notes" }} ]</div>
   {{ range .Notes }}<p>{{ . }}</p>{{ end }}
 </section>
 {{ end }}
 
-{{ if .Attachments }}
-<section class="block">
-  <h2>{{ t "Enclosed" }}</h2>
-  <ul class="enclosed">{{ range .Attachments }}<li>{{ . }}</li>{{ end }}</ul>
-</section>
-{{ end }}
-
 {{ if or .Terms .InvoiceTerms }}
-<section class="block terms">
-  <h2>{{ t "Terms" }}</h2>
+<section class="terms">
+  <div class="tag">[ {{ t "Terms" }} ]</div>
   {{ range .InvoiceTerms }}<p>{{ . }}</p>{{ end }}
   {{ range .Terms }}<p>{{ . }}</p>{{ end }}
 </section>
 {{ end }}
 
-{{ if .InvoiceFooter }}
-<footer class="closing">{{ .InvoiceFooter }}</footer>
-{{ end }}
+<footer class="closing">
+  {{ if .InvoiceFooter }}<div class="closing-note">{{ .InvoiceFooter }}</div>{{ end }}
+  <div class="closing-line">
+    <span>{{ .Organization.Name }}{{ range .Organization.Details }} · {{ .Label }} {{ .Value }}{{ end }}</span>
+    <span>{{ .InvoiceNumber }}</span>
+  </div>
+</footer>

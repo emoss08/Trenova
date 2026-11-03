@@ -223,7 +223,7 @@ export function DeskModelPicker({
         <span className="dk-mp2-bl">
           {selected ? selected.model : <span className="dk-tr-word">{t("Auto")}</span>}
         </span>
-        {!selected && <span className="dk-tr-ring" aria-hidden />}
+        {!selected && <span className="dk-tr-ring ui-spin-ring" aria-hidden />}
         <svg
           className="dk-mp2-cv"
           width="10"
@@ -292,6 +292,7 @@ export function DeskModelPicker({
                     onMouseMove={() => highlighted !== index && setHighlighted(index)}
                     onClick={() => pick(row)}
                   >
+                    <span className="dk-mp2-ring ui-spin-ring" aria-hidden />
                     <LogoRain />
                     <span className="dk-mp2-ai">
                       <span className="dk-ai-reel">

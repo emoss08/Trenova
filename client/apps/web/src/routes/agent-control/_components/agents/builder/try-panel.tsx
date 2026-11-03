@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { AssistantStreamError } from "@/services/assistant";
 import { apiService } from "@/services/api";
@@ -188,7 +189,15 @@ export function TryPanel({
             {t("Clear")}
           </button>
         )}
-        <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" title={t("Hide")} aria-label={t("Hide")} onClick={onClose}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="text-muted-foreground hover:text-foreground"
+          title={t("Hide")}
+          aria-label={t("Hide")}
+          onClick={onClose}
+        >
           <Ic n="x" s={13} />
         </Button>
       </header>
@@ -233,7 +242,11 @@ export function TryPanel({
                     <Tile agent={{ name: run.name, icon: run.icon, accent: run.accent }} s={18} />
                     <b>{run.name}</b>
                     <span className="mono">
-                      {run.mode === "live" ? t("live draft") : run.mode === "shadow" ? t("shadow") : t("simulation")}
+                      {run.mode === "live"
+                        ? t("live draft")
+                        : run.mode === "shadow"
+                          ? t("shadow")
+                          : t("simulation")}
                     </span>
                   </div>
                   <div className="tp2-l">
@@ -252,7 +265,9 @@ export function TryPanel({
                             )}
                           </span>
                           <span className="tx">
-                            <b>{describeToolCall(step.tool, null).title}</b>
+                            <TextShimmer as="b" active={going} duration={1.6}>
+                              {describeToolCall(step.tool, null).title}
+                            </TextShimmer>
                             <em className="mono">{step.tool}</em>
                           </span>
                           {step.outcome && (
@@ -275,14 +290,23 @@ export function TryPanel({
                     <span className="tp2-m mono">
                       {run.steps.length === 1
                         ? t("{0}s · 1 tool call · nothing written", elapsed.toFixed(1))
-                        : t("{0}s · {1} tool calls · nothing written", elapsed.toFixed(1), run.steps.length)}
+                        : t(
+                            "{0}s · {1} tool calls · nothing written",
+                            elapsed.toFixed(1),
+                            run.steps.length,
+                          )}
                     </span>
                   )}
                   {stale && (
                     <div className="tp2-st">
                       <Ic n="refresh" s={12} />
                       <span>{t("You changed the draft since this run")}</span>
-                      <Button type="button" variant="outline" size="sm" onClick={() => ask(run.question)}>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => ask(run.question)}
+                      >
                         {t("Run again")}
                       </Button>
                     </div>

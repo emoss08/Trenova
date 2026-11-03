@@ -19,6 +19,10 @@ with its wiring.
 - 206 REST routes no client called were deleted, with 11 handler packages and the service methods only
   they called (invoice-from-order, permission simulator, manual service-failure create, comment typing
   signal, share-candidate lookup, EDI profile get/list, detention occurrence list; restorable from git).
+  That sweep wrongly deleted `PUT /documents/uploads/:uploadSessionID/parts/:partNumber/`, which every
+  browser upload uses, and it was restored. **A route the server hands out as a URL counts as called**
+  even when no client source names it: before deleting a route, search the Go code for paths it builds
+  (`"/api/v1/` literals, such as upload part targets, stream URLs and share links) as well as the client.
 - Batch 1 (reference-data CRUD: accessorial charges, account types, commodities, customers, equipment
   manufacturers, fleet codes, hazardous materials, hazmat segregation rules, hold reasons, document types,
   factoring companies, location categories) is converted: 41 routes, 12 handler packages deleted, Go vet,

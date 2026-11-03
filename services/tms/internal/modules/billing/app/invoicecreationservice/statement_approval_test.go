@@ -169,6 +169,17 @@ func (h *approvalHarness) approve(
 	)
 }
 
+func (h *approvalHarness) preview(
+	t *testing.T,
+	req *invoiceports.CreateInvoiceFromBillingQueueRequest,
+) (*invoiceports.CreateInvoiceFromBillingQueueResult, error) {
+	t.Helper()
+	req.BillingQueueItemID = h.itemID
+	req.TenantInfo = h.tenantInfo
+
+	return h.svc.PreviewApprovalInvoice(t.Context(), req)
+}
+
 func statementProfile() *customer.CustomerBillingProfile {
 	return &customer.CustomerBillingProfile{
 		BillingCurrency:       "USD",
@@ -254,4 +265,19 @@ func TestExplicitInvoicingProceedsWithAReason(t *testing.T) {
 		result.Invoice.OffCycleReason,
 		"the reason is stamped on the invoice it justifies",
 	)
+}
+
+// Looking at the invoice a statement customer's freight would make is not taking it
+// off the statement: the packet preview saves nothing, so it has nothing to justify.
+func TestPreviewingStatementFreightNeedsNoOffCycleReason(t *testing.T) {
+	t.Parallel()
+
+	h := newApprovalHarness(t, statementProfile(), false)
+
+	result, err := h.preview(t, &invoiceports.CreateInvoiceFromBillingQueueRequest{})
+
+	require.NoError(t, err)
+	require.NotNil(t, result.Invoice)
+	assert.True(t, result.Invoice.ID.IsNil(), "a preview saves nothing")
+	assert.Empty(t, result.Invoice.OffCycleReason, "no reason was given, so none is stamped")
 }

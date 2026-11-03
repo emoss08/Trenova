@@ -40,7 +40,7 @@ func (s *Service) PlanDelete(ctx context.Context, req *BulkDeleteRequest) (*Dele
 		return &DeletePlan{Versions: map[pulid.ID][]*document.Document{}}, nil
 	}
 
-	docs, err := s.repo.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+	docs, err := s.repo.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 		IDs:        req.IDs,
 		TenantInfo: req.TenantInfo,
 	})

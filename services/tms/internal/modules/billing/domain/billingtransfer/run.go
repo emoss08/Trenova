@@ -1,7 +1,9 @@
 package billingtransfer
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -40,6 +42,7 @@ type BillingTransferRun struct {
 	MarkedReadyToInvoiceCount   int                   `json:"markedReadyToInvoiceCount"   keel:"marked_ready_to_invoice_count"`
 	RetryableCount              int                   `json:"retryableCount"              keel:"retryable_count"`
 	UnmatchedCount              int                   `json:"unmatchedCount"              keel:"unmatched_count"`
+	FailureCounts               []FailureCount        `json:"failureCounts"               keel:"failure_counts,jsonb"`
 	FailureMessage              string                `json:"failureMessage"              keel:"failure_message,nullzero"`
 	CancelRequestedAt           *int64                `json:"cancelRequestedAt"           keel:"cancel_requested_at"`
 	CancelRequestedByID         pulid.ID              `json:"cancelRequestedById"         keel:"cancel_requested_by_id,nullzero"`
@@ -59,6 +62,9 @@ func (r *BillingTransferRun) BeforeCreate(ctx context.Context) error {
 	now := timeutils.NowUnix()
 	if r.QueuedAt == 0 {
 		r.QueuedAt = now
+	}
+	if r.FailureCounts == nil {
+		r.FailureCounts = []FailureCount{}
 	}
 
 	return nil
@@ -137,6 +143,36 @@ func (r *BillingTransferRun) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, 200).Error("Search cannot be longer than 200 characters"),
 		),
 	))
+}
+
+type FailureCount struct {
+	Code  FailureCode `json:"code"`
+	Count int         `json:"count"`
+}
+
+func (c FailureCount) Retryable() bool {
+	return c.Code.IsRetryable()
+}
+
+func TallyFailureCounts(tally map[FailureCode]int) []FailureCount {
+	counts := make([]FailureCount, 0, len(tally))
+	for code, count := range tally {
+		if count > 0 {
+			counts = append(counts, FailureCount{Code: code, Count: count})
+		}
+	}
+	SortFailureCounts(counts)
+
+	return counts
+}
+
+func SortFailureCounts(counts []FailureCount) {
+	slices.SortFunc(counts, func(a, b FailureCount) int {
+		if a.Count != b.Count {
+			return cmp.Compare(b.Count, a.Count)
+		}
+		return cmp.Compare(a.Code, b.Code)
+	})
 }
 
 type MissingRequirement struct {

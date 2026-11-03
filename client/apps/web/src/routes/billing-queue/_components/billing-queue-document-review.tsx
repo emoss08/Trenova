@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 import { documentNeedsSignature } from "@/lib/document-signature";
+import { storedDocumentPages } from "@/lib/queries/document-page";
 import { documentReading } from "@/lib/queries/document-reading";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import type { Extraction } from "@/lib/document-reading/extraction-payload";
@@ -15,13 +16,14 @@ import {
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueItem } from "@trenova/shared/types/billing-queue";
 import type { Document } from "@trenova/shared/types/document";
+import type { ShipmentBillingRequirement } from "@trenova/shared/types/shipment";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { shipmentDocumentsQuery } from "../billing-queue-queries";
 import { BillingQueueDocumentDetails, type ReadingState } from "./billing-queue-document-details";
 import { BillingQueueDocumentPages } from "./billing-queue-document-pages";
-import { isInPacket, packetAfterToggle } from "./billing-queue-packet";
+import { packetAfterToggle, packetDocumentIds } from "./billing-queue-packet";
 import { useInvoiceDetails } from "./use-invoice-details";
 
 /** How often a document Nova is still reading is looked at again. */
@@ -138,9 +140,7 @@ export function BillingQueueDocumentReview({
   const index = documents.findIndex((doc) => doc.id === documentId);
   const next =
     index >= 0 && documents.length > 1 ? documents[(index + 1) % documents.length] : null;
-  const requiredTypes = new Set(
-    readiness?.requirements.map((requirement) => requirement.documentTypeId) ?? [],
-  );
+  const requirements = readiness?.requirements ?? [];
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onDocumentChange(null)}>
@@ -206,7 +206,8 @@ export function BillingQueueDocumentReview({
           <div className="min-h-0 min-w-0 flex-[999_1_560px]">
             {documentId ? (
               <BillingQueueDocumentPages
-                documentId={documentId}
+                key={documentId}
+                source={storedDocumentPages(documentId)}
                 fileName={document?.originalName ?? ""}
                 pageCount={extraction?.pageCount ?? 1}
                 pages={extraction?.pages ?? []}
@@ -225,8 +226,7 @@ export function BillingQueueDocumentReview({
               <DetailsWithPacket
                 key={`${document.id}-${document.version}`}
                 document={document}
-                documents={documents}
-                requiredTypes={requiredTypes}
+                requirements={requirements}
                 item={item}
                 extraction={extraction}
                 readingState={readingState}
@@ -252,8 +252,7 @@ export function BillingQueueDocumentReview({
 /** The details panel with its packet checkbox saved to the item's invoice details. */
 function DetailsWithPacket({
   document,
-  documents,
-  requiredTypes,
+  requirements,
   item,
   extraction,
   readingState,
@@ -267,8 +266,7 @@ function DetailsWithPacket({
   onDeleted,
 }: {
   document: Document;
-  documents: Document[];
-  requiredTypes: ReadonlySet<string>;
+  requirements: readonly ShipmentBillingRequirement[];
   item: BillingQueueItem;
   extraction: Extraction | undefined;
   readingState: ReadingState;
@@ -281,21 +279,20 @@ function DetailsWithPacket({
   onNext?: () => void;
   onDeleted: () => void;
 }) {
-  const { save, editable } = useInvoiceDetails(item);
+  const { save, editable, isSaving } = useInvoiceDetails(item);
+  const current = packetDocumentIds(item.packetDocumentIds, item.packetPicked, requirements);
   const packet =
     item.billType === "Invoice"
       ? {
-          included: isInPacket(document, item.packetDocumentIds, requiredTypes),
+          included: current.includes(document.id),
           editable,
+          saving: isSaving,
           onToggle: (include: boolean) =>
             void save({
-              packetDocumentIds: packetAfterToggle(
-                document,
-                include,
-                documents,
-                item.packetDocumentIds,
-                requiredTypes,
-              ),
+              packetDocumentIds: packetAfterToggle(document.id, include, current),
+              packetPicked: true,
+            }).catch(() => {
+              // The save has already reported why it failed and reloaded the item.
             }),
         }
       : undefined;

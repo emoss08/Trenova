@@ -562,7 +562,15 @@ func (r *repository) UpsertAttachments(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*invoice.Attachment, error) {
 		db := r.db.Keel(ctx)
 		att := invoicedb.Attachments
-		if _, err := att.Where(att.InvoiceID.Eq(req.InvoiceID)).Delete(ctx, db); err != nil {
+		existing, err := att.Where(att.InvoiceID.Eq(req.InvoiceID)).All(ctx, db)
+		if err != nil {
+			return nil, attachmentErrors.Map(err, req.InvoiceID.String())
+		}
+		turned := make(map[pulid.ID][]billingvocab.PageRotation, len(existing))
+		for _, attachment := range existing {
+			turned[attachment.DocumentID] = attachment.PageRotations
+		}
+		if _, err = att.Where(att.InvoiceID.Eq(req.InvoiceID)).Delete(ctx, db); err != nil {
 			return nil, attachmentErrors.Map(err, req.InvoiceID.String())
 		}
 
@@ -576,6 +584,7 @@ func (r *repository) UpsertAttachments(
 					DocumentID:     documentID,
 					Selected:       true,
 					SortOrder:      idx + 1,
+					PageRotations:  turned[documentID],
 				})
 			}
 

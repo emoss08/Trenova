@@ -66,14 +66,28 @@ export function useBulkBillingTransfer(runId: string | null, onRunIdChange: (id:
   // The queue only settles once, when the run reaches a terminal state: every
   // batch moves shipments, but refetching the whole billing queue after each of
   // them is the throttling this change exists to remove.
+  // A run that has finished is nobody's active run, whatever the cache last heard. The
+  // active-run query is disabled while a run is open, so it never refetched since it found
+  // this one; left alone, starting a fresh transfer would reattach straight back to it.
+  const forgetActiveRun = useCallback(
+    (finishedRunId: string) => {
+      queryClient.setQueryData<BillingTransferRun | null>(
+        [BILLING_TRANSFER_ACTIVE_RUN_KEY],
+        (active) => (active?.id === finishedRunId ? null : active),
+      );
+      void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_ACTIVE_RUN_KEY] });
+    },
+    [queryClient],
+  );
+
   useEffect(() => {
     if (!run || !isRunTerminal(run)) return;
     if (settledRunRef.current === run.id) return;
 
     settledRunRef.current = run.id;
     invalidateBillingViews();
-    void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_ACTIVE_RUN_KEY] });
-  }, [run, invalidateBillingViews, queryClient]);
+    forgetActiveRun(run.id);
+  }, [run, invalidateBillingViews, forgetActiveRun]);
 
   const adoptRun = useCallback(
     (next: BillingTransferRun) => {
@@ -147,8 +161,9 @@ export function useBulkBillingTransfer(runId: string | null, onRunIdChange: (id:
   const clear = useCallback(() => {
     setStartError(null);
     settledRunRef.current = null;
+    if (run && isRunTerminal(run)) forgetActiveRun(run.id);
     void queryClient.invalidateQueries({ queryKey: [BILLING_TRANSFER_RUN_ITEMS_KEY] });
-  }, [queryClient]);
+  }, [queryClient, run, forgetActiveRun]);
 
   return {
     run,

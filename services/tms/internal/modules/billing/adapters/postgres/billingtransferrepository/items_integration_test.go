@@ -174,3 +174,101 @@ func TestRecordItemOutcomesWritesEveryOutcomeOfAFlush(t *testing.T) {
 	assert.Equal(t, "PRO-1", reread.ProNumber)
 	assert.Equal(t, string(billingtransfer.ItemStatusTransferred), transferred.Status)
 }
+
+func TestRecordItemOutcomesKeepsHowManyEachReasonHeldBack(t *testing.T) {
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	var orgID, buID, userID pulid.ID
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&orgID, &buID))
+	require.NoError(t, keel.Pool(db).QueryRow(ctx,
+		`SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2
+		ORDER BY id LIMIT 1`,
+		orgID, buID,
+	).Scan(&userID))
+	shipmentRows, err := keel.Pool(db).Query(ctx,
+		`SELECT id FROM shipments WHERE organization_id = $1 AND business_unit_id = $2
+		ORDER BY id LIMIT 4`,
+		orgID, buID,
+	)
+	require.NoError(t, err)
+	shipments, err := pgx.CollectRows(shipmentRows, pgx.RowTo[pulid.ID])
+	require.NoError(t, err)
+	require.Len(t, shipments, 4)
+
+	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+
+	run, err := repo.Create(ctx, &billingtransfer.BillingTransferRun{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		RequestedByID:  userID,
+		Status:         billingtransfer.RunStatusRunning,
+		Scope:          billingtransfer.RunScopeSelected,
+		BillType:       billingvocab.BillTypeInvoice,
+		TotalCount:     len(shipments),
+		QueuedAt:       timeutils.NowUnix(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []billingtransfer.FailureCount{}, run.FailureCounts)
+
+	_, err = repo.SeedItems(ctx, &billingtransferports.SeedBillingTransferRunItemsRequest{
+		TenantInfo:  tenant,
+		RunID:       run.ID,
+		ShipmentIDs: shipments,
+	})
+	require.NoError(t, err)
+
+	_, err = repo.RecordItemOutcomes(ctx, &billingtransferports.RecordBillingTransferOutcomesRequest{
+		TenantInfo: tenant,
+		RunID:      run.ID,
+		Outcomes: []billingtransferports.BillingTransferItemOutcome{
+			{ShipmentID: shipments[0], Status: billingtransfer.ItemStatusTransferred},
+			{
+				ShipmentID:  shipments[1],
+				Status:      billingtransfer.ItemStatusNotTransferred,
+				FailureCode: billingtransfer.FailureAlreadyTransferred,
+			},
+			{
+				ShipmentID:  shipments[2],
+				Status:      billingtransfer.ItemStatusNotTransferred,
+				FailureCode: billingtransfer.FailureRequirementsUnmet,
+			},
+			{
+				ShipmentID:  shipments[3],
+				Status:      billingtransfer.ItemStatusNotTransferred,
+				FailureCode: billingtransfer.FailureRequirementsUnmet,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	reread, err := repo.GetByID(ctx, &billingtransferports.GetBillingTransferRunRequest{
+		TenantInfo: tenant,
+		RunID:      run.ID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []billingtransfer.FailureCount{
+		{Code: billingtransfer.FailureRequirementsUnmet, Count: 2},
+		{Code: billingtransfer.FailureAlreadyTransferred, Count: 1},
+	}, reread.FailureCounts)
+
+	cursor, err := pagination.NewCursorInfo(50, "")
+	require.NoError(t, err)
+	page, err := repo.ListItems(ctx, &billingtransferports.ListBillingTransferRunItemsRequest{
+		Filter:       &pagination.QueryOptions{TenantInfo: tenant},
+		Cursor:       cursor,
+		RunID:        run.ID,
+		Statuses:     []billingtransfer.ItemStatus{billingtransfer.ItemStatusNotTransferred},
+		FailureCodes: []billingtransfer.FailureCode{billingtransfer.FailureRequirementsUnmet},
+	})
+	require.NoError(t, err)
+	listed := make([]pulid.ID, 0, len(page.Items))
+	for _, entry := range page.Items {
+		listed = append(listed, entry.ShipmentID)
+	}
+	assert.ElementsMatch(t, []pulid.ID{shipments[2], shipments[3]}, listed)
+}

@@ -116,6 +116,10 @@ func ReviewLanes() []Lane {
 	return []Lane{LaneChecking, LaneNeedsYou, LaneWaiting, LaneReady}
 }
 
+func ReviewStatuses() []Status {
+	return []Status{StatusReadyForReview, StatusInReview}
+}
+
 func HeldStatuses() []Status {
 	return []Status{StatusOnHold, StatusException, StatusSentBackToOps}
 }

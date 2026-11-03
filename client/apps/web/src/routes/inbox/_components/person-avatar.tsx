@@ -34,7 +34,7 @@ export function PersonAvatar({
     >
       {getNameInitials(name, "?")}
       {present && (
-        <span className="bg-success ring-canvas animate-breathe absolute -right-px -bottom-px size-2 rounded-full ring-2" />
+        <span className="bg-success ring-canvas absolute -right-px -bottom-px size-2 rounded-full ring-2" />
       )}
     </span>
   );

@@ -35,8 +35,9 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  background: conic-gradient(from var(--dk-ang), var(--dk-rainbow));
-  animation: dk-ang 9s linear infinite;
+  /* The ring stands still until a reply is being written (below). It is
+     round, so turning it runs its colours round it, composited. */
+  background: conic-gradient(var(--dk-rainbow));
   transition: inset 300ms var(--as-spring);
 }
 .as-orb::after {
@@ -49,7 +50,7 @@
 }
 .as-orb[data-mode="writing"]::before {
   inset: 5px;
-  animation-duration: 1.4s;
+  animation: ui-spin 1.4s linear infinite;
 }
 .as-orb[data-mode="writing"]::after {
   transform: scale(0);
@@ -59,21 +60,12 @@
   animation: none;
 }
 .as-orb[data-mode="pending"]::after {
+  /* Waiting on the person is a state, not work: the point is marked, still. */
   background: var(--warning);
   transform: scale(1.2);
-  animation: as-breathe 1.6s ease-in-out infinite;
 }
 .as-orb[data-mode="replied"]::after {
   transform: scale(1.6);
-}
-@keyframes as-breathe {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 /* ---- the beacon ---- */
@@ -176,27 +168,8 @@
   margin-right: 0;
 }
 .as-shim {
-  background: linear-gradient(
-    90deg,
-    var(--foreground) 0%,
-    var(--foreground) 40%,
-    var(--foreground-subtle) 50%,
-    var(--foreground) 60%,
-    var(--foreground) 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: as-shimmer 2s linear infinite;
-}
-@keyframes as-shimmer {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -150% 0;
-  }
+  --shimmer-base: var(--foreground);
+  --shimmer-highlight: var(--foreground-subtle);
 }
 .as-beacon-hide {
   box-shadow: var(--lift-ring);
@@ -538,7 +511,6 @@
   border-radius: 50%;
   background: var(--dsk-warn);
   box-shadow: 0 0 0 3px color-mix(in oklch, var(--dsk-warn) 22%, transparent);
-  animation: as-breathe 2.4s ease-in-out infinite;
 }
 .as-empty {
   padding: 24px 12px;
@@ -653,14 +625,8 @@
 @media (prefers-reduced-motion: reduce) {
   .as-orb::before,
   .as-orb::after,
-  .as-wd,
-  .as-shim,
   .as-pn .as-sb-new svg {
     animation: none !important;
-  }
-  .as-shim {
-    color: var(--foreground);
-    background: none;
   }
   .as-beacon-l,
   .as-pn.as-full,

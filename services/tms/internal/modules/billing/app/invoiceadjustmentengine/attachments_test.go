@@ -47,7 +47,7 @@ func TestValidateAttachmentsRejectsArchivedDocuments(t *testing.T) {
 	docID := pulid.MustNew("doc_")
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req documentports.BulkDeleteDocumentRequest) bool {
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req documentports.GetDocumentsByIDsRequest) bool {
 			return len(req.IDs) == 1 && req.IDs[0] == docID
 		})).
 		Return([]*document.Document{{ID: docID, Status: document.StatusArchived}}, nil)

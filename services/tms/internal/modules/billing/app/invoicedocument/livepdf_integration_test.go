@@ -116,11 +116,11 @@ func TestLiveInvoicePDFRendersThroughTheSidecar(t *testing.T) {
 	// can read what they owe, so this asserts against the text a reader sees.
 	text := pdftest.Text(t, pdf)
 	require.Contains(t, text, "INV-1001", "the invoice number is missing from the page")
-	require.Contains(t, text, "Total USD 2950.00", "the amount billed is missing from the page")
+	require.Contains(t, text, "Total $2,950.00", "the amount billed is missing from the page")
 	require.Contains(t, text, "Detention Fee", "an accessorial line is missing from the page")
 	// BillingControl continuity, proven on the printed page rather than inferred
 	// from the context: the balance and the authored footer both survive.
-	require.Contains(t, text, "Balance Due USD 2950.00")
+	require.Contains(t, text, "Balance due $2,950.00")
 	require.Contains(t, text, "Thank you for your business.")
 	require.NotContains(t, text, "ZgotmplZ")
 }

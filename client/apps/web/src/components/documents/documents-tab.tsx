@@ -47,7 +47,8 @@ import {
   type SortField,
   type ViewMode,
 } from "./document-toolbar";
-import { formatFileSize, type RejectedFile } from "./document-upload-zone";
+import { formatFileSize } from "./document-upload-zone";
+import type { RejectedFile } from "@/lib/document-upload-files";
 import { getFileCategory } from "./document-utils";
 import { PacketCompletenessPanel } from "./packet-completeness-panel";
 import { DocumentSignatureDialog } from "./document-signature-dialog";

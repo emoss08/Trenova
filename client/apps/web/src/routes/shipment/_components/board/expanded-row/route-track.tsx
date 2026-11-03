@@ -132,10 +132,7 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
               style={{ left: truckLeft(progress.percent) }}
             >
               <span
-                className={cn(
-                  "animate-live-ping absolute inset-0 rounded-full opacity-40",
-                  meta.swatchClassName,
-                )}
+                className={cn("absolute -inset-1 rounded-full opacity-40", meta.swatchClassName)}
               />
               <span
                 className={cn(

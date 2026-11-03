@@ -127,7 +127,6 @@
   border-radius: 50%;
   background: var(--dsk-agent);
   margin-left: -2px;
-  animation: dk-breathe 2.4s ease-in-out infinite;
 }
 .dk-me {
   width: 28px;
@@ -318,21 +317,6 @@
 }
 .dk-nl.dk-cur {
   color: var(--dsk-fg);
-}
-.dk-nl.dk-cur .dk-tx {
-  background: linear-gradient(
-    90deg,
-    var(--dsk-fg) 0%,
-    var(--dsk-fg) 40%,
-    var(--dsk-faint) 50%,
-    var(--dsk-fg) 60%,
-    var(--dsk-fg) 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: dk-shimmer 2s linear infinite;
 }
 .dk-nl .dk-el {
   margin-left: auto;
@@ -530,11 +514,6 @@
   font-weight: 500;
   color: var(--dsk-fg2);
 }
-@property --dk-ang {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
 .dk-cmp {
   position: relative;
   background: var(--dsk-card);
@@ -561,8 +540,8 @@
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  background: conic-gradient(
-    from var(--dk-ang),
+  /* The gradient turns in ui-spin-ring's ::before, behind this static mask. */
+  --spin-gradient: conic-gradient(
     transparent 0deg,
     transparent 150deg,
     oklch(0.72 0.15 225 / 0.5) 190deg,
@@ -573,7 +552,12 @@
     oklch(0.85 0.17 85) 342deg,
     transparent 360deg
   );
-  animation: dk-ang 2.6s linear infinite;
+  --spin-duration: 2.6s;
+}
+/* The ring turns only while the composer works: busy, checking, retrying or taking
+   a drop. At rest, and on the Desk's home where it shows still, it does not turn. */
+.dk-cmp:not(.dk-busy, .dk-r-check, .dk-r-retry, .dk-drop-on) .dk-cmp-ring::before {
+  animation: none;
 }
 .dk-cmp.dk-busy .dk-cmp-ring {
   opacity: 1;
@@ -588,13 +572,7 @@
 }
 .dk-cmp.dk-hm .dk-cmp-ring {
   opacity: 1;
-  animation-duration: 7s;
-  background: conic-gradient(from var(--dk-ang), var(--dk-rainbow));
-}
-@keyframes dk-ang {
-  to {
-    --dk-ang: 360deg;
-  }
+  --spin-gradient: conic-gradient(var(--dk-rainbow));
 }
 .dk-cmp textarea {
   display: block;
@@ -623,19 +601,8 @@
   animation: dk-qin 300ms var(--dk-settle) both;
 }
 .dk-cmp-st .dk-shim {
-  background: linear-gradient(
-    90deg,
-    var(--dsk-fg2) 0%,
-    var(--dsk-fg2) 40%,
-    var(--dsk-faint) 50%,
-    var(--dsk-fg2) 60%,
-    var(--dsk-fg2) 100%
-  );
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: dk-shimmer 2s linear infinite;
+  --shimmer-base: var(--dsk-fg2);
+  --shimmer-highlight: var(--dsk-faint);
 }
 .dk-cmp-st-d {
   width: 6px;
@@ -1403,14 +1370,6 @@
   }
   50% {
     opacity: 1;
-  }
-}
-@keyframes dk-shimmer {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -150% 0;
   }
 }
 @keyframes dk-sweep {
@@ -2623,9 +2582,6 @@
 .dk-mp2-b.dk-auto .dk-mp2-bi {
   color: var(--dsk-fg);
 }
-.dk-mp2-b.dk-auto .dk-mk-auto circle {
-  animation: dk-autopt 2.4s ease-in-out infinite;
-}
 .dk-mp2-bl {
   white-space: nowrap;
   overflow: hidden;
@@ -2666,21 +2622,13 @@
 .dk-mp2-auto {
   animation: dk-mprow 300ms var(--dk-settle) both;
 }
-.dk-mp2-auto::before {
-  content: "";
+.dk-mp2-ring {
   position: absolute;
   inset: 0;
   z-index: -1;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(
-    120deg,
-    oklch(0.75 0.14 220),
-    oklch(0.62 0.2 255),
-    oklch(0.55 0.22 290),
-    oklch(0.62 0.24 345),
-    oklch(0.72 0.2 45)
-  );
+  pointer-events: none;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -2701,8 +2649,8 @@
     oklch(0.72 0.2 45/0.06)
   );
 }
-.dk-mp2-auto.dk-hi::before,
-.dk-mp2-auto.dk-sel::before {
+.dk-mp2-auto.dk-hi .dk-mp2-ring,
+.dk-mp2-auto.dk-sel .dk-mp2-ring {
   opacity: 1;
 }
 .dk-mp2-ai {
@@ -2896,15 +2844,6 @@
     transform: rotate(180deg);
   }
 }
-@keyframes dk-autopt {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
 .dk-mp2-l {
   max-height: min(330px, calc(100vh - 250px));
 }
@@ -2939,9 +2878,8 @@
 }
 
 /* auto router animation */
-.dk-mp2-auto::before {
-  background: conic-gradient(
-    from var(--dk-ang),
+.dk-mp2-ring {
+  --spin-gradient: conic-gradient(
     oklch(0.75 0.14 220),
     oklch(0.62 0.2 255),
     oklch(0.55 0.22 290),
@@ -2949,10 +2887,12 @@
     oklch(0.72 0.2 45),
     oklch(0.75 0.14 220)
   );
-  animation: dk-ang 6s linear infinite;
 }
-.dk-mp2-auto:hover::before {
-  animation-duration: 1.8s;
+.dk-mp2-ring::before {
+  animation: none;
+}
+.dk-mp2-auto:hover .dk-mp2-ring::before {
+  animation: ui-spin 1.8s linear 1;
 }
 .dk-mp2-auto::after {
   transition: opacity 300ms;
@@ -2992,7 +2932,7 @@
   animation: none;
 }
 .dk-mp2-auto.dk-hi .dk-ai-ring {
-  animation: dk-airing 1.6s var(--dk-ease) infinite;
+  animation: dk-airing 1.6s var(--dk-ease) 1;
 }
 .dk-mp2-hop svg {
   transition: transform 300ms var(--dk-spring);
@@ -3001,7 +2941,7 @@
   animation: dk-hopon 420ms var(--dk-settle) calc(var(--dk-d) + 300ms) forwards;
 }
 .dk-mp2-auto.dk-hi .dk-mp2-hop {
-  animation: dk-hopbeat 1.5s var(--dk-ease) var(--dk-d) infinite;
+  animation: dk-hopbeat 1.5s var(--dk-ease) var(--dk-d) 1;
 }
 .dk-mp2-wire b {
   position: absolute;
@@ -3015,7 +2955,7 @@
   opacity: 0;
 }
 .dk-mp2-auto.dk-hi .dk-mp2-wire b {
-  animation: dk-wireloop 1.5s var(--dk-ease) var(--dk-d) infinite;
+  animation: dk-wireloop 1.5s var(--dk-ease) var(--dk-d) 1;
 }
 @keyframes dk-aidraw {
   to {
@@ -3077,19 +3017,19 @@
 @keyframes dk-wireloop {
   0% {
     opacity: 0;
-    left: 0;
+    transform: translateX(0);
   }
   10% {
     opacity: 1;
   }
   33% {
     opacity: 1;
-    left: 10px;
+    transform: translateX(10px);
   }
   40%,
   100% {
     opacity: 0;
-    left: 10px;
+    transform: translateX(10px);
   }
 }
 
@@ -3183,7 +3123,7 @@
 }
 .dk-mp2-auto:hover .dk-ai-sat {
   opacity: 1;
-  animation: dk-orbit 3.2s linear infinite;
+  animation: dk-orbit 3.2s linear 1;
   animation-delay: calc(var(--dk-k) * -1.0667s);
 }
 .dk-ai-word {
@@ -3287,13 +3227,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  animation: dk-rain 2.4s linear infinite;
-  animation-play-state: paused;
   -webkit-mask-image: linear-gradient(transparent, #000 70%);
   mask-image: linear-gradient(transparent, #000 70%);
 }
+/* The marks fall once each time the row is pointed at; each column's duration and
+   delay are set inline. */
 .dk-mp2-auto:hover .dk-ai-col {
-  animation-play-state: running;
+  animation-name: dk-rain;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
 }
 .dk-ai-drop {
   display: grid;
@@ -3399,7 +3341,6 @@
   top: 0;
   display: flex;
   flex-direction: column;
-  animation: dk-trspin 7s cubic-bezier(0.5, 0, 0.2, 1) 1.2s infinite;
 }
 .dk-tr-cell {
   width: 14px;
@@ -3421,24 +3362,7 @@
 .dk-mp2-b.dk-auto.dk-on .dk-tr-strip {
   animation: dk-trspinfast 900ms cubic-bezier(0.2, 0.9, 0.25, 1.1) both;
 }
-.dk-tr-word {
-  background: linear-gradient(
-    90deg,
-    currentColor 0 40%,
-    oklch(0.68 0.17 255) 47%,
-    oklch(0.66 0.2 330) 53%,
-    currentColor 60% 100%
-  );
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-}
-.dk-mp2-b.dk-auto .dk-tr-word {
-  animation: dk-trword 7s linear 1.2s infinite;
-}
+
 .dk-tr-word {
   color: var(--dsk-fg2);
 }
@@ -3451,8 +3375,7 @@
   z-index: -1;
   border-radius: inherit;
   padding: 1px;
-  background: conic-gradient(
-    from var(--dk-ang),
+  --spin-gradient: conic-gradient(
     oklch(0.75 0.14 220),
     oklch(0.62 0.2 255),
     oklch(0.55 0.22 290),
@@ -3460,6 +3383,7 @@
     oklch(0.72 0.2 45),
     oklch(0.75 0.14 220)
   );
+  --spin-duration: 2.4s;
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -3467,7 +3391,9 @@
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 260ms var(--dk-ease);
-  animation: dk-ang 2.4s linear infinite;
+}
+.dk-mp2-b:not(.dk-auto:hover, .dk-auto.dk-on) .dk-tr-ring::before {
+  animation-play-state: paused;
 }
 .dk-mp2-b.dk-auto:hover .dk-tr-ring,
 .dk-mp2-b.dk-auto.dk-on .dk-tr-ring {
@@ -3475,27 +3401,6 @@
 }
 .dk-mp2-b.dk-auto:hover {
   background: color-mix(in srgb, oklch(0.62 0.2 255) 7%, var(--dsk-hover));
-}
-@keyframes dk-trspin {
-  0%,
-  78% {
-    transform: translateY(0);
-  }
-  84% {
-    transform: translateY(-14px);
-  }
-  88% {
-    transform: translateY(-28px);
-  }
-  92% {
-    transform: translateY(-42px);
-  }
-  96% {
-    transform: translateY(-56px);
-  }
-  100% {
-    transform: translateY(-70px);
-  }
 }
 @keyframes dk-trspinfast {
   from {
@@ -3505,15 +3410,7 @@
     transform: translateY(-70px);
   }
 }
-@keyframes dk-trword {
-  0%,
-  76% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
+
 
 .dk-scroll:hover {
   scrollbar-color: color-mix(in srgb, var(--dsk-fg) 18%, transparent) transparent;
@@ -3555,7 +3452,8 @@
     var(--dsk-lift-hi),
     0 0 0 1px var(--dsk-b-sub);
 }
-.dk-jump-b svg {
+/* The arrow bobs only while the agent is replying below; a waiting jump is still. */
+.dk-jump.dk-live .dk-jump-b svg {
   animation: dk-jumpbob 1.6s ease-in-out infinite;
 }
 .dk-jump-n {
@@ -4325,11 +4223,6 @@
 .dsk.dk-calm .dk-confetti {
   display: none !important;
 }
-.dsk.dk-calm .dk-shim {
-  background: none !important;
-  -webkit-text-fill-color: currentColor !important;
-  color: var(--dsk-fg2) !important;
-}
 .dsk.dk-drop-cmp .dk-dz {
   display: none;
 }
@@ -4437,27 +4330,25 @@
 }
 .dk-cmp.dk-ec.dk-r-check .dk-cmp-ring {
   opacity: 1;
-  background: conic-gradient(
-    from var(--dk-ang),
+  --spin-gradient: conic-gradient(
     transparent 0deg,
     transparent 220deg,
     color-mix(in srgb, var(--dsk-fg) 15%, transparent) 290deg,
     color-mix(in srgb, var(--dsk-fg) 70%, transparent) 350deg,
     transparent 360deg
   );
-  animation-duration: 1.6s;
+  --spin-duration: 1.6s;
 }
 .dk-cmp.dk-ec.dk-r-retry .dk-cmp-ring {
   opacity: 1;
-  background: conic-gradient(
-    from var(--dk-ang),
+  --spin-gradient: conic-gradient(
     transparent 0deg,
     transparent 200deg,
     color-mix(in srgb, var(--dsk-warn) 35%, transparent) 280deg,
     var(--dsk-warn) 345deg,
     transparent 360deg
   );
-  animation-duration: 2.2s;
+  --spin-duration: 2.2s;
 }
 .dk-ec-st {
   gap: 8px;
@@ -5445,21 +5336,11 @@
   inset: 0;
   border-radius: inherit;
   padding: 1.5px;
-  background: conic-gradient(
-    from var(--dk-ang),
-    oklch(0.75 0.14 220),
-    oklch(0.62 0.2 255),
-    oklch(0.55 0.22 290),
-    oklch(0.62 0.24 345),
-    oklch(0.72 0.2 45),
-    oklch(0.75 0.14 220)
-  );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: dk-ang 3s linear infinite;
 }
 .dk-dz-in {
   display: flex;
@@ -5590,8 +5471,7 @@
 }
 .dk-cmp.dk-drop-on .dk-cmp-ring {
   opacity: 1;
-  background: conic-gradient(
-    from var(--dk-ang),
+  --spin-gradient: conic-gradient(
     oklch(0.75 0.14 220),
     oklch(0.62 0.2 255),
     oklch(0.55 0.22 290),
@@ -5599,13 +5479,13 @@
     oklch(0.72 0.2 45),
     oklch(0.75 0.14 220)
   );
-  animation-duration: 3s;
+  --spin-duration: 3s;
 }
 .dk-cmp.dk-drop-hot {
   transform: translateY(-4px) scale(1.012);
 }
 .dk-cmp.dk-drop-hot .dk-cmp-ring {
-  animation-duration: 1.2s;
+  --spin-duration: 1.2s;
   padding: 2px;
 }
 .dk-cmp.dk-drop-hot::after {
@@ -5909,15 +5789,16 @@
   height: 2px;
   background: oklch(0.62 0.17 255);
   box-shadow: 0 0 6px oklch(0.62 0.17 255);
+  top: 2px;
   animation: dk-scanline 1.4s ease-in-out infinite;
 }
 @keyframes dk-scanline {
   0%,
   100% {
-    top: 2px;
+    transform: translateY(0);
   }
   50% {
-    top: 14px;
+    transform: translateY(12px);
   }
 }
 .dk-fp-pages {
@@ -6729,6 +6610,7 @@
     var(--dsk-sunken) 100%
   );
   background-size: 200% 100%;
+  /* design-tokens-ignore: a loading placeholder, on screen only until its data lands. */
   animation: dk-skel 1.2s ease-in-out infinite;
 }
 .dk-mn-skr .dk-a {
@@ -7927,10 +7809,10 @@
   opacity: 0;
 }
 .dk-sb-back:hover .dk-sb-bk-c {
-  animation: dk-sbkc 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) infinite;
+  animation: dk-sbkc 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
 }
 .dk-sb-back:hover .dk-sb-bk-l {
-  animation: dk-sbkl 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) infinite;
+  animation: dk-sbkl 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
 }
 @keyframes dk-sbkc {
   0% {
@@ -8895,20 +8777,8 @@
   font-size: 13px;
 }
 .dk-wl-l {
-  background: linear-gradient(90deg, var(--dsk-muted) 30%, var(--dsk-fg) 50%, var(--dsk-muted) 70%);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: dk-wlsh 1.6s linear infinite;
-}
-@keyframes dk-wlsh {
-  from {
-    background-position: 100% 0;
-  }
-  to {
-    background-position: -100% 0;
-  }
+  --shimmer-base: var(--dsk-muted);
+  --shimmer-highlight: var(--dsk-fg);
 }
 .dk-wl-q {
   align-self: flex-start;
@@ -9007,17 +8877,9 @@
   white-space: nowrap;
 }
 @media (prefers-reduced-motion: reduce) {
-  .dk-wl-l {
-    animation: none;
-    color: var(--dsk-muted);
-  }
   .dk-wl-it {
     animation: none;
   }
-}
-.dsk.dk-calm .dk-wl-l {
-  background: none;
-  color: var(--dsk-muted);
 }
 /* a citation pill and its popover's pages are links, but not drawn as the reply's links are */
 .dk-prose .dk-md a.dk-wc,
@@ -9066,7 +8928,6 @@
   height: 6px;
   border-radius: 50%;
   background: var(--dsk-success);
-  animation: dk-breathe 2.4s ease-in-out infinite;
 }
 /* A quiet conversation's dot takes its agent's accent where a list gives one. */
 .dk-sb-dot[style*="--dk-dot"] i {

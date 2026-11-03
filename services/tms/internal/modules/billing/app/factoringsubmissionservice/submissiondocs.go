@@ -9,6 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepacket"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -453,8 +455,19 @@ func (s *SubmissionService) buildPacket(
 	if err != nil {
 		return nil, err
 	}
+	attachments, err := s.invoices.ListAttachments(
+		ctx,
+		invoiceports.ListInvoiceEmailAttemptsRequest{
+			InvoiceID:  inv.ID,
+			TenantInfo: tenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	rotations := invoicepacket.AttachmentRotations(attachments)
 	for _, doc := range supporting {
-		page, pageErr := s.documentPart(ctx, tenantInfo, doc)
+		page, pageErr := s.documentPart(ctx, tenantInfo, doc, rotations[doc.ID])
 		if pageErr != nil {
 			return nil, errortypes.NewBusinessError(
 				"{0} on invoice {1} could not be added to its packet: {2}",
@@ -467,7 +480,8 @@ func (s *SubmissionService) buildPacket(
 			pages = append(pages, *page)
 		}
 	}
-	return s.packets.Merge(ctx, pages, kernelports.ImagingBatch)
+	packet, _, err := s.packets.Merge(ctx, pages, kernelports.ImagingBatch)
+	return packet, err
 }
 
 func (s *SubmissionService) invoicePDF(
@@ -586,8 +600,14 @@ func (s *SubmissionService) documentPart(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	doc *document.Document,
+	rotations []billingvocab.PageRotation,
 ) (*imagingkit.Part, error) {
-	return s.packets.Part(ctx, tenantInfo, doc)
+	return s.packets.Part(ctx, invoicepacket.PartRequest{
+		TenantInfo: tenantInfo,
+		Document:   doc,
+		Rotations:  rotations,
+		Priority:   kernelports.ImagingBatch,
+	})
 }
 
 func (s *SubmissionService) readDocument(

@@ -18,6 +18,7 @@ func runItemScope(req *billingtransferports.ListBillingTransferRunItemsRequest) 
 	return keel.And(
 		item.RunID.Eq(req.RunID),
 		keel.When(len(req.Statuses) > 0, item.Status.In(req.Statuses...)),
+		keel.When(len(req.FailureCodes) > 0, item.FailureCode.In(req.FailureCodes...)),
 	)
 }
 

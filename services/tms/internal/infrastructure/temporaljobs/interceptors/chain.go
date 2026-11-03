@@ -31,5 +31,6 @@ func BuildWorkerInterceptorChain(p ChainParams) []interceptor.WorkerInterceptor 
 		)
 	}
 
-	return workerInterceptors
+	// Innermost, so the interceptors above it see the error as Temporal will.
+	return append(workerInterceptors, NewRefusalInterceptor())
 }

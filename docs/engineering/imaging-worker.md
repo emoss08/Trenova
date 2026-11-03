@@ -223,6 +223,51 @@ stored render; on a miss it renders the page at interactive priority behind a si
 (one render per key however many viewers ask) and stores it. ETag, immutable caching headers
 and the document-view audit are unchanged. Deleting a document deletes its renders.
 
+A file that is never stored, such as the billing queue's invoice packet preview, is drawn in the
+same page viewer without stored renders. Opening the preview assembles the packet once
+(`invoicepacket.PreviewService.PreviewPacket`): the packet's documents are read in one query with
+their types, downloaded four at a time, and merged while each PDF part is probed for its page
+count, so the summary names every part (the invoice, then each document) with its page range and
+whether it lacks a signature its type requires. A part whose count cannot be read drops the parts
+from the summary rather than mislabelling pages. The PDF is kept in an in-process cache bounded by
+bytes (`invoicepacket.PreviewCache`, otter, 512 MB, evicted after 10 idle minutes, keyed by
+organization, business unit and item) with a build digest.
+
+Pages are rendered eight to a request (`Assembler.RenderPages`), so the packet is sent to the
+worker once per eight pages, and each chunk is cached by item, build and chunk (256 MB). The page
+index (`Assembler.IndexPages`) renders every page small, 32 to a request, and inspects those
+images with `InspectCapture` (barcodes skipped), which returns each page's ink coverage and a
+200-pixel WebP thumbnail in one pass; it is cached by item and build (128 MB). The rail's
+thumbnails come from it, and the checks endpoint reports the document pages under
+`capture.BlankThreshold` as blank. Opening the preview starts the first chunk and the index in the
+background (at most eight packets at once), so the first screen and the rail are usually ready
+before they are asked for. The caches' load deduplication means a chunk or an index asked for
+together renders once, and a request that finds no packet (evicted, or another API instance)
+assembles it again the same way. The client keys pages, thumbnails and checks by the build, so
+reopening the preview after the packet changed never shows an old page.
+
+A page a biller turns in the preview is kept on the billing queue item by document and the
+document's own page (`packet_page_rotations`), so it follows the document when the packet is
+reordered; approving copies each document's turns onto its invoice attachment (`page_rotations`),
+and replacing an invoice's attachments keeps the turns of the documents that stay.
+`Assembler.Part` applies them: a turned PDF is probed for its page count and sent to `Assemble` as
+spans with their own rotation (turns past the last page are ignored, so a stale turn never fails
+a packet), and a turned image turns as one page. The preview, the factoring submission packet and
+the invoice email all assemble through it; the email sends a turned document as a PDF of its
+turned pages instead of the original file.
+
+The viewer (`billing-queue-document-pages.tsx`) virtualizes both its page column and its thumbnail
+rail, so only the pages near either viewport are mounted and fetched; a hundred-page packet costs
+what its first screen does. A stored document's rail shows its pages' view renders, which are
+already stored.
+
+The worker's `cargo-fuzz` targets (`services/imaging/fuzz`) cover the image decoders, EXIF
+orientation and the job a child decodes, and PDFium behind the engine: `pdf_probe` (a readable
+document describes every page it counts), `pdf_render` (each page is drawn or refused on its
+own) and `pdf_assemble` (an accepted output holds exactly the pages its ranges and turns name).
+The PDF targets load PDFium from `TRENOVA_PDFIUM_LIBRARY` and seed from `tests/fixtures`;
+`rust.yml` runs them after each merge to master and weekly.
+
 ## Native libraries and licences
 
 | Library | Version | Licence | How it ships |

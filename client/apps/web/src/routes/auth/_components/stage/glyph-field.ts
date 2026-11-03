@@ -76,6 +76,46 @@ const MAX_FRAME_SECONDS = 0.05;
 const CELL_WIDTH_RATIO = 0.62;
 const GLYPH_SIZE_RATIO = 0.86;
 const OFFSCREEN = -999;
+/** How near an eased value has to come to its target to count as arrived. */
+const SETTLE_EPSILON = 0.001;
+/** How near, in device pixels, the glow has to come to the pointer. */
+const SETTLE_PIXELS = 0.5;
+
+/** What the loop eases toward, and where each eased value has got to. */
+export type GlyphFieldMotion = {
+  intro: number;
+  pulse: number;
+  done: number;
+  doneTarget: number;
+  hover: number;
+  hoverTarget: number;
+  mouse: readonly [number, number];
+  smoothedMouse: readonly [number, number];
+  palette: readonly (readonly number[])[];
+  paletteTarget: readonly (readonly number[])[];
+};
+
+/**
+ * Whether the field has nothing left to do: the intro has drawn in, a burst has
+ * crossed, the success ribbon has widened, the glow has caught the pointer and a new
+ * palette has arrived. The loop stops there; the field is still until one of them
+ * changes again.
+ */
+export function glyphFieldSettled(motion: GlyphFieldMotion): boolean {
+  const near = (value: number, target: number, epsilon = SETTLE_EPSILON) =>
+    Math.abs(value - target) <= epsilon;
+  return (
+    motion.intro >= 1 &&
+    motion.pulse >= 1 &&
+    near(motion.done, motion.doneTarget) &&
+    near(motion.hover, motion.hoverTarget) &&
+    near(motion.smoothedMouse[0], motion.mouse[0], SETTLE_PIXELS) &&
+    near(motion.smoothedMouse[1], motion.mouse[1], SETTLE_PIXELS) &&
+    motion.palette.every((stop, index) =>
+      stop.every((channel, c) => near(channel, motion.paletteTarget[index]?.[c] ?? channel)),
+    )
+  );
+}
 
 const UNIFORMS = [
   "uRes",
@@ -182,6 +222,11 @@ function buildProgram(gl: WebGL2RenderingContext): Program | null {
  * A twisting ribbon drawn as a grid of monospace glyphs. It renders and nothing else:
  * the owner decides when it exists, when it runs, and what palette it shows.
  *
+ * The loop runs only while something moves: the intro, a burst, the success
+ * ribbon, the glow following the pointer, a palette easing in. Once all of them
+ * have arrived it stops and the ribbon holds still; the next of them starts it
+ * again. A login screen left open is a still picture, not a loop.
+ *
  * Under `motion: false` there is no animation loop at all — each change draws one
  * still frame — and the palette snaps instead of easing.
  */
@@ -280,13 +325,17 @@ export class GlyphField {
     }
     if (!this.options.motion) {
       this.draw();
+      return;
     }
+    // A new palette or ground eases in, so the loop wakes to draw it.
+    this.start();
   }
 
   /** A glyph shockwave from the form edge across the stage. */
   burst(): void {
     if (this.options.motion) {
       this.pulse = 0;
+      this.start();
     }
   }
 
@@ -296,7 +345,9 @@ export class GlyphField {
     if (!this.options.motion) {
       this.done = this.doneTarget;
       this.draw();
+      return;
     }
+    this.start();
   }
 
   pause(): void {
@@ -359,9 +410,37 @@ export class GlyphField {
     const dt = Math.min(MAX_FRAME_SECONDS, (now - this.last) / 1000);
     this.last = now;
     this.step(dt);
+    if (
+      glyphFieldSettled({
+        intro: this.intro,
+        pulse: this.pulse,
+        done: this.done,
+        doneTarget: this.doneTarget,
+        hover: this.hover,
+        hoverTarget: this.hoverTarget,
+        mouse: this.mouse,
+        smoothedMouse: this.smoothedMouse,
+        palette: this.palette,
+        paletteTarget: this.paletteTarget,
+      })
+    ) {
+      this.settle();
+      this.draw();
+      this.running = false;
+      this.frame = 0;
+      return;
+    }
     this.draw();
     this.frame = requestAnimationFrame(this.tick);
   };
+
+  /** Snaps every eased value onto its target, so the still frame is the final one. */
+  private settle(): void {
+    this.done = this.doneTarget;
+    this.hover = this.hoverTarget;
+    this.smoothedMouse = [this.mouse[0], this.mouse[1]];
+    this.palette = this.paletteTarget.map((stop) => [...stop]);
+  }
 
   private step(dt: number): void {
     this.time += dt * this.options.speed;
@@ -462,9 +541,8 @@ export class GlyphField {
 
   private readonly handleResize = (): void => {
     this.resize();
-    if (!this.options.motion) {
-      this.draw();
-    }
+    // A resize clears the canvas, and a settled field has no loop to repaint it.
+    this.draw();
   };
 
   private readonly handlePointerMove = (event: PointerEvent): void => {
@@ -479,6 +557,9 @@ export class GlyphField {
         : 0;
     if (this.smoothedMouse[0] <= OFFSCREEN) {
       this.smoothedMouse = [this.mouse[0], this.mouse[1]];
+    }
+    if (this.options.motion) {
+      this.start();
     }
   };
 

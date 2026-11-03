@@ -90,6 +90,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 func SharedOptions() fx.Option {
@@ -177,13 +178,23 @@ func SharedOptions() fx.Option {
 			invoicepdfservice.New,
 			func(s *invoicepdfservice.Service) invoiceports.InvoicePDFService { return s },
 			invoicepacket.NewAssembler,
+			invoicepacket.NewPreviewCache,
 			func(
 				planner *invoicecreationservice.Service,
 				renderer *invoicepdfservice.Service,
 				assembler *invoicepacket.Assembler,
 				documents documentports.InvoiceDocumentService,
+				previews invoicepacket.PreviewCache,
+				logger *zap.Logger,
 			) billingqueueports.PacketPreviewer {
-				return invoicepacket.NewPreviewService(planner, renderer, assembler, documents)
+				return invoicepacket.NewPreviewService(invoicepacket.PreviewParams{
+					Planner:   planner,
+					Renderer:  renderer,
+					Assembler: assembler,
+					Documents: documents,
+					Previews:  previews,
+					Logger:    logger,
+				})
 			},
 			invoicepostingservice.New,
 			func(s *invoicepostingservice.Service) invoiceports.InvoicePostingService { return s },

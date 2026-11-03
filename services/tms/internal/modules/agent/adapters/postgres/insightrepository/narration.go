@@ -15,13 +15,20 @@ func (r *repository) ListNarrated(
 	ctx context.Context,
 	req insightports.ListNarratedInsightsRequest,
 ) ([]*insight.Insight, error) {
+	if len(req.DedupeKeys) == 0 {
+		return []*insight.Insight{}, nil
+	}
+
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
 		in := insightdb.Insights
 		entities, err := in.Where(
 			in.DetectorKey.Eq(req.DetectorKey),
+			in.DedupeKey.In(req.DedupeKeys...),
 			in.Status.Eq(insight.StatusActive),
 			in.Narrated.Eq(true),
-		).List(ctx, r.db.Keel(ctx))
+		).
+			Limit(len(req.DedupeKeys)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list narrated insights",
 				zap.String("operation", "ListNarrated"),
@@ -45,7 +52,9 @@ func (r *repository) GetByIDs(
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
 		in := insightdb.Insights
-		entities, err := in.Where(in.ID.In(req.IDs...)).List(ctx, r.db.Keel(ctx))
+		entities, err := in.Where(in.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get insights",
 				zap.String("operation", "GetByIDs"),

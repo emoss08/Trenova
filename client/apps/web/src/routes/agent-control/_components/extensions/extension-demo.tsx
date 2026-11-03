@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -99,10 +100,10 @@ export function ExtensionDemo({ agentName }: ExtensionDemoProps) {
                 <span className="ck">
                   {past ? <Ic n="check" s={12} w={2.4} /> : <i className="spn" />}
                 </span>
-                <span className="tx">
+                <TextShimmer as="span" className="tx" active={on && !past} duration={1.6}>
                   {past ? step.done : step.label}
                   <em>{step.detail}</em>
-                </span>
+                </TextShimmer>
                 <span className="el mono">{past ? step.elapsed : ""}</span>
               </div>
             );

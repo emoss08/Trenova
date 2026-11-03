@@ -1,0 +1,366 @@
+/* The documents tab's packet board. Cards and the empty slot spend ui-field, so a
+   document reads as a field: the input's hairline, its hover, its ring when it is
+   chosen. What lives here is what a utility cannot say: the slot's hatching, the
+   blank sheet that fills in, and the lane a card is dragged over. */
+
+/* The chosen document wears the focused field's ring, and keeps it under the
+   pointer: the field's own hover would otherwise grey its border. */
+.bq-board-cards [aria-pressed="true"] {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 var(--ring-width)
+    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+}
+
+/* The lane a dragged card is crossing into. */
+.bq-board-lane .bq-board-cards {
+  border-radius: var(--radius-control);
+  outline: 1px dashed transparent;
+  outline-offset: 4px;
+  transition: outline-color 140ms var(--ease-swift);
+}
+
+.bq-board-lane[data-drop-target] .bq-board-cards {
+  outline-color: var(--ring);
+}
+
+/* Where the dragged card will land: its place held open as a dashed field, tinted
+   with the ring, its page and name faded out. The cards around it slide to make
+   room through dnd-kit's transforms. */
+.bq-card[data-dragging] .bq-card-page {
+  border-style: dashed;
+  border-color: var(--ring);
+  background-color: color-mix(in oklch, var(--ring) 6%, var(--card));
+  box-shadow: none;
+}
+
+.bq-card[data-dragging] .bq-card-page > *,
+.bq-card[data-dragging] .bq-card-name {
+  opacity: 0;
+}
+
+/* The card in hand: tilted a little, ringed like a focused field, grabbing. It tilts
+   up as it is picked up and settles flat as it lands, both by transition. */
+.bq-card-lifted {
+  cursor: grabbing;
+  transform: rotate(-2deg) scale(1.04);
+  transform-origin: 50% 40%;
+  transition: transform 160ms var(--ease-swift);
+}
+
+@starting-style {
+  .bq-card-lifted {
+    transform: none;
+  }
+}
+
+.bq-card-dropping .bq-card-lifted {
+  transform: none;
+  transition-duration: 220ms;
+}
+
+.bq-card-lifted .bq-card-page {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 var(--ring-width)
+    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+}
+
+/* Carrying several, the others fan out behind the card in hand as plain sheets. */
+.bq-card-lifted[data-stack] .bq-card-stack::before,
+.bq-card-lifted[data-stack="3"] .bq-card-stack::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+.bq-card-lifted[data-stack] .bq-card-stack::before {
+  transform: translate(5px, 4px) rotate(3deg);
+}
+
+.bq-card-lifted[data-stack="3"] .bq-card-stack::after {
+  z-index: -2;
+  transform: translate(9px, 8px) rotate(6deg);
+}
+
+.bq-card-lifted .bq-card-stack {
+  isolation: isolate;
+}
+
+/* A required document still missing. Hovering it, focusing its upload or dragging
+   a file over it plays the same arrival once: the hatching glides a period along
+   its diagonal, the sheet lifts, its blanks are written in reading order and the
+   signature is drawn. Transitions, not keyframes, for the sheet, so leaving
+   half-way runs it back instead of snapping. */
+
+.bq-missing {
+  isolation: isolate;
+}
+
+.bq-missing:has(.bq-missing-action:focus-visible),
+.bq-missing[data-over] {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 var(--ring-width)
+    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+}
+
+.bq-missing-hatch {
+  position: absolute;
+  inset: -16px;
+  pointer-events: none;
+  color: color-mix(in oklch, var(--foreground) 7.5%, transparent);
+  background-image: repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px 8px);
+  mask-image: radial-gradient(ellipse 60% 42% at 50% 50%, transparent 0 30%, #000 85%);
+  transition: color 200ms var(--ease-swift);
+}
+
+.bq-missing:is(
+    :has(.bq-missing-action:not(:disabled)):hover,
+    :has(.bq-missing-action:focus-visible),
+    [data-over]
+  )
+  .bq-missing-hatch {
+  color: color-mix(in oklch, var(--foreground) 11%, transparent);
+  animation: bq-hatch-glide 700ms var(--ease-swift) both;
+}
+
+.bq-missing[data-over] .bq-missing-hatch {
+  color: color-mix(in oklch, var(--ring) 22%, transparent);
+}
+
+@keyframes bq-hatch-glide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(11.314px);
+  }
+}
+
+.bq-missing-sheet {
+  position: absolute;
+  left: 19%;
+  top: 9%;
+  width: 62%;
+  aspect-ratio: 85 / 110;
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+  transition: transform 320ms var(--ease-swift);
+}
+
+.bq-missing-sheet svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.bq-missing-sheet .paper {
+  fill: var(--card);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.bq-missing-sheet .fold {
+  fill: var(--sunken);
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.bq-missing-sheet .title {
+  fill: color-mix(in oklch, var(--foreground) 42%, transparent);
+}
+
+.bq-missing-sheet .label {
+  fill: color-mix(in oklch, var(--foreground) 16%, transparent);
+}
+
+.bq-missing-sheet .box {
+  fill: none;
+  stroke: color-mix(in oklch, var(--foreground) 10%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.bq-missing-sheet .thead {
+  fill: color-mix(in oklch, var(--foreground) 4.5%, transparent);
+}
+
+.bq-missing-sheet .rule {
+  fill: color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
+.bq-missing-sheet .blank {
+  fill: color-mix(in oklch, var(--foreground) 6.5%, transparent);
+}
+
+.bq-missing-sheet .ink {
+  fill: color-mix(in oklch, var(--foreground) 24%, transparent);
+  transform: scaleX(0);
+  transform-box: fill-box;
+  transform-origin: left center;
+  transition:
+    transform 160ms var(--ease-swift),
+    fill 140ms var(--ease-swift);
+}
+
+.bq-missing-sheet .signature {
+  fill: none;
+  stroke: color-mix(in oklch, var(--foreground) 45%, transparent);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  vector-effect: non-scaling-stroke;
+  transition:
+    stroke-dashoffset 160ms var(--ease-swift),
+    stroke 140ms var(--ease-swift);
+}
+
+.bq-missing:is(
+    :has(.bq-missing-action:not(:disabled)):hover,
+    :has(.bq-missing-action:focus-visible),
+    [data-over],
+    [data-uploading]
+  )
+  .bq-missing-sheet {
+  transform: translateY(-3px);
+}
+
+.bq-missing:is(
+    :has(.bq-missing-action:not(:disabled)):hover,
+    :has(.bq-missing-action:focus-visible),
+    [data-over],
+    [data-uploading]
+  )
+  .bq-missing-sheet
+  .ink {
+  transform: scaleX(1);
+  transition:
+    transform 360ms var(--ease-swift) calc(var(--i) * 45ms),
+    fill 140ms var(--ease-swift);
+}
+
+.bq-missing:is(
+    :has(.bq-missing-action:not(:disabled)):hover,
+    :has(.bq-missing-action:focus-visible),
+    [data-over],
+    [data-uploading]
+  )
+  .bq-missing-sheet
+  .signature {
+  stroke-dashoffset: 0;
+  transition:
+    stroke-dashoffset 520ms var(--ease-swift) 560ms,
+    stroke 140ms var(--ease-swift);
+}
+
+.bq-missing[data-over] .bq-missing-sheet .ink {
+  fill: color-mix(in oklch, var(--ring) 50%, transparent);
+}
+
+.bq-missing[data-over] .bq-missing-sheet .signature {
+  stroke: var(--ring);
+}
+
+/* The upload floats on the sheet's dissolving foot: a frosted pill that lifts a
+   pixel as the sheet does. */
+.bq-missing-pill {
+  background: color-mix(in oklch, var(--field) 82%, transparent);
+  backdrop-filter: blur(6px);
+  transition:
+    transform 200ms var(--ease-swift),
+    border-color 140ms var(--ease-swift),
+    color 140ms var(--ease-swift);
+}
+
+.bq-missing:is(
+    :has(.bq-missing-action:not(:disabled)):hover,
+    :has(.bq-missing-action:focus-visible),
+    [data-over]
+  )
+  .bq-missing-pill {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.bq-missing-action:active .bq-missing-pill {
+  transform: scale(0.97);
+}
+
+.bq-missing[data-over] .bq-missing-pill {
+  border-color: var(--ring);
+  color: var(--ring);
+}
+
+.bq-missing-progress {
+  transform-origin: left center;
+  transition: transform 200ms var(--ease-swift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bq-card-lifted {
+    transition: none;
+    transform: none;
+  }
+
+  .bq-board-lane .bq-board-cards {
+    transition: none;
+  }
+
+  .bq-missing-hatch,
+  .bq-missing-sheet,
+  .bq-missing-sheet .ink,
+  .bq-missing-sheet .signature,
+  .bq-missing-pill,
+  .bq-missing-progress,
+  .bq-missing:is(
+      :has(.bq-missing-action:not(:disabled)):hover,
+      :has(.bq-missing-action:focus-visible),
+      [data-over],
+      [data-uploading]
+    )
+    .bq-missing-sheet
+    .ink,
+  .bq-missing:is(
+      :has(.bq-missing-action:not(:disabled)):hover,
+      :has(.bq-missing-action:focus-visible),
+      [data-over],
+      [data-uploading]
+    )
+    .bq-missing-sheet
+    .signature {
+    transition: none;
+  }
+
+  .bq-missing:is(
+      :has(.bq-missing-action:not(:disabled)):hover,
+      :has(.bq-missing-action:focus-visible),
+      [data-over]
+    )
+    .bq-missing-hatch {
+    animation: none;
+  }
+
+  .bq-missing:is(
+      :has(.bq-missing-action:not(:disabled)):hover,
+      :has(.bq-missing-action:focus-visible),
+      [data-over],
+      [data-uploading]
+    )
+    .bq-missing-sheet,
+  .bq-missing:is(
+      :has(.bq-missing-action:not(:disabled)):hover,
+      :has(.bq-missing-action:focus-visible),
+      [data-over]
+    )
+    .bq-missing-pill {
+    transform: none;
+  }
+}

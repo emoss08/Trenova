@@ -50,6 +50,11 @@ query BillingTransferRun($id: ID!) {
     markedReadyToInvoiceCount
     retryableCount
     unmatchedCount
+    failureCounts {
+      code
+      count
+      retryable
+    }
     failureMessage
     cancelRequestedAt
     queuedAt
@@ -75,6 +80,11 @@ query MyActiveBillingTransferRun {
     markedReadyToInvoiceCount
     retryableCount
     unmatchedCount
+    failureCounts {
+      code
+      count
+      retryable
+    }
     failureMessage
     cancelRequestedAt
     queuedAt
@@ -140,6 +150,11 @@ mutation StartBillingTransferRun($input: StartBillingTransferRunInput!) {
     markedReadyToInvoiceCount
     retryableCount
     unmatchedCount
+    failureCounts {
+      code
+      count
+      retryable
+    }
     failureMessage
     cancelRequestedAt
     queuedAt
@@ -165,6 +180,11 @@ mutation CancelBillingTransferRun($id: ID!) {
     markedReadyToInvoiceCount
     retryableCount
     unmatchedCount
+    failureCounts {
+      code
+      count
+      retryable
+    }
     failureMessage
     cancelRequestedAt
     queuedAt
@@ -190,6 +210,11 @@ mutation RetryBillingTransferRun($id: ID!) {
     markedReadyToInvoiceCount
     retryableCount
     unmatchedCount
+    failureCounts {
+      code
+      count
+      retryable
+    }
     failureMessage
     cancelRequestedAt
     queuedAt

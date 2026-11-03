@@ -1,6 +1,7 @@
 package billingqueuereview
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -59,7 +60,7 @@ func ParseRecipients(raw string) []string {
 // IsReviewable reports whether an item is still before approval, where its
 // checks mean something.
 func IsReviewable(status billingqueue.Status) bool {
-	return status == billingqueue.StatusReadyForReview || status == billingqueue.StatusInReview
+	return slices.Contains(billingqueue.ReviewStatuses(), status)
 }
 
 // PODState is what the shipment's proof of delivery shows.

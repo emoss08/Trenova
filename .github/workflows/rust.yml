@@ -227,24 +227,37 @@ jobs:
             services/crates/scripts/fuzz
             services/crates/edi/fuzz
       - run: cargo install cargo-fuzz --locked --version 0.13.2
+      - name: PDFium for the PDF targets
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/pdfium.tgz \
+            "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${PDFIUM_BUILD}/pdfium-linux-x64.tgz"
+          echo "${PDFIUM_SHA256}  /tmp/pdfium.tgz" | sha256sum -c -
+          mkdir -p /tmp/pdfium && tar -xzf /tmp/pdfium.tgz -C /tmp/pdfium
+          echo "TRENOVA_PDFIUM_LIBRARY=/tmp/pdfium/lib/libpdfium.so" >> "$GITHUB_ENV"
       - name: Sandbox frame protocol
         working-directory: services/crates/sandbox/fuzz
         run: |
           cargo +nightly fuzz run frame_stream -- -max_total_time=60 -rss_limit_mb=1024
           cargo +nightly fuzz run init_body -- -max_total_time=30 -rss_limit_mb=1024
-      - name: Imaging decoders
+      - name: Imaging decoders and PDF engine
         working-directory: services/imaging/fuzz
         run: |
           cargo +nightly fuzz run image_decode -- -max_total_time=90 -rss_limit_mb=2048
           cargo +nightly fuzz run exif_orientation -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run worker_job -- -max_total_time=30 -rss_limit_mb=1024
-      - name: Tariff
+          mkdir -p corpus/pdf_probe corpus/pdf_render corpus/pdf_assemble
+          cargo +nightly fuzz run pdf_probe corpus/pdf_probe ../tests/fixtures -- -max_total_time=90 -rss_limit_mb=2048
+          cargo +nightly fuzz run pdf_render corpus/pdf_render ../tests/fixtures -- -max_total_time=90 -rss_limit_mb=2048
+          cargo +nightly fuzz run pdf_assemble corpus/pdf_assemble seeds/pdf_assemble -- -max_total_time=90 -rss_limit_mb=2048
+      - name: Tariff and charge splits
         working-directory: services/crates/rules/fuzz
         run: |
           cargo +nightly fuzz run tariff_parse -- -max_total_time=45 -rss_limit_mb=1024
           cargo +nightly fuzz run tariff_format -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run tariff_check -- -max_total_time=60 -rss_limit_mb=1024
           cargo +nightly fuzz run tariff_evaluate -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run allocation_split -- -max_total_time=60 -rss_limit_mb=1024
       - name: Agent scripts
         working-directory: services/crates/scripts/fuzz
         run: |

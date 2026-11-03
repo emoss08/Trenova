@@ -496,7 +496,7 @@ func (s *Service) reassignmentResult(
 		CanceledItemIDs: make([]pulid.ID, 0, len(canceled)),
 	}
 	for _, entity := range created {
-		s.autoAssignDefaultBiller(ctx, entity, entity.BillToCustomerID, req.TenantInfo, actor)
+		s.autoAssignDefaultBiller(ctx, entity, nil, req.TenantInfo, actor)
 		s.logAction(entity, auditActor, permission.OpCreate, nil, entity, comment)
 		s.activity.PublishInvalidation(ctx, entity, auditActor, "created", entity)
 		result.CreatedItemIDs = append(result.CreatedItemIDs, entity.ID)

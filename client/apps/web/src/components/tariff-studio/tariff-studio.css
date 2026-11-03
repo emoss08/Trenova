@@ -4,15 +4,9 @@
    Every colour is a token. Nova's edge runs across the same three categorical
    accents the Nova mark is drawn in (indigo, violet, rose), the way Triage's
    hand-off does, so it reads as Nova's own and never as a tone. Motion answers
-   an action: the edge turns while the pointer is on a Nova button, the ring
+   an action: the edge turns once when the pointer reaches a Nova button, the ring
    spins once, a stage halo pulses when the template moves through review, and
    an amount settles when it changes. Nothing loops at rest. */
-
-@property --fs-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
 
 .fs-studio {
   --fs-nova-a: var(--accent-indigo);
@@ -42,27 +36,28 @@
 }
 
 /* Nova's hand-off button: an outline button whose edge lights in Nova's
-   spectrum, with a faint wash of it, while the pointer is on it. */
+   spectrum, with a faint wash of it, while the pointer is on it, turning once. The edge and
+   the wash are elements (NovaButton renders them) whose gradients turn in
+   ui-spin-ring's ::before, so the turn is composited. */
 .fs-nova-btn {
   position: relative;
   isolation: isolate;
 }
 
-.fs-nova-btn::before,
-.fs-nova-btn::after {
-  content: "";
+.fs-nova-edge,
+.fs-nova-wash {
   position: absolute;
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
   transition: opacity 400ms var(--ease-settle);
+  --spin-duration: 4s;
 }
 
-.fs-nova-btn::before {
+.fs-nova-edge {
   inset: -1px;
   padding: 1.5px;
-  background: conic-gradient(
-    from var(--fs-angle),
+  --spin-gradient: conic-gradient(
     var(--fs-nova-a),
     var(--fs-nova-b),
     var(--fs-nova-c),
@@ -75,11 +70,10 @@
   mask-composite: exclude;
 }
 
-.fs-nova-btn::after {
+.fs-nova-wash {
   inset: 0;
   z-index: -1;
-  background: conic-gradient(
-    from var(--fs-angle),
+  --spin-gradient: conic-gradient(
     color-mix(in oklch, var(--fs-nova-a) 10%, transparent),
     color-mix(in oklch, var(--fs-nova-b) 10%, transparent),
     color-mix(in oklch, var(--fs-nova-c) 10%, transparent),
@@ -91,10 +85,17 @@
   border-color: transparent;
 }
 
-.fs-nova-btn:hover:not(:disabled)::before,
-.fs-nova-btn:hover:not(:disabled)::after {
+.fs-nova-btn:hover:not(:disabled) :is(.fs-nova-edge, .fs-nova-wash) {
   opacity: 1;
-  animation: fs-angle 4s linear infinite;
+}
+
+/* The colours make one turn each time the pointer arrives; at rest nothing turns. */
+.fs-nova-btn :is(.fs-nova-edge, .fs-nova-wash)::before {
+  animation: none;
+}
+
+.fs-nova-btn:hover:not(:disabled) :is(.fs-nova-edge, .fs-nova-wash)::before {
+  animation: ui-spin 4s linear 1;
 }
 
 .fs-nova-btn:hover:not(:disabled) .fs-nova-badge {
@@ -136,12 +137,6 @@
   .fs-studio *::before,
   .fs-studio *::after {
     animation: none !important;
-  }
-}
-
-@keyframes fs-angle {
-  to {
-    --fs-angle: 360deg;
   }
 }
 

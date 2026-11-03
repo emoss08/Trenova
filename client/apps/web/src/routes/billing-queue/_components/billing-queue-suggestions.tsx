@@ -5,7 +5,10 @@ import { CheckDone01Icon, Lightning01Icon, XCloseIcon } from "@trenova/shared/co
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { BillingQueueRecommendation } from "@trenova/shared/types/billing-queue";
+import type {
+  BillingQueueApprovalRun,
+  BillingQueueRecommendation,
+} from "@trenova/shared/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { StartBulkRun } from "./use-bulk-run";
@@ -14,7 +17,8 @@ type Suggestion = {
   title: string;
   detail: string;
   action: string;
-  run: () => void;
+  /** Starting a batch returns its run; opening an item or the hold dialog returns nothing. */
+  run: () => Promise<BillingQueueApprovalRun> | void;
 };
 
 /** Batches whose press clears items outright; the first of them is the primary. */
@@ -28,27 +32,55 @@ const CLEARING: readonly BillingQueueRecommendation["kind"][] = [
  * Rules suggest them for every organization; with Nova reviewing, the batch it
  * agreed with leads and replaces the plain "approve every ready item". A suggestion
  * the biller hides stays hidden until its batch covers different items.
+ *
+ * Pressing a suggestion that starts a batch shows the button working until the run
+ * is accepted, then takes the suggestion away: its items are now that run's, and
+ * offering them again would start a second run over the same freight. It comes back
+ * if the run is undone or fails.
  */
 export function BillingQueueSuggestions({
   run,
   onOpenItem,
   onHoldItems,
   isStarting,
+  revertedRunIds,
 }: {
   run: StartBulkRun;
   onOpenItem: (itemId: string) => void;
   onHoldItems: (itemIds: string[], note: string) => void;
   isStarting: boolean;
+  revertedRunIds: ReadonlySet<string>;
 }) {
   const t = useT();
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const { data: recommendations = [] } = useQuery(billingQueue.recommendations());
   const [hidden, setHidden] = useState<ReadonlySet<string>>(() => new Set());
+  const [taken, setTaken] = useState<ReadonlyMap<string, string>>(() => new Map());
+  const [startingKey, setStartingKey] = useState<string | null>(null);
+
+  const isTaken = (key: string) => {
+    const runId = taken.get(key);
+    return runId !== undefined && !revertedRunIds.has(runId);
+  };
+
+  const press = (key: string, suggestion: Suggestion) => {
+    const started = suggestion.run();
+    if (!started) return;
+
+    setStartingKey(key);
+    void started
+      .then((accepted) => setTaken((current) => new Map(current).set(key, accepted.id)))
+      .catch(() => {
+        // useApiMutation has already reported why the run did not start; the
+        // suggestion stays so the biller can try again.
+      })
+      .finally(() => setStartingKey(null));
+  };
 
   const agentAgreed = recommendations.some((r) => r.kind === "ApproveAgentAgreed");
   const suggestions = recommendations
     .filter((r) => r.count > 0 && !(agentAgreed && r.kind === "ApproveReady"))
-    .filter((r) => !hidden.has(hideKey(r)))
+    .filter((r) => !hidden.has(hideKey(r)) && !isTaken(hideKey(r)))
     .map((r) => ({
       recommendation: r,
       suggestion: suggestionFor(r, t, { run, onOpenItem, onHoldItems, userId }),
@@ -90,8 +122,10 @@ export function BillingQueueSuggestions({
             <Button
               size="xs"
               variant={recommendation.kind === primaryKind ? "default" : "outline"}
-              disabled={isStarting}
-              onClick={suggestion.run}
+              disabled={isStarting || startingKey !== null}
+              isLoading={startingKey === hideKey(recommendation)}
+              loadingText={suggestion.action}
+              onClick={() => press(hideKey(recommendation), suggestion)}
             >
               {suggestion.action}
             </Button>
@@ -138,14 +172,14 @@ function suggestionFor(
         title: t("Approve the {0} Nova checked", r.count),
         detail: t("All five checks clear; each matches its contract · {0}", total),
         action: t("Approve {0}", r.count),
-        run: () => void run("Approve", r.itemIds, { assignApprover: true }),
+        run: () => run("Approve", r.itemIds, { assignApprover: true }),
       };
     case "ApproveReady":
       return {
         title: t("{0, plural, one {Approve # ready item} other {Approve # ready items}}", r.count),
         detail: t("All five checks clear on each · {0}", total),
         action: t("Approve {0}", r.count),
-        run: () => void run("Approve", r.itemIds, { assignApprover: true }),
+        run: () => run("Approve", r.itemIds, { assignApprover: true }),
       };
     case "ReviewAgentConcerns":
       return {
@@ -155,7 +189,9 @@ function suggestionFor(
         ),
         detail: t("The checks pass, but something looks off · {0}", total),
         action: t("Review {0}", r.count),
-        run: () => first && onOpenItem(first),
+        run: () => {
+          if (first) onOpenItem(first);
+        },
       };
     case "RequestPaperwork":
       return {
@@ -165,7 +201,7 @@ function suggestionFor(
         ),
         detail: t("The same request the POD check offers, sent to each driver"),
         action: t("Ask {0}", r.count),
-        run: () => void run("RequestPaperwork", r.itemIds),
+        run: () => run("RequestPaperwork", r.itemIds),
       };
     case "ReviewUnbilled":
       return {
@@ -175,7 +211,9 @@ function suggestionFor(
         ),
         detail: t("Receipts or extra stops with no matching line · {0}", total),
         action: t("Review {0}", r.count),
-        run: () => first && onOpenItem(first),
+        run: () => {
+          if (first) onOpenItem(first);
+        },
       };
     case "HoldDuplicates":
       return {
@@ -196,7 +234,7 @@ function suggestionFor(
         ),
         detail: t("Nobody has picked these up · {0}", total),
         action: t("Assign {0}", r.count),
-        run: () => void run("Assign", r.itemIds, { billerId: userId }),
+        run: () => run("Assign", r.itemIds, { billerId: userId }),
       };
     case "PostApproved":
       return {
@@ -206,7 +244,7 @@ function suggestionFor(
         ),
         detail: t("Approved and waiting to post · {0}", total),
         action: t("Post {0}", r.count),
-        run: () => void run("Post", r.itemIds),
+        run: () => run("Post", r.itemIds),
       };
   }
 }

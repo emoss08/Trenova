@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
+import { DocumentUploadZone } from "@/components/documents/document-upload-zone";
+import type { RejectedFile } from "@/lib/document-upload-files";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";

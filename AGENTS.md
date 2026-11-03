@@ -64,7 +64,7 @@ change-data-capture pipeline, is a separate project; its routing is `deploy/gtc/
 ## Commands
 
 From `services/tms/`: `task run-watch` (API, hot reload), `task test`, `task test-integration`
-(Docker), `task lint`, `task gqlgen` (never `go tool gqlgen generate`), `task gqlschema-diff`,
+(Docker), `task test-fuzz` (fuzz seeds; `task fuzz` fuzzes), `task lint`, `task gqlgen` (never `go tool gqlgen generate`), `task gqlschema-diff`,
 `task db-migrate` (`trenova-devdb up`: migrations, then every seed that changed), `task db-seed`,
 `task db-reset`, `task db-seed-volume`,
 `task db-create-migration name=…`, `task db-stamp`, `task docker-up`, `task quick-start`.

@@ -15,7 +15,7 @@ import (
 type documentsByIDsGetter interface {
 	GetByIDs(
 		ctx context.Context,
-		req documentports.BulkDeleteDocumentRequest,
+		req documentports.GetDocumentsByIDsRequest,
 	) ([]*document.Document, error)
 }
 
@@ -46,7 +46,7 @@ func (f *DocumentByIDLoaderFactory) batchFunc(
 ) loadercore.BatchFetchFunc[*document.Document] {
 	return loadercore.BatchByIDFunc(
 		func(ctx context.Context, ids []pulid.ID) ([]*document.Document, error) {
-			return f.documents.GetByIDs(ctx, documentports.BulkDeleteDocumentRequest{
+			return f.documents.GetByIDs(ctx, documentports.GetDocumentsByIDsRequest{
 				IDs:        ids,
 				TenantInfo: tenantInfo,
 			})

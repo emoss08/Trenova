@@ -375,6 +375,14 @@ export const billingQueueAdjustmentContextSchema = z.object({
 });
 export type BillingQueueAdjustmentContext = z.infer<typeof billingQueueAdjustmentContextSchema>;
 
+/** A quarter turn a biller gave one page of a packet document, kept by document and page. */
+export const billingQueuePacketPageRotationSchema = z.object({
+  documentId: z.string(),
+  page: z.number().int().min(1),
+  rotation: z.number().int(),
+});
+export type BillingQueuePacketPageRotation = z.infer<typeof billingQueuePacketPageRotationSchema>;
+
 export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -432,6 +440,15 @@ export const billingQueueItemSchema = z.object({
   invoiceDate: z.number().nullish(),
   packetDocumentIds: z
     .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  /** The biller has picked the packet, so it is exactly packetDocumentIds, even when empty. */
+  packetPicked: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? false),
+  packetPageRotations: z
+    .array(billingQueuePacketPageRotationSchema)
     .nullish()
     .transform((value) => value ?? []),
   agentVerdict: nullableEnumSchema(agentVerdictSchema),
@@ -639,6 +656,40 @@ export const billingQueueStatsSchema = z.object({
 });
 export type BillingQueueStats = z.infer<typeof billingQueueStatsSchema>;
 
+/** One part of a packet: the invoice, or a document it carries, and the pages it fills. */
+export const billingQueuePacketPartSchema = z.object({
+  kind: z.enum(["Invoice", "Document"]),
+  documentId: z.string().nullish(),
+  name: z.string(),
+  firstPage: z.number().int().min(1),
+  lastPage: z.number().int().min(1),
+  unsigned: z.boolean(),
+});
+export type BillingQueuePacketPart = z.infer<typeof billingQueuePacketPartSchema>;
+
+/** The packet approving an item would send, assembled for viewing a page at a time. */
+export const billingQueuePacketPreviewSchema = z.object({
+  fileName: z.string(),
+  pageCount: z.number().int().min(1),
+  documents: z.number().int().min(0),
+  build: z.string().min(1),
+  parts: z
+    .array(billingQueuePacketPartSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type BillingQueuePacketPreview = z.infer<typeof billingQueuePacketPreviewSchema>;
+
+/** The checks one assembly of a packet passed: which of its document pages look blank. */
+export const billingQueuePacketChecksSchema = z.object({
+  build: z.string().min(1),
+  blankPages: z
+    .array(z.number().int().min(1))
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type BillingQueuePacketChecks = z.infer<typeof billingQueuePacketChecksSchema>;
+
 export const recommendationKindSchema = z.enum([
   "ApproveReady",
   "AssignToMe",
@@ -733,6 +784,8 @@ export type BillingQueueInvoiceDetailsInput = {
   paymentTerm: string;
   invoiceDate: number | null;
   packetDocumentIds: string[];
+  packetPicked: boolean;
+  packetPageRotations: BillingQueuePacketPageRotation[];
 };
 
 export const billingQueueUpdateChargesSchema = z.object({

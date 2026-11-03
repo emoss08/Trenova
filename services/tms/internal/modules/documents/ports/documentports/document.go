@@ -27,6 +27,12 @@ type GetDocumentByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetDocumentPreviewRequest struct {
+	GetDocumentByIDRequest
+
+	IfNoneMatch string `json:"ifNoneMatch"`
+}
+
 type GetDocumentPageImageRequest struct {
 	GetDocumentByIDRequest
 
@@ -43,6 +49,12 @@ type GetDocumentsByResourceRequest struct {
 	TenantInfo          pagination.TenantInfo `json:"tenantInfo"`
 	ResourceID          string                `json:"resourceId"`
 	ResourceType        string                `json:"resourceType"`
+	IncludeDocumentType bool                  `json:"includeDocumentType"`
+}
+
+type GetDocumentsByIDsRequest struct {
+	TenantInfo          pagination.TenantInfo `json:"tenantInfo"`
+	IDs                 []pulid.ID            `json:"ids"`
 	IncludeDocumentType bool                  `json:"includeDocumentType"`
 }
 
@@ -148,7 +160,7 @@ type DocumentRepository interface {
 		ctx context.Context,
 		req GetDocumentByStoragePathRequest,
 	) (*document.Document, error)
-	GetByIDs(ctx context.Context, req BulkDeleteDocumentRequest) ([]*document.Document, error)
+	GetByIDs(ctx context.Context, req GetDocumentsByIDsRequest) ([]*document.Document, error)
 	ListVersions(ctx context.Context, req ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResourceID(
 		ctx context.Context,
@@ -173,7 +185,10 @@ type DocumentRepository interface {
 	RecordDetectedSignature(ctx context.Context, req *RecordDetectedSignatureRequest) (bool, error)
 	// RecordDeliveryFacts returns the document as written, or nil when its
 	// guards left it as it was.
-	RecordDeliveryFacts(ctx context.Context, req *RecordDeliveryFactsRequest) (*document.Document, error)
+	RecordDeliveryFacts(
+		ctx context.Context,
+		req *RecordDeliveryFactsRequest,
+	) (*document.Document, error)
 	PromoteVersion(ctx context.Context, req *PromoteDocumentVersionRequest) error
 	MoveLineageToResource(ctx context.Context, req *MoveDocumentLineageRequest) error
 	Delete(ctx context.Context, req DeleteDocumentRequest) error
@@ -187,6 +202,16 @@ type DocumentChange struct {
 	TenantInfo   pagination.TenantInfo
 	ResourceType string
 	ResourceIDs  []string
+	Retired      []RetiredDocument
+}
+
+// RetiredDocument is a document that left its resource: deleted, rejected,
+// archived, moved to another resource, or superseded by ReplacedBy, a newer
+// version of it.
+type RetiredDocument struct {
+	ID         pulid.ID
+	ResourceID string
+	ReplacedBy pulid.ID
 }
 
 type DocumentChangeObserver interface {

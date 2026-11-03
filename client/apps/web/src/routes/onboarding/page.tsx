@@ -1,3 +1,4 @@
+import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import "./_components/onboarding.css";
 import { Metadata } from "@/components/metadata";
@@ -129,7 +130,9 @@ function NovaPending() {
         <b>{t("Nova")}</b>
         <span>{t("Setup guide")}</span>
       </div>
-      <div className="nv-thk">{t("Typing")}</div>
+      <TextShimmer as="div" className="nv-thk" duration={1.8}>
+        {t("Typing")}
+      </TextShimmer>
     </div>
   );
 }
