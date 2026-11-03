@@ -352,7 +352,7 @@ services:
         # indexes, the Redis caches and the table-change-alert stream. Routing
         # lives in deploy/gtc/sinks.yaml. Locally the slot and a FOR ALL TABLES
         # publication are created on first start.
-        image: ghcr.io/emoss08/gtc:0.9.0
+        image: ghcr.io/emoss08/gtc:0.10.0
         container_name: gtc
         environment:
             DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-trenova_go_db}?replication=database&sslmode=disable
