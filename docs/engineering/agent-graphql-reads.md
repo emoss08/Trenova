@@ -1196,7 +1196,7 @@ The `none` reasons:
   check, and an operation the screen also uses. It is listed as follow-up work in its module's PR,
   not done inside the conversion, because the screen would have to move to it too.
 - **Semantic retrieval**: `document_list`, which ranks by meaning.
-- **Document content and extraction**: `document_get_summary`, `intake_get_draft`.
+- **Document content and extraction**: `document_get`, `intake_get_draft`.
 - **Computed candidates**: `invoice_list_share_candidates`.
 - **A composite live read**: `shipment_get_tracking` (board moves, stored ETAs, positions and
   hours together).

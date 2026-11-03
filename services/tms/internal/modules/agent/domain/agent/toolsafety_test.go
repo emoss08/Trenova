@@ -74,7 +74,7 @@ func TestRunTaint_AddDedupesAndBounds(t *testing.T) {
 	for idx := range MaxTaintMarks + 4 {
 		taint.Add(TaintMark{
 			Source:   TaintSourceDocument,
-			ToolName: "document_get_summary",
+			ToolName: "document_get",
 			CallID:   fmt.Sprintf("call_%d", idx+10),
 		})
 	}

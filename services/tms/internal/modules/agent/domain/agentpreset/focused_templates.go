@@ -1,22 +1,22 @@
 package agentpreset
 
 const (
-	toolDescribeReport     = "report_get"
-	toolGetReportRun       = "report_get_run"
-	toolListReports        = "report_list"
-	toolPreviewReport      = "report_preview"
-	toolRunReport          = "report_run"
-	toolGetCustomer        = "customer_get"
-	toolGetDocumentSummary = "document_get_summary"
-	toolShipmentGet        = "shipment_get"
-	toolGetWorker          = "worker_get"
-	toolListCommodities    = "masterdata_list_commodities"
-	toolListCustomers      = "customer_list"
-	toolListTimeOff        = "worker_list_time_off"
-	toolListTractors       = "equipment_list_tractors"
-	toolListTrailers       = "equipment_list_trailers"
-	toolListWorkers        = "worker_list"
-	toolShipmentList       = "shipment_list"
+	toolDescribeReport  = "report_get"
+	toolGetReportRun    = "report_get_run"
+	toolListReports     = "report_list"
+	toolPreviewReport   = "report_preview"
+	toolRunReport       = "report_run"
+	toolGetCustomer     = "customer_get"
+	toolGetDocument     = "document_get"
+	toolShipmentGet     = "shipment_get"
+	toolGetWorker       = "worker_get"
+	toolListCommodities = "masterdata_list_commodities"
+	toolListCustomers   = "customer_list"
+	toolListTimeOff     = "worker_list_time_off"
+	toolListTractors    = "equipment_list_tractors"
+	toolListTrailers    = "equipment_list_trailers"
+	toolListWorkers     = "worker_list"
+	toolShipmentList    = "shipment_list"
 
 	toolShipmentAddComment  = "shipment_add_comment"
 	toolShipmentGetTracking = "shipment_get_tracking"
@@ -66,7 +66,7 @@ func masterDataStewardTools() []string {
 		"masterdata_list_fleet_codes",
 		toolShipmentList,
 		toolSearchDocuments,
-		toolGetDocumentSummary,
+		toolGetDocument,
 		"document_list_types",
 		"document_delete",
 		"document_restore_version",
@@ -151,7 +151,7 @@ func fuelTaxClerkTools() []string {
 		toolShipmentList,
 		toolShipmentGet,
 		toolSearchDocuments,
-		toolGetDocumentSummary,
+		toolGetDocument,
 		"fuel_list_ifta_jurisdictions",
 		"fuel_list_purchases",
 		"fuel_record_purchase",

@@ -90,7 +90,7 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"inbox_get_inbound_message":               agenttooltrust.ExternalReadAlways,
 		"inbox_list_inbound_messages":             agenttooltrust.ExternalReadAlways,
 		"document_list":                           agenttooltrust.ExternalReadAlways,
-		"document_get_summary":                    agenttooltrust.ExternalReadAlways,
+		"document_get":                            agenttooltrust.ExternalReadAlways,
 		"intake_get_draft":                        agenttooltrust.ExternalReadAlways,
 		"receivable_get_bank_receipt":             agenttooltrust.ExternalReadAlways,
 		"receivable_list_bank_receipt_exceptions": agenttooltrust.ExternalReadAlways,

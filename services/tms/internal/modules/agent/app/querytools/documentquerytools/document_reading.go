@@ -20,10 +20,18 @@ const (
 )
 
 type documentSummary struct {
-	DocumentID     string                    `json:"documentId"`
-	FileName       string                    `json:"fileName"`
-	ContentType    string                    `json:"contentType,omitempty"`
-	AttachedTo     string                    `json:"attachedTo,omitempty"`
+	DocumentID  string `json:"documentId"`
+	FileName    string `json:"fileName"`
+	ContentType string `json:"contentType,omitempty"`
+	AttachedTo  string `json:"attachedTo,omitempty"`
+	// AttachedLabel is the attached record as people know it: a shipment's PRO,
+	// a worker's name.
+	AttachedLabel string `json:"attachedLabel,omitempty"`
+	// UploadedBy is the person who uploaded the file, or Trenova's own user for
+	// one that came in on its own (a mailbox, a scan).
+	UploadedBy     string                    `json:"uploadedBy,omitempty"`
+	UploadedAt     int64                     `json:"uploadedAt,omitempty"`
+	CameInThrough  string                    `json:"cameInThrough"`
 	PageCount      int                       `json:"pageCount"`
 	Page           int                       `json:"page,omitempty"`
 	Reading        string                    `json:"reading"`
@@ -96,10 +104,12 @@ func summarizeDocument(
 	window textWindow,
 ) (*documentSummary, error) {
 	summary := &documentSummary{
-		DocumentID:  doc.ID.String(),
-		FileName:    doc.OriginalName,
-		ContentType: doc.FileType,
-		Reading:     string(documentcontent.StatusPending),
+		DocumentID:    doc.ID.String(),
+		FileName:      doc.OriginalName,
+		ContentType:   doc.FileType,
+		Reading:       string(documentcontent.StatusPending),
+		UploadedAt:    doc.CreatedAt,
+		CameInThrough: cameInThrough(doc.ProcessingProfile),
 	}
 	if doc.ResourceType != "" && doc.ResourceID != "" {
 		summary.AttachedTo = doc.ResourceType + " " + doc.ResourceID
@@ -152,6 +162,29 @@ func summarizeDocument(
 	}
 
 	return summary, nil
+}
+
+// cameInThrough says how a document reached Trenova, so a question about who
+// sent a file is answered from how it came in rather than guessed from its name.
+func cameInThrough(profile document.ProcessingProfile) string {
+	switch profile {
+	case document.ProcessingProfileRateConfirmationImport:
+		return "uploaded by a person through the rate confirmation import"
+	case document.ProcessingProfileAssistantAttachment:
+		return "attached by a person to a conversation with Nova"
+	case document.ProcessingProfileInboundAttachment:
+		return "an attachment on an email to a monitored mailbox"
+	case document.ProcessingProfileCapture:
+		return "scanned or printed into Trenova"
+	case document.ProcessingProfileFactoringRemittance:
+		return "a factor's remittance"
+	case document.ProcessingProfileShipmentPaperwork:
+		return "uploaded by a person as a shipment's paperwork"
+	case document.ProcessingProfileNone:
+		return "uploaded by a person"
+	default:
+		return "uploaded by a person"
+	}
 }
 
 func pageTextOf(content *documentcontent.Content, page int) (string, bool) {

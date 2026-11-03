@@ -58,18 +58,20 @@ func conversationSummaryTool(
 	doc *document.Document,
 	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
-	return NewGetDocumentSummaryTool(
+	return NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
 			Status:      documentcontent.StatusIndexed,
 			ContentText: "Rate confirmation for load 4471",
 		}},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		threads,
 	)
 }
 
-func TestGetDocumentSummary_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
+func TestGetDocument_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	t.Parallel()
 
 	threadID := pulid.MustNew("athr_")
@@ -99,7 +101,7 @@ func TestGetDocumentSummary_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	assert.Contains(t, err.Error(), "may not read")
 }
 
-func TestGetDocumentSummary_ConversationFileIsNeverReadWithoutAPerson(t *testing.T) {
+func TestGetDocument_ConversationFileIsNeverReadWithoutAPerson(t *testing.T) {
 	t.Parallel()
 
 	for _, principal := range []kernelports.PrincipalType{
@@ -126,7 +128,7 @@ func TestGetDocumentSummary_ConversationFileIsNeverReadWithoutAPerson(t *testing
 	}
 }
 
-func TestGetDocumentSummary_ConversationOwnerLookupFailureRefuses(t *testing.T) {
+func TestGetDocument_ConversationOwnerLookupFailureRefuses(t *testing.T) {
 	t.Parallel()
 
 	doc := conversationDocument(pulid.MustNew("athr_"))
@@ -138,7 +140,7 @@ func TestGetDocumentSummary_ConversationOwnerLookupFailureRefuses(t *testing.T) 
 	require.ErrorContains(t, err, "pool closed")
 }
 
-func TestGetDocumentSummary_ConversationFileWithoutOwnerLookupRefuses(t *testing.T) {
+func TestGetDocument_ConversationFileWithoutOwnerLookupRefuses(t *testing.T) {
 	t.Parallel()
 
 	doc := conversationDocument(pulid.MustNew("athr_"))

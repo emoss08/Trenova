@@ -2315,7 +2315,7 @@ behind it, decided it had made the details up, and withdrew them. The same texts
 count as what the turn read for the grounding guard (`RunRequest.FileTexts`), so
 a figure quoted from a file is not taken for an invented one. Before, the files were a section of the system prompt for the turn they
 came with and nowhere after it: the model was shown a 1,200-character excerpt,
-told to call `document_get_summary`, which an agent made in AI Control did not
+told to call `document_get`, which an agent made in AI Control did not
 necessarily hold, and in the next turn the files had gone. Asked twice to read a
 re-uploaded rate confirmation, gpt-6-luna answered both times that no file was
 attached.
@@ -2338,7 +2338,7 @@ A file read in full ends any open wait on it, so a conversation that got the
 file another way is not picked up again for nothing. Its policy is the person's own read
 (`ToolScopeSelf`) that always reads outside content (`TaintSourceAttachment`), so
 a run nobody is watching goes without it and a turn that read a file proposes
-its later writes. `document_get_summary` stays for documents a record names.
+its later writes. `document_get` stays for documents a record names.
 
 What document intelligence read off an attached rate confirmation is shown as its
 extraction card without anyone asking (`attachment_cards.go`). The card is read as

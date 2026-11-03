@@ -143,7 +143,7 @@ func TestMeasureContext_CountsEachPartAgainstTheModelsWindow(t *testing.T) {
 
 	history := numbered(append(append(
 		runtimetest.ReadTurn("c1", "shipment_list", strings.Repeat("x", 3000)),
-		runtimetest.ReadTurn("c2", "document_get_summary", strings.Repeat("y", 900))...),
+		runtimetest.ReadTurn("c2", "document_get", strings.Repeat("y", 900))...),
 		runtimetest.QuietTurns(2)...,
 	))
 

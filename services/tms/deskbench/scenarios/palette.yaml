@@ -74,3 +74,86 @@ scenarios:
           rubric: >
             Gives the count and every shipment type, written into the reply as a short list,
             without pointing to a table, card or document.
+
+  - name: palette-document-what-it-says
+    description: >
+      A quick question from the command palette about a rate confirmation the palette's search
+      found. The palette's get_record opens a kind through the read named <kind>_get, and the
+      document read was document_get_summary, so Nova found the file, could not open it, and
+      pointed the person at agent runs and the Desk instead of reading it.
+    palette: true
+    steps:
+      - say: "what did we pull from RateCon_SEED-SHP-003.pdf?"
+        page: { path: /, title: Home }
+        mentions:
+          - type: document
+            label: RateCon_SEED-SHP-003.pdf
+            find: >
+              select id from documents where original_name = 'RateCon_SEED-SHP-003.pdf'
+              and resource_type = 'shipment'
+        expect:
+          calls: ["get_record"]
+          noProposals: true
+          noRecordIds: true
+          replyIncludes: ["1,180"]
+          replyExcludes: ["can't be opened", "cannot be opened", "agent run"]
+          rubric: >
+            Says what was read off the rate confirmation (the load, the $1,180 rate, the
+            equipment), from the document itself, without saying it cannot open it or sending the
+            person to agent runs or the Desk.
+
+  - name: palette-document-against-its-shipment
+    description: >
+      Asked to check a rate confirmation against its shipment, Nova could not read the file, so it
+      did not know which shipment it was on and searched for a PRO made from the leading digits of
+      the file name. The document read names the shipment it is attached to, by its PRO.
+    palette: true
+    steps:
+      - say: "does this rate confirmation match the shipment it's on?"
+        page: { path: /, title: Home }
+        mentions:
+          - type: document
+            label: RateCon_SEED-SHP-003.pdf
+            find: >
+              select id from documents where original_name = 'RateCon_SEED-SHP-003.pdf'
+              and resource_type = 'shipment'
+        expect:
+          calls: ["get_record"]
+          noProposals: true
+          noRecordIds: true
+          replyIncludes: ["SEED-SHP-003"]
+          facts:
+            - sql: >
+                select total_charge_amount from shipments where pro_number = 'SEED-SHP-003'
+              note: the shipment's own total, to set against the document's $1,180
+          rubric: >
+            Reads the document, names the shipment it is attached to (SEED-SHP-003), reads that
+            shipment, and compares the document's rate with the shipment's charges, saying plainly
+            whether they agree.
+
+  - name: palette-document-who-sent-it
+    description: >
+      Asked who sent a rate confirmation that a person uploaded, Nova could not read the file,
+      assumed it had been emailed and searched the inbox for its name. The document read says who
+      uploaded it, when, and how it came in.
+    palette: true
+    steps:
+      - say: "who sent RateCon_SEED-SHP-003.pdf?"
+        page: { path: /, title: Home }
+        mentions:
+          - type: document
+            label: RateCon_SEED-SHP-003.pdf
+            find: >
+              select id from documents where original_name = 'RateCon_SEED-SHP-003.pdf'
+              and resource_type = 'shipment'
+        expect:
+          calls: ["get_record"]
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select name from users where username = 'admin'
+              note: the person who uploaded the file
+          rubric: >
+            Says the file was uploaded by hand and names the person who uploaded it (the fact
+            above) and when, rather than naming a sender or saying no email matched. It may add
+            that a signed copy came in separately by email, but does not say this file was sent.

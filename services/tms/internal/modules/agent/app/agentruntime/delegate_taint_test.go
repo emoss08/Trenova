@@ -65,7 +65,7 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	delegate := runtimetest.ReportBuilder()
 	document := agent.TaintMark{
 		Source:   agent.TaintSourceDocument,
-		ToolName: "document_get_summary",
+		ToolName: "document_get",
 		CallID:   "call_d0",
 		Ref:      &agentrecord.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
 	}

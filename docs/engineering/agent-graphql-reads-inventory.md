@@ -60,7 +60,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `document_get_summary` | none | - | - | - | - | Document content and extraction summary (DocumentContentService) have no Query root; documents are read through REST. |
+| `document_get` | none | - | - | - | - | Document content and extraction summary (DocumentContentService) have no Query root; documents are read through REST. |
 | `document_list` | none | - | - | - | - | Semantic/vector retrieval (RetrievalSearcher.SearchDocuments); no GraphQL document search. |
 
 ## edi

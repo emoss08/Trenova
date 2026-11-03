@@ -170,6 +170,37 @@ func TestGetRecord_ReadsTheRecordAsThePersonAsking(t *testing.T) {
 	assert.Equal(t, permission.OpRead, f.permissions.Requests[0].Operation)
 }
 
+// A document is opened the way every other kind is, through the read named
+// document_get: a question about a file the palette found ("what does this
+// rate confirmation say", "who uploaded it") reads the file itself.
+func TestGetRecord_OpensADocumentThroughItsRead(t *testing.T) {
+	t.Parallel()
+
+	read := &agenttest.StubQueryTool{
+		ToolName: "document_get",
+		Resource: permission.ResourceDocument,
+		Schema:   idSchema("documentId"),
+		Result: map[string]any{
+			"documentId": "doc_1",
+			"fileName":   "405515639Rate Confirmation.pdf",
+			"uploadedBy": "Dana Reyes",
+		},
+	}
+	f := newFixture()
+	f.reader.catalog = newCatalog(&agenttest.StubQueryRegistry{
+		Tools: []agenttoolports.AgentQueryTool{f.get, f.list, read},
+	})
+	id := pulid.MustNew("doc_").String()
+
+	result := (&getTool{reader: f.reader}).Call(t.Context(), map[string]any{"id": id})
+
+	require.False(t, result.Failed, result.Content)
+	assert.True(t, strings.HasPrefix(result.Content, "Result from document_get:"))
+	assert.Contains(t, result.Content, "Dana Reyes")
+	require.Equal(t, 1, read.Calls)
+	assert.Equal(t, map[string]any{"documentId": id}, read.LastParams.Params)
+}
+
 func TestGetRecord_RefusesWhatThePersonCannotRead(t *testing.T) {
 	t.Parallel()
 

@@ -200,7 +200,7 @@ nothing to bring them back, so it is always proposed.
 
 The master data steward is the organization's records keeper and holds 55 of its 56 tools:
 every write on this page, the reads that find each record, `document_list` and
-`document_get_summary` for the documents it deletes or restores, `document_list_types` for
+`document_get` for the documents it deletes or restores, `document_list_types` for
 filing, and `shipment_list` for paperwork that belongs on a load. The customer assistant
 handles customer records and holds 53. The insight analyst dismisses insights it finds are
 noise and can bring one back. All three run at a Propose ceiling, so every write they make

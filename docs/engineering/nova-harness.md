@@ -95,7 +95,9 @@ and runs `paletteanswer` through `Converse`. The answer streams the events a tur
 palette card is unchanged, and ends with `done` naming only the question.
 
 - **Tools.** `search_records` (global search, visibility-filtered), `get_record` (an id goes to
-  its kind's get tool) and `list_records` (a kind and its filters go to its kind's list tool;
+  its kind's get tool: the read whose name, in reading order, is `get_<kind>`, so a kind's read
+  is `<kind>_get` and nothing else; documents were unreadable here while theirs was
+  `document_get_summary`) and `list_records` (a kind and its filters go to its kind's list tool;
   the description lists each kind's filters, required and fixed-value ones first, paging left
   out). Every read is checked as the person and argument-checked the way the Desk checks a call
   (`argcheck.ContractCall`: aliases, "today", a refusal that names what each argument should

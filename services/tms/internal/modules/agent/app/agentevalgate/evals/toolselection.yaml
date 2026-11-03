@@ -105,7 +105,7 @@ cases:
   - request: attach the BOL document to the shipment
     expect: [shipment_attach_document]
   - request: what does the rate confirmation document say
-    expect: [document_get_summary]
+    expect: [document_get]
   - request: record the arrival time at the stop
     expect: [dispatch_record_stop_actual]
   - request: mark the tractor out of service

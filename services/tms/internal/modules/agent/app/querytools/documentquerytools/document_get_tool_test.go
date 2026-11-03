@@ -60,12 +60,12 @@ func summaryDocument() *document.Document {
 	}
 }
 
-func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
+func TestGetDocument_ReadsTextAndFieldsInWindows(t *testing.T) {
 	t.Parallel()
 
 	doc := summaryDocument()
 	text := strings.Repeat("a", maxDocumentSummaryRunes) + "TAIL OF THE DOCUMENT"
-	tool := NewGetDocumentSummaryTool(
+	tool := NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
 			Status:                   documentcontent.StatusExtracted,
@@ -95,6 +95,8 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 				},
 			},
 		}},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		nil,
 	)
@@ -135,13 +137,15 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 // A document whose reading has not happened is still answered: the model is
 // told to come back, rather than handed an error it would report as "the
 // document is empty".
-func TestGetDocumentSummary_SaysWhenNothingHasBeenReadYet(t *testing.T) {
+func TestGetDocument_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 	t.Parallel()
 
 	doc := summaryDocument()
-	tool := NewGetDocumentSummaryTool(
+	tool := NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{err: errortypes.NewNotFoundError("Document content not found")},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		nil,
 	)
@@ -155,11 +159,13 @@ func TestGetDocumentSummary_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 	assert.Equal(t, "Pending", summary.Reading)
 	assert.Contains(t, summary.Note, "ask again shortly")
 
-	pending := NewGetDocumentSummaryTool(
+	pending := NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
 			Status: documentcontent.StatusExtracting,
 		}},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		nil,
 	)
@@ -171,17 +177,19 @@ func TestGetDocumentSummary_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 	assert.Contains(t, result.(*documentSummary).Note, "still running")
 }
 
-func TestGetDocumentSummary_IsGatedOnDocumentsAndRefusesANonID(t *testing.T) {
+func TestGetDocument_IsGatedOnDocumentsAndRefusesANonID(t *testing.T) {
 	t.Parallel()
 
-	tool := NewGetDocumentSummaryTool(
+	tool := NewGetDocumentTool(
 		&stubDocumentRepo{},
 		&stubContentReader{},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		nil,
 	)
 	assert.Equal(t, permission.ResourceDocument, tool.Policy().Resource)
-	assert.Equal(t, "document_get_summary", tool.Name())
+	assert.Equal(t, "document_get", tool.Name())
 
 	_, err := tool.Query(
 		t.Context(),
@@ -190,13 +198,15 @@ func TestGetDocumentSummary_IsGatedOnDocumentsAndRefusesANonID(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGetDocumentSummary_SurfacesADatabaseError(t *testing.T) {
+func TestGetDocument_SurfacesADatabaseError(t *testing.T) {
 	t.Parallel()
 
 	doc := summaryDocument()
-	tool := NewGetDocumentSummaryTool(
+	tool := NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{err: errors.New("connection reset by peer")},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		nil,
 	)
@@ -209,7 +219,7 @@ func TestGetDocumentSummary_SurfacesADatabaseError(t *testing.T) {
 	assert.Contains(t, err.Error(), "connection reset by peer")
 }
 
-func TestGetDocumentSummary_RefusesADocumentOnARecordTheCallerCannotRead(t *testing.T) {
+func TestGetDocument_RefusesADocumentOnARecordTheCallerCannotRead(t *testing.T) {
 	t.Parallel()
 
 	doc := summaryDocument()
@@ -223,12 +233,14 @@ func TestGetDocumentSummary_RefusesADocumentOnARecordTheCallerCannotRead(t *test
 			},
 		},
 	}
-	tool := NewGetDocumentSummaryTool(
+	tool := NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
 			Status:      documentcontent.StatusIndexed,
 			ContentText: "Medical examiner's certificate",
 		}},
+		noLabels(),
+		noUploader(),
 		permissions,
 		nil,
 	)
@@ -245,11 +257,11 @@ func TestGetDocumentSummary_RefusesADocumentOnARecordTheCallerCannotRead(t *test
 	assert.Equal(t, doc.ResourceID, permissions.Captured.ResourceID.String())
 }
 
-func TestGetDocumentSummary_ReadsOnePage(t *testing.T) {
+func TestGetDocument_ReadsOnePage(t *testing.T) {
 	t.Parallel()
 
 	doc := summaryDocument()
-	tool := NewGetDocumentSummaryTool(
+	tool := NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
 			Status:      documentcontent.StatusIndexed,
@@ -260,6 +272,8 @@ func TestGetDocumentSummary_ReadsOnePage(t *testing.T) {
 				{PageNumber: 2, ExtractedText: "second page text"},
 			},
 		}},
+		noLabels(),
+		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
 		nil,
 	)

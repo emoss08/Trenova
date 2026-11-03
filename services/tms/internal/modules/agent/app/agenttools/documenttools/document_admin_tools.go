@@ -32,7 +32,7 @@ const maxDocumentsPerDelete = 25
 
 const maxDocumentVersion = 10_000
 
-const documentSupplier = "from document_list or document_get_summary"
+const documentSupplier = "from document_list or document_get"
 
 const documentKind = "document"
 

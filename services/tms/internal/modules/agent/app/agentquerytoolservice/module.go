@@ -45,8 +45,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
@@ -119,7 +121,7 @@ func coreToolProviders() []any {
 		provideGetDispatchBoardTool,
 		provideListWeatherAlertsTool,
 		provideGetShipmentDraftTool,
-		provideGetDocumentSummaryTool,
+		provideGetDocumentTool,
 		provideReadAttachmentTool,
 		provideFindShipmentRecordsTool,
 		provideQuoteShipmentTool,
@@ -242,13 +244,17 @@ func provideListWeatherAlertsTool(
 	return dispatchquerytools.NewListWeatherAlertsTool(weather)
 }
 
-func provideGetDocumentSummaryTool(
+func provideGetDocumentTool(
 	documents documentports.DocumentRepository,
 	content documentports.DocumentContentService,
+	labels captureports.CaptureRecordFinder,
+	users tenantports.UserRepository,
 	permissions permissionports.PermissionEngine,
 	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
-	return documentquerytools.NewGetDocumentSummaryTool(documents, content, permissions, threads)
+	return documentquerytools.NewGetDocumentTool(
+		documents, content, labels, users, permissions, threads,
+	)
 }
 
 //
