@@ -155,7 +155,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	}}
 	tool := NewGetDispatchBoardTool(reader)
 
-	call := querytooltest.KeyedCall(map[string]any{paramBoardLate: true, querytool.ParamLimit: 2})
+	call := querytooltest.KeyedCall(map[string]any{paramLate: true, querytool.ParamLimit: 2})
 	data, err := tool.Query(t.Context(), call)
 	require.NoError(t, err)
 
@@ -179,7 +179,7 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	assert.Contains(t, view.Note, "2 late moves listed")
 
 	_, err = tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
-		paramBoardLate: true, querytool.ParamLimit: 2, querytool.ParamAfter: view.NextCursor,
+		paramLate: true, querytool.ParamLimit: 2, querytool.ParamAfter: view.NextCursor,
 	}))
 	require.NoError(t, err)
 	assert.Equal(t, 2, reader.Req.Offset, "the next page starts after the two read")

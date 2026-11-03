@@ -30,8 +30,6 @@ const paramPayEventID = "payEventId"
 
 const ParamPayEventIDs = "payEventIds"
 
-const paramHoldReason = "reason"
-
 const maxHoldReasonChars = 500
 
 const maxPayEventsPerAttach = 50
@@ -39,8 +37,6 @@ const maxPayEventsPerAttach = 50
 const fieldOnHold = "onHold"
 
 const fieldHoldReason = "holdReason"
-
-const payEventSources = "settlement_list_pay_events"
 
 type payEventHolder interface {
 	PlanPayEventHold(
@@ -106,19 +102,19 @@ func (t *PayEventHoldTool) Description() string {
 func (t *PayEventHoldTool) ParamSchema() map[string]any {
 	properties := map[string]any{
 		paramPayEventID: agenttoolschema.KindID(
-			"The pay event, from "+payEventSources+
+			"The pay event, from settlement_list_pay_events"+
 				" or the lines settlement_get_driver lists. Never guess one.",
 			recordkind.PayEvent,
 		),
 	}
 	required := []string{paramPayEventID}
 	if t.hold {
-		properties[paramHoldReason] = toolparams.StringProperty(
+		properties[toolparams.ParamReason] = toolparams.StringProperty(
 			"Why the pay is held, in words for the "+
 				"driver.",
 			maxHoldReasonChars,
 		)
-		required = append(required, paramHoldReason)
+		required = append(required, toolparams.ParamReason)
 	}
 
 	return map[string]any{
@@ -175,7 +171,7 @@ func (t *PayEventHoldTool) request(
 	if t.hold {
 		if req.reason, err = toolparams.BoundedString(
 			params.Params,
-			paramHoldReason,
+			toolparams.ParamReason,
 			maxHoldReasonChars,
 			true,
 		); err != nil {
@@ -389,7 +385,7 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 			toolschema.KeyMaxItems: maxPayEventsPerAttach,
 			toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
 			toolschema.KeyDescription: "The driver's accrued pay events to add, from " +
-				payEventSources + " with status Accrued.",
+				"settlement_list_pay_events with status Accrued.",
 		}, recordkind.PayEvent)
 		required = []string{settlementpreview.ParamSettlementID, ParamPayEventIDs}
 	}

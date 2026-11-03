@@ -23,15 +23,11 @@ import (
 )
 
 const (
-	paramNoaID          = "noaId"
-	paramCustomerID     = "customerId"
-	paramNote           = "note"
-	paramRecipient      = "recipient"
-	paramAcknowledgedAt = "acknowledgedAt"
-	paramSignedDocument = "signedDocumentId"
-	paramExpiresAt      = "expiresAt"
-
-	toolListNoas = "factoring_list_noas"
+	paramNoaID            = "noaId"
+	paramRecipient        = "recipient"
+	paramAcknowledgedAt   = "acknowledgedAt"
+	paramSignedDocumentID = "signedDocumentId"
+	paramExpiresAt        = "expiresAt"
 )
 
 func noaRecord(noa *factoring.Noa) toolpreview.Record {
@@ -127,20 +123,24 @@ func (t *DraftFactoringNoaTool) SearchTerms() []string {
 	return []string{"notice of assignment", "noa", "factoring letter"}
 }
 
-func (t *DraftFactoringNoaTool) Prerequisites() []string { return []string{toolListNoas} }
+func (t *DraftFactoringNoaTool) Prerequisites() []string {
+	return []string{"factoring_list_noas"}
+}
 
 func (t *DraftFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramCustomerID: agenttoolschema.RecordIDText(
+		toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
 			"The factored customer, from the invoice or customer_list.",
 		),
-		factoringkit.ParamFactorID: agenttoolschema.RecordIDText(
+		factoringkit.ParamFactoringCompanyID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
 			"The factor the customer's invoices are assigned to, from invoice_get or factoring_list_readiness.",
 		),
-		paramNote: jsonschemautils.Text("A note printed on the letter, when there is one."),
-	}, paramCustomerID, factoringkit.ParamFactorID)
+		toolparams.ParamNote: jsonschemautils.Text(
+			"A note printed on the letter, when there is one.",
+		),
+	}, toolparams.ParamCustomerID, factoringkit.ParamFactoringCompanyID)
 }
 
 func (t *DraftFactoringNoaTool) Policy() agenttoolports.ToolPolicy {
@@ -160,11 +160,11 @@ func (t *DraftFactoringNoaTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	customerID, err := toolparams.RequirePulid(params.Params, paramCustomerID)
+	customerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCustomerID)
 	if err != nil {
 		return nil, err
 	}
-	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactorID)
+	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactoringCompanyID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (t *DraftFactoringNoaTool) request(
 		TenantInfo:         toolparams.TenantFrom(params),
 		CustomerID:         customerID,
 		FactoringCompanyID: factorID,
-		Notes:              toolparams.OptionalString(params.Params, paramNote),
+		Notes:              toolparams.OptionalString(params.Params, toolparams.ParamNote),
 	}, nil
 }
 
@@ -252,7 +252,9 @@ func (t *SendFactoringNoaTool) SearchTerms() []string {
 	return []string{"send notice of assignment", "email noa", "factoring letter"}
 }
 
-func (t *SendFactoringNoaTool) Prerequisites() []string { return []string{toolListNoas} }
+func (t *SendFactoringNoaTool) Prerequisites() []string {
+	return []string{"factoring_list_noas"}
+}
 
 func (t *SendFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
@@ -412,7 +414,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) SearchTerms() []string {
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) Prerequisites() []string {
-	return []string{toolListNoas}
+	return []string{"factoring_list_noas"}
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
@@ -422,7 +424,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
 		paramAcknowledgedAt: agenttoolschema.DateTime(
 			"When the customer signed the notice. It cannot be in the future.",
 		),
-		paramSignedDocument: agenttoolschema.RecordIDText(
+		paramSignedDocumentID: agenttoolschema.RecordIDText(
 			permission.ResourceDocument,
 			"The signed copy, a document uploaded to this notice, from document_list.",
 		),
@@ -430,7 +432,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
 			"When the notice stops applying, if the factor's agreement says so. Leave it " +
 				"out for a notice that runs until released.",
 		),
-	}, paramNoaID, factoringkit.ParamVersion, paramAcknowledgedAt, paramSignedDocument)
+	}, paramNoaID, factoringkit.ParamVersion, paramAcknowledgedAt, paramSignedDocumentID)
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) Policy() agenttoolports.ToolPolicy {
@@ -471,7 +473,7 @@ func (t *RecordFactoringNoaAcknowledgementTool) plan(
 	if err != nil {
 		return nil, err
 	}
-	documentID, err := toolparams.RequirePulid(params.Params, paramSignedDocument)
+	documentID, err := toolparams.RequirePulid(params.Params, paramSignedDocumentID)
 	if err != nil {
 		return nil, err
 	}
@@ -564,16 +566,18 @@ func (t *ReleaseFactoringNoaTool) SearchTerms() []string {
 	return []string{"release notice", "noa release", "stop factoring"}
 }
 
-func (t *ReleaseFactoringNoaTool) Prerequisites() []string { return []string{toolListNoas} }
+func (t *ReleaseFactoringNoaTool) Prerequisites() []string {
+	return []string{"factoring_list_noas"}
+}
 
 func (t *ReleaseFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramNoaID:                noaIDParam("The open notice, from factoring_list_noas."),
 		factoringkit.ParamVersion: versionParam(),
-		factoringkit.ParamReason: jsonschemautils.Text(
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the notice is released, such as the factor's release letter, in one sentence.",
 		),
-	}, paramNoaID, factoringkit.ParamVersion, factoringkit.ParamReason)
+	}, paramNoaID, factoringkit.ParamVersion, toolparams.ParamReason)
 }
 
 func (t *ReleaseFactoringNoaTool) Policy() agenttoolports.ToolPolicy {
@@ -607,7 +611,7 @@ func (t *ReleaseFactoringNoaTool) plan(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := toolparams.RequireString(params.Params, factoringkit.ParamReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return nil, err
 	}

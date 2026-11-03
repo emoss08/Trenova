@@ -41,14 +41,14 @@ func (s *Access) WithoutScripts(
 	}
 	kept = slices.DeleteFunc(slices.Clone(held), isScriptRunner)
 	reached = beyond
-	if _, found := beyond[codemode.ToolRunScript]; found {
+	if _, found := beyond["analysis_run"]; found {
 		reached = maps.Clone(beyond)
-		delete(reached, codemode.ToolRunScript)
+		delete(reached, "analysis_run")
 	}
 
 	return kept, reached
 }
 
 func isScriptRunner(name string) bool {
-	return name == codemode.ToolRunScript
+	return name == "analysis_run"
 }

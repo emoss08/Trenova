@@ -25,23 +25,19 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const paramCaptureItems = "items"
+const paramItems = "items"
 
-const paramCaptureItemID = "itemId"
-
-const paramCaptureItemIDOne = "captureItemId"
+const paramCaptureItemID = "captureItemId"
 
 const paramCaptureBatchID = "captureBatchId"
 
-const paramCaptureTarget = "targetType"
+const paramTargetType = "targetType"
 
-const paramCaptureTargetID = "targetId"
+const paramTargetID = "targetId"
 
-const paramCaptureDocType = "documentTypeId"
+const paramDocumentTypeID = "documentTypeId"
 
 const maxCaptureFilings = 25
-
-const captureSources = "inbox_list_capture_batches"
 
 var captureTargetTypes = agenttoolschema.Source(
 	"capture.targetType",
@@ -120,13 +116,13 @@ type captureFiling struct {
 }
 
 func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling, error) {
-	raw, ok := params.Params[paramCaptureItems].([]any)
+	raw, ok := params.Params[paramItems].([]any)
 	if !ok || len(raw) == 0 {
-		return nil, fmt.Errorf("parameter %q must list at least one document", paramCaptureItems)
+		return nil, fmt.Errorf("parameter %q must list at least one document", paramItems)
 	}
 	if len(raw) > maxCaptureFilings {
 		return nil, fmt.Errorf("parameter %q holds %d documents; file at most %d at once",
-			paramCaptureItems, len(raw), maxCaptureFilings)
+			paramItems, len(raw), maxCaptureFilings)
 	}
 
 	filing := &captureFiling{entries: make([]capturefiling.FileItemInput, 0, len(raw))}
@@ -134,14 +130,14 @@ func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling
 	for idx, entry := range raw {
 		values, isObject := entry.(map[string]any)
 		if !isObject {
-			return nil, fmt.Errorf("%s[%d] must be an object", paramCaptureItems, idx)
+			return nil, fmt.Errorf("%s[%d] must be an object", paramItems, idx)
 		}
 		input, err := captureFilingEntry(values, idx)
 		if err != nil {
 			return nil, err
 		}
 		if seen[input.ItemID] {
-			return nil, fmt.Errorf("%s[%d] names a document already listed", paramCaptureItems,
+			return nil, fmt.Errorf("%s[%d] names a document already listed", paramItems,
 				idx)
 		}
 		seen[input.ItemID] = true
@@ -153,20 +149,20 @@ func captureFilingFrom(params *agenttoolports.ToolExecuteParams) (*captureFiling
 }
 
 func captureFilingEntry(values map[string]any, idx int) (*capturefiling.FileItemInput, error) {
-	prefix := fmt.Sprintf("%s[%d].", paramCaptureItems, idx)
-	itemID, err := toolparams.RequirePulid(values, paramCaptureItemID)
+	prefix := fmt.Sprintf("%s[%d].", paramItems, idx)
+	itemID, err := toolparams.RequirePulid(values, toolparams.ParamItemID)
 	if err != nil {
 		return nil, fmt.Errorf("%s%w", prefix, err)
 	}
-	targetType, err := toolparams.RequireEnum(values, paramCaptureTarget, captureTargetTypes.Values)
+	targetType, err := toolparams.RequireEnum(values, paramTargetType, captureTargetTypes.Values)
 	if err != nil {
 		return nil, fmt.Errorf("%s%w", prefix, err)
 	}
-	targetID, err := toolparams.RequirePulid(values, paramCaptureTargetID)
+	targetID, err := toolparams.RequirePulid(values, paramTargetID)
 	if err != nil {
 		return nil, fmt.Errorf("%s%w", prefix, err)
 	}
-	docType, err := toolparams.OptionalPulidParam(values, paramCaptureDocType)
+	docType, err := toolparams.OptionalPulidParam(values, paramDocumentTypeID)
 	if err != nil {
 		return nil, fmt.Errorf("%s%w", prefix, err)
 	}
@@ -216,7 +212,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 		Rationale: "Files scanned pages as documents on records inside Trenova, as the person " +
 			"it acts for; nothing is sent, and a misfiled document can be deleted.",
 		Properties:  captureFilingProperties(),
-		Required:    []string{paramCaptureItems},
+		Required:    []string{paramItems},
 		SearchTerms: []string{"file scan", "scanned paperwork", "capture intake", "file pod"},
 	}, toolspec.ReceivablePlan[*captureFiling, []*capturefiling.FilePlan]{
 		Request: captureFilingFrom,
@@ -237,7 +233,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 				}
 				if plan.Unchanged {
 					return nil, errortypes.NewValidationError(
-						fmt.Sprintf("%s[%d].%s", paramCaptureItems, idx, paramCaptureItemID),
+						fmt.Sprintf("%s[%d].%s", paramItems, idx, toolparams.ParamItemID),
 						errortypes.ErrInvalid, "This document is already filed or being filed")
 				}
 				plans = append(plans, plan)
@@ -295,7 +291,7 @@ func NewFileCaptureItemsTool(captures CaptureKeeper) agenttoolports.AgentTool {
 
 func captureFilingProperties() map[string]any {
 	return map[string]any{
-		paramCaptureItems: map[string]any{
+		paramItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "The documents to file, each with the record it " +
 				"goes on.",
@@ -304,16 +300,16 @@ func captureFilingProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramCaptureItemID: agenttoolschema.KindID(
+					toolparams.ParamItemID: agenttoolschema.KindID(
 						agenttoolschema.IDDescription(
 							"The "+changepreview.ScannedDocument,
-							captureSources,
+							"inbox_list_capture_batches",
 						),
 						recordkind.ScannedDocument,
 					),
-					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+
+					paramTargetType: agenttoolschema.Enum("The kind of record it "+
 						"goes on.", captureTargetTypes),
-					paramCaptureTargetID: agenttoolschema.KindID("The record it goes on, by id "+
+					paramTargetID: agenttoolschema.KindID("The record it goes on, by id "+
 						"from shipment_list, worker_list, equipment_list_tractors, equipment_list_trailers, "+
 						"customer_list or carrier_list.",
 						recordkind.Kind(permission.ResourceShipment),
@@ -323,13 +319,13 @@ func captureFilingProperties() map[string]any {
 						recordkind.Kind(permission.ResourceCustomer),
 						recordkind.Kind(permission.ResourceCarrier),
 					),
-					paramCaptureDocType: agenttoolschema.RecordIDText(
+					paramDocumentTypeID: agenttoolschema.RecordIDText(
 						permission.ResourceDocumentType,
 						"What kind of document it is, from document_list_types.",
 					),
 				},
 				toolschema.KeyRequired: []string{
-					paramCaptureItemID, paramCaptureTarget, paramCaptureTargetID,
+					toolparams.ParamItemID, paramTargetType, paramTargetID,
 				},
 				toolschema.KeyAdditionalProperties: false,
 			},
@@ -351,8 +347,8 @@ func renderCaptureFiling(
 				TargetID:       pulidPointerText(plan.Target.ResourceID),
 				DocumentTypeID: pulidPointerText(plan.Target.DocumentTypeID),
 			}, toolpreview.WithRefs(map[string]permission.Resource{
-				paramCaptureTargetID: permission.Resource(plan.Target.ResourceType),
-				paramCaptureDocType:  permission.ResourceDocumentType,
+				paramTargetID:       permission.Resource(plan.Target.ResourceType),
+				paramDocumentTypeID: permission.ResourceDocumentType,
 			}))
 		if err != nil {
 			return nil, err
@@ -407,16 +403,19 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 		Rationale: "Marks one scanned document not worth filing inside Trenova; nothing is " +
 			"sent, and its pages are removed with the stack's other unfiled pages.",
 		Properties: map[string]any{
-			paramCaptureItemIDOne: agenttoolschema.KindID(
-				agenttoolschema.IDDescription("The "+changepreview.ScannedDocument, captureSources),
+			paramCaptureItemID: agenttoolschema.KindID(
+				agenttoolschema.IDDescription(
+					"The "+changepreview.ScannedDocument,
+					"inbox_list_capture_batches",
+				),
 				recordkind.ScannedDocument,
 			),
 		},
-		Required:    []string{paramCaptureItemIDOne},
+		Required:    []string{paramCaptureItemID},
 		SearchTerms: []string{"discard scan", "blank page", "throw away scan"},
 	}, toolspec.ReceivablePlan[pulid.ID, *capturefiling.DiscardItemPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-			return toolparams.RequirePulid(params.Params, paramCaptureItemIDOne)
+			return toolparams.RequirePulid(params.Params, paramCaptureItemID)
 		},
 		Plan: func(
 			ctx context.Context,
@@ -466,7 +465,7 @@ func NewDiscardCaptureItemTool(captures CaptureKeeper) agenttoolports.AgentTool 
 			return &agentrecord.ToolExecutionResult{
 				Action: "discarded",
 				Kind:   changepreview.ScannedDocument,
-				IDs:    map[string]string{paramCaptureItemIDOne: id.String()},
+				IDs:    map[string]string{paramCaptureItemID: id.String()},
 			}, nil
 		},
 	})
@@ -510,7 +509,7 @@ func NewDiscardCaptureBatchTool(captures CaptureKeeper) agenttoolports.AgentTool
 			"is sent, but nothing brings the pages back, so it is always proposed.",
 		Properties: map[string]any{
 			paramCaptureBatchID: agenttoolschema.RecordID(permission.ResourceCaptureBatch,
-				"The scanned stack", captureSources),
+				"The scanned stack", "inbox_list_capture_batches"),
 		},
 		Required:    []string{paramCaptureBatchID},
 		SearchTerms: []string{"discard stack", "clear capture intake", "throw away scans"},

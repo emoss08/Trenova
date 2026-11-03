@@ -96,7 +96,7 @@ func TestRecordPlan_ClassifiesEachProposalByTheAssignToolsPolicy(t *testing.T) {
 	t.Parallel()
 
 	svc, proposals := recordingService(t, &agenttest.StubActionTool{
-		ToolName: toolNameAssignMove,
+		ToolName: "dispatch_assign_move",
 		Tier:     agent.TierActWithApproval,
 		Egress:   agent.EgressInternal,
 	})

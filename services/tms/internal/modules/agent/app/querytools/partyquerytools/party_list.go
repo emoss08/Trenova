@@ -30,7 +30,7 @@ type customerRow struct {
 
 func NewListCustomersTool(repo customerports.CustomerRepository) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolCustomerList,
+		Name:         "customer_list",
 		Row:          customerRow{},
 		EntityPlural: pluralCustomers,
 		Summary:      customersSummary,
@@ -81,7 +81,7 @@ type locationRow struct {
 
 func NewListLocationsTool(repo locationports.LocationRepository) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolLocationList,
+		Name:         "location_list",
 		Row:          locationRow{},
 		EntityPlural: pluralLocations,
 		Summary:      locationsSummary,

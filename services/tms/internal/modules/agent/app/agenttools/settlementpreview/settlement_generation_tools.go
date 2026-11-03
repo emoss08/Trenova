@@ -16,9 +16,9 @@ const DriverSettlementEntity = "driver_settlement"
 const FieldPayDate = "payDate"
 
 var SettlementDateTypes = map[string]assistantartifact.DisplayType{
-	changepreview.FieldPeriodStart: assistantartifact.DisplayDate,
-	changepreview.FieldPeriodEnd:   assistantartifact.DisplayDate,
-	FieldPayDate:                   assistantartifact.DisplayDate,
+	toolparams.ParamPeriodStart: assistantartifact.DisplayDate,
+	toolparams.ParamPeriodEnd:   assistantartifact.DisplayDate,
+	FieldPayDate:                assistantartifact.DisplayDate,
 }
 
 func SettlementResult(created *driversettlement.Settlement) *agentrecord.ToolExecutionResult {
@@ -41,8 +41,8 @@ func NewSettlementChange(
 		toolpreview.Only(
 			toolparams.ParamWorkerID,
 			changepreview.FieldStatus,
-			changepreview.FieldPeriodStart,
-			changepreview.FieldPeriodEnd,
+			toolparams.ParamPeriodStart,
+			toolparams.ParamPeriodEnd,
 			FieldPayDate,
 			"payProfileName",
 			"classification",

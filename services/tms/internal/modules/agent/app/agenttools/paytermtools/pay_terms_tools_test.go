@@ -228,13 +228,13 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	assert.False(t, targeted)
 
 	raw := map[string]any{
-		toolparams.ParamWorkerID:               pulid.MustNew("wrk_").String(),
-		toolparams.ParamPayCodeID:              pulid.MustNew("payc_").String(),
-		paramRecurringDescription:              "Escrow contribution",
-		settlementpreview.ParamDriverPayAmount: "100.00",
-		paramRecurringStart:                    "2026-10-01",
-		paramRecurringCap:                      "2500",
-		paramEscrowContribution:                true,
+		toolparams.ParamWorkerID:    pulid.MustNew("wrk_").String(),
+		toolparams.ParamPayCodeID:   pulid.MustNew("payc_").String(),
+		toolparams.ParamDescription: "Escrow contribution",
+		toolparams.ParamAmount:      "100.00",
+		paramStartDate:              "2026-10-01",
+		paramTotalCap:               "2500",
+		paramEscrowContribution:     true,
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -256,10 +256,10 @@ func TestCreateRecurringDeduction_CanPayIntoEscrow(t *testing.T) {
 	assert.Equal(t, int64(250000), *book.created.TotalCapMinor)
 	assert.Equal(t, recurringpay.DeductionFrequencyEverySettlement, book.created.Frequency)
 
-	delete(raw, settlementpreview.ParamDriverPayAmount)
+	delete(raw, toolparams.ParamAmount)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 
-	raw[settlementpreview.ParamDriverPayAmount] = "100.00"
+	raw[toolparams.ParamAmount] = "100.00"
 	book.refusal = errortypes.NewNotFoundError("Pay code not found")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
@@ -304,11 +304,11 @@ func TestUpdateRecurringDeduction_ChangesOnlyWhatIsGiven(t *testing.T) {
 		),
 	), toolparams.ErrNothingToChange)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"deductionId":        id,
-		paramRecurringStatus: "Cancelled",
+		"deductionId": id,
+		paramStatus:   "Cancelled",
 	})))
 
-	raw := map[string]any{"deductionId": id, paramRecurringStatus: "Paused"}
+	raw := map[string]any{"deductionId": id, paramStatus: "Paused"}
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary,

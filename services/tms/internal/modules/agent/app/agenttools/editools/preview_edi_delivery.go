@@ -147,7 +147,7 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	ids, err := ediRecordSet(t, params, paramEDIMessageIDs)
+	ids, err := ediRecordSet(t, params, paramMessageIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	ids, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
+	ids, err := ediRecordSet(t, params, paramInboundFileIDs)
 	if err != nil {
 		return nil, err
 	}

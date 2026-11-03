@@ -362,10 +362,10 @@ func TestCreateOrder_PreviewsTheDraftAndCreates(t *testing.T) {
 	tool := NewCreateOrderTool(orders)
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		changepreview.FieldCustomerID: customerID.String(),
-		paramPONumber:                 "PO-77",
-		paramQuotedAmount:             "2400.00",
-		toolparams.ParamCurrencyCode:  "cad",
+		toolparams.ParamCustomerID:   customerID.String(),
+		paramPoNumber:                "PO-77",
+		paramQuotedAmount:            "2400.00",
+		toolparams.ParamCurrencyCode: "cad",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -377,7 +377,7 @@ func TestCreateOrder_PreviewsTheDraftAndCreates(t *testing.T) {
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
-	assert.Equal(t, "PO-77", agenttoolstest.FieldByPath(t, change, paramPONumber).After)
+	assert.Equal(t, "PO-77", agenttoolstest.FieldByPath(t, change, paramPoNumber).After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, orders.created)
@@ -398,11 +398,11 @@ func TestCreateOrder_RefusesBadArguments(t *testing.T) {
 
 	tool := NewCreateOrderTool(newFakeOrders())
 	for name, raw := range map[string]map[string]any{
-		"no customer":        {paramPONumber: "PO-1"},
-		"a bad customer":     {changepreview.FieldCustomerID: "acme"},
-		"a negative quote":   {changepreview.FieldCustomerID: pulid.MustNew("cus_").String(), paramQuotedAmount: "-5"},
-		"a long currency":    {changepreview.FieldCustomerID: pulid.MustNew("cus_").String(), toolparams.ParamCurrencyCode: "DOLLARS"},
-		"a non-number quote": {changepreview.FieldCustomerID: pulid.MustNew("cus_").String(), paramQuotedAmount: "lots"},
+		"no customer":        {paramPoNumber: "PO-1"},
+		"a bad customer":     {toolparams.ParamCustomerID: "acme"},
+		"a negative quote":   {toolparams.ParamCustomerID: pulid.MustNew("cus_").String(), paramQuotedAmount: "-5"},
+		"a long currency":    {toolparams.ParamCustomerID: pulid.MustNew("cus_").String(), toolparams.ParamCurrencyCode: "DOLLARS"},
+		"a non-number quote": {toolparams.ParamCustomerID: pulid.MustNew("cus_").String(), paramQuotedAmount: "lots"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -419,7 +419,7 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 	tool := NewUpdateOrderTool(orders)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamOrderID: orders.current.ID.String(),
-		changepreview.FieldBol:  "BOL-9",
+		changepreview.FieldBOL:  "BOL-9",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -430,7 +430,7 @@ func TestUpdateOrder_ChangesOnlyWhatIsSentAndIsMoneyOnlyForAmounts(t *testing.T)
 		},
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "BOL-9", agenttoolstest.FieldByPath(t, change, changepreview.FieldBol).After)
+	assert.Equal(t, "BOL-9", agenttoolstest.FieldByPath(t, change, changepreview.FieldBOL).After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, orders.updated)
@@ -596,19 +596,19 @@ func TestAddOrderCharge_ShowsTheMoneyAndReadsTheSplit(t *testing.T) {
 	tool := NewAddOrderChargeTool(orders)
 	payerA, payerB := pulid.MustNew("cus_"), pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamOrderID:        orders.current.ID.String(),
-		changepreview.FieldDescription: "Lumper",
-		toolparams.ParamAmount:         "200.00",
+		toolparams.ParamOrderID:     orders.current.ID.String(),
+		toolparams.ParamDescription: "Lumper",
+		toolparams.ParamAmount:      "200.00",
 		allocationparams.ParamAllocations: []any{
 			map[string]any{
-				allocationparams.ParamBillToCustomer: payerA.String(),
-				allocationparams.ParamAllocMethod:    "Percent",
-				allocationparams.ParamAllocPercent:   "60",
+				allocationparams.ParamBillToCustomerID: payerA.String(),
+				allocationparams.ParamMethod:           "Percent",
+				allocationparams.ParamPercent:          "60",
 			},
 			map[string]any{
-				allocationparams.ParamBillToCustomer: payerB.String(),
-				allocationparams.ParamAllocMethod:    "Percent",
-				allocationparams.ParamAllocPercent:   "40",
+				allocationparams.ParamBillToCustomerID: payerB.String(),
+				allocationparams.ParamMethod:           "Percent",
+				allocationparams.ParamPercent:          "40",
 			},
 		},
 	})
@@ -646,19 +646,19 @@ func TestAddOrderCharge_RefusesASplitThatDoesNotSayHow(t *testing.T) {
 	base := func(row map[string]any) map[string]any {
 		return map[string]any{
 			toolparams.ParamOrderID:           pulid.MustNew("ord_").String(),
-			changepreview.FieldDescription:    "Fee",
+			toolparams.ParamDescription:       "Fee",
 			toolparams.ParamAmount:            "10",
 			allocationparams.ParamAllocations: []any{row},
 		}
 	}
 	for name, raw := range map[string]map[string]any{
-		"percent without a percent": base(map[string]any{allocationparams.ParamBillToCustomer: payer,
-			allocationparams.ParamAllocMethod: "Percent", toolparams.ParamAmount: "10"}),
-		"an unknown method": base(map[string]any{allocationparams.ParamBillToCustomer: payer,
-			allocationparams.ParamAllocMethod: "Share", allocationparams.ParamAllocPercent: "10"}),
-		"no payer": base(map[string]any{allocationparams.ParamAllocMethod: "Amount", toolparams.ParamAmount: "10"}),
+		"percent without a percent": base(map[string]any{allocationparams.ParamBillToCustomerID: payer,
+			allocationparams.ParamMethod: "Percent", toolparams.ParamAmount: "10"}),
+		"an unknown method": base(map[string]any{allocationparams.ParamBillToCustomerID: payer,
+			allocationparams.ParamMethod: "Share", allocationparams.ParamPercent: "10"}),
+		"no payer": base(map[string]any{allocationparams.ParamMethod: "Amount", toolparams.ParamAmount: "10"}),
 		"no amount": {toolparams.ParamOrderID: pulid.MustNew("ord_").String(),
-			changepreview.FieldDescription: "Fee"},
+			toolparams.ParamDescription: "Fee"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -679,7 +679,7 @@ func TestUpdateOrderCharge_KeepsWhatIsNotSentAndThePayersRow(t *testing.T) {
 		paramChargeID:           orders.charge.ID.String(),
 		toolparams.ParamAmount:  "175.00",
 		allocationparams.ParamAllocations: []any{map[string]any{
-			allocationparams.ParamBillToCustomer: payer.String(), allocationparams.ParamAllocMethod: "Amount", toolparams.ParamAmount: "175.00",
+			allocationparams.ParamBillToCustomerID: payer.String(), allocationparams.ParamMethod: "Amount", toolparams.ParamAmount: "175.00",
 		}},
 	})
 

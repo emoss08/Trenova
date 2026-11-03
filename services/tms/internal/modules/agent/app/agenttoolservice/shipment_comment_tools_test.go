@@ -405,7 +405,7 @@ func TestEditShipmentComment_AnotherPersonsCommentNeedsTheManagePermission(t *te
 	tool := shipmentcommenttools.NewEditShipmentCommentTool(comments, permissions)
 	params := commentParams(
 		comments,
-		map[string]any{shipmentcommenttools.ParamCommentText: "Receipt received"},
+		map[string]any{shipmentcommenttools.ParamComment: "Receipt received"},
 	)
 
 	err := tool.Execute(t.Context(), params)
@@ -433,7 +433,7 @@ func TestEditShipmentComment_VisibilityDecidesWhoReadsIt(t *testing.T) {
 		t,
 		agent.EgressCustomerVisible,
 		policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
-			shipmentcommenttools.FieldCommentVisib: string(shipmentvocab.CommentVisibilityCustomer),
+			shipmentcommenttools.FieldVisibility: string(shipmentvocab.CommentVisibilityCustomer),
 		})).Egress,
 	)
 	assert.Equal(

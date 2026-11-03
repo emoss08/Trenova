@@ -16,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const RequestDecisionName = "request_decision"
-
 const requestDecisionDescription = "Open a proposal that is waiting on the person in the " +
 	"approval box under the conversation, so they can approve or reject it there. Call it " +
 	"when the person types an approval or asks you to go ahead with a change listed under " +
@@ -40,7 +38,7 @@ const (
 
 func RequestDecisionSpec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        RequestDecisionName,
+		Name:        "request_decision",
 		Description: requestDecisionDescription,
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -88,7 +86,7 @@ type requestedDecision struct {
 
 var requestedNothing = fmt.Sprintf("Tool %q was not run: proposalId must be the id of a "+
 	"proposal listed under Proposals awaiting a decision, proposalIds several of them, or "+
-	"planId the id of a waiting plan.", RequestDecisionName)
+	"planId the id of a waiting plan.", "request_decision")
 
 func requestedIDs(arguments map[string]any) (request requestedDecision, refusal string) {
 	given := 0
@@ -105,7 +103,7 @@ func requestedIDs(arguments map[string]any) (request requestedDecision, refusal 
 		given++
 		if len(raw) > maxRequestedProposals {
 			return requestedDecision{}, fmt.Sprintf("Tool %q was not run: proposalIds holds "+
-				"at most %d proposals.", RequestDecisionName, maxRequestedProposals)
+				"at most %d proposals.", "request_decision", maxRequestedProposals)
 		}
 		ids := make([]pulid.ID, 0, len(raw))
 		for _, value := range raw {
@@ -136,7 +134,7 @@ func requestedIDs(arguments map[string]any) (request requestedDecision, refusal 
 		return request, ""
 	default:
 		return requestedDecision{}, fmt.Sprintf("Tool %q was not run: give only one of "+
-			"proposalId, proposalIds and planId.", RequestDecisionName)
+			"proposalId, proposalIds and planId.", "request_decision")
 	}
 }
 
@@ -366,7 +364,7 @@ func DecisionRequested(
 }
 
 func UnkeptOutcome(name string) toolcall.Outcome {
-	if name == RequestDecisionName {
+	if name == "request_decision" {
 		return toolcall.Outcome{
 			Content: "The approval box could not be opened just now. Tell the person the " +
 				"proposal is still waiting on their decision in this conversation, and that " +
@@ -374,7 +372,7 @@ func UnkeptOutcome(name string) toolcall.Outcome {
 			Failed: true,
 		}
 	}
-	if name == ShowBoardName {
+	if name == "show_board" {
 		return toolcall.Outcome{
 			Content: fmt.Sprintf("Tool %q could not show the board just now. Answer in your "+
 				"reply instead.", name),

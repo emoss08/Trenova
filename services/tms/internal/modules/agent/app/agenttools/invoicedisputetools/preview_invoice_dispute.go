@@ -18,21 +18,21 @@ const fieldDisputeStatus = "disputeStatus"
 
 var disputeFields = []string{
 	changepreview.FieldStatus,
-	paramDisputeReasonCode,
+	paramReasonCode,
 	paramDisputedAmount,
-	fieldDisputeNotes,
-	paramDisputeResolution,
+	fieldNotes,
+	paramResolution,
 	paramResolutionNotes,
 	changepreview.FieldResolvedByID,
 	changepreview.FieldResolvedAt,
 	changepreview.FieldOpenedByID,
 	toolparams.ParamInvoiceID,
-	changepreview.FieldCustomerID,
+	toolparams.ParamCustomerID,
 }
 
 var disputeRefs = map[string]permission.Resource{
 	toolparams.ParamInvoiceID:       permission.ResourceInvoice,
-	changepreview.FieldCustomerID:   permission.ResourceCustomer,
+	toolparams.ParamCustomerID:      permission.ResourceCustomer,
 	changepreview.FieldOpenedByID:   permission.ResourceUser,
 	changepreview.FieldResolvedByID: permission.ResourceUser,
 }

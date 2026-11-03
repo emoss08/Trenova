@@ -13,22 +13,6 @@ import (
 )
 
 const (
-	ToolListDriverSettlements  = "settlement_list_driver"
-	ToolGetDriverSettlement    = "settlement_get_driver"
-	toolListPayEvents          = "settlement_list_pay_events"
-	ToolGetDriverEarnings      = "settlement_get_driver_earnings"
-	toolGetSettlementDispute   = "settlement_get_dispute"
-	toolListCarrierSettlements = "settlement_list_carrier"
-	toolGetCarrierSettlement   = "settlement_get_carrier"
-	toolListDriverExpenses     = "settlement_list_driver_expenses"
-	toolListPayCodes           = "settlement_list_pay_codes"
-	toolListPayProfiles        = "settlement_list_pay_profiles"
-	toolListPayAssignments     = "settlement_list_pay_assignments"
-	toolListEscrowAccounts     = "settlement_list_escrow_accounts"
-	toolListPayAdvances        = "settlement_list_advances"
-	toolListRecurringDeduction = "settlement_list_recurring_deductions"
-	toolListRecurringEarning   = "settlement_list_recurring_earnings"
-
 	fieldPayCodeID       = "payCodeId"
 	fieldEscrowAccountID = "escrowAccountId"
 	fieldInForce         = "inForce"
@@ -54,8 +38,8 @@ func ReadSpecs() []readspec.List {
 
 // driverReference is a list's workerId, which worker_list supplies.
 func driverReference() map[string]readspec.Reference {
-	return map[string]readspec.Reference{querytool.FieldWorkerID: {
-		Resource: permission.ResourceWorker, What: whatDriver, Source: querytool.ToolWorkerList,
+	return map[string]readspec.Reference{querytool.ParamWorkerID: {
+		Resource: permission.ResourceWorker, What: whatDriver, Source: "worker_list",
 	}}
 }
 
@@ -66,7 +50,7 @@ func settlementStatementSpecs() []readspec.List {
 
 	return []readspec.List{
 		{
-			Name:         ToolListDriverSettlements,
+			Name:         "settlement_list_driver",
 			EntityPlural: "driver settlements",
 			Summary: "List driver pay settlements, the drivers' pay statements. Each has " +
 				"the driver, period, pay date, status and exceptions, with gross, deductions " +
@@ -85,7 +69,7 @@ func settlementStatementSpecs() []readspec.List {
 			Amounts:    true,
 		},
 		{
-			Name:         toolListPayEvents,
+			Name:         "settlement_list_pay_events",
 			EntityPlural: "driver pay events",
 			Summary: "List driver pay events, the pay a driver earned per load. Each has " +
 				"the shipment, the date, whether it is accrued, settled or voided, and any " +
@@ -95,8 +79,8 @@ func settlementStatementSpecs() []readspec.List {
 			QueryNote: "Optional free text matched against the shipment's pro number. " +
 				noteDriverByID,
 			References: map[string]readspec.Reference{
-				querytool.FieldWorkerID: driver[querytool.FieldWorkerID],
-				querytool.FieldShipmentID: {
+				querytool.ParamWorkerID: driver[querytool.ParamWorkerID],
+				querytool.ParamShipmentID: {
 					Resource: permission.ResourceShipment,
 					What:     "The shipment",
 					Source:   "shipment_list or shipment_get",
@@ -106,7 +90,7 @@ func settlementStatementSpecs() []readspec.List {
 			Amounts:  true,
 		},
 		{
-			Name:         toolListCarrierSettlements,
+			Name:         "settlement_list_carrier",
 			EntityPlural: "carrier settlements",
 			Summary: "List carrier settlements, the statements paying outside carriers for " +
 				"the loads they hauled. Each has the carrier, period, pay date and status, with " +
@@ -120,13 +104,13 @@ func settlementStatementSpecs() []readspec.List {
 			References: map[string]readspec.Reference{querytool.ParamCarrierID: {
 				Resource: permission.ResourceCarrier,
 				What:     "The carrier",
-				Source:   querytool.ToolCarrierList,
+				Source:   "carrier_list",
 			}},
 			Resource: permission.ResourceCarrierSettlement,
 			Amounts:  true,
 		},
 		{
-			Name:         toolListDriverExpenses,
+			Name:         "settlement_list_driver_expenses",
 			EntityPlural: "driver expenses",
 			Summary: "List expenses drivers submitted for reimbursement, newest first. Each " +
 				"has whether a receipt is attached and how it was reviewed; the amount and the " +
@@ -157,16 +141,18 @@ func settlementStatementSpecs() []readspec.List {
 func payRecordSpecs() []readspec.List {
 	driver := driverReference()
 	payCode := readspec.Reference{
-		Resource: permission.ResourcePayCode, What: "The pay code", Source: toolListPayCodes,
+		Resource: permission.ResourcePayCode,
+		What:     "The pay code",
+		Source:   "settlement_list_pay_codes",
 	}
 	recurring := map[string]readspec.Reference{
-		querytool.FieldWorkerID: driver[querytool.FieldWorkerID],
+		querytool.ParamWorkerID: driver[querytool.ParamWorkerID],
 		fieldPayCodeID:          payCode,
 	}
 
 	return []readspec.List{
 		{
-			Name:         toolListPayProfiles,
+			Name:         "settlement_list_pay_profiles",
 			EntityPlural: "pay profiles",
 			Summary: "List the organization's driver pay profiles, the packages that say how " +
 				"a driver is paid per mile, per load or by percentage. Each has its " +
@@ -177,7 +163,7 @@ func payRecordSpecs() []readspec.List {
 			Amounts:   true,
 		},
 		{
-			Name:         toolListEscrowAccounts,
+			Name:         "settlement_list_escrow_accounts",
 			EntityPlural: "escrow accounts",
 			Summary: "List owner-operator escrow accounts with the driver, status and when " +
 				"each opened or closed. The balance, target and interest rate show when your " +
@@ -188,7 +174,7 @@ func payRecordSpecs() []readspec.List {
 			Amounts:    true,
 		},
 		{
-			Name:         toolListPayAdvances,
+			Name:         "settlement_list_advances",
 			EntityPlural: "pay advances",
 			Summary: "List driver pay advances, the cash and money codes given against " +
 				"future pay. Each has the driver, how it was given, its reference and status; " +
@@ -202,7 +188,7 @@ func payRecordSpecs() []readspec.List {
 			Amounts:    true,
 		},
 		{
-			Name:         toolListRecurringDeduction,
+			Name:         "settlement_list_recurring_deductions",
 			EntityPlural: "recurring deductions",
 			Summary: "List drivers' recurring deductions, such as insurance, equipment lease " +
 				"or escrow contributions. Each has the driver, schedule, dates and status; the " +
@@ -210,19 +196,19 @@ func payRecordSpecs() []readspec.List {
 				"them.",
 			QueryNote: queryNoDriverName,
 			References: map[string]readspec.Reference{
-				querytool.FieldWorkerID: driver[querytool.FieldWorkerID],
+				querytool.ParamWorkerID: driver[querytool.ParamWorkerID],
 				fieldPayCodeID:          payCode,
 				fieldEscrowAccountID: {
 					Resource: permission.ResourceEscrowAccount,
 					What:     "The escrow account it pays into",
-					Source:   toolListEscrowAccounts,
+					Source:   "settlement_list_escrow_accounts",
 				},
 			},
 			Resource: permission.ResourceRecurringDeduction,
 			Amounts:  true,
 		},
 		{
-			Name:         toolListRecurringEarning,
+			Name:         "settlement_list_recurring_earnings",
 			EntityPlural: "recurring earnings",
 			Summary: "List drivers' recurring earnings, such as per diem, a guaranteed " +
 				"stipend or a bonus paid over time. Each has the driver, schedule, dates and " +
@@ -234,7 +220,7 @@ func payRecordSpecs() []readspec.List {
 			Amounts:    true,
 		},
 		{
-			Name:         toolListPayAssignments,
+			Name:         "settlement_list_pay_assignments",
 			EntityPlural: "pay profile assignments",
 			Summary: "List a driver's pay profile assignments, newest first: which profile " +
 				"paid them from when to when, and which one is in force today (inForce). Their " +
@@ -245,7 +231,7 @@ func payRecordSpecs() []readspec.List {
 			Resource:    permission.ResourceDriverPayProfile,
 		},
 		{
-			Name:         toolListPayCodes,
+			Name:         "settlement_list_pay_codes",
 			EntityPlural: "pay codes",
 			Summary: "List the organization's active earning and deduction pay codes, each " +
 				"with the GL account it maps to. Settlement lines, adjustments and recurring " +
@@ -279,7 +265,7 @@ func markInForce(row map[string]any, withheld map[string]struct{}, clk filtercat
 func GetSpecs() []readspec.Get {
 	return []readspec.Get{
 		{
-			Name:        ToolGetDriverSettlement,
+			Name:        "settlement_get_driver",
 			Entity:      "driver settlement",
 			SearchTerms: []string{"net pay", "pay statement", "pay stub", "deductions"},
 			Resource:    permission.ResourceDriverSettlement,
@@ -292,20 +278,20 @@ func GetSpecs() []readspec.Get {
 			IDSource:  "from settlement_list_driver or the page you are on",
 		},
 		{
-			Name:     ToolGetDriverEarnings,
+			Name:     "settlement_get_driver_earnings",
 			Entity:   querytool.EntityDriver,
 			Resource: permission.ResourceDriverSettlement,
 			Amounts:  true,
 			Summary: "Summarize what a worker has earned but not yet been paid on a " +
 				"settlement. It gives the accrued pay events and their gross, outstanding " +
 				"advances and the escrow balance. Take the worker's id from worker_list.",
-			ParamName:   querytool.FieldWorkerID,
+			ParamName:   querytool.ParamWorkerID,
 			IDSource:    "from worker_list or the page you are on",
 			KeyResource: permission.ResourceWorker,
 			MinorUnits:  []string{"outstandingAdvances"},
 		},
 		{
-			Name:   toolGetSettlementDispute,
+			Name:   "settlement_get_dispute",
 			Entity: "dispute",
 			SearchTerms: []string{
 				"driver pay dispute", "read dispute", "what the driver says", "dispute details",
@@ -326,7 +312,7 @@ func GetSpecs() []readspec.Get {
 			Outside: []string{fieldDescription},
 		},
 		{
-			Name:     toolGetCarrierSettlement,
+			Name:     "settlement_get_carrier",
 			Entity:   "carrier settlement",
 			Resource: permission.ResourceCarrierSettlement,
 			Amounts:  true,

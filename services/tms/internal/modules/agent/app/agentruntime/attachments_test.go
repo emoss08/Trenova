@@ -21,7 +21,7 @@ func attachmentRuntime() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool(agentdefinition.CoreToolReadAttachment, nil, nil),
+			queryTool("agent_read_attachment", nil, nil),
 		}},
 		&stubActionRegistry{},
 		nil,
@@ -53,7 +53,7 @@ func TestOpenTurn_PutsTheFilesOnTheMessageTheyCameWith(t *testing.T) {
 	assert.NotContains(t, turn.system, documentID)
 	assert.Equal(t, "Here it is", turn.result.Messages[0].Content,
 		"the conversation keeps what the person typed")
-	assert.True(t, turn.tools.Offers(agentdefinition.CoreToolReadAttachment))
+	assert.True(t, turn.tools.Offers("agent_read_attachment"))
 }
 
 func TestOpenTurn_ReadsAttachmentsOnlyInAConversationWithFiles(t *testing.T) {
@@ -64,7 +64,7 @@ func TestOpenTurn_ReadsAttachmentsOnlyInAConversationWithFiles(t *testing.T) {
 		Actor:      runtimetest.Actor(),
 		Input:      "What is due today?",
 	})
-	assert.False(t, turn.tools.Offers(agentdefinition.CoreToolReadAttachment))
+	assert.False(t, turn.tools.Offers("agent_read_attachment"))
 
 	turn = attachmentRuntime().OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition(),
@@ -82,7 +82,7 @@ func TestOpenTurn_ReadsAttachmentsOnlyInAConversationWithFiles(t *testing.T) {
 			{Role: conversation.RoleAssistant, Content: "Which customer is it for?"},
 		},
 	})
-	assert.True(t, turn.tools.Offers(agentdefinition.CoreToolReadAttachment))
+	assert.True(t, turn.tools.Offers("agent_read_attachment"))
 }
 
 func TestOpenTurn_CountsEarlierFilesAsWhatTheTurnMayCite(t *testing.T) {

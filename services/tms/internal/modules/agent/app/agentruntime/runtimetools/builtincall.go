@@ -16,50 +16,50 @@ func Answer(
 	call *llmports.ToolCall,
 ) (outcome toolcall.Result, handled bool) {
 	switch call.Name {
-	case RequestDecisionName:
+	case "request_decision":
 		outcome = toolcall.Refused(aitrace.OutcomeDenied,
 			"the turn is not offered the approval box", "%s", UnofferedDecisionRefusal)
-		if offers(RequestDecisionName) {
+		if offers("request_decision") {
 			outcome = requestDecision(t, call.Arguments)
 		}
 
 		return outcome, true
-	case WithdrawProposalName:
+	case "withdraw_proposal":
 		outcome = toolcall.Refused(aitrace.OutcomeDenied,
 			"the turn has filed no proposal to withdraw", "%s", UnofferedWithdrawal)
 		if t.Request().Delegation != nil {
 			outcome = toolcall.Refused(aitrace.OutcomeDenied,
 				"a delegated task cannot withdraw a proposal", "%s", delegatedWithdrawal)
 		}
-		if offers(WithdrawProposalName) && hasFiledProposal(t) {
+		if offers("withdraw_proposal") && hasFiledProposal(t) {
 			outcome = withdrawProposal(t, call.Arguments)
 		}
 
 		return outcome, true
-	case NamePlanName:
+	case "name_plan":
 		outcome = toolcall.Refused(aitrace.OutcomeDenied,
 			"the turn is not offered plan naming", "%s", UnofferedNaming)
 		if t.Request().Delegation != nil {
 			outcome = toolcall.Refused(aitrace.OutcomeDenied,
 				"a delegated task cannot name the plan", "%s", DelegatedNaming)
 		}
-		if offers(NamePlanName) {
+		if offers("name_plan") {
 			outcome = namePlan(t, call.Arguments)
 		}
 
 		return outcome, true
-	case PublishArtifactName:
+	case "publish_artifact":
 		outcome = PublishOutcome(call.Arguments)
-		if !offers(PublishArtifactName) {
+		if !offers("publish_artifact") {
 			outcome = toolcall.Refused(aitrace.OutcomeDenied,
 				"the turn is not offered documents", "%s", UnpublishableRefusal)
 		}
 
 		return outcome, true
-	case ShowBoardName:
+	case "show_board":
 		outcome = toolcall.Refused(aitrace.OutcomeDenied,
 			"the turn is not offered boards", "%s", UnboardableRefusal)
-		if offers(ShowBoardName) {
+		if offers("show_board") {
 			outcome = showBoard(t, call.Arguments)
 		}
 

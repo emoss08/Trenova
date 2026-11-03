@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
@@ -28,7 +27,7 @@ func TestArtifactFromObservation_APortalReadIsAPortalTask(t *testing.T) {
 	t.Parallel()
 
 	artifact := ArtifactFromObservation(
-		assistanttest.Observation(agentextension.ToolReadPortal, portalReadResult()),
+		assistanttest.Observation("web_read_portal", portalReadResult()),
 	)
 
 	require.NotNil(t, artifact)
@@ -41,7 +40,7 @@ func TestArtifactFromObservation_APortalReadIsAPortalTask(t *testing.T) {
 	assert.False(t, assistantartifact.IsLookup(artifact.Kind),
 		"a portal task is followed to its end whether or not the reply names it")
 	assert.Empty(t, assistantartifact.LineageKeyFor(artifact.Kind,
-		agentextension.ToolReadPortal, map[string]any{"siteId": "apst_01"}),
+		"web_read_portal", map[string]any{"siteId": "apst_01"}),
 		"two reads of one site are two tasks, not versions of one")
 }
 
@@ -49,7 +48,7 @@ func TestArtifactFromObservation_APortalReadWaitingOnACodeIsKept(t *testing.T) {
 	t.Parallel()
 
 	artifact := ArtifactFromObservation(
-		assistanttest.Observation(agentextension.ToolReadPortal, map[string]any{
+		assistanttest.Observation("web_read_portal", map[string]any{
 			"site":               "Acme dock portal",
 			"question":           "Which dock appointments are open on October 20?",
 			"awaitingSignInCode": true,
@@ -72,7 +71,7 @@ func TestArtifactFromObservation_APortalReadWithoutARunIsNotKept(t *testing.T) {
 
 	assert.Nil(
 		t,
-		ArtifactFromObservation(assistanttest.Observation(agentextension.ToolReadPortal, result)),
+		ArtifactFromObservation(assistanttest.Observation("web_read_portal", result)),
 	)
 }
 

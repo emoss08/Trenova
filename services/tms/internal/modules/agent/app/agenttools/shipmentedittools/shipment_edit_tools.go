@@ -10,7 +10,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -70,11 +69,11 @@ func (t *rescheduleStopTool) SearchTerms() []string {
 }
 
 func (t *rescheduleStopTool) Prerequisites() []string {
-	return []string{shipmenttools.ToolShipmentList, "shipment_get"}
+	return []string{"shipment_list", "shipment_get"}
 }
 
 func (t *rescheduleStopTool) Recipe() []string {
-	return []string{shipmenttools.ToolShipmentList, "shipment_get", "shipment_reschedule_stop"}
+	return []string{"shipment_list", "shipment_get", "shipment_reschedule_stop"}
 }
 
 func (t *rescheduleStopTool) Description() string {
@@ -334,12 +333,12 @@ func (t *addShipmentChargeTool) SearchTerms() []string {
 }
 
 func (t *addShipmentChargeTool) Prerequisites() []string {
-	return []string{shipmenttools.ToolShipmentList, "masterdata_list_accessorial_charges"}
+	return []string{"shipment_list", "masterdata_list_accessorial_charges"}
 }
 
 func (t *addShipmentChargeTool) Recipe() []string {
 	return []string{
-		shipmenttools.ToolShipmentList,
+		"shipment_list",
 		"masterdata_list_accessorial_charges",
 		"shipment_add_charge",
 	}

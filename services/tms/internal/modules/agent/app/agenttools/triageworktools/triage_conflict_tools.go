@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	paramConflictID         = "conflictId"
-	paramConflictResolution = "resolution"
-	maxConflictID           = 200
+	paramConflictID = "conflictId"
+	paramResolution = "resolution"
+	maxConflictID   = 200
 )
 
 var triageConflictResolutions = agenttoolschema.Source(
@@ -133,7 +133,7 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 				paramConflictID: agenttoolschema.IDText(
 					"The conflict, from the conflicts inbox_get_inbound_message lists for the message.",
 				),
-				paramConflictResolution: agenttoolschema.Enum(
+				paramResolution: agenttoolschema.Enum(
 					"How to settle it: ReplaceExisting or KeepBoth for a duplicate document, "+
 						"SkipDuplicate or ConfirmNew for a repeated load.",
 					triageConflictResolutions,
@@ -142,10 +142,10 @@ func newResolveInboundConflictTool(conflicts triageConflicts) agenttoolports.Age
 			Required: []string{
 				inboundtools.ParamMessageID,
 				paramConflictID,
-				paramConflictResolution,
+				paramResolution,
 			},
 			SearchTerms: []string{"duplicate document", "duplicate load", "replace on file"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_resolve_conflict"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_resolve_conflict"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
@@ -204,7 +204,7 @@ func resolveConflictRequest(
 	if err != nil {
 		return nil, err
 	}
-	resolution, err := toolparams.RequireEnum(params.Params, paramConflictResolution,
+	resolution, err := toolparams.RequireEnum(params.Params, paramResolution,
 		triageConflictResolutions.Values)
 	if err != nil {
 		return nil, err
@@ -255,7 +255,7 @@ func newReopenInboundConflictTool(
 			},
 			Required:    []string{inboundtools.ParamMessageID, paramConflictID},
 			SearchTerms: []string{"reopen conflict", "undo duplicate decision"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_reopen_conflict"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_reopen_conflict"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[

@@ -30,15 +30,11 @@ import (
 )
 
 const (
-	toolReleaseBillingQueueItem  = "billing_release_queue_item"
-	toolResolveBillingQueueIssue = "billing_resolve_issue"
-	toolUndoBillingQueueIssue    = "billing_undo_issue"
-	toolListBillingQueueItems    = "billing_list_queue_items"
-	paramIssueID                 = "issueId"
-	paramOptionKey               = "optionKey"
-	checkStateOpen               = "Open"
-	checkStateSettled            = "Settled"
-	maxOptionKeyChars            = 30
+	paramIssueID      = "issueId"
+	paramOptionKey    = "optionKey"
+	checkStateOpen    = "Open"
+	checkStateSettled = "Settled"
+	maxOptionKeyChars = 30
 )
 
 type queueItemReader interface {
@@ -113,11 +109,11 @@ func newReleaseBillingQueueItemTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolReleaseBillingQueueItem,
+			Name: "billing_release_queue_item",
 			Recipe: []string{
-				toolListBillingQueueItems,
-				billingqueuepreview.ToolGetBillingQueueItem,
-				toolReleaseBillingQueueItem,
+				"billing_list_queue_items",
+				"billing_get_queue_item",
+				"billing_release_queue_item",
 			},
 			Description: "Take a billing queue item off hold and back to the status the hold " +
 				"found it in, the counterpart of billing_hold_queue_item. A hold was put on for " +
@@ -393,12 +389,12 @@ func NewResolveBillingQueueIssueTool(
 func newResolveBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolResolveBillingQueueIssue,
+			Name: "billing_resolve_issue",
 			Recipe: []string{
-				billingqueuepreview.ToolGetBillingQueueItem,
-				toolResolveBillingQueueIssue,
+				"billing_get_queue_item",
+				"billing_resolve_issue",
 			},
-			Prerequisites: []string{billingqueuepreview.ToolGetBillingQueueItem},
+			Prerequisites: []string{"billing_get_queue_item"},
 			Description: "Propose settling one of a billing queue item's flagged checks with " +
 				"one of the choices that check offers. A choice bills a charge as it stands, " +
 				"takes it off, reprices it, bills without the paperwork, or asks the driver for " +
@@ -579,12 +575,12 @@ func NewUndoBillingQueueIssueTool(
 func newUndoBillingQueueIssueTool(review queueReviewer) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolUndoBillingQueueIssue,
+			Name: "billing_undo_issue",
 			Recipe: []string{
-				billingqueuepreview.ToolGetBillingQueueItem,
-				toolUndoBillingQueueIssue,
+				"billing_get_queue_item",
+				"billing_undo_issue",
 			},
-			Prerequisites: []string{billingqueuepreview.ToolGetBillingQueueItem},
+			Prerequisites: []string{"billing_get_queue_item"},
 			Description: "Propose taking back how one of a billing queue item's checks was " +
 				"settled. The check is open again and any charge the settlement removed or " +
 				"repriced is put back as it was. billing_get_queue_item lists each check's " +

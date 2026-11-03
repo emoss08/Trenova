@@ -18,13 +18,9 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
-const paramAdjustmentAmount = "amount"
+const paramQuantity = "quantity"
 
-const paramAdjustmentDescription = "description"
-
-const paramAdjustmentQuantity = "quantity"
-
-const paramAdjustmentRate = "rate"
+const paramRate = "rate"
 
 const paramLineID = "lineId"
 
@@ -117,10 +113,10 @@ func rejectDecision(text *lifecycleText) *settlementDecision {
 		rationale: "Returns a settlement to draft with a note inside Trenova; nothing is " +
 			"paid and it is submitted again once fixed.",
 		properties: map[string]any{
-			paramSettlementReason: settlementReasonProperty("What is wrong and what would " +
+			toolparams.ParamReason: settlementReasonProperty("What is wrong and what would " +
 				"fix it, in a sentence payroll can act on."),
 		},
-		required:    []string{paramSettlementReason},
+		required:    []string{toolparams.ParamReason},
 		fill:        fillSettlementReason,
 		fields:      []string{changepreview.FieldStatus, changepreview.FieldNotes},
 		searchTerms: []string{"return to draft"},
@@ -190,10 +186,10 @@ func voidDecision(text *lifecycleText) *settlementDecision {
 		rationale: "Cancels a settlement for good and reverses any posting; only a person " +
 			"voids.",
 		properties: map[string]any{
-			paramSettlementReason: settlementReasonProperty("Why it must not be paid, such " +
+			toolparams.ParamReason: settlementReasonProperty("Why it must not be paid, such " +
 				"as a duplicate of another settlement."),
 		},
-		required: []string{paramSettlementReason},
+		required: []string{toolparams.ParamReason},
 		fill:     fillSettlementReason,
 		fields: []string{
 			changepreview.FieldStatus,
@@ -298,9 +294,12 @@ func fillAdjustmentLine(params map[string]any, req *settlementshared.ActionReque
 
 func adjustmentBase(payee string) map[string]any {
 	return map[string]any{
-		paramAdjustmentDescription: toolparams.StringProperty("What the adjustment is for, as the "+
-			payee+" and payroll will read it on the statement.", toolparams.MaxAdjustmentDescription),
-		paramAdjustmentAmount: map[string]any{
+		toolparams.ParamDescription: toolparams.StringProperty(
+			"What the adjustment is for, as the "+
+				payee+" and payroll will read it on the statement.",
+			toolparams.MaxAdjustmentDescription,
+		),
+		toolparams.ParamAmount: map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The amount as a decimal such as 125.00; negative " +
 				"to take money back. Never zero.",
@@ -314,14 +313,14 @@ func fillAdjustmentBase(
 ) (*settlementshared.AdjustmentInput, error) {
 	description, err := toolparams.BoundedString(
 		params,
-		paramAdjustmentDescription,
+		toolparams.ParamDescription,
 		toolparams.MaxAdjustmentDescription,
 		true,
 	)
 	if err != nil {
 		return nil, err
 	}
-	amount, err := toolparams.RequireSignedMoney(params, paramAdjustmentAmount)
+	amount, err := toolparams.RequireSignedMoney(params, toolparams.ParamAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -336,12 +335,12 @@ func fillAdjustmentBase(
 
 func driverAdjustmentSchema() (properties map[string]any, required []string) {
 	properties = adjustmentBase("driver")
-	properties[paramAdjustmentQuantity] = map[string]any{
+	properties[paramQuantity] = map[string]any{
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: "How many units the amount is for, such as hours of " +
 			"detention, when it is a rate times a quantity.",
 	}
-	properties[paramAdjustmentRate] = map[string]any{
+	properties[paramRate] = map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
 		toolschema.KeyDescription: "The rate per unit, when it is a rate times a quantity.",
 	}
@@ -351,7 +350,7 @@ func driverAdjustmentSchema() (properties map[string]any, required []string) {
 			"account. Leave it out for the default account.",
 	)
 
-	return properties, []string{paramAdjustmentDescription, paramAdjustmentAmount}
+	return properties, []string{toolparams.ParamDescription, toolparams.ParamAmount}
 }
 
 func fillDriverAdjustment(params map[string]any, req *settlementshared.ActionRequest) error {
@@ -361,11 +360,11 @@ func fillDriverAdjustment(params map[string]any, req *settlementshared.ActionReq
 	}
 	if input.Quantity, _, err = toolparams.OptionalDecimal(
 		params,
-		paramAdjustmentQuantity,
+		paramQuantity,
 	); err != nil {
 		return err
 	}
-	if input.Rate, _, err = toolparams.OptionalDecimal(params, paramAdjustmentRate); err != nil {
+	if input.Rate, _, err = toolparams.OptionalDecimal(params, paramRate); err != nil {
 		return err
 	}
 	payCodeID, err := toolparams.OptionalPulidParam(params, toolparams.ParamPayCodeID)
@@ -385,7 +384,7 @@ func carrierAdjustmentSchema() (properties map[string]any, required []string) {
 			"default purchased transportation account.",
 	)
 
-	return properties, []string{paramAdjustmentDescription, paramAdjustmentAmount}
+	return properties, []string{toolparams.ParamDescription, toolparams.ParamAmount}
 }
 
 func fillCarrierAdjustment(params map[string]any, req *settlementshared.ActionRequest) error {
@@ -407,7 +406,7 @@ func driverLifecycle() *lifecycleText {
 		noun:       settlementpreview.NounDriverSettlement,
 		qualifier:  "driver",
 		payee:      "driver",
-		listTool:   settlementpreview.ToolListDriverSettlements,
+		listTool:   "settlement_list_driver",
 		getTool:    "settlement_get_driver",
 		adjustFrom: "settlement_list_pay_codes",
 		methods:    settlementpreview.DriverPaymentMethods,

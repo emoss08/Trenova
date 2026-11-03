@@ -49,7 +49,7 @@ type Row struct {
 
 func ListSpec(repo shipmentports.ShipmentRepository) listtool.Spec {
 	return listtool.Spec{
-		Name:         querytool.ShipmentListName,
+		Name:         "shipment_list",
 		Row:          Row{},
 		EntityPlural: "shipments",
 		Summary: "Shipments by status, billing state, dates or charges, such as picking up " +

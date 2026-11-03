@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -40,7 +39,7 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 	service, completion, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			runtimetools.FindToolsName,
+			"find_tools",
 			map[string]any{"need": "trailers due inspection"},
 		),
 		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
@@ -94,6 +93,6 @@ func TestRun_SendsEveryHeldToolBelowTheConfiguredThreshold(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, observed.preselected, "nothing was ranked: every tool was sent")
-	assert.NotContains(t, requestTools(completion.Requests[0]), runtimetools.FindToolsName)
+	assert.NotContains(t, requestTools(completion.Requests[0]), "find_tools")
 	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers")
 }

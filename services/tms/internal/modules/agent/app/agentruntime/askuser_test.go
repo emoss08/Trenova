@@ -3,7 +3,6 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ func TestRun_AQuestionNobodySawDoesNotEndTheTurnInSilence(t *testing.T) {
 	result, completion, _ := runReplies(
 		t,
 		runtimetest.ToolTurn(
-			askuser.Name,
+			"ask_user",
 			map[string]any{"question": "Which customer, pickup and delivery?"},
 		),
 		runtimetest.TextTurn(""),
@@ -37,13 +36,13 @@ func TestRun_AQuestionRefusedAsAskedCanBeAskedAgainProperly(t *testing.T) {
 	question := "What does the shipment still need?"
 	result, _, _ := runReplies(
 		t,
-		runtimetest.ToolTurn(askuser.Name, map[string]any{
+		runtimetest.ToolTurn("ask_user", map[string]any{
 			"question": question,
 			"options":  []any{map[string]any{"value": "a", "label": "A"}},
 			"fields":   runtimetest.AskFieldArgs(),
 		}),
 		runtimetest.ToolTurn(
-			askuser.Name,
+			"ask_user",
 			map[string]any{"question": question, "fields": runtimetest.AskFieldArgs()},
 		),
 		runtimetest.TextTurn(""),

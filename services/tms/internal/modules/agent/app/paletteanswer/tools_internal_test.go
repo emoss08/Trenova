@@ -148,7 +148,7 @@ func TestTools_OffersSearchOnlyWhereSearchIsWired(t *testing.T) {
 		return out
 	}
 
-	assert.Equal(t, []string{toolGet, toolList}, names(newFixture().reader))
+	assert.Equal(t, []string{"get_record", "list_records"}, names(newFixture().reader))
 }
 
 func TestGetRecord_ReadsTheRecordAsThePersonAsking(t *testing.T) {

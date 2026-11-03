@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	DelegateTaskName     = "delegate_task"
 	MaxDelegateRecords   = 8
 	maxDelegateRecordID  = 100
 	MaxSharedResults     = 4
@@ -40,7 +39,7 @@ func DelegateTaskSpec(delegates []agentturn.RuntimeDelegate) kernelports.ToolSpe
 	}
 
 	return kernelports.ToolSpec{
-		Name:        DelegateTaskName,
+		Name:        "delegate_task",
 		Description: delegateTaskDescription,
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,

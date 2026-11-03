@@ -4,10 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
@@ -76,7 +74,7 @@ func delegatingRequest(delegates ...agentturn.RuntimeDelegate) *agentruntimeport
 }
 
 func delegateTurn(agentID pulid.ID, task string) *llmports.ChatCompletionResult {
-	return runtimetest.ToolTurn(runtimetools.DelegateTaskName, map[string]any{
+	return runtimetest.ToolTurn("delegate_task", map[string]any{
 		"agentId": agentID.String(),
 		"task":    task,
 	})
@@ -189,7 +187,7 @@ func TestDelegate_HandsTheTaskAndFoldsBackWhatTheDelegateDid(t *testing.T) {
 	result := driveWith(t, rt, delegatingRequest(delegate), fx)
 
 	first := completion.Requests[0]
-	assert.Contains(t, offered(first), runtimetools.DelegateTaskName)
+	assert.Contains(t, offered(first), "delegate_task")
 	assert.Contains(t, first.System, "## Agents you can ask")
 	assert.Contains(t, first.System, "Report Builder (agentId "+delegate.ID.String()+")")
 	assert.Contains(t, first.System, "report_create, report_run")
@@ -285,8 +283,8 @@ func TestDelegate_ASubAgentTurnNeverHandsItsTaskOn(t *testing.T) {
 	result := driveWith(t, rt, req, fx)
 
 	first := completion.Requests[0]
-	assert.NotContains(t, offered(first), runtimetools.DelegateTaskName)
-	assert.NotContains(t, offered(first), askuser.Name)
+	assert.NotContains(t, offered(first), "delegate_task")
+	assert.NotContains(t, offered(first), "ask_user")
 	assert.NotContains(t, first.System, "## Agents you can ask")
 	assert.Empty(t, fx.calls, "nobody was asked")
 	require.Len(t, result.Messages, 4)
@@ -316,7 +314,7 @@ func TestDelegate_IsOfferedOnlyInAConversationSomebodyIsReading(t *testing.T) {
 		change(req)
 
 		state := rt.OpenTurn(t.Context(), req).State()
-		holds := strings.Contains(strings.Join(state.Held, ","), runtimetools.DelegateTaskName)
+		holds := strings.Contains(strings.Join(state.Held, ","), "delegate_task")
 		assert.Equal(t, name == "all conditions", holds, name)
 	}
 }
@@ -442,11 +440,11 @@ func TestOpenTurn_LeavesTheDelegatesStepsOutOfTheReplay(t *testing.T) {
 		{
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
-				{ID: "call_1", Name: runtimetools.DelegateTaskName},
+				{ID: "call_1", Name: "delegate_task"},
 			},
 		},
 		delegated,
-		{Role: conversation.RoleTool, ToolCallID: "call_1", ToolName: runtimetools.DelegateTaskName,
+		{Role: conversation.RoleTool, ToolCallID: "call_1", ToolName: "delegate_task",
 			Content: "the account"},
 		{Role: conversation.RoleAssistant, Content: "Done."},
 	}
@@ -492,10 +490,10 @@ func TestDelegate_SeveralLookupsInOneReplyRunTogether(t *testing.T) {
 		{
 			ModelIdentifier: "test-model",
 			ToolCalls: []llmports.ToolCall{
-				{ID: "call_a", Name: runtimetools.DelegateTaskName, Arguments: map[string]any{
+				{ID: "call_a", Name: "delegate_task", Arguments: map[string]any{
 					"agentId": billing.ID.String(), "task": "Which invoices are overdue?",
 				}},
-				{ID: "call_b", Name: runtimetools.DelegateTaskName, Arguments: map[string]any{
+				{ID: "call_b", Name: "delegate_task", Arguments: map[string]any{
 					"agentId": compliance.ID.String(), "task": "Which medical cards lapse?",
 				}},
 			},

@@ -361,8 +361,8 @@ func TestCreateInvoice_PreviewsEachDraftAndOnlyAPersonCreatesThem(t *testing.T) 
 	tool := invoicelifecycletools.NewCreateInvoiceTool(fake)
 	shipmentID := pulid.MustNew("shp_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamShipmentIDs:             []any{shipmentID.String()},
-		invoicelifecycletools.ParamOffCycleNote: "Customer asked for this load on its own",
+		toolparams.ParamShipmentIDs:               []any{shipmentID.String()},
+		invoicelifecycletools.ParamOffCycleReason: "Customer asked for this load on its own",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -494,9 +494,9 @@ func TestVoidInvoice_PreviewsADraftVoidAndAPostedReversal(t *testing.T) {
 	}
 	tool := invoicelifecycletools.NewVoidInvoiceTool(fake)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamInvoiceID:                  before.ID.String(),
-		toolparams.ParamReason:                     "Billed the wrong customer",
-		invoicelifecycletools.ParamVoidDisposition: string(invoice.VoidDispositionRebill),
+		toolparams.ParamInvoiceID:              before.ID.String(),
+		toolparams.ParamReason:                 "Billed the wrong customer",
+		invoicelifecycletools.ParamDisposition: string(invoice.VoidDispositionRebill),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

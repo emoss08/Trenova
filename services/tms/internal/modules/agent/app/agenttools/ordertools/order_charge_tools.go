@@ -210,7 +210,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 			"order_remove_charge takes it off until it is invoiced.",
 		map[string]any{
 			toolparams.ParamOrderID: orderIDProperty("The order"),
-			changepreview.FieldDescription: toolparams.StringProperty(
+			toolparams.ParamDescription: toolparams.StringProperty(
 				"What the charge is for, as the invoice "+
 					"line should read.",
 				maxOrderChargeText,
@@ -222,7 +222,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 				"How the charge is split among payers.",
 			),
 		},
-		toolparams.ParamOrderID, changepreview.FieldDescription, toolparams.ParamAmount,
+		toolparams.ParamOrderID, toolparams.ParamDescription, toolparams.ParamAmount,
 	), toolspec.ReceivablePlan[*orderservice.AddChargeRequest, *orderservice.ChargePlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*orderservice.AddChargeRequest, error) {
 			orderID, err := toolparams.RequirePulid(params.Params, toolparams.ParamOrderID)
@@ -231,7 +231,7 @@ func NewAddOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentTool {
 			}
 			description, err := toolparams.RequireBoundedText(
 				params.Params,
-				changepreview.FieldDescription,
+				toolparams.ParamDescription,
 				maxOrderChargeText,
 			)
 			if err != nil {
@@ -346,7 +346,7 @@ func (r *chargeRef) updateRequest(
 		Amount:      current.Amount,
 		Version:     current.Version,
 	}
-	if text, textErr := toolparams.OptionalBoundedText(r.params, changepreview.FieldDescription,
+	if text, textErr := toolparams.OptionalBoundedText(r.params, toolparams.ParamDescription,
 		maxOrderChargeText); textErr != nil {
 		return nil, textErr
 	} else if text != nil {
@@ -412,7 +412,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentToo
 		map[string]any{
 			toolparams.ParamOrderID: orderIDProperty("The order"),
 			paramChargeID:           chargeIDProperty(),
-			changepreview.FieldDescription: toolparams.StringProperty(
+			toolparams.ParamDescription: toolparams.StringProperty(
 				"The new description, in full.",
 				maxOrderChargeText,
 			),
@@ -438,7 +438,7 @@ func NewUpdateOrderChargeTool(charges orderChargeKeeper) agenttoolports.AgentToo
 				}
 				if !toolparams.SendsAny(
 					params.Params,
-					changepreview.FieldDescription,
+					toolparams.ParamDescription,
 					toolparams.ParamAmount,
 					allocationparams.ParamAllocations,
 				) {

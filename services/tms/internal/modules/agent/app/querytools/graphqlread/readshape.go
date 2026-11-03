@@ -41,8 +41,8 @@ func (r *Read) PagedInput() string {
 		}
 		var first, after bool
 		for _, field := range Inputs[variable.Type] {
-			first = first || (field.Name == InputFirst && field.Type == TypeInt)
-			after = after || (field.Name == InputAfter && field.Type == TypeString)
+			first = first || (field.Name == FieldFirst && field.Type == TypeInt)
+			after = after || (field.Name == querytool.ParamAfter && field.Type == TypeString)
 		}
 		if first && after {
 			return variable.Name
@@ -57,8 +57,8 @@ func (r *Read) PagedInput() string {
 func (r *Read) PagesByCursor() bool {
 	var first, after bool
 	for _, variable := range r.Variables {
-		first = first || (variable.Name == InputFirst && variable.Type == TypeInt)
-		after = after || (variable.Name == InputAfter && variable.Type == TypeString)
+		first = first || (variable.Name == FieldFirst && variable.Type == TypeInt)
+		after = after || (variable.Name == querytool.ParamAfter && variable.Type == TypeString)
 	}
 
 	return first && after

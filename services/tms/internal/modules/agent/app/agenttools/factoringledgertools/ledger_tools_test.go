@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -222,10 +223,10 @@ func TestRecordFactoringFunding_PreviewsTheJournalAndRunsOnlyWhenApproved(t *tes
 	ledger := newFakeLedger()
 	tool := NewRecordFactoringFundingTool(ledger, nil)
 	params := fundingParams(ledger, map[string]any{
-		paramItemID:  ledger.item.ID.String(),
-		paramOutcome: string(factoringledger.FundingOutcomeFunded),
-		paramAdvance: "880.00",
-		paramFee:     "25",
+		toolparams.ParamItemID: ledger.item.ID.String(),
+		paramOutcome:           string(factoringledger.FundingOutcomeFunded),
+		paramAdvance:           "880.00",
+		paramFee:               "25",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -268,13 +269,13 @@ func TestRecordFactoringFunding_RefusesBadItems(t *testing.T) {
 	cases := map[string][]any{
 		"no items": {},
 		"unknown outcome": {
-			map[string]any{paramItemID: ledger.item.ID.String(), paramOutcome: "Paid"},
+			map[string]any{toolparams.ParamItemID: ledger.item.ID.String(), paramOutcome: "Paid"},
 		},
 		"negative advance": {
 			map[string]any{
-				paramItemID:  ledger.item.ID.String(),
-				paramOutcome: "Funded",
-				paramAdvance: "-1",
+				toolparams.ParamItemID: ledger.item.ID.String(),
+				paramOutcome:           "Funded",
+				paramAdvance:           "-1",
 			},
 		},
 		"not an object": {"funded"},
@@ -292,13 +293,13 @@ func TestRecordFactoringChargeback_NeedsAReason(t *testing.T) {
 	tool := NewRecordFactoringChargebackTool(ledger, nil)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		paramSubmissionID:         ledger.sub.ID.String(),
-		paramItemID:               ledger.item.ID.String(),
+		toolparams.ParamItemID:    ledger.item.ID.String(),
 		factoringkit.ParamVersion: float64(ledger.sub.Version),
-		paramOccurred:             "2026-10-20",
+		paramOccurredOn:           "2026-10-20",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
-	params.Params[factoringkit.ParamReason] = "Customer filed for bankruptcy"
+	params.Params[toolparams.ParamReason] = "Customer filed for bankruptcy"
 	params.Params[paramCash] = "930.00"
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -319,9 +320,9 @@ func TestReleaseFactoringReserve_SaysWhenNothingIsBooked(t *testing.T) {
 	tool := NewReleaseFactoringReserveTool(ledger, nil)
 	params := agenttoolstest.PersonCallParams(map[string]any{
 		paramSubmissionID:         ledger.sub.ID.String(),
-		paramItemID:               ledger.item.ID.String(),
+		toolparams.ParamItemID:    ledger.item.ID.String(),
 		factoringkit.ParamVersion: float64(ledger.sub.Version),
-		paramOccurred:             "2026-10-20",
+		paramOccurredOn:           "2026-10-20",
 	})
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)

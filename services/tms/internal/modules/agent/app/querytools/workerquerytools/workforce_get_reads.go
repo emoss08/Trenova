@@ -16,11 +16,6 @@ import (
 )
 
 const (
-	toolWorkerGet           = "worker_get"
-	ToolWorkerGetCredential = "worker_get_credential"
-	toolWorkerGetHOS        = "worker_get_hos"
-	toolWorkerGetDOTDraw    = "worker_get_dot_random_draw"
-
 	paramCredentialID = "credentialId" //nolint:gosec // G101: a parameter name, not a credential
 	paramDrawID       = "drawId"
 	dutyStatusUnknown = "Unknown"
@@ -64,7 +59,7 @@ const (
 // GetSpec reads one worker through the Desk's worker card.
 func GetSpec() readspec.Get {
 	return readspec.Get{
-		Name:      toolWorkerGet,
+		Name:      "worker_get",
 		Entity:    fieldWorker,
 		Resource:  permission.ResourceWorker,
 		Summary:   workerGetSummary,
@@ -79,7 +74,7 @@ func GetSpec() readspec.Get {
 // Confidential.
 func CredentialGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:      ToolWorkerGetCredential,
+		Name:      "worker_get_credential",
 		Entity:    "worker credential",
 		Resource:  permission.ResourceWorkerCredential,
 		Summary:   workerCredentialGetSummary,
@@ -92,7 +87,7 @@ func CredentialGetSpec() readspec.Get {
 // as the random testing page reads it.
 func DOTRandomDrawGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:        toolWorkerGetDOTDraw,
+		Name:        "worker_get_dot_random_draw",
 		Entity:      "random testing round",
 		SearchTerms: []string{"who was selected", "selected drivers", "draw results"},
 		Resource:    permission.ResourceDOTRandomPool,
@@ -107,7 +102,7 @@ func DOTRandomDrawGetSpec() readspec.Get {
 // in minutes, with a stale reading or no reading at all named as unknown.
 func HOSGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:   toolWorkerGetHOS,
+		Name:   "worker_get_hos",
 		Entity: querytool.EntityDriver,
 		SearchTerms: []string{
 			"hours of service", "hos", "hours left", "drive time", "duty status",

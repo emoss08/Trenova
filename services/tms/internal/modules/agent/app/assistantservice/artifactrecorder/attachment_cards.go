@@ -1,7 +1,6 @@
 package artifactrecorder
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -20,7 +19,7 @@ func (r *Recorder) AttachedExtraction(documentID pulid.ID) *assistantartifact.Ar
 	read, ok := r.reads.Runtime.ReadRecordWith(
 		r.ctx,
 		r.reader,
-		artifactpayload.ToolGetShipmentDraft,
+		"intake_get_draft",
 		documentID.String(),
 	)
 	if !ok {

@@ -11,10 +11,8 @@ import (
 )
 
 const (
-	FieldFactoringCompany = "factoringCompanyId"
-	ParamVersion          = "version"
-	ParamFactorID         = "factoringCompanyId"
-	ParamReason           = "reason"
+	ParamFactoringCompanyID = "factoringCompanyId"
+	ParamVersion            = "version"
 )
 
 type PolicySpec struct {

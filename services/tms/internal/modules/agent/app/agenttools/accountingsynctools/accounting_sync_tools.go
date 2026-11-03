@@ -36,25 +36,17 @@ const paramSyncRecordID = "syncRecordId"
 
 const ParamSyncRecordIDs = "syncRecordIds"
 
-const paramSyncErrorCategories = "errorCategories"
+const paramErrorCategories = "errorCategories"
 
-const paramSyncReason = "reason"
+const paramFrom = "from"
 
-const paramBackfillFrom = "from"
+const paramTo = "to"
 
-const paramBackfillTo = "to"
-
-const paramBackfillTypes = "documentTypes"
+const paramDocumentTypes = "documentTypes"
 
 const maxSyncRetryIDs = 50
 
 const maxSyncReasonRunes = 500
-
-const toolGetSyncRecord = "accounting_get_sync_record"
-
-const toolListSyncRecords = "accounting_list_sync_records"
-
-const toolGetSyncStatus = "accounting_get_connection"
 
 const secondsInOneDay = int64(24 * time.Hour / time.Second)
 
@@ -66,9 +58,13 @@ func SyncDocumentLabel(record *accountingsync.AccountingSyncRecord) string {
 }
 
 func syncReasonFrom(params map[string]any, why string) (string, error) {
-	raw, err := toolparams.RequireString(params, paramSyncReason)
+	raw, err := toolparams.RequireString(params, toolparams.ParamReason)
 	if err != nil {
-		return "", errortypes.NewValidationError(paramSyncReason, errortypes.ErrRequired, why)
+		return "", errortypes.NewValidationError(
+			toolparams.ParamReason,
+			errortypes.ErrRequired,
+			why,
+		)
 	}
 	return stringutils.TruncateRunes(
 		stringutils.OneLine(raw, maxSyncReasonRunes),
@@ -170,9 +166,9 @@ func (t *RetryAccountingSyncTool) Name() string { return "accounting_retry_sync_
 
 func (t *RetryAccountingSyncTool) Recipe() []string {
 	return []string{
-		toolGetSyncStatus,
-		toolListSyncRecords,
-		toolGetSyncRecord,
+		"accounting_get_connection",
+		"accounting_list_sync_records",
+		"accounting_get_sync_record",
 		"accounting_retry_sync_record",
 	}
 }
@@ -195,12 +191,12 @@ func (t *RetryAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *RetryAccountingSyncTool) Prerequisites() []string {
-	return []string{toolListSyncRecords, toolGetSyncRecord}
+	return []string{"accounting_list_sync_records", "accounting_get_sync_record"}
 }
 
 func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
+		accountingtools.ParamSystem: accountingtools.SystemSchema(),
 		ParamSyncRecordIDs: toolschema.KeepEmpty(toolschema.RecordSubset(
 			permission.ResourceAccountingSync.String(),
 			agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
@@ -212,12 +208,12 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 				maxSyncRetryIDs,
 			), recordkind.AccountingSyncRecord),
 		)),
-		paramSyncErrorCategories: jsonschemautils.DescribedArray(
+		paramErrorCategories: jsonschemautils.DescribedArray(
 			"Retry every retryable record that last failed for one of these reasons.",
 			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
-	}, accountingtools.ParamAccountingSystem)
+	}, accountingtools.ParamSystem)
 }
 
 func (t *RetryAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
@@ -251,7 +247,7 @@ func (t *RetryAccountingSyncTool) plan(
 	}
 	categories, err := syncEnums(
 		params.Params,
-		paramSyncErrorCategories,
+		paramErrorCategories,
 		accountingsync.SyncErrorCategory.IsValid,
 	)
 	if err != nil {
@@ -341,7 +337,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 	}
 	categories, err := syncEnums(
 		params.Params,
-		paramSyncErrorCategories,
+		paramErrorCategories,
 		accountingsync.SyncErrorCategory.IsValid,
 	)
 	if err != nil {
@@ -462,7 +458,7 @@ func (t *SkipAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *SkipAccountingSyncTool) Prerequisites() []string {
-	return []string{toolListSyncRecords, toolGetSyncRecord}
+	return []string{"accounting_list_sync_records", "accounting_get_sync_record"}
 }
 
 func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
@@ -472,11 +468,11 @@ func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
 				"accounting_get_sync_record.",
 			recordkind.AccountingSyncRecord,
 		),
-		paramSyncReason: jsonschemautils.Text(
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the document stays out of the books, in one sentence a bookkeeper " +
 				"would accept.",
 		),
-	}, paramSyncRecordID, paramSyncReason)
+	}, paramSyncRecordID, toolparams.ParamReason)
 }
 
 func (t *SkipAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
@@ -584,7 +580,7 @@ func (t *redateAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *redateAccountingSyncTool) Prerequisites() []string {
-	return []string{toolListSyncRecords, toolGetSyncRecord}
+	return []string{"accounting_list_sync_records", "accounting_get_sync_record"}
 }
 
 func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
@@ -688,16 +684,16 @@ func (t *PauseAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *PauseAccountingSyncTool) Prerequisites() []string {
-	return []string{toolGetSyncStatus}
+	return []string{"accounting_get_connection"}
 }
 
 func (t *PauseAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
-		paramSyncReason: jsonschemautils.Text(
+		accountingtools.ParamSystem: accountingtools.SystemSchema(),
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why sending is paused and what would let it resume, in one sentence.",
 		),
-	}, accountingtools.ParamAccountingSystem, paramSyncReason)
+	}, accountingtools.ParamSystem, toolparams.ParamReason)
 }
 
 func (t *PauseAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
@@ -808,13 +804,13 @@ func (t *ResumeAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *ResumeAccountingSyncTool) Prerequisites() []string {
-	return []string{toolGetSyncStatus}
+	return []string{"accounting_get_connection"}
 }
 
 func (t *ResumeAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(
-		map[string]any{accountingtools.ParamAccountingSystem: accountingtools.SystemSchema()},
-		accountingtools.ParamAccountingSystem,
+		map[string]any{accountingtools.ParamSystem: accountingtools.SystemSchema()},
+		accountingtools.ParamSystem,
 	)
 }
 
@@ -915,24 +911,24 @@ func (t *RequestAccountingBackfillTool) SearchTerms() []string {
 }
 
 func (t *RequestAccountingBackfillTool) Prerequisites() []string {
-	return []string{toolGetSyncStatus}
+	return []string{"accounting_get_connection"}
 }
 
 func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
-		paramBackfillFrom: agenttoolschema.Date(
+		accountingtools.ParamSystem: accountingtools.SystemSchema(),
+		paramFrom: agenttoolschema.Date(
 			"The first document date to send. Defaults to the start date.",
 		),
-		paramBackfillTo: agenttoolschema.Date(
+		paramTo: agenttoolschema.Date(
 			"The last document date to send. Defaults to the day sending began.",
 		),
-		paramBackfillTypes: jsonschemautils.DescribedArray(
+		paramDocumentTypes: jsonschemautils.DescribedArray(
 			"Only these kinds of document. Defaults to all of them.",
 			agenttoolschema.Enum("A document type.", agenttoolschema.BackfillObjectTypes),
 			len(accountingbackfill.BackfillObjectTypes()),
 		),
-	}, accountingtools.ParamAccountingSystem)
+	}, accountingtools.ParamSystem)
 }
 
 func (t *RequestAccountingBackfillTool) Policy() agenttoolports.ToolPolicy {
@@ -991,17 +987,17 @@ func (t *RequestAccountingBackfillTool) plan(
 	if err != nil {
 		return nil, err
 	}
-	from, hasFrom, err := optionalBackfillDay(params.Params, paramBackfillFrom)
+	from, hasFrom, err := optionalBackfillDay(params.Params, paramFrom)
 	if err != nil {
 		return nil, err
 	}
-	to, hasTo, err := optionalBackfillDay(params.Params, paramBackfillTo)
+	to, hasTo, err := optionalBackfillDay(params.Params, paramTo)
 	if err != nil {
 		return nil, err
 	}
 	types, err := syncEnums(
 		params.Params,
-		paramBackfillTypes,
+		paramDocumentTypes,
 		func(typ accountingsync.SyncObjectType) bool {
 			return slices.Contains(accountingbackfill.BackfillObjectTypes(), typ)
 		},
@@ -1037,7 +1033,7 @@ func (t *RequestAccountingBackfillTool) plan(
 	}
 	if rangeStart < start {
 		return nil, errortypes.NewValidationError(
-			paramBackfillFrom,
+			paramFrom,
 			errortypes.ErrInvalid,
 			"A backfill cannot reach before the start date, {0}",
 			changepreview.DayLabel(start),
@@ -1045,7 +1041,7 @@ func (t *RequestAccountingBackfillTool) plan(
 	}
 	if rangeStart > rangeEnd {
 		return nil, errortypes.NewValidationError(
-			paramBackfillTo,
+			paramTo,
 			errortypes.ErrInvalid,
 			"A backfill covers documents dated from {0} to {1}, the day sending began",
 			changepreview.DayLabel(start),

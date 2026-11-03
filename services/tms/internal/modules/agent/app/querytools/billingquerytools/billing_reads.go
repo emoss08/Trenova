@@ -9,12 +9,6 @@ import (
 )
 
 const (
-	toolInvoiceList          = "invoice_list"
-	toolInvoiceGet           = "invoice_get"
-	toolInvoiceGetAdjustment = "invoice_get_adjustment"
-	toolInvoiceListDisputes  = "invoice_list_disputes"
-	toolCustomerPaymentList  = "receivable_list_customer_payments"
-
 	entityInvoice = "invoice"
 	statusPosted  = "Posted"
 
@@ -56,15 +50,14 @@ const (
 	notePaymentStatus    = "Posted payments are read unless the call names a status."
 	paymentsQueryNote    = "Words to look for in the reference number or the memo."
 
-	fieldInvoiceStatus     = "status"
-	fieldSettlementStatus  = "settlementStatus"
-	fieldInvoiceBillType   = "billType"
-	fieldInvoiceDueDateTo  = "dueDateTo"
-	fieldInvoiceBillToName = "billToName"
-	fieldOrderID           = "orderId"
-	fieldInvoiceLines      = "lines"
-	fieldLineCount         = "lineCount"
-	fieldLinesTruncated    = "linesTruncated"
+	fieldSettlementStatus = "settlementStatus"
+	fieldBillType         = "billType"
+	fieldDueDateTo        = "dueDateTo"
+	fieldBillToName       = "billToName"
+	fieldOrderID          = "orderId"
+	fieldLines            = "lines"
+	fieldLineCount        = "lineCount"
+	fieldLinesTruncated   = "linesTruncated"
 
 	// invoiceGetBatch is how many invoices one invoice_get reads.
 	invoiceGetBatch = 50
@@ -79,34 +72,34 @@ const (
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         toolInvoiceList,
+			Name:         "invoice_list",
 			EntityPlural: pluralInvoices,
 			Summary:      invoicesSummary,
 			SearchTerms:  []string{"last invoice", "latest invoice", "overdue invoices"},
 			Resource:     permission.ResourceInvoice,
 			References: map[string]readspec.Reference{
 				querytool.ParamCustomerID: readspec.CustomerReference,
-				querytool.FieldShipmentID: {
+				querytool.ParamShipmentID: {
 					Resource: permission.ResourceShipment,
 					What:     "The shipment billed",
-					Source:   querytool.ShipmentListName,
+					Source:   "shipment_list",
 				},
 				fieldOrderID: {
 					Resource: permission.ResourceOrder,
 					What:     "The order billed",
-					Source:   querytool.ToolOrderList,
+					Source:   "order_list",
 				},
 			},
 			Notes: map[string]string{
-				fieldInvoiceStatus:     noteInvoiceStatus,
-				fieldSettlementStatus:  noteSettlementStatus,
-				fieldInvoiceBillType:   noteInvoiceBillType,
-				fieldInvoiceDueDateTo:  noteInvoiceOverdue,
-				fieldInvoiceBillToName: noteInvoiceBillTo,
+				querytool.ParamStatus: noteInvoiceStatus,
+				fieldSettlementStatus: noteSettlementStatus,
+				fieldBillType:         noteInvoiceBillType,
+				fieldDueDateTo:        noteInvoiceOverdue,
+				fieldBillToName:       noteInvoiceBillTo,
 			},
 		},
 		{
-			Name:         toolCustomerPaymentList,
+			Name:         "receivable_list_customer_payments",
 			EntityPlural: pluralCustomerPayments,
 			Summary:      customerPaymentsSummary,
 			QueryNote:    paymentsQueryNote,
@@ -114,18 +107,18 @@ func ReadSpecs() []readspec.List {
 			References: map[string]readspec.Reference{
 				querytool.ParamCustomerID: readspec.CustomerReference,
 			},
-			Defaults: map[string]any{fieldInvoiceStatus: []any{statusPosted}},
-			Notes:    map[string]string{fieldInvoiceStatus: notePaymentStatus},
+			Defaults: map[string]any{querytool.ParamStatus: []any{statusPosted}},
+			Notes:    map[string]string{querytool.ParamStatus: notePaymentStatus},
 		},
 		{
-			Name:         toolInvoiceListDisputes,
+			Name:         "invoice_list_disputes",
 			EntityPlural: pluralInvoiceDisputes,
 			Summary:      invoiceDisputesSummary,
 			Resource:     permission.ResourceInvoiceDispute,
-			References: map[string]readspec.Reference{querytool.ParamReceivableInvoices: {
+			References: map[string]readspec.Reference{querytool.ParamInvoiceIDs: {
 				Resource: permission.ResourceInvoice,
 				What:     "The invoices",
-				Source:   toolInvoiceList,
+				Source:   "invoice_list",
 			}},
 		},
 	}
@@ -135,12 +128,12 @@ func ReadSpecs() []readspec.List {
 // read per invoice.
 func InvoiceGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:        toolInvoiceGet,
+		Name:        "invoice_get",
 		Entity:      entityInvoice,
 		SearchTerms: []string{pluralInvoices},
 		Resource:    permission.ResourceInvoice,
 		Summary:     invoiceGetSummary,
-		ParamName:   querytool.ParamReceivableInvoices,
+		ParamName:   querytool.ParamInvoiceIDs,
 		IDSource:    "from invoice_list, receivable_list_open_items or the page you are on",
 		Batch:       invoiceGetBatch,
 		Shape:       countInvoiceLines,
@@ -151,7 +144,7 @@ func InvoiceGetSpec() readspec.Get {
 // InvoiceAdjustmentGetSpec reads one adjustment through the Desk's card.
 func InvoiceAdjustmentGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:      toolInvoiceGetAdjustment,
+		Name:      "invoice_get_adjustment",
 		Entity:    "invoice adjustment",
 		Resource:  permission.ResourceInvoice,
 		Kinds:     []recordkind.Kind{recordkind.InvoiceAdjustment},
@@ -165,10 +158,10 @@ func InvoiceAdjustmentGetSpec() readspec.Get {
 // of them, as the repository tool did. Lines access withholds are not
 // counted.
 func countInvoiceLines(record map[string]any, withheld map[string]struct{}, _ filtercatalog.Clock) {
-	if _, hidden := withheld[fieldInvoiceLines]; hidden {
+	if _, hidden := withheld[fieldLines]; hidden {
 		return
 	}
-	lines, _ := record[fieldInvoiceLines].([]any)
+	lines, _ := record[fieldLines].([]any)
 	record[fieldLineCount] = len(lines)
 	keepInvoiceLines(record, invoiceLinesShown)
 }
@@ -181,9 +174,9 @@ func keepInvoiceLinesEach(record map[string]any) {
 // keepInvoiceLines keeps an invoice's first lines and says whether some were
 // left out.
 func keepInvoiceLines(record map[string]any, most int) {
-	lines, _ := record[fieldInvoiceLines].([]any)
+	lines, _ := record[fieldLines].([]any)
 	if len(lines) > most {
-		record[fieldInvoiceLines] = lines[:most]
+		record[fieldLines] = lines[:most]
 		record[fieldLinesTruncated] = true
 	}
 }

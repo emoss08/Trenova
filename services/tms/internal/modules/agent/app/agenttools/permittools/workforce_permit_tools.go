@@ -29,11 +29,11 @@ const paramStateID = "stateId"
 
 const paramPermitNumber = "permitNumber"
 
-const paramPermitIssued = "issuedAt"
+const paramIssuedAt = "issuedAt"
 
 const paramPermitExpiry = workforcekit.FieldExpiresAt
 
-const paramPermitCost = "cost"
+const paramCost = "cost"
 
 const kindPermit = "permit"
 
@@ -45,9 +45,9 @@ var permitFields = []string{
 	paramStateID,
 	paramPermitNumber,
 	changepreview.FieldStatus,
-	paramPermitIssued,
+	paramIssuedAt,
 	paramPermitExpiry,
-	paramPermitCost,
+	paramCost,
 	workforcekit.FieldNotes,
 }
 
@@ -82,9 +82,9 @@ func permitFactProperties() map[string]any {
 				"records when it expires.",
 			permitStatuses,
 		),
-		paramPermitIssued: agenttoolschema.DateTime("When the permit takes effect."),
+		paramIssuedAt:     agenttoolschema.DateTime("When the permit takes effect."),
 		paramPermitExpiry: agenttoolschema.DateTime("When the permit stops covering the move."),
-		paramPermitCost: toolparams.AmountProperty(
+		paramCost: toolparams.AmountProperty(
 			"What the state charged, as a decimal string such " +
 				"as 85.00.",
 		),
@@ -119,7 +119,7 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 		key  string
 		dest **int64
 	}{
-		{paramPermitIssued, &entity.IssuedAt},
+		{paramIssuedAt, &entity.IssuedAt},
 		{paramPermitExpiry, &entity.ExpiresAt},
 	} {
 		value, timeErr := toolparams.OptionalDateTime(params, field.key)
@@ -130,7 +130,7 @@ func applyPermitFacts(entity *permit.Permit, params map[string]any) error {
 			*field.dest = value
 		}
 	}
-	if cost, costErr := workforcekit.OptionalNullDecimal(params, paramPermitCost); costErr != nil {
+	if cost, costErr := workforcekit.OptionalNullDecimal(params, paramCost); costErr != nil {
 		return costErr
 	} else if cost.Valid {
 		entity.Cost = cost

@@ -2,20 +2,9 @@ package agentextension
 
 import "slices"
 
-const (
-	ToolWebSearch       = "web_search"
-	ToolWebRead         = "web_read"
-	ToolListPortalSites = "web_list_portal_sites"
-	ToolReadPortal      = "web_read_portal"
-	ToolActOnPortal     = "web_use_portal"
-	ToolWatchWeb        = "web_watch"
-	ToolListWebWatches  = "web_list_watches"
-	ToolStopWebWatch    = "web_stop_watch"
-)
-
 // WebWatchTools are the web research tools that watch the web over time,
 // which a vendor without scheduled searches leaves out.
-var WebWatchTools = []string{ToolWatchWeb, ToolListWebWatches, ToolStopWebWatch}
+var WebWatchTools = []string{"web_watch", "web_list_watches", "web_stop_watch"}
 
 type Capability string
 
@@ -56,15 +45,15 @@ func (s CapabilitySpec) ReturnsOutsideContent(name string) bool {
 var capabilities = map[Capability]CapabilitySpec{
 	CapabilityWebResearch: {
 		Tools: []string{
-			ToolWebSearch, ToolWebRead, ToolWatchWeb, ToolListWebWatches, ToolStopWebWatch,
+			"web_search", "web_read", "web_watch", "web_list_watches", "web_stop_watch",
 		},
-		OutsideContentTools: []string{ToolWebSearch, ToolWebRead},
+		OutsideContentTools: []string{"web_search", "web_read"},
 		Unchecked:           "the web could not be checked",
 		RequestNoun:         "web requests",
 	},
 	CapabilityPortalAutomation: {
-		Tools:               []string{ToolListPortalSites, ToolReadPortal, ToolActOnPortal},
-		OutsideContentTools: []string{ToolReadPortal},
+		Tools:               []string{"web_list_portal_sites", "web_read_portal", "web_use_portal"},
+		OutsideContentTools: []string{"web_read_portal"},
 		Unchecked:           "the portal could not be checked",
 		RequestNoun:         "portal tasks",
 	},

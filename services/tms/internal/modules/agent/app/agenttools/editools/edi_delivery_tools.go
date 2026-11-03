@@ -26,11 +26,11 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-const paramEDIMessageIDs = "messageIds"
+const paramMessageIDs = "messageIds"
 
-const paramEDIMessageID = "messageId"
+const paramMessageID = "messageId"
 
-const paramEDIInboundFileIDs = "inboundFileIds"
+const paramInboundFileIDs = "inboundFileIds"
 
 const maxBulkOutcomeFailures = 3
 
@@ -151,10 +151,10 @@ func (t *RetryEDIMessageDeliveryTool) Description() string {
 
 func (t *RetryEDIMessageDeliveryTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIMessageIDs: agenttoolschema.OfKinds(ediRecordSubset("The outbound messages "+
+		paramMessageIDs: agenttoolschema.OfKinds(ediRecordSubset("The outbound messages "+
 			"to send again, by id from edi_list_messages filtered to Failed or DeadLettered. "+
 			"Never guess one."), recordkind.EDIMessage),
-	}, paramEDIMessageIDs)
+	}, paramMessageIDs)
 }
 
 func (t *RetryEDIMessageDeliveryTool) Policy() agenttoolports.ToolPolicy {
@@ -170,7 +170,7 @@ func (t *RetryEDIMessageDeliveryTool) Validate(
 	_ context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := ediRecordSet(t, params, paramEDIMessageIDs)
+	_, err := ediRecordSet(t, params, paramMessageIDs)
 
 	return err
 }
@@ -195,7 +195,7 @@ func (t *RetryEDIMessageDeliveryTool) ExecuteWithResult(
 		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
-	ids, err := ediRecordSet(t, params, paramEDIMessageIDs)
+	ids, err := ediRecordSet(t, params, paramMessageIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -237,9 +237,9 @@ func (t *ReplayEDIMessageTool) Description() string {
 
 func (t *ReplayEDIMessageTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIMessageID: agenttoolschema.KindID("The delivered outbound message, from "+
+		paramMessageID: agenttoolschema.KindID("The delivered outbound message, from "+
 			"edi_list_messages filtered to Sent. Never guess one.", recordkind.EDIMessage),
-	}, paramEDIMessageID)
+	}, paramMessageID)
 }
 
 func (t *ReplayEDIMessageTool) Policy() agenttoolports.ToolPolicy {
@@ -249,7 +249,7 @@ func (t *ReplayEDIMessageTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *ReplayEDIMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramEDIMessageID, permission.ResourceEDI)
+	return toolparams.TargetOf(params, paramMessageID, permission.ResourceEDI)
 }
 
 func (t *ReplayEDIMessageTool) request(
@@ -259,7 +259,7 @@ func (t *ReplayEDIMessageTool) request(
 		return nil, err
 	}
 
-	messageID, err := toolparams.RequirePulid(params.Params, paramEDIMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, paramMessageID)
 	if err != nil {
 		return nil, err
 	}
@@ -334,10 +334,10 @@ func (t *ReprocessEDIInboundFilesTool) Description() string {
 
 func (t *ReprocessEDIInboundFilesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIInboundFileIDs: agenttoolschema.OfKinds(ediRecordSubset("The inbound files "+
+		paramInboundFileIDs: agenttoolschema.OfKinds(ediRecordSubset("The inbound files "+
 			"to process again, by id from edi_list_inbound_files or edi_get_inbound_file. "+
 			"Never guess one."), recordkind.EDIInboundFile),
-	}, paramEDIInboundFileIDs)
+	}, paramInboundFileIDs)
 }
 
 func (t *ReprocessEDIInboundFilesTool) Policy() agenttoolports.ToolPolicy {
@@ -353,7 +353,7 @@ func (t *ReprocessEDIInboundFilesTool) Validate(
 	_ context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
+	_, err := ediRecordSet(t, params, paramInboundFileIDs)
 
 	return err
 }
@@ -378,7 +378,7 @@ func (t *ReprocessEDIInboundFilesTool) ExecuteWithResult(
 		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
-	ids, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
+	ids, err := ediRecordSet(t, params, paramInboundFileIDs)
 	if err != nil {
 		return nil, err
 	}

@@ -26,9 +26,9 @@ const paramVerificationID = "verificationId"
 
 const paramEmployerName = "employerName"
 
-const paramEmployerDOT = "employerDotNumber"
+const paramEmployerDOTNumber = "employerDotNumber"
 
-const paramEmployerMC = "employerMcNumber"
+const paramEmployerMCNumber = "employerMcNumber"
 
 const paramContactName = "contactName"
 
@@ -42,23 +42,23 @@ const paramEmployedTo = "employedTo"
 
 const paramWasDOTRegulated = "wasDotRegulated"
 
-const paramVerifyMethod = "method"
+const paramMethod = "method"
 
-const paramVerifyStatus = "status"
+const paramStatus = "status"
 
-const paramResponseAt = "responseReceivedAt"
+const paramResponseReceivedAt = "responseReceivedAt"
 
-const paramDAResponseAt = "drugAlcoholResponseReceivedAt"
+const paramDrugAlcoholResponseReceivedAt = "drugAlcoholResponseReceivedAt"
 
 const paramHadAccidents = "hadAccidents"
 
 const paramAccidentCount = "accidentCount"
 
-const paramHadDAViolations = "hadDrugAlcoholViolations"
+const paramHadDrugAlcoholViolations = "hadDrugAlcoholViolations"
 
 const paramFindings = "findings"
 
-const paramRequestMove = "action"
+const paramAction = "action"
 
 const kindVerification = "previous employer verification"
 
@@ -92,10 +92,10 @@ var verificationRequestMoves = agenttoolschema.Source(
 )
 
 var verificationFields = []string{
-	workforcekit.FieldWorkerID,
+	toolparams.ParamWorkerID,
 	paramEmployerName,
-	paramEmployerDOT,
-	paramEmployerMC,
+	paramEmployerDOTNumber,
+	paramEmployerMCNumber,
 	paramContactName,
 	paramContactPhone,
 	paramContactEmail,
@@ -103,7 +103,7 @@ var verificationFields = []string{
 	paramEmployedTo,
 	paramWasDOTRegulated,
 	changepreview.FieldStatus,
-	paramVerifyMethod,
+	paramMethod,
 	workforcekit.FieldRequestedAt,
 	"responseReceivedAt",
 	"drugAlcoholResponseReceivedAt",
@@ -111,10 +111,10 @@ var verificationFields = []string{
 	"lastFollowUpAt",
 	paramHadAccidents,
 	paramAccidentCount,
-	paramHadDAViolations,
+	paramHadDrugAlcoholViolations,
 	paramFindings,
 	workforcekit.FieldNotes,
-	workforcekit.FieldDocument,
+	workforcekit.ParamDocumentID,
 }
 
 type VerificationKeeper interface {
@@ -197,9 +197,18 @@ func verificationEmployerProperties() map[string]any {
 	return map[string]any{
 		paramEmployerName: toolparams.StringProperty("The previous employer's name.",
 			maxVerificationField),
-		paramEmployerDOT: toolparams.StringProperty("Their USDOT number.", maxRegistrationNumber),
-		paramEmployerMC:  toolparams.StringProperty("Their MC number.", maxRegistrationNumber),
-		paramContactName: toolparams.StringProperty("Who to ask there.", maxVerificationField),
+		paramEmployerDOTNumber: toolparams.StringProperty(
+			"Their USDOT number.",
+			maxRegistrationNumber,
+		),
+		paramEmployerMCNumber: toolparams.StringProperty(
+			"Their MC number.",
+			maxRegistrationNumber,
+		),
+		paramContactName: toolparams.StringProperty(
+			"Who to ask there.",
+			maxVerificationField,
+		),
 		paramContactPhone: toolparams.StringProperty(
 			"Their phone number, as the application gives "+
 				"it.",
@@ -216,7 +225,7 @@ func verificationEmployerProperties() map[string]any {
 			"Whether the job was DOT-regulated, which " +
 				"brings the drug and alcohol questions in.",
 		),
-		paramVerifyMethod: agenttoolschema.Enum("How the request goes out.",
+		paramMethod: agenttoolschema.Enum("How the request goes out.",
 			verificationMethods),
 		toolparams.ParamNote: workforcekit.NoteProperty("Anything the file should say."),
 	}
@@ -320,8 +329,8 @@ func applyVerificationEmployer(
 		limit int
 	}{
 		{paramEmployerName, &req.EmployerName, maxVerificationField},
-		{paramEmployerDOT, &req.EmployerDOTNumber, maxRegistrationNumber},
-		{paramEmployerMC, &req.EmployerMCNumber, maxRegistrationNumber},
+		{paramEmployerDOTNumber, &req.EmployerDOTNumber, maxRegistrationNumber},
+		{paramEmployerMCNumber, &req.EmployerMCNumber, maxRegistrationNumber},
 		{paramContactName, &req.ContactName, maxVerificationField},
 		{paramContactPhone, &req.ContactPhone, maxPhoneChars},
 		{paramContactEmail, &req.ContactEmail, maxVerificationField},
@@ -349,7 +358,7 @@ func applyVerificationEmployer(
 	); err != nil {
 		return err
 	}
-	if method, given, methodErr := toolparams.OptionalEnum(params, paramVerifyMethod,
+	if method, given, methodErr := toolparams.OptionalEnum(params, paramMethod,
 		verificationMethods.Values); methodErr != nil {
 		return methodErr
 	} else if given {
@@ -393,7 +402,7 @@ func applyVerificationResponse(
 	params map[string]any,
 ) error {
 	var err error
-	if status, given, statusErr := toolparams.OptionalEnum(params, paramVerifyStatus,
+	if status, given, statusErr := toolparams.OptionalEnum(params, paramStatus,
 		verificationStatuses.Values); statusErr != nil {
 		return statusErr
 	} else if given {
@@ -401,12 +410,12 @@ func applyVerificationResponse(
 	}
 	if req.ResponseReceivedAt, err = toolparams.OptionalScheduleDay(
 		params,
-		paramResponseAt,
+		paramResponseReceivedAt,
 	); err != nil {
 		return err
 	}
 	if req.DrugAlcoholResponseReceivedAt, err = toolparams.OptionalScheduleDay(params,
-		paramDAResponseAt); err != nil {
+		paramDrugAlcoholResponseReceivedAt); err != nil {
 		return err
 	}
 	if req.HadAccidents, err = toolparams.OptionalBoolPointer(
@@ -416,7 +425,7 @@ func applyVerificationResponse(
 		return err
 	}
 	if req.HadDrugAlcoholViolations, err = toolparams.OptionalBoolPointer(params,
-		paramHadDAViolations); err != nil {
+		paramHadDrugAlcoholViolations); err != nil {
 		return err
 	}
 	if req.Findings, err = toolparams.OptionalBoundedText(
@@ -426,7 +435,7 @@ func applyVerificationResponse(
 	); err != nil {
 		return err
 	}
-	if req.DocumentID, err = toolparams.OptionalID(params, workforcekit.ParamDocument); err != nil {
+	if req.DocumentID, err = toolparams.OptionalID(params, workforcekit.ParamDocumentID); err != nil {
 		return err
 	}
 	count, err := toolparams.OptionalIntInRange(params, paramAccidentCount, 0, maxAccidents)
@@ -443,10 +452,12 @@ func applyVerificationResponse(
 func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.AgentTool {
 	properties := verificationEmployerProperties()
 	properties[paramVerificationID] = verificationIDProperty()
-	properties[paramVerifyStatus] = agenttoolschema.Enum("Where the request stands.",
+	properties[paramStatus] = agenttoolschema.Enum("Where the request stands.",
 		verificationStatuses)
-	properties[paramResponseAt] = agenttoolschema.Date("When the employer's answer came back.")
-	properties[paramDAResponseAt] = agenttoolschema.Date(
+	properties[paramResponseReceivedAt] = agenttoolschema.Date(
+		"When the employer's answer came back.",
+	)
+	properties[paramDrugAlcoholResponseReceivedAt] = agenttoolschema.Date(
 		"When their drug and alcohol answer came " +
 			"back.",
 	)
@@ -456,7 +467,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		0,
 		maxAccidents,
 	)
-	properties[paramHadDAViolations] = toolparams.BooleanProperty(
+	properties[paramHadDrugAlcoholViolations] = toolparams.BooleanProperty(
 		"Whether they reported a drug or " +
 			"alcohol violation.",
 	)
@@ -464,7 +475,7 @@ func newUpdateEmploymentVerificationTool(dqf VerificationKeeper) agenttoolports.
 		"What the employer's answer says, from the " +
 			"document they sent.",
 	)
-	properties[workforcekit.ParamDocument] = workforcekit.DocumentProperty()
+	properties[workforcekit.ParamDocumentID] = workforcekit.DocumentProperty()
 	spec := workforcekit.Targeting(workforcekit.WithSchema(workforcekit.Spec(
 		"worker_update_employment_verification",
 		"Correct a previous employer on the qualification file, or record their answer. "+
@@ -555,9 +566,9 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 		permission.OpUpdate,
 	), map[string]any{
 		paramVerificationID: verificationIDProperty(),
-		paramRequestMove: agenttoolschema.Enum("Requested or FollowUp.",
+		paramAction: agenttoolschema.Enum("Requested or FollowUp.",
 			verificationRequestMoves),
-	}, paramVerificationID, paramRequestMove), paramVerificationID,
+	}, paramVerificationID, paramAction), paramVerificationID,
 		permission.ResourceQualification)
 	spec.Reversible = false
 
@@ -571,7 +582,7 @@ func newLogEmploymentVerificationRequestTool(dqf VerificationKeeper) agenttoolpo
 			if err != nil {
 				return nil, err
 			}
-			move, err := toolparams.RequireEnum(params.Params, paramRequestMove,
+			move, err := toolparams.RequireEnum(params.Params, paramAction,
 				verificationRequestMoves.Values)
 			if err != nil {
 				return nil, err

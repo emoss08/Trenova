@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,8 +30,8 @@ func TestAfterExternalContentOnlyLowersTheTier(t *testing.T) {
 func TestReadsExternalContent_NamesTheWebAndPastedPartnerText(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, ReadsExternalContent(agentextension.ToolWebSearch))
-	assert.True(t, ReadsExternalContent(agentextension.ToolWebRead))
+	assert.True(t, ReadsExternalContent("web_search"))
+	assert.True(t, ReadsExternalContent("web_read"))
 	assert.True(t, ReadsExternalContent("edi_inspect_x12"))
 	assert.True(t, ReadsExternalContent("edi_draft_connection"),
 		"a partner's implementation guide is their text too")

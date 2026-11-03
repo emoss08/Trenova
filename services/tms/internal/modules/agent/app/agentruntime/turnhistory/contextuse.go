@@ -3,7 +3,6 @@ package turnhistory
 import (
 	"encoding/json"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationreplay"
@@ -20,9 +19,9 @@ const CompactionKeepTurns = 2
 // fileTools are the tools whose results are the text of a document the person
 // attached, which the context meter counts as files rather than tool results.
 var fileTools = map[string]struct{}{
-	"document_get":                         {},
-	"get_document":                         {},
-	agentdefinition.CoreToolReadAttachment: {},
+	"document_get":          {},
+	"get_document":          {},
+	"agent_read_attachment": {},
 }
 
 // ContextRequest is what a conversation's next turn would send, for

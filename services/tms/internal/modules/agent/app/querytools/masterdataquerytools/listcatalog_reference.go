@@ -90,7 +90,7 @@ func NewListEquipmentTypesTool(
 	})
 
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolListEquipmentTypes,
+		Name:         "equipment_list_types",
 		Row:          codedRow{},
 		EntityPlural: "equipment types",
 		Summary:      equipmentTypesSummary,
@@ -125,7 +125,7 @@ func NewListEquipmentTypesTool(
 
 func NewListFleetCodesTool(repo fleetcodeports.FleetCodeRepository) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolListFleetCodes,
+		Name:         "masterdata_list_fleet_codes",
 		Row:          codedRow{},
 		EntityPlural: "fleet codes",
 		Summary:      fleetCodesSummary,
@@ -157,7 +157,7 @@ func NewListServiceTypesTool(
 	repo servicetypeports.ServiceTypeRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolMasterdataListServiceTypes,
+		Name:         "masterdata_list_service_types",
 		Row:          codedRow{},
 		EntityPlural: "service types",
 		Summary:      serviceTypesSummary,
@@ -189,7 +189,7 @@ func NewListShipmentTypesTool(
 	repo shipmenttypeports.ShipmentTypeRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListShipmentTypes,
+		Name:         "masterdata_list_shipment_types",
 		Row:          codedRow{},
 		EntityPlural: "shipment types",
 		Summary:      shipmentTypesSummary,
@@ -230,7 +230,7 @@ type commodityRow struct {
 
 func NewListCommoditiesTool(repo commodityports.CommodityRepository) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListCommodities,
+		Name:         "masterdata_list_commodities",
 		Row:          commodityRow{},
 		EntityPlural: pluralCommodities,
 		Summary:      commoditiesSummary,
@@ -295,7 +295,7 @@ func NewListHazardousMaterialsTool(
 	repo hazardousmaterialports.HazardousMaterialRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListHazardousMaterials,
+		Name:         "masterdata_list_hazardous_materials",
 		Row:          hazmatRow{},
 		EntityPlural: "hazardous materials",
 		Summary:      hazardousMaterialsSummary,
@@ -358,7 +358,7 @@ func NewListAccessorialChargesTool(
 	repo accessorialchargeports.AccessorialChargeRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListAccessorialCharges,
+		Name:         "masterdata_list_accessorial_charges",
 		Row:          accessorialRow{},
 		EntityPlural: "accessorial charges",
 		Summary:      accessorialChargesSummary,
@@ -407,7 +407,7 @@ func NewListDocumentTypesTool(
 	repo documenttypeports.DocumentTypeRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListDocumentTypes,
+		Name:         "document_list_types",
 		Row:          codedRow{},
 		EntityPlural: "document types",
 		Summary:      documentTypesSummary,
@@ -449,7 +449,7 @@ func NewListLocationCategoriesTool(
 	repo locationcategoryports.LocationCategoryRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolListLocationCategories,
+		Name:         "location_list_categories",
 		Row:          codedRow{},
 		EntityPlural: "location categories",
 		Summary:      locationCategoriesSummary,
@@ -505,7 +505,7 @@ func NewListHoldReasonsTool(
 	repo holdreasonports.HoldReasonRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListHoldReasons,
+		Name:         "masterdata_list_hold_reasons",
 		Row:          holdReasonRow{},
 		EntityPlural: "hold reasons",
 		Summary:      holdReasonsSummary,

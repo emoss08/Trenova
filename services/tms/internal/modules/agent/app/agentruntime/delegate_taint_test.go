@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -25,7 +24,7 @@ func taintOf(marks ...agent.TaintMark) *agent.RunTaint {
 
 func delegatingTurnScript(delegateID string) *scriptedCompletion {
 	return &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn(runtimetools.DelegateTaskName, map[string]any{
+		runtimetest.ToolTurn("delegate_task", map[string]any{
 			"agentId": delegateID,
 			"task":    "Create the report and return its id.",
 		}),

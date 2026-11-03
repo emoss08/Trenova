@@ -505,7 +505,7 @@ func NewAssignBillerTool(billing billingqueuepreview.BillingQueueDecider) agentt
 	return &AssignBillerTool{billing: billing}
 }
 
-func (t *AssignBillerTool) Name() string { return toolAssignBiller }
+func (t *AssignBillerTool) Name() string { return "billing_assign_biller" }
 
 func (t *AssignBillerTool) SearchTerms() []string {
 	return []string{"biller", "reviewer"}

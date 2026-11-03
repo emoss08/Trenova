@@ -5,10 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
-const (
-	ToolGetBillingQueueItem = "billing_get_queue_item"
-)
-
 const FieldReviewCompletedAt = "reviewCompletedAt"
 
 const FieldReviewStartedAt = "reviewStartedAt"

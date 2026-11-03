@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/extractionartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -162,7 +161,7 @@ func (s *Service) WaitOnUnreadFile(
 	if run == nil || run.Delegated || run.ThreadID.IsNil() || run.Actor == nil ||
 		observation == nil ||
 		observation.Failed ||
-		observation.Call.Name != agentdefinition.CoreToolReadAttachment {
+		observation.Call.Name != "agent_read_attachment" {
 		return
 	}
 	read, ok := artifactpayload.ToJSONDocument(observation.Data)

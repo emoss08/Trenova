@@ -313,10 +313,10 @@ func (t *VoidRateConfirmationTool) ParamSchema() map[string]any {
 			permission.ResourceRateConfirmation,
 			"The revision to void, from rate_list_confirmations.",
 		),
-		changepreview.FieldReason: jsonschemautils.Text(
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the agreement is withdrawn, in a sentence a person can check.",
 		),
-	}, fieldRateConfirmationID, changepreview.FieldReason)
+	}, fieldRateConfirmationID, toolparams.ParamReason)
 }
 
 func (t *VoidRateConfirmationTool) Policy() agenttoolports.ToolPolicy {
@@ -394,7 +394,7 @@ func (t *VoidRateConfirmationTool) arguments(
 	if err != nil {
 		return pulid.Nil, "", err
 	}
-	reason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return pulid.Nil, "", err
 	}

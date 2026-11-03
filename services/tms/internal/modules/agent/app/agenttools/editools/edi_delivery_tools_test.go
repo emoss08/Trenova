@@ -139,7 +139,7 @@ func TestEDIDeliveryTools_ArePersonOnlyProposals(t *testing.T) {
 
 	properties := NewRetryEDIMessageDeliveryTool(nil).ParamSchema()["properties"].(map[string]any)
 	assert.Equal(t, permission.ResourceEDI.String(),
-		toolschema.SubsetResource(properties[paramEDIMessageIDs].(map[string]any)),
+		toolschema.SubsetResource(properties[paramMessageIDs].(map[string]any)),
 		"a person approving may untick messages")
 }
 
@@ -154,7 +154,7 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 	}
 	tool := NewRetryEDIMessageDeliveryTool(deliveries).(*RetryEDIMessageDeliveryTool)
 	args := map[string]any{
-		paramEDIMessageIDs: []any{failed.ID.String(), sent.ID.String(), failed.ID.String()},
+		paramMessageIDs: []any{failed.ID.String(), sent.ID.String(), failed.ID.String()},
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -204,7 +204,7 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 	}
 	tool := NewReplayEDIMessageTool(deliveries).(*ReplayEDIMessageTool)
 
-	target, ok := tool.Target(map[string]any{paramEDIMessageID: sent.ID.String()})
+	target, ok := tool.Target(map[string]any{paramMessageID: sent.ID.String()})
 	require.True(t, ok)
 	assert.Equal(
 		t,
@@ -212,7 +212,7 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 		target,
 	)
 
-	args := map[string]any{paramEDIMessageID: sent.ID.String()}
+	args := map[string]any{paramMessageID: sent.ID.String()}
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		deliveries.guard,
@@ -225,7 +225,7 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 	assert.Equal(t, int64(3), *change.Version)
 	assert.Equal(t, "Queued", agenttoolstest.FieldByPath(t, change, "deliveryStatus").After)
 
-	refused := map[string]any{paramEDIMessageID: failed.ID.String()}
+	refused := map[string]any{paramMessageID: failed.ID.String()}
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(refused)))
 
 	require.ErrorIs(
@@ -297,7 +297,7 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 	}
 	tool := NewReprocessEDIInboundFilesTool(files).(*ReprocessEDIInboundFilesTool)
 	args := map[string]any{
-		paramEDIInboundFileIDs: []any{quarantined.ID.String(), processed.ID.String()},
+		paramInboundFileIDs: []any{quarantined.ID.String(), processed.ID.String()},
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -338,7 +338,7 @@ func TestEDIBulkTools_RefuseMoreThanTheServiceTakes(t *testing.T) {
 	tool := NewRetryEDIMessageDeliveryTool(&fakeDeliveries{})
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
-		agenttoolstest.AgentParamsFor(map[string]any{paramEDIMessageIDs: ids}),
+		agenttoolstest.AgentParamsFor(map[string]any{paramMessageIDs: ids}),
 	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "split it into smaller calls")

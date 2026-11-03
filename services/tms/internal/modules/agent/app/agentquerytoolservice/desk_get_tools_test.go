@@ -21,7 +21,7 @@ import (
 func TestGetWorkerCredential_NeverReadsTheNumber(t *testing.T) {
 	t.Parallel()
 
-	read := graphqlread.Reads[workerquerytools.ToolWorkerGetCredential]
+	read := graphqlread.Reads["worker_get_credential"]
 	for _, field := range read.Fields {
 		if field.Name == "number" {
 			assert.False(t, field.Selected, "the credential number is never selected")

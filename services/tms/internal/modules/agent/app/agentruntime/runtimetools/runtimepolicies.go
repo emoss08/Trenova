@@ -1,7 +1,6 @@
 package runtimetools
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -19,7 +18,7 @@ type runtimePolicySpec struct {
 
 var runtimePolicySpecs = []runtimePolicySpec{
 	{
-		name:      FindToolsName,
+		name:      "find_tools",
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
@@ -28,7 +27,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"catalog and changes nothing.",
 	},
 	{
-		name:      askuser.Name,
+		name:      "ask_user",
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
@@ -37,7 +36,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"or sent.",
 	},
 	{
-		name:      PublishArtifactName,
+		name:      "publish_artifact",
 		operation: permission.OpCreate,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
@@ -46,7 +45,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"only they read it.",
 	},
 	{
-		name:      ShowBoardName,
+		name:      "show_board",
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
@@ -56,7 +55,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"access when the board is opened.",
 	},
 	{
-		name:      RequestDecisionName,
+		name:      "request_decision",
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressPersonal,
@@ -65,7 +64,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"proposal already waiting on them; it decides nothing and changes no record.",
 	},
 	{
-		name:      WithdrawProposalName,
+		name:      "withdraw_proposal",
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
@@ -74,7 +73,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"anyone has seen it; it changes no record and only narrows what the person is asked.",
 	},
 	{
-		name:      NamePlanName,
+		name:      "name_plan",
 		operation: permission.OpRead,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,
@@ -84,7 +83,7 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"previewed changes the approval rests on.",
 	},
 	{
-		name:      DelegateTaskName,
+		name:      "delegate_task",
 		operation: permission.OpCreate,
 		scope:     agenttooltrust.ToolScopeRun,
 		egress:    agent.EgressNone,

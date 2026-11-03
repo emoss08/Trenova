@@ -23,7 +23,7 @@ import (
 
 func pageRead(callID string, arguments, data map[string]any) agentruntimeports.ToolObservation {
 	return agentruntimeports.ToolObservation{
-		Call: llmports.ToolCall{ID: callID, Name: assistanttest.PagedTool, Arguments: arguments},
+		Call: llmports.ToolCall{ID: callID, Name: "billing_list_queue_items", Arguments: arguments},
 		Data: data,
 	}
 }
@@ -318,7 +318,7 @@ func TestArtifactRecorder_AReportRunNamesTheAgentThatRanIt(t *testing.T) {
 	_, err := recorder.Observe(agentruntimeports.ToolObservation{
 		Call: llmports.ToolCall{
 			ID:        "call_run",
-			Name:      toolartifacts.ToolRunReport,
+			Name:      "report_run",
 			Arguments: map[string]any{"reportKey": "revenue-by-customer"},
 		},
 		Data: map[string]any{

@@ -173,7 +173,7 @@ func ExtractionArtifact(
 		"needsLook":      needs,
 		"missing":        missing,
 		"missingFields":  missingFields(missing),
-		"tool":           artifactpayload.ToolGetShipmentDraft,
+		"tool":           "intake_get_draft",
 	}
 	if attached := typeutils.StringOfTrimmed(draft["attachedShipmentId"]); attached != "" {
 		payload["attachedShipmentId"] = attached
@@ -197,7 +197,7 @@ func ExtractionArtifact(
 func ExtractionLineageKey(documentID string) string {
 	return assistantartifact.LineageKeyFor(
 		assistantartifact.KindExtraction,
-		artifactpayload.ToolGetShipmentDraft,
+		"intake_get_draft",
 		map[string]any{DraftDocumentIDParam: documentID},
 	)
 }

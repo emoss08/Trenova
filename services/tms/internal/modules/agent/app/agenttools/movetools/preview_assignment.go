@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -28,7 +29,7 @@ type assignmentChecker interface {
 var assignmentFields = []string{
 	changepreview.FieldPrimaryWorkerID,
 	changepreview.FieldSecondaryWorkerID,
-	changepreview.FieldTractorID,
+	toolparams.ParamTractorID,
 	changepreview.FieldTrailerID,
 	changepreview.FieldStatus,
 }
@@ -36,14 +37,14 @@ var assignmentFields = []string{
 var assignmentRefs = map[string]permission.Resource{
 	changepreview.FieldPrimaryWorkerID:   permission.ResourceWorker,
 	changepreview.FieldSecondaryWorkerID: permission.ResourceWorker,
-	changepreview.FieldTractorID:         permission.ResourceTractor,
+	toolparams.ParamTractorID:            permission.ResourceTractor,
 	changepreview.FieldTrailerID:         permission.ResourceTrailer,
 }
 
 var assignmentLabels = map[string]string{
 	changepreview.FieldPrimaryWorkerID:   "Driver",
 	changepreview.FieldSecondaryWorkerID: "Second driver",
-	changepreview.FieldTractorID:         "Tractor",
+	toolparams.ParamTractorID:            "Tractor",
 	changepreview.FieldTrailerID:         "Trailer",
 }
 

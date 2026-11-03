@@ -3,7 +3,6 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -43,7 +42,7 @@ func runAskEnd(
 
 func askTurn(question string) *llmports.ChatCompletionResult {
 	return runtimetest.ToolTurn(
-		askuser.Name,
+		"ask_user",
 		map[string]any{"question": question, "allowOther": true},
 	)
 }
@@ -85,7 +84,7 @@ func TestRun_KeepsWorkingAfterAQuestionThatWasNotShown(t *testing.T) {
 	t.Parallel()
 
 	run := runAskEnd(t,
-		runtimetest.ToolTurn(askuser.Name, map[string]any{"question": "  "}),
+		runtimetest.ToolTurn("ask_user", map[string]any{"question": "  "}),
 		runtimetest.TextTurn("Your dashboard has three tiles."),
 	)
 

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +44,7 @@ func TestRun_OffersABoardWhereArtifactsAreKept(t *testing.T) {
 	observer := &boardObserver{}
 	_, completion := runWithObserver(t, observer.observe, nil, runtimetest.TextTurn("Here it is."))
 
-	assert.Contains(t, offeredNames(completion.LastReq.Tools), runtimetools.ShowBoardName)
+	assert.Contains(t, offeredNames(completion.LastReq.Tools), "show_board")
 }
 
 func TestRun_ShowsABoardOfRecordsTheConversationRead(t *testing.T) {
@@ -60,7 +59,7 @@ func TestRun_ShowsABoardOfRecordsTheConversationRead(t *testing.T) {
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(first, second)},
 		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
-		runtimetest.ToolTurn(runtimetools.ShowBoardName, runtimetest.ShipmentBoard(first, second)),
+		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(first, second)),
 		runtimetest.TextTurn("The board is beside the conversation."),
 	)
 
@@ -85,7 +84,7 @@ func TestRun_RefusesABoardNamingARecordNoToolReturned(t *testing.T) {
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(read)},
 		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
-		runtimetest.ToolTurn(runtimetools.ShowBoardName, runtimetest.ShipmentBoard(read, invented)),
+		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(read, invented)),
 		runtimetest.TextTurn("Sorry."),
 	)
 
@@ -106,7 +105,7 @@ func TestRun_RefusesABoardWhoseWordsStateFigures(t *testing.T) {
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
 		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
-		runtimetest.ToolTurn(runtimetools.ShowBoardName, args),
+		runtimetest.ToolTurn("show_board", args),
 		runtimetest.TextTurn("Sorry."),
 	)
 
@@ -125,7 +124,7 @@ func TestRun_RefusesABoardThatDoesNotParse(t *testing.T) {
 		observer.observe,
 		nil,
 		runtimetest.ToolTurn(
-			runtimetools.ShowBoardName,
+			"show_board",
 			map[string]any{"title": "Board", "verdict": "x"},
 		),
 		runtimetest.TextTurn("Sorry."),
@@ -146,7 +145,7 @@ func TestRun_AFixableBoardIsSentAgain(t *testing.T) {
 	result, _ := runWithObserver(t, observer.observe,
 		[]agenttoolports.AgentQueryTool{listedShipments(id)},
 		runtimetest.ToolTurn("shipment_list", map[string]any{"query": "late"}),
-		runtimetest.ToolTurn(runtimetools.ShowBoardName, runtimetest.ShipmentBoard(id)),
+		runtimetest.ToolTurn("show_board", runtimetest.ShipmentBoard(id)),
 		runtimetest.TextTurn("Sorry."),
 	)
 

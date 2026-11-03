@@ -33,8 +33,8 @@ const maxPayrollNoteChars = 1000
 
 var payrollExportFields = []string{
 	changepreview.FieldStatus,
-	changepreview.FieldPeriodStart,
-	changepreview.FieldPeriodEnd,
+	toolparams.ParamPeriodStart,
+	toolparams.ParamPeriodEnd,
 	"timesheetCount",
 	"regularMinutes",
 	"overtimeMinutes",
@@ -43,7 +43,7 @@ var payrollExportFields = []string{
 	"generatedAt",
 	changepreview.FieldVoidedAt,
 	"voidReason",
-	changepreview.FieldNote,
+	toolparams.ParamNote,
 }
 
 type PayrollExporter interface {
@@ -110,7 +110,7 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 	), map[string]any{
 		paramFirstDay: agenttoolschema.Date("The first day of the pay period."),
 		paramLastDay:  agenttoolschema.Date("The last day of the pay period, included."),
-		changepreview.FieldNote: toolparams.StringProperty(
+		toolparams.ParamNote: toolparams.StringProperty(
 			"A note kept on the run.",
 			maxPayrollNoteChars,
 		),
@@ -136,7 +136,7 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 			}
 			note, err := toolparams.BoundedText(
 				params.Params,
-				changepreview.FieldNote,
+				toolparams.ParamNote,
 				maxPayrollNoteChars,
 			)
 			if err != nil {
@@ -205,11 +205,11 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 				"Never guess one.",
 			recordkind.PayrollExport,
 		),
-		changepreview.FieldReason: toolparams.StringProperty(
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why the run is voided, kept on it.",
 			maxPayrollNoteChars,
 		),
-	}, paramPayrollExportID, changepreview.FieldReason), paramPayrollExportID, permission.ResourceTimesheet)
+	}, paramPayrollExportID, toolparams.ParamReason), paramPayrollExportID, permission.ResourceTimesheet)
 	spec.SearchTerms = append(spec.SearchTerms, "undo payroll run", "redo payroll", "rerun payroll")
 
 	return toolspec.NewReceivableTool(spec, toolspec.ReceivablePlan[
@@ -224,7 +224,7 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 			}
 			reason, err := toolparams.RequireBoundedText(
 				params.Params,
-				changepreview.FieldReason,
+				toolparams.ParamReason,
 				maxPayrollNoteChars,
 			)
 			if err != nil {

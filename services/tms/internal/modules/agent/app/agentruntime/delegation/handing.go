@@ -73,19 +73,19 @@ func Prepare(t HandingTurn, call *llmports.ToolCall) (*HandedTask, toolcall.Resu
 	if refusal != "" {
 		return nil, toolcall.Failed(
 			"Tool %q was not run: %s",
-			runtimetools.DelegateTaskName,
+			"delegate_task",
 			refusal,
 		)
 	}
 	spec := runtimetools.DelegateTaskSpec(t.Delegates())
 	if err := toolschema.Validate(spec.Parameters, call.Arguments); err != nil {
-		return nil, argcheck.Refusal(runtimetools.DelegateTaskName, spec.Parameters, err)
+		return nil, argcheck.Refusal("delegate_task", spec.Parameters, err)
 	}
 	handed, refusal := HandedOver(t, call.Arguments)
 	if refusal != "" {
 		return nil, toolcall.Failed(
 			"Tool %q was not run: %s",
-			runtimetools.DelegateTaskName,
+			"delegate_task",
 			refusal,
 		)
 	}
@@ -94,7 +94,7 @@ func Prepare(t HandingTurn, call *llmports.ToolCall) (*HandedTask, toolcall.Resu
 			"Tool %q was not run: this turn has already handed out %d tasks, the most one "+
 				"turn may. Answer with what the agents returned, and tell the person what is "+
 				"left.",
-			runtimetools.DelegateTaskName, MaxPerTurn,
+			"delegate_task", MaxPerTurn,
 		)
 	}
 	t.CountDelegation()
@@ -116,12 +116,12 @@ func FanOut(
 	calls []llmports.ToolCall,
 	used, budget int,
 ) map[string]toolcall.Result {
-	if !t.Holds(runtimetools.DelegateTaskName) || t.Request().Delegation != nil {
+	if !t.Holds("delegate_task") || t.Request().Delegation != nil {
 		return nil
 	}
 	eligible := make([]llmports.ToolCall, 0, len(calls))
 	for idx, call := range calls {
-		if call.Name == runtimetools.DelegateTaskName && call.ArgumentsError == "" &&
+		if call.Name == "delegate_task" && call.ArgumentsError == "" &&
 			used+idx < budget {
 			eligible = append(eligible, call)
 		}
@@ -189,7 +189,7 @@ func start(t HandingTurn, fx Effects, h *HandedTask) Call {
 	}
 	scope := toolcall.StepKey(toolcall.StepKeyParams{
 		OwnerID:  t.Request().StepOwner.ID,
-		ToolName: runtimetools.DelegateTaskName,
+		ToolName: "delegate_task",
 		Args:     call.Arguments,
 		Ordinal:  t.NextOrdinal(&call),
 	})

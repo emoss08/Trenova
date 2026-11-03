@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -229,8 +230,8 @@ func TestCancelTender_SendsTheTenderAndTheReason(t *testing.T) {
 
 	tenders := newFakeTenderManager(tender.StatusActive, tender.OfferStatusSent)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		fieldTenderID:             tenders.entity.ID.String(),
-		changepreview.FieldReason: " Covered by our own driver ",
+		fieldTenderID:          tenders.entity.ID.String(),
+		toolparams.ParamReason: " Covered by our own driver ",
 	})
 
 	require.NoError(t, NewCancelTenderTool(tenders).Execute(t.Context(), params))
@@ -253,8 +254,8 @@ func TestCancelTender_ATenderAwaitingReviewIsAProposal(t *testing.T) {
 		return tool.Policy().Condition.Limit(
 			t.Context(),
 			agenttoolstest.ExecuteParams(map[string]any{
-				fieldTenderID:             tenders.entity.ID.String(),
-				changepreview.FieldReason: "Not needed",
+				fieldTenderID:          tenders.entity.ID.String(),
+				toolparams.ParamReason: "Not needed",
 			}),
 		)
 	}
@@ -281,8 +282,8 @@ func TestCancelTender_PreviewShowsTheTenderAndEachOfferItMoves(t *testing.T) {
 		&tenders.guard,
 		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-				fieldTenderID:             tenders.entity.ID.String(),
-				changepreview.FieldReason: "Covered by our own driver",
+				fieldTenderID:          tenders.entity.ID.String(),
+				toolparams.ParamReason: "Covered by our own driver",
 			}))
 		},
 	)

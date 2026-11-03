@@ -30,13 +30,13 @@ type Ledger struct {
 // an error before it read anything, up to ScriptsPerTurn of them: correcting
 // a read's name is not another analysis.
 func (l *Ledger) Position(call *llmports.ToolCall, messages []conversation.Message) int {
-	if call.Name != codemode.ToolRunScript {
+	if call.Name != "analysis_run" {
 		return 0
 	}
 	position, unread := 0, 0
 	for idx := range messages {
 		for _, made := range messages[idx].ToolCalls {
-			if made.Name != codemode.ToolRunScript {
+			if made.Name != "analysis_run" {
 				continue
 			}
 			counted := !l.finishes(made.ID)
@@ -71,7 +71,7 @@ func (l *Ledger) finishes(id string) bool {
 // call, so a second call naming it runs nothing. Nil when call continues
 // nothing it may.
 func (l *Ledger) Continue(call *llmports.ToolCall, messages []conversation.Message) map[string]any {
-	if call.Name != codemode.ToolRunScript {
+	if call.Name != "analysis_run" {
 		return nil
 	}
 	earlier := strings.TrimSpace(argcheck.String(call.Arguments, codemode.ParamScriptContinues))
@@ -140,7 +140,7 @@ func (l *Ledger) continuedArguments(
 func scriptArguments(id string, messages []conversation.Message) map[string]any {
 	for idx := range messages {
 		for _, made := range messages[idx].ToolCalls {
-			if made.ID == id && made.Name == codemode.ToolRunScript {
+			if made.ID == id && made.Name == "analysis_run" {
 				return made.Arguments
 			}
 		}

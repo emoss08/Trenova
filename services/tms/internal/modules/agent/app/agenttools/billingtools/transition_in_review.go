@@ -36,7 +36,7 @@ func NewTransitionToInReviewTool(
 	return &TransitionToInReviewTool{billing: billing}
 }
 
-func (t *TransitionToInReviewTool) Name() string { return toolStartReview }
+func (t *TransitionToInReviewTool) Name() string { return "billing_start_review" }
 
 func (t *TransitionToInReviewTool) Description() string {
 	return "Move a billing queue item into review so a biller can work it: one waiting for " +

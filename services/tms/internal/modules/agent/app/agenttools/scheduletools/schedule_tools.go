@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
@@ -75,7 +74,7 @@ func NewCreateScheduleTool(
 	return &CreateScheduleTool{planner: planner}
 }
 
-func (t *CreateScheduleTool) Name() string { return agentdefinition.CoreToolSchedule }
+func (t *CreateScheduleTool) Name() string { return "agent_create_schedule" }
 
 func (t *CreateScheduleTool) SearchTerms() []string {
 	return []string{

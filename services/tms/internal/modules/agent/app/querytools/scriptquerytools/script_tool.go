@@ -39,10 +39,9 @@ const (
 	paramScriptTitle     = codemode.ParamScriptTitle
 	paramScriptPurpose   = codemode.ParamScriptPurpose
 	paramScriptCode      = codemode.ParamScriptCode
-	paramScriptInputs    = "inputs"
+	paramInputs          = "inputs"
 	paramScriptContinues = codemode.ParamScriptContinues
-	paramInputName       = "name"
-	paramInputValue      = "value"
+	paramValue           = "value"
 	maxInputNameRunes    = 64
 	maxContinuesRunes    = 200
 
@@ -111,7 +110,7 @@ func NewRunScriptTool(p *RunScriptToolParams) agenttoolports.AgentQueryTool {
 	}
 }
 
-func (t *runScriptTool) Name() string { return codemode.ToolRunScript }
+func (t *runScriptTool) Name() string { return "analysis_run" }
 
 func (t *runScriptTool) Description() string {
 	return "Run a short Python script that calls the reads you hold and totals, compares " +
@@ -158,7 +157,7 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 					"trenova.result() are for you: the person sees only what is shown.",
 				toolschema.KeyMaxLength: codemode.MaxCodeChars,
 			},
-			paramScriptInputs: map[string]any{
+			paramInputs: map[string]any{
 				toolschema.KeyType: toolschema.TypeArray,
 				toolschema.KeyDescription: "Values the script reads from trenova.inputs by " +
 					"name, such as a date or a list of ids, so the same script can run again " +
@@ -167,22 +166,22 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						paramInputName: map[string]any{
+						paramName: map[string]any{
 							toolschema.KeyType:        toolschema.TypeString,
 							toolschema.KeyDescription: "The name the script reads it by.",
 							toolschema.KeyMaxLength:   maxInputNameRunes,
 						},
-						paramInputValue: map[string]any{
+						paramValue: map[string]any{
 							toolschema.KeyType:        toolschema.TypeString,
 							toolschema.KeyDescription: "The value, as text.",
 							toolschema.KeyMaxLength:   codemode.MaxInputBytes,
 						},
 					},
-					toolschema.KeyRequired:             []string{paramInputName, paramInputValue},
+					toolschema.KeyRequired:             []string{paramName, paramValue},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
-			paramScriptDatasets: datasetsSchema(),
+			paramDatasets: datasetsSchema(),
 			paramScriptContinues: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "Only a scriptId an analysis_run answer of " +
@@ -241,25 +240,25 @@ func datasetsSchema() map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				paramDatasetName: map[string]any{
+				paramName: map[string]any{
 					toolschema.KeyType: toolschema.TypeString,
 					toolschema.KeyDescription: "The name the script reads it by: lower-case " +
 						"letters, digits and underscores, starting with a letter, such as lanes.",
 					toolschema.KeyMaxLength: analysis.MaxDatasetName,
 				},
-				paramDatasetRun: agenttoolschema.OfKinds(map[string]any{
+				paramReportRunID: agenttoolschema.OfKinds(map[string]any{
 					toolschema.KeyType: toolschema.TypeString,
 					toolschema.KeyDescription: "A finished report run you ran for this person, " +
 						"from report_run.",
 				}, recordkind.ReportRun),
-				paramDatasetDocument: agenttoolschema.RecordIDText(
+				paramDocumentID: agenttoolschema.RecordIDText(
 					permission.ResourceDocument,
 					"A CSV, XLSX or text file the person attached to this conversation, "+
 						"from agent_read_attachment.",
 				),
-				paramDatasetDefinition: report.DefinitionToolSchema(),
+				paramDefinition: report.DefinitionToolSchema(),
 			},
-			toolschema.KeyRequired:             []string{paramDatasetName},
+			toolschema.KeyRequired:             []string{paramName},
 			toolschema.KeyAdditionalProperties: false,
 		},
 	}
@@ -473,8 +472,8 @@ func scriptRunOf(params *agenttoolports.QueryToolParams) (*scriptRun, error) {
 		title:    querytool.OptionalString(params.Params, paramScriptTitle),
 		purpose:  querytool.OptionalString(params.Params, paramScriptPurpose),
 		code:     code,
-		datasets: params.Params[paramScriptDatasets],
-		inputs:   params.Params[paramScriptInputs],
+		datasets: params.Params[paramDatasets],
+		inputs:   params.Params[paramInputs],
 	}
 	earlier := params.Continues
 	if earlier == nil {
@@ -484,8 +483,8 @@ func scriptRunOf(params *agenttoolports.QueryToolParams) (*scriptRun, error) {
 		return nil, errContinuationReadsItsOwn
 	}
 	run.earlier, _ = earlier[paramScriptCode].(string)
-	run.datasets = earlier[paramScriptDatasets]
-	run.inputs = earlier[paramScriptInputs]
+	run.datasets = earlier[paramDatasets]
+	run.inputs = earlier[paramInputs]
 	if run.title == "" {
 		run.title = querytool.OptionalString(earlier, paramScriptTitle)
 	}
@@ -647,8 +646,8 @@ func scriptInputs(raw any) map[string]any {
 		if !ok {
 			continue
 		}
-		name, _ := item[paramInputName].(string)
-		value, _ := item[paramInputValue].(string)
+		name, _ := item[paramName].(string)
+		value, _ := item[paramValue].(string)
 		if name = strings.TrimSpace(name); name != "" {
 			inputs[name] = value
 		}

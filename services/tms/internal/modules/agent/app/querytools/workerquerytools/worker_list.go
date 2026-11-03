@@ -79,7 +79,7 @@ func NewListWorkersTool(
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolWorkerList,
+		Name:         "worker_list",
 		EntityPlural: "workers",
 		Summary:      workersSummary,
 		SearchTerms:  workerSearchTerms,

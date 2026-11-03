@@ -1,19 +1,16 @@
 package querytool
 
 const (
-	ArgStatuses           = "statuses"
+	FieldStatuses         = "statuses"
 	FieldTargetType       = "targetType"
 	AccountingStatusField = "status"
 	FieldNumber           = "number"
 	FieldCreatedAt        = "createdAt"
 	ParamOffset           = "offset"
-	ToolListTractors      = "equipment_list_tractors"
-	ToolWorkerList        = "worker_list"
 	FieldFleetCodeID      = "fleetCodeId"
 	FieldEffectiveFrom    = "effectiveFrom"
 	FieldEffectiveTo      = "effectiveTo"
 	ParamFuelIndexID      = "fuelIndexId"
-	FieldWorkerID         = "workerId"
 	ParamActiveOnly       = "activeOnly"
 	GraphQLListLimit      = 25
 	// GraphQLListMost is the server's own page bound (pagination.MaxLimit).
@@ -24,49 +21,31 @@ const (
 	FilterGroupFilters = "filters"
 	// UnpagedMost is the most rows a limit on an unpaged list may ask for: the
 	// server's page bound, since such a list has no next page to hand out.
-	UnpagedMost                = 100
-	RecordIDField              = "id"
-	FilterOperator             = "operator"
-	FilterValue                = "value"
-	MinutesPerHour             = 60
-	ListFieldName              = "name"
-	ListFieldCode              = "code"
-	ListFieldStatus            = "status"
-	ToolOrderList              = "order_list"
-	ParamAfter                 = "after"
-	ToolCarrierList            = "carrier_list"
-	FieldPercent               = "percent"
-	ParamAdjustmentID          = "adjustmentId"
-	ParamReceivableInvoices    = "invoiceIds"
-	ToolListEquipmentTypes     = "equipment_list_types"
-	ToolListFleetCodes         = "masterdata_list_fleet_codes"
-	ToolListLocationCategories = "location_list_categories"
-	FieldActive                = "active"
-	ParamQuery                 = "query"
-	ParamLimit                 = "limit"
-	FieldShipmentID            = "shipmentId"
-	EntityDriver               = "driver"
-	ShipmentListName           = "shipment_list"
-	ParamShipmentID            = "shipmentId"
-	InputStatus                = "status"
-	ActiveStatus               = "Active"
-	WfParamOpenOnly            = "openOnly"
-	WfParamClosed              = "includeClosed"
+	UnpagedMost       = 100
+	RecordIDField     = "id"
+	FilterOperator    = "operator"
+	FilterValue       = "value"
+	MinutesPerHour    = 60
+	ListFieldName     = "name"
+	ListFieldCode     = "code"
+	ListFieldStatus   = "status"
+	ParamAfter        = "after"
+	FieldPercent      = "percent"
+	ParamAdjustmentID = "adjustmentId"
+	ParamInvoiceIDs   = "invoiceIds"
+	FieldActive       = "active"
+	ParamQuery        = "query"
+	ParamLimit        = "limit"
+	EntityDriver      = "driver"
+	ParamShipmentID   = "shipmentId"
+	ActiveStatus      = "Active"
+	WfParamOpenOnly   = "openOnly"
+	WfParamClosed     = "includeClosed"
 )
 
 var (
 	StatusValues = []string{"Active", "Inactive"}
 )
-
-const (
-	ToolCustomerList               = "customer_list"
-	ToolLocationList               = "location_list"
-	ToolMasterdataListServiceTypes = "masterdata_list_service_types"
-	ToolReportGet                  = "report_get"
-	ToolReportList                 = "report_list"
-)
-
-const ToolListEquipmentManufacturers = "equipment_list_manufacturers"
 
 // listWrapperKeys are the shapes a model reaches for when it has to produce a
 // list and nothing told it the shape.

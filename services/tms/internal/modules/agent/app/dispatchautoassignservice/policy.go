@@ -36,7 +36,7 @@ func policyFor(definition *agentdefinition.Definition, organizationShadow bool) 
 		DefinitionID: definition.ID,
 		Enabled:      true,
 		ShadowMode:   definition.EffectiveShadow(organizationShadow),
-		Tier:         definition.EffectiveTier(toolNameAssignMove, agent.TierPropose),
+		Tier:         definition.EffectiveTier("dispatch_assign_move", agent.TierPropose),
 	}
 }
 

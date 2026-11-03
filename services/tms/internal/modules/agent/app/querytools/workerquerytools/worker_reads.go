@@ -58,7 +58,7 @@ var workerCredentialDates = []string{"hazmatExpiry", "licenseExpiry", "medicalCa
 
 func ReadSpecs() []readspec.List {
 	return []readspec.List{{
-		Name:         querytool.ToolWorkerList,
+		Name:         "worker_list",
 		EntityPlural: pluralWorkers,
 		Summary:      workersSummary,
 		SearchTerms:  workerSearchTerms,
@@ -73,7 +73,7 @@ func ReadSpecs() []readspec.List {
 		References: map[string]readspec.Reference{querytool.FieldFleetCodeID: {
 			Resource: permission.ResourceFleetCode,
 			What:     "The fleet code",
-			Source:   querytool.ToolListFleetCodes,
+			Source:   "masterdata_list_fleet_codes",
 		}},
 		Rank:       rankWorkerRows,
 		Shape:      shapeWorkerRow,

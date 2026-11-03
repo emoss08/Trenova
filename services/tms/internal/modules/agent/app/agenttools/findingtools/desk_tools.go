@@ -32,12 +32,6 @@ import (
 )
 
 const (
-	toolDetentionGetOccurrence              = "detention_get_occurrence"
-	toolCarrierResolveIntelligenceEvent     = "carrier_resolve_intelligence_event"
-	toolCarrierAcknowledgeIntelligenceEvent = "carrier_acknowledge_intelligence_event"
-)
-
-const (
 	paramOccurrenceID = "occurrenceId"
 	paramEventID      = "eventId"
 )
@@ -82,7 +76,7 @@ func ProvideEscalateDetentionTool(detentions *detentionreview.Service) agenttool
 func (t *EscalateDetentionTool) Name() string { return "detention_escalate" }
 
 func (t *EscalateDetentionTool) Recipe() []string {
-	return []string{toolDetentionGetOccurrence, "detention_escalate"}
+	return []string{"detention_get_occurrence", "detention_escalate"}
 }
 
 func (t *EscalateDetentionTool) Description() string {
@@ -238,11 +232,11 @@ func ProvideApproveDetentionTool(detentions *detentionreview.Service) agenttoolp
 func (t *ApproveDetentionTool) Name() string { return "detention_approve" }
 
 func (t *ApproveDetentionTool) Prerequisites() []string {
-	return []string{"detention_list_occurrences", toolDetentionGetOccurrence}
+	return []string{"detention_list_occurrences", "detention_get_occurrence"}
 }
 
 func (t *ApproveDetentionTool) Recipe() []string {
-	return []string{"detention_list_occurrences", toolDetentionGetOccurrence, "detention_approve"}
+	return []string{"detention_list_occurrences", "detention_get_occurrence", "detention_approve"}
 }
 
 func (t *ApproveDetentionTool) Description() string {
@@ -748,27 +742,27 @@ func NewResolveCarrierIntelEventTool(intel carrierIntelActor) agenttoolports.Age
 
 func (t *carrierIntelEventTool) Name() string {
 	if t.resolves {
-		return toolCarrierResolveIntelligenceEvent
+		return "carrier_resolve_intelligence_event"
 	}
 
-	return toolCarrierAcknowledgeIntelligenceEvent
+	return "carrier_acknowledge_intelligence_event"
 }
 
 func (t *AcknowledgeCarrierIntelEventTool) Name() string {
-	return toolCarrierAcknowledgeIntelligenceEvent
+	return "carrier_acknowledge_intelligence_event"
 }
 
 func (t *AcknowledgeCarrierIntelEventTool) Recipe() []string {
-	return []string{"carrier_get_intelligence_event", toolCarrierAcknowledgeIntelligenceEvent}
+	return []string{"carrier_get_intelligence_event", "carrier_acknowledge_intelligence_event"}
 }
 
-func (t *ResolveCarrierIntelEventTool) Name() string { return toolCarrierResolveIntelligenceEvent }
+func (t *ResolveCarrierIntelEventTool) Name() string { return "carrier_resolve_intelligence_event" }
 
 func (t *ResolveCarrierIntelEventTool) Recipe() []string {
 	return []string{
 		"carrier_get_intelligence_event",
 		"carrier_get",
-		toolCarrierResolveIntelligenceEvent,
+		"carrier_resolve_intelligence_event",
 	}
 }
 

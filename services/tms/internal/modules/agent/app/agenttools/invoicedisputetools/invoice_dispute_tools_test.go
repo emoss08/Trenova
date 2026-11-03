@@ -136,7 +136,7 @@ func openDisputePlan() *invoiceports.InvoiceDisputePreview {
 func openDisputeParams(invoiceID pulid.ID) *agenttoolports.ToolExecuteParams {
 	return agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamInvoiceID: invoiceID.String(),
-		paramDisputeReasonCode:    string(invoicedispute.DisputeReasonAccessorialDisputed),
+		paramReasonCode:           string(invoicedispute.DisputeReasonAccessorialDisputed),
 		paramDisputedAmount:       "150.00",
 		toolparams.ParamNote:      " Customer disputes the detention line ",
 	})
@@ -204,14 +204,14 @@ func TestOpenInvoiceDispute_RefusesBadArguments(t *testing.T) {
 	invoiceID := pulid.MustNew("inv_").String()
 	cases := map[string]map[string]any{
 		"an unknown reason": {
-			toolparams.ParamInvoiceID: invoiceID, paramDisputeReasonCode: "TooExpensive",
+			toolparams.ParamInvoiceID: invoiceID, paramReasonCode: "TooExpensive",
 			paramDisputedAmount: "10",
 		},
 		"a negative amount": {
-			toolparams.ParamInvoiceID: invoiceID, paramDisputeReasonCode: "Other",
+			toolparams.ParamInvoiceID: invoiceID, paramReasonCode: "Other",
 			paramDisputedAmount: "-10",
 		},
-		"no invoice": {paramDisputeReasonCode: "Other", paramDisputedAmount: "10"},
+		"no invoice": {paramReasonCode: "Other", paramDisputedAmount: "10"},
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -269,7 +269,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	tool := NewResolveInvoiceDisputeTool(disputer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamDisputeID: disputer.preview.Before.ID.String(),
-		paramDisputeResolution:    string(invoicedispute.DisputeResolutionInvoiceUpheld),
+		paramResolution:           string(invoicedispute.DisputeResolutionInvoiceUpheld),
 		paramResolutionNotes:      "Detention was on the rate confirmation",
 	})
 
@@ -285,7 +285,7 @@ func TestResolveInvoiceDispute_OnlyAPersonResolves(t *testing.T) {
 	assert.Equal(
 		t,
 		"InvoiceUpheld",
-		agenttoolstest.FieldByPath(t, change, paramDisputeResolution).After,
+		agenttoolstest.FieldByPath(t, change, paramResolution).After,
 	)
 	assert.Equal(
 		t,
@@ -320,7 +320,7 @@ func TestResolveInvoiceDispute_AnAgentPrincipalCannotEvenPreviewIt(t *testing.T)
 	tool := NewResolveInvoiceDisputeTool(disputer).(agenttoolports.ToolPreviewer)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		toolparams.ParamDisputeID: disputer.preview.Before.ID.String(),
-		paramDisputeResolution:    string(invoicedispute.DisputeResolutionInvoiceUpheld),
+		paramResolution:           string(invoicedispute.DisputeResolutionInvoiceUpheld),
 	})
 
 	_, err := tool.Preview(t.Context(), params)

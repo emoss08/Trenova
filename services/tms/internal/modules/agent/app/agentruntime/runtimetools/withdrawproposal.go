@@ -29,8 +29,6 @@ Only a proposal filed earlier in the same turn can be withdrawn: one from an
 earlier turn is already in front of the person, who rejects it there.
 */
 
-const WithdrawProposalName = "withdraw_proposal"
-
 const withdrawProposalDescription = "Withdraw a proposal you filed earlier in this turn, " +
 	"before the person sees it, when a later proposal corrects or replaces it: otherwise " +
 	"they are asked to approve both, and approving both makes both changes. Pass the id " +
@@ -49,7 +47,7 @@ const (
 
 func WithdrawProposalSpec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        WithdrawProposalName,
+		Name:        "withdraw_proposal",
 		Description: withdrawProposalDescription,
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -88,7 +86,7 @@ func withdrawProposal(t Turn, arguments map[string]any) toolcall.Result {
 		return toolcall.Failed(
 			"Tool %q was not run: proposalId must be the id of a proposal "+
 				"you filed earlier in this turn, as its result gave it.",
-			WithdrawProposalName,
+			"withdraw_proposal",
 		)
 	}
 

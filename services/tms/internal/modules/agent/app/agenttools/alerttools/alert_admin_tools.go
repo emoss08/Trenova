@@ -26,7 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const ParamAlertID = "tableChangeAlertId"
+const ParamTableChangeAlertID = "tableChangeAlertId"
 
 const alertSupplier = "The alert, from report_list_table_change_alerts. Never guess one."
 
@@ -82,11 +82,11 @@ func alertRecord(subscription *tablechangealert.TCASubscription) toolpreview.Rec
 }
 
 func targetAlert(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, ParamAlertID, permission.ResourceTableChangeAlert)
+	return toolparams.TargetOf(params, ParamTableChangeAlertID, permission.ResourceTableChangeAlert)
 }
 
 func alertIDRequest(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-	return toolparams.RequirePulid(params.Params, ParamAlertID)
+	return toolparams.RequirePulid(params.Params, ParamTableChangeAlertID)
 }
 
 type alertEdit struct {
@@ -95,13 +95,13 @@ type alertEdit struct {
 }
 
 func alertEditFrom(params *agenttoolports.ToolExecuteParams) (*alertEdit, error) {
-	id, err := toolparams.RequirePulid(params.Params, ParamAlertID)
+	id, err := toolparams.RequirePulid(params.Params, ParamTableChangeAlertID)
 	if err != nil {
 		return nil, err
 	}
 	values := make(map[string]any, len(params.Params))
 	for key, value := range params.Params {
-		if key != ParamAlertID {
+		if key != ParamTableChangeAlertID {
 			values[key] = value
 		}
 	}
@@ -182,7 +182,7 @@ func (e *alertEdit) Build(
 
 func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool {
 	properties := alertProperties(toolparams.KeepWhenLeftOut)
-	properties[ParamAlertID] = agenttoolschema.RecordIDText(
+	properties[ParamTableChangeAlertID] = agenttoolschema.RecordIDText(
 		permission.ResourceTableChangeAlert, alertSupplier,
 	)
 
@@ -199,7 +199,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 		Rationale: "Changes an alert whose notices go to the person who owns it; nothing " +
 			"else changes.",
 		Properties: properties,
-		Required:   []string{ParamAlertID},
+		Required:   []string{ParamTableChangeAlertID},
 		SearchTerms: []string{
 			alertKind,
 			"edit notification",
@@ -253,7 +253,7 @@ func NewUpdateTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 				Action: masterdatakit.ActionUpdated,
 				Kind:   alertKind,
 				Name:   updated.Name,
-				IDs:    map[string]string{ParamAlertID: updated.ID.String()},
+				IDs:    map[string]string{ParamTableChangeAlertID: updated.ID.String()},
 			}, nil
 		},
 	})
@@ -278,7 +278,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 		Rationale: "Pauses or resumes an alert whose notices go to the person who owns it; " +
 			"the opposite call undoes it.",
 		Properties: map[string]any{
-			ParamAlertID: agenttoolschema.RecordIDText(
+			ParamTableChangeAlertID: agenttoolschema.RecordIDText(
 				permission.ResourceTableChangeAlert, alertSupplier,
 			),
 			changepreview.FieldStatus: agenttoolschema.Enum(
@@ -286,7 +286,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 				alertStatuses,
 			),
 		},
-		Required:    []string{ParamAlertID, changepreview.FieldStatus},
+		Required:    []string{ParamTableChangeAlertID, changepreview.FieldStatus},
 		SearchTerms: []string{"pause alert", "resume alert", "mute notification"},
 		Target:      targetAlert,
 	}, toolspec.ReceivablePlan[*alertStatusChange, *kernelports.RecordChange[tablechangealert.TCASubscription]]{
@@ -349,7 +349,7 @@ func NewSetTableChangeAlertStatusTool(alerts AlertKeeper) agenttoolports.AgentTo
 				Action: masterdatakit.ActionUpdated,
 				Kind:   alertKind,
 				Name:   updated.Name,
-				IDs:    map[string]string{ParamAlertID: updated.ID.String()},
+				IDs:    map[string]string{ParamTableChangeAlertID: updated.ID.String()},
 			}, nil
 		},
 	})
@@ -366,10 +366,10 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 		MaxTier:     agent.TierActWithApproval,
 		Rationale: "Removes an alert whose notices went to the person who owns it; " +
 			"report_create_table_change_alert sets it up again.",
-		Properties: map[string]any{ParamAlertID: agenttoolschema.RecordIDText(
+		Properties: map[string]any{ParamTableChangeAlertID: agenttoolschema.RecordIDText(
 			permission.ResourceTableChangeAlert, alertSupplier,
 		)},
-		Required:    []string{ParamAlertID},
+		Required:    []string{ParamTableChangeAlertID},
 		SearchTerms: []string{"delete alert", "remove notification", "stop alerting"},
 		Target:      targetAlert,
 	}, toolspec.ReceivablePlan[pulid.ID, *tablechangealert.TCASubscription]{
@@ -411,7 +411,7 @@ func NewDeleteTableChangeAlertTool(alerts AlertKeeper) agenttoolports.AgentTool 
 			return &agentrecord.ToolExecutionResult{
 				Action: changepreview.ActionDeleted,
 				Kind:   alertKind,
-				IDs:    map[string]string{ParamAlertID: id.String()},
+				IDs:    map[string]string{ParamTableChangeAlertID: id.String()},
 			}, nil
 		},
 	})

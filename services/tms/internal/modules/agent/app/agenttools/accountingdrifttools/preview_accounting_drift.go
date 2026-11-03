@@ -16,37 +16,37 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const fieldDriftStatus = "status"
+const fieldStatus = "status"
 
-const fieldDriftResolution = "resolution"
+const fieldResolution = "resolution"
 
-const fieldDriftNote = "resolutionNote"
+const fieldResolutionNote = "resolutionNote"
 
-const fieldDriftFixObject = "fixObjectType"
+const fieldFixObjectType = "fixObjectType"
 
-const fieldDriftResolvedByID = "resolvedById"
+const fieldResolvedByID = "resolvedById"
 
-const fieldDriftResolvedAt = "resolvedAt"
+const fieldResolvedAt = "resolvedAt"
 
 func driftFindingOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
-			fieldDriftStatus,
-			fieldDriftResolution,
-			fieldDriftNote,
-			fieldDriftFixObject,
-			fieldDriftResolvedByID,
-			fieldDriftResolvedAt,
+			fieldStatus,
+			fieldResolution,
+			fieldResolutionNote,
+			fieldFixObjectType,
+			fieldResolvedByID,
+			fieldResolvedAt,
 		),
-		toolpreview.Volatile(fieldDriftResolvedAt),
+		toolpreview.Volatile(fieldResolvedAt),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			fieldDriftResolvedByID: permission.ResourceUser,
+			fieldResolvedByID: permission.ResourceUser,
 		}),
 		toolpreview.Labels(map[string]string{
-			fieldDriftNote:         "Why both sides stay as they are",
-			fieldDriftFixObject:    "Fixed with",
-			fieldDriftResolvedByID: "Decided by",
-			fieldDriftResolvedAt:   "Decided at",
+			fieldResolutionNote: "Why both sides stay as they are",
+			fieldFixObjectType:  "Fixed with",
+			fieldResolvedByID:   "Decided by",
+			fieldResolvedAt:     "Decided at",
 		}),
 	}
 }

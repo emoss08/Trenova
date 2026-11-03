@@ -26,11 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const (
-	toolReportList    = "report_list"
-	toolHomeGetLayout = "home_get_layout"
-)
-
 type homeLayoutWriter interface {
 	GetEffective(
 		ctx context.Context,
@@ -239,9 +234,9 @@ func (t *AddHomeWidgetTool) Description() string {
 
 func (t *AddHomeWidgetTool) Prerequisites() []string {
 	return []string{
-		toolHomeGetLayout,
+		"home_get_layout",
 		"home_list_widgets",
-		toolReportList,
+		"report_list",
 		"report_list_dashboards",
 	}
 }
@@ -583,7 +578,7 @@ func (t *RemoveHomeWidgetTool) Description() string {
 }
 
 func (t *RemoveHomeWidgetTool) Prerequisites() []string {
-	return []string{toolHomeGetLayout}
+	return []string{"home_get_layout"}
 }
 
 func (t *RemoveHomeWidgetTool) ParamSchema() map[string]any {
@@ -679,7 +674,7 @@ func (t *ArrangeHomeLayoutTool) Description() string {
 }
 
 func (t *ArrangeHomeLayoutTool) Prerequisites() []string {
-	return []string{toolHomeGetLayout}
+	return []string{"home_get_layout"}
 }
 
 func (t *ArrangeHomeLayoutTool) ParamSchema() map[string]any {

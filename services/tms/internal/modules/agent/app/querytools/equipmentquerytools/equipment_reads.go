@@ -9,9 +9,6 @@ import (
 )
 
 const (
-	toolListTrailers  = "equipment_list_trailers"
-	toolListPositions = "equipment_list_positions"
-
 	pluralTractors = "tractors"
 	pluralTrailers = "trailers"
 
@@ -24,7 +21,7 @@ const (
 		"flatbed). Use it for questions about which trailers are out of service, " +
 		"overdue for inspection, or free now (hasInProgressMove false). " + unitNumberNote
 	unitNumberNote      = "Name a unit by its unitNumber, never by its plate."
-	fieldUnitCode       = "code"
+	fieldCode           = "code"
 	fieldUnitNumber     = "unitNumber"
 	noteEquipmentStatus = "The unit's standing, not whether it is free now: Available means " +
 		"it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in " +
@@ -49,7 +46,7 @@ const (
 	defaultPositionAgeSecs = 4 * 60 * 60
 
 	fieldRegistrationExpiryFrom = "registrationExpiryFrom"
-	fieldLastInspectionFrom     = "lastInspectionDateFrom"
+	fieldLastInspectionDateFrom = "lastInspectionDateFrom"
 
 	fieldEquipmentTypeID         = "equipmentTypeId"
 	fieldEquipmentManufacturerID = "equipmentManufacturerId"
@@ -63,22 +60,22 @@ func equipmentReferences(workers ...string) map[string]readspec.Reference {
 		fieldEquipmentTypeID: {
 			Resource: permission.ResourceEquipmentType,
 			What:     "The equipment type",
-			Source:   querytool.ToolListEquipmentTypes,
+			Source:   "equipment_list_types",
 		},
 		fieldEquipmentManufacturerID: {
 			Resource: permission.ResourceEquipmentManufacturer,
 			What:     "The manufacturer",
-			Source:   querytool.ToolListEquipmentManufacturers,
+			Source:   "equipment_list_manufacturers",
 		},
 		querytool.FieldFleetCodeID: {
 			Resource: permission.ResourceFleetCode,
 			What:     "The fleet code",
-			Source:   querytool.ToolListFleetCodes,
+			Source:   "masterdata_list_fleet_codes",
 		},
 		fieldLastKnownLocationID: {
 			Resource: permission.ResourceLocation,
 			What:     "The location it was last seen at",
-			Source:   querytool.ToolLocationList,
+			Source:   "location_list",
 		},
 	}
 	for _, field := range workers {
@@ -94,7 +91,7 @@ func equipmentReferences(workers ...string) map[string]readspec.Reference {
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         querytool.ToolListTractors,
+			Name:         "equipment_list_tractors",
 			EntityPlural: pluralTractors,
 			Summary:      tractorsSummary,
 			SearchTerms: []string{
@@ -102,8 +99,8 @@ func ReadSpecs() []readspec.List {
 				"available tractors",
 			},
 			Resource: permission.ResourceTractor,
-			Names:    map[string]string{fieldUnitCode: fieldUnitNumber},
-			Presents: map[string]string{fieldUnitCode: fieldUnitNumber},
+			Names:    map[string]string{fieldCode: fieldUnitNumber},
+			Presents: map[string]string{fieldCode: fieldUnitNumber},
 			Notes: map[string]string{
 				querytool.ParamStatus:       noteEquipmentStatus,
 				fieldRegistrationExpiryFrom: notePlateLapses,
@@ -113,22 +110,22 @@ func ReadSpecs() []readspec.List {
 			),
 		},
 		{
-			Name:         toolListTrailers,
+			Name:         "equipment_list_trailers",
 			EntityPlural: pluralTrailers,
 			Summary:      trailersSummary,
 			SearchTerms:  []string{"find trailer by unit number", "available dry vans"},
 			Resource:     permission.ResourceTrailer,
-			Names:        map[string]string{fieldUnitCode: fieldUnitNumber},
-			Presents:     map[string]string{fieldUnitCode: fieldUnitNumber},
+			Names:        map[string]string{fieldCode: fieldUnitNumber},
+			Presents:     map[string]string{fieldCode: fieldUnitNumber},
 			Notes: map[string]string{
 				querytool.ParamStatus:       noteEquipmentStatus,
 				fieldRegistrationExpiryFrom: notePlateLapses,
-				fieldLastInspectionFrom:     noteLastInspection,
+				fieldLastInspectionDateFrom: noteLastInspection,
 			},
 			References: equipmentReferences("ownerWorkerId"),
 		},
 		{
-			Name:         toolListPositions,
+			Name:         "equipment_list_positions",
 			EntityPlural: "vehicle positions",
 			Summary:      positionsSummary,
 			SearchTerms: []string{
@@ -140,7 +137,7 @@ func ReadSpecs() []readspec.List {
 			References: map[string]readspec.Reference{paramTractorIDs: {
 				Resource: permission.ResourceTractor,
 				What:     "The tractors",
-				Source:   querytool.ToolListTractors,
+				Source:   "equipment_list_tractors",
 			}},
 			Shape: ageOfReading,
 		},

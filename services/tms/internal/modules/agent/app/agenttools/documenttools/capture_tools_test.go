@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -161,13 +162,13 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 	shipmentID := pulid.MustNew("shp_")
 	entry := func(id pulid.ID) map[string]any {
 		return map[string]any{
-			paramCaptureItemID:   id.String(),
-			paramCaptureTarget:   "shipment",
-			paramCaptureTargetID: shipmentID.String(),
+			toolparams.ParamItemID: id.String(),
+			paramTargetType:        "shipment",
+			paramTargetID:          shipmentID.String(),
 		}
 	}
 	one := agenttoolstest.ExecuteParams(
-		map[string]any{paramCaptureItems: []any{entry(captures.item.ID)}},
+		map[string]any{paramItems: []any{entry(captures.item.ID)}},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -191,7 +192,7 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 
 	second := pulid.MustNew("citm_")
 	two := agenttoolstest.ExecuteParams(map[string]any{
-		paramCaptureItems: []any{entry(captures.item.ID), entry(second)},
+		paramItems: []any{entry(captures.item.ID), entry(second)},
 	})
 	err := tool.Execute(t.Context(), two)
 	require.Error(t, err)
@@ -200,14 +201,14 @@ func TestFileCaptureItems_FilesWithTheVersionItReadAndReportsWhatDidNotFile(t *t
 
 	for name, bad := range map[string][]any{
 		"an unknown record kind": {map[string]any{
-			paramCaptureItemID:   captures.item.ID.String(),
-			paramCaptureTarget:   "invoice",
-			paramCaptureTargetID: shipmentID.String(),
+			toolparams.ParamItemID: captures.item.ID.String(),
+			paramTargetType:        "invoice",
+			paramTargetID:          shipmentID.String(),
 		}},
 		"the same document twice": {entry(captures.item.ID), entry(captures.item.ID)},
 	} {
 		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
-			agenttoolstest.ExecuteParams(map[string]any{paramCaptureItems: bad})), name)
+			agenttoolstest.ExecuteParams(map[string]any{paramItems: bad})), name)
 	}
 }
 
@@ -217,7 +218,7 @@ func TestDiscardCaptureTools_SendTheVersionTheyRead(t *testing.T) {
 	captures := captureFixture()
 	item := NewDiscardCaptureItemTool(captures)
 	itemParams := agenttoolstest.ExecuteParams(
-		map[string]any{paramCaptureItemIDOne: captures.item.ID.String()},
+		map[string]any{paramCaptureItemID: captures.item.ID.String()},
 	)
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

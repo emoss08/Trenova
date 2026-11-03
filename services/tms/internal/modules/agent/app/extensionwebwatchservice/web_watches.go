@@ -86,7 +86,7 @@ func (s *Service) webWatchCallFor(
 ) (*webWatchCall, error) {
 	spec, _ := agentextension.SpecFor(extension.Type)
 	provider, ok := s.watchers[extension.Type]
-	if !ok || spec.Omits(agentextension.ToolWatchWeb) {
+	if !ok || spec.Omits("web_watch") {
 		return nil, &agentextensionservice.ToolError{
 			Message: extension.Def.Vendor + " cannot watch the web on a " +
 				"schedule. Search again later instead, or an administrator can use Exa for web " +

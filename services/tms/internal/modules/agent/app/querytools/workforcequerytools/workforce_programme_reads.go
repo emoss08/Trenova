@@ -13,18 +13,15 @@ import (
 )
 
 const (
-	toolWorkerGetSchedule  = "worker_get_schedule"
-	toolListDOTRandomDraws = "worker_list_dot_random_draws"
-	toolListShiftTemplates = "worker_list_shift_templates"
-	opWorkerAvailability   = "WorkerAvailabilityPreferences"
-	opShiftSwapRequests    = "ShiftSwapRequests"
-	opDOTRandomPools       = "DotRandomPools"
-	paramPoolID            = "poolId"
-	shiftDaysOfWeek        = "daysOfWeek"
-	shiftStartMinute       = "startMinute"
-	shiftDurationMinutes   = "durationMinutes"
-	openSwapsShown         = 20
-	daysInWeek             = 7
+	opWorkerAvailability = "WorkerAvailabilityPreferences"
+	opShiftSwapRequests  = "ShiftSwapRequests"
+	opDOTRandomPools     = "DotRandomPools"
+	paramPoolID          = "poolId"
+	shiftDaysOfWeek      = "daysOfWeek"
+	shiftStartMinute     = "startMinute"
+	shiftDurationMinutes = "durationMinutes"
+	openSwapsShown       = 20
+	daysInWeek           = 7
 
 	workerScheduleSummary       = "Read one worker's schedule: their shift patterns, what they said about each weekday, and their open shift swaps. Items are the patterns they have been on, the current one open-ended; preferences give each weekday's statement (dayOfWeek 0 for Sunday); openSwaps their open swaps. An item's id is the shiftAssignmentId and a swap's id the swapId the scheduling tools take."
 	dotRandomDrawsSummary       = "List the rounds drawn for random drug and alcohol testing, newest first, beside the active pools they are drawn from (pools, with their annual rates). Each round is draft, final or cancelled, with how many drivers each substance needed and got. It yields the poolId and drawId the random testing tools take; worker_get_dot_random_draw names who was picked."
@@ -41,7 +38,7 @@ const (
 func ProgrammeReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         toolWorkerGetSchedule,
+			Name:         "worker_get_schedule",
 			EntityPlural: "shift assignments",
 			Summary:      workerScheduleSummary,
 			Resource:     permission.ResourceWorkerSchedule,
@@ -65,7 +62,7 @@ func ProgrammeReadSpecs() []readspec.List {
 			},
 		},
 		{
-			Name:         toolListShiftTemplates,
+			Name:         "worker_list_shift_templates",
 			EntityPlural: "shift patterns",
 			Summary:      shiftTemplatesSummary,
 			Resource:     permission.ResourceShiftTemplate,
@@ -77,7 +74,7 @@ func ProgrammeReadSpecs() []readspec.List {
 			Shape: shapeShiftTemplate,
 		},
 		{
-			Name:         toolListDOTRandomDraws,
+			Name:         "worker_list_dot_random_draws",
 			EntityPlural: "random testing rounds",
 			Summary:      dotRandomDrawsSummary,
 			Resource:     permission.ResourceDOTRandomPool,
@@ -92,7 +89,7 @@ func ProgrammeReadSpecs() []readspec.List {
 				Key:       "pools",
 				Operation: opDOTRandomPools,
 				What:      "random testing pools",
-				Inputs:    map[string]any{querytool.InputStatus: querytool.ActiveStatus},
+				Inputs:    map[string]any{querytool.ParamStatus: querytool.ActiveStatus},
 			}},
 		},
 	}

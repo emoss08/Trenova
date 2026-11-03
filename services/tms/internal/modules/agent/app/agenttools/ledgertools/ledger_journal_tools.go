@@ -32,21 +32,15 @@ const paramJournalReversalID = "journalReversalId"
 
 const paramJournalEntryID = "journalEntryId"
 
-const paramJournalDescription = "description"
+const paramDebit = "debit"
 
-const paramJournalLines = "lines"
+const paramCredit = "credit"
 
-const paramJournalCurrency = "currencyCode"
+const paramLocationID = "locationId"
 
-const paramJournalLineDebit = "debit"
+const paramReasonCode = "reasonCode"
 
-const paramJournalLineCredit = "credit"
-
-const paramJournalLineLocationID = "locationId"
-
-const paramReversalReasonCode = "reasonCode"
-
-const paramReversalReasonText = "reasonText"
+const paramReasonText = "reasonText"
 
 const maxManualJournalLines = 100
 
@@ -200,7 +194,7 @@ func manualJournalDraftProperties(forRevision bool) map[string]any {
 	}
 
 	properties := map[string]any{
-		paramJournalDescription: toolparams.StringProperty(
+		toolparams.ParamDescription: toolparams.StringProperty(
 			description,
 			maxManualJournalDescription,
 		),
@@ -210,12 +204,12 @@ func manualJournalDraftProperties(forRevision bool) map[string]any {
 			maxManualJournalReason,
 		),
 		toolparams.ParamAccountingDate: agenttoolschema.Date(date),
-		paramJournalCurrency: toolparams.StringProperty(
+		toolparams.ParamCurrencyCode: toolparams.StringProperty(
 			"The ISO currency code, such as USD. Leave it "+
 				"out for the organization's functional currency.",
 			manualJournalCurrencyPattern,
 		),
-		paramJournalLines: lines,
+		toolparams.ParamLines: lines,
 	}
 	if forRevision {
 		properties[paramManualJournalID] = agenttoolschema.RecordIDText(
@@ -241,11 +235,11 @@ func journalLinesProperty() map[string]any {
 					"The account the line posts to, from ledger_list_accounts; it must be active "+
 						"and allow manual journals.",
 				),
-				paramJournalDescription: toolparams.StringProperty("What the line is for.",
+				toolparams.ParamDescription: toolparams.StringProperty("What the line is for.",
 					maxManualJournalLineText),
-				paramJournalLineDebit: toolparams.StringProperty("The debit as a decimal such as "+
+				paramDebit: toolparams.StringProperty("The debit as a decimal such as "+
 					"125.00. Give a debit or a credit, never both.", 0),
-				paramJournalLineCredit: toolparams.StringProperty(
+				paramCredit: toolparams.StringProperty(
 					"The credit as a decimal such as "+
 						"125.00. Give a debit or a credit, never both.",
 					0,
@@ -255,14 +249,14 @@ func journalLinesProperty() map[string]any {
 					"The customer the line is for, from customer_list or customer_get, when "+
 						"it concerns one.",
 				),
-				paramJournalLineLocationID: agenttoolschema.RecordIDText(
+				paramLocationID: agenttoolschema.RecordIDText(
 					permission.ResourceLocation,
 					"The location the line is for, from location_list, when it concerns one.",
 				),
 			},
 			toolschema.KeyRequired: []string{
 				toolparams.ParamGLAccountID,
-				paramJournalDescription,
+				toolparams.ParamDescription,
 			},
 			toolschema.KeyAdditionalProperties: false,
 		},
@@ -270,14 +264,14 @@ func journalLinesProperty() map[string]any {
 }
 
 func readJournalLines(params map[string]any) ([]*manualjournalports.ManualJournalLineInput, error) {
-	raw, ok := params[paramJournalLines].([]any)
+	raw, ok := params[toolparams.ParamLines].([]any)
 	if !ok || len(raw) < 2 {
-		return nil, fmt.Errorf("parameter %q must list at least two lines", paramJournalLines)
+		return nil, fmt.Errorf("parameter %q must list at least two lines", toolparams.ParamLines)
 	}
 	if len(raw) > maxManualJournalLines {
 		return nil, fmt.Errorf(
 			"parameter %q holds %d lines; a manual journal takes at most %d",
-			paramJournalLines, len(raw), maxManualJournalLines,
+			toolparams.ParamLines, len(raw), maxManualJournalLines,
 		)
 	}
 
@@ -285,11 +279,11 @@ func readJournalLines(params map[string]any) ([]*manualjournalports.ManualJourna
 	for idx, item := range raw {
 		fields, isObject := item.(map[string]any)
 		if !isObject {
-			return nil, fmt.Errorf("%s[%d] must be an object", paramJournalLines, idx)
+			return nil, fmt.Errorf("%s[%d] must be an object", toolparams.ParamLines, idx)
 		}
 		line, err := readJournalLine(fields)
 		if err != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", paramJournalLines, idx, err)
+			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamLines, idx, err)
 		}
 		lines = append(lines, line)
 	}
@@ -304,17 +298,17 @@ func readJournalLine(fields map[string]any) (*manualjournalports.ManualJournalLi
 	}
 	description, err := toolparams.RequireBoundedText(
 		fields,
-		paramJournalDescription,
+		toolparams.ParamDescription,
 		maxManualJournalLineText,
 	)
 	if err != nil {
 		return nil, err
 	}
-	debit, hasDebit, err := toolparams.OptionalMoney(fields, paramJournalLineDebit)
+	debit, hasDebit, err := toolparams.OptionalMoney(fields, paramDebit)
 	if err != nil {
 		return nil, err
 	}
-	credit, hasCredit, err := toolparams.OptionalMoney(fields, paramJournalLineCredit)
+	credit, hasCredit, err := toolparams.OptionalMoney(fields, paramCredit)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +319,7 @@ func readJournalLine(fields map[string]any) (*manualjournalports.ManualJournalLi
 	if err != nil {
 		return nil, err
 	}
-	locationID, err := toolparams.OptionalPulidParam(fields, paramJournalLineLocationID)
+	locationID, err := toolparams.OptionalPulidParam(fields, paramLocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -348,10 +342,13 @@ func readJournalLine(fields map[string]any) (*manualjournalports.ManualJournalLi
 
 func readJournalCurrency(params map[string]any) (string, error) {
 	code := strings.ToUpper(
-		strings.TrimSpace(toolparams.OptionalString(params, paramJournalCurrency)),
+		strings.TrimSpace(toolparams.OptionalString(params, toolparams.ParamCurrencyCode)),
 	)
 	if code != "" && len(code) != manualJournalCurrencyPattern {
-		return "", fmt.Errorf("%s must be a three-letter code such as USD", paramJournalCurrency)
+		return "", fmt.Errorf(
+			"%s must be a three-letter code such as USD",
+			toolparams.ParamCurrencyCode,
+		)
 	}
 
 	return code, nil
@@ -362,7 +359,7 @@ func draftManualJournalRequest(
 ) (*manualjournalports.CreateManualJournalRequest, error) {
 	description, err := toolparams.RequireBoundedText(
 		params.Params,
-		paramJournalDescription,
+		toolparams.ParamDescription,
 		maxManualJournalDescription,
 	)
 	if err != nil {
@@ -409,7 +406,7 @@ func journalRevisionFrom(
 	revision := &journalpreview.JournalRevision{ID: id}
 	if revision.Description, err = toolparams.BoundedText(
 		params.Params,
-		paramJournalDescription,
+		toolparams.ParamDescription,
 		maxManualJournalDescription,
 	); err != nil {
 		return nil, err
@@ -431,7 +428,7 @@ func journalRevisionFrom(
 	if revision.Currency, err = readJournalCurrency(params.Params); err != nil {
 		return nil, err
 	}
-	if _, given := params.Params[paramJournalLines]; given {
+	if _, given := params.Params[toolparams.ParamLines]; given {
 		if revision.Lines, err = readJournalLines(params.Params); err != nil {
 			return nil, err
 		}
@@ -546,9 +543,9 @@ func newDraftManualJournalTool(
 			"person submits, approves and posts it, and a draft is cancelled the same way.",
 		Properties: manualJournalDraftProperties(false),
 		Required: []string{
-			paramJournalDescription,
+			toolparams.ParamDescription,
 			toolparams.ParamAccountingDate,
-			paramJournalLines,
+			toolparams.ParamLines,
 		},
 	}), toolspec.ReceivablePlan[*manualjournalports.CreateManualJournalRequest, *journalpreview.ManualJournalPlan]{
 		Request: draftManualJournalRequest,
@@ -843,7 +840,7 @@ func journalReversalRequestFrom(
 	}
 	code, err := toolparams.RequireBoundedText(
 		params.Params,
-		paramReversalReasonCode,
+		paramReasonCode,
 		maxReversalReasonCode,
 	)
 	if err != nil {
@@ -851,7 +848,7 @@ func journalReversalRequestFrom(
 	}
 	text, err := toolparams.RequireBoundedText(
 		params.Params,
-		paramReversalReasonText,
+		paramReasonText,
 		maxReversalReasonText,
 	)
 	if err != nil {
@@ -891,12 +888,12 @@ func newRequestJournalReversalTool(
 					"The day the reversal is booked; a day in a " +
 						"closed period moves to the next open one where policy allows.",
 				),
-				paramReversalReasonCode: toolparams.StringProperty(
+				paramReasonCode: toolparams.StringProperty(
 					"A short code for the kind of error, such "+
 						"as WrongAccount or Duplicate.",
 					maxReversalReasonCode,
 				),
-				paramReversalReasonText: toolparams.StringProperty(
+				paramReasonText: toolparams.StringProperty(
 					"What was wrong with the entry, as the "+
 						"approver and the auditor will read it.",
 					maxReversalReasonText,
@@ -905,8 +902,8 @@ func newRequestJournalReversalTool(
 			Required: []string{
 				paramJournalEntryID,
 				toolparams.ParamAccountingDate,
-				paramReversalReasonCode,
-				paramReversalReasonText,
+				paramReasonCode,
+				paramReasonText,
 			},
 			Target:      targetReversedEntry,
 			SearchTerms: []string{"reverse", "undo", "wrong", "entry", "error"},

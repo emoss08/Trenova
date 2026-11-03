@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -24,7 +23,7 @@ const commodityRecordEntity = "commodity"
 
 const paramCommodityID = "commodityId"
 
-const paramHazmatID = "hazardousMaterialId"
+const paramHazardousMaterialID = "hazardousMaterialId"
 
 var freightClasses = agenttoolschema.Source("commodity.freightClass", commodity.FreightClasses)
 
@@ -119,7 +118,7 @@ var commodityRecord = &masterdatakit.Record[commodity.Commodity]{
 	},
 	View: commodityViewOf,
 	Options: []toolpreview.Option{toolpreview.WithRefs(map[string]permission.Resource{
-		paramHazmatID: permission.ResourceHazardousMaterial,
+		paramHazardousMaterialID: permission.ResourceHazardousMaterial,
 	})},
 }
 
@@ -140,7 +139,7 @@ func commodityFields() []masterdatakit.Field[commodity.Commodity] {
 			func(c *commodity.Commodity) *string { return &c.Description },
 		),
 		masterdatakit.OptionalID(
-			paramHazmatID,
+			paramHazardousMaterialID,
 			permission.ResourceHazardousMaterial,
 			"The hazardous material it is, from masterdata_list_hazardous_materials, when the goods "+
 				"are hazmat.",
@@ -189,7 +188,7 @@ func commodityFields() []masterdatakit.Field[commodity.Commodity] {
 func NewCreateCommodityTool(commodities CommodityKeeper) agenttoolports.AgentTool {
 	return masterdatakit.NewCreateTool(&masterdatakit.CreateSpec[commodity.Commodity]{
 		Record: commodityRecord,
-		Name:   agentpreset.ToolCreateCommodity,
+		Name:   "masterdata_create_commodity",
 		Description: "Add a commodity shipments can carry, with its freight class, " +
 			"temperature range, dimensions and handling. Name the hazardous material it is " +
 			"when it is hazmat, and check masterdata_list_commodities first.",
@@ -383,7 +382,7 @@ var hazmatRecord = &masterdatakit.Record[hazardousmaterial.HazardousMaterial]{
 	Kind:     "hazardous material",
 	Resource: permission.ResourceHazardousMaterial,
 	Entity:   hazmatRecordEntity,
-	IDParam:  paramHazmatID,
+	IDParam:  paramHazardousMaterialID,
 	IDsParam: "hazardousMaterialIds",
 	Lister:   "masterdata_list_hazardous_materials",
 	Label:    func(entity *hazardousmaterial.HazardousMaterial) string { return entity.Name },

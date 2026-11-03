@@ -7,11 +7,6 @@ import (
 )
 
 const (
-	toolListJournalEntries   = "ledger_list_journal_entries"
-	toolListFiscalPeriods    = "ledger_list_fiscal_periods"
-	toolListManualJournals   = "ledger_list_manual_journals"
-	toolListJournalReversals = "ledger_list_journal_reversals"
-
 	journalEntriesSummary = "List general ledger journal entries in any status, newest " +
 		"accounting date first, with their number, type, status and source reference. " +
 		"Their debit and credit totals show when your data access reaches them. " +
@@ -38,7 +33,6 @@ const (
 	noteApprovedJournal  = "Approved journals are waiting to be posted."
 	noteApprovedReversal = "Approved reversals are waiting to be posted."
 
-	fieldFiscalPeriodID          = "fiscalPeriodId"
 	fieldRequestedFiscalPeriodID = "requestedFiscalPeriodId"
 	fieldResolvedFiscalPeriodID  = "resolvedFiscalPeriodId"
 	fieldOriginalJournalEntryID  = "originalJournalEntryId"
@@ -52,13 +46,13 @@ var (
 	fiscalPeriodReference = readspec.Reference{
 		Resource: permission.ResourceFiscalPeriod,
 		What:     "The fiscal period",
-		Source:   toolListFiscalPeriods,
+		Source:   "ledger_list_fiscal_periods",
 	}
 	journalEntryReference = func(what string) readspec.Reference {
 		return readspec.Reference{
 			Resource: permission.ResourceJournalEntry,
 			What:     what,
-			Source:   toolListJournalEntries,
+			Source:   "ledger_list_journal_entries",
 		}
 	}
 )
@@ -69,7 +63,7 @@ var (
 func LedgerReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         toolListJournalEntries,
+			Name:         "ledger_list_journal_entries",
 			EntityPlural: "journal entries",
 			Summary:      journalEntriesSummary,
 			Resource:     permission.ResourceJournalEntry,
@@ -79,10 +73,12 @@ func LedgerReadSpecs() []readspec.List {
 				fieldReferenceType:    noteJournalSource,
 				fieldReferenceID:      noteJournalSourceID,
 			},
-			References: map[string]readspec.Reference{fieldFiscalPeriodID: fiscalPeriodReference},
+			References: map[string]readspec.Reference{
+				querytool.ParamFiscalPeriodID: fiscalPeriodReference,
+			},
 		},
 		{
-			Name:         toolListFiscalPeriods,
+			Name:         "ledger_list_fiscal_periods",
 			EntityPlural: "fiscal periods",
 			Summary:      fiscalPeriodsSummary,
 			SearchTerms: []string{
@@ -92,7 +88,7 @@ func LedgerReadSpecs() []readspec.List {
 			Notes:    map[string]string{querytool.ParamStatus: notePeriodStatus},
 		},
 		{
-			Name:         toolListManualJournals,
+			Name:         "ledger_list_manual_journals",
 			EntityPlural: "manual journals",
 			Summary:      manualJournalsSummary,
 			Resource:     permission.ResourceManualJournal,
@@ -102,7 +98,7 @@ func LedgerReadSpecs() []readspec.List {
 			},
 		},
 		{
-			Name:         toolListJournalReversals,
+			Name:         "ledger_list_journal_reversals",
 			EntityPlural: "journal reversals",
 			Summary:      journalReversalsSummary,
 			Resource:     permission.ResourceJournalReversal,

@@ -7,13 +7,6 @@ import (
 )
 
 const (
-	toolListShipmentTypes      = "masterdata_list_shipment_types"
-	toolListCommodities        = "masterdata_list_commodities"
-	toolListHazardousMaterials = "masterdata_list_hazardous_materials"
-	toolListAccessorialCharges = "masterdata_list_accessorial_charges"
-	toolListDocumentTypes      = "document_list_types"
-	toolListHoldReasons        = "masterdata_list_hold_reasons"
-
 	pluralCommodities        = "commodities"
 	fieldHazardousMaterialID = "hazardousMaterialId"
 	fieldUNNumber            = "unNumber"
@@ -63,31 +56,31 @@ const (
 func ReferenceReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         querytool.ToolListEquipmentTypes,
+			Name:         "equipment_list_types",
 			EntityPlural: "equipment types",
 			Summary:      equipmentTypesSummary,
 			Resource:     permission.ResourceEquipmentType,
 		},
 		{
-			Name:         querytool.ToolListFleetCodes,
+			Name:         "masterdata_list_fleet_codes",
 			EntityPlural: "fleet codes",
 			Summary:      fleetCodesSummary,
 			Resource:     permission.ResourceFleetCode,
 		},
 		{
-			Name:         querytool.ToolMasterdataListServiceTypes,
+			Name:         "masterdata_list_service_types",
 			EntityPlural: "service types",
 			Summary:      serviceTypesSummary,
 			Resource:     permission.ResourceServiceType,
 		},
 		{
-			Name:         toolListShipmentTypes,
+			Name:         "masterdata_list_shipment_types",
 			EntityPlural: "shipment types",
 			Summary:      shipmentTypesSummary,
 			Resource:     permission.ResourceShipmentType,
 		},
 		{
-			Name:         toolListCommodities,
+			Name:         "masterdata_list_commodities",
 			EntityPlural: pluralCommodities,
 			Summary:      commoditiesSummary,
 			Resource:     permission.ResourceCommodity,
@@ -95,37 +88,37 @@ func ReferenceReadSpecs() []readspec.List {
 			References: map[string]readspec.Reference{fieldHazardousMaterialID: {
 				Resource: permission.ResourceHazardousMaterial,
 				What:     "The hazardous material the commodity is",
-				Source:   toolListHazardousMaterials,
+				Source:   "masterdata_list_hazardous_materials",
 			}},
 		},
 		{
-			Name:         toolListHazardousMaterials,
+			Name:         "masterdata_list_hazardous_materials",
 			EntityPlural: "hazardous materials",
 			Summary:      hazardousMaterialsSummary,
 			Resource:     permission.ResourceHazardousMaterial,
 			Notes:        map[string]string{fieldUNNumber: noteUNNumber},
 		},
 		{
-			Name:         toolListAccessorialCharges,
+			Name:         "masterdata_list_accessorial_charges",
 			EntityPlural: "accessorial charges",
 			Summary:      accessorialChargesSummary,
 			Resource:     permission.ResourceAccessorialCharge,
 		},
 		{
-			Name:         toolListDocumentTypes,
+			Name:         "document_list_types",
 			EntityPlural: "document types",
 			Summary:      documentTypesSummary,
 			Resource:     permission.ResourceDocumentType,
 			Notes:        map[string]string{fieldIsSystem: noteSystemDocumentType},
 		},
 		{
-			Name:         querytool.ToolListLocationCategories,
+			Name:         "location_list_categories",
 			EntityPlural: "location categories",
 			Summary:      locationCategoriesSummary,
 			Resource:     permission.ResourceLocationCategory,
 		},
 		{
-			Name:         toolListHoldReasons,
+			Name:         "masterdata_list_hold_reasons",
 			EntityPlural: "hold reasons",
 			Summary:      holdReasonsSummary,
 			Resource:     permission.ResourceHoldReason,

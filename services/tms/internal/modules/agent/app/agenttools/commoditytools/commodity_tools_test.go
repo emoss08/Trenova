@@ -216,9 +216,9 @@ func TestHazardousMaterialTools_AlwaysWaitForAPerson(t *testing.T) {
 
 	update := NewUpdateHazardousMaterialTool(materials)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramHazmatID:     stored.ID.String(),
-		"placardRequired": true,
-		"class":           "HazardClass8",
+		paramHazardousMaterialID: stored.ID.String(),
+		"placardRequired":        true,
+		"class":                  "HazardClass8",
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

@@ -119,10 +119,10 @@ func filterInputParams(
 	for idx := range Inputs[variable.Type] {
 		field := Inputs[variable.Type][idx]
 		if field.Kind == KindInput ||
-			(paged && (field.Name == InputFirst || field.Name == InputAfter)) {
+			(paged && (field.Name == FieldFirst || field.Name == querytool.ParamAfter)) {
 			continue
 		}
-		searched := field.Name == filterSearch || (paged && field.Name == InputQuery)
+		searched := field.Name == filterSearch || (paged && field.Name == querytool.ParamQuery)
 		if searched && field.Type == TypeString {
 			search = field.Name
 			continue

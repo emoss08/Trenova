@@ -19,11 +19,8 @@ import (
 )
 
 const (
-	toolShareCustomerTrackingLink  = "shipment_share_tracking_link"
-	toolRevokeCustomerTrackingLink = "shipment_revoke_tracking_link"
-	paramRecipientEmail            = "recipientEmail"
-	paramTrackingLinkID            = "linkId"
-	ToolShipmentList               = "shipment_list"
+	paramRecipientEmail = "recipientEmail"
+	paramLinkID         = "linkId"
 )
 
 type customerTrackingLinker interface {
@@ -71,8 +68,8 @@ func NewShareCustomerTrackingLinkTool(
 func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name:   toolShareCustomerTrackingLink,
-			Recipe: []string{ToolShipmentList, toolShareCustomerTrackingLink},
+			Name:   "shipment_share_tracking_link",
+			Recipe: []string{"shipment_list", "shipment_share_tracking_link"},
 			Description: "Share a link to a shipment's tracking page with the customer, and email it " +
 				"when given an address. The page shows only what the customer's tracking settings " +
 				"allow and needs no sign-in. Use the address the customer asked you to send it to; " +
@@ -179,7 +176,7 @@ func shareLink(
 		Name:   issued.URL,
 		IDs: map[string]string{
 			toolparams.ParamShipmentID: req.ShipmentID.String(),
-			paramTrackingLinkID:        issued.Link.ID.String(),
+			paramLinkID:                issued.Link.ID.String(),
 		},
 		State: "Link shared; not emailed",
 	}
@@ -206,8 +203,8 @@ func NewRevokeCustomerTrackingLinkTool(
 func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name:   toolRevokeCustomerTrackingLink,
-			Recipe: []string{ToolShipmentList, toolRevokeCustomerTrackingLink},
+			Name:   "shipment_revoke_tracking_link",
+			Recipe: []string{"shipment_list", "shipment_revoke_tracking_link"},
 			Description: "Stop every live customer tracking link on a shipment from working. Use " +
 				"it when a link reached the wrong person or the customer asks for access to end; " +
 				"share a new link afterwards if someone should keep following the load.",

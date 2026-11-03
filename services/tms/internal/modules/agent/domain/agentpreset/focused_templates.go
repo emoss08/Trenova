@@ -1,61 +1,38 @@
 package agentpreset
 
-const (
-	toolDescribeReport  = "report_get"
-	toolGetReportRun    = "report_get_run"
-	toolListReports     = "report_list"
-	toolPreviewReport   = "report_preview"
-	toolRunReport       = "report_run"
-	toolGetCustomer     = "customer_get"
-	toolGetDocument     = "document_get"
-	toolShipmentGet     = "shipment_get"
-	toolGetWorker       = "worker_get"
-	toolListCommodities = "masterdata_list_commodities"
-	toolListCustomers   = "customer_list"
-	toolListTimeOff     = "worker_list_time_off"
-	toolListTractors    = "equipment_list_tractors"
-	toolListTrailers    = "equipment_list_trailers"
-	toolListWorkers     = "worker_list"
-	toolShipmentList    = "shipment_list"
-
-	toolShipmentAddComment  = "shipment_add_comment"
-	toolShipmentGetTracking = "shipment_get_tracking"
-	toolIntakeGetDraft      = "intake_get_draft"
-)
-
 func masterDataStewardTools() []string {
 	return []string{
-		toolListCarriers,
-		toolGetCarrier,
+		"carrier_list",
+		"carrier_get",
 		"carrier_create",
 		"carrier_update",
 		"carrier_set_status",
-		toolListCustomers,
-		toolGetCustomer,
+		"customer_list",
+		"customer_get",
 		"customer_create",
 		"customer_update",
 		"customer_set_status",
-		toolListCommodities,
-		ToolCreateCommodity,
+		"masterdata_list_commodities",
+		"masterdata_create_commodity",
 		"masterdata_update_commodity",
 		"masterdata_set_commodity_status",
 		"masterdata_list_hazardous_materials",
 		"masterdata_create_hazardous_material",
 		"masterdata_update_hazardous_material",
 		"masterdata_set_hazardous_material_status",
-		toolListLocations,
+		"location_list",
 		"location_get",
 		"location_list_categories",
 		"location_create",
 		"location_update",
 		"location_set_status",
-		toolListTractors,
+		"equipment_list_tractors",
 		"equipment_get_tractor",
 		"equipment_create_tractor",
 		"equipment_update_tractor",
 		"equipment_set_tractor_status",
 		"equipment_set_tractor_location",
-		toolListTrailers,
+		"equipment_list_trailers",
 		"equipment_get_trailer",
 		"equipment_create_trailer",
 		"equipment_update_trailer",
@@ -64,9 +41,9 @@ func masterDataStewardTools() []string {
 		"equipment_list_types",
 		"equipment_list_manufacturers",
 		"masterdata_list_fleet_codes",
-		toolShipmentList,
-		toolSearchDocuments,
-		toolGetDocument,
+		"shipment_list",
+		"document_list",
+		"document_get",
 		"document_list_types",
 		"document_delete",
 		"document_restore_version",
@@ -86,10 +63,10 @@ func masterDataStewardTools() []string {
 
 func workforceCoordinatorTools() []string {
 	return []string{
-		toolListWorkers,
-		toolGetWorker,
-		toolShipmentList,
-		toolListTimeOff,
+		"worker_list",
+		"worker_get",
+		"shipment_list",
+		"worker_list_time_off",
 		"worker_request_pto",
 		"worker_update_pto",
 		"worker_approve_pto",
@@ -145,13 +122,13 @@ func workforceCoordinatorTools() []string {
 
 func fuelTaxClerkTools() []string {
 	return []string{
-		toolListTractors,
+		"equipment_list_tractors",
 		"equipment_get_tractor",
-		toolListWorkers,
-		toolShipmentList,
-		toolShipmentGet,
-		toolSearchDocuments,
-		toolGetDocument,
+		"worker_list",
+		"shipment_list",
+		"shipment_get",
+		"document_list",
+		"document_get",
 		"fuel_list_ifta_jurisdictions",
 		"fuel_list_purchases",
 		"fuel_record_purchase",
@@ -183,11 +160,11 @@ func fuelTaxClerkTools() []string {
 
 func reportAnalystTools() []string {
 	return []string{
-		toolListReports,
-		toolDescribeReport,
-		toolPreviewReport,
-		toolRunReport,
-		toolGetReportRun,
+		"report_list",
+		"report_get",
+		"report_preview",
+		"report_run",
+		"report_get_run",
 		"report_list_runs",
 		"report_compare_runs",
 		"report_cancel_run",

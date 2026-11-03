@@ -67,12 +67,12 @@ func TestDriverEarnings_TakeAWorkerID(t *testing.T) {
 
 	var spec readspec.Get
 	for _, candidate := range GetSpecs() {
-		if candidate.Name == ToolGetDriverEarnings {
+		if candidate.Name == "settlement_get_driver_earnings" {
 			spec = candidate
 		}
 	}
 	tool := &gettool.Tool{Spec: spec}
-	property := tool.ParamSchema()["properties"].(map[string]any)[querytool.FieldWorkerID].(map[string]any)
+	property := tool.ParamSchema()["properties"].(map[string]any)[querytool.ParamWorkerID].(map[string]any)
 
 	assert.Equal(t, permission.ResourceWorker.String(), property[toolschema.KeyRecordOf])
 }

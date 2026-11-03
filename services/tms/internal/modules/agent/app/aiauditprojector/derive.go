@@ -616,13 +616,13 @@ func (d *deriver) runEventEvent(
 	case assistantstreamports.AssistantEventDelegateStarted:
 		event.Kind = aiaudit.KindDelegationStarted
 		event.Outcome = aiaudit.OutcomeStarted
-		event.ToolName = delegateToolName
+		event.ToolName = "delegate_task"
 	case assistantstreamports.AssistantEventDelegateFinished:
 		event.Kind = aiaudit.KindDelegationEnded
 		event.Outcome = delegateOutcome(
 			conversation.DelegateStatus(typeutils.StringOf(payload[payloadKeyStatus])),
 		)
-		event.ToolName = delegateToolName
+		event.ToolName = "delegate_task"
 		event.Reason = d.redactor.Text(
 			typeutils.StringOf(payload[payloadKeyReason]),
 			aiaudit.MaxReasonLength,
@@ -639,8 +639,6 @@ func (d *deriver) runEventEvent(
 
 	return event
 }
-
-const delegateToolName = "delegate_task"
 
 func delegateOrCallKey(kind string) string {
 	if kind == assistantstreamports.AssistantEventToolFinished {

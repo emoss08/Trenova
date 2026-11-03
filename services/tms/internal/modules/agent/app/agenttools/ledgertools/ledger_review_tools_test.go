@@ -278,7 +278,7 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 		guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingreviewtools.NewConfirmAccountingMappingProposalsTool(reviewer)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{accountingreviewtools.ParamMappingProposals: []any{
+		map[string]any{accountingreviewtools.ParamProposals: []any{
 			map[string]any{
 				accountingtools.ParamMappingID:        ar.ID.String(),
 				accountingreviewtools.ParamExternalID: "1",
@@ -328,7 +328,7 @@ func TestConfirmAccountingMappingProposals_RefusesARepeatedMapping(t *testing.T)
 	require.Error(
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-			map[string]any{accountingreviewtools.ParamMappingProposals: []any{
+			map[string]any{accountingreviewtools.ParamProposals: []any{
 				map[string]any{
 					accountingtools.ParamMappingID:        ar.ID.String(),
 					accountingreviewtools.ParamExternalID: "1",
@@ -457,7 +457,7 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 	}
 	tool := accountingreviewtools.NewReleaseAccountingSyncTool(sync, sync)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		accountingtools.ParamAccountingSystem:  string(integration.TypeQuickBooksOnline),
+		accountingtools.ParamSystem:            string(integration.TypeQuickBooksOnline),
 		accountingsynctools.ParamSyncRecordIDs: []any{held.ID.String()},
 	})
 
@@ -502,7 +502,7 @@ func TestReleaseAccountingSync_RefusesADocumentThatIsNotHeld(t *testing.T) {
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			accountingtools.ParamAccountingSystem:  string(integration.TypeQuickBooksOnline),
+			accountingtools.ParamSystem:            string(integration.TypeQuickBooksOnline),
 			accountingsynctools.ParamSyncRecordIDs: []any{failed.ID.String()},
 		}),
 	)
@@ -520,8 +520,8 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 	sync := &fakeSyncReleaser{backfill: backfill, guard: &agenttoolstest.WriteGuard{}}
 	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync, sync)
 	params := agenttoolstest.PersonParams(map[string]any{
-		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingreviewtools.ParamBackfillAction: string(
+		accountingtools.ParamSystem: string(integration.TypeQuickBooksOnline),
+		accountingreviewtools.ParamAction: string(
 			accountingsyncports.AccountingBackfillPause,
 		),
 	})
@@ -556,16 +556,16 @@ func TestChangeAccountingBackfill_RefusesAMoveTheBackfillCannotMake(t *testing.T
 	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync, sync)
 
 	resume := agenttoolstest.PersonParams(map[string]any{
-		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingreviewtools.ParamBackfillAction: string(
+		accountingtools.ParamSystem: string(integration.TypeQuickBooksOnline),
+		accountingreviewtools.ParamAction: string(
 			accountingsyncports.AccountingBackfillResume,
 		),
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), resume))
 
 	agentCall := agenttoolstest.AgentParamsFor(map[string]any{
-		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingreviewtools.ParamBackfillAction: string(
+		accountingtools.ParamSystem: string(integration.TypeQuickBooksOnline),
+		accountingreviewtools.ParamAction: string(
 			accountingsyncports.AccountingBackfillCancel,
 		),
 	})
@@ -648,9 +648,9 @@ func TestTriageBankReceiptWorkItem_AssignsOrMarksItUnderReview(t *testing.T) {
 	tool := newTriageBankReceiptWorkItemTool(items)
 	assignee := pulid.MustNew("usr_")
 	assign := agenttoolstest.AgentParamsFor(map[string]any{
-		paramWorkItemID:   items.item.ID.String(),
-		paramWorkItemMove: string(workItemAssign),
-		paramAssigneeID:   assignee.String(),
+		paramWorkItemID:     items.item.ID.String(),
+		paramAction:         string(workItemAssign),
+		paramAssigneeUserID: assignee.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -671,8 +671,8 @@ func TestTriageBankReceiptWorkItem_AssignsOrMarksItUnderReview(t *testing.T) {
 	assert.Equal(t, assignee, items.assigned.AssignedToUserID)
 
 	review := agenttoolstest.AgentParamsFor(map[string]any{
-		paramWorkItemID:   items.item.ID.String(),
-		paramWorkItemMove: string(workItemStartReview),
+		paramWorkItemID: items.item.ID.String(),
+		paramAction:     string(workItemStartReview),
 	})
 	require.NoError(t, tool.Execute(t.Context(), review))
 	assert.True(t, items.reviewed)
@@ -690,17 +690,17 @@ func TestTriageBankReceiptWorkItem_RefusesAMismatchedAssignee(t *testing.T) {
 
 	for name, raw := range map[string]map[string]any{
 		"assign without anyone": {
-			paramWorkItemID:   id,
-			paramWorkItemMove: string(workItemAssign),
+			paramWorkItemID: id,
+			paramAction:     string(workItemAssign),
 		},
 		"review with someone": {
-			paramWorkItemID:   id,
-			paramWorkItemMove: string(workItemStartReview),
-			paramAssigneeID:   pulid.MustNew("usr_").String(),
+			paramWorkItemID:     id,
+			paramAction:         string(workItemStartReview),
+			paramAssigneeUserID: pulid.MustNew("usr_").String(),
 		},
 		"an unknown action": {
-			paramWorkItemID:   id,
-			paramWorkItemMove: "Resolve",
+			paramWorkItemID: id,
+			paramAction:     "Resolve",
 		},
 	} {
 		t.Run(name, func(t *testing.T) {

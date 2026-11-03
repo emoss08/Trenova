@@ -18,8 +18,6 @@ import (
 )
 
 const (
-	DraftEDIConnectionToolName = "edi_draft_connection"
-
 	draftReadyNote = "Ready: point the person to the draft in the sentence that says what it " +
 		"sets up, then propose edi_apply_connection_draft with the same input and documentDigest. Nothing is written until they approve it. Tell " +
 		"them which credentials to enter before the connection is turned on."
@@ -68,7 +66,7 @@ func newDraftEDIConnectionTool(
 	return &draftEDIConnectionTool{drafts: drafts, documents: documents}
 }
 
-func (t *draftEDIConnectionTool) Name() string { return DraftEDIConnectionToolName }
+func (t *draftEDIConnectionTool) Name() string { return "edi_draft_connection" }
 
 func (t *draftEDIConnectionTool) SearchTerms() []string {
 	return []string{

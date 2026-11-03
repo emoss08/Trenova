@@ -195,8 +195,8 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamInvoiceID: inv.ID.String(),
 		paramUserIDs:              []any{dana.String()},
-		paramShareNote:            "Check the detention line",
-		paramShareTab:             string(invoiceshare.ShareTabCharges),
+		toolparams.ParamNote:      "Check the detention line",
+		paramTab:                  string(invoiceshare.ShareTabCharges),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

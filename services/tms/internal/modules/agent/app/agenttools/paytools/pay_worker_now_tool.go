@@ -65,8 +65,9 @@ func (t *PayWorkerNowTool) ParamSchema() map[string]any {
 		toolschema.KeyType:     toolschema.TypeArray,
 		toolschema.KeyMaxItems: maxPayEventsPerAttach,
 		toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
-		toolschema.KeyDescription: "The accrued pay events to pay, from " + payEventSources +
-			". Leave it out to pay everything the driver has accrued and not held.",
+		toolschema.KeyDescription: "The accrued pay events to pay, from " +
+			"settlement_list_pay_events. Leave it out to pay everything the driver has " +
+			"accrued and not held.",
 	}, recordkind.PayEvent))
 	properties[ParamApplyRecurring] = map[string]any{
 		toolschema.KeyType: toolschema.TypeBoolean,

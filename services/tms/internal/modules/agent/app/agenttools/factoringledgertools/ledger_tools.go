@@ -30,19 +30,16 @@ import (
 )
 
 const (
-	paramItems     = "items"
-	paramItemID    = "itemId"
-	paramOutcome   = "outcome"
-	paramAdvance   = "advance"
-	paramFee       = "fee"
-	paramFundedOn  = "fundedOn"
-	paramMemo      = "memo"
-	paramCash      = "cash"
-	paramOccurred  = "occurredOn"
-	maxMemoLength  = factoringledger.MaxReserveMemoLength
-	maxReasonText  = factoringsubmission.MaxFundingReasonLength
-	toolGetSubmit  = "factoring_get_submission"
-	toolGetBalance = "factoring_get_reserve_balance"
+	paramItems      = "items"
+	paramOutcome    = "outcome"
+	paramAdvance    = "advance"
+	paramFee        = "fee"
+	paramFundedOn   = "fundedOn"
+	paramMemo       = "memo"
+	paramCash       = "cash"
+	paramOccurredOn = "occurredOn"
+	maxMemoLength   = factoringledger.MaxReserveMemoLength
+	maxReasonText   = factoringsubmission.MaxFundingReasonLength
 )
 
 type ledgerTool struct {
@@ -211,7 +208,9 @@ func (t *RecordFactoringFundingTool) SearchTerms() []string {
 	return []string{"factor funding", "funding report", "advance received", "factor rejected"}
 }
 
-func (t *RecordFactoringFundingTool) Prerequisites() []string { return []string{toolGetSubmit} }
+func (t *RecordFactoringFundingTool) Prerequisites() []string {
+	return []string{"factoring_get_submission"}
+}
 
 func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
@@ -229,7 +228,7 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramItemID: itemIDParam(
+					toolparams.ParamItemID: itemIDParam(
 						"The invoice's line on the schedule (its item id) from " +
 							"factoring_get_submission.",
 					),
@@ -241,12 +240,12 @@ func (t *RecordFactoringFundingTool) ParamSchema() map[string]any {
 						"the expected advance."),
 					paramFee: amountParam("What the factor kept as its fee, when it differs " +
 						"from the expected fee."),
-					factoringkit.ParamReason: toolparams.StringProperty(
+					toolparams.ParamReason: toolparams.StringProperty(
 						"Why the factor rejected it.",
 						maxReasonText,
 					),
 				},
-				toolschema.KeyRequired:             []string{paramItemID, paramOutcome},
+				toolschema.KeyRequired:             []string{toolparams.ParamItemID, paramOutcome},
 				toolschema.KeyAdditionalProperties: false,
 			},
 		},
@@ -324,7 +323,7 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 		if !isObject {
 			return nil, fmt.Errorf("%s[%d] must be an object", paramItems, idx)
 		}
-		itemID, err := toolparams.RequirePulid(fields, paramItemID)
+		itemID, err := toolparams.RequirePulid(fields, toolparams.ParamItemID)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramItems, idx, err)
 		}
@@ -349,7 +348,7 @@ func fundingItems(params map[string]any) ([]factoringledgerports.FundingItemInpu
 		}
 		reason, err := toolparams.OptionalBoundedText(
 			fields,
-			factoringkit.ParamReason,
+			toolparams.ParamReason,
 			maxReasonText,
 		)
 		if err != nil {
@@ -473,27 +472,35 @@ type ReserveMovementTool struct {
 	spec movementSpec
 }
 
-func (t *ReserveMovementTool) Name() string            { return t.spec.name }
-func (t *ReserveMovementTool) Description() string     { return t.spec.description }
-func (t *ReserveMovementTool) SearchTerms() []string   { return t.spec.searchTerms }
-func (t *ReserveMovementTool) Prerequisites() []string { return []string{toolGetSubmit} }
+func (t *ReserveMovementTool) Name() string          { return t.spec.name }
+func (t *ReserveMovementTool) Description() string   { return t.spec.description }
+func (t *ReserveMovementTool) SearchTerms() []string { return t.spec.searchTerms }
+
+func (t *ReserveMovementTool) Prerequisites() []string {
+	return []string{"factoring_get_submission"}
+}
 
 func (t *ReserveMovementTool) ParamSchema() map[string]any {
 	properties := map[string]any{
 		paramSubmissionID: submissionIDParam("The schedule, from factoring_list_submissions."),
-		paramItemID: itemIDParam(
+		toolparams.ParamItemID: itemIDParam(
 			"The invoice's line on the schedule (its item id) from factoring_get_submission.",
 		),
 		factoringkit.ParamVersion: submissionVersionParam(),
-		paramOccurred:             agenttoolschema.Date(t.spec.dateHelp),
-		factoringkit.ParamReason:  toolparams.StringProperty(t.spec.reasonHelp, maxReasonText),
+		paramOccurredOn:           agenttoolschema.Date(t.spec.dateHelp),
+		toolparams.ParamReason:    toolparams.StringProperty(t.spec.reasonHelp, maxReasonText),
 	}
-	required := []string{paramSubmissionID, paramItemID, factoringkit.ParamVersion, paramOccurred}
+	required := []string{
+		paramSubmissionID,
+		toolparams.ParamItemID,
+		factoringkit.ParamVersion,
+		paramOccurredOn,
+	}
 	if t.spec.cashHelp != "" {
 		properties[paramCash] = amountParam(t.spec.cashHelp)
 	}
 	if t.spec.needsReason {
-		required = append(required, factoringkit.ParamReason)
+		required = append(required, toolparams.ParamReason)
 	}
 	return jsonschemautils.Object(properties, required...)
 }
@@ -516,7 +523,7 @@ func (t *ReserveMovementTool) request(
 	if err != nil {
 		return nil, err
 	}
-	itemID, err := toolparams.RequirePulid(params.Params, paramItemID)
+	itemID, err := toolparams.RequirePulid(params.Params, toolparams.ParamItemID)
 	if err != nil {
 		return nil, err
 	}
@@ -529,7 +536,7 @@ func (t *ReserveMovementTool) request(
 	if err != nil {
 		return nil, err
 	}
-	occurredOn, err := toolparams.RequireDay(params.Params, paramOccurred)
+	occurredOn, err := toolparams.RequireDay(params.Params, paramOccurredOn)
 	if err != nil {
 		return nil, err
 	}
@@ -548,7 +555,7 @@ func (t *ReserveMovementTool) request(
 	if t.spec.needsReason {
 		reason, reasonErr := toolparams.RequireBoundedText(
 			params.Params,
-			factoringkit.ParamReason,
+			toolparams.ParamReason,
 			maxReasonText,
 		)
 		if reasonErr != nil {
@@ -559,7 +566,7 @@ func (t *ReserveMovementTool) request(
 	}
 	reason, err := toolparams.OptionalBoundedText(
 		params.Params,
-		factoringkit.ParamReason,
+		toolparams.ParamReason,
 		maxReasonText,
 	)
 	if err != nil {

@@ -22,23 +22,17 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const (
-	ToolListMappingGaps = "accounting_list_mapping_gaps"
-)
-
 const maxMappingReasonRunes = 500
 
-const ParamAccountingSystem = "system"
+const ParamSystem = "system"
 
 const paramRecordID = "recordId"
 
-const paramMappingKey = "key"
+const paramKey = "key"
 
 const ParamMappingID = "mappingId"
 
 const paramTargetType = "targetType"
-
-const toolGetAccountingMapping = "accounting_get_mapping"
 
 func SystemSchema() map[string]any {
 	return agenttoolschema.Enum(
@@ -49,7 +43,7 @@ func SystemSchema() map[string]any {
 
 func mappingTargetProperties() map[string]any {
 	return map[string]any{
-		ParamAccountingSystem: SystemSchema(),
+		ParamSystem: SystemSchema(),
 		ParamMappingID: agenttoolschema.KindID(
 			"The mapping's id from accounting_list_mapping_gaps or "+
 				"accounting_get_mapping. Never guess one.",
@@ -68,7 +62,7 @@ func mappingTargetProperties() map[string]any {
 			recordkind.Kind(permission.ResourceWorker),
 			recordkind.Kind(permission.ResourceGeneralLedgerAccount),
 		),
-		paramMappingKey: jsonschemautils.Text(
+		paramKey: jsonschemautils.Text(
 			"The setting's key from accounting_list_mapping_gaps, for the " +
 				"other target types. Examples: " +
 				"\"ARAccount\", \"Freight\", \"Net30\", \"ACH\".",
@@ -77,7 +71,7 @@ func mappingTargetProperties() map[string]any {
 }
 
 func SystemFrom(params map[string]any) (integration.Type, error) {
-	system, err := toolparams.RequireString(params, ParamAccountingSystem)
+	system, err := toolparams.RequireString(params, ParamSystem)
 	if err != nil {
 		return "", err
 	}
@@ -112,7 +106,7 @@ func mappingRequestFrom(
 			toolparams.OptionalString(params.Params, paramTargetType),
 		),
 		TrenovaObjectID: recordID,
-		TrenovaKey:      toolparams.OptionalString(params.Params, paramMappingKey),
+		TrenovaKey:      toolparams.OptionalString(params.Params, paramKey),
 		Source:          accountingmapping.MappingSourceAgent,
 	}
 	if err = req.ValidateTarget(); err != nil {
@@ -195,7 +189,7 @@ func (t *SetAccountingMappingTool) Name() string { return "accounting_set_mappin
 
 func (t *SetAccountingMappingTool) Recipe() []string {
 	return []string{
-		ToolListMappingGaps,
+		"accounting_list_mapping_gaps",
 		"accounting_get_mapping",
 		"accounting_set_mapping",
 	}
@@ -214,7 +208,7 @@ func (t *SetAccountingMappingTool) SearchTerms() []string {
 }
 
 func (t *SetAccountingMappingTool) Prerequisites() []string {
-	return []string{ToolListMappingGaps, toolGetAccountingMapping}
+	return []string{"accounting_list_mapping_gaps", "accounting_get_mapping"}
 }
 
 func (t *SetAccountingMappingTool) ParamSchema() map[string]any {
@@ -226,7 +220,7 @@ func (t *SetAccountingMappingTool) ParamSchema() map[string]any {
 	properties["reason"] = jsonschemautils.Text(
 		"Why this record is the right one, in one sentence.",
 	)
-	return jsonschemautils.Object(properties, ParamAccountingSystem, "externalId", "reason")
+	return jsonschemautils.Object(properties, ParamSystem, "externalId", "reason")
 }
 
 func (t *SetAccountingMappingTool) Policy() agenttoolports.ToolPolicy {
@@ -335,11 +329,11 @@ func (t *ClearAccountingMappingTool) SearchTerms() []string {
 }
 
 func (t *ClearAccountingMappingTool) Prerequisites() []string {
-	return []string{toolGetAccountingMapping}
+	return []string{"accounting_get_mapping"}
 }
 
 func (t *ClearAccountingMappingTool) ParamSchema() map[string]any {
-	return jsonschemautils.Object(mappingTargetProperties(), ParamAccountingSystem)
+	return jsonschemautils.Object(mappingTargetProperties(), ParamSystem)
 }
 
 func (t *ClearAccountingMappingTool) Policy() agenttoolports.ToolPolicy {
@@ -427,7 +421,7 @@ func (t *CreateAccountingReferenceRecordTool) SearchTerms() []string {
 }
 
 func (t *CreateAccountingReferenceRecordTool) Prerequisites() []string {
-	return []string{toolGetAccountingMapping}
+	return []string{"accounting_get_mapping"}
 }
 
 func (t *CreateAccountingReferenceRecordTool) ParamSchema() map[string]any {
@@ -435,7 +429,7 @@ func (t *CreateAccountingReferenceRecordTool) ParamSchema() map[string]any {
 	properties["name"] = jsonschemautils.Text(
 		"The name to create it under. Defaults to the Trenova record's name.",
 	)
-	return jsonschemautils.Object(properties, ParamAccountingSystem)
+	return jsonschemautils.Object(properties, ParamSystem)
 }
 
 func (t *CreateAccountingReferenceRecordTool) Policy() agenttoolports.ToolPolicy {
@@ -521,7 +515,7 @@ func (t *RefreshAccountingReferenceDataTool) Name() string {
 }
 
 func (t *RefreshAccountingReferenceDataTool) Recipe() []string {
-	return []string{"accounting_refresh_reference_data", ToolListMappingGaps}
+	return []string{"accounting_refresh_reference_data", "accounting_list_mapping_gaps"}
 }
 
 func (t *RefreshAccountingReferenceDataTool) Description() string {
@@ -538,8 +532,8 @@ func (t *RefreshAccountingReferenceDataTool) SearchTerms() []string {
 
 func (t *RefreshAccountingReferenceDataTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(
-		map[string]any{ParamAccountingSystem: SystemSchema()},
-		ParamAccountingSystem,
+		map[string]any{ParamSystem: SystemSchema()},
+		ParamSystem,
 	)
 }
 

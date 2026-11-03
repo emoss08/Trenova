@@ -28,14 +28,14 @@ type draftDeliveryView struct {
 }
 
 var draftDeliveryLabels = map[string]string{
-	paramInvoiceMemo:  "Memo",
-	paramRemittance:   "Remittance instructions",
-	paramEmailSubject: "Email subject",
-	paramEmailBody:    "Email body",
-	paramEmailTo:      "Emailed to",
-	paramEmailCc:      "Copied",
-	paramEmailBcc:     "Blind-copied",
-	"attachments":     "Attached documents",
+	paramMemo:                   "Memo",
+	paramRemittanceInstructions: "Remittance instructions",
+	paramEmailSubject:           "Email subject",
+	paramEmailBody:              "Email body",
+	paramEmailTo:                "Emailed to",
+	paramEmailCc:                "Copied",
+	paramEmailBcc:               "Blind-copied",
+	"attachments":               "Attached documents",
 }
 
 func draftDeliveryOf(entity *invoice.Invoice, attachments int) *draftDeliveryView {

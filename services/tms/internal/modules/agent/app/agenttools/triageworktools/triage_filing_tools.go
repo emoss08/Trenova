@@ -27,7 +27,6 @@ import (
 
 const (
 	paramAttachmentID = "attachmentId"
-	paramShipmentID   = "shipmentId"
 	paramPages        = "pages"
 	paramFromPage     = "fromPage"
 	paramToPage       = "toPage"
@@ -164,9 +163,11 @@ func newFileInboundAttachmentTool(
 					"The attachment, from the attachments inbox_get_inbound_message lists for the " +
 						"message.",
 				),
-				paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+				toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
+					permission.ResourceShipment,
 					"The shipment to file it on: the message's matched shipment from "+
-						"inbox_get_inbound_message, or one from shipment_list."),
+						"inbox_get_inbound_message, or one from shipment_list.",
+				),
 				inboundtools.ParamDocumentTypeID: agenttoolschema.RecordIDText(
 					permission.ResourceDocumentType,
 					"Optional, for the whole file: what to file it as, from "+
@@ -174,9 +175,13 @@ func newFileInboundAttachmentTool(
 				),
 				paramPages: filingPagesProperty(),
 			},
-			Required:    []string{inboundtools.ParamMessageID, paramAttachmentID, paramShipmentID},
+			Required: []string{
+				inboundtools.ParamMessageID,
+				paramAttachmentID,
+				toolparams.ParamShipmentID,
+			},
 			SearchTerms: []string{"file attachment", "attach POD", "split pdf", "file on load"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_file_attachment"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_file_attachment"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*fileCall, *triageworkservice.FilePlan]{
@@ -212,7 +217,7 @@ func newFileInboundAttachmentTool(
 					Name:   inboundtools.DescribeMessage(message),
 					IDs: map[string]string{
 						inboundtools.ParamMessageID: message.ID.String(),
-						paramShipmentID:             call.file.ShipmentID.String(),
+						toolparams.ParamShipmentID:  call.file.ShipmentID.String(),
 					},
 					Record: changepreview.RecordOf(
 						changepreview.ShipmentRecordEntity,
@@ -266,7 +271,7 @@ func fileRequest(params *agenttoolports.ToolExecuteParams) (*fileCall, error) {
 	if err != nil {
 		return nil, err
 	}
-	shipmentID, err := toolparams.RequirePulid(params.Params, paramShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -452,7 +457,7 @@ func newUnfileInboundAttachmentTool(
 			},
 			Required:    []string{inboundtools.ParamMessageID, paramAttachmentID},
 			SearchTerms: []string{"unfile attachment", "wrong load", "take document off"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_unfile_attachment"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_unfile_attachment"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*unfileCall, *triageworkservice.UnfilePlan]{

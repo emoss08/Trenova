@@ -22,12 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const (
-	toolSearch = "search_records"
-	toolGet    = "get_record"
-	toolList   = "list_records"
-)
-
 // reader is the person's reads: every call is checked against what they may
 // read, exactly as the Desk checks a query tool, and nothing here writes.
 type reader struct {
@@ -50,7 +44,7 @@ type searchTool struct{ reader *reader }
 
 func (t *searchTool) Spec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name: toolSearch,
+		Name: "search_records",
 		Description: "Find records by a name, number or phrase: a PRO number, a customer, " +
 			"a driver, a location. Returns each match's id, kind and title.",
 		Parameters: map[string]any{
@@ -113,7 +107,7 @@ func (t *searchTool) Call(ctx context.Context, arguments map[string]any) llmport
 		}
 	}
 
-	encoded := t.reader.encode(toolSearch, hits)
+	encoded := t.reader.encode("search_records", hits)
 	encoded.Records = records
 
 	return encoded
@@ -123,7 +117,7 @@ type getTool struct{ reader *reader }
 
 func (t *getTool) Spec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        toolGet,
+		Name:        "get_record",
 		Description: "Read one record in full by its id, such as an id search_records or list_records returned.",
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -163,7 +157,7 @@ type listTool struct{ reader *reader }
 
 func (t *listTool) Spec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name: toolList,
+		Name: "list_records",
 		Description: "List records of one kind, filtered, with how many there are in all. " +
 			"The kinds and the filters each takes:\n" + t.reader.catalog.listGuide(),
 		Parameters: map[string]any{

@@ -33,7 +33,7 @@ var mappingFields = []string{
 	changepreview.FieldState,
 	"externalName",
 	"source",
-	changepreview.FieldReason,
+	toolparams.ParamReason,
 	"confirmedAt",
 }
 

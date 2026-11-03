@@ -3,9 +3,7 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -53,13 +51,13 @@ func TestToolEffect_DerivesFromMetadataAndNamesTheRuntimeTools(t *testing.T) {
 	assert.Equal(
 		t,
 		agenttooltrust.ToolEffectDiscover,
-		rt.access.ToolEffect(runtimetools.FindToolsName),
+		rt.access.ToolEffect("find_tools"),
 	)
-	assert.Equal(t, agenttooltrust.ToolEffectAsk, rt.access.ToolEffect(askuser.Name))
+	assert.Equal(t, agenttooltrust.ToolEffectAsk, rt.access.ToolEffect("ask_user"))
 	assert.Equal(
 		t,
 		agenttooltrust.ToolEffectPresent,
-		rt.access.ToolEffect(runtimetools.PublishArtifactName),
+		rt.access.ToolEffect("publish_artifact"),
 	)
 	assert.Empty(
 		t,

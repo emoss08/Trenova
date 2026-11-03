@@ -31,8 +31,6 @@ const (
 	evidenceTypeHOS      = "worker_hos_state"
 	evidenceTypeDeadhead = "vehicle_position"
 
-	toolNameAssignMove = "dispatch_assign_move"
-
 	promptVersion = "dispatch-auto-assign-v1"
 
 	maxPlanMoves = 400
@@ -397,7 +395,7 @@ func (s *Service) recordPlan(
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			RunID:          run.ID,
-			ToolName:       toolNameAssignMove,
+			ToolName:       "dispatch_assign_move",
 			ToolParams:     toolParams,
 			Confidence:     planned.Confidence,
 			Rationale:      planned.Rationale,

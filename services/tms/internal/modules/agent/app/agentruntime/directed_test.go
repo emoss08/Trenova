@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -65,7 +64,7 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 	require.Len(t, opening.ToolCalls, 1)
 	callID := opening.ToolCalls[0].ID
 	assert.Equal(t, call.Call.ID, callID)
-	assert.Equal(t, runtimetools.DelegateTaskName, opening.ToolCalls[0].Name)
+	assert.Equal(t, "delegate_task", opening.ToolCalls[0].Name)
 	assert.Equal(t, delegate.ID.String(), opening.ToolCalls[0].Arguments["agentId"],
 		"a later turn and the thread both read who was asked")
 	assert.Equal(t, directedStep, opening.ToolCalls[0].Arguments["task"])

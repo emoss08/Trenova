@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -218,7 +217,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 	// sees the first result, which is after the turn's tools are fixed, so
 	// the script tool rides on every turn that may run one rather than
 	// waiting on a search the model would not think to make.
-	s.Load(set, codemode.ToolRunScript)
+	s.Load(set, "analysis_run")
 	s.carryOver(set, req.History)
 	set.add(runtimetools.FindToolsSpec())
 	set.addConversational(req)
@@ -236,7 +235,7 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 func (s *Access) loadCoreTools(set *ToolSet, req *ToolSetRequest, searchable bool, text string) {
 	waiting := make([]string, 0, len(deferredCoreTools))
 	for _, name := range coreOf(set.Allowed) {
-		if name == agentdefinition.CoreToolReadAttachment && !req.Attachments {
+		if name == "agent_read_attachment" && !req.Attachments {
 			continue
 		}
 		if searchable && defersCoreTool(name, req.Unattended) {
@@ -260,15 +259,15 @@ func (s *Access) loadCoreTools(set *ToolSet, req *ToolSetRequest, searchable boo
 }
 
 var deferredCoreTools = []string{
-	agentdefinition.CoreToolCancelWait,
-	agentdefinition.CoreToolGuideProfile,
-	agentdefinition.CoreToolRaiseException,
-	agentdefinition.CoreToolSchedule,
-	agentdefinition.CoreToolWaitUntil,
+	"agent_cancel_wait",
+	"agent_guide_profile",
+	"agent_raise_exception",
+	"agent_create_schedule",
+	"agent_create_wait",
 }
 
 func defersCoreTool(name string, unattended bool) bool {
-	if unattended && name == agentdefinition.CoreToolRaiseException {
+	if unattended && name == "agent_raise_exception" {
 		return false
 	}
 
@@ -374,7 +373,7 @@ func (s *Access) freeze(set *ToolSet) {
 	slices.SortFunc(set.Specs, func(a, b kernelports.ToolSpec) int {
 		return strings.Compare(a.Name, b.Name)
 	})
-	if set.Offers(runtimetools.FindToolsName) {
+	if set.Offers("find_tools") {
 		reachable := slices.Concat(set.Allowed, set.Beyond)
 		deferred := make([]string, 0, len(reachable))
 		for _, name := range reachable {
@@ -434,14 +433,14 @@ func (s *Access) carryOver(set *ToolSet, history []conversation.Message) {
 		}
 		for _, call := range message.ToolCalls {
 			switch call.Name {
-			case askuser.Name,
-				runtimetools.PublishArtifactName,
-				runtimetools.ShowBoardName,
-				runtimetools.DelegateTaskName,
-				runtimetools.RequestDecisionName,
-				runtimetools.WithdrawProposalName,
-				runtimetools.NamePlanName:
-			case runtimetools.FindToolsName:
+			case "ask_user",
+				"publish_artifact",
+				"show_board",
+				"delegate_task",
+				"request_decision",
+				"withdraw_proposal",
+				"name_plan":
+			case "find_tools":
 				if names, stored := found[call.ID]; stored {
 					for _, name := range names {
 						s.Load(set, name)
@@ -762,7 +761,7 @@ func (s *Access) unheldRefusal(set *ToolSet, name string, exists bool) string {
 		return b.String()
 	}
 
-	if set.Offers(runtimetools.FindToolsName) {
+	if set.Offers("find_tools") {
 		b.WriteString(" Call find_tools with what you are trying to do.")
 	} else {
 		b.WriteString(" Use one of the tools you have, or tell the person what is missing.")
@@ -817,14 +816,14 @@ func (s *Access) HeldTools(definition *agentdefinition.Definition) []string {
 }
 
 func (s *Access) withScripts(definition *agentdefinition.Definition, names []string) []string {
-	if !s.LooksUp(codemode.ToolRunScript) ||
-		slices.Contains(names, codemode.ToolRunScript) ||
-		slices.Contains(definition.DisabledToolNames, codemode.ToolRunScript) ||
+	if !s.LooksUp("analysis_run") ||
+		slices.Contains(names, "analysis_run") ||
+		slices.Contains(definition.DisabledToolNames, "analysis_run") ||
 		!slices.ContainsFunc(names, scriptable) {
 		return names
 	}
 
-	return append(names, codemode.ToolRunScript)
+	return append(names, "analysis_run")
 }
 
 // scriptable reports whether a held tool is one a script could call: a tool

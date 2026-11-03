@@ -134,7 +134,7 @@ func alongsideVariables(
 	for name, value := range spec.Inputs {
 		input[name] = value
 	}
-	input[InputFirst] = AlongsideMost
+	input[FieldFirst] = AlongsideMost
 
 	return map[string]any{bound.Input: input}, true
 }

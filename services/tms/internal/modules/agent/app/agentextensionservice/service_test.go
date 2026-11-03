@@ -123,7 +123,7 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	for _, tool := range parallel.Tools {
 		parallelTools = append(parallelTools, tool.Name)
 	}
-	assert.Equal(t, []string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+	assert.Equal(t, []string{"web_search", "web_read"},
 		parallelTools, "a vendor that cannot watch lists no watch tools")
 
 	portal := byType[agentextension.TypeBrowserUse]
@@ -658,7 +658,7 @@ func TestSwitchingVendorsKeepsTheToolsAndMovesTheCalls(t *testing.T) {
 		Availability: agentextension.AvailabilityAllAgents,
 	}, active[agentextension.CapabilityWebResearch])
 	assert.Equal(t,
-		[]string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		[]string{"web_search", "web_read"},
 		active.Grants(),
 	)
 

@@ -32,7 +32,7 @@ const paramMoves = "moves"
 
 const paramTargetGroupID = "targetGroupId"
 
-const paramBillingQueueItems = "billingQueueItemId"
+const paramBillingQueueItemID = "billingQueueItemId"
 
 const maxRunCustomers = 200
 
@@ -548,7 +548,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						paramBillingQueueItems: agenttoolschema.KindID(
+						paramBillingQueueItemID: agenttoolschema.KindID(
 							"The shipment's billing queue item, from invoice_list_open_statements.",
 							recordkind.BillingQueueItem),
 						toolparams.ParamReason: toolparams.StringProperty(
@@ -557,7 +557,7 @@ func NewBillStatementNowTool(runs invoiceRunKeeper) agenttoolports.AgentTool {
 						),
 					},
 					toolschema.KeyRequired: []string{
-						paramBillingQueueItems,
+						paramBillingQueueItemID,
 						toolparams.ParamReason,
 					},
 					toolschema.KeyAdditionalProperties: false,
@@ -612,7 +612,7 @@ func billStatementRequest(
 	exclusions := make([]invoicerunports.StatementExclusion, 0, len(entries))
 	seen := make(map[pulid.ID]struct{}, len(entries))
 	for idx, fields := range entries {
-		itemID, idErr := toolparams.RequirePulid(fields, paramBillingQueueItems)
+		itemID, idErr := toolparams.RequirePulid(fields, paramBillingQueueItemID)
 		if idErr != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", paramExclude, idx, idErr)
 		}

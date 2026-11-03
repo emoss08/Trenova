@@ -61,11 +61,11 @@ func runWithExtensions(
 		completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool(
-				agentextension.ToolWebSearch,
+				"web_search",
 				map[string]any{"results": []any{}},
 				run.searchErr,
 			),
-			queryTool(agentextension.ToolWebRead, map[string]any{"text": "page"}, nil),
+			queryTool("web_read", map[string]any{"text": "page"}, nil),
 		}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("report_create", agent.TierAutoExecute, nil),
@@ -114,10 +114,10 @@ func TestRun_AWriteAfterReadingTheWebWaitsForAPerson(t *testing.T) {
 
 	result, _ := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
-		definition: []string{agentextension.ToolWebSearch, "report_create"},
+		definition: []string{"web_search", "report_create"},
 		turns: []*llmports.ChatCompletionResult{
 			runtimetest.ToolTurn(
-				agentextension.ToolWebSearch,
+				"web_search",
 				map[string]any{"query": "eld rule changes"},
 			),
 			runtimetest.ToolTurn("report_create", map[string]any{"name": "ELD changes"}),
@@ -139,7 +139,7 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		runtimetest.ToolTurn(
-			agentextension.ToolWebSearch,
+			"web_search",
 			map[string]any{"query": "eld rule changes"},
 		),
 		runtimetest.ToolTurn(
@@ -157,7 +157,7 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool(agentextension.ToolWebSearch, map[string]any{"results": []any{}}, nil),
+			queryTool("web_search", map[string]any{"results": []any{}}, nil),
 		}},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			escalation,
@@ -171,7 +171,7 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 	)
 
 	definition := runtimetest.Definition(
-		agentextension.ToolWebSearch,
+		"web_search",
 		"agent_raise_exception",
 		"report_create",
 	)
@@ -208,7 +208,7 @@ func TestRun_AWriteBeforeAnyWebContentRunsAtItsTier(t *testing.T) {
 
 	result, _ := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
-		definition: []string{agentextension.ToolWebSearch, "report_create"},
+		definition: []string{"web_search", "report_create"},
 		turns: []*llmports.ChatCompletionResult{
 			runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
 			runtimetest.TextTurn("Saved."),
@@ -225,11 +225,11 @@ func TestRun_AFailedSearchReadNothing(t *testing.T) {
 
 	result, _ := runWithExtensions(t, extensionRun{
 		gate:       webGate(agentextension.AvailabilitySelectedAgents),
-		definition: []string{agentextension.ToolWebSearch, "report_create"},
+		definition: []string{"web_search", "report_create"},
 		searchErr:  context.DeadlineExceeded,
 		turns: []*llmports.ChatCompletionResult{
 			runtimetest.ToolTurn(
-				agentextension.ToolWebSearch,
+				"web_search",
 				map[string]any{"query": "eld rule changes"},
 			),
 			runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
@@ -246,10 +246,10 @@ func TestRun_AnExtensionTurnedOffIsNeitherOfferedNorRun(t *testing.T) {
 
 	result, completion := runWithExtensions(t, extensionRun{
 		gate:       &stubExtensionGate{active: agentextension.Active{}},
-		definition: []string{agentextension.ToolWebSearch, "report_create"},
+		definition: []string{"web_search", "report_create"},
 		turns: []*llmports.ChatCompletionResult{
 			runtimetest.ToolTurn(
-				agentextension.ToolWebSearch,
+				"web_search",
 				map[string]any{"query": "eld rule changes"},
 			),
 			runtimetest.TextTurn("I could not check the web."),
@@ -257,10 +257,10 @@ func TestRun_AnExtensionTurnedOffIsNeitherOfferedNorRun(t *testing.T) {
 	})
 
 	offered := offeredTools(completion.Requests[0])
-	assert.NotContains(t, offered, agentextension.ToolWebSearch)
+	assert.NotContains(t, offered, "web_search")
 	assert.Contains(t, offered, "report_create")
 
-	contents := toolResults(result, agentextension.ToolWebSearch)
+	contents := toolResults(result, "web_search")
 	require.Len(t, contents, 1)
 	assert.NotContains(t, contents[0], "results")
 }
@@ -273,7 +273,7 @@ func TestRun_AnExtensionForEveryAgentReachesAgentsThatNeverSelectedIt(t *testing
 		definition: []string{"report_create"},
 		turns: []*llmports.ChatCompletionResult{
 			runtimetest.ToolTurn(
-				agentextension.ToolWebSearch,
+				"web_search",
 				map[string]any{"query": "eld rule changes"},
 			),
 			runtimetest.TextTurn("Here is what changed."),
@@ -281,10 +281,10 @@ func TestRun_AnExtensionForEveryAgentReachesAgentsThatNeverSelectedIt(t *testing
 	})
 
 	offered := offeredTools(completion.Requests[0])
-	assert.Contains(t, offered, agentextension.ToolWebSearch)
-	assert.Contains(t, offered, agentextension.ToolWebRead)
+	assert.Contains(t, offered, "web_search")
+	assert.Contains(t, offered, "web_read")
 
-	contents := toolResults(result, agentextension.ToolWebSearch)
+	contents := toolResults(result, "web_search")
 	require.Len(t, contents, 1)
 	assert.Contains(t, contents[0], "untrusted_data")
 }

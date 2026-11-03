@@ -12,10 +12,6 @@ import (
 )
 
 const (
-	toolRateListAgreements       = "rate_list_agreements"
-	toolRateGetAgreement         = "rate_get_agreement"
-	toolRateListFuelIndexPrices  = "rate_list_fuel_index_prices"
-	toolRateListFuelSurcharge    = "rate_list_fuel_surcharge_programs"
 	toolRateListFuelProgramsWord = "fuel surcharge programs"
 
 	rateAgreementsSummary = "List rate agreements, the contracts and tariffs that price freight " +
@@ -51,7 +47,7 @@ var fuelSurchargeRates = []string{fieldRatePerMile, querytool.FieldPercent, fiel
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         toolRateListAgreements,
+			Name:         "rate_list_agreements",
 			EntityPlural: "rate agreements",
 			Summary:      rateAgreementsSummary,
 			QueryNote:    rateAgreementQueryNote,
@@ -60,29 +56,29 @@ func ReadSpecs() []readspec.List {
 				querytool.ParamCustomerID: {
 					Resource: permission.ResourceCustomer,
 					What:     "The customer",
-					Source:   querytool.ToolCustomerList,
+					Source:   "customer_list",
 				},
 				querytool.ParamCarrierID: {
 					Resource: permission.ResourceCarrier,
 					What:     "The carrier",
-					Source:   querytool.ToolCarrierList,
+					Source:   "carrier_list",
 				},
 			},
 		},
 		{
-			Name:         toolRateListFuelIndexPrices,
+			Name:         "rate_list_fuel_index_prices",
 			EntityPlural: "fuel index prices",
 			Summary:      fuelIndexPricesSummary,
 			Resource:     permission.ResourceFuelSurchargeProgram,
 			References: map[string]readspec.Reference{querytool.ParamFuelIndexID: {
 				Kinds:  []recordkind.Kind{recordkind.FuelIndex},
 				What:   "The fuel index",
-				Source: toolRateListFuelSurcharge,
+				Source: "rate_list_fuel_surcharge_programs",
 			}},
 			Defaults: querytool.ListDefaults,
 		},
 		{
-			Name:         toolRateListFuelSurcharge,
+			Name:         "rate_list_fuel_surcharge_programs",
 			EntityPlural: toolRateListFuelProgramsWord,
 			Summary:      fuelSurchargeProgramsSummary,
 			SearchTerms:  []string{"fuel program", "diesel price in use", "surcharge schedule"},
@@ -126,7 +122,7 @@ func noteFuelSurchargeRate(
 // RateAgreementGetSpec reads one rate agreement through the Desk's card.
 func RateAgreementGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:   toolRateGetAgreement,
+		Name:   "rate_get_agreement",
 		Entity: "rate agreement",
 		SearchTerms: []string{
 			"contract terms",

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcekit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -215,7 +214,7 @@ func TestAssignWorkerTraining_RoutesOnePairToAssign(t *testing.T) {
 	training := newFakeTraining()
 	tool := newAssignWorkerTrainingTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingWorkers:      []any{training.record.WorkerID.String()},
+		paramWorkerIDs:            []any{training.record.WorkerID.String()},
 		paramCourseIDs:            []any{training.course.ID.String()},
 		workforcekit.ParamDueDate: "2026-10-31",
 	})
@@ -242,7 +241,7 @@ func TestAssignWorkerTraining_SendsSeveralToBulkAssign(t *testing.T) {
 	training := newFakeTraining()
 	tool := newAssignWorkerTrainingTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingWorkers: []any{
+		paramWorkerIDs: []any{
 			pulid.MustNew("wrk_").String(),
 			pulid.MustNew("wrk_").String(),
 		},
@@ -293,9 +292,9 @@ func TestRecordTrainingCompletion_SaysWhetherItPassed(t *testing.T) {
 	training := newFakeTraining()
 	tool := newRecordTrainingCompletionTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID: training.record.ID.String(),
-		"completedAt":   "2026-09-18",
-		paramScore:      "72",
+		paramTrainingRecordID: training.record.ID.String(),
+		"completedAt":         "2026-09-18",
+		paramScore:            "72",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -344,21 +343,21 @@ func TestCloseWorkerTraining_WaiveNeedsAReason(t *testing.T) {
 	tool := newCloseWorkerTrainingTool(training)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramTrainingID:    training.record.ID.String(),
-			paramTrainingClose: "Waive",
+			paramTrainingRecordID: training.record.ID.String(),
+			paramAction:           "Waive",
 		})))
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:           training.record.ID.String(),
-		paramTrainingClose:        "Waive",
-		changepreview.FieldReason: "Equivalent certificate on file",
+		paramTrainingRecordID:  training.record.ID.String(),
+		paramAction:            "Waive",
+		toolparams.ParamReason: "Equivalent certificate on file",
 	})))
 	require.NotNil(t, training.waived)
 	assert.Nil(t, training.cancelled)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:    training.record.ID.String(),
-		paramTrainingClose: "Cancel",
+		paramTrainingRecordID: training.record.ID.String(),
+		paramAction:           "Cancel",
 	})))
 	require.NotNil(t, training.cancelled)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)

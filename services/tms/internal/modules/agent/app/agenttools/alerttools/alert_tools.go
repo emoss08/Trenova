@@ -66,7 +66,7 @@ func NewScheduleReportTool(
 func (t *ScheduleReportTool) Name() string { return "report_create_schedule" }
 
 func (t *ScheduleReportTool) Recipe() []string {
-	return []string{toolReportList, "report_create_schedule"}
+	return []string{"report_list", "report_create_schedule"}
 }
 
 func (t *ScheduleReportTool) Description() string {
@@ -77,7 +77,7 @@ func (t *ScheduleReportTool) Description() string {
 }
 
 func (t *ScheduleReportTool) Prerequisites() []string {
-	return []string{toolReportList}
+	return []string{"report_list"}
 }
 
 func (t *ScheduleReportTool) ParamSchema() map[string]any {

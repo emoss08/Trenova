@@ -14,26 +14,20 @@ import (
 )
 
 const (
-	toolListFactoringReadiness = "factoring_list_readiness"
-	toolListFactoringNoas      = "factoring_list_noas"
-	toolListFactoringSubs      = "factoring_list_submissions"
-	toolListFactoringRemits    = "factoring_list_remittances"
-	toolListFactoringAgreement = "factoring_list_agreements"
-
-	paramFactoringCompany = "factoringCompanyId"
-	paramFactoringInvoice = "invoiceId"
-	paramFactoringVerdict = "verdict"
-	fieldFactoringChecks  = "checks"
-	fieldFactoringPassed  = "passed"
-	fieldMatchStatus      = "matchStatus"
-	fieldExpiresAt        = "expiresAt"
-	fieldSubmissionTime   = "submissionTime"
-	fieldRemittanceCells  = "cells"
-	keyFactoringSummary   = "summary"
-	entityInvoices        = "invoices"
-	keyFactoringPath      = "path"
-	factoringScheduleTerm = "factoring schedule"
-	factorRemittanceTerm  = "factor remittance"
+	paramFactoringCompanyID = "factoringCompanyId"
+	paramInvoiceID          = "invoiceId"
+	paramVerdict            = "verdict"
+	fieldChecks             = "checks"
+	fieldPassed             = "passed"
+	fieldMatchStatus        = "matchStatus"
+	fieldExpiresAt          = "expiresAt"
+	fieldSubmissionTime     = "submissionTime"
+	fieldCells              = "cells"
+	keyFactoringSummary     = "summary"
+	entityInvoices          = "invoices"
+	keyFactoringPath        = "path"
+	factoringScheduleTerm   = "factoring schedule"
+	factorRemittanceTerm    = "factor remittance"
 
 	factoringQueuePath   = "/billing/factoring"
 	factoringSubsPath    = factoringQueuePath + "/submissions/"
@@ -67,7 +61,7 @@ func ReadSpecs() []readspec.List {
 // by readiness, with the queue's totals.
 func readinessListSpec() readspec.List {
 	return readspec.List{
-		Name:         toolListFactoringReadiness,
+		Name:         "factoring_list_readiness",
 		EntityPlural: entityInvoices,
 		Summary: "List factored customers' invoices by readiness, newest first, with the " +
 			"queue's totals. summary totals what is ready, not ready, submitted, ready for " +
@@ -80,14 +74,14 @@ func readinessListSpec() readspec.List {
 		QueryNote: "Matched only against the verdict; narrow by customerId or " +
 			"factoringCompanyId instead.",
 		Notes: map[string]string{
-			paramFactoringVerdict: "Ready unless you name others; NotReady rows carry " +
+			paramVerdict: "Ready unless you name others; NotReady rows carry " +
 				"their failed checks.",
 		},
 		Defaults: map[string]any{
-			paramFactoringVerdict: []any{string(factoringreadiness.VerdictReady)},
+			paramVerdict: []any{string(factoringreadiness.VerdictReady)},
 		},
 		References: map[string]readspec.Reference{
-			paramFactoringCompany: factoringCompanyReference,
+			paramFactoringCompanyID: factoringCompanyReference,
 			querytool.ParamCustomerID: {
 				Resource: permission.ResourceCustomer,
 				What:     factoringCustomerWhat,
@@ -107,7 +101,7 @@ func readinessListSpec() readspec.List {
 // noasListSpec reads the notices of assignment.
 func noasListSpec() readspec.List {
 	return readspec.List{
-		Name:         toolListFactoringNoas,
+		Name:         "factoring_list_noas",
 		EntityPlural: "notices of assignment",
 		Summary: "List notices of assignment, the letters telling customers to pay a " +
 			"factor. Each says who it is for, whether it was sent, acknowledged with a " +
@@ -118,7 +112,7 @@ func noasListSpec() readspec.List {
 		SearchTerms: []string{"notice of assignment", "noa", "factoring letter"},
 		QueryNote:   "Words to find in the address the notice was sent to.",
 		References: map[string]readspec.Reference{
-			paramFactoringCompany: factoringCompanyReference,
+			paramFactoringCompanyID: factoringCompanyReference,
 			querytool.ParamCustomerID: {
 				Resource: permission.ResourceCustomer,
 				What:     factoringCustomerWhat,
@@ -133,7 +127,7 @@ func noasListSpec() readspec.List {
 // submissionsListSpec reads the schedules of accounts sent to factors.
 func submissionsListSpec() readspec.List {
 	return readspec.List{
-		Name:         toolListFactoringSubs,
+		Name:         "factoring_list_submissions",
 		EntityPlural: "factoring schedules",
 		Summary: "List the schedules of accounts sent to factors, newest first. Each has " +
 			"its number, factor, status, invoice count, expected funding, where it went and " +
@@ -144,7 +138,7 @@ func submissionsListSpec() readspec.List {
 		SearchTerms: []string{factoringScheduleTerm, "schedule of accounts", "submitted to factor"},
 		QueryNote:   "Words to find in the schedule's number.",
 		References: map[string]readspec.Reference{
-			paramFactoringCompany: factoringCompanyReference,
+			paramFactoringCompanyID: factoringCompanyReference,
 		},
 		Resource: permission.ResourceFactoringSubmission,
 		Shape:    pathTo(factoringSubsPath),
@@ -154,7 +148,7 @@ func submissionsListSpec() readspec.List {
 // remittancesListSpec reads the factors' remittances.
 func remittancesListSpec() readspec.List {
 	return readspec.List{
-		Name:         toolListFactoringRemits,
+		Name:         "factoring_list_remittances",
 		EntityPlural: "factor remittances",
 		Summary: "List factor remittances, newest first, with how far each has been read " +
 			"and booked. Each has its factor, file, status (Pending, NeedsMapping, Parsed, " +
@@ -164,7 +158,7 @@ func remittancesListSpec() readspec.List {
 		SearchTerms: []string{factorRemittanceTerm, "funding report", "remittance exceptions"},
 		QueryNote:   "Words to find in the remittance's file name.",
 		References: map[string]readspec.Reference{
-			paramFactoringCompany: factoringCompanyReference,
+			paramFactoringCompanyID: factoringCompanyReference,
 		},
 		Resource: permission.ResourceFactoringRemittance,
 		Shape:    pathTo(factoringRemitsPath),
@@ -174,7 +168,7 @@ func remittancesListSpec() readspec.List {
 // agreementsListSpec reads one factor's agreements.
 func agreementsListSpec() readspec.List {
 	return readspec.List{
-		Name:         toolListFactoringAgreement,
+		Name:         "factoring_list_agreements",
 		EntityPlural: "factoring agreements",
 		Summary: "List a factor's agreements, newest first, marking the one in force " +
 			"(inForce). Each gives the advance and reserve rates in basis points, fee tiers " +
@@ -184,7 +178,7 @@ func agreementsListSpec() readspec.List {
 			"invoices ready to factor. The rates and fees can be withheld at your access.",
 		SearchTerms: []string{"factoring agreement", "advance rate", "factoring fee", "recourse"},
 		References: map[string]readspec.Reference{
-			paramFactoringCompany: factoringCompanyReference,
+			paramFactoringCompanyID: factoringCompanyReference,
 		},
 		Resource: permission.ResourceFactoringAgreement,
 		Shape:    agreementInForce,
@@ -207,8 +201,8 @@ func GetSpecs() []readspec.Get {
 			SearchTerms: []string{"factor", "factoring", "ready to factor", "notice of assignment",
 				"noa"},
 			Resource:  permission.ResourceInvoice,
-			ParamName: paramFactoringInvoice,
-			References: map[string]readspec.Reference{paramFactoringInvoice: {
+			ParamName: paramInvoiceID,
+			References: map[string]readspec.Reference{paramInvoiceID: {
 				Resource: permission.ResourceInvoice,
 				What:     "The invoice",
 				Source:   "invoice_list, invoice_get or factoring_list_readiness",
@@ -271,8 +265,8 @@ func GetSpecs() []readspec.Get {
 			SearchTerms: []string{"factoring reserve", "reserve balance", "due from factor",
 				"factor fees"},
 			Resource:  permission.ResourceFactoringReserve,
-			ParamName: paramFactoringCompany,
-			References: map[string]readspec.Reference{paramFactoringCompany: {
+			ParamName: paramFactoringCompanyID,
+			References: map[string]readspec.Reference{paramFactoringCompanyID: {
 				Resource: permission.ResourceFactoringCompany,
 				What:     factoringCompanyWhat,
 				Source:   "factoring_list_submissions or factoring_list_agreements",
@@ -285,22 +279,22 @@ func GetSpecs() []readspec.Get {
 // holds it back, and drops every other invoice's.
 func readinessChecks(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
 	if querytool.StringOf(
-		row[paramFactoringVerdict],
+		row[paramVerdict],
 	) != string(
 		factoringreadiness.VerdictNotReady,
 	) {
-		delete(row, fieldFactoringChecks)
+		delete(row, fieldChecks)
 		return
 	}
-	checks, _ := row[fieldFactoringChecks].([]any)
+	checks, _ := row[fieldChecks].([]any)
 	failed := make([]any, 0, len(checks))
 	for _, check := range checks {
 		object, _ := check.(map[string]any)
-		if passed, _ := object[fieldFactoringPassed].(bool); !passed {
+		if passed, _ := object[fieldPassed].(bool); !passed {
 			failed = append(failed, check)
 		}
 	}
-	row[fieldFactoringChecks] = failed
+	row[fieldChecks] = failed
 }
 
 // noaEffective says whether a notice binds the customer now, as the domain
@@ -349,7 +343,7 @@ func remittanceLines(record map[string]any, withheld map[string]struct{}, clk fi
 		) != string(
 			factoringremittance.RemittanceLineError,
 		) {
-			delete(object, fieldRemittanceCells)
+			delete(object, fieldCells)
 		}
 	}
 }

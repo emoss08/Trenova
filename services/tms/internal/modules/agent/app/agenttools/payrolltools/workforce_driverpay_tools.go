@@ -32,9 +32,9 @@ const paramDecision = "decision"
 
 const paramResolutionNote = "resolutionNote"
 
-const paramAdjustmentAmountMoney = "adjustmentAmount"
+const paramAdjustmentAmount = "adjustmentAmount"
 
-const paramAdjustmentLabel = "adjustmentDescription"
+const paramAdjustmentDescription = "adjustmentDescription"
 
 const kindSettlementDispute = "pay dispute"
 
@@ -60,7 +60,7 @@ var payDisputeFields = []string{
 
 var expenseFields = []string{
 	changepreview.FieldStatus,
-	changepreview.FieldDescription,
+	toolparams.ParamDescription,
 	"reviewNote",
 	"reviewedById",
 	changepreview.FieldReviewedAt,
@@ -131,7 +131,7 @@ func approves(params map[string]any) bool {
 }
 
 func disputeMovesMoney(params map[string]any) bool {
-	raw, given := params[paramAdjustmentAmountMoney]
+	raw, given := params[paramAdjustmentAmount]
 	return approves(params) && given && raw != nil
 }
 
@@ -264,14 +264,14 @@ func resolvePayDisputeRequest(
 		Approve:        decision == decisionApprove,
 		ResolutionNote: note,
 	}
-	if raw, given := params.Params[paramAdjustmentAmountMoney]; !given || raw == nil {
+	if raw, given := params.Params[paramAdjustmentAmount]; !given || raw == nil {
 		return req, nil
 	}
-	amount, err := toolparams.RequireSignedMoney(params.Params, paramAdjustmentAmountMoney)
+	amount, err := toolparams.RequireSignedMoney(params.Params, paramAdjustmentAmount)
 	if err != nil {
 		return nil, err
 	}
-	description, err := toolparams.RequireBoundedText(params.Params, paramAdjustmentLabel,
+	description, err := toolparams.RequireBoundedText(params.Params, paramAdjustmentDescription,
 		toolparams.MaxAdjustmentDescription)
 	if err != nil {
 		return nil, err
@@ -311,11 +311,11 @@ func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.
 					"Dash. Required either way.",
 				maxDisputeResolution,
 			),
-			paramAdjustmentAmountMoney: toolparams.AmountProperty(
+			paramAdjustmentAmount: toolparams.AmountProperty(
 				"For an approval, what to pay back as a " +
 					"decimal such as 42.50; negative to take money back. Leave it out for none.",
 			),
-			paramAdjustmentLabel: toolparams.StringProperty(
+			paramAdjustmentDescription: toolparams.StringProperty(
 				"What the adjustment is for, as the driver "+
 					"and payroll read it. Required with an adjustment.",
 				toolparams.MaxAdjustmentDescription,
@@ -434,7 +434,7 @@ func reviewExpenseFrom(
 	}
 	note, err := toolparams.BoundedText(
 		params.Params,
-		changepreview.FieldNote,
+		toolparams.ParamNote,
 		maxDisputeResolution,
 	)
 	if err != nil {
@@ -468,7 +468,7 @@ func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.Agent
 			),
 			paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",
 				expenseDecisions),
-			changepreview.FieldNote: toolparams.StringProperty(
+			toolparams.ParamNote: toolparams.StringProperty(
 				"What the driver reads with the decision. Required "+
 					"to reject.",
 				maxDisputeResolution,

@@ -22,7 +22,6 @@ import (
 
 const (
 	MessageEntity    = "inbound_message"
-	ToolGetMessage   = "inbox_get_inbound_message"
 	FieldMatchReason = "matchReason"
 )
 

@@ -21,8 +21,6 @@ import (
 )
 
 const (
-	Name = "ask_user"
-
 	// maxAskOptions bounds one question. A list longer than this is a search,
 	// not a choice, and a person scanning it will read none of it.
 	maxAskOptions = 8
@@ -150,7 +148,7 @@ func AskedQuestions(history []conversation.Message) map[string]struct{} {
 			continue
 		}
 		if message.Role == conversation.RoleTool {
-			if message.ToolFailed && message.ToolName == Name &&
+			if message.ToolFailed && message.ToolName == "ask_user" &&
 				message.ToolCallID != "" {
 				refused[message.ToolCallID] = struct{}{}
 			}
@@ -203,7 +201,7 @@ func ComparableQuestion(question string) string {
 // that has to guess, and guessing is what this exists to stop.
 func Spec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        Name,
+		Name:        "ask_user",
 		Description: askUserDescription,
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -406,7 +404,7 @@ func Resolve(now time.Time, arguments map[string]any) (content string, shown boo
 		return "The question could not be shown. Ask it in your reply instead.", false
 	}
 
-	return toolresult.Fence(Name, encoded), true
+	return toolresult.Fence("ask_user", encoded), true
 }
 
 // askRequestFrom builds the question the thread shows from a model's call, or

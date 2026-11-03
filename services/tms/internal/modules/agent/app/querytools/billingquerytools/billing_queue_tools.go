@@ -34,9 +34,9 @@ import (
 )
 
 const (
-	fieldAllocatedTotal  = "allocatedTotalAmount"
-	maxBillingQueueLines = 50
-	secondsPerDayInQueue = 86400
+	fieldAllocatedTotalAmount = "allocatedTotalAmount"
+	maxBillingQueueLines      = 50
+	secondsPerDayInQueue      = 86400
 )
 
 var (
@@ -148,7 +148,7 @@ func buildBillingQueueList(
 				Note:     "when it was queued",
 			},
 			{Name: "reviewStartedAt", Kind: filtercatalog.KindDate, Sortable: true},
-			{Name: fieldAllocatedTotal, Kind: filtercatalog.KindNumber, Sortable: true},
+			{Name: fieldAllocatedTotalAmount, Kind: filtercatalog.KindNumber, Sortable: true},
 		},
 		Access: access,
 		FetchGated: func(
@@ -170,7 +170,7 @@ func buildBillingQueueList(
 				return listtool.Page{}, err
 			}
 
-			showAmount := gate.Show(fieldAllocatedTotal, querytool.FieldAmount)
+			showAmount := gate.Show(fieldAllocatedTotalAmount, querytool.FieldAmount)
 			now := timeutils.NowUnix()
 
 			return listtool.OffsetPage(result.Items, func(item *billingqueue.BillingQueueItem) any {
@@ -435,7 +435,7 @@ func (r queueDetailReader) detail(
 		return nil, err
 	}
 
-	showAmount := gate.Show(fieldAllocatedTotal, querytool.WithheldAmounts)
+	showAmount := gate.Show(fieldAllocatedTotalAmount, querytool.WithheldAmounts)
 	detail := &billingQueueDetail{
 		billingQueueRow:           billingQueueRowFrom(item, showAmount, timeutils.NowUnix()),
 		ShipmentID:                querytool.PulidString(item.ShipmentID),

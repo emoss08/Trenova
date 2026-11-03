@@ -325,7 +325,7 @@ func (a *Auditor) auditEffects(
 		}
 		out.steps, err = keel.QueryAll(ctx, db, pgx.RowToStructByName[settledStep],
 			settledStepsSQL,
-			org, bu, runs, thread, benchscenario.DelegateTool, owners,
+			org, bu, runs, thread, "delegate_task", owners,
 		)
 		if err != nil {
 			return out, fmt.Errorf("read settled steps: %w", err)

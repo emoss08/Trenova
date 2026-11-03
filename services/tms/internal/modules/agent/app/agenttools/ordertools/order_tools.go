@@ -29,7 +29,7 @@ import (
 
 const paramChargeID = "chargeId"
 
-const paramPONumber = "poNumber"
+const paramPoNumber = "poNumber"
 
 const paramQuotedAmount = "quotedAmount"
 
@@ -44,10 +44,10 @@ const maxOrderChargeText = 255
 const maxOrderAttachments = 50
 
 var orderFields = []string{
-	changepreview.FieldCustomerID,
+	toolparams.ParamCustomerID,
 	toolparams.ParamOwnerID,
-	paramPONumber,
-	changepreview.FieldBol,
+	paramPoNumber,
+	changepreview.FieldBOL,
 	toolparams.ParamCurrencyCode,
 	paramQuotedAmount,
 	paramBaseAmount,
@@ -55,8 +55,8 @@ var orderFields = []string{
 }
 
 var orderRefs = map[string]permission.Resource{
-	changepreview.FieldCustomerID: permission.ResourceCustomer,
-	toolparams.ParamOwnerID:       permission.ResourceUser,
+	toolparams.ParamCustomerID: permission.ResourceCustomer,
+	toolparams.ParamOwnerID:    permission.ResourceUser,
 }
 
 type orderKeeper interface {
@@ -173,16 +173,16 @@ func orderProperties(customerRequired bool) map[string]any {
 	}
 
 	return map[string]any{
-		changepreview.FieldCustomerID: agenttoolschema.RecordIDText(
+		toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
 			permission.ResourceCustomer,
 			customer+" Never guess one.",
 		),
 		toolparams.ParamOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
 			"The user who owns the order: the person who asked, "+
 				"or an ownerId order_get shows. Never guess one."),
-		paramPONumber: toolparams.StringProperty("The customer's purchase order number.",
+		paramPoNumber: toolparams.StringProperty("The customer's purchase order number.",
 			maxOrderReference),
-		changepreview.FieldBol: toolparams.StringProperty(
+		changepreview.FieldBOL: toolparams.StringProperty(
 			"The bill of lading number.",
 			maxOrderReference,
 		),
@@ -199,8 +199,8 @@ func orderProperties(customerRequired bool) map[string]any {
 // applyOrderArgs lays what the call sends over an order, the way the order
 // form does: an absent argument leaves the value alone.
 func applyOrderArgs(entity *order.Order, params map[string]any) error {
-	if _, given := params[changepreview.FieldCustomerID]; given {
-		customerID, err := toolparams.RequirePulid(params, changepreview.FieldCustomerID)
+	if _, given := params[toolparams.ParamCustomerID]; given {
+		customerID, err := toolparams.RequirePulid(params, toolparams.ParamCustomerID)
 		if err != nil {
 			return err
 		}
@@ -214,8 +214,8 @@ func applyOrderArgs(entity *order.Order, params map[string]any) error {
 		entity.OwnerID = ownerID
 	}
 	for key, target := range map[string]*string{
-		paramPONumber:          &entity.PONumber,
-		changepreview.FieldBol: &entity.BOL,
+		paramPoNumber:          &entity.PONumber,
+		changepreview.FieldBOL: &entity.BOL,
 	} {
 		value, err := toolparams.OptionalBoundedText(params, key, maxOrderReference)
 		if err != nil {
@@ -331,12 +331,12 @@ func NewCreateOrderTool(orders orderKeeper) agenttoolports.AgentTool {
 		Rationale: "Opens an empty order inside Trenova; nothing is billed or sent, and an " +
 			"order opened in error is canceled.",
 		Properties: orderProperties(true),
-		Required:   []string{changepreview.FieldCustomerID},
+		Required:   []string{toolparams.ParamCustomerID},
 	}, toolspec.ReceivablePlan[*order.Order, *orderservice.OrderChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*order.Order, error) {
 			if _, err := toolparams.RequirePulid(
 				params.Params,
-				changepreview.FieldCustomerID,
+				toolparams.ParamCustomerID,
 			); err != nil {
 				return nil, err
 			}
@@ -678,7 +678,7 @@ func NewDetachOrderShipmentTool(orders orderKeeper) agenttoolports.AgentTool {
 				orderRecord(plan.Replacement),
 				plan.Replacement,
 				toolpreview.Only(
-					changepreview.FieldCustomerID,
+					toolparams.ParamCustomerID,
 					changepreview.FieldStatus,
 					toolparams.ParamCurrencyCode,
 					"totalAmount",

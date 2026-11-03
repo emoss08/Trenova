@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -82,7 +83,7 @@ func derivedParams(t *testing.T, tool string, read *graphqlread.Read) []graphqlr
 	if input, _, tabled := read.TableInput(); tabled {
 		skip[input] = struct{}{}
 	} else if read.Verb == graphqlread.VerbList {
-		skip[graphqlread.InputFirst], skip[graphqlread.InputAfter] = struct{}{}, struct{}{}
+		skip[graphqlread.FieldFirst], skip[querytool.ParamAfter] = struct{}{}, struct{}{}
 	}
 	args, _, _, err := read.RootParams(tool, skip)
 	require.NoError(t, err)

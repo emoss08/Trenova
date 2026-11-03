@@ -29,10 +29,6 @@ const bulkInReviewDescription = "Move billing queue items into review, one or up
 const bulkQueueItemIDsDescription = "The billing queue items, by id from billing_list_queue_items " +
 	"or billing_get_queue_item. Never guess one."
 
-const toolAssignBiller = "billing_assign_biller"
-
-const toolStartReview = "billing_start_review"
-
 const verbAssignBiller = "assign a biller to"
 
 const pastAssigned = "assigned"
@@ -77,13 +73,13 @@ func NewAssignBillersTool(
 	}
 }
 
-func (t *AssignBillersTool) Name() string { return toolAssignBiller }
+func (t *AssignBillersTool) Name() string { return "billing_assign_biller" }
 
 func (t *AssignBillersTool) Recipe() []string {
 	return []string{
 		"billing_list_queue_items",
-		billingqueuepreview.ToolGetBillingQueueItem,
-		toolAssignBiller,
+		"billing_get_queue_item",
+		"billing_assign_biller",
 	}
 }
 
@@ -178,7 +174,7 @@ func NewTransitionItemsToInReviewTool(
 	}
 }
 
-func (t *TransitionItemsToInReviewTool) Name() string { return toolStartReview }
+func (t *TransitionItemsToInReviewTool) Name() string { return "billing_start_review" }
 
 func (t *TransitionItemsToInReviewTool) Target(
 	params map[string]any,

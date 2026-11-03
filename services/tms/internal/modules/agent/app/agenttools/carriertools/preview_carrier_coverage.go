@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -19,13 +20,13 @@ import (
 )
 
 var carrierAssignmentFields = []string{
-	carrierpreview.FieldCarrierID,
+	toolparams.ParamCarrierID,
 	changepreview.FieldStatus,
 	fieldRateMethod,
 	fieldBaseRate,
 	fieldFuelSurcharge,
 	"totalCost",
-	fieldProNumber,
+	paramProNumber,
 	fieldExternalDriverName,
 	fieldExternalDriverPhone,
 	fieldExternalTractorNumber,
@@ -33,12 +34,12 @@ var carrierAssignmentFields = []string{
 }
 
 var carrierAssignmentLabels = map[string]string{
-	carrierpreview.FieldCarrierID: changepreview.LabelCarrier,
-	fieldProNumber:                "Carrier's reference",
-	fieldExternalDriverName:       "Carrier's driver",
-	fieldExternalDriverPhone:      "Carrier's driver phone",
-	fieldExternalTractorNumber:    "Carrier's truck",
-	fieldExternalTrailerNumber:    "Carrier's trailer",
+	toolparams.ParamCarrierID:  changepreview.LabelCarrier,
+	paramProNumber:             "Carrier's reference",
+	fieldExternalDriverName:    "Carrier's driver",
+	fieldExternalDriverPhone:   "Carrier's driver phone",
+	fieldExternalTractorNumber: "Carrier's truck",
+	fieldExternalTrailerNumber: "Carrier's trailer",
 }
 
 func (t *AssignMoveToCarrierTool) Preview(
@@ -67,7 +68,7 @@ func (t *AssignMoveToCarrierTool) Preview(
 	}, plan.Created,
 		toolpreview.Only(carrierAssignmentFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			carrierpreview.FieldCarrierID: permission.ResourceCarrier,
+			toolparams.ParamCarrierID: permission.ResourceCarrier,
 		}),
 		toolpreview.Labels(carrierAssignmentLabels),
 	)
@@ -76,7 +77,7 @@ func (t *AssignMoveToCarrierTool) Preview(
 	}
 	changepreview.LabelRefs(
 		created,
-		map[string]string{carrierpreview.FieldCarrierID: carrierpreview.CarrierName(plan.Carrier)},
+		map[string]string{toolparams.ParamCarrierID: carrierpreview.CarrierName(plan.Carrier)},
 	)
 	toolpreview.AttachMoney(
 		created,

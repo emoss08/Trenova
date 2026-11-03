@@ -110,17 +110,17 @@ func TestHonouredByNeedsOneOfTheToolsTheCommandRequires(t *testing.T) {
 
 	browser, _ := agentextension.CommandSpecFor(agentextension.CommandBrowser)
 	assert.True(t, browser.HonouredBy([]string{
-		agentextension.ToolListPortalSites, agentextension.ToolReadPortal,
+		"web_list_portal_sites", "web_read_portal",
 	}))
-	assert.True(t, browser.HonouredBy([]string{agentextension.ToolActOnPortal}))
-	assert.False(t, browser.HonouredBy([]string{agentextension.ToolListPortalSites}))
-	assert.False(t, browser.HonouredBy([]string{agentextension.ToolWebSearch}))
+	assert.True(t, browser.HonouredBy([]string{"web_use_portal"}))
+	assert.False(t, browser.HonouredBy([]string{"web_list_portal_sites"}))
+	assert.False(t, browser.HonouredBy([]string{"web_search"}))
 	assert.False(t, browser.HonouredBy(nil))
 
 	search, _ := agentextension.CommandSpecFor(agentextension.CommandSearch)
-	assert.True(t, search.HonouredBy([]string{agentextension.ToolWebSearch}))
-	assert.False(t, search.HonouredBy([]string{agentextension.ToolWebRead}))
-	assert.False(t, search.HonouredBy([]string{agentextension.ToolReadPortal}))
+	assert.True(t, search.HonouredBy([]string{"web_search"}))
+	assert.False(t, search.HonouredBy([]string{"web_read"}))
+	assert.False(t, search.HonouredBy([]string{"web_read_portal"}))
 }
 
 func TestToolsInKeepsTheCapabilitysToolsInItsOwnOrder(t *testing.T) {
@@ -128,10 +128,10 @@ func TestToolsInKeepsTheCapabilitysToolsInItsOwnOrder(t *testing.T) {
 
 	search, _ := agentextension.CommandSpecFor(agentextension.CommandSearch)
 	assert.Equal(t,
-		[]string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		[]string{"web_search", "web_read"},
 		search.ToolsIn([]string{
-			"worker_list", agentextension.ToolWebRead, agentextension.ToolWebSearch,
-			agentextension.ToolReadPortal,
+			"worker_list", "web_read", "web_search",
+			"web_read_portal",
 		}),
 	)
 	assert.Empty(t, search.ToolsIn([]string{"worker_list"}))
@@ -142,28 +142,28 @@ func TestAWatchIsSetOnlyWithTheWatchTools(t *testing.T) {
 
 	watch, _ := agentextension.CommandSpecFor(agentextension.CommandWatch)
 	assert.Equal(t, agentextension.CapabilityWebResearch, watch.Capability)
-	assert.True(t, watch.HonouredBy([]string{agentextension.ToolWatchWeb}))
-	assert.False(t, watch.HonouredBy([]string{agentextension.ToolWebSearch}),
+	assert.True(t, watch.HonouredBy([]string{"web_watch"}))
+	assert.False(t, watch.HonouredBy([]string{"web_search"}),
 		"a vendor that cannot watch leaves the command out")
 
 	for _, name := range agentextension.WebWatchTools {
 		assert.True(t, watch.HonouredByCall(name), name)
 	}
-	assert.False(t, watch.HonouredByCall(agentextension.ToolWebSearch),
+	assert.False(t, watch.HonouredByCall("web_search"),
 		"a search alone does not stand in for setting a watch")
-	assert.False(t, watch.HonouredByCall(agentextension.ToolReadPortal))
+	assert.False(t, watch.HonouredByCall("web_read_portal"))
 }
 
 func TestACommandWithoutItsOwnToolsIsHonouredByAnyOfItsCapability(t *testing.T) {
 	t.Parallel()
 
 	search, _ := agentextension.CommandSpecFor(agentextension.CommandSearch)
-	assert.True(t, search.HonouredByCall(agentextension.ToolWebSearch))
-	assert.True(t, search.HonouredByCall(agentextension.ToolWebRead))
-	assert.False(t, search.HonouredByCall(agentextension.ToolReadPortal))
+	assert.True(t, search.HonouredByCall("web_search"))
+	assert.True(t, search.HonouredByCall("web_read"))
+	assert.False(t, search.HonouredByCall("web_read_portal"))
 	assert.False(t, search.HonouredByCall("worker_list"))
 
 	browser, _ := agentextension.CommandSpecFor(agentextension.CommandBrowser)
-	assert.True(t, browser.HonouredByCall(agentextension.ToolListPortalSites))
-	assert.False(t, browser.HonouredByCall(agentextension.ToolWebSearch))
+	assert.True(t, browser.HonouredByCall("web_list_portal_sites"))
+	assert.False(t, browser.HonouredByCall("web_search"))
 }

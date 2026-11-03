@@ -764,23 +764,23 @@ func TestAskedQuestions_LeavesOutAQuestionThatWasRefused(t *testing.T) {
 	history := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "book a load"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "c1", Name: Name, Arguments: map[string]any{
+			{ID: "c1", Name: "ask_user", Arguments: map[string]any{
 				"question": "Which customer, pickup and delivery?",
 			}},
 		}},
 		{
 			Role:       conversation.RoleTool,
 			ToolCallID: "c1",
-			ToolName:   Name,
+			ToolName:   "ask_user",
 			ToolFailed: true,
 			Content:    multiPartAskRefusal,
 		},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
-			{ID: "c2", Name: Name, Arguments: map[string]any{
+			{ID: "c2", Name: "ask_user", Arguments: map[string]any{
 				"question": "Which customer is it for?",
 			}},
 		}},
-		{Role: conversation.RoleTool, ToolCallID: "c2", ToolName: Name, Content: "shown"},
+		{Role: conversation.RoleTool, ToolCallID: "c2", ToolName: "ask_user", Content: "shown"},
 	}
 
 	asked := AskedQuestions(history)

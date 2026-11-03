@@ -23,9 +23,9 @@ import (
 )
 
 const (
-	paramLoadFields   = "fields"
-	paramLoadKey      = "key"
-	paramLoadValue    = "value"
+	paramFields       = "fields"
+	paramKey          = "key"
+	paramValue        = "value"
 	maxLoadFieldValue = 500
 )
 
@@ -145,7 +145,7 @@ func newDraftInboundLoadTool(
 			},
 			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"draft the load", "tender fields", "read out the load"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_draft_load"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_draft_load"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDraftPlan]{
@@ -233,7 +233,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The tender, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramLoadFields: map[string]any{
+				paramFields: map[string]any{
 					toolschema.KeyType: toolschema.TypeArray,
 					toolschema.KeyDescription: "The load's fields, each once, as checked " +
 						"against the tender and the draft inbox_get_inbound_message shows.",
@@ -242,22 +242,22 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 					toolschema.KeyItems: map[string]any{
 						toolschema.KeyType: toolschema.TypeObject,
 						toolschema.KeyProperties: map[string]any{
-							paramLoadKey: agenttoolschema.Enum("Which field.",
+							paramKey: agenttoolschema.Enum("Which field.",
 								triageLoadFieldKeys),
-							paramLoadValue: toolparams.StringProperty(
+							paramValue: toolparams.StringProperty(
 								"The value as the tender says it: a city with its state, a "+
 									"date with its window, a weight with its unit.",
 								maxLoadFieldValue,
 							),
 						},
-						toolschema.KeyRequired:             []string{paramLoadKey, paramLoadValue},
+						toolschema.KeyRequired:             []string{paramKey, paramValue},
 						toolschema.KeyAdditionalProperties: false,
 					},
 				},
 			},
-			Required:    []string{inboundtools.ParamMessageID, paramLoadFields},
+			Required:    []string{inboundtools.ParamMessageID, paramFields},
 			SearchTerms: []string{"enter the tender", "tender from triage"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_create_load"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_create_load"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
@@ -300,7 +300,7 @@ func newCreateInboundLoadTool(loads triageLoads) agenttoolports.AgentTool {
 					Kind:   "shipment",
 					Name:   "Shipment from " + inboundtools.DescribeMessage(message),
 					IDs: map[string]string{
-						paramShipmentID:             inboundtools.IDText(shipmentID),
+						toolparams.ParamShipmentID:  inboundtools.IDText(shipmentID),
 						inboundtools.ParamMessageID: message.ID.String(),
 					},
 					Record: changepreview.RecordOf(changepreview.ShipmentRecordEntity, shipmentID),
@@ -329,11 +329,11 @@ func createLoadRequest(
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	}
-	if err = toolparams.DecodeParam(params.Params, paramLoadFields, &raw); err != nil {
+	if err = toolparams.DecodeParam(params.Params, paramFields, &raw); err != nil {
 		return nil, err
 	}
 	if len(raw) == 0 {
-		return nil, fmt.Errorf("parameter %q must name at least one field", paramLoadFields)
+		return nil, fmt.Errorf("parameter %q must name at least one field", paramFields)
 	}
 
 	fields := make([]triageworkservice.LoadFieldInput, 0, len(raw))
@@ -341,7 +341,7 @@ func createLoadRequest(
 		key := inboundmessage.LoadFieldKey(field.Key)
 		if !key.IsValid() {
 			return nil, toolparams.ErrUnknownValue(
-				fmt.Sprintf("%s[%d].%s", paramLoadFields, idx, paramLoadKey),
+				fmt.Sprintf("%s[%d].%s", paramFields, idx, paramKey),
 				field.Key,
 				triageLoadFieldKeys.Names(),
 			)
@@ -418,7 +418,7 @@ func newDiscardInboundLoadTool(
 			},
 			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"discard the load draft", "throw away drafted load"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_discard_load"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_discard_load"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.LoadRequest, *triageworkservice.LoadDiscardPlan]{

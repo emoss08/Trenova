@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -16,7 +17,7 @@ import (
 )
 
 var placedHoldFields = []string{
-	changepreview.FieldShipmentID,
+	toolparams.ParamShipmentID,
 	changepreview.FieldType,
 	changepreview.FieldSeverity,
 	"reasonCode",
@@ -29,8 +30,8 @@ var placedHoldFields = []string{
 }
 
 var placedHoldLabels = map[string]string{
-	changepreview.FieldShipmentID: changepreview.LabelShipment,
-	"reasonCode":                  "Reason",
+	toolparams.ParamShipmentID: changepreview.LabelShipment,
+	"reasonCode":               "Reason",
 }
 
 var ReleasedHoldFields = []string{"releasedAt"}
@@ -39,7 +40,7 @@ func PlacedHoldOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(placedHoldFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.FieldShipmentID: permission.ResourceShipment,
+			toolparams.ParamShipmentID: permission.ResourceShipment,
 		}),
 		toolpreview.Labels(placedHoldLabels),
 		toolpreview.Volatile("startedAt"),

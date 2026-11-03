@@ -46,7 +46,7 @@ func TestInspectX12_ReadsPastedX12WithTheInboundFileCardsOverview(t *testing.T) 
 	tool := newInspectX12Tool(inspector)
 
 	result, err := tool.Query(t.Context(), querytooltest.AgentParams(map[string]any{
-		paramX12Content: pastedShipmentStatus,
+		paramContent: pastedShipmentStatus,
 	}, ""))
 	require.NoError(t, err)
 
@@ -88,7 +88,7 @@ func TestInspectX12_RefusesContentPastTheCapAndSaysWhy(t *testing.T) {
 	oversized := strings.Repeat("N1*ST*STORE~", maxInspectX12Bytes/12+1)
 
 	_, err := tool.Query(t.Context(), querytooltest.AgentParams(map[string]any{
-		paramX12Content: oversized,
+		paramContent: oversized,
 	}, ""))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "64 KB")
@@ -97,7 +97,7 @@ func TestInspectX12_RefusesContentPastTheCapAndSaysWhy(t *testing.T) {
 
 	_, err = tool.Query(
 		t.Context(),
-		querytooltest.AgentParams(map[string]any{paramX12Content: "  "}, ""),
+		querytooltest.AgentParams(map[string]any{paramContent: "  "}, ""),
 	)
 	require.Error(t, err)
 	assert.Empty(t, inspector.requests)
@@ -117,7 +117,7 @@ func TestInspectX12_KeepsALargeInspectionToBounds(t *testing.T) {
 	result, err := newInspectX12Tool(
 		&recordingInspector{},
 	).Query(t.Context(), querytooltest.AgentParams(
-		map[string]any{paramX12Content: raw.String()}, "",
+		map[string]any{paramContent: raw.String()}, "",
 	))
 	require.NoError(t, err)
 

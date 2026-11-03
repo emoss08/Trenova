@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	toolListTimeOff = "worker_list_time_off"
 	// defaultTimeOffWindowDays is how far ahead an unqualified question
 	// reaches. "Who is off?" means this week and next, not the whole year of
 	// accrued leave, and a model handed a year of rows summarises the wrong
@@ -45,7 +44,7 @@ var (
 // withinDays did, with each request's worker as the table shows it.
 func TimeOffReadSpecs() []readspec.List {
 	return []readspec.List{{
-		Name:         toolListTimeOff,
+		Name:         "worker_list_time_off",
 		EntityPlural: "time-off requests",
 		Summary:      timeOffSummary,
 		SearchTerms:  timeOffSearchTerms,

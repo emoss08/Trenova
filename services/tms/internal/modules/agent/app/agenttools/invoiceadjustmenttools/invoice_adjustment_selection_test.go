@@ -48,7 +48,7 @@ func TestSaveInvoiceAdjustmentDraft_TakesTheDraftsOwnInvoiceBesideIt(t *testing.
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		ParamAdjustmentID:         detail.ID.String(),
 		toolparams.ParamInvoiceID: detail.OriginalInvoiceID.String(),
-		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		paramKind:                 string(invoiceadjustment.KindCreditOnly),
 		toolparams.ParamReason:    "Customer disputes the lumper fee",
 	})
 
@@ -69,7 +69,7 @@ func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCa
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		ParamAdjustmentID:         detail.ID.String(),
 		toolparams.ParamInvoiceID: other.String(),
-		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		paramKind:                 string(invoiceadjustment.KindCreditOnly),
 		toolparams.ParamReason:    "Customer disputes the lumper fee",
 	})
 
@@ -88,7 +88,7 @@ func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCa
 		tool.(agenttoolports.ToolValidator).Validate(
 			t.Context(),
 			agenttoolstest.AgentParamsFor(map[string]any{
-				paramAdjustmentKind: string(invoiceadjustment.KindCreditOnly),
+				paramKind: string(invoiceadjustment.KindCreditOnly),
 			}),
 		),
 		errNoDraftTarget,
@@ -107,7 +107,7 @@ func TestSubmitInvoiceAdjustment_ARefusalForBothSelectionsShowsBothCalls(t *test
 			ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
 			toolparams.ParamAdjustments: []any{map[string]any{
 				toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
-				paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+				paramKind:                 string(invoiceadjustment.KindCreditOnly),
 				toolparams.ParamReason:    "x",
 			}},
 		}),

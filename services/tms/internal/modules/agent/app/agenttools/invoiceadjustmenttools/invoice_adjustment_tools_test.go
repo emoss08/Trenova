@@ -204,9 +204,9 @@ func TestSubmitInvoiceAdjustment_OneAdjustmentPreviewsItsFigures(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: invoiceID.String(),
-			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+			paramKind:                 string(invoiceadjustment.KindCreditOnly),
 			toolparams.ParamReason:    "Detention was billed twice",
-			toolparams.ParamAdjustmentLines: []any{map[string]any{
+			toolparams.ParamLines: []any{map[string]any{
 				paramInvoiceLineID: pulid.MustNew("invl_").String(),
 				paramCreditAmount:  "125.00",
 			}},
@@ -258,7 +258,7 @@ func TestSubmitInvoiceAdjustment_ManyGoAsOneBatch(t *testing.T) {
 	for range 3 {
 		items = append(items, map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:       string(invoiceadjustment.KindWriteOff),
+			paramKind:                 string(invoiceadjustment.KindWriteOff),
 			toolparams.ParamReason:    "Small balance write-off",
 		})
 	}
@@ -290,7 +290,7 @@ func TestSubmitInvoiceAdjustment_PreviewErrorsRefuseIt(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+			paramKind:                 string(invoiceadjustment.KindCreditOnly),
 			toolparams.ParamReason:    "Wrong rate",
 		}},
 	})
@@ -312,7 +312,7 @@ func TestSubmitInvoiceAdjustment_TakesADraftOrAdjustmentsNotBoth(t *testing.T) {
 		ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
 		toolparams.ParamAdjustments: []any{map[string]any{
 			toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
-			paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+			paramKind:                 string(invoiceadjustment.KindCreditOnly),
 			toolparams.ParamReason:    "x",
 		}},
 	})
@@ -374,7 +374,7 @@ func TestSaveInvoiceAdjustmentDraft_AnAgentSavesADraftAndSaysWhere(t *testing.T)
 	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster, adjuster)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
 		toolparams.ParamInvoiceID: inv.ID.String(),
-		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		paramKind:                 string(invoiceadjustment.KindCreditOnly),
 		toolparams.ParamReason:    "Customer disputes the lumper fee",
 	})
 

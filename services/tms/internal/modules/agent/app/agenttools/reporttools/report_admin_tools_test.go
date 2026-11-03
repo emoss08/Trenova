@@ -216,7 +216,7 @@ func TestCancelReportRun_StopsARunWithoutChangingAnything(t *testing.T) {
 	reports := adminReports()
 	tool := NewCancelReportRunTool(reports)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{paramReportRunID: reports.run.ID.String()},
+		map[string]any{paramRunID: reports.run.ID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -272,7 +272,7 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 
 	schedule := NewDeleteReportScheduleTool(reports)
 	stop := agenttoolstest.ExecuteParams(
-		map[string]any{paramReportScheduleID: reports.schedule.ID.String()},
+		map[string]any{paramScheduleID: reports.schedule.ID.String()},
 	)
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -321,9 +321,9 @@ func TestUpdateReportSchedule_KeepsWhatItIsNotGivenAndNeverLeavesUnasked(t *test
 	reports := adminReports()
 	tool := NewUpdateReportScheduleTool(reports)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramReportScheduleID: reports.schedule.ID.String(),
-		paramEmailRecipients:  []any{"ops@example.com", "controller@customer.example"},
-		paramFormats:          []any{"xlsx"},
+		paramScheduleID:      reports.schedule.ID.String(),
+		paramEmailRecipients: []any{"ops@example.com", "controller@customer.example"},
+		paramFormats:         []any{"xlsx"},
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

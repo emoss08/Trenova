@@ -173,7 +173,7 @@ func TestRecordEmploymentVerification_StartsPending(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamWorkerID: dqf.verification.WorkerID.String(),
 		paramEmployerName:        "Lakeshore Carriers",
-		paramEmployerDOT:         "1234567",
+		paramEmployerDOTNumber:   "1234567",
 		paramEmployedFrom:        "2021-03-01",
 		paramEmployedTo:          "2025-06-30",
 		paramWasDOTRegulated:     true,
@@ -244,7 +244,7 @@ func TestLogEmploymentVerificationRequest_CountsFollowUps(t *testing.T) {
 	tool := newLogEmploymentVerificationRequestTool(dqf)
 	followUp := agenttoolstest.ExecuteParams(map[string]any{
 		paramVerificationID: dqf.verification.ID.String(),
-		paramRequestMove:    "FollowUp",
+		paramAction:         "FollowUp",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -258,7 +258,7 @@ func TestLogEmploymentVerificationRequest_CountsFollowUps(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), followUp))
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		paramVerificationID: dqf.verification.ID.String(),
-		paramRequestMove:    "Requested",
+		paramAction:         "Requested",
 	})))
 	assert.Len(t, dqf.followUps, 1)
 	assert.Len(t, dqf.requested, 1)

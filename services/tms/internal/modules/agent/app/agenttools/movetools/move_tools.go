@@ -59,7 +59,7 @@ func ProvideRecordStopActualTool(
 func (t *RecordStopActualTool) Name() string { return "dispatch_record_stop_actual" }
 
 func (t *RecordStopActualTool) Recipe() []string {
-	return []string{toolShipmentList, toolShipmentGet, "dispatch_record_stop_actual"}
+	return []string{"shipment_list", "shipment_get", "dispatch_record_stop_actual"}
 }
 
 func (t *RecordStopActualTool) Description() string {

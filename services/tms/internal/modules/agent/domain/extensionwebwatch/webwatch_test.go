@@ -222,6 +222,6 @@ func TestAVendorThatCannotWatchIsNeverOfferedTheWatchTools(t *testing.T) {
 		assert.True(t, served, name)
 		assert.Contains(t, exa.Grants(), name)
 	}
-	_, served := parallel.Serving(agentextension.ToolWebSearch)
+	_, served := parallel.Serving("web_search")
 	assert.True(t, served, "the vendor still serves the rest of web research")
 }

@@ -28,7 +28,7 @@ const ParamDisputeID = "disputeId"
 
 const ParamOrderID = "orderId"
 
-const ParamForceResend = "force"
+const ParamForce = "force"
 
 const ParamCustomerID = "customerId"
 
@@ -90,10 +90,6 @@ const SchemaItems = "items"
 
 const ParamAdjustments = "adjustments"
 
-const ParamAdjustmentLines = "lines"
+const ParamLines = "lines"
 
-const ParamLineDescription = "description"
-
-const ToolInvoiceGet = "invoice_get"
-
-const ToolShipmentGetTracking = "shipment_get_tracking"
+const ParamDescription = "description"

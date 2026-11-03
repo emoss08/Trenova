@@ -11,7 +11,7 @@ import (
 
 const (
 	matrixAxes      = 4
-	fieldMatrixKeys = "keys"
+	fieldKeys       = "keys"
 	fieldRanges     = "ranges"
 	paramCellOffset = "cellOffset"
 )
@@ -68,7 +68,7 @@ func foldMatrixCells(record map[string]any, _ map[string]struct{}, _ filtercatal
 			ranged = ranged || low != nil || high != nil
 		}
 		if keyed {
-			cell[fieldMatrixKeys] = keys
+			cell[fieldKeys] = keys
 		}
 		if ranged {
 			cell[fieldRanges] = ranges

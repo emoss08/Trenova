@@ -9,7 +9,7 @@ var (
 	CustomerReference = Reference{
 		Resource: permission.ResourceCustomer,
 		What:     "The customer",
-		Source:   querytool.ToolCustomerList,
+		Source:   "customer_list",
 	}
 )
 
@@ -17,7 +17,7 @@ var (
 var WorkerReference = Reference{
 	Resource: permission.ResourceWorker,
 	What:     "The worker",
-	Source:   querytool.ToolWorkerList,
+	Source:   "worker_list",
 }
 
 // TheWorker is the worker a per-worker list is keyed by.

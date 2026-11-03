@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -406,8 +407,8 @@ func TestVoidRateConfirmation_VoidsWithTheReason(t *testing.T) {
 		"a void needs a reason",
 	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		fieldRateConfirmationID:   rateCons.entity.ID.String(),
-		changepreview.FieldReason: " Rate renegotiated ",
+		fieldRateConfirmationID: rateCons.entity.ID.String(),
+		toolparams.ParamReason:  " Rate renegotiated ",
 	})))
 
 	assert.Equal(t, "Rate renegotiated", rateCons.voided)
@@ -424,8 +425,8 @@ func TestVoidRateConfirmation_AnAgreementTheCarrierHoldsIsAProposal(t *testing.T
 		return NewVoidRateConfirmationTool(rateCons).Policy().Condition.Limit(
 			t.Context(),
 			agenttoolstest.ExecuteParams(map[string]any{
-				fieldRateConfirmationID:   rateCons.entity.ID.String(),
-				changepreview.FieldReason: "Wrong rate",
+				fieldRateConfirmationID: rateCons.entity.ID.String(),
+				toolparams.ParamReason:  "Wrong rate",
 			}),
 		)
 	}
@@ -446,8 +447,8 @@ func TestVoidRateConfirmation_PreviewShowsTheAssignmentGoingBackToPending(t *tes
 		&rateCons.guard,
 		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-				fieldRateConfirmationID:   rateCons.entity.ID.String(),
-				changepreview.FieldReason: "Wrong rate",
+				fieldRateConfirmationID: rateCons.entity.ID.String(),
+				toolparams.ParamReason:  "Wrong rate",
 			}))
 		},
 	)

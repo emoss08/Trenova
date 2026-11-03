@@ -40,13 +40,13 @@ const paramDepth = "depth"
 
 const ParamEnabled = "enabled"
 
-const paramSuggestionFields = "fields"
+const paramFields = "fields"
 
 const paramPolicyIDs = "policyIds"
 
 const paramDOTNumber = "dotNumber"
 
-const paramCarrierCode = "code"
+const paramCode = "code"
 
 const paramEnrollMonitoring = "enrollMonitoring"
 
@@ -213,7 +213,7 @@ func carrierIntelResult(action string, ids map[string]string) *agentrecord.ToolE
 	result := &agentrecord.ToolExecutionResult{Action: action, Kind: kindCarrierIntel, IDs: ids}
 	if id, err := pulid.Parse(ids[toolparams.ParamCarrierID]); err == nil {
 		result.Record = changepreview.RecordOf(changepreview.CarrierRecordEntity, id)
-	} else if id, err = pulid.Parse(ids[changepreview.FieldCustomerID]); err == nil {
+	} else if id, err = pulid.Parse(ids[toolparams.ParamCustomerID]); err == nil {
 		result.Record = changepreview.RecordOf(changepreview.CustomerRecordEntity, id)
 	}
 
@@ -272,7 +272,7 @@ func NewVetCarrierTool(intel carrierVetter) agenttoolports.AgentTool {
 			toolparams.ParamCarrierID: carrierIDProperty("The carrier"),
 			paramDepth: agenttoolschema.Enum("How deep a lookup: FMCSA is the public record, "+
 				"Lite and Full add the provider's profile. Defaults to Full.", lookupDepths),
-			toolparams.ParamForceResend: toolparams.BooleanProperty(
+			toolparams.ParamForce: toolparams.BooleanProperty(
 				"Look up again even when the last result is " +
 					"still current. It is charged; only when the person asks.",
 			),
@@ -291,7 +291,7 @@ func NewVetCarrierTool(intel carrierVetter) agenttoolports.AgentTool {
 			if err != nil {
 				return nil, err
 			}
-			force, err := toolparams.OptionalBoolPointer(params.Params, toolparams.ParamForceResend)
+			force, err := toolparams.OptionalBoolPointer(params.Params, toolparams.ParamForce)
 			if err != nil {
 				return nil, err
 			}
@@ -375,31 +375,31 @@ func NewVetCustomerBrokerTool(intel carrierVetter) agenttoolports.AgentTool {
 		Rationale: "Spends the organization's carrier intelligence budget on a lookup and " +
 			"records the result; nothing is sent to the customer.",
 		Properties: map[string]any{
-			changepreview.FieldCustomerID: agenttoolschema.RecordIDText(
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(
 				permission.ResourceCustomer,
 				"The broker customer, from customer_list. Never "+
 					"guess one.",
 			),
-			toolparams.ParamForceResend: toolparams.BooleanProperty(
+			toolparams.ParamForce: toolparams.BooleanProperty(
 				"Look up again even when the last result is " +
 					"still current. It is charged; only when the person asks.",
 			),
 		},
-		Required: []string{changepreview.FieldCustomerID},
+		Required: []string{toolparams.ParamCustomerID},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return toolparams.TargetOf(
 				params,
-				changepreview.FieldCustomerID,
+				toolparams.ParamCustomerID,
 				permission.ResourceCustomer,
 			)
 		},
 	}, toolspec.ReceivablePlan[*brokerVet, *carrierintelvetservice.VetPlan]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*brokerVet, error) {
-			customerID, err := toolparams.RequirePulid(params.Params, changepreview.FieldCustomerID)
+			customerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCustomerID)
 			if err != nil {
 				return nil, err
 			}
-			force, err := toolparams.OptionalBoolPointer(params.Params, toolparams.ParamForceResend)
+			force, err := toolparams.OptionalBoolPointer(params.Params, toolparams.ParamForce)
 			if err != nil {
 				return nil, err
 			}
@@ -433,7 +433,7 @@ func NewVetCustomerBrokerTool(intel carrierVetter) agenttoolports.AgentTool {
 
 			return fetchResult(
 				result,
-				map[string]string{changepreview.FieldCustomerID: req.customerID.String()},
+				map[string]string{toolparams.ParamCustomerID: req.customerID.String()},
 			), nil
 		},
 	})
@@ -716,7 +716,7 @@ func NewApplyCarrierIntelSuggestionsTool(
 			"reports; nothing is sent, and the old values are set back by hand.",
 		Properties: map[string]any{
 			toolparams.ParamCarrierID: carrierIDProperty("The carrier"),
-			paramSuggestionFields: toolschema.KeepEmpty(map[string]any{
+			paramFields: toolschema.KeepEmpty(map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The profile fields to correct.",
 				toolschema.KeyMaxItems:    len(syncFieldValues.Values),
@@ -799,14 +799,14 @@ func readSuggestionChoice(params *agenttoolports.ToolExecuteParams) (*suggestion
 		TenantInfo: toolparams.TenantFrom(params),
 		CarrierID:  carrierID,
 	}
-	if _, given := params.Params[paramSuggestionFields]; given {
+	if _, given := params.Params[paramFields]; given {
 		var names []string
-		if err = toolparams.DecodeParam(params.Params, paramSuggestionFields, &names); err != nil {
+		if err = toolparams.DecodeParam(params.Params, paramFields, &names); err != nil {
 			return nil, err
 		}
 		for _, name := range names {
-			field, fieldErr := toolparams.RequireEnum(map[string]any{paramSuggestionFields: name},
-				paramSuggestionFields, syncFieldValues.Values)
+			field, fieldErr := toolparams.RequireEnum(map[string]any{paramFields: name},
+				paramFields, syncFieldValues.Values)
 			if fieldErr != nil {
 				return nil, fieldErr
 			}
@@ -886,7 +886,7 @@ func NewImportSourcedCarrierTool(
 					"search.",
 				maxDOTNumberChars,
 			),
-			paramCarrierCode: toolparams.StringProperty(
+			paramCode: toolparams.StringProperty(
 				"The short code to file it under. Left out, one "+
 					"is made from its name.",
 				maxCarrierCodeChars,
@@ -1132,7 +1132,7 @@ func importProspectRequest(
 	if err != nil {
 		return nil, err
 	}
-	code, err := toolparams.BoundedText(params.Params, paramCarrierCode, maxCarrierCodeChars)
+	code, err := toolparams.BoundedText(params.Params, paramCode, maxCarrierCodeChars)
 	if err != nil {
 		return nil, err
 	}

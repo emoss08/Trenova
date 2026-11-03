@@ -18,26 +18,26 @@ import (
 
 // The fields the accounting lists' bespoke searches match.
 const (
-	fieldSyncObjectNumber      = "objectNumber"
-	fieldSyncExternalDocNumber = "externalDocNumber"
-	fieldMappingTargetLabel    = "targetLabel"
+	fieldObjectNumber      = "objectNumber"
+	fieldExternalDocNumber = "externalDocNumber"
+	fieldTargetLabel       = "targetLabel"
 )
 
 const (
-	paramAccountingSystem = "system"
-	paramSyncRecordID     = "syncRecordId"
-	paramMappingID        = "mappingId"
-	paramDocumentIDs      = "documentIds"
+	paramSystem       = "system"
+	paramSyncRecordID = "syncRecordId"
+	paramMappingID    = "mappingId"
+	paramDocumentIDs  = "documentIds"
 
-	argIntegrationType = "integrationType"
-	argObjectIDs       = "objectIds"
-	argMappingKey      = "key"
-	argMappingRecordID = "recordId"
+	fieldIntegrationType = "integrationType"
+	fieldObjectIDs       = "objectIds"
+	fieldKey             = "key"
+	fieldRecordID        = "recordId"
 
-	fieldSyncErrorCategory = "errorCategory"
-	fieldMappingState      = "state"
-	fieldRequiredOnly      = "requiredOnly"
-	fieldMapping           = "mapping"
+	fieldErrorCategory = "errorCategory"
+	fieldState         = "state"
+	fieldRequiredOnly  = "requiredOnly"
+	fieldMapping       = "mapping"
 
 	syncStateMaxDocuments = 50
 	syncDocumentIDSources = "invoice_list, invoice_get, receivable_list_customer_payments, " +
@@ -88,7 +88,7 @@ var syncDocumentKinds = []recordkind.Kind{
 
 // accountingSystemName is what every accounting read and write calls the
 // accounting system its call is about.
-var accountingSystemName = map[string]string{argIntegrationType: paramAccountingSystem}
+var accountingSystemName = map[string]string{fieldIntegrationType: paramSystem}
 
 // ReadSpecs are the accounting sync lists, each read for one
 // accounting system through the operation the Desk reads it with.
@@ -153,7 +153,7 @@ func syncRecordsListSpec() readspec.List {
 	return readspec.List{
 		Name:         "accounting_list_sync_records",
 		EntityPlural: "sync records",
-		Searches:     []string{fieldSyncObjectNumber, fieldSyncExternalDocNumber},
+		Searches:     []string{fieldObjectNumber, fieldExternalDocNumber},
 		Summary: "List the documents Trenova sends to the accounting system and where " +
 			"each stands, or say whether particular Trenova documents or parties reached " +
 			"it. List one system's records, newest first, by status (Blocked and " +
@@ -171,14 +171,14 @@ func syncRecordsListSpec() readspec.List {
 		},
 		QueryNote: "Words to find in Trenova or accounting system document numbers.",
 		Names: map[string]string{
-			argIntegrationType:    paramAccountingSystem,
-			querytool.ArgStatuses: querytool.AccountingStatusField,
-			"objectTypes":         "documentType",
-			"errorCategories":     fieldSyncErrorCategory,
-			argObjectIDs:          paramDocumentIDs,
+			fieldIntegrationType:    paramSystem,
+			querytool.FieldStatuses: querytool.AccountingStatusField,
+			"objectTypes":           "documentType",
+			"errorCategories":       fieldErrorCategory,
+			fieldObjectIDs:          paramDocumentIDs,
 		},
 		Notes: map[string]string{
-			paramAccountingSystem: "Required to list records; with documentIds, only " +
+			paramSystem: "Required to list records; with documentIds, only " +
 				"that system's records answer, and without it every system that syncs " +
 				"does.",
 			querytool.AccountingStatusField: "Blocked and DeadLettered need a person; " +
@@ -210,7 +210,7 @@ func mappingGapsListSpec() readspec.List {
 	return readspec.List{
 		Name:         "accounting_list_mapping_gaps",
 		EntityPlural: "mapping gaps",
-		Searches:     []string{fieldMappingTargetLabel},
+		Searches:     []string{fieldTargetLabel},
 		Summary: "List what still has to be matched to the accounting system before " +
 			"anything can sync. It covers account roles, line types, accessorial charges, " +
 			"customers, carriers, terms and payment methods that are unmatched or only " +
@@ -222,15 +222,15 @@ func mappingGapsListSpec() readspec.List {
 		},
 		QueryNote: "Words to find in the Trenova label or the chosen record's name.",
 		Names: map[string]string{
-			argIntegrationType: paramAccountingSystem,
-			"targetTypes":      querytool.FieldTargetType,
-			"states":           fieldMappingState,
+			fieldIntegrationType: paramSystem,
+			"targetTypes":        querytool.FieldTargetType,
+			"states":             fieldState,
 		},
 		Notes: map[string]string{
-			fieldMappingState: "Unmatched and Proposed unless you name others.",
+			fieldState:        "Unmatched and Proposed unless you name others.",
 			fieldRequiredOnly: "Only the mappings setup cannot finish without.",
 		},
-		Defaults: map[string]any{fieldMappingState: []any{
+		Defaults: map[string]any{fieldState: []any{
 			string(accountingmapping.MappingStateUnmatched),
 			string(accountingmapping.MappingStateProposed),
 		}},
@@ -313,15 +313,15 @@ func GetSpecs() []readspec.Get {
 			ParamName: paramMappingID,
 			IDSource:  "from accounting_list_mapping_gaps",
 			Names: map[string]string{
-				argIntegrationType: paramAccountingSystem,
-				"optionsQuery":     querytool.ParamQuery,
+				fieldIntegrationType: paramSystem,
+				"optionsQuery":       querytool.ParamQuery,
 			},
 			Notes: map[string]string{
-				argMappingKey: "Its trenovaKey from accounting_list_mapping_gaps, for the other " +
+				fieldKey: "Its trenovaKey from accounting_list_mapping_gaps, for the other " +
 					"target types. Examples: \"ARAccount\", \"RevenueAccount\", " +
 					"\"Freight\", \"Net30\", \"ACH\".",
 			},
-			References: map[string]readspec.Reference{argMappingRecordID: {
+			References: map[string]readspec.Reference{fieldRecordID: {
 				Kinds: []recordkind.Kind{
 					recordkind.Kind(permission.ResourceCustomer),
 					recordkind.Kind(permission.ResourceCarrier),
@@ -432,7 +432,7 @@ func mappingActions(row map[string]any, _ map[string]struct{}, _ filtercatalog.C
 	kind := accountingprovider.ReferenceKind(querytool.StringOf(row["providerKind"]))
 	row["canCreateInAccountingSystem"] = kind.Creatable() &&
 		querytool.StringOf(
-			row[fieldMappingState],
+			row[fieldState],
 		) != string(
 			accountingmapping.MappingStateConfirmed,
 		)
@@ -449,7 +449,7 @@ func mappingSetupPath(summary map[string]any) {
 // worded itself with a pointer to the connection page, as the domain words
 // it for an agent.
 func connectionMeaning(record map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
-	system := integration.Type(querytool.StringOf(record[argIntegrationType]))
+	system := integration.Type(querytool.StringOf(record[fieldIntegrationType]))
 	provider := querytool.StringOf(record[accountingProviderField])
 	available, _ := record["available"].(bool)
 	record["setupPath"] = accountingprovider.SetupPath(system)

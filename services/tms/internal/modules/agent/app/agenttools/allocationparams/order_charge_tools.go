@@ -23,21 +23,21 @@ func AllocationsProperty(description string) map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				ParamBillToCustomer: agenttoolschema.RecordIDText(
+				ParamBillToCustomerID: agenttoolschema.RecordIDText(
 					permission.ResourceCustomer,
 					"The customer who pays this share, from "+
 						"customer_list. Never guess one.",
 				),
-				ParamAllocMethod: agenttoolschema.Enum("Whether the share is a percent of "+
+				ParamMethod: agenttoolschema.Enum("Whether the share is a percent of "+
 					"the charge or a fixed amount.", allocationMethods),
-				ParamAllocPercent: toolparams.AmountProperty("The share as a percent such as 60, " +
+				ParamPercent: toolparams.AmountProperty("The share as a percent such as 60, " +
 					"when method is Percent."),
 				toolparams.ParamAmount: toolparams.AmountProperty(
 					"The share as an amount such as 250.00, when " +
 						"method is Amount.",
 				),
 			},
-			toolschema.KeyRequired:             []string{ParamBillToCustomer, ParamAllocMethod},
+			toolschema.KeyRequired:             []string{ParamBillToCustomerID, ParamMethod},
 			toolschema.KeyAdditionalProperties: false,
 		},
 	}
@@ -105,11 +105,11 @@ func allocationRow(
 	path := fmt.Sprintf("%s[%d]", ParamAllocations, index)
 	payer, err := pulid.Parse(strings.TrimSpace(arg.BillToCustomerID))
 	if err != nil || payer.IsNil() {
-		return nil, fmt.Errorf("%s.%s must be a customer id", path, ParamBillToCustomer)
+		return nil, fmt.Errorf("%s.%s must be a customer id", path, ParamBillToCustomerID)
 	}
 	method, err := toolparams.RequireEnum(
-		map[string]any{ParamAllocMethod: arg.Method},
-		ParamAllocMethod,
+		map[string]any{ParamMethod: arg.Method},
+		ParamMethod,
 		allocationMethods.Values,
 	)
 	if err != nil {
@@ -124,8 +124,8 @@ func allocationRow(
 		Method:           method,
 		Sequence:         int16(index), //nolint:gosec // bounded by maxChargeAllocations
 	}
-	share := map[string]any{ParamAllocPercent: arg.Percent, toolparams.ParamAmount: arg.Amount}
-	percent, hasPercent, err := toolparams.OptionalDecimal(share, ParamAllocPercent)
+	share := map[string]any{ParamPercent: arg.Percent, toolparams.ParamAmount: arg.Amount}
+	percent, hasPercent, err := toolparams.OptionalDecimal(share, ParamPercent)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}

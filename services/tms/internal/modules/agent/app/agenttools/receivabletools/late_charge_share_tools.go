@@ -30,9 +30,7 @@ const paramAsOfDate = "asOfDate"
 
 const paramUserIDs = "userIds"
 
-const paramShareNote = "note"
-
-const paramShareTab = "tab"
+const paramTab = "tab"
 
 const maxLateCustomers = 200
 
@@ -249,9 +247,11 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 				"The teammates, from invoice_list_share_candidates.",
 				invoiceshare.MaxShareRecipients,
 			),
-			paramShareNote: toolparams.StringProperty("A note for them, such as what to look at.",
-				invoiceshare.MaxShareNoteLength),
-			paramShareTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
+			toolparams.ParamNote: toolparams.StringProperty(
+				"A note for them, such as what to look at.",
+				invoiceshare.MaxShareNoteLength,
+			),
+			paramTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
 				"Defaults to overview.", shareTabs),
 		},
 		Required: []string{toolparams.ParamInvoiceID, paramUserIDs},
@@ -298,13 +298,13 @@ func shareRequest(
 	}
 	note, err := toolparams.BoundedText(
 		params.Params,
-		paramShareNote,
+		toolparams.ParamNote,
 		invoiceshare.MaxShareNoteLength,
 	)
 	if err != nil {
 		return nil, err
 	}
-	tab, _, err := toolparams.OptionalEnum(params.Params, paramShareTab, shareTabs.Values)
+	tab, _, err := toolparams.OptionalEnum(params.Params, paramTab, shareTabs.Values)
 	if err != nil {
 		return nil, err
 	}

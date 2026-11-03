@@ -135,9 +135,9 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 	}
 	update := alerttools.NewUpdateTableChangeAlertTool(alerts)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		alerttools.ParamAlertID: alerts.stored.ID.String(),
-		"customMessage":         "A load slipped",
-		"eventTypes":            []any{"update", "insert"},
+		alerttools.ParamTableChangeAlertID: alerts.stored.ID.String(),
+		"customMessage":                    "A load slipped",
+		"eventTypes":                       []any{"update", "insert"},
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -158,21 +158,21 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 		t,
 		update.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
-				alerttools.ParamAlertID: alerts.stored.ID.String(),
-				"tableName":             "secrets",
+				alerttools.ParamTableChangeAlertID: alerts.stored.ID.String(),
+				"tableName":                        "secrets",
 			},
 		)),
 	)
 
 	status := alerttools.NewSetTableChangeAlertStatusTool(alerts)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		alerttools.ParamAlertID:   alerts.stored.ID.String(),
-		changepreview.FieldStatus: "Paused",
+		alerttools.ParamTableChangeAlertID: alerts.stored.ID.String(),
+		changepreview.FieldStatus:          "Paused",
 	})))
 	assert.True(t, alerts.paused)
 	require.NoError(t, status.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		alerttools.ParamAlertID:   alerts.stored.ID.String(),
-		changepreview.FieldStatus: "Active",
+		alerttools.ParamTableChangeAlertID: alerts.stored.ID.String(),
+		changepreview.FieldStatus:          "Active",
 	})))
 	assert.True(t, alerts.resumed)
 
@@ -184,7 +184,7 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 			return remove.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(
-					map[string]any{alerttools.ParamAlertID: alerts.stored.ID.String()}),
+					map[string]any{alerttools.ParamTableChangeAlertID: alerts.stored.ID.String()}),
 			)
 		},
 	)
@@ -194,6 +194,6 @@ func TestTableChangeAlertTools_ActOnlyOnTheCallersOwnAlert(t *testing.T) {
 		agenttoolstest.PreviewChange(t, deletePreview, 0).Operation,
 	)
 	require.NoError(t, remove.Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{alerttools.ParamAlertID: alerts.stored.ID.String()})))
+		map[string]any{alerttools.ParamTableChangeAlertID: alerts.stored.ID.String()})))
 	assert.True(t, alerts.deleted)
 }

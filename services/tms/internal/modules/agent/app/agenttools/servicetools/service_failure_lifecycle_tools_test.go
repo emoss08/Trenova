@@ -169,7 +169,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 	tool := NewUpdateServiceFailureTool(failures)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		editools.ParamServiceFailureID: failures.current.ID.String(),
-		paramX12Status:                 "ax",
+		paramX12StatusCodeOverride:     "ax",
 		toolparams.ParamNote:           "Consignee closed early",
 	})
 
@@ -181,7 +181,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 		},
 	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "AX", agenttoolstest.FieldByPath(t, change, paramX12Status).After)
+	assert.Equal(t, "AX", agenttoolstest.FieldByPath(t, change, paramX12StatusCodeOverride).After)
 	assert.Contains(t, preview.Summary, "SF-0042")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -207,7 +207,7 @@ func TestUpdateServiceFailure_ChangesOnlyWhatIsSent(t *testing.T) {
 		},
 		"a long code": {
 			editools.ParamServiceFailureID: failures.current.ID.String(),
-			paramX12Reason:                 "ABCD",
+			paramX12ReasonCodeOverride:     "ABCD",
 		},
 	} {
 		require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),

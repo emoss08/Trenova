@@ -27,10 +27,6 @@ const nounInvoice = "invoice"
 
 const nounInvoices = "invoices"
 
-const toolInvoicePost = "invoice_post"
-
-const toolInvoiceSend = "invoice_send"
-
 const bulkApprovalDescription = "Propose approving billing queue items, one or up to 50 in one proposal the person decides together. On your own, propose only items you reviewed and found clean: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. When the person asks for items, propose those and say in reviewNotes what you could not confirm. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; the person may untick items. Name every ready item in one call; an item the queue would refuse is reported, not approved, and the rest still go."
 
 const bulkPostDescription = "Propose posting draft invoices, one or up to 50 in one proposal the person decides together, usually the drafts approving billing queue items just made. Posting books each to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so propose it once you have checked the drafts; the person may untick invoices. Name every ready invoice in one call; one posting would refuse is reported, not posted, and the rest still go."
@@ -100,10 +96,10 @@ func NewPostInvoicesTool(
 	}
 }
 
-func (t *PostInvoicesTool) Name() string { return toolInvoicePost }
+func (t *PostInvoicesTool) Name() string { return "invoice_post" }
 
 func (t *PostInvoicesTool) Recipe() []string {
-	return []string{"invoice_list", toolparams.ToolInvoiceGet, toolInvoicePost}
+	return []string{"invoice_list", "invoice_get", "invoice_post"}
 }
 
 func (t *PostInvoicesTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
@@ -191,7 +187,7 @@ func NewSendInvoicesTool(
 	}
 }
 
-func (t *SendInvoicesTool) Name() string { return toolInvoiceSend }
+func (t *SendInvoicesTool) Name() string { return "invoice_send" }
 
 func (t *SendInvoicesTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)

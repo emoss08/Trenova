@@ -31,7 +31,6 @@ const (
 	paramStateCode        = "stateCode"
 	paramDelayed          = "delayed"
 	paramDelayReason      = "delayReason"
-	paramNote             = "note"
 	paramContactName      = "contactName"
 	fieldReportedAt       = "reportedAt"
 	fieldEstimatedArrival = "estimatedArrival"
@@ -80,7 +79,7 @@ func ProvideLogCheckCallTool(
 func (t *LogCheckCallTool) Name() string { return "dispatch_record_check_call" }
 
 func (t *LogCheckCallTool) Recipe() []string {
-	return []string{toolShipmentList, toolShipmentGet, "dispatch_record_check_call"}
+	return []string{"shipment_list", "shipment_get", "dispatch_record_check_call"}
 }
 
 func (t *LogCheckCallTool) Description() string {
@@ -132,7 +131,7 @@ func (t *LogCheckCallTool) ParamSchema() map[string]any {
 			fieldEstimatedArrival: agenttoolschema.LocalDateTime(
 				"When the caller expects to reach the next stop, if they said.",
 			),
-			paramNote: toolparams.StringProperty(
+			toolparams.ParamNote: toolparams.StringProperty(
 				"Anything else the caller reported that a dispatcher should read.",
 				checkcall.MaxNoteLength,
 			),
@@ -235,7 +234,7 @@ func (t *LogCheckCallTool) request(
 			StateCode:   toolparams.OptionalString(params.Params, paramStateCode),
 			Delayed:     toolparams.OptionalBool(params.Params, paramDelayed),
 			DelayReason: toolparams.OptionalString(params.Params, paramDelayReason),
-			Note:        toolparams.OptionalString(params.Params, paramNote),
+			Note:        toolparams.OptionalString(params.Params, toolparams.ParamNote),
 			ContactName: toolparams.OptionalString(params.Params, paramContactName),
 		},
 	}

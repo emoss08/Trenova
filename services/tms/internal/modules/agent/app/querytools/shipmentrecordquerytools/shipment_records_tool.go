@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/partyquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
@@ -126,7 +125,7 @@ func NewFindShipmentRecordsTool(p *ShipmentRecordsToolParams) agenttoolports.Age
 	}
 }
 
-func (t *findShipmentRecordsTool) Name() string { return agentpreset.ToolFindShipmentRecords }
+func (t *findShipmentRecordsTool) Name() string { return "shipment_match_records" }
 
 func (t *findShipmentRecordsTool) Description() string {
 	return "Match the customer, stop locations and commodities a new shipment names, in " +

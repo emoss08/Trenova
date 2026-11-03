@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	ApplyConnectionDraftToolName = "edi_apply_connection_draft"
-	ediPartnerRecordEntity       = "edi_partner"
+	ediPartnerRecordEntity = "edi_partner"
 )
 
 var (
@@ -60,7 +59,7 @@ func NewApplyConnectionDraftTool(
 	return &ApplyConnectionDraftTool{drafts: drafts, documents: documents}
 }
 
-func (t *ApplyConnectionDraftTool) Name() string { return ApplyConnectionDraftToolName }
+func (t *ApplyConnectionDraftTool) Name() string { return "edi_apply_connection_draft" }
 
 func (t *ApplyConnectionDraftTool) SearchTerms() []string {
 	return []string{
@@ -77,7 +76,7 @@ func (t *ApplyConnectionDraftTool) Recipe() []string {
 	return []string{
 		"agent_read_attachment",
 		"edi_draft_connection",
-		ApplyConnectionDraftToolName,
+		"edi_apply_connection_draft",
 	}
 }
 

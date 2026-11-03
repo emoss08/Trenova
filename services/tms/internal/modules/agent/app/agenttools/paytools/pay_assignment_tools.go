@@ -32,12 +32,6 @@ const ParamEndDate = "endDate"
 
 const maxAssignmentNotes = 1000
 
-const assignmentSourcesTool = "settlement_list_pay_assignments"
-
-const payProfileSourcesTool = "settlement_list_pay_profiles"
-
-const fieldSplitPercent = "splitPercent"
-
 const labelPayAssignment = "Pay assignment"
 
 const payAssignmentResource = permission.ResourceDriverPayProfile
@@ -77,7 +71,7 @@ func (t *AssignPayProfileTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		ParamPayProfileID: agenttoolschema.KindID(
-			"The pay profile, from "+payProfileSourcesTool+". Never guess one.",
+			"The pay profile, from settlement_list_pay_profiles. Never guess one.",
 			recordkind.PayProfile,
 		),
 		toolparams.ParamEffectiveFrom: agenttoolschema.Date(
@@ -262,9 +256,9 @@ func (t *AssignPayProfileTool) Preview(
 		plan.entity,
 		toolpreview.Only(
 			toolparams.ParamWorkerID,
-			changepreview.FieldEffectiveFrom,
-			changepreview.FieldEffectiveTo,
-			fieldSplitPercent,
+			toolparams.ParamEffectiveFrom,
+			toolparams.ParamEffectiveTo,
+			paramSplitPercent,
 			changepreview.FieldNotes,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
@@ -281,7 +275,7 @@ func (t *AssignPayProfileTool) Preview(
 			assignmentRecord(ended, labelPayAssignment+" in force"),
 			endedBefore(ended),
 			ended,
-			toolpreview.Only(changepreview.FieldEffectiveTo),
+			toolpreview.Only(toolparams.ParamEffectiveTo),
 			toolpreview.Types(settlementpreview.DriverPayDateTypes),
 		)
 		if changeErr != nil {
@@ -339,7 +333,7 @@ func (t *EndPayAssignmentTool) Description() string {
 func (t *EndPayAssignmentTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		ParamAssignmentID: agenttoolschema.KindID(
-			"The assignment, from "+assignmentSourcesTool+". Never guess one.",
+			"The assignment, from settlement_list_pay_assignments. Never guess one.",
 			recordkind.PayAssignment,
 		),
 		ParamEndDate: agenttoolschema.Date("The day it stops applying."),
@@ -447,7 +441,7 @@ func (t *EndPayAssignmentTool) Preview(
 		assignmentRecord(plan.before, label),
 		plan.before,
 		plan.after,
-		toolpreview.Only(changepreview.FieldEffectiveTo),
+		toolpreview.Only(toolparams.ParamEffectiveTo),
 		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {

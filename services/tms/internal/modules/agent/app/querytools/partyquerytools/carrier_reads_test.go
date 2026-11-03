@@ -86,9 +86,9 @@ func TestListCarrierInvoiceMatches_MarksOnlyInvoicesACarrierSentOverEDI(t *testi
 		"carrierInvoiceMatches.items.varianceMinor",
 	))
 
-	assert.Equal(t, matchSourceEDI, items[0][fieldMatchSource])
-	assert.Equal(t, matchSourceDocument, items[1][fieldMatchSource])
-	assert.Equal(t, matchSourceManual, items[2][fieldMatchSource])
+	assert.Equal(t, matchSourceEDI, items[0][fieldSource])
+	assert.Equal(t, matchSourceDocument, items[1][fieldSource])
+	assert.Equal(t, matchSourceManual, items[2][fieldSource])
 	assert.Equal(t, []agentrecord.RecordRef{{
 		EntityType: carrierInvoiceEntity,
 		ID:         "ecinv_1",

@@ -274,7 +274,7 @@ func (b *Builder) describeTrenova(
 	rc.Guide = req.Trigger == agent.RunTriggerChat &&
 		req.Actor != nil &&
 		req.Actor.PrincipalType == permissionports.PrincipalTypeUser &&
-		slices.Contains(req.Definition.EffectiveToolNames(), agentdefinition.CoreToolFindInTrenova)
+		slices.Contains(req.Definition.EffectiveToolNames(), "agent_find_page")
 
 	if req.Surface == agentpagecontext.SurfaceDesk {
 		rc.SurfaceGuide = b.runtimePage(deskPath)

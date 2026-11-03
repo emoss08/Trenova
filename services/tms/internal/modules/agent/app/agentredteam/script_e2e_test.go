@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -83,7 +82,7 @@ func TestAnAgentRunsARealScriptThroughTheWholeTurn(t *testing.T) {
 	completion := &agenttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		{ModelIdentifier: scriptModel, ToolCalls: []llmports.ToolCall{{
 			ID:   "call_script",
-			Name: codemode.ToolRunScript,
+			Name: "analysis_run",
 			Arguments: map[string]any{
 				"title":   "Open loads by customer",
 				"purpose": "Count each customer's open loads and their earliest pickup.",
@@ -120,7 +119,7 @@ func TestAnAgentRunsARealScriptThroughTheWholeTurn(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, completion.Requests, 2)
-	assert.Contains(t, offeredTools(completion.Requests[0]), codemode.ToolRunScript,
+	assert.Contains(t, offeredTools(completion.Requests[0]), "analysis_run",
 		"the agent was configured with list tools alone")
 	answer := scriptAnswer(t, completion.Requests[1])
 	assert.Equal(t, "Succeeded", answer.Status)

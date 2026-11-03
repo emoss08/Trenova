@@ -18,8 +18,6 @@ import (
 )
 
 const (
-	PublishArtifactName = "publish_artifact"
-
 	maxDocumentTitleRunes = 120
 	maxDocumentBodyBytes  = 60000
 	maxDocumentTypeRunes  = 40
@@ -51,7 +49,7 @@ const publishArtifactDescription = "Publish a written document beside the conver
 // pane beside it.
 func PublishArtifactSpec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        PublishArtifactName,
+		Name:        "publish_artifact",
 		Description: publishArtifactDescription,
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -176,7 +174,7 @@ func PublishOutcome(arguments map[string]any) toolcall.Result {
 	if len(problems) > 0 {
 		return toolcall.Failed(
 			"Tool %q was not run: %s.",
-			PublishArtifactName,
+			"publish_artifact",
 			strings.Join(problems, "; "),
 		)
 	}
@@ -284,7 +282,7 @@ func PublishedContent(shown *agentruntimeports.ShownArtifact) string {
 	encoded := fmt.Sprintf(`{"artifactId":%q,"title":%q,"status":"published"}`,
 		shown.ID.String(), shown.Title)
 
-	return toolresult.Fence(PublishArtifactName, encoded) +
+	return toolresult.Fence("publish_artifact", encoded) +
 		"\n\n[The person can open this document beside the conversation. Reply in two or " +
 		"three sentences that point to it; do not repeat its text." + replycheck.ArtifactRefNote(shown) + "]"
 }

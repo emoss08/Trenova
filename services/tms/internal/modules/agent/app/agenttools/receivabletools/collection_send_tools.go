@@ -25,10 +25,7 @@ import (
 )
 
 const (
-	toolSendPaymentReminder   = "receivable_send_payment_reminder"
-	toolSendCustomerStatement = "receivable_send_statement"
-	paramStatementStart       = "startDate"
-	paramStatementAsOf        = "asOfDate"
+	paramStartDate            = "startDate"
 	maxCustomerEmailNoteChars = 2000
 )
 
@@ -55,11 +52,11 @@ func customerNoteProperty(what string) map[string]any {
 func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolSendPaymentReminder,
+			Name: "receivable_send_payment_reminder",
 			Recipe: []string{
-				toolListCollectionsWorklist,
-				toolGetCustomerStatement,
-				toolSendPaymentReminder,
+				"receivable_list_collection_worklist",
+				"receivable_get_statement",
+				"receivable_send_payment_reminder",
 			},
 			Description: "Email a customer a reminder of every overdue invoice it has that is " +
 				"not in dispute, with an optional note. It is one email per currency, to the " +
@@ -79,7 +76,7 @@ func NewSendPaymentReminderTool(reminders paymentreminderports.Service) agenttoo
 			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
 				toolparams.ParamCustomerID: collectionCustomerProperty(),
-				paramCollectionNote: customerNoteProperty(
+				toolparams.ParamNote: customerNoteProperty(
 					"A short note the customer reads above the list of invoices. Leave it out " +
 						"unless the person asked for one; never repeat the amounts the email " +
 						"already lists.",
@@ -149,7 +146,7 @@ func sendPaymentReminderRequest(
 	}
 	note, err := toolparams.BoundedText(
 		params.Params,
-		paramCollectionNote,
+		toolparams.ParamNote,
 		maxCustomerEmailNoteChars,
 	)
 	if err != nil {
@@ -207,10 +204,10 @@ func NewSendCustomerStatementTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolSendCustomerStatement,
+			Name: "receivable_send_statement",
 			Recipe: []string{
-				toolGetCustomerStatement,
-				toolSendCustomerStatement,
+				"receivable_get_statement",
+				"receivable_send_statement",
 			},
 			Description: "Email a customer its statement of account as a PDF, to the invoice " +
 				"recipients on its email profile, with an optional note. The statement runs from " +
@@ -229,14 +226,14 @@ func NewSendCustomerStatementTool(
 			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
 				toolparams.ParamCustomerID: collectionCustomerProperty(),
-				paramStatementStart: agenttoolschema.Date(
+				paramStartDate: agenttoolschema.Date(
 					"The first day the statement covers. Leave it out to start from the " +
 						"account's first transaction.",
 				),
-				paramStatementAsOf: agenttoolschema.Date(
+				paramAsOfDate: agenttoolschema.Date(
 					"The statement date, today or earlier. Leave it out for today.",
 				),
-				paramCollectionNote: customerNoteProperty(
+				toolparams.ParamNote: customerNoteProperty(
 					"A short note the customer reads in the email. Leave it out unless the " +
 						"person asked for one.",
 				),
@@ -296,7 +293,7 @@ func statementRequest(
 	}
 	note, err := toolparams.BoundedText(
 		params.Params,
-		paramCollectionNote,
+		toolparams.ParamNote,
 		maxCustomerEmailNoteChars,
 	)
 	if err != nil {
@@ -311,17 +308,17 @@ func statementRequest(
 		},
 		Note: note,
 	}
-	if raw := optionalText(params.Params, paramStatementStart); raw != "" {
+	if raw := optionalText(params.Params, paramStartDate); raw != "" {
 		start, parseErr := timeutils.ParseCalendarDate(raw, zone)
 		if parseErr != nil {
-			return nil, toolparams.DateRefusal(paramStatementStart, raw, toolschema.FormatDate)
+			return nil, toolparams.DateRefusal(paramStartDate, raw, toolschema.FormatDate)
 		}
 		req.StartDate = start
 	}
-	if raw := optionalText(params.Params, paramStatementAsOf); raw != "" {
+	if raw := optionalText(params.Params, paramAsOfDate); raw != "" {
 		day, parseErr := timeutils.ParseCalendarDate(raw, zone)
 		if parseErr != nil {
-			return nil, toolparams.DateRefusal(paramStatementAsOf, raw, toolschema.FormatDate)
+			return nil, toolparams.DateRefusal(paramAsOfDate, raw, toolschema.FormatDate)
 		}
 		req.AsOfDate = timeutils.NextDayStart(day, zone) - 1
 	}

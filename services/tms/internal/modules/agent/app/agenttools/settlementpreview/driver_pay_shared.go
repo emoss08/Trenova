@@ -13,8 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 )
 
-const ParamDriverPayAmount = "amount"
-
 const MaxDriverPayNotes = 1000
 
 const MaxPayReferenceChars = 100

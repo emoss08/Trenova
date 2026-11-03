@@ -24,7 +24,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const ParamCopyCount = "count"
+const ParamCount = "count"
 
 const ParamFirstPickupAt = "firstPickupAt"
 
@@ -424,7 +424,7 @@ func NewDuplicateShipmentTool(deps DuplicateShipmentDeps) agenttoolports.AgentTo
 			"sent, and a copy made in error is canceled.",
 		Properties: map[string]any{
 			toolparams.ParamShipmentID: shipmentpreview.ShipmentIDProperty("The shipment to copy"),
-			ParamCopyCount: toolparams.IntegerProperty(
+			ParamCount: toolparams.IntegerProperty(
 				"How many copies to make, 1 to 20. Defaults to 1.", 1, maxDuplicateCopies,
 			),
 			ParamFirstPickupAt: agenttoolschema.LocalDateTime(
@@ -491,9 +491,9 @@ func duplicateRequest(
 	}
 
 	count := 1
-	if _, given := params.Params[ParamCopyCount]; given {
+	if _, given := params.Params[ParamCount]; given {
 		if count, err = toolparams.RequireIntInRange(
-			params.Params, ParamCopyCount, 1, maxDuplicateCopies,
+			params.Params, ParamCount, 1, maxDuplicateCopies,
 		); err != nil {
 			return nil, err
 		}

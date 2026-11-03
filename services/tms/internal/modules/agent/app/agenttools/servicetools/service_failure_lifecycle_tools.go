@@ -29,11 +29,11 @@ const paramClearReasonCode = "clearReasonCode"
 
 const paramInternalNotes = "internalNotes"
 
-const paramX12Status = "x12StatusCodeOverride"
+const paramX12StatusCodeOverride = "x12StatusCodeOverride"
 
-const paramX12Reason = "x12ReasonCodeOverride"
+const paramX12ReasonCodeOverride = "x12ReasonCodeOverride"
 
-const paramX12Exception = "x12ExceptionCode"
+const paramX12ExceptionCode = "x12ExceptionCode"
 
 const kindServiceFailure = "service failure"
 
@@ -184,20 +184,20 @@ func readServiceFailureEdit(params *agenttoolports.ToolExecuteParams) (*serviceF
 	}
 	if edit.x12Status, err = toolparams.OptionalBoundedText(
 		params.Params,
-		paramX12Status,
+		paramX12StatusCodeOverride,
 		maxX12CodeChars,
 	); err != nil {
 		return nil, err
 	}
 	if edit.x12Reason, err = toolparams.OptionalBoundedText(
 		params.Params,
-		paramX12Reason,
+		paramX12ReasonCodeOverride,
 		maxX12CodeChars,
 	); err != nil {
 		return nil, err
 	}
 	if edit.x12Exception, err = toolparams.OptionalBoundedText(
-		params.Params, paramX12Exception, maxX12CodeChars); err != nil {
+		params.Params, paramX12ExceptionCode, maxX12CodeChars); err != nil {
 		return nil, err
 	}
 	if edit.reasonCodeID.IsNil() && !edit.clearReason && edit.notes == nil &&
@@ -278,11 +278,15 @@ func NewUpdateServiceFailureTool(failures serviceFailureLifecycle) agenttoolport
 				toolparams.StringProperty("What staff should know.",
 					toolparams.MaxOperationNoteChars),
 			),
-			paramX12Status: toolschema.KeepEmpty(toolparams.StringProperty("EDI 214 status code "+
-				"override, three characters.", maxX12CodeChars)),
-			paramX12Reason: toolschema.KeepEmpty(toolparams.StringProperty("EDI 214 reason code "+
-				"override, three characters.", maxX12CodeChars)),
-			paramX12Exception: toolschema.KeepEmpty(
+			paramX12StatusCodeOverride: toolschema.KeepEmpty(
+				toolparams.StringProperty("EDI 214 status code "+
+					"override, three characters.", maxX12CodeChars),
+			),
+			paramX12ReasonCodeOverride: toolschema.KeepEmpty(
+				toolparams.StringProperty("EDI 214 reason code "+
+					"override, three characters.", maxX12CodeChars),
+			),
+			paramX12ExceptionCode: toolschema.KeepEmpty(
 				toolparams.StringProperty("EDI 214 exception code, "+
 					"three characters.", maxX12CodeChars),
 			),
@@ -338,9 +342,9 @@ func renderServiceFailureEdit(
 			changepreview.FieldReasonCodeID,
 			changepreview.FieldNotes,
 			paramInternalNotes,
-			paramX12Status,
-			paramX12Reason,
-			paramX12Exception,
+			paramX12StatusCodeOverride,
+			paramX12ReasonCodeOverride,
+			paramX12ExceptionCode,
 		),
 		toolpreview.WithRefs(serviceFailureUserRefs),
 	)

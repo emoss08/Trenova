@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -36,27 +35,27 @@ var commandCases = []commandCase{
 		capability: agentextension.CapabilityPortalAutomation,
 		ask:        "/browser check whether the 9am slot at Acme DC is still open",
 		task:       "check whether the 9am slot at Acme DC is still open",
-		held:       []string{agentextension.ToolListPortalSites, agentextension.ToolReadPortal},
-		call:       agentextension.ToolReadPortal,
-		other:      agentextension.ToolWebSearch,
+		held:       []string{"web_list_portal_sites", "web_read_portal"},
+		call:       "web_read_portal",
+		other:      "web_search",
 	},
 	{
 		command:    agentextension.CommandSearch,
 		capability: agentextension.CapabilityWebResearch,
 		ask:        "/search what changed in the FMCSA hours of service rules this year",
 		task:       "what changed in the FMCSA hours of service rules this year",
-		held:       []string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
-		call:       agentextension.ToolWebSearch,
-		other:      agentextension.ToolReadPortal,
+		held:       []string{"web_search", "web_read"},
+		call:       "web_search",
+		other:      "web_read_portal",
 	},
 	{
 		command:    agentextension.CommandWatch,
 		capability: agentextension.CapabilityWebResearch,
 		ask:        "/watch FMCSA finalizing the broker transparency rule",
 		task:       "FMCSA finalizing the broker transparency rule",
-		held:       []string{agentextension.ToolWatchWeb, agentextension.ToolListWebWatches},
-		call:       agentextension.ToolListWebWatches,
-		other:      agentextension.ToolReadPortal,
+		held:       []string{"web_watch", "web_list_watches"},
+		call:       "web_list_watches",
+		other:      "web_read_portal",
 	},
 }
 
@@ -102,19 +101,19 @@ func newCommandRuntime(
 	query := &stubQueryRegistry{
 		Tools: append(paramsOf(service).QueryTools.(*stubQueryRegistry).Tools,
 			&agenttest.StubQueryTool{
-				ToolName: agentextension.ToolListPortalSites,
+				ToolName: "web_list_portal_sites",
 				Desc:     "List the portal sites the organization set up.",
 				Result:   map[string]any{"sites": []any{map[string]any{"name": "Acme DC"}}},
 				Resource: permission.ResourcePortalAutomation,
 			},
 			&agenttest.StubQueryTool{
-				ToolName: agentextension.ToolReadPortal,
+				ToolName: "web_read_portal",
 				Desc:     "Look something up on one of the organization's portal sites.",
 				Result:   map[string]any{"answer": "The 9am slot is open."},
 				Resource: permission.ResourcePortalAutomation,
 			},
 			&agenttest.StubQueryTool{
-				ToolName: agentextension.ToolWebSearch,
+				ToolName: "web_search",
 				Desc:     "Search the public web for current information that is not in Trenova.",
 				Result: map[string]any{
 					"results": []any{map[string]any{"url": "https://fmcsa.dot.gov"}},
@@ -122,13 +121,13 @@ func newCommandRuntime(
 				Resource: permission.ResourceWebResearch,
 			},
 			&agenttest.StubQueryTool{
-				ToolName: agentextension.ToolWebRead,
+				ToolName: "web_read",
 				Desc:     "Read the text of a page that web_search returned.",
 				Result:   map[string]any{"text": "The rule changed in March."},
 				Resource: permission.ResourceWebResearch,
 			},
 			&agenttest.StubQueryTool{
-				ToolName: agentextension.ToolListWebWatches,
+				ToolName: "web_list_watches",
 				Desc:     "List the web watches set for the person.",
 				Result:   map[string]any{"watches": []any{}},
 				Resource: permission.ResourceWebResearch,
@@ -137,13 +136,13 @@ func newCommandRuntime(
 	}
 	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{
-			ToolName:  agentextension.ToolWatchWeb,
+			ToolName:  "web_watch",
 			Tier:      agent.TierAutoExecute,
 			Resource:  permission.ResourceWebResearch,
 			Operation: permission.OpRead,
 		},
 		&agenttest.StubActionTool{
-			ToolName:  agentextension.ToolStopWebWatch,
+			ToolName:  "web_stop_watch",
 			Tier:      agent.TierAutoExecute,
 			Resource:  permission.ResourceWebResearch,
 			Operation: permission.OpRead,
@@ -232,7 +231,7 @@ func TestRun_ACommandTurnOffersItsToolsAndAsksForItsExtension(t *testing.T) {
 			assert.Contains(
 				t,
 				offered,
-				runtimetools.FindToolsName,
+				"find_tools",
 				"the agent holds enough tools to be narrowed",
 			)
 			for _, name := range tc.held {
@@ -310,11 +309,11 @@ func TestRun_AWatchTurnIsNotSatisfiedByASearchAlone(t *testing.T) {
 		everyCapabilityGate(agentextension.AvailabilityAllAgents),
 		nil,
 		runtimetest.ToolTurn(
-			agentextension.ToolWebSearch,
+			"web_search",
 			map[string]any{"query": "broker transparency"},
 		),
 		runtimetest.TextTurn("FMCSA has not finalized it yet."),
-		runtimetest.ToolTurn(agentextension.ToolListWebWatches, map[string]any{}),
+		runtimetest.ToolTurn("web_list_watches", map[string]any{}),
 		runtimetest.TextTurn("I am watching for it."),
 	)
 	result := rt.run(t, &agentruntimeports.RunRequest{
@@ -408,7 +407,7 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 
 	portalRead := permission.ResourcePortalAutomation.String() + ":" + string(permission.OpRead)
 	webRead := permission.ResourceWebResearch.String() + ":" + string(permission.OpRead)
-	holding := []string{agentextension.ToolReadPortal, agentextension.ToolWebSearch}
+	holding := []string{"web_read_portal", "web_search"}
 	both := []agentextension.Command{agentextension.CommandBrowser, agentextension.CommandSearch}
 	every := []agentextension.Command{
 		agentextension.CommandBrowser, agentextension.CommandSearch, agentextension.CommandWatch,
@@ -455,7 +454,7 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 		{
 			name:       "the agent holds tools that cannot honour a command",
 			gate:       everyCapabilityGate(agentextension.AvailabilitySelectedAgents),
-			definition: []string{agentextension.ToolListPortalSites, agentextension.ToolWebRead},
+			definition: []string{"web_list_portal_sites", "web_read"},
 			want:       []agentextension.Command{},
 		},
 		{
@@ -473,13 +472,13 @@ func TestAvailableCommands_AreTheOnesTheAgentAndThePersonCanUse(t *testing.T) {
 		{
 			name:       "the agent holds the watch tool",
 			gate:       everyCapabilityGate(agentextension.AvailabilitySelectedAgents),
-			definition: []string{agentextension.ToolWatchWeb},
+			definition: []string{"web_watch"},
 			want:       []agentextension.Command{agentextension.CommandWatch},
 		},
 		{
 			name:       "the web research vendor cannot watch",
 			gate:       parallel,
-			definition: []string{agentextension.ToolWatchWeb, agentextension.ToolWebSearch},
+			definition: []string{"web_watch", "web_search"},
 			want:       both,
 		},
 		{

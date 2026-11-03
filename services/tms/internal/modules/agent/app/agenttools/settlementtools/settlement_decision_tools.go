@@ -16,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
-const paramSettlementReason = "reason"
-
 const maxSettlementReason = 500
 
 type SettlementBook[E any] interface {
@@ -281,7 +279,7 @@ func (t *SettlementDecisionTool[E]) Execute(
 func fillSettlementReason(params map[string]any, req *settlementshared.ActionRequest) error {
 	reason, err := toolparams.BoundedString(
 		params,
-		paramSettlementReason,
+		toolparams.ParamReason,
 		maxSettlementReason,
 		true,
 	)

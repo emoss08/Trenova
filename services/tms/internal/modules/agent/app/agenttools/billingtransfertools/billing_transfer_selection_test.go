@@ -73,7 +73,7 @@ func TestTransferToBilling_ResolvesEveryTransferableShipmentToIDs(t *testing.T) 
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			paramAllTransferable:                       true,
-			paramMarkCompletedReady:                    true,
+			paramMarkCompletedReadyToInvoice:           true,
 			toolparams.ParamBillType:                   "Invoice",
 			billingtransfercriteria.ParamStatus:        "Completed",
 			billingtransfercriteria.ParamCustomerID:    customerID.String(),
@@ -98,9 +98,9 @@ func TestTransferToBilling_ResolvesEveryTransferableShipmentToIDs(t *testing.T) 
 	assert.True(t, sel.planner.planned.MarkCompletedReadyToInvoice)
 
 	assert.Equal(t, map[string]any{
-		toolparams.ParamShipmentIDs: []any{sel.ready.String(), sel.marked.String()},
-		paramMarkCompletedReady:     true,
-		toolparams.ParamBillType:    "Invoice",
+		toolparams.ParamShipmentIDs:      []any{sel.ready.String(), sel.marked.String()},
+		paramMarkCompletedReadyToInvoice: true,
+		toolparams.ParamBillType:         "Invoice",
 	}, resolved, "only what would transfer is proposed, and the criteria are spent")
 	require.NoError(t, sel.tool.Validate(t.Context(), agenttoolstest.ExecuteParams(resolved)))
 }
@@ -162,8 +162,8 @@ func TestTransferToBilling_PreviewOfACriteriaSelectionShowsTheShipmentsItResolve
 	sel := newTransferSelection()
 
 	preview, err := sel.tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		paramAllTransferable:    true,
-		paramMarkCompletedReady: true,
+		paramAllTransferable:             true,
+		paramMarkCompletedReadyToInvoice: true,
 	}))
 	require.NoError(t, err)
 
@@ -263,7 +263,7 @@ func TestTransferToBilling_SetsAsideTheFiltersANamedSelectionWasFoundBy(t *testi
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			toolparams.ParamShipmentIDs:         []any{named},
-			paramMarkCompletedReady:             true,
+			paramMarkCompletedReadyToInvoice:    true,
 			billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
 			billingtransfercriteria.ParamStatus: "Completed",
 		}),
@@ -271,8 +271,8 @@ func TestTransferToBilling_SetsAsideTheFiltersANamedSelectionWasFoundBy(t *testi
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]any{
-		toolparams.ParamShipmentIDs: []any{named},
-		paramMarkCompletedReady:     true,
+		toolparams.ParamShipmentIDs:      []any{named},
+		paramMarkCompletedReadyToInvoice: true,
 	}, resolved)
 	assert.Nil(t, sel.planner.listed, "a named selection is never widened by its filters")
 }

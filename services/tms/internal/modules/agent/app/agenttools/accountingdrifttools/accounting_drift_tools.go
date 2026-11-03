@@ -23,13 +23,9 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const paramDriftFindingID = "findingId"
+const paramFindingID = "findingId"
 
-const paramDriftDirection = "direction"
-
-const paramDriftNote = "note"
-
-const toolListDrift = "accounting_list_drift_findings"
+const paramDirection = "direction"
 
 const maxDriftNoteRunes = 500
 
@@ -80,7 +76,7 @@ func driftLabel(finding *accountingdrift.AccountingDriftFinding) string {
 }
 
 func driftFindingID(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-	return toolparams.RequirePulid(params.Params, paramDriftFindingID)
+	return toolparams.RequirePulid(params.Params, paramFindingID)
 }
 
 type ResolveAccountingDriftTool struct {
@@ -119,20 +115,20 @@ func (t *ResolveAccountingDriftTool) SearchTerms() []string {
 }
 
 func (t *ResolveAccountingDriftTool) Prerequisites() []string {
-	return []string{toolListDrift}
+	return []string{"accounting_list_drift_findings"}
 }
 
 func (t *ResolveAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramDriftFindingID: agenttoolschema.KindID(
+		paramFindingID: agenttoolschema.KindID(
 			driftFindingHelp,
 			recordkind.AccountingDriftFinding,
 		),
-		paramDriftDirection: agenttoolschema.Enum(
+		paramDirection: agenttoolschema.Enum(
 			"Which side to change: PushTrenovaValue changes the accounting system, AdjustTrenova changes Trenova.",
 			agenttoolschema.DriftDirections,
 		),
-	}, paramDriftFindingID, paramDriftDirection)
+	}, paramFindingID, paramDirection)
 }
 
 func (t *ResolveAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
@@ -156,7 +152,7 @@ func (t *ResolveAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *ResolveAccountingDriftTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramFindingID, permission.ResourceAccountingSync)
 }
 
 func (t *ResolveAccountingDriftTool) request(
@@ -169,14 +165,14 @@ func (t *ResolveAccountingDriftTool) request(
 	if err != nil {
 		return nil, err
 	}
-	raw, err := toolparams.RequireString(params.Params, paramDriftDirection)
+	raw, err := toolparams.RequireString(params.Params, paramDirection)
 	if err != nil {
 		return nil, err
 	}
 	direction := accountingdrift.DriftDirection(raw)
 	if !direction.IsValid() {
 		return nil, errortypes.NewValidationError(
-			paramDriftDirection,
+			paramDirection,
 			errortypes.ErrInvalid,
 			"Direction must be PushTrenovaValue or AdjustTrenova",
 		)
@@ -253,19 +249,19 @@ func (t *DismissAccountingDriftTool) SearchTerms() []string {
 }
 
 func (t *DismissAccountingDriftTool) Prerequisites() []string {
-	return []string{toolListDrift}
+	return []string{"accounting_list_drift_findings"}
 }
 
 func (t *DismissAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramDriftFindingID: agenttoolschema.KindID(
+		paramFindingID: agenttoolschema.KindID(
 			driftFindingHelp,
 			recordkind.AccountingDriftFinding,
 		),
-		paramDriftNote: jsonschemautils.Text(
+		toolparams.ParamNote: jsonschemautils.Text(
 			"Why both sides stay as they are, in one sentence a bookkeeper would accept.",
 		),
-	}, paramDriftFindingID, paramDriftNote)
+	}, paramFindingID, toolparams.ParamNote)
 }
 
 func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
@@ -281,7 +277,7 @@ func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
 func (t *DismissAccountingDriftTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramDriftFindingID, permission.ResourceAccountingSync)
+	return toolparams.TargetOf(params, paramFindingID, permission.ResourceAccountingSync)
 }
 
 func (t *DismissAccountingDriftTool) plan(
@@ -295,10 +291,10 @@ func (t *DismissAccountingDriftTool) plan(
 	if err != nil {
 		return nil, nil, err
 	}
-	raw, err := toolparams.RequireString(params.Params, paramDriftNote)
+	raw, err := toolparams.RequireString(params.Params, toolparams.ParamNote)
 	if err != nil {
 		return nil, nil, errortypes.NewValidationError(
-			paramDriftNote,
+			toolparams.ParamNote,
 			errortypes.ErrRequired,
 			"Say why both sides stay as they are",
 		)
@@ -368,8 +364,8 @@ func (t *CheckAccountingDriftTool) SearchTerms() []string {
 
 func (t *CheckAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(
-		map[string]any{accountingtools.ParamAccountingSystem: accountingtools.SystemSchema()},
-		accountingtools.ParamAccountingSystem,
+		map[string]any{accountingtools.ParamSystem: accountingtools.SystemSchema()},
+		accountingtools.ParamSystem,
 	)
 }
 

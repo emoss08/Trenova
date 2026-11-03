@@ -84,12 +84,12 @@ var postSettlements = settlementBulk{
 // payments as well.
 var settlementBulkRecipes = map[string][]string{
 	"settlement_approve_driver": {
-		settlementpreview.ToolListDriverSettlements,
+		"settlement_list_driver",
 		"settlement_get_driver",
 		"settlement_approve_driver",
 	},
 	"settlement_post_driver": {
-		settlementpreview.ToolListDriverSettlements,
+		"settlement_list_driver",
 		"settlement_post_driver",
 	},
 	"settlement_approve_carrier": {

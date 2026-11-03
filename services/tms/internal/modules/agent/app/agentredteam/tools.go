@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -20,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var passthroughTools = []string{agentdefinition.CoreToolRemember}
+var passthroughTools = []string{"agent_create_memory"}
 
 type toolDeps struct {
 	desk        *inboundDesk
@@ -47,9 +46,12 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 			Repo:   &memoryRepository{rec: rec},
 			Runs:   &runRepository{rec: rec},
 		}),
-		shipments:   &shipmentDesk{rec: rec, response: responses[getShipmentTool]},
-		comments:    &commentDesk{rec: rec, response: responses[getShipmentTool]},
-		watchtower:  &watchtowerDesk{rec: rec, response: responses[listWatchtowerTool]},
+		shipments: &shipmentDesk{rec: rec, response: responses["shipment_get"]},
+		comments:  &commentDesk{rec: rec, response: responses["shipment_get"]},
+		watchtower: &watchtowerDesk{
+			rec:      rec,
+			response: responses["exception_list_watchtower_items"],
+		},
 		permissions: &permissionDesk{rec: rec},
 		scripts:     &scriptDesk{rec: rec},
 	}

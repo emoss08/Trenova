@@ -23,23 +23,19 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const paramRecurringDescription = "description"
+const paramFrequency = "frequency"
 
-const paramRecurringFrequency = "frequency"
+const paramStatus = "status"
 
-const paramRecurringStatus = "status"
+const paramTotalCap = "totalCap"
 
-const paramRecurringCap = "totalCap"
+const paramStartDate = "startDate"
 
-const paramRecurringStart = "startDate"
-
-const paramRecurringEnd = "endDate"
+const paramEndDate = "endDate"
 
 const paramEscrowContribution = "escrowContribution"
 
 const maxRecurringDescription = 255
-
-const fieldRecurringFrequency = "frequency"
 
 const fieldEscrowAccountID = "escrowAccountId"
 
@@ -141,27 +137,27 @@ func (t *RecurringPayTool[E]) ParamSchema() map[string]any {
 			permission.ResourcePayCode,
 			"The "+t.kind.payee+" pay code it posts under, from settlement_list_pay_codes.",
 		),
-		paramRecurringDescription: toolparams.StringProperty(
+		toolparams.ParamDescription: toolparams.StringProperty(
 			"What it is for, as it will read on the "+
 				"driver's statement.",
 			maxRecurringDescription,
 		),
-		settlementpreview.ParamDriverPayAmount: toolparams.AmountProperty(
+		toolparams.ParamAmount: toolparams.AmountProperty(
 			"The amount each time, as a decimal such as " +
 				"25.00.",
 		),
-		paramRecurringFrequency: agenttoolschema.Enum("How often it applies.", t.kind.frequencies),
-		paramRecurringCap: toolparams.AmountProperty(
+		paramFrequency: agenttoolschema.Enum("How often it applies.", t.kind.frequencies),
+		paramTotalCap: toolparams.AmountProperty(
 			"The total after which it stops, when there is " +
 				"one.",
 		),
-		paramRecurringStart: agenttoolschema.Date("The first day it applies."),
-		paramRecurringEnd:   agenttoolschema.Date("The last day it applies, when it ends."),
+		paramStartDate: agenttoolschema.Date("The first day it applies."),
+		paramEndDate:   agenttoolschema.Date("The last day it applies, when it ends."),
 	}
 	if t.update {
 		properties[t.kind.idParam] = agenttoolschema.RecordIDText(t.kind.resource,
 			"The "+t.kind.noun+", from "+t.kind.listTool+". Never guess one.")
-		properties[paramRecurringStatus] = agenttoolschema.Enum(
+		properties[paramStatus] = agenttoolschema.Enum(
 			"Paused stops it for now; Completed ends it for good.", t.kind.statuses,
 		)
 
@@ -181,9 +177,9 @@ func (t *RecurringPayTool[E]) ParamSchema() map[string]any {
 		properties,
 		toolparams.ParamWorkerID,
 		toolparams.ParamPayCodeID,
-		paramRecurringDescription,
-		settlementpreview.ParamDriverPayAmount,
-		paramRecurringStart,
+		toolparams.ParamDescription,
+		toolparams.ParamAmount,
+		paramStartDate,
 	)
 }
 
@@ -222,57 +218,57 @@ func readRecurringFields(
 	given := map[string]bool{}
 
 	var err error
-	if fields.frequency, given[paramRecurringFrequency], err = toolparams.OptionalEnum(
-		params, paramRecurringFrequency, kind.frequencies,
+	if fields.frequency, given[paramFrequency], err = toolparams.OptionalEnum(
+		params, paramFrequency, kind.frequencies,
 	); err != nil {
 		return nil, nil, err
 	}
-	if fields.status, given[paramRecurringStatus], err = toolparams.OptionalEnum(
-		params, paramRecurringStatus, kind.statuses,
+	if fields.status, given[paramStatus], err = toolparams.OptionalEnum(
+		params, paramStatus, kind.statuses,
 	); err != nil {
 		return nil, nil, err
 	}
 	if fields.description, err = toolparams.BoundedString(
-		params, paramRecurringDescription, maxRecurringDescription, required,
+		params, toolparams.ParamDescription, maxRecurringDescription, required,
 	); err != nil {
 		return nil, nil, err
 	}
-	given[paramRecurringDescription] = fields.description != ""
-	if fields.amount, given[settlementpreview.ParamDriverPayAmount], err = toolparams.OptionalMoney(
-		params, settlementpreview.ParamDriverPayAmount,
+	given[toolparams.ParamDescription] = fields.description != ""
+	if fields.amount, given[toolparams.ParamAmount], err = toolparams.OptionalMoney(
+		params, toolparams.ParamAmount,
 	); err != nil {
 		return nil, nil, err
 	}
-	if required && !given[settlementpreview.ParamDriverPayAmount] {
+	if required && !given[toolparams.ParamAmount] {
 		return nil, nil, fmt.Errorf(
 			"parameter %q is required",
-			settlementpreview.ParamDriverPayAmount,
+			toolparams.ParamAmount,
 		)
 	}
-	capMinor, hasCap, err := toolparams.OptionalMoney(params, paramRecurringCap)
+	capMinor, hasCap, err := toolparams.OptionalMoney(params, paramTotalCap)
 	if err != nil {
 		return nil, nil, err
 	}
 	if hasCap {
 		fields.capMinor = &capMinor
 	}
-	given[paramRecurringCap] = hasCap
-	if fields.start, given[paramRecurringStart], err = toolparams.OptionalDay(
-		params, paramRecurringStart,
+	given[paramTotalCap] = hasCap
+	if fields.start, given[paramStartDate], err = toolparams.OptionalDay(
+		params, paramStartDate,
 	); err != nil {
 		return nil, nil, err
 	}
-	if required && !given[paramRecurringStart] {
-		return nil, nil, fmt.Errorf("parameter %q is required", paramRecurringStart)
+	if required && !given[paramStartDate] {
+		return nil, nil, fmt.Errorf("parameter %q is required", paramStartDate)
 	}
-	end, hasEnd, err := toolparams.OptionalDay(params, paramRecurringEnd)
+	end, hasEnd, err := toolparams.OptionalDay(params, paramEndDate)
 	if err != nil {
 		return nil, nil, err
 	}
 	if hasEnd {
 		fields.end = &end
 	}
-	given[paramRecurringEnd] = hasEnd
+	given[paramEndDate] = hasEnd
 	payCode, err := toolparams.OptionalPulidParam(params, toolparams.ParamPayCodeID)
 	if err != nil {
 		return nil, nil, err
@@ -423,10 +419,10 @@ func (t *RecurringPayTool[E]) Preview(
 
 	fields := []string{
 		changepreview.FieldStatus,
-		fieldRecurringFrequency,
-		paramRecurringDescription,
-		changepreview.FieldRecurringStart,
-		changepreview.FieldRecurringEnd,
+		paramFrequency,
+		toolparams.ParamDescription,
+		changepreview.FieldStartDate,
+		changepreview.FieldEndDate,
 		fieldEscrowAccountID,
 	}
 	var change *agentpreview.RecordChange
@@ -538,10 +534,10 @@ func deductionKind() recurringKind[recurringpay.RecurringDeduction] {
 				start:       &entity.StartDate,
 				end:         &entity.EndDate,
 			}, fields, given)
-			if given[paramRecurringFrequency] {
+			if given[paramFrequency] {
 				entity.Frequency = recurringpay.DeductionFrequency(fields.frequency)
 			}
-			if given[paramRecurringStatus] {
+			if given[paramStatus] {
 				entity.Status = recurringpay.DeductionStatus(fields.status)
 			}
 		},
@@ -612,10 +608,10 @@ func earningKind() recurringKind[recurringpay.RecurringEarning] {
 				start:       &entity.StartDate,
 				end:         &entity.EndDate,
 			}, fields, given)
-			if given[paramRecurringFrequency] {
+			if given[paramFrequency] {
 				entity.Frequency = recurringpay.EarningFrequency(fields.frequency)
 			}
-			if given[paramRecurringStatus] {
+			if given[paramStatus] {
 				entity.Status = recurringpay.EarningStatus(fields.status)
 			}
 		},
@@ -649,19 +645,19 @@ func applyRecurringChanges(
 	if given[toolparams.ParamPayCodeID] {
 		*target.payCodeID = fields.payCodeID
 	}
-	if given[paramRecurringDescription] {
+	if given[toolparams.ParamDescription] {
 		*target.description = fields.description
 	}
-	if given[settlementpreview.ParamDriverPayAmount] {
+	if given[toolparams.ParamAmount] {
 		*target.amount = fields.amount
 	}
-	if given[paramRecurringCap] {
+	if given[paramTotalCap] {
 		*target.capMinor = fields.capMinor
 	}
-	if given[paramRecurringStart] {
+	if given[paramStartDate] {
 		*target.start = fields.start
 	}
-	if given[paramRecurringEnd] {
+	if given[paramEndDate] {
 		*target.end = fields.end
 	}
 }

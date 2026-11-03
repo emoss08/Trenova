@@ -460,8 +460,8 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 
 	fuel := &fakeFuel{guard: &agenttoolstest.WriteGuard{}, batch: fuelBatch()}
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramFuelImportID:      fuel.batch.ID.String(),
-		toolparams.ParamReason: "Loaded twice",
+		paramFuelPurchaseImportID: fuel.batch.ID.String(),
+		toolparams.ParamReason:    "Loaded twice",
 	})
 
 	commit := NewCommitFuelPurchaseImportTool(fuel)
@@ -472,14 +472,18 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 			return commit.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(
-					map[string]any{paramFuelImportID: fuel.batch.ID.String()},
+					map[string]any{paramFuelPurchaseImportID: fuel.batch.ID.String()},
 				),
 			)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would commit 2 fuel purchases from september.csv")
-	require.NoError(t, commit.Execute(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramFuelImportID: fuel.batch.ID.String()})))
+	require.NoError(t, commit.Execute(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramFuelPurchaseImportID: fuel.batch.ID.String()},
+		),
+	))
 	assert.Equal(t, int64(5), fuel.committed.Version)
 
 	resolve := NewResolveFuelPurchaseImportRowsTool(fuel)
@@ -490,7 +494,7 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 			return resolve.(agenttoolports.ToolPreviewer).Preview(
 				t.Context(),
 				agenttoolstest.ExecuteParams(
-					map[string]any{paramFuelImportID: fuel.batch.ID.String()},
+					map[string]any{paramFuelPurchaseImportID: fuel.batch.ID.String()},
 				),
 			)
 		},
@@ -517,8 +521,12 @@ func TestFuelImportTools_PlanWithTheVersionTheyReadAndWriteOnlyOnExecute(t *test
 		batch:   fuelBatch(),
 		refusal: errortypes.NewValidationError("status", errortypes.ErrInvalid, "Committed"),
 	})
-	require.Error(t, refused.(agenttoolports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{paramFuelImportID: fuel.batch.ID.String()})))
+	require.Error(t, refused.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{paramFuelPurchaseImportID: fuel.batch.ID.String()},
+		),
+	))
 }
 
 type fakeFuelPrices struct {

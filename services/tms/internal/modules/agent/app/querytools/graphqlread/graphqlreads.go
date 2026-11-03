@@ -211,13 +211,13 @@ type Param struct {
 // tableInputFields are what a table-shaped input holds for the table itself;
 // its other fields are the screen's own filters.
 var tableInputFields = map[string]struct{}{
-	InputFirst: {}, InputAfter: {}, InputQuery: {}, InputFieldFilters: {}, InputSort: {},
-	InputFilterGroups: {},
+	FieldFirst: {}, querytool.ParamAfter: {}, querytool.ParamQuery: {}, FieldFieldFilters: {}, FieldSort: {},
+	FieldFilterGroups: {},
 }
 
 const (
 	includePrefix     = "include"
-	InputFilterGroups = "filterGroups"
+	FieldFilterGroups = "filterGroups"
 	KindInput         = "input"
 )
 
@@ -226,7 +226,7 @@ const (
 func tableShaped(fields []Field) bool {
 	have := 0
 	for _, field := range fields {
-		if _, core := tableInputFields[field.Name]; core && field.Name != InputFilterGroups {
+		if _, core := tableInputFields[field.Name]; core && field.Name != FieldFilterGroups {
 			have++
 		}
 	}
@@ -331,7 +331,7 @@ func inputFieldParams(field *Field) []Param {
 	}
 	if field.Kind == graphQLKindEnum && !field.List {
 		what := "Only records whose " + words + " is this."
-		if field.Name == InputSort {
+		if field.Name == FieldSort {
 			what = "How the list is ordered."
 		}
 		return []Param{{Name: field.Name, Field: field.Name, Kind: ParamEquals,

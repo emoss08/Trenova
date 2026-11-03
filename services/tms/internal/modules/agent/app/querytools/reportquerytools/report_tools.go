@@ -102,7 +102,7 @@ func NewListReportsTool(reports Runner) agenttoolports.AgentQueryTool {
 	return &listReportsTool{reports: reports}
 }
 
-func (t *listReportsTool) Name() string { return querytool.ToolReportList }
+func (t *listReportsTool) Name() string { return "report_list" }
 
 func (t *listReportsTool) Description() string {
 	return "List the reports this organization can run and what each takes: built-in " +
@@ -415,14 +415,14 @@ func NewRunReportTool(
 	}
 }
 
-func (t *runReportTool) Name() string { return toolRunReport }
+func (t *runReportTool) Name() string { return "report_run" }
 
 func (t *runReportTool) Prerequisites() []string {
-	return []string{querytool.ToolReportList, querytool.ToolReportGet}
+	return []string{"report_list", "report_get"}
 }
 
 func (t *runReportTool) Recipe() []string {
-	return []string{querytool.ToolReportList, querytool.ToolReportGet, toolRunReport}
+	return []string{"report_list", "report_get", "report_run"}
 }
 
 func (t *runReportTool) Description() string {
@@ -683,11 +683,6 @@ func describeMissingParameter(parameter *ir.Parameter) string {
 	)
 }
 
-const (
-	toolRunReport    = "report_run"
-	toolGetReportRun = "report_get_run"
-)
-
 type getReportRunTool struct {
 	reports Runner
 }
@@ -696,7 +691,7 @@ func NewGetReportRunTool(reports Runner) agenttoolports.AgentQueryTool {
 	return &getReportRunTool{reports: reports}
 }
 
-func (t *getReportRunTool) Name() string { return toolGetReportRun }
+func (t *getReportRunTool) Name() string { return "report_get_run" }
 
 func (t *getReportRunTool) Description() string {
 	return "Check on a report started by report_run, when the person asks a question " +

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -31,7 +30,7 @@ const fieldBaseRate = "baseRate"
 
 const fieldFuelSurcharge = "fuelSurcharge"
 
-const fieldProNumber = "proNumber"
+const paramProNumber = "proNumber"
 
 const fieldExternalDriverName = "externalDriverName"
 
@@ -46,8 +45,6 @@ const fieldReplace = "replace"
 const fieldOverrideInsuranceWarning = "overrideInsuranceWarning"
 
 const fieldAccessorials = "accessorials"
-
-const fieldAmount = "amount"
 
 const fieldAccessorialChargeID = "accessorialChargeId"
 
@@ -103,7 +100,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 			permission.ResourceShipmentMove,
 			"The move to cover, from dispatch_get_board (moveId) or shipment_get (its moves).",
 		),
-		carrierpreview.FieldCarrierID: agenttoolschema.RecordIDText(
+		toolparams.ParamCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
 			"The carrier, from carrier_shop or carrier_list.",
 		),
@@ -121,18 +118,18 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 		fieldAccessorials: jsonschemautils.DescribedArray(
 			"Extra charges the carrier is paid on this move, each agreed with them.",
 			jsonschemautils.Object(map[string]any{
-				changepreview.FieldDescription: jsonschemautils.Text(
+				toolparams.ParamDescription: jsonschemautils.Text(
 					"What the charge is for, as the carrier will read it.",
 				),
-				fieldAmount: jsonschemautils.Text("The amount as a decimal string."),
+				toolparams.ParamAmount: jsonschemautils.Text("The amount as a decimal string."),
 				fieldAccessorialChargeID: agenttoolschema.RecordIDText(
 					permission.ResourceAccessorialCharge,
 					"The accessorial charge it is, from masterdata_list_accessorial_charges.",
 				),
-			}, changepreview.FieldDescription, fieldAmount),
+			}, toolparams.ParamDescription, toolparams.ParamAmount),
 			maxCarrierAccessorials,
 		),
-		fieldProNumber: jsonschemautils.Text(
+		paramProNumber: jsonschemautils.Text(
 			"The carrier's own reference for the load, when they gave one.",
 		),
 		fieldExternalDriverName: jsonschemautils.Text(
@@ -155,7 +152,7 @@ func (t *AssignMoveToCarrierTool) ParamSchema() map[string]any {
 			"Cover the move although the carrier's insurance expires soon. A carrier that is " +
 				"blocked can never be used. Off by default.",
 		),
-	}, changepreview.PreviewFieldShipmentMoveID, carrierpreview.FieldCarrierID, fieldRateMethod, fieldBaseRate)
+	}, changepreview.PreviewFieldShipmentMoveID, toolparams.ParamCarrierID, fieldRateMethod, fieldBaseRate)
 }
 
 func (t *AssignMoveToCarrierTool) Policy() agenttoolports.ToolPolicy {
@@ -248,7 +245,7 @@ func (t *AssignMoveToCarrierTool) request(
 	if err != nil {
 		return nil, err
 	}
-	carrierID, err := toolparams.RequirePulid(params.Params, carrierpreview.FieldCarrierID)
+	carrierID, err := toolparams.RequirePulid(params.Params, toolparams.ParamCarrierID)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +278,7 @@ func (t *AssignMoveToCarrierTool) request(
 		BaseRate:       baseRate,
 		FuelSurcharge:  fuelSurcharge,
 		Accessorials:   accessorials,
-		ProNumber:      strings.TrimSpace(toolparams.OptionalString(params.Params, fieldProNumber)),
+		ProNumber:      strings.TrimSpace(toolparams.OptionalString(params.Params, paramProNumber)),
 		ExternalDriverName: strings.TrimSpace(
 			toolparams.OptionalString(params.Params, fieldExternalDriverName),
 		),
@@ -340,10 +337,10 @@ func (t *CancelCarrierAssignmentTool) ParamSchema() map[string]any {
 			"The move whose carrier comes off, from dispatch_get_board (moveId) or "+
 				"shipment_get (its moves).",
 		),
-		changepreview.FieldReason: jsonschemautils.Text(
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the carrier is coming off, in a sentence a person can check.",
 		),
-	}, changepreview.PreviewFieldShipmentMoveID, changepreview.FieldReason)
+	}, changepreview.PreviewFieldShipmentMoveID, toolparams.ParamReason)
 }
 
 func (t *CancelCarrierAssignmentTool) Policy() agenttoolports.ToolPolicy {
@@ -431,7 +428,7 @@ func (t *CancelCarrierAssignmentTool) request(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return nil, err
 	}
@@ -486,8 +483,8 @@ func carrierAccessorialsArg(
 	out := make([]carrierassignmentports.CarrierAccessorialInput, 0, len(lines))
 	for idx, line := range lines {
 		amount, err := toolparams.DecimalArg(
-			map[string]any{fieldAmount: line.Amount},
-			fieldAmount,
+			map[string]any{toolparams.ParamAmount: line.Amount},
+			toolparams.ParamAmount,
 			true,
 		)
 		if err != nil {

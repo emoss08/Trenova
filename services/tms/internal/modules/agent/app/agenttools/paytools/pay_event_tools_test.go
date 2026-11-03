@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -175,8 +176,8 @@ func TestHoldDriverPayEvent_TellsTheDriverWhyInTheirPortal(t *testing.T) {
 	require.Error(t, tool.Execute(t.Context(), missing))
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramPayEventID: events.event.ID.String(),
-		paramHoldReason: "  Proof of delivery is missing for this load  ",
+		paramPayEventID:        events.event.ID.String(),
+		toolparams.ParamReason: "  Proof of delivery is missing for this load  ",
 	})
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -210,8 +211,8 @@ func TestHoldDriverPayEvent_SettledPayCannotBeHeld(t *testing.T) {
 	event.Status = driversettlement.PayEventStatusSettled
 	tool := &PayEventHoldTool{events: &fakePayEvents{event: event, locked: true}, hold: true}
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramPayEventID: event.ID.String(),
-		paramHoldReason: "Disputed load",
+		paramPayEventID:        event.ID.String(),
+		toolparams.ParamReason: "Disputed load",
 	})
 
 	preview, err := tool.Preview(t.Context(), params)

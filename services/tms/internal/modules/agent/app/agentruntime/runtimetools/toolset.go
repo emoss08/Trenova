@@ -5,10 +5,6 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
-const (
-	FindToolsName = "find_tools"
-)
-
 // findToolsDescription is a constant rather than a literal in the spec below
 // because the i18n extractor harvests any Description: field it finds
 // (shared/cmd/i18n-extract). This text is addressed to a model; translating it
@@ -27,7 +23,7 @@ const findToolsDescription = "Load more tools. You start a turn with the tools t
 // tool cannot do that — it returns data and the tool list stays as it was.
 func FindToolsSpec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        FindToolsName,
+		Name:        "find_tools",
 		Description: findToolsDescription,
 		Searches:    true,
 		Parameters: map[string]any{

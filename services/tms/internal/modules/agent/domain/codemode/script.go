@@ -7,7 +7,6 @@ import (
 )
 
 const (
-	ToolRunScript = "analysis_run"
 	// The run-script tool's parameters a batch reads its origin back from.
 	ParamScriptTitle   = "title"
 	ParamScriptPurpose = "purpose"

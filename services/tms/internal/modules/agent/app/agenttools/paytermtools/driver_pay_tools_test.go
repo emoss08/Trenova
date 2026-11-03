@@ -102,11 +102,11 @@ func TestIssuePayAdvance_RecordsOnlyOnceAPersonApproves(t *testing.T) {
 	tool := &paytools.IssuePayAdvanceTool{Advances: advances}
 	workerID := pulid.MustNew("wrk_")
 	raw := map[string]any{
-		toolparams.ParamWorkerID:               workerID.String(),
-		settlementpreview.ParamDriverPayAmount: "300.00",
-		paytools.ParamAdvanceSource:            "EFSMoneyCode",
-		paytools.ParamAdvanceRef:               "MC-55012",
-		paytools.ParamIssuedDate:               "2026-09-20",
+		toolparams.ParamWorkerID: workerID.String(),
+		toolparams.ParamAmount:   "300.00",
+		paytools.ParamSource:     "EFSMoneyCode",
+		paytools.ParamReference:  "MC-55012",
+		paytools.ParamIssuedDate: "2026-09-20",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -134,10 +134,10 @@ func TestIssuePayAdvance_RecordsOnlyOnceAPersonApproves(t *testing.T) {
 	assert.Equal(t, payadvance.AdvanceSourceEFSMoneyCode, advances.issued.Source)
 	assert.Equal(t, workerID, advances.issued.WorkerID)
 
-	raw[paytools.ParamAdvanceSource] = "Venmo"
+	raw[paytools.ParamSource] = "Venmo"
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
-	raw[paytools.ParamAdvanceSource] = "Cash"
-	raw[settlementpreview.ParamDriverPayAmount] = "-5"
+	raw[paytools.ParamSource] = "Cash"
+	raw[toolparams.ParamAmount] = "-5"
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 }
 
@@ -156,8 +156,8 @@ func TestWriteOffPayAdvance_ShowsWhatIsForgiven(t *testing.T) {
 	advances := &fakeAdvances{advance: advance}
 	tool := &paytools.WriteOffPayAdvanceTool{Advances: advances}
 	raw := map[string]any{
-		paytools.ParamAdvanceID:      advance.ID.String(),
-		paytools.ParamWriteOffReason: "Driver left the company",
+		paytools.ParamAdvanceID: advance.ID.String(),
+		toolparams.ParamReason:  "Driver left the company",
 	}
 
 	target, ok := tool.Target(raw)
@@ -304,8 +304,8 @@ func TestOpenEscrowAccount_OneActiveAccountPerDriver(t *testing.T) {
 	tool := &OpenEscrowAccountTool{escrow: escrow}
 	raw := map[string]any{
 		toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(),
-		paramEscrowTarget:        "2500",
-		paramEscrowInterestRate:  "2.5",
+		paramTargetAmount:        "2500",
+		paramAnnualInterestRate:  "2.5",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -320,10 +320,10 @@ func TestOpenEscrowAccount_OneActiveAccountPerDriver(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
 	assert.Equal(t, int64(250000), escrow.opened.TargetAmountMinor)
 
-	raw[paramEscrowInterestRate] = "140"
+	raw[paramAnnualInterestRate] = "140"
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 
-	raw[paramEscrowInterestRate] = "2.5"
+	raw[paramAnnualInterestRate] = "2.5"
 	escrow.active = true
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
@@ -340,11 +340,11 @@ func TestUpdateEscrowAccount_ChangesOnlyTheTerms(t *testing.T) {
 	require.ErrorIs(t, tool.Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{paramEscrowAccountID: id},
+			map[string]any{paramAccountID: id},
 		),
 	), toolparams.ErrNothingToChange)
 
-	raw := map[string]any{paramEscrowAccountID: id, paramEscrowTarget: "3000"}
+	raw := map[string]any{paramAccountID: id, paramTargetAmount: "3000"}
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -364,16 +364,16 @@ func TestAdjustEscrowAccount_NeverDrawsBelowZero(t *testing.T) {
 	escrow := &fakeEscrow{account: activeEscrow()}
 	tool := &AdjustEscrowAccountTool{escrow: escrow}
 	raw := map[string]any{
-		paramEscrowAccountID:                   escrow.account.ID.String(),
-		settlementpreview.ParamDriverPayAmount: "-900.00",
-		paramEscrowDescription:                 "Trailer damage under the lease",
+		paramAccountID:              escrow.account.ID.String(),
+		toolparams.ParamAmount:      "-900.00",
+		toolparams.ParamDescription: "Trailer damage under the lease",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
-	raw[settlementpreview.ParamDriverPayAmount] = "-300.00"
+	raw[toolparams.ParamAmount] = "-300.00"
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
@@ -385,7 +385,7 @@ func TestAdjustEscrowAccount_NeverDrawsBelowZero(t *testing.T) {
 	assert.Equal(t, int64(-30000), escrow.adjusted.AmountMinor)
 	assert.Equal(t, "Trailer damage under the lease", escrow.adjusted.Description)
 
-	raw[settlementpreview.ParamDriverPayAmount] = "0"
+	raw[toolparams.ParamAmount] = "0"
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 }
 
@@ -394,7 +394,7 @@ func TestCloseEscrowAccount_RefundsWhatRemains(t *testing.T) {
 
 	escrow := &fakeEscrow{account: activeEscrow()}
 	tool := &CloseEscrowAccountTool{escrow: escrow}
-	raw := map[string]any{paramEscrowAccountID: escrow.account.ID.String()}
+	raw := map[string]any{paramAccountID: escrow.account.ID.String()}
 
 	assert.Equal(t, permission.OpClose, tool.Policy().Operation)
 

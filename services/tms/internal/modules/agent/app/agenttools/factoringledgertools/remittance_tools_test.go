@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -221,8 +222,8 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramRemittanceID:         remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(remittances.rem.Version),
 		paramLineID:               remittances.line.ID.String(),
-		paramLineAction:           string(factoringremittanceports.RemittanceLineActionMatch),
-		paramItemID:               itemID.String(),
+		paramAction:               string(factoringremittanceports.RemittanceLineActionMatch),
+		toolparams.ParamItemID:    itemID.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -244,7 +245,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramRemittanceID:         remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(remittances.rem.Version),
 		paramLineID:               remittances.line.ID.String(),
-		paramLineAction:           string(factoringremittanceports.RemittanceLineActionMatch),
+		paramAction:               string(factoringremittanceports.RemittanceLineActionMatch),
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missingItem))
 
@@ -252,7 +253,7 @@ func TestResolveFactoringRemittanceLine_PreviewsTheMatch(t *testing.T) {
 		paramRemittanceID:         remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(remittances.rem.Version),
 		paramLineID:               remittances.line.ID.String(),
-		paramLineAction:           "Book",
+		paramAction:               "Book",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), badAction))
 }
@@ -263,7 +264,7 @@ func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *t
 	remittances := newFakeRemittances()
 	tool := NewApplyFactoringRemittanceTool(remittances, remittances.ledger, nil)
 	params := agenttoolstest.PersonCallParams(map[string]any{
-		paramRemittanceID2:        remittances.rem.ID.String(),
+		paramID:                   remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(remittances.rem.Version),
 	})
 
@@ -287,7 +288,7 @@ func TestApplyFactoringRemittance_PreviewsTheJournalAndRunsOnlyWhenApproved(t *t
 	assert.Equal(t, int64(5), remittances.applied.Version)
 
 	stale := agenttoolstest.PersonCallParams(map[string]any{
-		paramRemittanceID2:        remittances.rem.ID.String(),
+		paramID:                   remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(4),
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), stale))
@@ -299,13 +300,13 @@ func TestDiscardAndRematchFactoringRemittance(t *testing.T) {
 	remittances := newFakeRemittances()
 	discard := NewDiscardFactoringRemittanceTool(remittances)
 	params := agenttoolstest.PersonCallParams(map[string]any{
-		paramRemittanceID2:        remittances.rem.ID.String(),
+		paramID:                   remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(remittances.rem.Version),
 	})
 	require.Error(t, discard.(agenttoolports.ToolValidator).Validate(t.Context(), params),
 		"a discard says why")
 
-	params.Params[factoringkit.ParamReason] = "A duplicate of yesterday's report"
+	params.Params[toolparams.ParamReason] = "A duplicate of yesterday's report"
 	preview, err := discard.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, preview.Changes, 1)
@@ -314,7 +315,7 @@ func TestDiscardAndRematchFactoringRemittance(t *testing.T) {
 
 	rematch := NewRematchFactoringRemittanceTool(remittances)
 	rematchParams := agenttoolstest.PersonCallParams(map[string]any{
-		paramRemittanceID2:        remittances.rem.ID.String(),
+		paramID:                   remittances.rem.ID.String(),
 		factoringkit.ParamVersion: float64(remittances.rem.Version),
 	})
 	require.NoError(t, rematch.(agenttoolports.ToolValidator).Validate(t.Context(), rematchParams))

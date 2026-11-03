@@ -28,11 +28,11 @@ import (
 
 const paramLeaveCaseID = "leaveCaseId"
 
-const paramLeaveEntryID = "leaveDayId"
+const paramLeaveDayID = "leaveDayId"
 
 const paramLeaveType = "leaveType"
 
-const paramLeaveFrequency = "frequency"
+const paramFrequency = "frequency"
 
 const paramMilitaryCaregiver = "militaryCaregiver"
 
@@ -42,17 +42,17 @@ const paramEndsAt = "endsAt"
 
 const paramRequestedAt = workforcekit.FieldRequestedAt
 
-const paramEligibilityHours = "eligibilityHoursWorked"
+const paramEligibilityHoursWorked = "eligibilityHoursWorked"
 
 const paramUsedOn = "usedOn"
 
-const paramLeaveHours = "hours"
+const paramHours = "hours"
 
-const paramCounts = "countsAgainstEntitlement"
+const paramCountsAgainstEntitlement = "countsAgainstEntitlement"
 
-const paramPTOLink = "ptoId"
+const paramPTOID = "ptoId"
 
-const paramCertificationDue = "dueDate"
+const paramDueDate = "dueDate"
 
 const kindLeaveCase = "leave case"
 
@@ -68,31 +68,31 @@ var leaveFrequencies = agenttoolschema.Source(
 )
 
 var leaveCaseFields = []string{
-	workforcekit.FieldWorkerID,
+	toolparams.ParamWorkerID,
 	paramLeaveType,
 	changepreview.FieldStatus,
-	paramLeaveFrequency,
-	changepreview.FieldReason,
+	paramFrequency,
+	toolparams.ParamReason,
 	paramMilitaryCaregiver,
 	workforcekit.FieldRequestedAt,
 	paramStartsAt,
 	paramEndsAt,
 	workforcekit.FieldClosedAt,
 	"certificationStatus",
-	workforcekit.FieldCertRequestedAt,
+	workforcekit.FieldCertificationRequestedAt,
 	"certificationDueAt",
-	paramEligibilityHours,
-	workforcekit.FieldDocument,
+	paramEligibilityHoursWorked,
+	workforcekit.ParamDocumentID,
 	workforcekit.FieldNotes,
 }
 
 var leaveDayFields = []string{
-	workforcekit.FieldWorkerID,
+	toolparams.ParamWorkerID,
 	paramLeaveCaseID,
 	paramUsedOn,
-	paramLeaveHours,
-	paramCounts,
-	paramPTOLink,
+	paramHours,
+	paramCountsAgainstEntitlement,
+	paramPTOID,
 	workforcekit.FieldNotes,
 }
 
@@ -200,9 +200,9 @@ func leaveDayRecord(entry *workerleave.WorkerLeaveEntry) toolpreview.Record {
 
 func leaveCaseProperties() map[string]any {
 	return map[string]any{
-		paramLeaveType:      agenttoolschema.Enum("The kind of leave.", leaveTypes),
-		paramLeaveFrequency: agenttoolschema.Enum("How the leave is taken.", leaveFrequencies),
-		changepreview.FieldReason: toolparams.StringProperty(
+		paramLeaveType: agenttoolschema.Enum("The kind of leave.", leaveTypes),
+		paramFrequency: agenttoolschema.Enum("How the leave is taken.", leaveFrequencies),
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why, as the worker gave it. Keep medical detail out; "+
 				"the certification carries that.",
 			workforcekit.ShortChars,
@@ -212,14 +212,14 @@ func leaveCaseProperties() map[string]any {
 				"servicemember.",
 		),
 		paramEndsAt: agenttoolschema.Date("The last day of leave, when it is known."),
-		paramEligibilityHours: toolparams.IntegerProperty(
+		paramEligibilityHoursWorked: toolparams.IntegerProperty(
 			"Hours worked in the twelve months before, "+
 				"for eligibility.",
 			0,
 			maxEligibilityHours,
 		),
-		workforcekit.ParamDocument: workforcekit.DocumentProperty(),
-		toolparams.ParamNote:       workforcekit.NoteProperty("Anything the case should say."),
+		workforcekit.ParamDocumentID: workforcekit.DocumentProperty(),
+		toolparams.ParamNote:         workforcekit.NoteProperty("Anything the case should say."),
 	}
 }
 
@@ -231,7 +231,7 @@ func applyLeaveCaseOpen(entity *workerleave.WorkerLeaveCase, params map[string]a
 	} else if given {
 		entity.LeaveType = kind
 	}
-	if frequency, given, freqErr := toolparams.OptionalEnum(params, paramLeaveFrequency,
+	if frequency, given, freqErr := toolparams.OptionalEnum(params, paramFrequency,
 		leaveFrequencies.Values); freqErr != nil {
 		return freqErr
 	} else if given {
@@ -239,7 +239,7 @@ func applyLeaveCaseOpen(entity *workerleave.WorkerLeaveCase, params map[string]a
 	}
 	if entity.Reason, err = toolparams.BoundedText(
 		params,
-		changepreview.FieldReason,
+		toolparams.ParamReason,
 		workforcekit.ShortChars,
 	); err != nil {
 		return err
@@ -256,7 +256,7 @@ func applyLeaveCaseOpen(entity *workerleave.WorkerLeaveCase, params map[string]a
 	}
 	if entity.DocumentID, err = toolparams.OptionalID(
 		params,
-		workforcekit.ParamDocument,
+		workforcekit.ParamDocumentID,
 	); err != nil {
 		return err
 	}
@@ -269,7 +269,7 @@ func applyLeaveCaseOpen(entity *workerleave.WorkerLeaveCase, params map[string]a
 	}
 	hours, err := toolparams.OptionalIntInRange(
 		params,
-		paramEligibilityHours,
+		paramEligibilityHoursWorked,
 		0,
 		maxEligibilityHours,
 	)
@@ -397,7 +397,7 @@ func leaveCaseUpdateFrom(
 	} else if given {
 		req.LeaveType = &kind
 	}
-	if frequency, given, freqErr := toolparams.OptionalEnum(params.Params, paramLeaveFrequency,
+	if frequency, given, freqErr := toolparams.OptionalEnum(params.Params, paramFrequency,
 		leaveFrequencies.Values); freqErr != nil {
 		return nil, freqErr
 	} else if given {
@@ -405,7 +405,7 @@ func leaveCaseUpdateFrom(
 	}
 	if req.Reason, err = toolparams.OptionalBoundedText(
 		params.Params,
-		changepreview.FieldReason,
+		toolparams.ParamReason,
 		workforcekit.ShortChars,
 	); err != nil {
 		return nil, err
@@ -432,13 +432,13 @@ func leaveCaseUpdateFrom(
 	}
 	if req.DocumentID, err = toolparams.OptionalID(
 		params.Params,
-		workforcekit.ParamDocument,
+		workforcekit.ParamDocumentID,
 	); err != nil {
 		return nil, err
 	}
 	hours, err := toolparams.OptionalIntInRange(
 		params.Params,
-		paramEligibilityHours,
+		paramEligibilityHoursWorked,
 		0,
 		maxEligibilityHours,
 	)
@@ -605,13 +605,13 @@ func newRequestLeaveCertificationTool(
 		permission.ResourceWorkerLeave,
 		permission.OpUpdate,
 	), map[string]any{
-		paramLeaveCaseID:      leaveCaseIDProperty(),
-		paramCertificationDue: agenttoolschema.Date("When it is due, when not the usual window."),
+		paramLeaveCaseID: leaveCaseIDProperty(),
+		paramDueDate:     agenttoolschema.Date("When it is due, when not the usual window."),
 	}, paramLeaveCaseID), paramLeaveCaseID, permission.ResourceWorkerLeave)
 	spec.SearchTerms = []string{"fmla certification", "certification clock"}
 	render := renderLeaveCaseChange("Would record that certification was requested.",
-		[]string{workforcekit.FieldCertRequestedAt}, "certificationStatus",
-		workforcekit.FieldCertRequestedAt, "certificationDueAt")
+		[]string{workforcekit.FieldCertificationRequestedAt}, "certificationStatus",
+		workforcekit.FieldCertificationRequestedAt, "certificationDueAt")
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerleaveservice.RequestCertificationRequest, *workerleaveservice.CaseChange,
@@ -623,7 +623,7 @@ func newRequestLeaveCertificationTool(
 			if err != nil {
 				return nil, err
 			}
-			due, err := toolparams.OptionalScheduleDay(params.Params, paramCertificationDue)
+			due, err := toolparams.OptionalScheduleDay(params.Params, paramDueDate)
 			if err != nil {
 				return nil, err
 			}
@@ -678,13 +678,13 @@ func newRequestLeaveCertificationTool(
 }
 
 func requireHours(params map[string]any) (decimal.Decimal, error) {
-	hours, present, err := toolparams.OptionalDecimal(params, paramLeaveHours)
+	hours, present, err := toolparams.OptionalDecimal(params, paramHours)
 	if err != nil {
 		return decimal.Zero, err
 	}
 	if !present || !hours.IsPositive() {
 		return decimal.Zero, fmt.Errorf("parameter %q must be a positive number of hours",
-			paramLeaveHours)
+			paramHours)
 	}
 	return hours, nil
 }
@@ -693,7 +693,7 @@ func leaveDayOptions() []toolpreview.Option {
 	return append(
 		workforcekit.Options(leaveDayFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			paramPTOLink:  permission.ResourceWorkerPTO,
+			paramPTOID:    permission.ResourceWorkerPTO,
 			"leaveCaseId": permission.ResourceWorkerLeave,
 		}),
 	)
@@ -714,7 +714,7 @@ func recordLeaveDayRequest(
 	if err != nil {
 		return nil, err
 	}
-	ptoID, err := toolparams.OptionalID(params.Params, paramPTOLink)
+	ptoID, err := toolparams.OptionalID(params.Params, paramPTOID)
 	if err != nil {
 		return nil, err
 	}
@@ -750,12 +750,12 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 	), map[string]any{
 		paramLeaveCaseID: leaveCaseIDProperty(),
 		paramUsedOn:      agenttoolschema.Date("The day the leave was taken."),
-		paramLeaveHours:  toolparams.AmountProperty("Hours taken that day, such as 8 or 4.5."),
-		paramPTOLink: agenttoolschema.RecordIDText(permission.ResourceWorkerPTO,
+		paramHours:       toolparams.AmountProperty("Hours taken that day, such as 8 or 4.5."),
+		paramPTOID: agenttoolschema.RecordIDText(permission.ResourceWorkerPTO,
 			"Paid time off booked for the same day, from worker_list_time_off, when the leave "+
 				"runs concurrently."),
 		toolparams.ParamNote: workforcekit.NoteProperty("Anything the day should say."),
-	}, paramLeaveCaseID, paramUsedOn, paramLeaveHours)
+	}, paramLeaveCaseID, paramUsedOn, paramHours)
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerleaveservice.RecordDayRequest, *workerleave.WorkerLeaveEntry,
@@ -806,7 +806,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			if err != nil {
 				return nil, err
 			}
-			return workforcekit.Result("recorded", kindLeaveDay, paramLeaveEntryID, created.ID,
+			return workforcekit.Result("recorded", kindLeaveDay, paramLeaveDayID, created.ID,
 				created.WorkerID), nil
 		},
 	})
@@ -822,16 +822,18 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 		permission.ResourceWorkerLeave,
 		permission.OpUpdate,
 	), map[string]any{
-		paramLeaveEntryID: leaveDayIDProperty(),
-		paramLeaveHours:   toolparams.AmountProperty("Hours taken that day, such as 8 or 4.5."),
-		paramCounts: toolparams.BooleanProperty("Whether this day counts against the FMLA " +
-			"entitlement."),
-		paramPTOLink: agenttoolschema.RecordIDText(
+		paramLeaveDayID: leaveDayIDProperty(),
+		paramHours:      toolparams.AmountProperty("Hours taken that day, such as 8 or 4.5."),
+		paramCountsAgainstEntitlement: toolparams.BooleanProperty(
+			"Whether this day counts against the FMLA " +
+				"entitlement.",
+		),
+		paramPTOID: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerPTO,
 			"Paid time off booked for the same day, from worker_list_time_off.",
 		),
 		toolparams.ParamNote: workforcekit.NoteProperty("The day's note."),
-	}, paramLeaveEntryID), paramLeaveEntryID, permission.ResourceWorkerLeave)
+	}, paramLeaveDayID), paramLeaveDayID, permission.ResourceWorkerLeave)
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerleaveservice.UpdateDayRequest, *workerleaveservice.EntryChange,
@@ -839,7 +841,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*workerleaveservice.UpdateDayRequest, error) {
-			id, err := toolparams.RequirePulid(params.Params, paramLeaveEntryID)
+			id, err := toolparams.RequirePulid(params.Params, paramLeaveDayID)
 			if err != nil {
 				return nil, err
 			}
@@ -848,7 +850,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 				EntryID:    id,
 				UserID:     params.Actor.UserID,
 			}
-			if _, given := params.Params[paramLeaveHours]; given {
+			if _, given := params.Params[paramHours]; given {
 				hours, hoursErr := requireHours(params.Params)
 				if hoursErr != nil {
 					return nil, hoursErr
@@ -857,11 +859,11 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			}
 			if req.Counts, err = toolparams.OptionalBoolPointer(
 				params.Params,
-				paramCounts,
+				paramCountsAgainstEntitlement,
 			); err != nil {
 				return nil, err
 			}
-			if req.PTOID, err = toolparams.OptionalID(params.Params, paramPTOLink); err != nil {
+			if req.PTOID, err = toolparams.OptionalID(params.Params, paramPTOID); err != nil {
 				return nil, err
 			}
 			if req.Notes, err = toolparams.OptionalBoundedText(params.Params, toolparams.ParamNote,
@@ -907,7 +909,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			if err != nil {
 				return nil, err
 			}
-			return workforcekit.Result("updated", kindLeaveDay, paramLeaveEntryID, updated.ID,
+			return workforcekit.Result("updated", kindLeaveDay, paramLeaveDayID, updated.ID,
 				updated.WorkerID), nil
 		},
 	})
@@ -922,8 +924,8 @@ func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 			"worker_record_leave_day records it again.",
 		permission.ResourceWorkerLeave,
 		permission.OpUpdate,
-	), map[string]any{paramLeaveEntryID: leaveDayIDProperty()}, paramLeaveEntryID),
-		paramLeaveEntryID, permission.ResourceWorkerLeave)
+	), map[string]any{paramLeaveDayID: leaveDayIDProperty()}, paramLeaveDayID),
+		paramLeaveDayID, permission.ResourceWorkerLeave)
 	spec.SearchTerms = []string{"remove leave day"}
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
@@ -931,7 +933,7 @@ func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agenttoolports.A
 	return toolspec.NewReceivableTool(
 		spec,
 		toolspec.ReceivablePlan[*workforcekit.RecordDelete, *workerleave.WorkerLeaveEntry]{
-			Request: workforcekit.RecordDeleteFrom(paramLeaveEntryID),
+			Request: workforcekit.RecordDeleteFrom(paramLeaveDayID),
 			Settle: func(
 				ctx context.Context,
 				req *workforcekit.RecordDelete,

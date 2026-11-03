@@ -710,7 +710,7 @@ func NewDescribeReportTool(reports Runner) agenttoolports.AgentQueryTool {
 	return &describeReportTool{reports: reports}
 }
 
-func (t *describeReportTool) Name() string { return querytool.ToolReportGet }
+func (t *describeReportTool) Name() string { return "report_get" }
 
 func (t *describeReportTool) Description() string {
 	return "Show what a report contains: its dataset, columns, filters, sort, " +

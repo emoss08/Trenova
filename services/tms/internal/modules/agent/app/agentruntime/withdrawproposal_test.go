@@ -42,7 +42,7 @@ func (c *withdrawingCompletion) CompleteChat(
 	c.CallCount++
 	for _, message := range req.Messages {
 		if match := filedProposalID.FindStringSubmatch(message.Content); match != nil {
-			return runtimetest.ToolTurn(runtimetools.WithdrawProposalName, map[string]any{
+			return runtimetest.ToolTurn("withdraw_proposal", map[string]any{
 				"proposalId": match[1],
 				"reason":     "resent without the tractor type",
 			}), nil
@@ -118,12 +118,12 @@ func TestWithdrawProposal_TakesBackTheProposalALaterOneReplaced(t *testing.T) {
 	assert.False(t, result.Actions[0].Waiting())
 	assert.True(t, result.Actions[1].Waiting())
 
-	content, failed := toolResult(result, runtimetools.WithdrawProposalName)
+	content, failed := toolResult(result, "withdraw_proposal")
 	assert.False(t, failed)
 	assert.Contains(t, content, "Withdrew proposal "+result.Actions[0].ProposalID.String())
 	assert.Contains(t, content, "1 proposal is still waiting")
 
-	assert.Contains(t, offered(completion.Requests[0]), runtimetools.WithdrawProposalName,
+	assert.Contains(t, offered(completion.Requests[0]), "withdraw_proposal",
 		"declared before the first proposal, so the tool list never changes")
 	assertSameToolsEveryCall(t, completion.Requests)
 }
@@ -151,7 +151,7 @@ func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				runtimetest.ToolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 				runtimetest.ToolTurn(
-					runtimetools.WithdrawProposalName,
+					"withdraw_proposal",
 					map[string]any{"proposalId": tc.id},
 				),
 				runtimetest.TextTurn("Done."),
@@ -162,7 +162,7 @@ func TestWithdrawProposal_RefusesWhatThisTurnDidNotFile(t *testing.T) {
 			result, err := proposingRuntime(completion).Run(t.Context(), req)
 			require.NoError(t, err)
 
-			content, failed := toolResult(result, runtimetools.WithdrawProposalName)
+			content, failed := toolResult(result, "withdraw_proposal")
 			assert.True(t, failed)
 			assert.Contains(t, content, tc.contains)
 			require.Len(t, result.Actions, 1)
@@ -176,7 +176,7 @@ func TestWithdrawProposal_IsRefusedUntilTheTurnHasFiledOne(t *testing.T) {
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		runtimetest.ToolTurn(
-			runtimetools.WithdrawProposalName,
+			"withdraw_proposal",
 			map[string]any{"proposalId": pulid.MustNew("ap_").String()},
 		),
 		runtimetest.TextTurn("Nothing to take back."),
@@ -185,8 +185,8 @@ func TestWithdrawProposal_IsRefusedUntilTheTurnHasFiledOne(t *testing.T) {
 	result, err := proposingRuntime(completion).Run(t.Context(), proposingRequest())
 	require.NoError(t, err)
 
-	assert.Contains(t, offered(completion.Requests[0]), runtimetools.WithdrawProposalName)
-	content, failed := toolResult(result, runtimetools.WithdrawProposalName)
+	assert.Contains(t, offered(completion.Requests[0]), "withdraw_proposal")
+	content, failed := toolResult(result, "withdraw_proposal")
 	assert.True(t, failed)
 	assert.Equal(t, runtimetools.UnofferedWithdrawal, content)
 }
@@ -207,7 +207,7 @@ func TestWithdrawProposal_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 		Input:      "where is S-1",
 	})
 	require.NoError(t, err)
-	assert.NotContains(t, offered(completion.Requests[0]), runtimetools.WithdrawProposalName)
+	assert.NotContains(t, offered(completion.Requests[0]), "withdraw_proposal")
 }
 
 func TestTurn_SendsTheSameToolsOnEveryModelCall(t *testing.T) {
@@ -259,7 +259,7 @@ func TestWithdrawProposal_IsNeverOfferedToADelegate(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, request := range completion.Requests {
-		assert.False(t, slices.Contains(offered(request), runtimetools.WithdrawProposalName))
+		assert.False(t, slices.Contains(offered(request), "withdraw_proposal"))
 	}
 }
 

@@ -6,12 +6,10 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/ediquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
-	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/settlementquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
@@ -55,7 +53,7 @@ func TestNearMiss_NamesTheRowsTheConditionKeptOutAndWhatTheyHold(t *testing.T) {
 	t.Parallel()
 
 	reader := &conditionalReader{
-		root: graphqlread.Reads[settlementquerytools.ToolListDriverSettlements].RootField,
+		root: graphqlread.Reads["settlement_list_driver"].RootField,
 		rows: []map[string]any{{
 			"id": "dstl_1", "settlementNumber": "SEED-STL-1005", "status": "Posted",
 		}},
@@ -64,7 +62,7 @@ func TestNearMiss_NamesTheRowsTheConditionKeptOutAndWhatTheyHold(t *testing.T) {
 		},
 	}
 	tool, err := graphqllisttool.New(
-		keyedSpec(t, settlementquerytools.ToolListDriverSettlements),
+		keyedSpec(t, "settlement_list_driver"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -92,10 +90,10 @@ func TestNearMiss_ACallWhoseOnlyConditionFindsNothingIsToldThereIsNothing(t *tes
 	t.Parallel()
 
 	reader := &conditionalReader{
-		root:  graphqlread.Reads[ediquerytools.ToolEDIListInboundFiles].RootField,
+		root:  graphqlread.Reads["edi_list_inbound_files"].RootField,
 		holds: func(string) bool { return false },
 	}
-	tool, err := graphqllisttool.New(keyedSpec(t, ediquerytools.ToolEDIListInboundFiles), reader,
+	tool, err := graphqllisttool.New(keyedSpec(t, "edi_list_inbound_files"), reader,
 		&mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 

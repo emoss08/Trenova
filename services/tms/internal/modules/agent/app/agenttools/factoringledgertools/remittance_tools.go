@@ -25,12 +25,10 @@ import (
 
 const (
 	paramRemittanceID   = "remittanceId"
-	paramRemittanceID2  = "id"
+	paramID             = "id"
 	paramLineID         = "lineId"
-	paramLineAction     = "action"
-	paramLineKind       = "kind"
-	toolGetRemittance   = "factoring_get_remittance"
-	toolListRemittances = "factoring_list_remittances"
+	paramAction         = "action"
+	paramKind           = "kind"
 	maxRemittanceReason = factoringremittance.MaxRemittanceReasonLength
 )
 
@@ -150,7 +148,7 @@ func (t *ResolveFactoringRemittanceLineTool) SearchTerms() []string {
 }
 
 func (t *ResolveFactoringRemittanceLineTool) Prerequisites() []string {
-	return []string{toolGetRemittance}
+	return []string{"factoring_get_remittance"}
 }
 
 func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
@@ -160,23 +158,23 @@ func (t *ResolveFactoringRemittanceLineTool) ParamSchema() map[string]any {
 		paramLineID: jsonschemautils.Text(
 			"The line's lineId, from factoring_get_remittance.",
 		),
-		paramLineAction: agenttoolschema.Enum(
+		paramAction: agenttoolschema.Enum(
 			"What to do with the line.",
 			agenttoolschema.FactoringRemittanceLineActions,
 		),
-		paramItemID: itemIDParam(
+		toolparams.ParamItemID: itemIDParam(
 			"The schedule item the line pays, for Match: a suggestion's itemId from " +
 				"factoring_get_remittance, or an item from factoring_get_submission.",
 		),
-		paramLineKind: agenttoolschema.Enum(
+		paramKind: agenttoolschema.Enum(
 			"What the line records, for SetKind.",
 			agenttoolschema.FactoringRemittanceLineKinds,
 		),
-		factoringkit.ParamReason: toolparams.StringProperty(
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why the line is not booked, for Ignore.",
 			maxRemittanceReason,
 		),
-	}, paramRemittanceID, factoringkit.ParamVersion, paramLineID, paramLineAction)
+	}, paramRemittanceID, factoringkit.ParamVersion, paramLineID, paramAction)
 }
 
 func (t *ResolveFactoringRemittanceLineTool) Policy() agenttoolports.ToolPolicy {
@@ -212,12 +210,12 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 		return nil, err
 	}
 	action := factoringremittanceports.RemittanceLineAction(
-		strings.TrimSpace(toolparams.OptionalString(params.Params, paramLineAction)),
+		strings.TrimSpace(toolparams.OptionalString(params.Params, paramAction)),
 	)
 	if !action.IsValid() {
 		return nil, fmt.Errorf(
 			"parameter %q must be Match, Unmatch, Ignore, Restore or SetKind",
-			paramLineAction,
+			paramAction,
 		)
 	}
 	req := &factoringremittanceports.UpdateRemittanceLineRequest{
@@ -227,17 +225,17 @@ func (t *ResolveFactoringRemittanceLineTool) request(
 		LineID:       lineID,
 		Action:       action,
 		Kind: factoringremittance.RemittanceLineKind(
-			strings.TrimSpace(toolparams.OptionalString(params.Params, paramLineKind)),
+			strings.TrimSpace(toolparams.OptionalString(params.Params, paramKind)),
 		),
 	}
 	if action == factoringremittanceports.RemittanceLineActionMatch {
-		if req.ItemID, err = toolparams.RequirePulid(params.Params, paramItemID); err != nil {
+		if req.ItemID, err = toolparams.RequirePulid(params.Params, toolparams.ParamItemID); err != nil {
 			return nil, err
 		}
 	}
 	reason, err := toolparams.OptionalBoundedText(
 		params.Params,
-		factoringkit.ParamReason,
+		toolparams.ParamReason,
 		maxRemittanceReason,
 	)
 	if err != nil {
@@ -334,14 +332,14 @@ func (t *RematchFactoringRemittanceTool) SearchTerms() []string {
 }
 
 func (t *RematchFactoringRemittanceTool) Prerequisites() []string {
-	return []string{toolGetRemittance}
+	return []string{"factoring_get_remittance"}
 }
 
 func (t *RematchFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2:        remittanceIDParam(),
+		paramID:                   remittanceIDParam(),
 		factoringkit.ParamVersion: remittanceVersionParam(),
-	}, paramRemittanceID2, factoringkit.ParamVersion)
+	}, paramID, factoringkit.ParamVersion)
 }
 
 func (t *RematchFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
@@ -360,7 +358,7 @@ func (t *RematchFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *RematchFactoringRemittanceTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramID, permission.ResourceFactoringRemittance)
 }
 
 func (t *RematchFactoringRemittanceTool) request(
@@ -369,7 +367,7 @@ func (t *RematchFactoringRemittanceTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	return remittanceVersionRequest(params, paramRemittanceID2)
+	return remittanceVersionRequest(params, paramID)
 }
 
 func (t *RematchFactoringRemittanceTool) Validate(
@@ -443,14 +441,14 @@ func (t *ApplyFactoringRemittanceTool) SearchTerms() []string {
 }
 
 func (t *ApplyFactoringRemittanceTool) Prerequisites() []string {
-	return []string{toolGetRemittance}
+	return []string{"factoring_get_remittance"}
 }
 
 func (t *ApplyFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2:        remittanceIDParam(),
+		paramID:                   remittanceIDParam(),
 		factoringkit.ParamVersion: remittanceVersionParam(),
-	}, paramRemittanceID2, factoringkit.ParamVersion)
+	}, paramID, factoringkit.ParamVersion)
 }
 
 func (t *ApplyFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
@@ -469,7 +467,7 @@ func (t *ApplyFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *ApplyFactoringRemittanceTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramID, permission.ResourceFactoringRemittance)
 }
 
 func (t *ApplyFactoringRemittanceTool) request(
@@ -478,7 +476,7 @@ func (t *ApplyFactoringRemittanceTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	return remittanceVersionRequest(params, paramRemittanceID2)
+	return remittanceVersionRequest(params, paramID)
 }
 
 func (t *ApplyFactoringRemittanceTool) Validate(
@@ -577,18 +575,18 @@ func (t *DiscardFactoringRemittanceTool) SearchTerms() []string {
 }
 
 func (t *DiscardFactoringRemittanceTool) Prerequisites() []string {
-	return []string{toolListRemittances}
+	return []string{"factoring_list_remittances"}
 }
 
 func (t *DiscardFactoringRemittanceTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramRemittanceID2:        remittanceIDParam(),
+		paramID:                   remittanceIDParam(),
 		factoringkit.ParamVersion: remittanceVersionParam(),
-		factoringkit.ParamReason: toolparams.StringProperty(
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why the remittance is discarded.",
 			maxRemittanceReason,
 		),
-	}, paramRemittanceID2, factoringkit.ParamVersion, factoringkit.ParamReason)
+	}, paramID, factoringkit.ParamVersion, toolparams.ParamReason)
 }
 
 func (t *DiscardFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
@@ -604,7 +602,7 @@ func (t *DiscardFactoringRemittanceTool) Policy() agenttoolports.ToolPolicy {
 func (t *DiscardFactoringRemittanceTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramRemittanceID2, permission.ResourceFactoringRemittance)
+	return toolparams.TargetOf(params, paramID, permission.ResourceFactoringRemittance)
 }
 
 func (t *DiscardFactoringRemittanceTool) request(
@@ -613,13 +611,13 @@ func (t *DiscardFactoringRemittanceTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	base, err := remittanceVersionRequest(params, paramRemittanceID2)
+	base, err := remittanceVersionRequest(params, paramID)
 	if err != nil {
 		return nil, err
 	}
 	reason, err := toolparams.RequireBoundedText(
 		params.Params,
-		factoringkit.ParamReason,
+		toolparams.ParamReason,
 		maxRemittanceReason,
 	)
 	if err != nil {

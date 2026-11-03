@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	paramX12Content    = "content"
+	paramContent       = "content"
 	maxInspectX12Bytes = 64 * 1024
 	maxInspectRows     = 100
 
@@ -70,11 +70,11 @@ func (t *inspectX12Tool) Description() string {
 
 func (t *inspectX12Tool) ParamSchema() map[string]any {
 	return querytool.ObjectSchema(map[string]any{
-		paramX12Content: querytool.StringParam(fmt.Sprintf(
+		paramContent: querytool.StringParam(fmt.Sprintf(
 			"The X12 exactly as given, from ISA (or the first segment) on, at most %d KB.",
 			maxInspectX12Bytes/1024,
 		)),
-	}, paramX12Content)
+	}, paramContent)
 }
 
 func (t *inspectX12Tool) Policy() agenttoolports.ToolPolicy {
@@ -107,9 +107,9 @@ func (t *inspectX12Tool) Query(
 		return nil, err
 	}
 
-	content, _ := params.Params[paramX12Content].(string)
+	content, _ := params.Params[paramContent].(string)
 	if strings.TrimSpace(content) == "" {
-		return nil, fmt.Errorf("parameter %q is empty; pass the X12 to inspect", paramX12Content)
+		return nil, fmt.Errorf("parameter %q is empty; pass the X12 to inspect", paramContent)
 	}
 	if len(content) > maxInspectX12Bytes {
 		return nil, fmt.Errorf(

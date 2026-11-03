@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -62,7 +61,7 @@ func NewReadAttachmentTool(
 	}
 }
 
-func (t *readAttachmentTool) Name() string { return agentdefinition.CoreToolReadAttachment }
+func (t *readAttachmentTool) Name() string { return "agent_read_attachment" }
 
 func (t *readAttachmentTool) SearchTerms() []string {
 	return []string{

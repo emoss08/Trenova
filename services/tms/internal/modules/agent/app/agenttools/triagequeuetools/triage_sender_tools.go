@@ -98,7 +98,7 @@ func newBlockInboundSenderTool(senders triageSenders) agenttoolports.AgentTool {
 			},
 			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"block sender", "phishing", "junk sender"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_block_sender"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_block_sender"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*triageworkservice.BlockSenderRequest, *triageworkservice.SenderPlan]{

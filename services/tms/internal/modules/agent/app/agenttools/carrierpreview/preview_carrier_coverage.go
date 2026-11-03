@@ -13,8 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 )
 
-const FieldCarrierID = "carrierId"
-
 // rateConfirmationChange is one revision before and after, limited to the
 // fields the write moves; a time the write stamps is shown but left out of
 // the digest.

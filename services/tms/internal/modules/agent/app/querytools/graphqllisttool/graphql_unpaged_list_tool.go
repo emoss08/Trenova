@@ -174,7 +174,7 @@ func (t *UnpagedTool) ParamSchema() map[string]any {
 		properties[querytool.ParamAfter] = querytool.CursorPageSchema(querytool.GraphQLListLimit, querytool.UnpagedMost)[querytool.ParamAfter]
 	}
 	if len(t.spec.Matches) > 0 {
-		properties[graphqlread.ParamQuery] = map[string]any{
+		properties[querytool.ParamQuery] = map[string]any{
 			toolschema.KeyType:        toolschema.TypeString,
 			toolschema.KeyDescription: t.spec.QueryNote,
 		}
@@ -228,7 +228,7 @@ func (t *UnpagedTool) Query(
 		rows = rows[:window.Limit]
 	}
 	query := strings.ToLower(
-		strings.TrimSpace(querytool.OptionalString(params.Params, graphqlread.ParamQuery)),
+		strings.TrimSpace(querytool.OptionalString(params.Params, querytool.ParamQuery)),
 	)
 	items, positions := t.matched(rows, query)
 	withheld := t.present(items, graphqlread.RelativePaths(result.Withheld, prefix), clk)

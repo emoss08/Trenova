@@ -32,11 +32,11 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const ParamMappingProposals = "proposals"
+const ParamProposals = "proposals"
 
 const ParamExternalID = "externalId"
 
-const ParamBackfillAction = "action"
+const ParamAction = "action"
 
 const maxMappingProposals = 50
 
@@ -142,17 +142,17 @@ func mappingProposalsProperty() map[string]any {
 func confirmMappingsRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.ConfirmAccountingMappingsRequest, error) {
-	raw, ok := params.Params[ParamMappingProposals].([]any)
+	raw, ok := params.Params[ParamProposals].([]any)
 	if !ok || len(raw) == 0 {
 		return nil, fmt.Errorf(
 			"parameter %q must list at least one proposal",
-			ParamMappingProposals,
+			ParamProposals,
 		)
 	}
 	if len(raw) > maxMappingProposals {
 		return nil, fmt.Errorf(
 			"parameter %q holds %d proposals; confirm at most %d at once",
-			ParamMappingProposals, len(raw), maxMappingProposals,
+			ParamProposals, len(raw), maxMappingProposals,
 		)
 	}
 
@@ -161,19 +161,19 @@ func confirmMappingsRequest(
 	for idx, item := range raw {
 		fields, isObject := item.(map[string]any)
 		if !isObject {
-			return nil, fmt.Errorf("%s[%d] must be an object", ParamMappingProposals, idx)
+			return nil, fmt.Errorf("%s[%d] must be an object", ParamProposals, idx)
 		}
 		id, err := toolparams.RequirePulid(fields, accountingtools.ParamMappingID)
 		if err != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", ParamMappingProposals, idx, err)
+			return nil, fmt.Errorf("%s[%d]: %w", ParamProposals, idx, err)
 		}
 		if _, dup := seen[id]; dup {
-			return nil, fmt.Errorf("%s[%d] repeats mapping %s", ParamMappingProposals, idx, id)
+			return nil, fmt.Errorf("%s[%d] repeats mapping %s", ParamProposals, idx, id)
 		}
 		seen[id] = struct{}{}
 		externalID, err := toolparams.RequireString(fields, ParamExternalID)
 		if err != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", ParamMappingProposals, idx, err)
+			return nil, fmt.Errorf("%s[%d]: %w", ParamProposals, idx, err)
 		}
 		items = append(items, accountingmappingports.AccountingMappingConfirmation{
 			ID:         id,
@@ -205,15 +205,15 @@ func NewConfirmAccountingMappingProposalsTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(mappingReviewSpec(&toolspec.ReceivableSpec{
 		Name:   "accounting_confirm_mapping",
-		Recipe: []string{accountingtools.ToolListMappingGaps, "accounting_confirm_mapping"},
+		Recipe: []string{"accounting_list_mapping_gaps", "accounting_confirm_mapping"},
 		Description: "Confirm Trenova's proposed accounting system matches exactly as " +
 			"accounting_list_mapping_gaps shows them, several at once, so sync can use them. " +
 			"A proposal that changed since it was read is refused; to choose a different " +
 			"record, use accounting_set_mapping.",
 		Rationale: "Decides which accounts and records Trenova's documents post to in the " +
 			"books, so a person approves it; clearing or changing a mapping undoes it.",
-		Properties: map[string]any{ParamMappingProposals: mappingProposalsProperty()},
-		Required:   []string{ParamMappingProposals},
+		Properties: map[string]any{ParamProposals: mappingProposalsProperty()},
+		Required:   []string{ParamProposals},
 	}), toolspec.ReceivablePlan[*accountingmappingports.ConfirmAccountingMappingsRequest, *accountingmappingports.AccountingMappingConfirmPlan]{
 		Request: confirmMappingsRequest,
 		Plan: func(
@@ -377,7 +377,7 @@ func NewReleaseAccountingSyncTool(
 		Rationale: "Sends documents a review policy held for a person to the organization's " +
 			"books; only a person releases them.",
 		Properties: map[string]any{
-			accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
+			accountingtools.ParamSystem: accountingtools.SystemSchema(),
 			accountingsynctools.ParamSyncRecordIDs: toolschema.RecordSubset(
 				permission.ResourceAccountingSync.String(),
 				agenttoolschema.KindIDs(fmt.Sprintf(
@@ -388,7 +388,7 @@ func NewReleaseAccountingSyncTool(
 			),
 		},
 		Required: []string{
-			accountingtools.ParamAccountingSystem,
+			accountingtools.ParamSystem,
 			accountingsynctools.ParamSyncRecordIDs,
 		},
 	}, toolspec.ReceivablePlan[*accountingsyncports.ReleaseAccountingSyncRequest, *releasePlan]{
@@ -428,7 +428,7 @@ func backfillChangeRequest(
 	}
 	action, err := toolparams.RequireEnum(
 		params.Params,
-		ParamBackfillAction,
+		ParamAction,
 		backfillActions.Values,
 	)
 	if err != nil {
@@ -515,11 +515,11 @@ func NewChangeAccountingBackfillTool(
 		Rationale: "Changes how much history reaches the organization's books; a person who " +
 			"manages the integration approves it, and pausing or cancelling sends nothing.",
 		Properties: map[string]any{
-			accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
-			ParamBackfillAction: agenttoolschema.Enum("Pause holds what is left, Resume "+
+			accountingtools.ParamSystem: accountingtools.SystemSchema(),
+			ParamAction: agenttoolschema.Enum("Pause holds what is left, Resume "+
 				"carries on from where it stopped, Cancel ends it for good.", backfillActions),
 		},
-		Required: []string{accountingtools.ParamAccountingSystem, ParamBackfillAction},
+		Required: []string{accountingtools.ParamSystem, ParamAction},
 	}, toolspec.ReceivablePlan[*accountingsyncports.ChangeAccountingBackfillRequest, *backfillChange]{
 		Request: backfillChangeRequest,
 		Plan: func(

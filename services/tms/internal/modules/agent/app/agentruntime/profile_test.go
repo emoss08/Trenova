@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
@@ -173,8 +172,8 @@ func TestProfile_ALookupHandedOutHoldsOnlyWhatReads(t *testing.T) {
 	assert.Equal(t, toolaccess.ProfileFanOut, profile.Mode)
 	assert.Contains(t, profile.Held, "invoice_list")
 	assert.NotContains(t, profile.Held, "invoice_post")
-	assert.NotContains(t, profile.Held, agentdefinition.CoreToolRemember)
-	assert.NotContains(t, profile.Held, runtimetools.DelegateTaskName)
+	assert.NotContains(t, profile.Held, "agent_create_memory")
+	assert.NotContains(t, profile.Held, "delegate_task")
 }
 
 func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
@@ -189,7 +188,7 @@ func TestProfile_ATaskThePersonDirectedKeepsItsWrites(t *testing.T) {
 
 	assert.Equal(t, toolaccess.ProfileDelegated, profile.Mode)
 	assert.Contains(t, profile.Held, "invoice_post")
-	assert.NotContains(t, profile.Held, agentdefinition.CoreToolOpenPage)
+	assert.NotContains(t, profile.Held, "agent_open_page")
 }
 
 func TestOpenTurn_AReachedWriteIsDecidedUnderItsHoldersCeiling(t *testing.T) {
@@ -270,7 +269,7 @@ func TestProfile_OnlyAPersonsConversationHoldsTheScheduleTool(t *testing.T) {
 	service := profileRuntime(t, billing)
 
 	held := service.access.ProfileFor(t.Context(), conversationRequest(billing), nil).Held
-	assert.Contains(t, held, agentdefinition.CoreToolSchedule)
+	assert.Contains(t, held, "agent_create_schedule")
 
 	cases := map[string]func(*agentruntimeports.RunRequest){
 		"unattended": func(req *agentruntimeports.RunRequest) { req.Unattended = true },
@@ -291,7 +290,7 @@ func TestProfile_OnlyAPersonsConversationHoldsTheScheduleTool(t *testing.T) {
 
 			assert.NotContains(t,
 				service.access.ProfileFor(t.Context(), req, nil).Held,
-				agentdefinition.CoreToolSchedule,
+				"agent_create_schedule",
 			)
 		})
 	}

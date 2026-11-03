@@ -70,13 +70,13 @@ func boardShown(
 		return toolcall.Failed(
 			"Tool %q did not show the board: %s. Fix the call and send it "+
 				"again.",
-			ShowBoardName,
+			"show_board",
 			mistake.Reason,
 		)
 	}
 	if err != nil || shown == nil {
 		return toolcall.Failed("Tool %q could not show the board just now. Answer in your "+
-			"reply instead.", ShowBoardName)
+			"reply instead.", "show_board")
 	}
 	outcome.Content = BoardContent(shown)
 	outcome.Summary = toolsummary.Line(shown.Title)
@@ -93,7 +93,7 @@ func documentKept(
 		return toolcall.Failed(
 			"Tool %q did not keep the document: %s. Fix the call and send "+
 				"it again.",
-			PublishArtifactName,
+			"publish_artifact",
 			mistake.Reason,
 		)
 	}
@@ -101,13 +101,13 @@ func documentKept(
 		return toolcall.Failed(
 			"Tool %q could not keep the document: %s. Put the text in your "+
 				"reply instead.",
-			PublishArtifactName,
+			"publish_artifact",
 			err.Error(),
 		)
 	}
 	if shown == nil {
 		return toolcall.Failed("Tool %q could not keep the document. Put the text in your "+
-			"reply instead.", PublishArtifactName)
+			"reply instead.", "publish_artifact")
 	}
 	outcome.Content = PublishedContent(shown)
 	outcome.Summary = toolsummary.Line(shown.Title)

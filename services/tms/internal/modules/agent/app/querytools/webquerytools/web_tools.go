@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -224,7 +223,7 @@ func (t *webReadTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *webReadTool) Prerequisites() []string {
-	return []string{agentextension.ToolWebSearch}
+	return []string{"web_search"}
 }
 
 func (t *webReadTool) SearchTerms() []string {

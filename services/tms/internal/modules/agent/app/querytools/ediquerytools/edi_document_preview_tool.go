@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	paramTenderResponse = "response"
-	paramDeclineReason  = "reason"
+	paramResponse = "response"
+	paramReason   = "reason"
 
 	maxPreviewSegments     = 200
 	maxDeclineReasonLength = 500
@@ -121,11 +121,11 @@ func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
 		),
 		querytool.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"For a 204 or 214: the shipment, from shipment_list or shipment_get."),
-		paramEDITransferID: agenttoolschema.KindID("For a 990: the tender it answers, from "+
+		paramTransferID: agenttoolschema.KindID("For a 990: the tender it answers, from "+
 			"edi_list_transfers.", recordkind.EDITransfer),
-		paramTenderResponse: querytool.EnumParam("For a 990 on a tender not yet answered: preview "+
+		paramResponse: querytool.EnumParam("For a 990 on a tender not yet answered: preview "+
 			"accepting or declining it.", tenderResponses),
-		paramDeclineReason: querytool.StringParam(fmt.Sprintf(
+		paramReason: querytool.StringParam(fmt.Sprintf(
 			"For a declining 990: the reason, at most %d characters.", maxDeclineReasonLength,
 		)),
 	}, paramTransactionSet, querytool.ParamPartnerID)
@@ -271,15 +271,15 @@ func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error
 	if call.shipmentID, err = querytool.OptionalID(params, querytool.ParamShipmentID); err != nil {
 		return nil, err
 	}
-	if call.transferID, err = querytool.OptionalID(params, paramEDITransferID); err != nil {
+	if call.transferID, err = querytool.OptionalID(params, paramTransferID); err != nil {
 		return nil, err
 	}
-	response, err := querytool.ValidEnum(params, paramTenderResponse, tenderResponses)
+	response, err := querytool.ValidEnum(params, paramResponse, tenderResponses)
 	if err != nil {
 		return nil, err
 	}
 	call.response = editransferservice.TenderResponseChoice(response)
-	call.reason = strings.TrimSpace(querytool.OptionalString(params, paramDeclineReason))
+	call.reason = strings.TrimSpace(querytool.OptionalString(params, paramReason))
 
 	if call.set == edidocument.TransactionSet990 {
 		err = call.check990()
@@ -297,15 +297,15 @@ func (c *documentPreviewCall) check990() error {
 	switch {
 	case c.transferID.IsNil():
 		return fmt.Errorf("a 990 answers a tender: give %q from edi_list_transfers",
-			paramEDITransferID)
+			paramTransferID)
 	case c.shipmentID.IsNotNil():
 		return fmt.Errorf("a 990 is named by %q, not %q; leave the shipment out",
-			paramEDITransferID, querytool.ParamShipmentID)
+			paramTransferID, querytool.ParamShipmentID)
 	case c.reason != "" && c.response != editransferservice.TenderResponseDecline:
-		return fmt.Errorf("parameter %q goes only with %q Decline", paramDeclineReason,
-			paramTenderResponse)
+		return fmt.Errorf("parameter %q goes only with %q Decline", paramReason,
+			paramResponse)
 	case len(c.reason) > maxDeclineReasonLength:
-		return fmt.Errorf("parameter %q is longer than %d characters", paramDeclineReason,
+		return fmt.Errorf("parameter %q is longer than %d characters", paramReason,
 			maxDeclineReasonLength)
 	}
 
@@ -325,11 +325,11 @@ func (c *documentPreviewCall) checkShipmentDocument() error {
 			"a %s is named by %q alone; %q is for a 990",
 			c.set,
 			querytool.ParamShipmentID,
-			paramEDITransferID,
+			paramTransferID,
 		)
 	case c.response != "" || c.reason != "":
-		return fmt.Errorf("parameters %q and %q are for a 990 only", paramTenderResponse,
-			paramDeclineReason)
+		return fmt.Errorf("parameters %q and %q are for a 990 only", paramResponse,
+			paramReason)
 	}
 
 	return nil

@@ -51,11 +51,11 @@ func (t *GenerateRateConfirmationTool) Preview(
 		toolpreview.Only(
 			"revision",
 			changepreview.FieldStatus,
-			carrierpreview.FieldCarrierID,
+			toolparams.ParamCarrierID,
 			changepreview.PreviewFieldShipmentMoveID,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			carrierpreview.FieldCarrierID:            permission.ResourceCarrier,
+			toolparams.ParamCarrierID:                permission.ResourceCarrier,
 			changepreview.PreviewFieldShipmentMoveID: permission.ResourceShipmentMove,
 		}),
 		toolpreview.Labels(carrierpreview.RateConfirmationLabels),
@@ -65,7 +65,7 @@ func (t *GenerateRateConfirmationTool) Preview(
 	}
 	changepreview.LabelRefs(
 		created,
-		map[string]string{carrierpreview.FieldCarrierID: carrierpreview.CarrierName(plan.Carrier)},
+		map[string]string{toolparams.ParamCarrierID: carrierpreview.CarrierName(plan.Carrier)},
 	)
 	toolpreview.AttachMoney(
 		created,

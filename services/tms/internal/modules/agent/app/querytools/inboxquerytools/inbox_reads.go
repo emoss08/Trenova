@@ -42,8 +42,6 @@ a forwarded thread can run to pages and the desk needs the top of it.
 */
 
 const (
-	toolListInboundMessages = "inbox_list_inbound_messages"
-
 	// inboundBodyChars is how much of a body the desk reads. The sender's own
 	// words come first; a long quoted thread below them adds cost, not facts.
 	inboundBodyChars = 6000
@@ -51,12 +49,12 @@ const (
 	// at a time, and a ranked search has no next page.
 	inboundSearchMost = 25
 
-	paramInboundClassification = "classification"
-	paramMailboxID             = "mailboxId"
-	paramCaptureBatchID        = "captureBatchId"
-	paramTargetID              = "targetId"
-	paramOwnerID               = "ownerId"
-	paramThreadKey             = "threadKey"
+	paramClassification = "classification"
+	paramMailboxID      = "mailboxId"
+	paramCaptureBatchID = "captureBatchId"
+	paramTargetID       = "targetId"
+	paramOwnerID        = "ownerId"
+	paramThreadKey      = "threadKey"
 
 	termEmail   = "email"
 	termSubject = "subject"
@@ -67,8 +65,8 @@ const (
 	inboundFieldBody        = "textBody"
 	inboundFieldFrom        = "from"
 
-	argSort = "sort"
-	argID   = "id"
+	fieldSort = "sort"
+	fieldID   = "id"
 
 	keyCaptureBatch   = "batch"
 	keyTriageSettings = "settings"
@@ -133,9 +131,9 @@ func captureBatchesListSpec() readspec.List {
 			"sent it, whose it is, a code on one of its pages, or a shipment's PRO or bill " +
 			"of lading number.",
 		Names: map[string]string{
-			querytool.ArgStatuses: querytool.ParamStatus,
-			argSort:               listtool.ParamSortBy,
-			argID:                 paramCaptureBatchID,
+			querytool.FieldStatuses: querytool.ParamStatus,
+			fieldSort:               listtool.ParamSortBy,
+			fieldID:                 paramCaptureBatchID,
 		},
 		Notes: map[string]string{
 			querytool.ParamStatus: "The stacks still waiting on a person (" +
@@ -222,7 +220,7 @@ func markOnCall(items []map[string]any, beside map[string]any) {
 	}
 	for _, item := range items {
 		user, _ := item["user"].(map[string]any)
-		if querytool.StringOf(user[argID]) == onCall {
+		if querytool.StringOf(user[fieldID]) == onCall {
 			item["onCall"] = true
 		}
 	}
@@ -262,7 +260,7 @@ func inboundMessageGetSpec() readspec.Get {
 // every call that gives no words.
 func InboundMessagesListSpec() readspec.List {
 	return readspec.List{
-		Name:         toolListInboundMessages,
+		Name:         "inbox_list_inbound_messages",
 		EntityPlural: "inbound messages",
 		Summary: "List the inbox: mail that arrived on a monitored address, newest first, " +
 			"or best match first when you give words. Words are searched in the subject, " +
@@ -284,8 +282,8 @@ func InboundMessagesListSpec() readspec.List {
 			"request, a reference number, a sender. Results come best match first; omit to " +
 			"list the newest.",
 		Names: map[string]string{
-			querytool.ArgStatuses: querytool.ParamStatus,
-			argSort:               listtool.ParamSortBy,
+			querytool.FieldStatuses: querytool.ParamStatus,
+			fieldSort:               listtool.ParamSortBy,
 		},
 		Notes: map[string]string{
 			querytool.ParamStatus: "InReview and Quarantined are the ones waiting on a person.",
@@ -303,7 +301,7 @@ func InboundMessagesListSpec() readspec.List {
 				What:     "Only messages assigned to this person",
 				Source:   "inbox_list_triage_assignees (user.id)",
 			},
-			querytool.FieldShipmentID: {
+			querytool.ParamShipmentID: {
 				Resource: permission.ResourceShipment,
 				What:     "Only messages about this shipment",
 				Source:   "shipment_list or the page you are on",
@@ -340,7 +338,7 @@ func inboundSender(row map[string]any, _ map[string]struct{}, _ filtercatalog.Cl
 var inboundSearchParams = []string{
 	querytool.ParamQuery,
 	querytool.ParamStatus,
-	paramInboundClassification,
+	paramClassification,
 	paramMailboxID,
 	querytool.ParamLimit,
 }
@@ -434,7 +432,7 @@ func inboundSearchFilter(args map[string]any) (retrievalports.InboundMessageFilt
 		}
 		filter.Statuses = append(filter.Statuses, status)
 	}
-	if raw := querytool.OptionalString(args, paramInboundClassification); raw != "" {
+	if raw := querytool.OptionalString(args, paramClassification); raw != "" {
 		filter.Classification = inboundmessage.Classification(raw)
 		if !slices.Contains(inboundmessage.AllClassifications(), filter.Classification) {
 			return filter, fmt.Errorf("classification %q is not a kind the inbox reads "+

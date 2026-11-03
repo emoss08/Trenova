@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
@@ -53,7 +52,7 @@ func NewListPortalSitesTool(
 	return &listPortalSitesTool{portals: portals}
 }
 
-func (t *listPortalSitesTool) Name() string { return agentextension.ToolListPortalSites }
+func (t *listPortalSitesTool) Name() string { return "web_list_portal_sites" }
 
 func (t *listPortalSitesTool) Description() string {
 	return "List the third-party web portals the organization set up for agents: warehouse " +
@@ -146,7 +145,7 @@ func NewReadPortalTool(
 	return &readPortalTool{portals: portals, waits: waits}
 }
 
-func (t *readPortalTool) Name() string { return agentextension.ToolReadPortal }
+func (t *readPortalTool) Name() string { return "web_read_portal" }
 
 func (t *readPortalTool) Description() string {
 	return "Look something up on an organization portal site through a cloud browser, such " +
@@ -197,7 +196,7 @@ func (t *readPortalTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *readPortalTool) Prerequisites() []string {
-	return []string{agentextension.ToolListPortalSites}
+	return []string{"web_list_portal_sites"}
 }
 
 func (t *readPortalTool) SearchTerms() []string {

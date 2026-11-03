@@ -22,16 +22,14 @@ import (
 )
 
 const (
-	paramInvoiceID       = "invoiceId"
 	paramOverride        = "override"
 	paramDocumentTypeIDs = "documentTypeIds"
 	paramMessage         = "message"
 
-	toolGetReadiness       = "factoring_get_readiness"
-	maxRequestedDocuments  = 20
-	fieldFactoringOverride = "factoringOverride"
-	fieldOverrideReason    = "factoringOverrideReason"
-	fieldFactoringAgree    = "factoringAgreementId"
+	maxRequestedDocuments        = 20
+	fieldFactoringOverride       = "factoringOverride"
+	fieldFactoringOverrideReason = "factoringOverrideReason"
+	fieldFactoringAgreementID    = "factoringAgreementId"
 )
 
 func invoiceRecord(inv *invoice.Invoice) toolpreview.Record {
@@ -69,12 +67,12 @@ func (t *SetInvoiceFactoringOverrideTool) SearchTerms() []string {
 }
 
 func (t *SetInvoiceFactoringOverrideTool) Prerequisites() []string {
-	return []string{toolGetReadiness}
+	return []string{"factoring_get_readiness"}
 }
 
 func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramInvoiceID: agenttoolschema.RecordIDText(
+		toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
 			"The invoice, from invoice_list or factoring_list_readiness.",
 		),
@@ -82,10 +80,10 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 			"Exclude keeps it out of factoring; Default follows the customer's factoring.",
 			agenttoolschema.FactoringOverrides,
 		),
-		factoringkit.ParamReason: jsonschemautils.Text(
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the invoice stays out of factoring. Required for Exclude.",
 		),
-	}, paramInvoiceID, paramOverride)
+	}, toolparams.ParamInvoiceID, paramOverride)
 }
 
 func (t *SetInvoiceFactoringOverrideTool) Policy() agenttoolports.ToolPolicy {
@@ -104,7 +102,7 @@ func (t *SetInvoiceFactoringOverrideTool) Policy() agenttoolports.ToolPolicy {
 func (t *SetInvoiceFactoringOverrideTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(params, toolparams.ParamInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *SetInvoiceFactoringOverrideTool) request(
@@ -113,7 +111,7 @@ func (t *SetInvoiceFactoringOverrideTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +123,7 @@ func (t *SetInvoiceFactoringOverrideTool) request(
 		TenantInfo: toolparams.TenantFrom(params),
 		InvoiceID:  invoiceID,
 		Override:   invoice.FactoringOverride(raw),
-		Reason:     toolparams.OptionalString(params.Params, factoringkit.ParamReason),
+		Reason:     toolparams.OptionalString(params.Params, toolparams.ParamReason),
 	}, nil
 }
 
@@ -169,19 +167,19 @@ func (t *SetInvoiceFactoringOverrideTool) Preview(
 	change, err := toolpreview.Changed(invoiceRecord(plan.Before), plan.Before, plan.After,
 		toolpreview.Only(
 			fieldFactoringOverride,
-			fieldOverrideReason,
-			factoringkit.FieldFactoringCompany,
-			fieldFactoringAgree,
+			fieldFactoringOverrideReason,
+			factoringkit.ParamFactoringCompanyID,
+			fieldFactoringAgreementID,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			factoringkit.FieldFactoringCompany: permission.ResourceFactoringCompany,
-			fieldFactoringAgree:                permission.ResourceFactoringAgreement,
+			factoringkit.ParamFactoringCompanyID: permission.ResourceFactoringCompany,
+			fieldFactoringAgreementID:            permission.ResourceFactoringAgreement,
 		}),
 		toolpreview.Labels(map[string]string{
-			fieldFactoringOverride:             "Factoring",
-			fieldOverrideReason:                "Why it stays out",
-			factoringkit.FieldFactoringCompany: "Assigned to",
-			fieldFactoringAgree:                "Agreement",
+			fieldFactoringOverride:               "Factoring",
+			fieldFactoringOverrideReason:         "Why it stays out",
+			factoringkit.ParamFactoringCompanyID: "Assigned to",
+			fieldFactoringAgreementID:            "Agreement",
 		}),
 	)
 	if err != nil {
@@ -234,12 +232,12 @@ func (t *RequestMissingFactoringDocumentTool) SearchTerms() []string {
 }
 
 func (t *RequestMissingFactoringDocumentTool) Prerequisites() []string {
-	return []string{toolGetReadiness}
+	return []string{"factoring_get_readiness"}
 }
 
 func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramInvoiceID: agenttoolschema.RecordIDText(
+		toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(
 			permission.ResourceInvoice,
 			"The invoice, from factoring_get_readiness or factoring_list_readiness.",
 		),
@@ -255,7 +253,7 @@ func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 			"The request in plain prose. Leave it out for the standard wording; the " +
 				"template adds the greeting, letterhead and the list of documents.",
 		),
-	}, paramInvoiceID)
+	}, toolparams.ParamInvoiceID)
 }
 
 func (t *RequestMissingFactoringDocumentTool) Policy() agenttoolports.ToolPolicy {
@@ -273,7 +271,7 @@ func (t *RequestMissingFactoringDocumentTool) Policy() agenttoolports.ToolPolicy
 func (t *RequestMissingFactoringDocumentTool) Target(
 	params map[string]any,
 ) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
+	return toolparams.TargetOf(params, toolparams.ParamInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *RequestMissingFactoringDocumentTool) request(
@@ -282,7 +280,7 @@ func (t *RequestMissingFactoringDocumentTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
 	}

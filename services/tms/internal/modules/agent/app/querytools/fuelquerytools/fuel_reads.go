@@ -10,19 +10,13 @@ import (
 )
 
 const (
-	toolListFuelCards            = "fuel_list_cards"
-	toolListFuelPurchases        = "fuel_list_purchases"
-	toolListFuelPurchaseImports  = "fuel_list_purchase_imports"
-	toolListIFTAReturns          = "fuel_list_ifta_returns"
-	toolListIFTAMileageEntries   = "fuel_list_ifta_mileage_entries"
-	toolListIFTAJurisdictions    = "fuel_list_ifta_jurisdictions"
 	fieldAssignedTractorID       = "assignedTractorId"
 	fieldAssignedWorkerID        = "assignedWorkerId"
 	fieldFuelCardID              = "fuelCardId"
 	fieldImportBatchID           = "importBatchId"
 	fieldDiscoveredAt            = "discoveredAt"
 	fieldProblems                = "problems"
-	fieldProblemCode             = "code"
+	fieldCode                    = "code"
 	rowUnassigned                = "unassigned"
 	rowDiscoveredByFeed          = "discoveredByFeed"
 	rowBlockingProblems          = "blockingProblems"
@@ -61,13 +55,13 @@ var (
 	tractorReference = readspec.Reference{
 		Resource: permission.ResourceTractor,
 		What:     "The tractor",
-		Source:   querytool.ToolListTractors,
+		Source:   "equipment_list_tractors",
 	}
 	jurisdictionReference = readspec.Reference{
 		Resource: permission.ResourceFuelPurchase,
 		Kinds:    []recordkind.Kind{recordkind.IFTAJurisdiction},
 		What:     "The state or province",
-		Source:   toolListIFTAJurisdictions,
+		Source:   "fuel_list_ifta_jurisdictions",
 	}
 )
 
@@ -78,7 +72,7 @@ var (
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         toolListFuelCards,
+			Name:         "fuel_list_cards",
 			EntityPlural: "fuel cards",
 			Summary:      fuelCardsSummary,
 			Resource:     permission.ResourceFuelCard,
@@ -89,42 +83,42 @@ func ReadSpecs() []readspec.List {
 			Shape: shapeFuelCard,
 		},
 		{
-			Name:         toolListFuelPurchases,
+			Name:         "fuel_list_purchases",
 			EntityPlural: "fuel purchases",
 			Summary:      fuelPurchasesSummary,
 			Resource:     permission.ResourceFuelPurchase,
 			References: map[string]readspec.Reference{
 				fieldTractorID:          tractorReference,
-				querytool.FieldWorkerID: readspec.WorkerReference,
+				querytool.ParamWorkerID: readspec.WorkerReference,
 				fieldJurisdictionID:     jurisdictionReference,
 				fieldFuelCardID: {
 					Resource: permission.ResourceFuelCard,
 					What:     "The fuel card",
-					Source:   toolListFuelCards,
+					Source:   "fuel_list_cards",
 				},
 				fieldImportBatchID: {
 					Resource: permission.ResourceFuelPurchaseImport,
 					What:     "The import it came in",
-					Source:   toolListFuelPurchaseImports,
+					Source:   "fuel_list_purchase_imports",
 				},
 			},
 		},
 		{
-			Name:         toolListFuelPurchaseImports,
+			Name:         "fuel_list_purchase_imports",
 			EntityPlural: "fuel purchase imports",
 			Summary:      fuelPurchaseImportsSummary,
 			Resource:     permission.ResourceFuelPurchaseImport,
 			Notes:        map[string]string{querytool.ParamStatus: noteParsedImports},
 		},
 		{
-			Name:         toolListIFTAReturns,
+			Name:         "fuel_list_ifta_returns",
 			EntityPlural: "IFTA returns",
 			Summary:      iftaReturnsSummary,
 			Resource:     permission.ResourceIFTAReturn,
 			Shape:        shapeIFTAReturn,
 		},
 		{
-			Name:         toolListIFTAMileageEntries,
+			Name:         "fuel_list_ifta_mileage_entries",
 			EntityPlural: "IFTA mileage entries",
 			Summary:      iftaMileageEntriesSummary,
 			Resource:     permission.ResourceIFTAJurisdictionMileage,
@@ -134,7 +128,7 @@ func ReadSpecs() []readspec.List {
 			},
 		},
 		{
-			Name:         toolListIFTAJurisdictions,
+			Name:         "fuel_list_ifta_jurisdictions",
 			EntityPlural: "IFTA jurisdictions",
 			Summary:      iftaJurisdictionsSummary,
 			Resource:     permission.ResourceFuelPurchase,
@@ -173,7 +167,7 @@ func shapeIFTAReturn(row map[string]any, withheld map[string]struct{}, _ filterc
 	blocking := 0
 	for _, raw := range problems {
 		problem, _ := raw.(map[string]any)
-		code, _ := problem[fieldProblemCode].(string)
+		code, _ := problem[fieldCode].(string)
 		if ifta.ProblemCode(code).Blocks() {
 			blocking++
 		}

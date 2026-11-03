@@ -4,8 +4,6 @@ import (
 	"strings"
 )
 
-const PagedTool = "billing_list_queue_items"
-
 func QueueItem(n int) map[string]any {
 	return map[string]any{
 		"id":     "bqi_" + strings.Repeat("0", 3) + string(rune('A'+n)),

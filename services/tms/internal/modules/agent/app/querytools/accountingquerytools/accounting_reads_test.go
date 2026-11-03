@@ -90,13 +90,13 @@ func TestAccountingDrift_SendsTheSystemBesideTheTableInput(t *testing.T) {
 
 	sent := reader.Sent("DeskAccountingDriftFindings")
 	require.NotNil(t, sent)
-	assert.Equal(t, "QuickBooksOnline", sent.Variables[argIntegrationType])
+	assert.Equal(t, "QuickBooksOnline", sent.Variables[fieldIntegrationType])
 	input, _ := sent.Variables["input"].(map[string]any)
 	assert.Equal(t, []map[string]any{{"field": "status", "operator": "in",
 		"value": []string{"Open"}}}, input["fieldFilters"])
 	overview := reader.Sent("DeskAccountingDriftOverview")
 	require.NotNil(t, overview)
-	assert.Equal(t, map[string]any{argIntegrationType: "QuickBooksOnline"}, overview.Variables)
+	assert.Equal(t, map[string]any{fieldIntegrationType: "QuickBooksOnline"}, overview.Variables)
 
 	outcome, ok := graphqllisttool.PageRecord(data)
 	require.True(t, ok)
@@ -222,7 +222,7 @@ func TestAccountingSyncRecords_DocumentIDsReadTheirStatesInstead(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	last := reader.Requests[len(reader.Requests)-1]
-	assert.Equal(t, "Xero", last.Variables[argIntegrationType])
+	assert.Equal(t, "Xero", last.Variables[fieldIntegrationType])
 
 	_, err = tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
 		paramDocumentIDs: []any{invoice}, "limit": 10,
@@ -305,7 +305,7 @@ func TestAccountingConnection_ReadsBySystemAndSaysWhatItMeans(t *testing.T) {
 	require.NoError(t, err)
 	sent := reader.Sent("DeskAccountingConnection")
 	require.NotNil(t, sent)
-	assert.Equal(t, map[string]any{argIntegrationType: "QuickBooksOnline"}, sent.Variables)
+	assert.Equal(t, map[string]any{fieldIntegrationType: "QuickBooksOnline"}, sent.Variables)
 
 	record, ok := data.(map[string]any)
 	require.True(t, ok)
@@ -403,7 +403,7 @@ func TestAccountingMapping_NamesItByWhatItMaps(t *testing.T) {
 	sent := reader.Sent("DeskAccountingMappingDetail")
 	require.NotNil(t, sent)
 	assert.Equal(t, map[string]any{
-		argIntegrationType: "QuickBooksOnline", "targetType": "Customer",
+		fieldIntegrationType: "QuickBooksOnline", "targetType": "Customer",
 		"recordId": customer, "optionsQuery": "freight",
 	}, sent.Variables)
 	record, ok := data.(map[string]any)

@@ -331,7 +331,7 @@ func (r *Recorder) Observe(
 	if request, ok := observation.Data.(agentruntimeports.BoardRequest); ok {
 		return r.showBoard(observation.Call.ID, request)
 	}
-	if observation.Call.Name == artifactpayload.ToolGetShipmentDraft && !observation.Failed {
+	if observation.Call.Name == "intake_get_draft" && !observation.Failed {
 		if extraction := r.extraction(observation.Call.ID, observation.Data); extraction != nil {
 			return r.shownIfKept(extraction), nil
 		}

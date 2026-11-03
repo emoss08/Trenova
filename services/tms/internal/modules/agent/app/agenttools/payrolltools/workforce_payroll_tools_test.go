@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -107,9 +107,9 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	payroll := newFakePayroll()
 	tool := newGeneratePayrollExportTool(payroll)
 	raw := map[string]any{
-		paramFirstDay:           "2026-09-14",
-		paramLastDay:            "2026-09-27",
-		changepreview.FieldNote: "Biweekly run",
+		paramFirstDay:        "2026-09-14",
+		paramLastDay:         "2026-09-27",
+		toolparams.ParamNote: "Biweekly run",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -157,8 +157,8 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 	payroll := newFakePayroll()
 	tool := newVoidPayrollExportTool(payroll)
 	raw := map[string]any{
-		paramPayrollExportID:      payroll.export.ID.String(),
-		changepreview.FieldReason: "Two weeks were approved in error",
+		paramPayrollExportID:   payroll.export.ID.String(),
+		toolparams.ParamReason: "Two weeks were approved in error",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(

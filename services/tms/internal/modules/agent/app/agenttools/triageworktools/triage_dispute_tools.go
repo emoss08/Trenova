@@ -27,14 +27,13 @@ import (
 )
 
 const (
-	paramExceptionKind     = "kind"
-	paramExceptionQuantity = "quantity"
-	paramExceptionUnit     = "unit"
-	paramExceptionNote     = "note"
-	paramStopsDecision     = "decision"
-	maxExceptionQuantity   = 100000
-	maxExceptionUnit       = 50
-	maxExceptionNote       = 500
+	paramKind            = "kind"
+	paramQuantity        = "quantity"
+	paramUnit            = "unit"
+	paramDecision        = "decision"
+	maxExceptionQuantity = 100000
+	maxExceptionUnit     = 50
+	maxExceptionNote     = 500
 )
 
 var (
@@ -142,33 +141,33 @@ func newLogInboundExceptionTool(
 				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The delivery email, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramExceptionKind: agenttoolschema.Enum(
+				paramKind: agenttoolschema.Enum(
 					"What the delivery reported.",
 					triageExceptionKinds,
 				),
-				paramExceptionQuantity: map[string]any{
+				paramQuantity: map[string]any{
 					toolschema.KeyType:        toolschema.TypeInteger,
 					toolschema.KeyDescription: "How many, as the sender counted them.",
 					toolschema.KeyMinimum:     1,
 					toolschema.KeyMaximum:     maxExceptionQuantity,
 				},
-				paramExceptionUnit: toolparams.StringProperty(
+				paramUnit: toolparams.StringProperty(
 					"What was counted: pallets, cases, pieces.",
 					maxExceptionUnit,
 				),
-				paramExceptionNote: toolparams.StringProperty(
+				toolparams.ParamNote: toolparams.StringProperty(
 					"Optional: what the sender said about it, for the person who clears the hold.",
 					maxExceptionNote,
 				),
 			},
 			Required: []string{
 				inboundtools.ParamMessageID,
-				paramExceptionKind,
-				paramExceptionQuantity,
-				paramExceptionUnit,
+				paramKind,
+				paramQuantity,
+				paramUnit,
 			},
 			SearchTerms: []string{"shortage", "overage", "damaged goods", "OS&D", "billing hold"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_record_discrepancy"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_record_discrepancy"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
@@ -244,22 +243,22 @@ func logExceptionRequest(
 	}
 	kind, err := toolparams.RequireEnum(
 		params.Params,
-		paramExceptionKind,
+		paramKind,
 		triageExceptionKinds.Values,
 	)
 	if err != nil {
 		return nil, err
 	}
-	quantity, err := toolparams.RequireIntInRange(params.Params, paramExceptionQuantity, 1,
+	quantity, err := toolparams.RequireIntInRange(params.Params, paramQuantity, 1,
 		maxExceptionQuantity)
 	if err != nil {
 		return nil, err
 	}
-	unit, err := toolparams.RequireBoundedText(params.Params, paramExceptionUnit, maxExceptionUnit)
+	unit, err := toolparams.RequireBoundedText(params.Params, paramUnit, maxExceptionUnit)
 	if err != nil {
 		return nil, err
 	}
-	note, err := toolparams.BoundedText(params.Params, paramExceptionNote, maxExceptionNote)
+	note, err := toolparams.BoundedText(params.Params, toolparams.ParamNote, maxExceptionNote)
 	if err != nil {
 		return nil, err
 	}
@@ -310,15 +309,15 @@ func newSettleDetentionDisputeTool(
 					"The detention dispute, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
-				paramStopsDecision: agenttoolschema.Enum(
+				paramDecision: agenttoolschema.Enum(
 					"Waive gives the charge up; StandBy keeps it.",
 					triageStopsDecisions,
 				),
 			},
-			Required:    []string{inboundtools.ParamMessageID, paramStopsDecision},
+			Required:    []string{inboundtools.ParamMessageID, paramDecision},
 			SearchTerms: []string{"disputed detention", "contested detention"},
 			Recipe: []string{
-				inboundtools.ToolGetMessage,
+				"inbox_get_inbound_message",
 				"detention_get_occurrence",
 				"detention_resolve_dispute",
 			},
@@ -335,7 +334,7 @@ func newSettleDetentionDisputeTool(
 				if err != nil {
 					return nil, err
 				}
-				decision, err := toolparams.RequireEnum(params.Params, paramStopsDecision,
+				decision, err := toolparams.RequireEnum(params.Params, paramDecision,
 					triageStopsDecisions.Values)
 				if err != nil {
 					return nil, err

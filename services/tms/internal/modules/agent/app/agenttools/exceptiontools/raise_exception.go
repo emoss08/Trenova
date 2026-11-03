@@ -92,7 +92,7 @@ func evidenceItemsProperty(description string) map[string]any {
 					"What kind of record it is: document, charge, rate, shipment.", 0,
 				),
 				evidenceID: toolparams.StringProperty("The record's id.", 0),
-				changepreview.FieldNote: toolparams.StringProperty(
+				toolparams.ParamNote: toolparams.StringProperty(
 					"What the record shows, in a sentence.",
 					0,
 				),

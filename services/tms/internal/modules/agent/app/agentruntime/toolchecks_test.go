@@ -26,7 +26,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 	rt := newRuntime(
 		&scriptedCompletion{},
 		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
-			queryTool(agentextension.ToolWebSearch, map[string]any{}, nil),
+			queryTool("web_search", map[string]any{}, nil),
 		}},
 		&stubActionRegistry{},
 		nil,
@@ -34,7 +34,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 	rewire(rt, func(p *Params) { p.Extensions = gate })
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
-		Definition: runtimetest.Definition(agentextension.ToolWebSearch),
+		Definition: runtimetest.Definition("web_search"),
 		Actor:      runtimetest.Actor(),
 		Input:      "What changed in the ELD rules?",
 	})

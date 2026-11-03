@@ -7,7 +7,6 @@ import (
 	"unicode"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -144,7 +143,7 @@ func Drift(t Turn, specFor SpecFor, reply string) (GroundingFinding, bool) {
 // nothing the conversation read gives. A conversation that has read no tool's
 // result is answering from what the trade knows, and is not checked.
 func readFinding(t Turn, reply string) GroundingFinding {
-	finding := GroundingFinding{read: true, analyze: t.Holds(codemode.ToolRunScript)}
+	finding := GroundingFinding{read: true, analyze: t.Holds("analysis_run")}
 	if strings.TrimSpace(reply) == "" || !readAnything(t) || readUnseenFiles(t) {
 		return finding
 	}

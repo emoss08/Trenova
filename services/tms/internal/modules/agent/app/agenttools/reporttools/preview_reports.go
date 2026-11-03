@@ -222,7 +222,7 @@ func (t *ForkReportTool) request(
 	return &reporting.ForkCannedRequest{
 		Request:   reportingRequestFrom(params),
 		CannedKey: key,
-		Name:      strings.TrimSpace(toolparams.OptionalString(params.Params, paramReportName)),
+		Name:      strings.TrimSpace(toolparams.OptionalString(params.Params, paramName)),
 	}, entry, nil
 }
 

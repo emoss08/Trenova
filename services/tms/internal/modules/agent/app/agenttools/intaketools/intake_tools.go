@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -102,7 +101,7 @@ func (t *CreateShipmentTool) SearchTerms() []string {
 
 func (t *CreateShipmentTool) Prerequisites() []string {
 	return []string{
-		agentpreset.ToolFindShipmentRecords,
+		"shipment_match_records",
 		"customer_list",
 		"masterdata_list_service_types",
 		"masterdata_list_shipment_types",
@@ -116,14 +115,14 @@ func (t *CreateShipmentTool) Prerequisites() []string {
 
 func (t *CreateShipmentTool) Companions() []string {
 	return []string{
-		agentpreset.ToolCreateCustomer,
-		agentpreset.ToolCreateLocation,
-		agentpreset.ToolCreateCommodity,
+		"customer_create",
+		"location_create",
+		"masterdata_create_commodity",
 	}
 }
 
 func (t *CreateShipmentTool) Recipe() []string {
-	return []string{agentpreset.ToolFindShipmentRecords, "shipment_create"}
+	return []string{"shipment_match_records", "shipment_create"}
 }
 
 func (t *CreateShipmentTool) Description() string {

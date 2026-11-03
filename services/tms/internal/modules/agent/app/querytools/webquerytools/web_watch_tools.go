@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -30,7 +29,7 @@ func NewListWebWatchesTool(watches agentextensionports.WebWatcher) agenttoolport
 	return &listWebWatchesTool{watches: watches}
 }
 
-func (t *listWebWatchesTool) Name() string { return agentextension.ToolListWebWatches }
+func (t *listWebWatchesTool) Name() string { return "web_list_watches" }
 
 func (t *listWebWatchesTool) Description() string {
 	return "List the web watches set for the person: what each watches for, how often and " +

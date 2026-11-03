@@ -42,7 +42,7 @@ func ProvideListEquipmentManufacturersTool(
 	permissions permissionports.PermissionEngine,
 ) (agenttoolports.AgentQueryTool, error) {
 	return graphqllisttool.New(&readspec.List{
-		Name:         querytool.ToolListEquipmentManufacturers,
+		Name:         "equipment_list_manufacturers",
 		EntityPlural: "equipment manufacturers",
 		Summary:      equipmentManufacturersSummary,
 		Resource:     permission.ResourceEquipmentManufacturer,
@@ -56,7 +56,7 @@ func NewListEquipmentManufacturersTool(
 	repo equipmentmanufacturerports.EquipmentManufacturerRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolListEquipmentManufacturers,
+		Name:         "equipment_list_manufacturers",
 		Row:          codedRow{},
 		EntityPlural: "equipment manufacturers",
 		Summary:      equipmentManufacturersSummary,

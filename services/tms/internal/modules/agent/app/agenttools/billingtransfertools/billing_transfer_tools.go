@@ -30,7 +30,7 @@ import (
 
 const paramAllTransferable = "allTransferable"
 
-const paramMarkCompletedReady = "markCompletedReadyToInvoice"
+const paramMarkCompletedReadyToInvoice = "markCompletedReadyToInvoice"
 
 const resultRunID = "billingTransferRunId"
 
@@ -138,7 +138,7 @@ func (t *TransferToBillingTool) ParamSchema() map[string]any {
 	properties[toolparams.ParamBillType] = agenttoolschema.Enum(
 		"What the queue items bill. Defaults to Invoice.", transferBillTypes,
 	)
-	properties[paramMarkCompletedReady] = map[string]any{
+	properties[paramMarkCompletedReadyToInvoice] = map[string]any{
 		toolschema.KeyType: toolschema.TypeBoolean,
 		toolschema.KeyDescription: "Mark Completed shipments ready to invoice first, as " +
 			"the dialog can. Defaults to false, which leaves a Completed shipment where " +
@@ -199,7 +199,7 @@ func (t *TransferToBillingTool) request(
 
 	request := transferRequest{
 		billType:  billingvocab.BillTypeInvoice,
-		markReady: toolparams.OptionalBool(params.Params, paramMarkCompletedReady),
+		markReady: toolparams.OptionalBool(params.Params, paramMarkCompletedReadyToInvoice),
 		all:       toolparams.OptionalBool(params.Params, paramAllTransferable),
 	}
 	if raw := toolparams.OptionalString(params.Params, toolparams.ParamBillType); raw != "" {

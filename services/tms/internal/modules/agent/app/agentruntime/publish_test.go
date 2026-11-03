@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -78,7 +77,7 @@ func TestRun_OffersPublishingWhereArtifactsAreKept(t *testing.T) {
 	observer := &recordingObserver{}
 	_, completion := runWithObserver(t, observer.observe, nil, runtimetest.TextTurn("Here it is."))
 
-	assert.Contains(t, offeredNames(completion.LastReq.Tools), runtimetools.PublishArtifactName)
+	assert.Contains(t, offeredNames(completion.LastReq.Tools), "publish_artifact")
 	assert.Contains(t, completion.LastReq.System, "## Artifacts")
 	assert.Contains(t, completion.LastReq.System, "publish_artifact")
 }
@@ -93,13 +92,13 @@ func TestRun_DoesNotOfferPublishingWithoutAPane(t *testing.T) {
 		nil,
 		nil,
 		runtimetest.ToolTurn(
-			runtimetools.PublishArtifactName,
+			"publish_artifact",
 			map[string]any{"title": "Brief", "body": "# Brief"},
 		),
 		runtimetest.TextTurn("Here it is."),
 	)
 
-	assert.NotContains(t, offeredNames(completion.LastReq.Tools), runtimetools.PublishArtifactName)
+	assert.NotContains(t, offeredNames(completion.LastReq.Tools), "publish_artifact")
 	assert.NotContains(t, completion.LastReq.System, "## Artifacts")
 	last := completion.LastReq.Messages[len(completion.LastReq.Messages)-1]
 	assert.True(t, last.IsError)
@@ -116,7 +115,7 @@ func TestRun_PublishesADocumentAndReturnsItsID(t *testing.T) {
 		ID: id, Kind: "document", Title: "SEED-SHP-007 brief",
 	}}
 	result, _ := runWithObserver(t, observer.observe, nil,
-		runtimetest.ToolTurn(runtimetools.PublishArtifactName, map[string]any{
+		runtimetest.ToolTurn("publish_artifact", map[string]any{
 			"title": "SEED-SHP-007 brief",
 			"body":  "# SEED-SHP-007\n\nRange Logistics, Chicago to Denver.",
 		}),
@@ -146,7 +145,7 @@ func TestRun_SaysWhenADocumentCouldNotBeKept(t *testing.T) {
 		observer.observe,
 		nil,
 		runtimetest.ToolTurn(
-			runtimetools.PublishArtifactName,
+			"publish_artifact",
 			map[string]any{"title": "Brief", "body": "# Brief"},
 		),
 		runtimetest.TextTurn("Here it is."),
@@ -166,7 +165,7 @@ func TestRun_PublishesTheAnalysesADocumentNames(t *testing.T) {
 		ID: pulid.MustNew("art_"), Kind: "document", Title: "Lane brief",
 	}}
 	runWithObserver(t, observer.observe, nil,
-		runtimetest.ToolTurn(runtimetools.PublishArtifactName, map[string]any{
+		runtimetest.ToolTurn("publish_artifact", map[string]any{
 			"title":    "Lane brief",
 			"body":     "Revenue is spread thin.",
 			"analyses": []any{analysis.String(), analysis.String()},
@@ -187,7 +186,7 @@ func TestRun_RefusesAnAnalysisThatIsNotAnID(t *testing.T) {
 
 	observer := &recordingObserver{}
 	result, _ := runWithObserver(t, observer.observe, nil,
-		runtimetest.ToolTurn(runtimetools.PublishArtifactName, map[string]any{
+		runtimetest.ToolTurn("publish_artifact", map[string]any{
 			"title": "Brief", "body": "# Brief", "analyses": []any{"lanes"},
 		}),
 		runtimetest.TextTurn("Sorry."),
@@ -215,7 +214,7 @@ func TestRun_AFixablePublishIsSentAgainNotRetyped(t *testing.T) {
 		observer.observe,
 		nil,
 		runtimetest.ToolTurn(
-			runtimetools.PublishArtifactName,
+			"publish_artifact",
 			map[string]any{"title": "Brief", "body": "# Brief"},
 		),
 		runtimetest.TextTurn("Sorry."),
@@ -238,7 +237,7 @@ func TestRun_RefusesAnEmptyDocument(t *testing.T) {
 		observer.observe,
 		nil,
 		runtimetest.ToolTurn(
-			runtimetools.PublishArtifactName,
+			"publish_artifact",
 			map[string]any{"title": "", "body": ""},
 		),
 		runtimetest.TextTurn("Sorry."),

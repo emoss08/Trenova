@@ -51,7 +51,7 @@ func TestFuelIndexPrices_SendsTheIndexTheWindowAndAPage(t *testing.T) {
 	t.Parallel()
 
 	reader := &querytooltest.KeyedReader{}
-	tool := rateTool(t, toolRateListFuelIndexPrices, reader)
+	tool := rateTool(t, "rate_list_fuel_index_prices", reader)
 	index := pulid.MustNew("fidx_").String()
 
 	_, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
@@ -71,7 +71,7 @@ func TestFuelIndexPrices_RefusesADayThatIsNotADayAndACallWithoutAnIndex(t *testi
 	t.Parallel()
 
 	reader := &querytooltest.KeyedReader{}
-	tool := rateTool(t, toolRateListFuelIndexPrices, reader)
+	tool := rateTool(t, "rate_list_fuel_index_prices", reader)
 
 	_, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
 		querytool.ParamFuelIndexID: pulid.MustNew("fidx_").String(), "from": "last spring",
@@ -112,7 +112,7 @@ func TestFuelSurchargePrograms_MatchesTheQueryInTheRowsItRead(t *testing.T) {
 	t.Parallel()
 
 	reader := &querytooltest.KeyedReader{Answers: fuelRatesAnswer()}
-	tool := rateTool(t, toolRateListFuelSurcharge, reader)
+	tool := rateTool(t, "rate_list_fuel_surcharge_programs", reader)
 
 	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{"query": "doe"}))
 	require.NoError(t, err)
@@ -132,7 +132,7 @@ func TestFuelSurchargePrograms_SaysWhyAProgramHasNoSurcharge(t *testing.T) {
 
 	tool := rateTool(
 		t,
-		toolRateListFuelSurcharge,
+		"rate_list_fuel_surcharge_programs",
 		&querytooltest.KeyedReader{Answers: fuelRatesAnswer()},
 	)
 
@@ -152,7 +152,7 @@ func TestFuelSurchargePrograms_SaysNothingOfWhatAccessWithheld(t *testing.T) {
 
 	tool := rateTool(
 		t,
-		toolRateListFuelSurcharge,
+		"rate_list_fuel_surcharge_programs",
 		&querytooltest.KeyedReader{Answers: fuelRatesAnswer(
 			"fuelProgramCurrentRates.price", "fuelProgramCurrentRates.ratePerMile",
 		)},
@@ -210,7 +210,7 @@ func TestRateAgreementGet_ReadsTheCardWithItsLanes(t *testing.T) {
 func TestRateAgreementGet_TheCardSelectsWhatTheSummaryPromises(t *testing.T) {
 	t.Parallel()
 
-	read := graphqlread.Reads[toolRateGetAgreement]
+	read := graphqlread.Reads["rate_get_agreement"]
 	selected := make(map[string]bool, len(read.Fields))
 	for _, field := range read.Fields {
 		selected[field.Name] = field.Selected

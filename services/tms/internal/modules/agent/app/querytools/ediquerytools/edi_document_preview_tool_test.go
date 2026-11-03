@@ -155,9 +155,9 @@ func TestPreviewEDIDocument_AnswersATenderWithThe990ItWouldSend(t *testing.T) {
 	result, err := tool.Query(t.Context(), querytooltest.ChatParams(map[string]any{
 		paramTransactionSet:      "990",
 		querytool.ParamPartnerID: partnerID.String(),
-		paramEDITransferID:       transfer.ID.String(),
-		paramTenderResponse:      "Decline",
-		paramDeclineReason:       "No trucks Friday",
+		paramTransferID:          transfer.ID.String(),
+		paramResponse:            "Decline",
+		paramReason:              "No trucks Friday",
 	}, ""))
 	require.NoError(t, err)
 
@@ -288,23 +288,23 @@ func TestPreviewEDIDocument_RefusesWhatItCannotPreview(t *testing.T) {
 				paramTransactionSet: "990", querytool.ParamPartnerID: partnerID, querytool.ParamShipmentID: shipmentID,
 			},
 			permissions: readers(permission.ResourceEDI, permission.ResourceShipment),
-			contains:    paramEDITransferID,
+			contains:    paramTransferID,
 		},
 		"a 204 named by both": {
 			params: map[string]any{
 				paramTransactionSet: "204", querytool.ParamPartnerID: partnerID,
-				querytool.ParamShipmentID: shipmentID, paramEDITransferID: transferID,
+				querytool.ParamShipmentID: shipmentID, paramTransferID: transferID,
 			},
 			permissions: readers(permission.ResourceEDI, permission.ResourceShipment),
-			contains:    paramEDITransferID,
+			contains:    paramTransferID,
 		},
 		"an answer on a 214": {
 			params: map[string]any{
 				paramTransactionSet: "214", querytool.ParamPartnerID: partnerID, querytool.ParamShipmentID: shipmentID,
-				paramTenderResponse: "Accept",
+				paramResponse: "Accept",
 			},
 			permissions: readers(permission.ResourceEDI, permission.ResourceShipment),
-			contains:    paramTenderResponse,
+			contains:    paramResponse,
 		},
 		"a shipment the person may not read": {
 			params: map[string]any{

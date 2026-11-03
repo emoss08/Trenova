@@ -9,14 +9,10 @@ import (
 )
 
 const (
-	ToolListWorkerChecklists         = "worker_list_checklists"
-	ToolListWorkerTraining           = "worker_list_training"
-	toolListWorkerPerformanceReviews = "worker_list_performance_reviews"
-
 	opDeskChecklistTemplates = "DeskWorkerChecklistTemplates"
 	OpDeskReviewTemplates    = "DeskPerformanceReviewTemplates"
 
-	inputTrigger = "trigger"
+	fieldTrigger = "trigger"
 
 	workerChecklistsSummary = "List one worker's onboarding, offboarding and other checklists " +
 		"with every item and where it stands, and the templates a person can start by " +
@@ -31,9 +27,6 @@ const (
 		"keys worker_update_performance_review scores."
 	NoteOpenOnly = "Defaults to false, the open ones only."
 
-	ToolListWorkerInjuries = "worker_list_injuries"
-	ToolListWorkerDOTTests = "worker_list_dot_tests"
-
 	workerInjuriesSummary = "List injury and illness cases on the OSHA log, for one worker or a " +
 		"year, with the classification, days away or restricted and the workers' comp " +
 		"claim. Medical detail follows the injury permission. It yields the injuryId " +
@@ -42,8 +35,6 @@ const (
 		"collection still open across the organization. Each row has the test type, why it " +
 		"was ordered, its status and dates; the substance and result are shown only where " +
 		"access reaches Restricted. It yields the testId worker_cancel_dot_test takes."
-	toolListWorkerLeaveCases        = "worker_list_leave_cases"
-	toolListEmploymentVerifications = "worker_list_employment_verifications"
 
 	workerLeaveCasesSummary = "List FMLA, medical, military, parental and personal leave cases. " +
 		"Cases for one worker or the whole organization come with their status, " +
@@ -53,9 +44,7 @@ const (
 		"files. Each shows where its safety performance history request stands: asked when, " +
 		"followed up how often, and what came back. It yields the verificationId the " +
 		"verification tools take."
-	ToolListWorkerSafetyEvents = "worker_list_safety_events"
-	ToolWorkerListCredentials  = "worker_list_credentials"
-	credentialEntity           = "credentials"
+	credentialEntity = "credentials"
 
 	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
 
@@ -97,7 +86,7 @@ func RecordReadSpecs() []readspec.List {
 	return []readspec.List{
 		workerChecklistsSpec(),
 		{
-			Name:         ToolListWorkerTraining,
+			Name:         "worker_list_training",
 			EntityPlural: "training assignments",
 			Summary:      workerTrainingSummary,
 			Resource:     permission.ResourceWorkerTraining,
@@ -106,7 +95,7 @@ func RecordReadSpecs() []readspec.List {
 			Defaults:     map[string]any{querytool.WfParamClosed: false},
 		},
 		{
-			Name:         toolListWorkerPerformanceReviews,
+			Name:         "worker_list_performance_reviews",
 			EntityPlural: "performance reviews",
 			Summary:      workerReviewsSummary,
 			Resource:     permission.ResourcePerformanceReview,
@@ -115,11 +104,11 @@ func RecordReadSpecs() []readspec.List {
 				Key:       "templates",
 				Operation: OpDeskReviewTemplates,
 				What:      "review templates",
-				Inputs:    map[string]any{querytool.InputStatus: querytool.ActiveStatus},
+				Inputs:    map[string]any{querytool.ParamStatus: querytool.ActiveStatus},
 			}},
 		},
 		{
-			Name:         ToolListWorkerInjuries,
+			Name:         "worker_list_injuries",
 			EntityPlural: "injury cases",
 			Summary:      workerInjuriesSummary,
 			Resource:     permission.ResourceWorkerInjury,
@@ -129,7 +118,7 @@ func RecordReadSpecs() []readspec.List {
 			Shape:        withholdPrivacyCaseNames,
 		},
 		{
-			Name:         ToolListWorkerDOTTests,
+			Name:         "worker_list_dot_tests",
 			EntityPlural: "drug and alcohol tests",
 			Summary:      workerDOTTestsSummary,
 			Resource:     permission.ResourceWorkerDOTTest,
@@ -138,7 +127,7 @@ func RecordReadSpecs() []readspec.List {
 			Defaults:     querytool.ListDefaults,
 		},
 		{
-			Name:         toolListWorkerLeaveCases,
+			Name:         "worker_list_leave_cases",
 			EntityPlural: "leave cases",
 			Summary:      workerLeaveCasesSummary,
 			Resource:     permission.ResourceWorkerLeave,
@@ -149,7 +138,7 @@ func RecordReadSpecs() []readspec.List {
 		workerSafetyEventsSpec(),
 		workerCredentialsSpec(),
 		{
-			Name:         toolListEmploymentVerifications,
+			Name:         "worker_list_employment_verifications",
 			EntityPlural: "previous employers",
 			Summary:      employmentVerificationsSummary,
 			Resource:     permission.ResourceQualification,
@@ -162,7 +151,7 @@ func RecordReadSpecs() []readspec.List {
 
 func workerChecklistsSpec() readspec.List {
 	return readspec.List{
-		Name:         ToolListWorkerChecklists,
+		Name:         "worker_list_checklists",
 		EntityPlural: "checklists",
 		Summary:      workerChecklistsSummary,
 		Resource:     permission.ResourceWorkerChecklist,
@@ -174,8 +163,8 @@ func workerChecklistsSpec() readspec.List {
 			Operation: opDeskChecklistTemplates,
 			What:      "checklist templates",
 			Inputs: map[string]any{
-				querytool.InputStatus: querytool.ActiveStatus,
-				inputTrigger:          string(workerchecklist.ChecklistTriggerManual),
+				querytool.ParamStatus: querytool.ActiveStatus,
+				fieldTrigger:          string(workerchecklist.ChecklistTriggerManual),
 			},
 		}},
 	}
@@ -183,7 +172,7 @@ func workerChecklistsSpec() readspec.List {
 
 func workerSafetyEventsSpec() readspec.List {
 	return readspec.List{
-		Name:         ToolListWorkerSafetyEvents,
+		Name:         "worker_list_safety_events",
 		EntityPlural: "safety events",
 		Summary:      workerSafetyEventsSummary,
 		Resource:     permission.ResourceWorkerSafetyEvent,
@@ -204,7 +193,7 @@ func workerSafetyEventsSpec() readspec.List {
 
 func workerCredentialsSpec() readspec.List {
 	return readspec.List{
-		Name:         ToolWorkerListCredentials,
+		Name:         "worker_list_credentials",
 		EntityPlural: credentialEntity,
 		Summary:      workerCredentialsSummary,
 		SearchTerms: []string{
@@ -222,7 +211,7 @@ func workerCredentialsSpec() readspec.List {
 			Key:       "credentialTypes",
 			Operation: opDeskCredentialTypes,
 			What:      "credential types",
-			Inputs:    map[string]any{querytool.InputStatus: querytool.ActiveStatus},
+			Inputs:    map[string]any{querytool.ParamStatus: querytool.ActiveStatus},
 			Scoped:    true,
 			Unless:    []string{paramCredentialTypeCode},
 		}},

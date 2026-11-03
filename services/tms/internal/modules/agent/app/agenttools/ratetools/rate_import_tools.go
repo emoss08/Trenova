@@ -238,13 +238,17 @@ func rateSimulationFrom(
 	}
 	name, err := toolparams.RequireBoundedText(
 		params.Params,
-		paramSimulationName,
+		paramName,
 		maxSimulationName,
 	)
 	if err != nil {
 		return nil, err
 	}
-	description, err := toolparams.BoundedText(params.Params, paramDescription, maxSimulationText)
+	description, err := toolparams.BoundedText(
+		params.Params,
+		toolparams.ParamDescription,
+		maxSimulationText,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -305,12 +309,12 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 			"background; no shipment, rate or invoice changes.",
 		Properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			paramSimulationName: toolparams.StringProperty(
+			paramName: toolparams.StringProperty(
 				"What the simulation is called, such as "+
 					"Acme renewal against Q3.",
 				maxSimulationName,
 			),
-			paramDescription: toolparams.StringProperty(
+			toolparams.ParamDescription: toolparams.StringProperty(
 				"What it is meant to answer.",
 				maxSimulationText,
 			),
@@ -324,7 +328,7 @@ func NewRunRateSimulationTool(simulations RateSimulationKeeper) agenttoolports.A
 			),
 		},
 		Required: []string{
-			paramRateAgreementID, paramSimulationName, paramSampleFrom, paramSampleTo,
+			paramRateAgreementID, paramName, paramSampleFrom, paramSampleTo,
 		},
 		Target:      targetRateAgreement,
 		SearchTerms: []string{"simulate", "what if", "replay", "backtest", "renewal"},

@@ -82,7 +82,7 @@ func (t *EvaluateServiceFailuresTool) Name() string { return "exception_evaluate
 
 func (t *EvaluateServiceFailuresTool) Recipe() []string {
 	return []string{
-		toolparams.ToolShipmentGetTracking,
+		"shipment_get_tracking",
 		"exception_list_service_failures",
 		"exception_evaluate_service_failures",
 	}
@@ -316,7 +316,7 @@ func (t *ResolveServiceFailureTool) Recipe() []string {
 	return []string{
 		"exception_list_service_failures",
 		"exception_get_service_failure",
-		toolparams.ToolShipmentGetTracking,
+		"shipment_get_tracking",
 		"exception_list_service_failure_reason_codes",
 		"exception_resolve_service_failure",
 	}

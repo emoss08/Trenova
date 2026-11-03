@@ -6,9 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -116,8 +114,8 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 
 	assert.False(t, set.Disclosed)
 	assert.Len(t, set.Specs, 5, "the agent's four tools plus ask_user")
-	assert.NotContains(t, specNames(set.Specs), runtimetools.FindToolsName)
-	assert.Contains(t, specNames(set.Specs), askuser.Name,
+	assert.NotContains(t, specNames(set.Specs), "find_tools")
+	assert.Contains(t, specNames(set.Specs), "ask_user",
 		"asking for a missing value is not a capability an agent has to be granted")
 }
 
@@ -144,8 +142,8 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 		toolaccess.PreselectedTools+2,
 		"the preselected tools, find_tools and ask_user",
 	)
-	assert.Contains(t, specNames(set.Specs), runtimetools.FindToolsName)
-	assert.Contains(t, specNames(set.Specs), askuser.Name)
+	assert.Contains(t, specNames(set.Specs), "find_tools")
+	assert.Contains(t, specNames(set.Specs), "ask_user")
 	assert.Less(t, len(set.Specs), len(names),
 		"the point is to send fewer schemas than the agent holds")
 }
@@ -295,8 +293,8 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 			[]string{
 				"customer_list",
 				"location_list",
-				runtimetools.FindToolsName,
-				askuser.Name,
+				"find_tools",
+				"ask_user",
 			},
 			name,
 		)
@@ -358,11 +356,11 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 	require.NotEmpty(t, summaries)
 
 	disclosed := agentprompt.BuildSystemPrompt(definition, runtimeContextWith(summaries, true))
-	assert.Contains(t, disclosed, runtimetools.FindToolsName)
+	assert.Contains(t, disclosed, "find_tools")
 	assert.Contains(t, disclosed, "call find_tools before you tell")
 
 	whole := agentprompt.BuildSystemPrompt(definition, runtimeContextWith(summaries, false))
-	assert.NotContains(t, whole, runtimetools.FindToolsName)
+	assert.NotContains(t, whole, "find_tools")
 	assert.Contains(t, whole, "are the only ones you have")
 }
 
@@ -529,7 +527,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	service, _, _ := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			runtimetools.FindToolsName,
+			"find_tools",
 			map[string]any{"need": "driver medical card expiry"},
 		),
 		runtimetest.TextTurn("The compliance assistant can check that."),
@@ -558,7 +556,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, runtimetools.FindToolsName, result.Messages[2].ToolName)
+	assert.Equal(t, "find_tools", result.Messages[2].ToolName)
 	assert.Equal(t, []pulid.ID{compliance.ID}, result.Messages[2].HandOffAgents)
 
 	var finished []assistantstreamports.AssistantToolFinishedEvent
@@ -568,7 +566,7 @@ func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
 		}
 	}
 	require.Len(t, finished, 1)
-	assert.Equal(t, runtimetools.FindToolsName, finished[0].Name)
+	assert.Equal(t, "find_tools", finished[0].Name)
 	assert.Equal(t, []pulid.ID{compliance.ID}, finished[0].HandOffAgents)
 }
 
@@ -635,7 +633,7 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 			Unattended: true,
 		},
 	)
-	assert.NotContains(t, specNames(small.Specs), askuser.Name)
+	assert.NotContains(t, specNames(small.Specs), "ask_user")
 
 	large := service.access.NewToolSet(
 		t.Context(),
@@ -646,11 +644,11 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 			Unattended: true,
 		},
 	)
-	assert.NotContains(t, specNames(large.Specs), askuser.Name)
+	assert.NotContains(t, specNames(large.Specs), "ask_user")
 	assert.Contains(
 		t,
 		specNames(large.Specs),
-		runtimetools.FindToolsName,
+		"find_tools",
 		"finding tools needs no person",
 	)
 }
@@ -746,7 +744,7 @@ func TestNewToolSet_OffersNothingWithoutAnActor(t *testing.T) {
 	assert.Empty(t, set.Allowed)
 	assert.Equal(
 		t,
-		[]string{askuser.Name},
+		[]string{"ask_user"},
 		specNames(set.Specs),
 		"only the question tool, which reads nothing",
 	)
@@ -981,7 +979,7 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 		},
 	)
 	require.False(t, set.Disclosed)
-	require.Contains(t, specNames(set.Specs), runtimetools.FindToolsName)
+	require.Contains(t, specNames(set.Specs), "find_tools")
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 

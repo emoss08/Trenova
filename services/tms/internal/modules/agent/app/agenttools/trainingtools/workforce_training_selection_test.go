@@ -23,7 +23,7 @@ func TestRecordTrainingCompletion_TakesTheAssignmentsOwnWorkerAndCourseBesideIt(
 	training := newFakeTraining()
 	tool := newRecordTrainingCompletionTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:          training.record.ID.String(),
+		paramTrainingRecordID:    training.record.ID.String(),
 		toolparams.ParamWorkerID: training.record.WorkerID.String(),
 		paramCourseID:            training.record.CourseID.String(),
 	})
@@ -40,7 +40,7 @@ func TestRecordTrainingCompletion_ARefusalForAnotherWorkersAssignmentShowsBothCa
 	training := newFakeTraining()
 	tool := newRecordTrainingCompletionTool(training)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramTrainingID:          training.record.ID.String(),
+		paramTrainingRecordID:    training.record.ID.String(),
 		toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(),
 		paramCourseID:            training.record.CourseID.String(),
 	})

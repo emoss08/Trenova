@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
@@ -20,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -33,10 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
-)
-
-const (
-	toolDetentionGetOccurrence = "detention_get_occurrence"
 )
 
 var driverMessagePriorities = agenttoolschema.Source(
@@ -269,15 +263,13 @@ func NewEmailCustomerTool(
 	}}
 }
 
-const emailCustomerToolName = customerupdateservice.SourceAgentEmail
-
-func (t *EmailCustomerTool) Name() string { return emailCustomerToolName }
+func (t *EmailCustomerTool) Name() string { return "customer_send_email" }
 
 func (t *EmailCustomerTool) Recipe() []string {
 	return []string{
-		toolparams.ToolShipmentGetTracking,
+		"shipment_get_tracking",
 		"customer_get_update_preferences",
-		emailCustomerToolName,
+		"customer_send_email",
 	}
 }
 
@@ -414,11 +406,11 @@ func ProvideSendDetentionNoticeTool(
 func (t *SendDetentionNoticeTool) Name() string { return "detention_send_notice" }
 
 func (t *SendDetentionNoticeTool) Prerequisites() []string {
-	return []string{"detention_list_occurrences", toolDetentionGetOccurrence}
+	return []string{"detention_list_occurrences", "detention_get_occurrence"}
 }
 
 func (t *SendDetentionNoticeTool) Recipe() []string {
-	return []string{toolDetentionGetOccurrence, "detention_send_notice"}
+	return []string{"detention_get_occurrence", "detention_send_notice"}
 }
 
 func (t *SendDetentionNoticeTool) Description() string {
@@ -508,7 +500,7 @@ func ProvideWaiveDetentionTool(detentions *detentionreview.Service) agenttoolpor
 func (t *WaiveDetentionTool) Name() string { return "detention_waive" }
 
 func (t *WaiveDetentionTool) Recipe() []string {
-	return []string{"detention_list_occurrences", toolDetentionGetOccurrence, "detention_waive"}
+	return []string{"detention_list_occurrences", "detention_get_occurrence", "detention_waive"}
 }
 
 func (t *WaiveDetentionTool) Description() string {
@@ -526,7 +518,7 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 				"The occurrence id from detention_list_occurrences.",
 				recordkind.DetentionOccurrence,
 			),
-			changepreview.FieldReason: agenttoolschema.Enum(
+			toolparams.ParamReason: agenttoolschema.Enum(
 				"The coded reason for the waiver.",
 				waiverReasons,
 			),
@@ -535,7 +527,7 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 				"description": "Why, in a sentence a person can read on the occurrence later.",
 			},
 		},
-		"required":             []string{"occurrenceId", changepreview.FieldReason, "note"},
+		"required":             []string{"occurrenceId", toolparams.ParamReason, "note"},
 		"additionalProperties": false,
 	}
 }
@@ -589,7 +581,7 @@ func (t *WaiveDetentionTool) request(
 	if err != nil {
 		return detentionreview.WaiveParams{}, err
 	}
-	rawReason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
+	rawReason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return detentionreview.WaiveParams{}, err
 	}

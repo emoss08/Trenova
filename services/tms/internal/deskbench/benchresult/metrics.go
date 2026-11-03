@@ -90,7 +90,7 @@ func MeasureCase(result *CaseResult) CaseMetrics {
 		}
 		if first := firstOwnTool(turn); first != "" {
 			metrics.ToolTurns++
-			if first == findToolsName {
+			if first == "find_tools" {
 				metrics.FindFirstTurns++
 			}
 		}
@@ -260,8 +260,6 @@ func usedDomainTools(turn *benchrecord.TurnRecord) []string {
 
 	return used
 }
-
-const findToolsName = "find_tools"
 
 func firstOwnTool(turn *benchrecord.TurnRecord) string {
 	for _, call := range turn.Tools {

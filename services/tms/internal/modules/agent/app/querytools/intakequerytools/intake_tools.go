@@ -278,17 +278,17 @@ func (t *quoteShipmentTool) SearchTerms() []string {
 
 func (t *quoteShipmentTool) Prerequisites() []string {
 	return []string{
-		querytool.ToolCustomerList,
-		querytool.ToolMasterdataListServiceTypes,
-		querytool.ToolLocationList,
+		"customer_list",
+		"masterdata_list_service_types",
+		"location_list",
 	}
 }
 
 func (t *quoteShipmentTool) Recipe() []string {
 	return []string{
-		querytool.ToolCustomerList,
-		querytool.ToolMasterdataListServiceTypes,
-		querytool.ToolLocationList,
+		"customer_list",
+		"masterdata_list_service_types",
+		"location_list",
 		"rate_quote",
 	}
 }

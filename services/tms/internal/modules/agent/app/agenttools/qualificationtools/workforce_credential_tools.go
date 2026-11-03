@@ -26,7 +26,7 @@ const paramCredentialID = "credentialId" //nolint:gosec // G101: a parameter nam
 
 const paramCredentialTypeID = "credentialTypeId" //nolint:gosec // G101: a parameter name, not a credential
 
-const paramCredentialNumber = "number"
+const paramNumber = "number"
 
 const paramIssuingAuthority = "issuingAuthority"
 
@@ -39,14 +39,14 @@ const paramRenew = "renew"
 const kindCredential = "credential"
 
 var credentialFields = []string{
-	workforcekit.FieldWorkerID,
+	toolparams.ParamWorkerID,
 	paramCredentialTypeID,
 	changepreview.FieldStatus,
-	paramCredentialNumber,
+	paramNumber,
 	paramIssuingAuthority,
 	paramIssuedAt,
 	paramExpiresAt,
-	workforcekit.FieldDocument,
+	workforcekit.ParamDocumentID,
 	workforcekit.FieldNotes,
 	"verifiedById",
 	"verifiedAt",
@@ -121,13 +121,13 @@ func credentialRecord(credential *workercredential.WorkerCredential) toolpreview
 
 func credentialFactProperties() map[string]any {
 	return map[string]any{
-		paramCredentialNumber: toolparams.StringProperty("The number on the card or certificate, "+
+		paramNumber: toolparams.StringProperty("The number on the card or certificate, "+
 			"exactly as printed.", workforcekit.MaxCredentialField),
 		paramIssuingAuthority: toolparams.StringProperty("Who issued it, such as the state.",
 			workforcekit.MaxCredentialField),
-		paramIssuedAt:              agenttoolschema.Date("When it was issued."),
-		paramExpiresAt:             agenttoolschema.Date("When it expires."),
-		workforcekit.ParamDocument: workforcekit.DocumentProperty(),
+		paramIssuedAt:                agenttoolschema.Date("When it was issued."),
+		paramExpiresAt:               agenttoolschema.Date("When it expires."),
+		workforcekit.ParamDocumentID: workforcekit.DocumentProperty(),
 		toolparams.ParamNote: workforcekit.NoteProperty(
 			"Anything the credential should say.",
 		),
@@ -136,7 +136,7 @@ func credentialFactProperties() map[string]any {
 
 func applyCredentialFacts(entity *workercredential.WorkerCredential, params map[string]any) error {
 	var err error
-	if number, numErr := toolparams.OptionalBoundedText(params, paramCredentialNumber,
+	if number, numErr := toolparams.OptionalBoundedText(params, paramNumber,
 		workforcekit.MaxCredentialField); numErr != nil {
 		return numErr
 	} else if number != nil {
@@ -167,7 +167,7 @@ func applyCredentialFacts(entity *workercredential.WorkerCredential, params map[
 	} else if expires != nil {
 		entity.ExpiresAt = expires
 	}
-	documentID, err := toolparams.OptionalID(params, workforcekit.ParamDocument)
+	documentID, err := toolparams.OptionalID(params, workforcekit.ParamDocumentID)
 	if err != nil {
 		return err
 	}
@@ -390,9 +390,9 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 		permission.ResourceWorkerCredential,
 		permission.OpUpdate,
 	), map[string]any{
-		paramCredentialID:          credentialIDProperty(),
-		workforcekit.ParamDocument: workforcekit.DocumentProperty(),
-	}, paramCredentialID, workforcekit.ParamDocument), paramCredentialID,
+		paramCredentialID:            credentialIDProperty(),
+		workforcekit.ParamDocumentID: workforcekit.DocumentProperty(),
+	}, paramCredentialID, workforcekit.ParamDocumentID), paramCredentialID,
 		permission.ResourceWorkerCredential)
 	spec.SearchTerms = []string{"scanned card", "card scan"}
 
@@ -406,7 +406,7 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 			if err != nil {
 				return nil, err
 			}
-			documentID, err := toolparams.RequirePulid(params.Params, workforcekit.ParamDocument)
+			documentID, err := toolparams.RequirePulid(params.Params, workforcekit.ParamDocumentID)
 			if err != nil {
 				return nil, err
 			}
@@ -435,7 +435,7 @@ func newAttachWorkerCredentialDocumentTool(credentials CredentialKeeper) agentto
 				credentialRecord(change.Before),
 				change.Before,
 				change.After,
-				workforcekit.Options(workforcekit.FieldDocument, "verifiedById", "verifiedAt")...)
+				workforcekit.Options(workforcekit.ParamDocumentID, "verifiedById", "verifiedAt")...)
 			if err != nil {
 				return nil, err
 			}
@@ -469,18 +469,18 @@ func newArchiveWorkerCredentialTool(credentials CredentialKeeper) agenttoolports
 		permission.OpArchive,
 	), map[string]any{
 		paramCredentialID: credentialIDProperty(),
-		changepreview.FieldReason: toolparams.StringProperty(
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why it is archived.",
 			workforcekit.ShortChars,
 		),
-	}, paramCredentialID, changepreview.FieldReason), paramCredentialID, permission.ResourceWorkerCredential)
+	}, paramCredentialID, toolparams.ParamReason), paramCredentialID, permission.ResourceWorkerCredential)
 	spec.MaxTier = agent.TierPropose
 	spec.Reversible = false
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workforcekit.ReasonedRecord, *workercredentialservice.CredentialChange,
 	]{
-		Request: workforcekit.ReasonedRecordFrom(paramCredentialID, changepreview.FieldReason),
+		Request: workforcekit.ReasonedRecordFrom(paramCredentialID, toolparams.ParamReason),
 		Plan: func(
 			ctx context.Context,
 			req *workforcekit.ReasonedRecord,

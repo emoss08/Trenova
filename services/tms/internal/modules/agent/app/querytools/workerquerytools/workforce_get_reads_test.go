@@ -79,7 +79,7 @@ func TestWorkerGet_TheCardSelectsWhatTheRepositoryRowCarried(t *testing.T) {
 		}
 		return out
 	}
-	read := graphqlread.Reads[toolWorkerGet]
+	read := graphqlread.Reads["worker_get"]
 	own := selected(read.Fields)
 	for _, name := range []string{
 		"externalId", "city", "postalCode", "email", "phoneNumber", "emergencyContactName",
@@ -235,17 +235,17 @@ func TestWorkforceGets_ReadThroughTheirScreensOperations(t *testing.T) {
 	t.Parallel()
 
 	for tool, operation := range map[string]string{
-		toolWorkerGet:           "DeskWorkerCard",
-		ToolWorkerGetCredential: "DeskWorkerCredential",
-		toolWorkerGetDOTDraw:    "DotRandomDraw",
-		toolWorkerGetHOS:        "WorkerHosState",
+		"worker_get":                 "DeskWorkerCard",
+		"worker_get_credential":      "DeskWorkerCredential",
+		"worker_get_dot_random_draw": "DotRandomDraw",
+		"worker_get_hos":             "WorkerHosState",
 	} {
 		read, ok := graphqlread.Reads[tool]
 		require.True(t, ok, tool)
 		assert.Equal(t, graphqlread.VerbGet, read.Verb, tool)
 		assert.Equal(t, operation, read.Operation, tool)
 	}
-	hours, card := graphqlread.Reads[toolWorkerGetHOS], graphqlread.Reads[toolWorkerGet]
+	hours, card := graphqlread.Reads["worker_get_hos"], graphqlread.Reads["worker_get"]
 	assert.Equal(t, querytool.ParamWorkerID, hours.GetKey())
 	assert.Equal(t, graphqlread.IDVariable, card.GetKey())
 }

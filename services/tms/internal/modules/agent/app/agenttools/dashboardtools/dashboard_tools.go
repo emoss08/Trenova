@@ -69,11 +69,11 @@ func (t *CreateDashboardTool) Description() string {
 }
 
 func (t *CreateDashboardTool) Prerequisites() []string {
-	return []string{toolReportList, toolReportGet}
+	return []string{"report_list", "report_get"}
 }
 
 func (t *CreateDashboardTool) Recipe() []string {
-	return []string{toolReportList, toolReportGet, "report_create_dashboard"}
+	return []string{"report_list", "report_get", "report_create_dashboard"}
 }
 
 func (t *CreateDashboardTool) SearchTerms() []string {
@@ -314,8 +314,8 @@ func (t *AddDashboardTileTool) Name() string { return "report_add_dashboard_tile
 func (t *AddDashboardTileTool) Recipe() []string {
 	return []string{
 		"report_list_dashboards",
-		toolReportList,
-		toolReportGet,
+		"report_list",
+		"report_get",
 		"report_add_dashboard_tile",
 	}
 }
@@ -328,7 +328,7 @@ func (t *AddDashboardTileTool) Description() string {
 }
 
 func (t *AddDashboardTileTool) Prerequisites() []string {
-	return []string{"report_list_dashboards", toolReportList, toolReportGet}
+	return []string{"report_list_dashboards", "report_list", "report_get"}
 }
 
 func (t *AddDashboardTileTool) SearchTerms() []string {

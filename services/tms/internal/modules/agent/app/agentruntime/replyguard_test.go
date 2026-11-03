@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -133,7 +132,7 @@ func TestRun_AcceptsSilenceAfterAQuestion(t *testing.T) {
 	result, completion, _ := runReplies(
 		t,
 		runtimetest.ToolTurn(
-			askuser.Name,
+			"ask_user",
 			map[string]any{"question": "Which dashboard?", "allowOther": true},
 		),
 		runtimetest.TextTurn(""),
@@ -155,7 +154,7 @@ func TestRun_RefusesAQuestionThePersonJustAnswered(t *testing.T) {
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		runtimetest.ToolTurn(
-			askuser.Name,
+			"ask_user",
 			map[string]any{"question": "Which dashboard do you mean?"},
 		),
 		runtimetest.TextTurn("Using your home page."),
@@ -169,7 +168,7 @@ func TestRun_RefusesAQuestionThePersonJustAnswered(t *testing.T) {
 		History: []conversation.Message{
 			{Role: conversation.RoleUser, Content: "what is on my dashboard"},
 			{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
-				{ID: "c1", Name: askuser.Name, Arguments: map[string]any{
+				{ID: "c1", Name: "ask_user", Arguments: map[string]any{
 					"question": "which dashboard do you mean",
 				}},
 			}},
@@ -189,7 +188,7 @@ func TestRun_AsksANewQuestion(t *testing.T) {
 	result, _, _ := runReplies(
 		t,
 		runtimetest.ToolTurn(
-			askuser.Name,
+			"ask_user",
 			map[string]any{"question": "Which dashboard?", "allowOther": true},
 		),
 		runtimetest.TextTurn(""),

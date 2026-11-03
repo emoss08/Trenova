@@ -28,13 +28,13 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const paramReportRunID = "runId"
+const paramRunID = "runId"
 
 const paramDefinitionID = "definitionId"
 
 const paramDashboardID = "dashboardId"
 
-const paramReportScheduleID = "scheduleId"
+const paramScheduleID = "scheduleId"
 
 const paramFormats = "formats"
 
@@ -119,7 +119,7 @@ type reportRunView struct {
 
 func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentTool {
 	request := func(params *agenttoolports.ToolExecuteParams) (*reporting.GetRunRequest, error) {
-		id, err := toolparams.RequirePulid(params.Params, paramReportRunID)
+		id, err := toolparams.RequirePulid(params.Params, paramRunID)
 		if err != nil {
 			return nil, err
 		}
@@ -138,10 +138,10 @@ func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentToo
 		Rationale: "Stops a report the person asked for from running; nothing is changed or " +
 			"sent, and running the report again gives the same rows.",
 		Properties: map[string]any{
-			paramReportRunID: agenttoolschema.KindID(reportRunSupplier, recordkind.ReportRun),
+			paramRunID: agenttoolschema.KindID(reportRunSupplier, recordkind.ReportRun),
 		},
-		Required: []string{paramReportRunID},
-		Target:   reportTarget(paramReportRunID),
+		Required: []string{paramRunID},
+		Target:   reportTarget(paramRunID),
 	}), toolspec.ReceivablePlan[*reporting.GetRunRequest, *reporting.RunChange]{
 		Request: request,
 		Plan: func(
@@ -520,13 +520,13 @@ func (e scheduleEdit) apply(req *reportscheduleservice.SaveScheduleRequest) erro
 }
 
 func scheduleIDFrom(params *agenttoolports.ToolExecuteParams) (scheduleEdit, error) {
-	id, err := toolparams.RequirePulid(params.Params, paramReportScheduleID)
+	id, err := toolparams.RequirePulid(params.Params, paramScheduleID)
 	if err != nil {
 		return scheduleEdit{}, err
 	}
 	values := make(map[string]any, len(params.Params))
 	for key, value := range params.Params {
-		if key != paramReportScheduleID {
+		if key != paramScheduleID {
 			values[key] = value
 		}
 	}
@@ -549,7 +549,7 @@ func NewUpdateReportScheduleTool(schedules ScheduleAdministrator) agenttoolports
 		Rationale: "Changes where and when a report is emailed, which may be to addresses " +
 			"outside the organization.",
 		Properties: map[string]any{
-			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
+			paramScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
 				recordkind.ReportSchedule),
 			paramDefinitionID: agenttoolschema.RecordIDText(
 				permission.ResourceReport,
@@ -587,8 +587,8 @@ func NewUpdateReportScheduleTool(schedules ScheduleAdministrator) agenttoolports
 			),
 			carriertools.ParamEnabled: toolparams.BooleanProperty("Whether the schedule runs."),
 		},
-		Required:    []string{paramReportScheduleID},
-		Target:      reportTarget(paramReportScheduleID),
+		Required:    []string{paramScheduleID},
+		Target:      reportTarget(paramScheduleID),
 		SearchTerms: []string{"scheduled", "recipients", "emailed", "subscription"},
 	}, toolspec.ReceivablePlan[scheduleEdit, *reportscheduleservice.ScheduleChange]{
 		Request: scheduleIDFrom,
@@ -659,15 +659,15 @@ func NewDeleteReportScheduleTool(schedules ScheduleAdministrator) agenttoolports
 		Rationale: "Stops a report reaching the people it was scheduled for; nothing brings " +
 			"the schedule back but setting it up again, so a person always decides.",
 		Properties: map[string]any{
-			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
+			paramScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
 				recordkind.ReportSchedule),
 		},
-		Required:    []string{paramReportScheduleID},
-		Target:      reportTarget(paramReportScheduleID),
+		Required:    []string{paramScheduleID},
+		Target:      reportTarget(paramScheduleID),
 		SearchTerms: []string{"scheduled", "unsubscribe", "emailing"},
 	}), toolspec.ReceivablePlan[*reportscheduleservice.GetScheduleRequest, *report.ReportSchedule]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*reportscheduleservice.GetScheduleRequest, error) {
-			id, err := toolparams.RequirePulid(params.Params, paramReportScheduleID)
+			id, err := toolparams.RequirePulid(params.Params, paramScheduleID)
 			if err != nil {
 				return nil, err
 			}

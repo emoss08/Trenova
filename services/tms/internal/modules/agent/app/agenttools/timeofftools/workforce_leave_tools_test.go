@@ -196,12 +196,12 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	cases := newFakeLeave()
 	tool := newOpenLeaveCaseTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID: cases.lcase.WorkerID.String(),
-		paramLeaveType:           "Parental",
-		"startsAt":               "2026-10-05",
-		"endsAt":                 "2026-11-13",
-		"requestedAt":            "2026-09-30",
-		paramEligibilityHours:    float64(1800),
+		toolparams.ParamWorkerID:    cases.lcase.WorkerID.String(),
+		paramLeaveType:              "Parental",
+		"startsAt":                  "2026-10-05",
+		"endsAt":                    "2026-11-13",
+		"requestedAt":               "2026-09-30",
+		paramEligibilityHoursWorked: float64(1800),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -290,7 +290,7 @@ func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramLeaveCaseID: cases.lcase.ID.String(),
 		"usedOn":         "2026-10-06",
-		paramLeaveHours:  "4.5",
+		paramHours:       "4.5",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -313,7 +313,7 @@ func TestDeleteLeaveDay_IsOnlyProposed(t *testing.T) {
 	cases := newFakeLeave()
 	tool := newDeleteLeaveDayTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{paramLeaveEntryID: cases.entry.ID.String()},
+		map[string]any{paramLeaveDayID: cases.entry.ID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -385,7 +385,7 @@ func TestLeaveTools_ATeamGrantReachesOnlyTheTeamsCases(t *testing.T) {
 		leaveTeam{cases.lcase.WorkerID: true}, cases)
 	offTeam := NewLeaveScope(leaveGrant{scope: permission.DataScopeTeam}, leaveTeam{}, cases)
 	closeCase := map[string]any{paramLeaveCaseID: cases.lcase.ID.String()}
-	removeDay := map[string]any{paramLeaveEntryID: cases.entry.ID.String()}
+	removeDay := map[string]any{paramLeaveDayID: cases.entry.ID.String()}
 	openCase := map[string]any{
 		toolparams.ParamWorkerID: cases.lcase.WorkerID.String(),
 		paramLeaveType:           "FMLA",

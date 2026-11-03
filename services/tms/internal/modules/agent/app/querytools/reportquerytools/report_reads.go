@@ -9,26 +9,23 @@ import (
 )
 
 const (
-	paramReportDefinition = "definitionId"
-	fieldRunStatus        = "status"
-	fieldRunRowsStored    = "rowsStored"
-	fieldRunComparable    = "comparable"
-	fieldRunReason        = "reason"
-	fieldRunQueuedAt      = "queuedAt"
-	fieldRunStartedAt     = "startedAt"
-	fieldAlertConditions  = "conditions"
-	fieldAlertPriority    = "priority"
-	fieldAlertRecordID    = "recordId"
-	fieldAlertUpdatedAt   = "updatedAt"
-
-	reportDefinitionSource = "report_list"
+	paramDefinitionID = "definitionId"
+	fieldRowsStored   = "rowsStored"
+	fieldComparable   = "comparable"
+	fieldReason       = "reason"
+	fieldQueuedAt     = "queuedAt"
+	fieldStartedAt    = "startedAt"
+	fieldConditions   = "conditions"
+	fieldPriority     = "priority"
+	fieldRecordID     = "recordId"
+	fieldUpdatedAt    = "updatedAt"
 )
 
 // savedReportReference is the saved report a report read is narrowed to.
 var savedReportReference = readspec.Reference{
 	Resource: permission.ResourceReport,
 	What:     "The saved report",
-	Source:   reportDefinitionSource,
+	Source:   "report_list",
 }
 
 // ReadSpecs are the report lists, each read through the operation the
@@ -53,13 +50,13 @@ func reportRunsListSpec() readspec.List {
 		QueryNote: "Words to find in a run's status, format or built-in report key.",
 		Notes: map[string]string{
 			"cannedKey": "A built-in report's reportKey, from report_list.",
-			fieldRunStatus: "queued, running, succeeded, failed, canceled or expired; only " +
+			querytool.ParamStatus: "queued, running, succeeded, failed, canceled or expired; only " +
 				"a succeeded run can be compared.",
 		},
-		References: map[string]readspec.Reference{paramReportDefinition: savedReportReference},
+		References: map[string]readspec.Reference{paramDefinitionID: savedReportReference},
 		Unoffered: []string{
 			"artifactExpiresAt", "byteSize", "cacheHit", "cannedVersion", "durationMs",
-			fieldRunQueuedAt, fieldRunStartedAt, "revisionId",
+			fieldQueuedAt, fieldStartedAt, "revisionId",
 		},
 		Resource: permission.ResourceReport,
 		Shape:    runComparable,
@@ -76,7 +73,7 @@ func reportSchedulesListSpec() readspec.List {
 			"schedule up can change it with report_update_schedule or remove it with " +
 			"report_delete_schedule; mine says which are theirs.",
 		SearchTerms: []string{"scheduled", "emailed", "recurring", "subscription"},
-		References:  map[string]readspec.Reference{paramReportDefinition: savedReportReference},
+		References:  map[string]readspec.Reference{paramDefinitionID: savedReportReference},
 		Defaults:    querytool.ListDefaults,
 		Resource:    permission.ResourceReport,
 	}
@@ -87,27 +84,27 @@ func reportSchedulesListSpec() readspec.List {
 // whose status or storage was withheld is left unjudged rather than called
 // incomparable.
 func runComparable(row map[string]any, withheld map[string]struct{}, _ filtercatalog.Clock) {
-	if _, hidden := withheld[fieldRunStatus]; hidden {
+	if _, hidden := withheld[querytool.ParamStatus]; hidden {
 		return
 	}
-	if _, hidden := withheld[fieldRunRowsStored]; hidden {
+	if _, hidden := withheld[fieldRowsStored]; hidden {
 		return
 	}
 
-	status := report.RunStatus(querytool.StringOf(row[fieldRunStatus]))
-	stored, _ := row[fieldRunRowsStored].(bool)
-	row[fieldRunComparable] = false
+	status := report.RunStatus(querytool.StringOf(row[querytool.ParamStatus]))
+	stored, _ := row[fieldRowsStored].(bool)
+	row[fieldComparable] = false
 	switch {
 	case !status.IsTerminal():
-		row[fieldRunReason] = "This run is still " + string(status) +
+		row[fieldReason] = "This run is still " + string(status) +
 			"; it can be compared once it succeeds."
 	case status != report.RunStatusSucceeded:
-		row[fieldRunReason] = "This run ended as " + string(status) + ", so it has no rows."
+		row[fieldReason] = "This run ended as " + string(status) + ", so it has no rows."
 	case !stored:
-		row[fieldRunReason] = "This run was generated before its rows were stored, so it " +
+		row[fieldReason] = "This run was generated before its rows were stored, so it " +
 			"cannot be compared."
 	default:
-		row[fieldRunComparable] = true
+		row[fieldComparable] = true
 	}
 }
 
@@ -129,8 +126,8 @@ func tableChangeAlertsListSpec() readspec.List {
 			"conditionMatch":      "all when every condition must hold, any when one is enough.",
 		},
 		Unoffered: []string{
-			"customTitle", "customMessage", "topic", fieldAlertPriority, fieldAlertRecordID,
-			fieldAlertUpdatedAt,
+			"customTitle", "customMessage", "topic", fieldPriority, fieldRecordID,
+			fieldUpdatedAt,
 		},
 		Resource: permission.ResourceTableChangeAlert,
 		Shape:    alertConditionCount,
@@ -142,10 +139,10 @@ func tableChangeAlertsListSpec() readspec.List {
 // count of withheld conditions would say something about them. An alert
 // with none reaches here without the field, which the read leaves out empty.
 func alertConditionCount(row map[string]any, withheld map[string]struct{}, _ filtercatalog.Clock) {
-	if _, hidden := withheld[fieldAlertConditions]; hidden {
+	if _, hidden := withheld[fieldConditions]; hidden {
 		return
 	}
-	conditions, _ := row[fieldAlertConditions].([]any)
+	conditions, _ := row[fieldConditions].([]any)
 	row["conditionCount"] = len(conditions)
-	delete(row, fieldAlertConditions)
+	delete(row, fieldConditions)
 }

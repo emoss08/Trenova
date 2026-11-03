@@ -36,11 +36,11 @@ import (
 )
 
 const (
-	paramScriptDatasets    = "datasets"
-	paramDatasetName       = "name"
-	paramDatasetRun        = "reportRunId"
-	paramDatasetDocument   = "documentId"
-	paramDatasetDefinition = "definition"
+	paramDatasets    = "datasets"
+	paramName        = "name"
+	paramReportRunID = "reportRunId"
+	paramDocumentID  = "documentId"
+	paramDefinition  = "definition"
 
 	extensionCSV  = "csv"
 	extensionXLSX = "xlsx"
@@ -71,7 +71,7 @@ func datasetsFrom(raw any) ([]datasetRequest, error) {
 	}
 	items, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf("%s must be a list", paramScriptDatasets)
+		return nil, fmt.Errorf("%s must be a list", paramDatasets)
 	}
 	if len(items) > analysis.MaxDatasets {
 		return nil, fmt.Errorf("give at most %d datasets", analysis.MaxDatasets)
@@ -84,7 +84,7 @@ func datasetsFrom(raw any) ([]datasetRequest, error) {
 		if !isObject {
 			return nil, fmt.Errorf("dataset %d must be an object with a name", idx+1)
 		}
-		name := strings.TrimSpace(querytool.OptionalString(fields, paramDatasetName))
+		name := strings.TrimSpace(querytool.OptionalString(fields, paramName))
 		if err := analysis.CheckDatasetName(name); err != nil {
 			return nil, err
 		}
@@ -92,16 +92,16 @@ func datasetsFrom(raw any) ([]datasetRequest, error) {
 			return nil, fmt.Errorf("two datasets are named %s; give each its own name", name)
 		}
 		seen[name] = struct{}{}
-		run, hasRun, err := querytool.OptionalPulid(fields, paramDatasetRun)
+		run, hasRun, err := querytool.OptionalPulid(fields, paramReportRunID)
 		if err != nil {
 			return nil, err
 		}
-		document, hasDocument, err := querytool.OptionalPulid(fields, paramDatasetDocument)
+		document, hasDocument, err := querytool.OptionalPulid(fields, paramDocumentID)
 		if err != nil {
 			return nil, err
 		}
 		var definition *ir.Definition
-		if encoded, given := fields[paramDatasetDefinition]; given && encoded != nil {
+		if encoded, given := fields[paramDefinition]; given && encoded != nil {
 			if definition, err = reporting.DecodeDefinition(encoded); err != nil {
 				return nil, fmt.Errorf("dataset %s: %w", name, err)
 			}

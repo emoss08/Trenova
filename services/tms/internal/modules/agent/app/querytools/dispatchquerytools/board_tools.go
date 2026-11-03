@@ -28,8 +28,8 @@ type boardReader interface {
 }
 
 const (
-	paramBoardLate    = "late"
-	paramBoardDrivers = "drivers"
+	paramLate    = "late"
+	paramDrivers = "drivers"
 
 	defaultBoardHours = 24
 	maxBoardHours     = 7 * 24
@@ -203,14 +203,14 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 			"type":        "boolean",
 			"description": "Only moves with no driver or carrier. Default false.",
 		},
-		paramBoardLate: map[string]any{
+		paramLate: map[string]any{
 			"type": "boolean",
 			"description": "Only the moves late now: past the pickup window's close with no " +
 				"arrival, or past the delivery window's close once picked up, the same rule as " +
 				"shipment_list's late. A move inside its window is due now, not late. Every " +
 				"late move and no others, a page at a time. Default false.",
 		},
-		paramBoardDrivers: map[string]any{
+		paramDrivers: map[string]any{
 			"type": "boolean",
 			"description": "List the drivers beside the moves. Default true, and false with " +
 				"late; leave them out when the question is only about loads.",
@@ -258,9 +258,9 @@ func (t *getDispatchBoardTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	late := querytool.OptionalBool(params.Params, paramBoardLate)
+	late := querytool.OptionalBool(params.Params, paramLate)
 	drivers := !late
-	if raw, given := params.Params[paramBoardDrivers].(bool); given {
+	if raw, given := params.Params[paramDrivers].(bool); given {
 		drivers = raw
 	}
 

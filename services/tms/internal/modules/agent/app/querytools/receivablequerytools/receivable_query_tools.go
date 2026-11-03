@@ -30,12 +30,12 @@ import (
 )
 
 const (
-	defaultReceivableRows  = 25
-	maxReceivableRows      = 50
-	maxReceivableInvoices  = 50
-	maxRunItemsShown       = 500
-	paramInvoiceRunID      = "invoiceRunId"
-	paramReceivableInvoice = "invoiceId"
+	defaultReceivableRows = 25
+	maxReceivableRows     = 50
+	maxReceivableInvoices = 50
+	maxRunItemsShown      = 500
+	paramInvoiceRunID     = "invoiceRunId"
+	paramInvoiceID        = "invoiceId"
 )
 
 type adjustmentReader interface {
@@ -162,7 +162,7 @@ func (t *listInvoiceAdjustmentsTool) Description() string {
 
 func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 	return querytool.ObjectSchema(map[string]any{
-		paramReceivableInvoice: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+		paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 			"Optional: the invoice, from invoice_list or "+
 				"invoice_get. Leave it out for the approval queue."),
 		querytool.ParamLimit: limitProperty(),
@@ -181,7 +181,7 @@ func (t *listInvoiceAdjustmentsTool) Query(
 		return nil, err
 	}
 
-	invoiceID, hasInvoice, err := querytool.OptionalPulid(params.Params, paramReceivableInvoice)
+	invoiceID, hasInvoice, err := querytool.OptionalPulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -337,13 +337,13 @@ func (t *listCreditMemoApplicationsTool) Description() string {
 
 func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 	return querytool.ObjectSchema(map[string]any{
-		querytool.ParamReceivableInvoices: agenttoolschema.RecordIDs(
+		querytool.ParamInvoiceIDs: agenttoolschema.RecordIDs(
 			permission.ResourceInvoice,
 			"Invoices or credit memos, from invoice_list "+
 				"or invoice_get.",
 			maxReceivableInvoices,
 		),
-	}, querytool.ParamReceivableInvoices)
+	}, querytool.ParamInvoiceIDs)
 }
 
 func (t *listCreditMemoApplicationsTool) Policy() agenttoolports.ToolPolicy {
@@ -359,7 +359,7 @@ func (t *listCreditMemoApplicationsTool) Query(
 	}
 	ids, err := querytool.RequireIDList(
 		params.Params,
-		querytool.ParamReceivableInvoices,
+		querytool.ParamInvoiceIDs,
 		maxReceivableInvoices,
 	)
 	if err != nil {
@@ -811,11 +811,11 @@ func (t *listInvoiceShareCandidatesTool) Description() string {
 
 func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 	return querytool.ObjectSchema(map[string]any{
-		paramReceivableInvoice: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+		paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 			"The invoice, from invoice_list or invoice_get."),
 		querytool.ParamQuery: querytool.StringParam("Optional: part of a name or username."),
 		querytool.ParamLimit: limitProperty(),
-	}, paramReceivableInvoice)
+	}, paramInvoiceID)
 }
 
 func (t *listInvoiceShareCandidatesTool) Policy() agenttoolports.ToolPolicy {
@@ -829,7 +829,7 @@ func (t *listInvoiceShareCandidatesTool) Query(
 	if err := querytool.GuardQuery(params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := querytool.RequirePulid(params.Params, paramReceivableInvoice)
+	invoiceID, err := querytool.RequirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}

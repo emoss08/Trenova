@@ -27,7 +27,7 @@ func TestMeasureCase_CountsTheCacheReadOfEveryCallButATurnsFirst(t *testing.T) {
 		FinishedAt: time.Unix(10, 0),
 		Steps: []*StepResult{{Turns: []*benchrecord.TurnRecord{
 			turnWithCalls(
-				[]string{findToolsName, "equipment_list_trailers"},
+				[]string{"find_tools", "equipment_list_trailers"},
 				benchrecord.CallSummary{
 					Kind:        benchrecord.ModelCallChat,
 					InputTokens: 900,

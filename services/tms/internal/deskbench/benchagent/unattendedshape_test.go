@@ -40,7 +40,7 @@ func TestUnattendedMatches_ResetsToolTiersALeftRunSet(t *testing.T) {
 	assert.True(t, UnattendedMatches(existing, UnattendedShape(template)))
 
 	existing.ToolTiers = map[string]agent.AutonomyTier{
-		agentdefinition.CoreToolRaiseException: agent.TierPropose,
+		"agent_raise_exception": agent.TierPropose,
 	}
 	assert.False(t, UnattendedMatches(existing, UnattendedShape(template)),
 		"tiers a crashed case left on the agent are cleared by the next sync")

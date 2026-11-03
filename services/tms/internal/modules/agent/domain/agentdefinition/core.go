@@ -2,30 +2,17 @@ package agentdefinition
 
 import "slices"
 
-const (
-	CoreToolRecallMemory   = "agent_list_memories"
-	CoreToolRemember       = "agent_create_memory"
-	CoreToolGuideProfile   = "agent_guide_profile"
-	CoreToolRaiseException = "agent_raise_exception"
-	CoreToolFindInTrenova  = "agent_find_page"
-	CoreToolOpenPage       = "agent_open_page"
-	CoreToolWaitUntil      = "agent_create_wait"
-	CoreToolCancelWait     = "agent_cancel_wait"
-	CoreToolSchedule       = "agent_create_schedule"
-	CoreToolReadAttachment = "agent_read_attachment"
-)
-
 var coreTools = [...]string{
-	CoreToolRecallMemory,
-	CoreToolRemember,
-	CoreToolGuideProfile,
-	CoreToolRaiseException,
-	CoreToolFindInTrenova,
-	CoreToolOpenPage,
-	CoreToolWaitUntil,
-	CoreToolCancelWait,
-	CoreToolSchedule,
-	CoreToolReadAttachment,
+	"agent_list_memories",
+	"agent_create_memory",
+	"agent_guide_profile",
+	"agent_raise_exception",
+	"agent_find_page",
+	"agent_open_page",
+	"agent_create_wait",
+	"agent_cancel_wait",
+	"agent_create_schedule",
+	"agent_read_attachment",
 }
 
 // CoreTools are held by every agent without being selected. Memory, escalation,

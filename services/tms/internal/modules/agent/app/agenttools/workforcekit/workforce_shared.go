@@ -21,17 +21,13 @@ const NoteChars = 2000
 
 const ShortChars = 255
 
-const ParamDocument = "documentId"
+const ParamDocumentID = "documentId"
 
-const ParamOccurred = "occurredAt"
+const ParamOccurredAt = "occurredAt"
 
 const ParamDueDate = "dueDate"
 
 const FieldNotes = "notes"
-
-const FieldWorkerID = "workerId"
-
-const FieldDocument = "documentId"
 
 const FieldCompletedAt = "completedAt"
 
@@ -39,7 +35,7 @@ const FieldClosedAt = "closedAt"
 
 const FieldRequestedAt = "requestedAt"
 
-const FieldCertRequestedAt = "certificationRequestedAt"
+const FieldCertificationRequestedAt = "certificationRequestedAt"
 
 const FieldStartedAt = "startedAt"
 
@@ -151,9 +147,9 @@ func Record(
 }
 
 var wfRefs = map[string]permission.Resource{
-	FieldWorkerID:              permission.ResourceWorker,
+	toolparams.ParamWorkerID:   permission.ResourceWorker,
 	toolparams.ParamShipmentID: permission.ResourceShipment,
-	FieldDocument:              permission.ResourceDocument,
+	ParamDocumentID:            permission.ResourceDocument,
 	"recordedById":             permission.ResourceUser,
 	"closedById":               permission.ResourceUser,
 	"awardedById":              permission.ResourceUser,
@@ -176,44 +172,44 @@ var wfRefs = map[string]permission.Resource{
 }
 
 var wfTimes = map[string]assistantartifact.DisplayType{
-	ParamOccurred:                  assistantartifact.DisplayDateTime,
-	FieldClosedAt:                  assistantartifact.DisplayDateTime,
-	"scheduledAt":                  assistantartifact.DisplayDateTime,
-	"collectedAt":                  assistantartifact.DisplayDateTime,
-	"finalizedAt":                  assistantartifact.DisplayDateTime,
-	"notifiedAt":                   assistantartifact.DisplayDateTime,
-	"drawnAt":                      assistantartifact.DisplayDateTime,
-	"reportedAt":                   assistantartifact.DisplayDateTime,
-	FieldCompletedAt:               assistantartifact.DisplayDate,
-	"assignedAt":                   assistantartifact.DisplayDateTime,
-	"archivedAt":                   assistantartifact.DisplayDateTime,
-	"verifiedAt":                   assistantartifact.DisplayDateTime,
-	FieldRequestedAt:               assistantartifact.DisplayDate,
-	"responseReceivedAt":           assistantartifact.DisplayDate,
-	"lastFollowUpAt":               assistantartifact.DisplayDateTime,
-	FieldCertRequestedAt:           assistantartifact.DisplayDateTime,
-	"certificationDueAt":           assistantartifact.DisplayDate,
-	"pointsExpireAt":               assistantartifact.DisplayDate,
-	"dueAt":                        assistantartifact.DisplayDate,
-	FieldExpiresAt:                 assistantartifact.DisplayDate,
-	"issuedAt":                     assistantartifact.DisplayDate,
-	"startsAt":                     assistantartifact.DisplayDate,
-	"endsAt":                       assistantartifact.DisplayDate,
-	"usedOn":                       assistantartifact.DisplayDate,
-	FieldStartedAt:                 assistantartifact.DisplayDate,
-	"employedFrom":                 assistantartifact.DisplayDate,
-	"employedTo":                   assistantartifact.DisplayDate,
-	"returnedToWorkAt":             assistantartifact.DisplayDate,
-	"claimFiledAt":                 assistantartifact.DisplayDate,
-	changepreview.FieldResolvedAt:  assistantartifact.DisplayDateTime,
-	changepreview.FieldReviewedAt:  assistantartifact.DisplayDateTime,
-	changepreview.FieldVoidedAt:    assistantartifact.DisplayDateTime,
-	"generatedAt":                  assistantartifact.DisplayDateTime,
-	"effectiveAt":                  assistantartifact.DisplayDate,
-	changepreview.FieldPeriodStart: assistantartifact.DisplayDate,
-	changepreview.FieldPeriodEnd:   assistantartifact.DisplayDate,
-	FieldStartDate:                 assistantartifact.DisplayDate,
-	FieldEndDate:                   assistantartifact.DisplayDate,
+	ParamOccurredAt:               assistantartifact.DisplayDateTime,
+	FieldClosedAt:                 assistantartifact.DisplayDateTime,
+	"scheduledAt":                 assistantartifact.DisplayDateTime,
+	"collectedAt":                 assistantartifact.DisplayDateTime,
+	"finalizedAt":                 assistantartifact.DisplayDateTime,
+	"notifiedAt":                  assistantartifact.DisplayDateTime,
+	"drawnAt":                     assistantartifact.DisplayDateTime,
+	"reportedAt":                  assistantartifact.DisplayDateTime,
+	FieldCompletedAt:              assistantartifact.DisplayDate,
+	"assignedAt":                  assistantartifact.DisplayDateTime,
+	"archivedAt":                  assistantartifact.DisplayDateTime,
+	"verifiedAt":                  assistantartifact.DisplayDateTime,
+	FieldRequestedAt:              assistantartifact.DisplayDate,
+	"responseReceivedAt":          assistantartifact.DisplayDate,
+	"lastFollowUpAt":              assistantartifact.DisplayDateTime,
+	FieldCertificationRequestedAt: assistantartifact.DisplayDateTime,
+	"certificationDueAt":          assistantartifact.DisplayDate,
+	"pointsExpireAt":              assistantartifact.DisplayDate,
+	"dueAt":                       assistantartifact.DisplayDate,
+	FieldExpiresAt:                assistantartifact.DisplayDate,
+	"issuedAt":                    assistantartifact.DisplayDate,
+	"startsAt":                    assistantartifact.DisplayDate,
+	"endsAt":                      assistantartifact.DisplayDate,
+	"usedOn":                      assistantartifact.DisplayDate,
+	FieldStartedAt:                assistantartifact.DisplayDate,
+	"employedFrom":                assistantartifact.DisplayDate,
+	"employedTo":                  assistantartifact.DisplayDate,
+	"returnedToWorkAt":            assistantartifact.DisplayDate,
+	"claimFiledAt":                assistantartifact.DisplayDate,
+	changepreview.FieldResolvedAt: assistantartifact.DisplayDateTime,
+	changepreview.FieldReviewedAt: assistantartifact.DisplayDateTime,
+	changepreview.FieldVoidedAt:   assistantartifact.DisplayDateTime,
+	"generatedAt":                 assistantartifact.DisplayDateTime,
+	"effectiveAt":                 assistantartifact.DisplayDate,
+	toolparams.ParamPeriodStart:   assistantartifact.DisplayDate,
+	toolparams.ParamPeriodEnd:     assistantartifact.DisplayDate,
+	FieldStartDate:                assistantartifact.DisplayDate,
+	FieldEndDate:                  assistantartifact.DisplayDate,
 }
 
 func Options(fields ...string) []toolpreview.Option {

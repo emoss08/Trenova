@@ -52,7 +52,7 @@ func handOff(t *testing.T, p handOffParams) (*agentruntimeports.RunResult, *dele
 	}
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callTurn("call_read", lookup.ToolName, map[string]any{"shipmentId": "shp_1"}),
-		callTurn("call_hand", runtimetools.DelegateTaskName, args),
+		callTurn("call_hand", "delegate_task", args),
 		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion,

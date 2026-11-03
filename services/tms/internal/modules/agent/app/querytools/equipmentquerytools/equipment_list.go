@@ -82,7 +82,7 @@ func NewListTractorsTool(
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolListTractors,
+		Name:         "equipment_list_tractors",
 		Row:          equipmentRow{},
 		EntityPlural: pluralTractors,
 		Summary:      tractorsSummary,
@@ -148,7 +148,7 @@ func NewListTrailersTool(repo trailerports.TrailerRepository) agenttoolports.Age
 	})
 
 	return listtool.New(&listtool.Spec{
-		Name:         toolListTrailers,
+		Name:         "equipment_list_trailers",
 		Row:          equipmentRow{},
 		EntityPlural: pluralTrailers,
 		Summary:      trailersSummary,

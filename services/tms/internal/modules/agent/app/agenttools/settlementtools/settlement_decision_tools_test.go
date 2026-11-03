@@ -328,14 +328,14 @@ func TestRejectDriverSettlement_NeedsABoundedReason(t *testing.T) {
 
 	long := agenttoolstest.ExecuteParams(map[string]any{
 		settlementpreview.ParamSettlementID: entity.ID.String(),
-		paramSettlementReason:               string(make([]byte, maxSettlementReason+1)),
+		toolparams.ParamReason:              string(make([]byte, maxSettlementReason+1)),
 	})
 	require.Error(t, tool.Execute(t.Context(), long))
 	assert.Nil(t, book.performed)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		settlementpreview.ParamSettlementID: entity.ID.String(),
-		paramSettlementReason:               "  Detention line is doubled  ",
+		toolparams.ParamReason:              "  Detention line is doubled  ",
 	})
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -399,23 +399,23 @@ func TestAddDriverSettlementAdjustment_PreviewsTheNewNet(t *testing.T) {
 
 	zero := agenttoolstest.ExecuteParams(map[string]any{
 		settlementpreview.ParamSettlementID: entity.ID.String(),
-		paramAdjustmentDescription:          "Nothing",
-		paramAdjustmentAmount:               "0.00",
+		toolparams.ParamDescription:         "Nothing",
+		toolparams.ParamAmount:              "0.00",
 	})
 	require.Error(t, tool.Execute(t.Context(), zero))
 
 	badCode := agenttoolstest.ExecuteParams(map[string]any{
 		settlementpreview.ParamSettlementID: entity.ID.String(),
-		paramAdjustmentDescription:          "Fuel advance repaid",
-		paramAdjustmentAmount:               "-50",
+		toolparams.ParamDescription:         "Fuel advance repaid",
+		toolparams.ParamAmount:              "-50",
 		toolparams.ParamPayCodeID:           "not-an-id",
 	})
 	require.Error(t, tool.Execute(t.Context(), badCode))
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		settlementpreview.ParamSettlementID: entity.ID.String(),
-		paramAdjustmentDescription:          "Fuel advance repaid",
-		paramAdjustmentAmount:               "-50.00",
+		toolparams.ParamDescription:         "Fuel advance repaid",
+		toolparams.ParamAmount:              "-50.00",
 		toolparams.ParamPayCodeID:           payCode.String(),
 	})
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)

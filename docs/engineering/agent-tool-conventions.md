@@ -76,6 +76,19 @@ row (`worker_list`'s `withoutCredential`); what the model opened each
 row for belongs on the list row when it is cheap to read for a page (a shipment row's holds with
 their notes).
 
+**Written out wherever it is named.** A tool's name is a string literal at its one definition
+(`Name()`, a spec's `Name`), and everything else that names it writes the name: another tool's
+`Source`, recipe or prerequisites, a description, a preset, a starter, a policy map. There is no
+constant for a tool's name, exported or not, and no file of names: the name is the contract
+the model, saved agents and migrations read, and a search for it finds every use. A value
+stored under a tool's name by another module (a shipment comment's `tool`, a page draft's
+`Action`) is that module's own constant; the tool still writes its literal, and a test holds the
+two equal (`TestEmailCustomerTool_IsNamedAsTheCommentsItWritesRecordIt`). The command palette's
+`get_record` opens a kind through the read whose name reads `get_<kind>`, so a kind's read is
+`<kind>_get`. `TestEveryToolATextNamesIsRegistered` fails on any word in a tool's description,
+search terms or parameter descriptions that reads as a tool name (a namespace, then a verb a
+tool in it uses) and is not one, so a rename cannot leave the old name behind.
+
 ## Parameters
 
 | Kind | Convention |
@@ -89,6 +102,17 @@ their notes).
 | Lateness | A list of work that runs late takes `late`, read from the stops' windows, never from a status a person sets (`shipment_list`, `dispatch_get_board`). |
 | Status | A tool narrowing by status takes `status` as a list of the domain's values, all in one call. |
 | Filters | The generated list tools take `filters` of `{field, operator, value, values, days}` from the entity's filter catalog; a tool that takes `status` itself leaves it out of `filters`. |
+
+**Constants for parameters and fields.** In `app/querytools` and `app/agenttools` a word a tool
+takes or reads is one constant per package, named for the word: `param<Word>` for what a tool
+takes, `field<Word>` for what it only reads or writes (a record's field, a bound operation's
+input), exported when another package reads it, with initialisms in capitals (`"transferId"` is
+`paramTransferID`, `"bol"` is `fieldBOL`, `"proNumber"` is `paramProNumber`). Two tools in a
+package that take the same word share its constant; there is no `arg` or `input` prefix and no
+name for what the word means to one tool (`paramEscrowDescription`). A word the shared packages
+already export (`querytool.ParamStatus`, `toolparams.ParamShipmentID`) is read from them.
+`TestEveryParameterAndFieldConstantIsNamedForItsWord` in `agenttoolcatalog` holds every package
+to it.
 
 A tool bound to a GraphQL input (`internal/api/toolcontract`) keeps the input's field names, and
 a parameter the input names differently says why in the binding.
@@ -118,7 +142,9 @@ a parameter the input names differently says why in the binding.
    the repository as whole words: Go, agent templates and starters, seeds, bench agents and
    scenarios, the eval suites, write coverage, tool contract bindings, the client's tool
    titles and fixtures, i18n catalogs (keys and translations together), and docs. Leave history
-   alone: old migrations, `findings.yaml`, the harness review's audit.
+   alone: old migrations, `findings.yaml`, the harness review's audit. Every name is written
+   out (see "Names"), so the mapping reaches each use, and `TestEveryToolATextNamesIsRegistered`
+   catches a description still naming the old one.
 2. Add a migration that calls `agent_rename_tool(old, new)` for each pair. It renames the tool
    in saved agent definitions (tool lists, disabled lists, tiers), earned trust, tool rule
    overrides and memories, keeps one entry where two tools merged, and quarantines captured

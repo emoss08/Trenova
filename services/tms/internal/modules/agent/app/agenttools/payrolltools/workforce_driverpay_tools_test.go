@@ -210,8 +210,8 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		toolparams.ParamDisputeID:  reviews.dispute.ID.String(),
 		paramDecision:              "Approve",
 		paramResolutionNote:        "Detention confirmed from the gate log",
-		paramAdjustmentAmountMoney: "75.00",
-		paramAdjustmentLabel:       "Detention at Joliet DC",
+		paramAdjustmentAmount:      "75.00",
+		paramAdjustmentDescription: "Detention at Joliet DC",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -260,17 +260,17 @@ func TestResolveSettlementDispute_ClassifiesByWhetherPayMoves(t *testing.T) {
 		toolparams.ParamDisputeID:  reviews.dispute.ID.String(),
 		paramDecision:              "Deny",
 		paramResolutionNote:        "x",
-		paramAdjustmentAmountMoney: "10.00",
-		paramAdjustmentLabel:       "x",
+		paramAdjustmentAmount:      "10.00",
+		paramAdjustmentDescription: "x",
 	}
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(deniedWithPay)), "validation runs the service's plan")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			toolparams.ParamDisputeID:  reviews.dispute.ID.String(),
-			paramDecision:              "Approve",
-			paramResolutionNote:        "x",
-			paramAdjustmentAmountMoney: "10.00",
+			toolparams.ParamDisputeID: reviews.dispute.ID.String(),
+			paramDecision:             "Approve",
+			paramResolutionNote:       "x",
+			paramAdjustmentAmount:     "10.00",
 		})), "an adjustment says what it is for")
 }
 
@@ -307,7 +307,7 @@ func TestReviewDriverExpense_ARejectionSaysWhy(t *testing.T) {
 	}
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(reject)))
-	reject[changepreview.FieldNote] = "No receipt attached"
+	reject[toolparams.ParamNote] = "No receipt attached"
 	preview = agenttoolstest.PreviewWithoutWrites(
 		t,
 		reviews.guard,

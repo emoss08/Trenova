@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
@@ -58,10 +57,10 @@ func NewActOnPortalTool(
 	return &ActOnPortalTool{portals: portals, waits: waits, l: logger.Named("tool.act-on-portal")}
 }
 
-func (t *ActOnPortalTool) Name() string { return agentextension.ToolActOnPortal }
+func (t *ActOnPortalTool) Name() string { return "web_use_portal" }
 
 func (t *ActOnPortalTool) Prerequisites() []string {
-	return []string{agentextension.ToolListPortalSites, agentextension.ToolReadPortal}
+	return []string{"web_list_portal_sites", "web_read_portal"}
 }
 
 func (t *ActOnPortalTool) Description() string {

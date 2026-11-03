@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -190,7 +190,7 @@ func (f *fakeCarrierCoverage) coverWith(status shipmentvocab.CarrierAssignmentSt
 func (f *fakeCarrierCoverage) assignParams(extra map[string]any) map[string]any {
 	params := map[string]any{
 		changepreview.PreviewFieldShipmentMoveID: f.moveID().String(),
-		carrierpreview.FieldCarrierID:            f.carrier.ID.String(),
+		toolparams.ParamCarrierID:                f.carrier.ID.String(),
 		"rateMethod":                             "Flat",
 		"baseRate":                               "1800.00",
 		"fuelSurcharge":                          "120",
@@ -389,7 +389,7 @@ func TestCancelCarrierAssignment_SendsTheMoveAndTheReason(t *testing.T) {
 		NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
 			map[string]any{
 				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-				changepreview.FieldReason:                "  Carrier's truck broke down ",
+				toolparams.ParamReason:                   "  Carrier's truck broke down ",
 			},
 		)),
 	)
@@ -420,7 +420,7 @@ func TestCancelCarrierAssignment_AConfirmedCarrierIsAProposal(t *testing.T) {
 	params := func(carriers *fakeCarrierCoverage) map[string]any {
 		return map[string]any{
 			changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			changepreview.FieldReason:                "Carrier fell off",
+			toolparams.ParamReason:                   "Carrier fell off",
 		}
 	}
 
@@ -460,7 +460,7 @@ func TestCancelCarrierAssignment_PreviewShowsTheCarrierComingOff(t *testing.T) {
 		func() (*agentpreview.ToolPreview, error) {
 			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-				changepreview.FieldReason:                "Carrier fell off",
+				toolparams.ParamReason:                   "Carrier fell off",
 			}))
 		},
 	)

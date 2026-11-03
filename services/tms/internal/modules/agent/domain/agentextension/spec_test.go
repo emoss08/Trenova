@@ -58,7 +58,7 @@ func TestCapabilityForToolIgnoresOtherTools(t *testing.T) {
 	assert.False(t, found)
 	assert.False(t, agentextension.IsExtensionTool("shipment_get"))
 	assert.False(t, agentextension.ReturnsExternalContent("shipment_get"))
-	assert.True(t, agentextension.ReturnsExternalContent(agentextension.ToolWebSearch))
+	assert.True(t, agentextension.ReturnsExternalContent("web_search"))
 }
 
 func readyExa(availability agentextension.Availability) *agentextension.Extension {
@@ -95,30 +95,30 @@ func TestActiveOffersGrantsAndServes(t *testing.T) {
 
 	none := agentextension.Active{}
 	assert.True(t, none.Offers("shipment_get"))
-	assert.False(t, none.Offers(agentextension.ToolWebSearch))
+	assert.False(t, none.Offers("web_search"))
 	assert.Empty(t, none.Grants())
 
 	chosen := agentextension.ActiveFrom(
 		[]*agentextension.Extension{readyExa(agentextension.AvailabilitySelectedAgents)},
 	)
-	assert.True(t, chosen.Offers(agentextension.ToolWebRead))
+	assert.True(t, chosen.Offers("web_read"))
 	assert.Empty(t, chosen.Grants())
-	assert.False(t, chosen.GrantsEveryAgent(agentextension.ToolWebSearch))
+	assert.False(t, chosen.GrantsEveryAgent("web_search"))
 
 	everyone := agentextension.ActiveFrom(
 		[]*agentextension.Extension{readyExa(agentextension.AvailabilityAllAgents)},
 	)
 	assert.Equal(t,
 		[]string{
-			agentextension.ToolWebSearch, agentextension.ToolWebRead,
-			agentextension.ToolWatchWeb, agentextension.ToolListWebWatches,
-			agentextension.ToolStopWebWatch,
+			"web_search", "web_read",
+			"web_watch", "web_list_watches",
+			"web_stop_watch",
 		},
 		everyone.Grants(),
 		"Exa can watch the web, so every agent is given the watch tools too",
 	)
-	assert.True(t, everyone.GrantsEveryAgent(agentextension.ToolWebRead))
-	served, ok := everyone.Serving(agentextension.ToolWebSearch)
+	assert.True(t, everyone.GrantsEveryAgent("web_read"))
+	served, ok := everyone.Serving("web_search")
 	require.True(t, ok)
 	assert.Equal(t, agentextension.TypeExa, served.Type)
 }

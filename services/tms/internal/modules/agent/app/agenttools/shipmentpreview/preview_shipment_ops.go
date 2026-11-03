@@ -2,6 +2,7 @@ package shipmentpreview
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -62,7 +63,7 @@ func ShipmentCopyChange(
 		toolpreview.Record{Resource: permission.ResourceShipment, Label: label},
 		duplicateViewOf(source, copied),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.FieldCustomerID:        permission.ResourceCustomer,
+			toolparams.ParamCustomerID:           permission.ResourceCustomer,
 			changepreview.FieldFormulaTemplateID: permission.ResourceFormulaTemplate,
 		}),
 		toolpreview.Types(operationDateTimes),

@@ -42,7 +42,7 @@ func reportTool(
 }
 
 func runNode(id string, status report.RunStatus, stored bool) map[string]any {
-	return map[string]any{"id": id, fieldRunStatus: string(status), fieldRunRowsStored: stored}
+	return map[string]any{"id": id, querytool.ParamStatus: string(status), fieldRowsStored: stored}
 }
 
 // A run can be compared only when it succeeded and its rows were stored, and
@@ -63,26 +63,26 @@ func TestReportRuns_SayWhichRunsCanBeCompared(t *testing.T) {
 	definition := pulid.MustNew("rdef_").String()
 
 	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
-		paramReportDefinition: definition,
+		paramDefinitionID: definition,
 	}))
 	require.NoError(t, err)
 
 	sent := reader.Sent("DeskReportRuns")
 	require.NotNil(t, sent)
 	input, _ := sent.Variables["input"].(map[string]any)
-	assert.Equal(t, []map[string]any{{"field": paramReportDefinition, "operator": "eq",
+	assert.Equal(t, []map[string]any{{"field": paramDefinitionID, "operator": "eq",
 		"value": definition}}, input["fieldFilters"])
 	outcome, ok := data.(graphqllisttool.Outcome)
 	require.True(t, ok)
 	require.Len(t, outcome.Items, 4)
-	assert.Equal(t, true, outcome.Items[0][fieldRunComparable])
-	assert.NotContains(t, outcome.Items[0], fieldRunReason)
-	assert.Equal(t, false, outcome.Items[1][fieldRunComparable])
-	assert.Contains(t, outcome.Items[1][fieldRunReason], "before its rows were stored")
-	assert.Equal(t, false, outcome.Items[2][fieldRunComparable])
-	assert.Contains(t, outcome.Items[2][fieldRunReason], "ended as failed")
-	assert.Equal(t, false, outcome.Items[3][fieldRunComparable])
-	assert.Contains(t, outcome.Items[3][fieldRunReason], "still running")
+	assert.Equal(t, true, outcome.Items[0][fieldComparable])
+	assert.NotContains(t, outcome.Items[0], fieldReason)
+	assert.Equal(t, false, outcome.Items[1][fieldComparable])
+	assert.Contains(t, outcome.Items[1][fieldReason], "before its rows were stored")
+	assert.Equal(t, false, outcome.Items[2][fieldComparable])
+	assert.Contains(t, outcome.Items[2][fieldReason], "ended as failed")
+	assert.Equal(t, false, outcome.Items[3][fieldComparable])
+	assert.Contains(t, outcome.Items[3][fieldReason], "still running")
 }
 
 // A run whose status or storage the reader may not see is not called
@@ -90,12 +90,12 @@ func TestReportRuns_SayWhichRunsCanBeCompared(t *testing.T) {
 func TestReportRuns_LeaveAWithheldRunUnjudged(t *testing.T) {
 	t.Parallel()
 
-	for _, field := range []string{fieldRunStatus, fieldRunRowsStored} {
+	for _, field := range []string{querytool.ParamStatus, fieldRowsStored} {
 		row := runNode("rrun_1", report.RunStatusSucceeded, true)
 		delete(row, field)
 		runComparable(row, map[string]struct{}{field: {}}, filtercatalog.Clock{})
-		assert.NotContains(t, row, fieldRunComparable, field)
-		assert.NotContains(t, row, fieldRunReason, field)
+		assert.NotContains(t, row, fieldComparable, field)
+		assert.NotContains(t, row, fieldReason, field)
 	}
 }
 
@@ -113,14 +113,14 @@ func TestReportSchedules_SendTheCallsArguments(t *testing.T) {
 	definition := pulid.MustNew("rdef_").String()
 
 	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
-		paramReportDefinition: definition, "enabledOnly": true, querytool.ParamLimit: 10,
+		paramDefinitionID: definition, "enabledOnly": true, querytool.ParamLimit: 10,
 	}))
 	require.NoError(t, err)
 
 	sent := reader.Sent("DeskReportSchedules")
 	require.NotNil(t, sent)
 	assert.Equal(t, map[string]any{
-		paramReportDefinition: definition, "enabledOnly": true, querytool.ParamLimit: 10,
+		paramDefinitionID: definition, "enabledOnly": true, querytool.ParamLimit: 10,
 	}, sent.Variables)
 	outcome, ok := data.(map[string]any)
 	require.True(t, ok)
@@ -134,12 +134,12 @@ func TestReportSchedules_SendTheCallsArguments(t *testing.T) {
 func TestTableChangeAlerts_CountOnlyTheConditionsTheyShow(t *testing.T) {
 	t.Parallel()
 
-	shown := map[string]any{"id": "tcas_1", fieldAlertConditions: []any{
+	shown := map[string]any{"id": "tcas_1", fieldConditions: []any{
 		map[string]any{"field": "status"}, map[string]any{"field": "total"},
 	}}
 	alertConditionCount(shown, nil, filtercatalog.Clock{})
 	assert.Equal(t, 2, shown["conditionCount"])
-	assert.NotContains(t, shown, fieldAlertConditions)
+	assert.NotContains(t, shown, fieldConditions)
 
 	none := map[string]any{"id": "tcas_2"}
 	alertConditionCount(none, nil, filtercatalog.Clock{})
@@ -148,7 +148,7 @@ func TestTableChangeAlerts_CountOnlyTheConditionsTheyShow(t *testing.T) {
 	hidden := map[string]any{"id": "tcas_3"}
 	alertConditionCount(
 		hidden,
-		map[string]struct{}{fieldAlertConditions: {}},
+		map[string]struct{}{fieldConditions: {}},
 		filtercatalog.Clock{},
 	)
 	assert.NotContains(t, hidden, "conditionCount")

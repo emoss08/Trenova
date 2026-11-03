@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
-	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -185,7 +184,7 @@ func TestWorkerList_DispatchableFiltersByHoldEmploymentAndCompliance(t *testing.
 
 	reader := &querytooltest.KeyedReader{}
 	tool, err := graphqllisttool.New(
-		querytooltest.ListSpecNamed(t, ReadSpecs(), querytool.ToolWorkerList),
+		querytooltest.ListSpecNamed(t, ReadSpecs(), "worker_list"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -206,12 +205,12 @@ func TestWorkerList_DispatchableFiltersByHoldEmploymentAndCompliance(t *testing.
 		{"field": "assignmentBlocked", "operator": "isnull"},
 		{"field": "status", "operator": "eq", "value": "Active"},
 		{"field": "profile.complianceStatus", "operator": "ne", "value": "NonCompliant"},
-	}, input[graphqlread.InputFieldFilters])
-	assert.NotContains(t, input, graphqlread.InputFilterGroups)
+	}, input[graphqlread.FieldFieldFilters])
+	assert.NotContains(t, input, graphqlread.FieldFilterGroups)
 
 	reader = &querytooltest.KeyedReader{}
 	tool, err = graphqllisttool.New(
-		querytooltest.ListSpecNamed(t, ReadSpecs(), querytool.ToolWorkerList),
+		querytooltest.ListSpecNamed(t, ReadSpecs(), "worker_list"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -222,14 +221,14 @@ func TestWorkerList_DispatchableFiltersByHoldEmploymentAndCompliance(t *testing.
 	)
 	require.NoError(t, err)
 	input = querytooltest.SentInput(t, reader)
-	assert.NotContains(t, input, graphqlread.InputFieldFilters)
+	assert.NotContains(t, input, graphqlread.FieldFieldFilters)
 	assert.Equal(t, []map[string]any{{"filters": []map[string]any{
 		{"field": "canBeAssigned", "operator": "eq", "value": false},
 		{"field": "availableForDispatch", "operator": "eq", "value": false},
 		{"field": "assignmentBlocked", "operator": "isnotnull"},
 		{"field": "status", "operator": "ne", "value": "Active"},
 		{"field": "profile.complianceStatus", "operator": "eq", "value": "NonCompliant"},
-	}}}, input[graphqlread.InputFilterGroups])
+	}}}, input[graphqlread.FieldFilterGroups])
 
 	_, err = tool.Query(
 		t.Context(),

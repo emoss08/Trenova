@@ -25,7 +25,7 @@ import (
 
 const ParamCommentID = "commentId"
 
-const ParamCommentText = "comment"
+const ParamComment = "comment"
 
 const ParamResolved = "resolved"
 
@@ -41,15 +41,13 @@ const fieldEditedAt = "editedAt"
 
 const FieldPriority = "priority"
 
-const fieldCommentText = "comment"
-
 const fieldDeletedByID = "deletedById"
 
-const fieldRequiresAck = "requiresAcknowledgment"
+const fieldRequiresAcknowledgment = "requiresAcknowledgment"
 
-const fieldCommentType = "type"
+const fieldType = "type"
 
-const FieldCommentVisib = "visibility"
+const FieldVisibility = "visibility"
 
 var commentUserRefs = map[string]permission.Resource{
 	FieldPinnedByID:                 permission.ResourceUser,
@@ -378,10 +376,10 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 		ShipmentID: shipmentID,
 		TenantInfo: toolparams.TenantFrom(params),
 	}}
-	if _, given := params.Params[ParamCommentText]; given {
+	if _, given := params.Params[ParamComment]; given {
 		text, textErr := toolparams.RequireBoundedText(
 			params.Params,
-			ParamCommentText,
+			ParamComment,
 			maxCommentChars,
 		)
 		if textErr != nil {
@@ -391,7 +389,7 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	}
 	visibility, given, err := toolparams.OptionalEnum(
 		params.Params,
-		FieldCommentVisib,
+		FieldVisibility,
 		agenttoolschema.CommentVisibilities.Values,
 	)
 	if err != nil {
@@ -413,7 +411,7 @@ func readCommentEdit(params *agenttoolports.ToolExecuteParams) (*commentEdit, er
 	}
 	if edit.requiresAck, err = toolparams.OptionalBoolPointer(
 		params.Params,
-		fieldRequiresAck,
+		fieldRequiresAcknowledgment,
 	); err != nil {
 		return nil, err
 	}
@@ -533,16 +531,18 @@ func NewEditShipmentCommentTool(
 				"The shipment the comment is on",
 			),
 			ParamCommentID: commentIDProperty(),
-			ParamCommentText: toolparams.StringProperty(
+			ParamComment: toolparams.StringProperty(
 				"The new text, in full.",
 				maxCommentChars,
 			),
-			FieldCommentVisib: agenttoolschema.Enum("Who sees it. Only widen it to a customer "+
+			FieldVisibility: agenttoolschema.Enum("Who sees it. Only widen it to a customer "+
 				"or a driver when the person asked.", agenttoolschema.CommentVisibilities),
 			FieldPriority: agenttoolschema.Enum("How urgently dispatch should read it.",
 				agenttoolschema.CommentPriorities),
-			fieldRequiresAck: toolparams.BooleanProperty("Whether the people it mentions must " +
-				"acknowledge it."),
+			fieldRequiresAcknowledgment: toolparams.BooleanProperty(
+				"Whether the people it mentions must " +
+					"acknowledge it.",
+			),
 		},
 		Required: []string{toolparams.ParamShipmentID, ParamCommentID},
 		Target:   targetComment,
@@ -600,8 +600,8 @@ func renderCommentEdit(_ *commentEdit, plan *commentEditPlan) (*agentpreview.Too
 		commentRecord(plan.change.Before),
 		plan.change.Before,
 		plan.change.After,
-		toolpreview.Only(fieldCommentText, fieldCommentType, FieldCommentVisib,
-			FieldPriority, fieldRequiresAck, fieldEditedAt),
+		toolpreview.Only(ParamComment, fieldType, FieldVisibility,
+			FieldPriority, fieldRequiresAcknowledgment, fieldEditedAt),
 		toolpreview.Volatile(fieldEditedAt),
 	)
 	if err != nil {
@@ -699,7 +699,7 @@ func NewDeleteShipmentCommentTool(
 			plan *shipmentcommentports.ShipmentCommentDeletion,
 		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(commentRecord(plan.Comment), plan.Comment,
-				toolpreview.Only(fieldCommentText, FieldCommentVisib, FieldPriority))
+				toolpreview.Only(ParamComment, FieldVisibility, FieldPriority))
 			if err != nil {
 				return nil, err
 			}

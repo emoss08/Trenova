@@ -128,7 +128,7 @@ func TestTransferToBilling_PreviewSaysWhatHappensToEachShipment(t *testing.T) {
 		toolparams.ParamShipmentIDs: []any{
 			ready.String(), completed.String(), blocked.String(), ready.String(),
 		},
-		paramMarkCompletedReady: true,
+		paramMarkCompletedReadyToInvoice: true,
 	})
 
 	preview, err := tool.Preview(t.Context(), params)

@@ -39,8 +39,8 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 				agentextension.AvailabilitySelectedAgents,
 				both...),
 			definition: assistanttest.Definition(
-				agentextension.ToolReadPortal,
-				agentextension.ToolWebSearch,
+				"web_read_portal",
+				"web_search",
 			),
 			want: []agentextension.Command{
 				agentextension.CommandBrowser,
@@ -61,7 +61,7 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 			gate: assistanttest.ExtensionsOn(
 				agentextension.AvailabilitySelectedAgents,
 				both...),
-			definition: assistanttest.Definition(agentextension.ToolWatchWeb),
+			definition: assistanttest.Definition("web_watch"),
 			want:       []agentextension.Command{agentextension.CommandWatch},
 		},
 		{
@@ -70,7 +70,7 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 				agentextension.AvailabilityAllAgents,
 				agentextension.CapabilityWebResearch,
 			),
-			definition: assistanttest.Definition(agentextension.ToolReadPortal),
+			definition: assistanttest.Definition("web_read_portal"),
 			want: []agentextension.Command{
 				agentextension.CommandSearch, agentextension.CommandWatch,
 			},
@@ -80,7 +80,7 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 			gate: assistanttest.ExtensionsOn(
 				agentextension.AvailabilitySelectedAgents,
 				both...),
-			definition: assistanttest.Definition(agentextension.ToolWebRead),
+			definition: assistanttest.Definition("web_read"),
 			want:       []agentextension.Command{},
 		},
 		{
@@ -95,8 +95,8 @@ func TestCommandAvailability_ListsTheCommandsTheAgentCanHonour(t *testing.T) {
 			name: "no extension is on",
 			gate: assistanttest.ExtensionGate{Active: agentextension.Active{}},
 			definition: assistanttest.Definition(
-				agentextension.ToolReadPortal,
-				agentextension.ToolWebSearch,
+				"web_read_portal",
+				"web_search",
 			),
 			want: []agentextension.Command{},
 		},
@@ -127,8 +127,8 @@ func TestCommandAvailability_RefusesAnAgentThatIsSwitchedOff(t *testing.T) {
 	t.Parallel()
 
 	definition := assistanttest.Definition(
-		agentextension.ToolReadPortal,
-		agentextension.ToolWebSearch,
+		"web_read_portal",
+		"web_search",
 	)
 	definition.Enabled = false
 	svc, conversations := newCommandThreads(

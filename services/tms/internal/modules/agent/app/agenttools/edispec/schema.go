@@ -1,6 +1,7 @@
 package edispec
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -14,8 +15,7 @@ import (
 
 const (
 	ParamDocumentID     = "documentId"
-	ParamPartnerID      = "ediPartnerId"
-	ParamCustomerID     = "customerId"
+	ParamEDIPartnerID   = "ediPartnerId"
 	ParamValues         = "values"
 	ParamRequirements   = "requirements"
 	ParamMappings       = "mappings"
@@ -119,10 +119,13 @@ func ParamSchema(withDigest bool) map[string]any {
 		ParamDocumentID: agenttoolschema.RecordIDText(permission.ResourceDocument,
 			"The partner's implementation guide the person attached to this conversation, from "+
 				"agent_read_attachment."),
-		ParamPartnerID: agenttoolschema.KindID("The partner to update when the person names one, "+
-			"from edi_list_partners. Leave it out and the draft matches one by code, ISA ID or "+
-			"AS2 ID, or plans a new partner.", recordkind.EDIPartner),
-		ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+		ParamEDIPartnerID: agenttoolschema.KindID(
+			"The partner to update when the person names one, "+
+				"from edi_list_partners. Leave it out and the draft matches one by code, ISA ID or "+
+				"AS2 ID, or plans a new partner.",
+			recordkind.EDIPartner,
+		),
+		toolparams.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 			"The customer this partner's documents are for, by id from customer_list, only when "+
 				"the person names which customer. Leave it out otherwise, and never pass a name "+
 				"or guess one from the partner's."),

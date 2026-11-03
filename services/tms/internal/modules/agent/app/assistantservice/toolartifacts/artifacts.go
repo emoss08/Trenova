@@ -15,10 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/recordviews"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -37,17 +35,9 @@ import (
 // mapper reads each result in its JSON form, exactly as the model does, so
 // it depends on the tool's contract rather than on its Go types.
 const (
-	toolPreviewReport  = "report_preview"
-	ToolRunReport      = "report_run"
-	toolGetReportRun   = "report_get_run"
-	getToolPrefix      = "get_"
-	listToolPrefix     = "list_"
-	searchToolPrefix   = "search_"
-	toolComposeView    = "report_compose_table_view"
-	toolExplainRate    = "rate_explain"
-	toolCompareRuns    = "report_compare_runs"
-	toolOpenPage       = "agent_open_page"
-	toolRankCandidates = "dispatch_rank_candidates"
+	getToolPrefix    = "get_"
+	listToolPrefix   = "list_"
+	searchToolPrefix = "search_"
 
 	paramBody    = "body"
 	paramSubject = "subject"
@@ -499,11 +489,11 @@ func reportArtifact(
 	result map[string]any,
 ) (artifact *assistantartifact.Artifact, matched bool) {
 	switch call.Name {
-	case toolPreviewReport:
+	case "report_preview":
 		return previewArtifact(call.ID, result, call.Arguments), true
-	case toolRankCandidates:
+	case "dispatch_rank_candidates":
 		return candidateRankingArtifact(call.ID, result), true
-	case ToolRunReport, toolGetReportRun:
+	case "report_run", "report_get_run":
 		return RunArtifact(call.ID, result), true
 	default:
 		return nil, false
@@ -515,21 +505,21 @@ func namedToolArtifact(
 	result map[string]any,
 ) (artifact *assistantartifact.Artifact, matched bool) {
 	switch {
-	case call.Name == toolExplainRate:
+	case call.Name == "rate_explain":
 		return rateArtifact(call.ID, result), true
-	case call.Name == toolCompareRuns:
+	case call.Name == "report_compare_runs":
 		return runDiffArtifact(call.ID, result), true
-	case call.Name == toolOpenPage:
+	case call.Name == "agent_open_page":
 		return navigationArtifact(call.ID, result), true
-	case call.Name == toolComposeView:
+	case call.Name == "report_compose_table_view":
 		return composedViewArtifact(call.ID, result), true
 	case pagedraft.IsEditTool(call.Name):
 		return draftEditArtifact(call.ID, result), true
-	case call.Name == toolDraftEDIConnection:
+	case call.Name == "edi_draft_connection":
 		return connectionDraftArtifact(call.ID, result), true
-	case call.Name == codemode.ToolRunScript:
+	case call.Name == "analysis_run":
 		return analysisArtifact(call.ID, result, call.Arguments), true
-	case call.Name == agentextension.ToolReadPortal:
+	case call.Name == "web_read_portal":
 		return portalTaskArtifact(call.ID, result), true
 	default:
 		return nil, false
@@ -730,7 +720,7 @@ func candidateRankingArtifact(callID string, result map[string]any) *assistantar
 
 	payload := map[string]any{
 		payloadDisplay:                     assistantartifact.DisplayVersion,
-		artifactpayload.PayloadTool:        toolRankCandidates,
+		artifactpayload.PayloadTool:        "dispatch_rank_candidates",
 		artifactpayload.PayloadEntity:      "workers",
 		artifactpayload.PayloadColumns:     projection.Columns,
 		artifactpayload.PayloadRows:        projection.Rows,
@@ -1022,7 +1012,7 @@ func previewArtifact(
 		artifactpayload.PayloadTruncated: typeutils.BoolOf(
 			result[artifactpayload.PayloadTruncated],
 		),
-		artifactpayload.PayloadTool: toolPreviewReport,
+		artifactpayload.PayloadTool: "report_preview",
 	}
 	// A saved or built-in report can be opened whole where reports live; an
 	// inline definition has nowhere but its own page.

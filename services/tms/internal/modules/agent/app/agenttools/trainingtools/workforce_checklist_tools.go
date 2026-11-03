@@ -27,13 +27,11 @@ const paramChecklistID = "checklistId"
 
 const paramChecklistItemID = "checklistItemId"
 
-const paramChecklistTemplate = "templateId"
+const paramTemplateID = "templateId"
 
 const paramStartedAt = workforcekit.FieldStartedAt
 
-const paramItemMove = "action"
-
-const paramEvidenceDocument = "evidenceDocumentId"
+const paramEvidenceDocumentID = "evidenceDocumentId"
 
 const kindChecklist = "checklist"
 
@@ -63,8 +61,8 @@ var checklistItemFields = []string{
 	changepreview.FieldStatus,
 	workforcekit.FieldCompletedAt,
 	"completedById",
-	changepreview.FieldNote,
-	paramEvidenceDocument,
+	toolparams.ParamNote,
+	paramEvidenceDocumentID,
 }
 
 type ChecklistKeeper interface {
@@ -144,14 +142,14 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 		permission.OpCreate,
 	), map[string]any{
 		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
-		paramChecklistTemplate: agenttoolschema.RecordIDText(
+		paramTemplateID: agenttoolschema.RecordIDText(
 			permission.ResourceWorkerChecklistTemplate,
 			"The template, from worker_list_checklists. Never "+
 				"guess one.",
 		),
 		paramStartedAt: agenttoolschema.Date("The day it starts, which its items fall due from. " +
 			"Defaults to today."),
-	}, toolparams.ParamWorkerID, paramChecklistTemplate)
+	}, toolparams.ParamWorkerID, paramTemplateID)
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*workerchecklistservice.StartRequest, *workerchecklistservice.StartPlan,
@@ -185,8 +183,8 @@ func newStartWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Agen
 				),
 				plan.Checklist,
 				workforcekit.Options(
-					workforcekit.FieldWorkerID,
-					paramChecklistTemplate,
+					toolparams.ParamWorkerID,
+					paramTemplateID,
 					"name",
 					changepreview.FieldKind,
 					changepreview.FieldStatus,
@@ -221,7 +219,7 @@ func startChecklistRequest(
 	if err != nil {
 		return nil, err
 	}
-	templateID, err := toolparams.RequirePulid(params.Params, paramChecklistTemplate)
+	templateID, err := toolparams.RequirePulid(params.Params, paramTemplateID)
 	if err != nil {
 		return nil, err
 	}
@@ -254,25 +252,25 @@ func checklistItemChangeFrom(
 	if err != nil {
 		return nil, err
 	}
-	move, err := toolparams.RequireEnum(params.Params, paramItemMove, checklistItemMoves.Values)
+	move, err := toolparams.RequireEnum(params.Params, paramAction, checklistItemMoves.Values)
 	if err != nil {
 		return nil, err
 	}
 	note, err := toolparams.BoundedText(
 		params.Params,
-		changepreview.FieldNote,
+		toolparams.ParamNote,
 		workforcekit.NoteChars,
 	)
 	if err != nil {
 		return nil, err
 	}
-	evidence, err := toolparams.OptionalID(params.Params, paramEvidenceDocument)
+	evidence, err := toolparams.OptionalID(params.Params, paramEvidenceDocumentID)
 	if err != nil {
 		return nil, err
 	}
 	if move == checklistItemReopen {
 		if note != "" || !evidence.IsNil() {
-			return nil, errortypes.NewValidationError(paramItemMove, errortypes.ErrInvalid,
+			return nil, errortypes.NewValidationError(paramAction, errortypes.ErrInvalid,
 				"A reopened item takes no note or evidence")
 		}
 		return &checklistItemChange{move: move, reopen: &workerchecklistservice.ReopenItemRequest{
@@ -305,7 +303,7 @@ func (c *checklistItemChange) plan(
 		return checklists.PlanReopenItem(ctx, c.reopen)
 	}
 	return nil, toolparams.ErrUnknownValue(
-		paramItemMove,
+		paramAction,
 		string(c.move),
 		checklistItemMoves.Names(),
 	)
@@ -326,7 +324,7 @@ func (c *checklistItemChange) run(
 		return checklists.ReopenItem(ctx, c.reopen)
 	}
 	return nil, toolparams.ErrUnknownValue(
-		paramItemMove,
+		paramAction,
 		string(c.move),
 		checklistItemMoves.Names(),
 	)
@@ -349,19 +347,19 @@ func newUpdateWorkerChecklistItemTool(checklists ChecklistKeeper) agenttoolports
 				"one.",
 			recordkind.ChecklistItem,
 		),
-		paramItemMove: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
+		paramAction: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
 			checklistItemMoves),
-		changepreview.FieldNote: toolparams.StringProperty(
+		toolparams.ParamNote: toolparams.StringProperty(
 			"What was done, or why it was skipped or does not apply. "+
 				"Required to skip or mark not applicable.",
 			workforcekit.NoteChars,
 		),
-		paramEvidenceDocument: agenttoolschema.RecordIDText(
+		paramEvidenceDocumentID: agenttoolschema.RecordIDText(
 			permission.ResourceDocument,
 			"For Complete: a document filed on the worker "+
 				"that shows it done, from document_list.",
 		),
-	}, paramChecklistItemID, paramItemMove), paramChecklistItemID,
+	}, paramChecklistItemID, paramAction), paramChecklistItemID,
 		permission.ResourceWorkerChecklist)
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
@@ -465,11 +463,11 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			"The checklist, from worker_list_checklists. Never "+
 				"guess one.",
 		),
-		changepreview.FieldReason: toolparams.StringProperty(
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why it no longer applies.",
 			workforcekit.ShortChars,
 		),
-	}, paramChecklistID, changepreview.FieldReason), paramChecklistID, permission.ResourceWorkerChecklist)
+	}, paramChecklistID, toolparams.ParamReason), paramChecklistID, permission.ResourceWorkerChecklist)
 	spec.SearchTerms = []string{"drop checklist", "no longer applies"}
 	spec.MaxTier = agent.TierPropose
 
@@ -485,7 +483,7 @@ func newCancelWorkerChecklistTool(checklists ChecklistKeeper) agenttoolports.Age
 			}
 			reason, err := toolparams.RequireBoundedText(
 				params.Params,
-				changepreview.FieldReason,
+				toolparams.ParamReason,
 				workforcekit.ShortChars,
 			)
 			if err != nil {

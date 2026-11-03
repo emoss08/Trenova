@@ -319,7 +319,7 @@ func TestInboundMessages_DescribeBothReads(t *testing.T) {
 	mailbox, _ := properties[paramMailboxID].(map[string]any)
 	assert.Contains(t, mailbox["description"], "inbox_get_inbound_message")
 	assert.Contains(t, properties, querytool.ParamStatus)
-	assert.NotContains(t, properties, querytool.ArgStatuses)
+	assert.NotContains(t, properties, querytool.FieldStatuses)
 	assert.Contains(t, properties, listtool.ParamSortBy)
 }
 

@@ -24,14 +24,12 @@ import (
 )
 
 const (
-	toolListWatchtowerItems = "exception_list_watchtower_items"
-	paramExceptionAssignee  = "assigneeId"
-	paramExceptionNote      = "note"
-	paramSnoozeUntil        = "until"
-	paramDueAt              = "dueAt"
-	paramResolutionCode     = "resolutionCode"
-	paramCommentBody        = "body"
-	maxExceptionNoteChars   = watchtower.MaxNoteLength
+	paramAssigneeID       = "assigneeId"
+	paramUntil            = "until"
+	paramDueAt            = "dueAt"
+	paramResolutionCode   = "resolutionCode"
+	paramBody             = "body"
+	maxExceptionNoteChars = watchtower.MaxNoteLength
 )
 
 var resolutionCodes = agenttoolschema.Source(
@@ -190,7 +188,7 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 		&exceptionChangeSpec[*watchtowerports.AssignExceptionRequest]{
 			spec: &toolspec.ReceivableSpec{
 				Name:   "exception_assign",
-				Recipe: []string{toolListWatchtowerItems, "exception_assign"},
+				Recipe: []string{"exception_list_watchtower_items", "exception_assign"},
 				Description: "Give an exception on the watchtower to a person, or to nobody, so " +
 					"someone owns getting it dealt with. The new owner must be able to see the record " +
 					"behind it; they are told it is theirs.",
@@ -201,10 +199,10 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 					"the record behind it is unchanged.",
 				Properties: map[string]any{
 					paramWatchtowerItemID: exceptionItemProperty(),
-					paramExceptionAssignee: agenttoolschema.RecordIDText(permission.ResourceUser,
+					paramAssigneeID: agenttoolschema.RecordIDText(permission.ResourceUser,
 						"The person who should own it: the person who asked, or an assigneeId "+
 							"exception_list_watchtower_items shows. Omit to leave it with nobody. Never guess one."),
-					paramExceptionNote: exceptionNoteProperty(
+					toolparams.ParamNote: exceptionNoteProperty(
 						"Why it goes to them, kept in its history.",
 					),
 				},
@@ -218,11 +216,11 @@ func NewAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 				}
 				req := &watchtowerports.AssignExceptionRequest{
 					ExceptionTarget: target,
-					Note:            toolparams.OptionalString(params.Params, paramExceptionNote),
+					Note:            toolparams.OptionalString(params.Params, toolparams.ParamNote),
 				}
 				assignee, err := toolparams.OptionalPulidParam(
 					params.Params,
-					paramExceptionAssignee,
+					paramAssigneeID,
 				)
 				if err != nil {
 					return nil, err
@@ -262,7 +260,7 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 		&exceptionChangeSpec[*watchtowerports.SnoozeExceptionRequest]{
 			spec: &toolspec.ReceivableSpec{
 				Name:   "exception_snooze",
-				Recipe: []string{toolListWatchtowerItems, "exception_snooze"},
+				Recipe: []string{"exception_list_watchtower_items", "exception_snooze"},
 				Description: "Put an exception aside until a time when nothing can be done before " +
 					"then, such as a receiver that opens at 7. It wakes on its own and its owner is told.",
 				DefaultTier: agent.TierPropose,
@@ -271,13 +269,13 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 				Rationale:   "Hides an exception from the open queue until a time; nothing outside Trenova changes.",
 				Properties: map[string]any{
 					paramWatchtowerItemID: exceptionItemProperty(),
-					paramSnoozeUntil: agenttoolschema.LocalDateTime(
+					paramUntil: agenttoolschema.LocalDateTime(
 						"When it should come back, at most 30 days out."),
-					paramExceptionNote: exceptionNoteProperty(
+					toolparams.ParamNote: exceptionNoteProperty(
 						"Why it can wait, kept in its history.",
 					),
 				},
-				Required:    []string{paramWatchtowerItemID, paramSnoozeUntil},
+				Required:    []string{paramWatchtowerItemID, paramUntil},
 				SearchTerms: []string{"snooze exception", "remind me later", "put aside"},
 			},
 			request: func(params *agenttoolports.ToolExecuteParams) (*watchtowerports.SnoozeExceptionRequest, error) {
@@ -285,7 +283,7 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 				if err != nil {
 					return nil, err
 				}
-				until, err := toolparams.RequireLocalTime(params.Params, paramSnoozeUntil,
+				until, err := toolparams.RequireLocalTime(params.Params, paramUntil,
 					timeutils.LoadLocation(params.Timezone))
 				if err != nil {
 					return nil, err
@@ -293,7 +291,7 @@ func NewSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 				return &watchtowerports.SnoozeExceptionRequest{
 					ExceptionTarget: target,
 					Until:           until,
-					Note:            toolparams.OptionalString(params.Params, paramExceptionNote),
+					Note:            toolparams.OptionalString(params.Params, toolparams.ParamNote),
 				}, nil
 			},
 			target: func(req *watchtowerports.SnoozeExceptionRequest) *watchtowerports.ExceptionTarget {
@@ -320,7 +318,7 @@ func NewWakeExceptionTool(exceptions watchtowerports.ExceptionService) agenttool
 		&exceptionChangeSpec[*watchtowerports.UnsnoozeExceptionRequest]{
 			spec: &toolspec.ReceivableSpec{
 				Name:   "exception_wake",
-				Recipe: []string{toolListWatchtowerItems, "exception_wake"},
+				Recipe: []string{"exception_list_watchtower_items", "exception_wake"},
 				Description: "Bring a snoozed exception back to the open queue now, before the " +
 					"time exception_snooze set, when whatever it was waiting for has happened " +
 					"early. Only a snoozed exception can be woken; exception_list_watchtower_items shows " +
@@ -371,7 +369,7 @@ func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentto
 		&exceptionChangeSpec[*watchtowerports.SetExceptionDueRequest]{
 			spec: &toolspec.ReceivableSpec{
 				Name:   "exception_set_due",
-				Recipe: []string{toolListWatchtowerItems, "exception_set_due"},
+				Recipe: []string{"exception_list_watchtower_items", "exception_set_due"},
 				Description: "Move when an exception must be dealt with, or clear its due time. An " +
 					"exception past its due time escalates to its owner and the escalation contact.",
 				DefaultTier: agent.TierPropose,
@@ -382,7 +380,9 @@ func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentto
 					paramWatchtowerItemID: exceptionItemProperty(),
 					paramDueAt: agenttoolschema.LocalDateTime(
 						"The new due time, at most 90 days out. Omit to clear it."),
-					paramExceptionNote: exceptionNoteProperty("Why it moved, kept in its history."),
+					toolparams.ParamNote: exceptionNoteProperty(
+						"Why it moved, kept in its history.",
+					),
 				},
 				Required:    []string{paramWatchtowerItemID},
 				SearchTerms: []string{"exception due", "extend deadline", "due time"},
@@ -400,7 +400,7 @@ func NewSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentto
 				return &watchtowerports.SetExceptionDueRequest{
 					ExceptionTarget: target,
 					DueAt:           dueAt,
-					Note:            toolparams.OptionalString(params.Params, paramExceptionNote),
+					Note:            toolparams.OptionalString(params.Params, toolparams.ParamNote),
 				}, nil
 			},
 			target: func(req *watchtowerports.SetExceptionDueRequest) *watchtowerports.ExceptionTarget {
@@ -430,7 +430,7 @@ func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentt
 		&exceptionChangeSpec[*watchtowerports.ResolveExceptionRequest]{
 			spec: &toolspec.ReceivableSpec{
 				Name:   "exception_resolve",
-				Recipe: []string{toolListWatchtowerItems, "exception_resolve"},
+				Recipe: []string{"exception_list_watchtower_items", "exception_resolve"},
 				Description: "Close an exception with the reason it is closed. The resolution holds " +
 					"while the record behind it still shows the problem; it reopens only after the " +
 					"problem clears and comes back. Other needs a note.",
@@ -445,7 +445,7 @@ func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentt
 						"Why it is closed.",
 						resolutionCodes,
 					),
-					paramExceptionNote: exceptionNoteProperty(
+					toolparams.ParamNote: exceptionNoteProperty(
 						"How it was resolved. Required when the code is Other."),
 				},
 				Required:    []string{paramWatchtowerItemID, paramResolutionCode},
@@ -471,7 +471,7 @@ func NewResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentt
 				return &watchtowerports.ResolveExceptionRequest{
 					ExceptionTarget: target,
 					Code:            code,
-					Note:            toolparams.OptionalString(params.Params, paramExceptionNote),
+					Note:            toolparams.OptionalString(params.Params, toolparams.ParamNote),
 				}, nil
 			},
 			target: func(req *watchtowerports.ResolveExceptionRequest) *watchtowerports.ExceptionTarget {
@@ -502,7 +502,7 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 		&exceptionChangeSpec[*watchtowerports.ReopenExceptionRequest]{
 			spec: &toolspec.ReceivableSpec{
 				Name:   "exception_reopen",
-				Recipe: []string{toolListWatchtowerItems, "exception_reopen"},
+				Recipe: []string{"exception_list_watchtower_items", "exception_reopen"},
 				Description: "Open a resolved exception again when it was closed too soon. It gets a " +
 					"fresh due time and keeps its owner.",
 				DefaultTier: agent.TierPropose,
@@ -511,7 +511,7 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 				Rationale:   "Puts an exception back on the open queue inside Trenova; nothing outside changes.",
 				Properties: map[string]any{
 					paramWatchtowerItemID: exceptionItemProperty(),
-					paramExceptionNote: exceptionNoteProperty(
+					toolparams.ParamNote: exceptionNoteProperty(
 						"Why it is open again, kept in its history.",
 					),
 				},
@@ -525,7 +525,7 @@ func NewReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentto
 				}
 				return &watchtowerports.ReopenExceptionRequest{
 					ExceptionTarget: target,
-					Note:            toolparams.OptionalString(params.Params, paramExceptionNote),
+					Note:            toolparams.OptionalString(params.Params, toolparams.ParamNote),
 				}, nil
 			},
 			target: func(req *watchtowerports.ReopenExceptionRequest) *watchtowerports.ExceptionTarget {
@@ -551,7 +551,7 @@ func NewCommentOnExceptionTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:   "exception_add_comment",
-		Recipe: []string{toolListWatchtowerItems, "exception_add_comment"},
+		Recipe: []string{"exception_list_watchtower_items", "exception_add_comment"},
 		Description: "Add a note to an exception's history, such as what the carrier said. " +
 			"Its owner is told. The history is never edited.",
 		Resource:    permission.ResourceWatchtower,
@@ -562,10 +562,10 @@ func NewCommentOnExceptionTool(
 		Rationale:   "Adds a line to an exception's history inside Trenova and tells its owner.",
 		Properties: map[string]any{
 			paramWatchtowerItemID: exceptionItemProperty(),
-			paramCommentBody: toolparams.StringProperty("The comment, in plain words.",
+			paramBody: toolparams.StringProperty("The comment, in plain words.",
 				watchtower.MaxCommentLength),
 		},
-		Required:    []string{paramWatchtowerItemID, paramCommentBody},
+		Required:    []string{paramWatchtowerItemID, paramBody},
 		SearchTerms: []string{"comment on exception", "note on alert", "exception history"},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return toolparams.TargetOf(params, paramWatchtowerItemID, permission.ResourceWatchtower)
@@ -576,7 +576,7 @@ func NewCommentOnExceptionTool(
 			if err != nil {
 				return nil, err
 			}
-			body, err := toolparams.RequireString(params.Params, paramCommentBody)
+			body, err := toolparams.RequireString(params.Params, paramBody)
 			if err != nil {
 				return nil, err
 			}

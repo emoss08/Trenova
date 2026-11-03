@@ -29,7 +29,7 @@ const paramRecurringShipmentID = "recurringShipmentId"
 
 const paramSourceShipmentID = "sourceShipmentId"
 
-const paramSeriesName = "name"
+const paramName = "name"
 
 const ParamCronExpression = "cronExpression"
 
@@ -70,14 +70,14 @@ var seriesExceptionPolicies = agenttoolschema.Source(
 )
 
 var seriesFields = []string{
-	paramSeriesName,
-	changepreview.FieldDescription,
+	paramName,
+	toolparams.ParamDescription,
 	paramSourceShipmentID,
-	changepreview.FieldCustomerID,
+	toolparams.ParamCustomerID,
 	ParamCronExpression,
 	ParamTimezone,
-	changepreview.FieldRecurringStart,
-	changepreview.FieldRecurringEnd,
+	changepreview.FieldStartDate,
+	changepreview.FieldEndDate,
 	paramMaxOccurrences,
 	paramLeadTimeDays,
 	paramSkipWeekends,
@@ -89,12 +89,12 @@ var seriesFields = []string{
 }
 
 var seriesEditable = []string{
-	paramSeriesName,
-	changepreview.FieldDescription,
+	paramName,
+	toolparams.ParamDescription,
 	ParamCronExpression,
 	ParamTimezone,
-	changepreview.FieldRecurringStart,
-	changepreview.FieldRecurringEnd,
+	changepreview.FieldStartDate,
+	changepreview.FieldEndDate,
 	paramMaxOccurrences,
 	paramLeadTimeDays,
 	paramSkipWeekends,
@@ -104,14 +104,14 @@ var seriesEditable = []string{
 }
 
 var seriesRefs = map[string]permission.Resource{
-	paramSourceShipmentID:         permission.ResourceShipment,
-	changepreview.FieldCustomerID: permission.ResourceCustomer,
+	paramSourceShipmentID:      permission.ResourceShipment,
+	toolparams.ParamCustomerID: permission.ResourceCustomer,
 }
 
 var seriesTypes = map[string]assistantartifact.DisplayType{
-	changepreview.FieldRecurringStart: assistantartifact.DisplayDate,
-	changepreview.FieldRecurringEnd:   assistantartifact.DisplayDate,
-	"nextOccurrenceAt":                assistantartifact.DisplayDateTime,
+	changepreview.FieldStartDate: assistantartifact.DisplayDate,
+	changepreview.FieldEndDate:   assistantartifact.DisplayDate,
+	"nextOccurrenceAt":           assistantartifact.DisplayDateTime,
 }
 
 type recurringShipmentKeeper interface {
@@ -194,9 +194,9 @@ func seriesResult(
 
 func seriesProperties() map[string]any {
 	return map[string]any{
-		paramSeriesName: toolparams.StringProperty("What dispatch calls the series, such as "+
+		paramName: toolparams.StringProperty("What dispatch calls the series, such as "+
 			"\"Acme weekday Dallas run\".", maxSeriesName),
-		changepreview.FieldDescription: toolparams.StringProperty(
+		toolparams.ParamDescription: toolparams.StringProperty(
 			"Anything a planner should know about it.",
 			toolparams.MaxOperationNoteChars,
 		),
@@ -211,11 +211,11 @@ func seriesProperties() map[string]any {
 				"America/Chicago.",
 			maxTimezoneName,
 		),
-		changepreview.FieldRecurringStart: agenttoolschema.Date(
+		changepreview.FieldStartDate: agenttoolschema.Date(
 			"The first day shipments may be generated, in the " +
 				"series' timezone.",
 		),
-		changepreview.FieldRecurringEnd: agenttoolschema.Date(
+		changepreview.FieldEndDate: agenttoolschema.Date(
 			"The last day shipments may be generated, in the " +
 				"series' timezone. Leave out for no end.",
 		),
@@ -255,7 +255,7 @@ func seriesProperties() map[string]any {
 // moment of that day and an end the last.
 func applySeriesArgs(series *recurringshipment.RecurringShipment, params map[string]any) error {
 	for key, target := range map[string]*string{
-		paramSeriesName:     &series.Name,
+		paramName:           &series.Name,
 		ParamCronExpression: &series.CronExpression,
 		ParamTimezone:       &series.Timezone,
 	} {
@@ -276,7 +276,7 @@ func applySeriesArgs(series *recurringshipment.RecurringShipment, params map[str
 	}
 	description, err := toolparams.OptionalBoundedText(
 		params,
-		changepreview.FieldDescription,
+		toolparams.ParamDescription,
 		toolparams.MaxOperationNoteChars,
 	)
 	if err != nil {
@@ -344,8 +344,8 @@ func applySeriesFlags(series *recurringshipment.RecurringShipment, params map[st
 func applySeriesDays(series *recurringshipment.RecurringShipment, params map[string]any) error {
 	if !toolparams.SendsAny(
 		params,
-		changepreview.FieldRecurringStart,
-		changepreview.FieldRecurringEnd,
+		changepreview.FieldStartDate,
+		changepreview.FieldEndDate,
 		paramBlackoutDates,
 	) {
 		return nil
@@ -356,14 +356,14 @@ func applySeriesDays(series *recurringshipment.RecurringShipment, params map[str
 			"before days can be read", ParamTimezone)
 	}
 
-	start, given, err := optionalLocalDay(params, changepreview.FieldRecurringStart, location)
+	start, given, err := optionalLocalDay(params, changepreview.FieldStartDate, location)
 	if err != nil {
 		return err
 	}
 	if given && start != nil {
 		series.StartDate = start.Unix()
 	}
-	end, given, err := optionalLocalDay(params, changepreview.FieldRecurringEnd, location)
+	end, given, err := optionalLocalDay(params, changepreview.FieldEndDate, location)
 	if err != nil {
 		return err
 	}
@@ -478,7 +478,7 @@ func NewCreateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 			"is sent, and pausing the series stops it.",
 		Properties: properties,
 		Required: []string{
-			paramSourceShipmentID, paramSeriesName, ParamCronExpression, ParamTimezone,
+			paramSourceShipmentID, paramName, ParamCronExpression, ParamTimezone,
 		},
 	}, toolspec.ReceivablePlan[*recurringshipment.RecurringShipment, *recurringshipmentservice.SeriesChange]{
 		Request: func(
@@ -488,7 +488,7 @@ func NewCreateRecurringShipmentTool(series recurringShipmentKeeper) agenttoolpor
 			if err != nil {
 				return nil, err
 			}
-			for _, key := range []string{paramSeriesName, ParamCronExpression, ParamTimezone} {
+			for _, key := range []string{paramName, ParamCronExpression, ParamTimezone} {
 				if _, err = toolparams.RequireString(params.Params, key); err != nil {
 					return nil, err
 				}

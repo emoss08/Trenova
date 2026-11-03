@@ -25,7 +25,9 @@ func TestPolicyFor(t *testing.T) {
 		ID:              pulid.MustNew("agd_"),
 		Enabled:         false,
 		AutonomyCeiling: agent.TierAutoExecute,
-		ToolTiers:       map[string]agent.AutonomyTier{toolNameAssignMove: agent.TierAutoExecute},
+		ToolTiers: map[string]agent.AutonomyTier{
+			"dispatch_assign_move": agent.TierAutoExecute,
+		},
 	}, false)
 	assert.Equal(t, agent.TierPropose, disabled.Tier,
 		"a disabled dispatch agent can never act, whatever tier is stored")
@@ -40,7 +42,9 @@ func TestPolicyFor(t *testing.T) {
 		ID:              pulid.MustNew("agd_"),
 		Enabled:         true,
 		AutonomyCeiling: agent.TierActWithApproval,
-		ToolTiers:       map[string]agent.AutonomyTier{toolNameAssignMove: agent.TierAutoExecute},
+		ToolTiers: map[string]agent.AutonomyTier{
+			"dispatch_assign_move": agent.TierAutoExecute,
+		},
 	}, false)
 	assert.Equal(t, agent.TierActWithApproval, capped.Tier,
 		"the definition's ceiling caps the tool tier")
@@ -49,7 +53,9 @@ func TestPolicyFor(t *testing.T) {
 		ID:              pulid.MustNew("agd_"),
 		Enabled:         true,
 		AutonomyCeiling: agent.TierAutoExecute,
-		ToolTiers:       map[string]agent.AutonomyTier{toolNameAssignMove: agent.TierAutoExecute},
+		ToolTiers: map[string]agent.AutonomyTier{
+			"dispatch_assign_move": agent.TierAutoExecute,
+		},
 	}, false)
 	assert.Equal(t, agent.TierAutoExecute, autoExecute.Tier)
 	assert.True(t, autoExecute.Enabled)

@@ -92,7 +92,7 @@ func TestShapeTender_SaysWhatEachOfferTakes(t *testing.T) {
 func TestListShipmentTenders_ReadsNothingTheCarrierWrote(t *testing.T) {
 	t.Parallel()
 
-	read := graphqlread.Reads[toolListShipmentTenders]
+	read := graphqlread.Reads["dispatch_list_tenders"]
 	idx := slices.IndexFunc(
 		read.Fields,
 		func(f graphqlread.Field) bool { return f.Name == "offers" },
@@ -117,7 +117,7 @@ func TestListShipmentTenders_ReadsNothingTheCarrierWrote(t *testing.T) {
 
 	specs := ReadSpecs()
 	at := slices.IndexFunc(specs, func(s readspec.List) bool {
-		return s.Name == toolListShipmentTenders
+		return s.Name == "dispatch_list_tenders"
 	})
 	require.GreaterOrEqual(t, at, 0)
 	tool, err := graphqllisttool.NewRead(&specs[at], &querytooltest.KeyedReader{}, nil)

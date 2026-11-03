@@ -30,9 +30,9 @@ const workItemStartReview = workItemMove("StartReview")
 
 const paramWorkItemID = "workItemId"
 
-const paramWorkItemMove = "action"
+const paramAction = "action"
 
-const paramAssigneeID = "assigneeUserId"
+const paramAssigneeUserID = "assigneeUserId"
 
 var workItemMoves = agenttoolschema.Source(
 	"bankReceiptWorkItem.agentMove",
@@ -80,11 +80,11 @@ func workItemRouteFrom(params *agenttoolports.ToolExecuteParams) (*workItemRoute
 	if err != nil {
 		return nil, err
 	}
-	move, err := toolparams.RequireEnum(params.Params, paramWorkItemMove, workItemMoves.Values)
+	move, err := toolparams.RequireEnum(params.Params, paramAction, workItemMoves.Values)
 	if err != nil {
 		return nil, err
 	}
-	assignee, err := toolparams.OptionalPulidParam(params.Params, paramAssigneeID)
+	assignee, err := toolparams.OptionalPulidParam(params.Params, paramAssigneeUserID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,16 +162,16 @@ func newTriageBankReceiptWorkItemTool(items WorkItemRouter) agenttoolports.Agent
 				"The work item's id, from receivable_get_bank_receipt or "+
 					"this run's subject. Never guess one.",
 			),
-			paramWorkItemMove: agenttoolschema.Enum("Assign hands it to a person; "+
+			paramAction: agenttoolschema.Enum("Assign hands it to a person; "+
 				"StartReview marks it under review.", workItemMoves),
-			paramAssigneeID: agenttoolschema.RecordIDText(
+			paramAssigneeUserID: agenttoolschema.RecordIDText(
 				permission.ResourceUser,
 				"For Assign: the person's user id, the "+
 					"assignedToUserId receivable_get_bank_receipt shows on a work item, or the person who "+
 					"asked. Never guess one.",
 			),
 		},
-		Required: []string{paramWorkItemID, paramWorkItemMove},
+		Required: []string{paramWorkItemID, paramAction},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return toolparams.TargetOf(
 				params,

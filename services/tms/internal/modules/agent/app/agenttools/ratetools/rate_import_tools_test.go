@@ -170,7 +170,7 @@ func TestRunRateSimulation_ReplaysTheWholeLastDayAndChangesNothing(t *testing.T)
 	agreementID := pulid.MustNew("rag_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramRateAgreementID: agreementID.String(),
-		paramSimulationName:  "Acme renewal against Q3",
+		paramName:            "Acme renewal against Q3",
 		paramSampleFrom:      "2026-07-01",
 		paramSampleTo:        "2026-09-30",
 	})

@@ -55,7 +55,7 @@ func TestUnpagedList_SendsTheWorkerAndReadsOpenOnesByDefault(t *testing.T) {
 		"DeskWorkerChecklistTemplates": templateAnswer(false),
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerChecklists),
+		keyedSpec(t, "worker_list_checklists"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -93,7 +93,7 @@ func TestUnpagedList_ReadsTheTemplatesAPersonStartsByHand(t *testing.T) {
 		"DeskWorkerChecklistTemplates": templateAnswer(true),
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerChecklists),
+		keyedSpec(t, "worker_list_checklists"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -127,7 +127,7 @@ func TestUnpagedList_LeavesOutTheTemplatesAReaderCannotRead(t *testing.T) {
 		Denied: []string{permission.ResourceWorkerChecklistTemplate.String()},
 	}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerChecklists),
+		keyedSpec(t, "worker_list_checklists"),
 		reader,
 		engine,
 	)
@@ -152,7 +152,7 @@ func TestUnpagedList_RefusesACallWithoutItsWorkerOrWithAName(t *testing.T) {
 
 	reader := &querytooltest.KeyedReader{}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerTraining),
+		keyedSpec(t, "worker_list_training"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -173,7 +173,7 @@ func TestUnpagedList_TakesTheWorkerAndTheSwitchAsItsParameters(t *testing.T) {
 	t.Parallel()
 
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerTraining),
+		keyedSpec(t, "worker_list_training"),
 		&querytooltest.KeyedReader{},
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -193,19 +193,19 @@ func TestUnpagedList_TakesTheWorkerAndTheSwitchAsItsParameters(t *testing.T) {
 func TestUnpagedList_SpecsMatchWhatTheGeneratorProved(t *testing.T) {
 	t.Parallel()
 
-	spec := *keyedSpec(t, workerquerytools.ToolListWorkerChecklists)
+	spec := *keyedSpec(t, "worker_list_checklists")
 	spec.Alongside = nil
 	_, err := graphqllisttool.NewUnpaged(&spec, &querytooltest.KeyedReader{}, nil)
 	require.ErrorContains(t, err, "reads.yml lists 1 reads alongside it, its spec 0")
 
-	spec = *keyedSpec(t, workerquerytools.ToolListWorkerTraining)
+	spec = *keyedSpec(t, "worker_list_training")
 	spec.Alongside = []readspec.Alongside{
 		{Key: "templates", Operation: workerquerytools.OpDeskReviewTemplates},
 	}
 	_, err = graphqllisttool.NewUnpaged(&spec, &querytooltest.KeyedReader{}, nil)
 	require.ErrorContains(t, err, "which reads.yml does not list for it")
 
-	spec = *keyedSpec(t, workerquerytools.ToolListWorkerTraining)
+	spec = *keyedSpec(t, "worker_list_training")
 	spec.References = nil
 	_, err = graphqllisttool.NewUnpaged(&spec, &querytooltest.KeyedReader{}, nil)
 	require.ErrorContains(t, err, "requires workerId, which no tool supplies")
@@ -222,7 +222,7 @@ func TestUnpagedList_ReadsTheWholeOrganizationWithAPageAndSaysWhenItIsFull(t *te
 		"DeskWorkerDotTests": {Data: map[string]any{"workerDotTests": rows}},
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerDOTTests),
+		keyedSpec(t, "worker_list_dot_tests"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -262,7 +262,7 @@ func TestUnpagedList_LeavesOutTheWorkerOfAPrivacyCase(t *testing.T) {
 		}}},
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerInjuries),
+		keyedSpec(t, "worker_list_injuries"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -311,7 +311,7 @@ func TestUnpagedList_ReadsTheWorkersRecognitionsByTheWorkerTheCallNames(t *testi
 
 	reader := &querytooltest.KeyedReader{Answers: safetyAnswers()}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerSafetyEvents),
+		keyedSpec(t, "worker_list_safety_events"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -343,7 +343,7 @@ func TestUnpagedList_ReadsNoRecognitionsWithoutAWorker(t *testing.T) {
 
 	reader := &querytooltest.KeyedReader{Answers: safetyAnswers()}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolListWorkerSafetyEvents),
+		keyedSpec(t, "worker_list_safety_events"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -370,8 +370,8 @@ func TestUnpagedList_ReadsNoRecognitionsWithoutAWorker(t *testing.T) {
 func TestUnpagedList_AKeyedReadAlongsideTakesOnlyTheVariablesItLeavesToTheSpec(t *testing.T) {
 	t.Parallel()
 
-	spec := keyedSpec(t, workerquerytools.ToolListWorkerSafetyEvents)
-	spec.Alongside[0].Inputs = map[string]any{querytool.InputStatus: querytool.ActiveStatus}
+	spec := keyedSpec(t, "worker_list_safety_events")
+	spec.Alongside[0].Inputs = map[string]any{querytool.ParamStatus: querytool.ActiveStatus}
 	_, err := graphqllisttool.NewUnpaged(
 		spec,
 		&querytooltest.KeyedReader{},
@@ -407,7 +407,7 @@ func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *test
 
 			reader := &querytooltest.KeyedReader{Answers: safetyAnswers()}
 			tool, err := graphqllisttool.NewUnpaged(
-				keyedSpec(t, workerquerytools.ToolListWorkerSafetyEvents),
+				keyedSpec(t, "worker_list_safety_events"),
 				reader,
 				&mocks.DenyResourcesPermissionEngine{},
 			)
@@ -477,7 +477,7 @@ func TestUnpagedList_ReadsTheCredentialTypesBesideOneWorkersCredentialsOnly(t *t
 
 			reader := &querytooltest.KeyedReader{Answers: credentialAnswers()}
 			tool, err := graphqllisttool.NewUnpaged(
-				keyedSpec(t, workerquerytools.ToolWorkerListCredentials),
+				keyedSpec(t, "worker_list_credentials"),
 				reader,
 				&mocks.DenyResourcesPermissionEngine{},
 			)
@@ -508,7 +508,7 @@ func TestUnpagedList_ReadsTheCredentialTypesBesideOneWorkersCredentialsOnly(t *t
 func TestCredentialList_NeverSelectsTheCredentialNumber(t *testing.T) {
 	t.Parallel()
 
-	read := graphqlread.Reads[workerquerytools.ToolWorkerListCredentials]
+	read := graphqlread.Reads["worker_list_credentials"]
 	for _, field := range read.Fields {
 		if field.Name == "number" {
 			assert.False(t, field.Selected)
@@ -536,7 +536,7 @@ func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 		}},
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolWorkerListCredentials),
+		keyedSpec(t, "worker_list_credentials"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -564,7 +564,7 @@ func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 		}},
 	}}
 	tool, err = graphqllisttool.NewUnpaged(
-		keyedSpec(t, workerquerytools.ToolWorkerListCredentials),
+		keyedSpec(t, "worker_list_credentials"),
 		next,
 		&mocks.DenyResourcesPermissionEngine{},
 	)

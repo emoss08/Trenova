@@ -7,7 +7,6 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -34,9 +33,9 @@ func TestDelegateReport_HandsBackWhatTheLookupsReadWordForWord(t *testing.T) {
 				{
 					Role:       conversation.RoleTool,
 					ToolCallID: "call_d3",
-					ToolName:   runtimetools.FindToolsName,
+					ToolName:   "find_tools",
 					Content: toolresult.Fence(
-						runtimetools.FindToolsName,
+						"find_tools",
 						"These tools are now callable",
 					),
 				},

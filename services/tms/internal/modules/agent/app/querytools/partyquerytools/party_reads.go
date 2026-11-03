@@ -1,7 +1,6 @@
 package partyquerytools
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -32,24 +31,24 @@ const (
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         querytool.ToolCustomerList,
+			Name:         "customer_list",
 			EntityPlural: pluralCustomers,
 			Summary:      customersSummary,
 			Resource:     permission.ResourceCustomer,
 		},
 		{
-			Name:         querytool.ToolLocationList,
+			Name:         "location_list",
 			EntityPlural: pluralLocations,
 			Summary:      locationsSummary,
 			Resource:     permission.ResourceLocation,
 			References: map[string]readspec.Reference{fieldLocationCategoryID: {
 				Resource: permission.ResourceLocationCategory,
 				What:     "The location category",
-				Source:   querytool.ToolListLocationCategories,
+				Source:   "location_list_categories",
 			}},
 		},
 		{
-			Name:         querytool.ToolCarrierList,
+			Name:         "carrier_list",
 			EntityPlural: pluralCarriers,
 			Summary:      carriersSummary,
 			Resource:     permission.ResourceCarrier,

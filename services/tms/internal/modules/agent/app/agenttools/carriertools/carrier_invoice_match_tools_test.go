@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -112,8 +111,8 @@ func TestAcceptCarrierInvoiceMatchWithVariance_AccruesTheDifference(t *testing.T
 		agenttoolstest.ExecuteParams(map[string]any{paramMatchID: matches.match.ID.String()})))
 
 	raw := map[string]any{
-		paramMatchID:   matches.match.ID.String(),
-		paramMatchNote: "Two hours of agreed detention at the consignee",
+		paramMatchID:         matches.match.ID.String(),
+		toolparams.ParamNote: "Two hours of agreed detention at the consignee",
 	}
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
@@ -128,7 +127,7 @@ func TestAcceptCarrierInvoiceMatchWithVariance_AccruesTheDifference(t *testing.T
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			fieldMatchStatus,
+			fieldStatus,
 		).After,
 	)
 	adjustment := agenttoolstest.PreviewChange(t, preview, 1)
@@ -177,8 +176,8 @@ func TestRejectCarrierInvoiceMatch_RunsInsideAndHoldsOnOutsideText(t *testing.T)
 	require.NotNil(t, policy.TaintHold)
 
 	raw := map[string]any{
-		paramMatchID:   matches.match.ID.String(),
-		paramMatchNote: "Billed for load PRO-1 we never tendered to this carrier",
+		paramMatchID:         matches.match.ID.String(),
+		toolparams.ParamNote: "Billed for load PRO-1 we never tendered to this carrier",
 	}
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
@@ -188,7 +187,7 @@ func TestRejectCarrierInvoiceMatch_RunsInsideAndHoldsOnOutsideText(t *testing.T)
 		agenttoolstest.FieldByPath(
 			t,
 			agenttoolstest.PreviewChange(t, preview, 0),
-			fieldMatchStatus,
+			fieldStatus,
 		).After,
 	)
 	assert.NotContains(t, preview.Summary, "reconciled")
@@ -233,9 +232,9 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	tool := &CreateCarrierInvoiceMatchTool{matches: creator}
 	shipmentID := pulid.MustNew("shp_")
 	raw := map[string]any{
-		paramEDIInvoiceID:             match.EDICarrierInvoiceID.String(),
-		changepreview.FieldShipmentID: shipmentID.String(),
-		paramMatchProNumber:           "  PRO-7781  ",
+		paramEDICarrierInvoiceID:   match.EDICarrierInvoiceID.String(),
+		toolparams.ParamShipmentID: shipmentID.String(),
+		paramProNumber:             "  PRO-7781  ",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -301,7 +300,7 @@ func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {
 	tool := &LinkEDICarrierInvoiceTool{invoices: linker}
 	carrierID := pulid.MustNew("car_")
 	raw := map[string]any{
-		paramEDIInvoiceID:         pulid.MustNew("edici_").String(),
+		paramEDICarrierInvoiceID:  pulid.MustNew("edici_").String(),
 		toolparams.ParamCarrierID: carrierID.String(),
 	}
 

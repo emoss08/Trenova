@@ -64,7 +64,7 @@ func TestFactoringReadiness_ReadsReadyByDefaultWithTheQueueTotals(t *testing.T) 
 			"ready": map[string]any{"count": 1, "amountMinor": 120_000},
 		}}},
 	}}
-	tool := factoringTool(t, toolListFactoringReadiness, reader)
+	tool := factoringTool(t, "factoring_list_readiness", reader)
 
 	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{}))
 	require.NoError(t, err)
@@ -82,13 +82,13 @@ func TestFactoringReadiness_ReadsReadyByDefaultWithTheQueueTotals(t *testing.T) 
 	assert.Contains(t, outcome, keyFactoringSummary)
 	items, _ := outcome["items"].([]any)
 	require.Len(t, items, 2)
-	assert.NotContains(t, items[0].(map[string]any), fieldFactoringChecks)
-	checks, _ := items[1].(map[string]any)[fieldFactoringChecks].([]any)
+	assert.NotContains(t, items[0].(map[string]any), fieldChecks)
+	checks, _ := items[1].(map[string]any)[fieldChecks].([]any)
 	require.Len(t, checks, 1, "only the check that failed says what holds it back")
 	assert.Equal(t, "Agreement", checks[0].(map[string]any)["code"])
 
 	_, err = tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
-		paramFactoringVerdict: []any{"NotReady", "Submitted"},
+		paramVerdict: []any{"NotReady", "Submitted"},
 	}))
 	require.NoError(t, err)
 	last := reader.Requests[len(reader.Requests)-2]
@@ -110,7 +110,7 @@ func TestFactoringNoas_SayWhetherEachNoticeIsEffective(t *testing.T) {
 			map[string]any{"id": "fnoa_4", "status": "Sent"},
 		)},
 	}}
-	tool := factoringTool(t, toolListFactoringNoas, reader)
+	tool := factoringTool(t, "factoring_list_noas", reader)
 	customer := pulid.MustNew("cus_").String()
 
 	data, err := tool.Query(
@@ -156,21 +156,21 @@ func TestFactoringAgreements_MarkTheOneInForce(t *testing.T) {
 			},
 		}}},
 	}}
-	tool := factoringTool(t, toolListFactoringAgreement, reader)
+	tool := factoringTool(t, "factoring_list_agreements", reader)
 
 	_, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{}))
-	require.ErrorContains(t, err, paramFactoringCompany)
+	require.ErrorContains(t, err, paramFactoringCompanyID)
 	assert.Empty(t, reader.Requests)
 
 	factor := pulid.MustNew("fco_").String()
 	data, err := tool.Query(
 		t.Context(),
-		querytooltest.KeyedCall(map[string]any{paramFactoringCompany: factor}),
+		querytooltest.KeyedCall(map[string]any{paramFactoringCompanyID: factor}),
 	)
 	require.NoError(t, err)
 	sent := reader.Sent("DeskFactoringAgreements")
 	require.NotNil(t, sent)
-	assert.Equal(t, factor, sent.Variables[paramFactoringCompany])
+	assert.Equal(t, factor, sent.Variables[paramFactoringCompanyID])
 
 	outcome, ok := data.(map[string]any)
 	require.True(t, ok)
@@ -190,9 +190,9 @@ func TestFactoringRemittance_ReadsItsLinesByMatchStatus(t *testing.T) {
 		"DeskFactoringRemittance": {Data: map[string]any{"factoringRemittance": map[string]any{
 			"id": "frem_1", "status": "Parsed", "lines": []any{
 				map[string]any{"id": "freml_1", fieldMatchStatus: "Error",
-					fieldRemittanceCells: []any{"A-1", "oops"}},
+					fieldCells: []any{"A-1", "oops"}},
 				map[string]any{"id": "freml_2", fieldMatchStatus: "Unmatched",
-					fieldRemittanceCells: []any{"A-2", "100.00"}},
+					fieldCells: []any{"A-2", "100.00"}},
 			},
 		}}},
 	}}
@@ -214,8 +214,8 @@ func TestFactoringRemittance_ReadsItsLinesByMatchStatus(t *testing.T) {
 	assert.Equal(t, factoringRemitsPath+"frem_1", record[keyFactoringPath])
 	lines, _ := record["lines"].([]any)
 	require.Len(t, lines, 2)
-	assert.Contains(t, lines[0].(map[string]any), fieldRemittanceCells)
-	assert.NotContains(t, lines[1].(map[string]any), fieldRemittanceCells)
+	assert.Contains(t, lines[0].(map[string]any), fieldCells)
+	assert.NotContains(t, lines[1].(map[string]any), fieldCells)
 }
 
 // A factor's balance is keyed by the factor, not by a record's id.
@@ -230,17 +230,17 @@ func TestFactoringReserveBalance_IsReadByTheFactor(t *testing.T) {
 	tool := factoringTool(t, "factoring_get_reserve_balance", reader)
 
 	_, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{}))
-	require.ErrorContains(t, err, paramFactoringCompany)
+	require.ErrorContains(t, err, paramFactoringCompanyID)
 
 	factor := pulid.MustNew("fco_").String()
 	data, err := tool.Query(
 		t.Context(),
-		querytooltest.KeyedCall(map[string]any{paramFactoringCompany: factor}),
+		querytooltest.KeyedCall(map[string]any{paramFactoringCompanyID: factor}),
 	)
 	require.NoError(t, err)
 	sent := reader.Sent("FactoringReserveBalance")
 	require.NotNil(t, sent)
-	assert.Equal(t, map[string]any{paramFactoringCompany: factor}, sent.Variables)
+	assert.Equal(t, map[string]any{paramFactoringCompanyID: factor}, sent.Variables)
 	record, ok := data.(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, 3, record["entryCount"])
@@ -260,12 +260,12 @@ func TestFactoringGetReadiness_EvaluatesTheInvoiceItNames(t *testing.T) {
 	invoice := pulid.MustNew("inv_").String()
 
 	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
-		paramFactoringInvoice: invoice,
+		paramInvoiceID: invoice,
 	}))
 	require.NoError(t, err)
 	sent := reader.Sent("DeskFactoringReadiness")
 	require.NotNil(t, sent)
-	assert.Equal(t, map[string]any{paramFactoringInvoice: invoice}, sent.Variables)
+	assert.Equal(t, map[string]any{paramInvoiceID: invoice}, sent.Variables)
 	record, ok := data.(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, factoringQueuePath, record[keyFactoringPath])
@@ -278,9 +278,9 @@ func TestFactoringGets_TypeTheirKeyByTheRecordItBelongsTo(t *testing.T) {
 		param    string
 		recordOf string
 	}{
-		"factoring_get_readiness": {param: paramFactoringInvoice, recordOf: "invoice"},
+		"factoring_get_readiness": {param: paramInvoiceID, recordOf: "invoice"},
 		"factoring_get_reserve_balance": {
-			param:    paramFactoringCompany,
+			param:    paramFactoringCompanyID,
 			recordOf: "factoring_company",
 		},
 	}

@@ -11,15 +11,6 @@ import (
 )
 
 const (
-	toolOrderGet                  = "order_get"
-	toolListRecurringShipments    = "shipment_list_recurring"
-	toolListServiceFailures       = "exception_list_service_failures"
-	toolListServiceFailureReasons = "exception_list_service_failure_reason_codes"
-	toolGetServiceFailure         = "exception_get_service_failure"
-	toolGetDetentionOccurrence    = "detention_get_occurrence"
-	toolListDetentionOccurrences  = "detention_list_occurrences"
-	toolListShipmentTenders       = "dispatch_list_tenders"
-
 	fieldReasonCodeID            = "reasonCodeId"
 	fieldSourceShipmentID        = "sourceShipmentId"
 	fieldLastGeneratedShipmentID = "lastGeneratedShipmentId"
@@ -102,7 +93,7 @@ var (
 	shipmentReference = readspec.Reference{
 		Resource: permission.ResourceShipment,
 		What:     "The shipment",
-		Source:   querytool.ShipmentListName,
+		Source:   "shipment_list",
 	}
 )
 
@@ -112,7 +103,7 @@ var (
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         querytool.ToolOrderList,
+			Name:         "order_list",
 			EntityPlural: pluralOrders,
 			Summary:      ordersSummary,
 			SearchTerms:  []string{"po number", "order number"},
@@ -123,7 +114,7 @@ func ReadSpecs() []readspec.List {
 			},
 		},
 		{
-			Name:         toolListRecurringShipments,
+			Name:         "shipment_list_recurring",
 			EntityPlural: pluralRecurringShipments,
 			Summary:      recurringShipmentsSummary,
 			SearchTerms:  []string{"recurring shipments", "when a series generates next"},
@@ -134,27 +125,27 @@ func ReadSpecs() []readspec.List {
 				fieldOriginLocationID: {
 					Resource: permission.ResourceLocation,
 					What:     "The lane's origin",
-					Source:   querytool.ToolLocationList,
+					Source:   "location_list",
 				},
 				fieldDestinationLocationID: {
 					Resource: permission.ResourceLocation,
 					What:     "The lane's destination",
-					Source:   querytool.ToolLocationList,
+					Source:   "location_list",
 				},
 				fieldSourceShipmentID: {
 					Resource: permission.ResourceShipment,
 					What:     "The shipment the series copies",
-					Source:   querytool.ShipmentListName,
+					Source:   "shipment_list",
 				},
 				fieldLastGeneratedShipmentID: {
 					Resource: permission.ResourceShipment,
 					What:     "The shipment the series last made",
-					Source:   querytool.ShipmentListName,
+					Source:   "shipment_list",
 				},
 			},
 		},
 		{
-			Name:         toolListServiceFailures,
+			Name:         "exception_list_service_failures",
 			EntityPlural: pluralServiceFailures,
 			Summary:      serviceFailuresSummary,
 			Resource:     permission.ResourceServiceFailure,
@@ -163,12 +154,12 @@ func ReadSpecs() []readspec.List {
 				fieldReasonCodeID: {
 					Resource: permission.ResourceServiceFailureReasonCode,
 					What:     "The reason code",
-					Source:   toolListServiceFailureReasons,
+					Source:   "exception_list_service_failure_reason_codes",
 				},
 			},
 		},
 		{
-			Name:         toolListServiceFailureReasons,
+			Name:         "exception_list_service_failure_reason_codes",
 			EntityPlural: pluralServiceFailureReasons,
 			Summary:      serviceFailureReasonsSummary,
 			Resource:     permission.ResourceServiceFailureReasonCode,
@@ -176,7 +167,7 @@ func ReadSpecs() []readspec.List {
 			Defaults:     map[string]any{querytool.FieldActive: true},
 		},
 		{
-			Name:         toolListDetentionOccurrences,
+			Name:         "detention_list_occurrences",
 			EntityPlural: pluralDetentionOccurrences,
 			Summary:      detentionOccurrencesSummary,
 			Resource:     permission.ResourceDetention,
@@ -187,7 +178,7 @@ func ReadSpecs() []readspec.List {
 			References: map[string]readspec.Reference{querytool.ParamShipmentID: shipmentReference},
 		},
 		{
-			Name:         toolListShipmentTenders,
+			Name:         "dispatch_list_tenders",
 			EntityPlural: pluralTenders,
 			Summary:      shipmentTendersSummary,
 			Resource:     permission.ResourceTender,
@@ -247,7 +238,7 @@ func shapeTender(row map[string]any, _ map[string]struct{}, _ filtercatalog.Cloc
 // order read.
 func OrderGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:        toolOrderGet,
+		Name:        "order_get",
 		Entity:      labelOrder,
 		Summary:     orderGetSummary,
 		SearchTerms: []string{searchTermCharges, "invoiced", searchTermLegs},
@@ -261,7 +252,7 @@ func OrderGetSpec() readspec.Get {
 // ServiceFailureGetSpec reads one service failure through the Desk's card.
 func ServiceFailureGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:      toolGetServiceFailure,
+		Name:      "exception_get_service_failure",
 		Entity:    "service failure",
 		Summary:   serviceFailureGetSummary,
 		Resource:  permission.ResourceServiceFailure,
@@ -274,7 +265,7 @@ func ServiceFailureGetSpec() readspec.Get {
 // Desk's detention card, priced as of now while its clock runs.
 func DetentionOccurrenceGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:      toolGetDetentionOccurrence,
+		Name:      "detention_get_occurrence",
 		Entity:    "detention occurrence",
 		Summary:   detentionOccurrenceGetSummary,
 		Resource:  permission.ResourceDetention,

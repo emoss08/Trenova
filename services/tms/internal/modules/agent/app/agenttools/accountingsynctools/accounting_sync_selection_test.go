@@ -87,7 +87,7 @@ func TestRetryAccountingSync_PinsTheRecordsItsCategoriesNameWhenProposed(t *test
 	want := []string{dead.ID.String(), limited.ID.String(), retrying.ID.String()}
 	assert.ElementsMatch(t, want, pinnedIDs(t, pinned))
 	assert.Equal(t, "QuickBooksOnline", pinned["system"])
-	assert.Equal(t, []any{"Transient", "RateLimited"}, pinned[paramSyncErrorCategories],
+	assert.Equal(t, []any{"Transient", "RateLimited"}, pinned[paramErrorCategories],
 		"the categories stay beside the records to say why they were chosen")
 	assert.Equal(t,
 		map[string]any{

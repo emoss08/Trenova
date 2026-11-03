@@ -154,7 +154,7 @@ func NewLinkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentToo
 func (t *LinkInboundMessageTool) Name() string { return "inbox_link_inbound_message" }
 
 func (t *LinkInboundMessageTool) Recipe() []string {
-	return []string{ToolGetMessage, "inbox_link_inbound_message"}
+	return []string{"inbox_get_inbound_message", "inbox_link_inbound_message"}
 }
 
 func (t *LinkInboundMessageTool) Description() string {
@@ -287,7 +287,7 @@ func NewMarkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentToo
 func (t *MarkInboundMessageTool) Name() string { return "inbox_mark_inbound_message" }
 
 func (t *MarkInboundMessageTool) Recipe() []string {
-	return []string{ToolGetMessage, "inbox_mark_inbound_message"}
+	return []string{"inbox_get_inbound_message", "inbox_mark_inbound_message"}
 }
 
 func (t *MarkInboundMessageTool) SearchTerms() []string {
@@ -482,7 +482,7 @@ func (t *ReplyToInboundMessageTool) Name() string { return "inbox_send_reply" }
 
 func (t *ReplyToInboundMessageTool) Recipe() []string {
 	return []string{
-		ToolGetMessage,
+		"inbox_get_inbound_message",
 		"shipment_get_tracking",
 		"inbox_send_reply",
 	}

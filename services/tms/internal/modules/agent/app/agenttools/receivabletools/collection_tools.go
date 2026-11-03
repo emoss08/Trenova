@@ -24,21 +24,15 @@ import (
 )
 
 const (
-	toolLogCollectionActivity      = "receivable_record_collection_activity"
-	toolAssignCollector            = "receivable_assign_collector"
-	toolScheduleCollectionFollowUp = "receivable_schedule_follow_up"
-	toolListCollectionsWorklist    = "receivable_list_collection_worklist"
-	toolGetCustomerStatement       = "receivable_get_statement"
-	paramCollectionKind            = "kind"
-	paramCollectionSummary         = "summary"
-	paramCollectionContact         = "contactName"
-	paramPromisedAmount            = "promisedAmount"
-	paramPromisedOn                = "promisedOn"
-	paramFollowUpOn                = "followUpOn"
-	paramCollectorID               = "collectorId"
-	paramCollectionNote            = "note"
-	maxCollectionContactChars      = 200
-	collectionTaintHold            = "What a customer said is what a collector acts on " +
+	paramKind                 = "kind"
+	paramSummary              = "summary"
+	paramContactName          = "contactName"
+	paramPromisedAmount       = "promisedAmount"
+	paramPromisedOn           = "promisedOn"
+	paramFollowUpOn           = "followUpOn"
+	paramCollectorID          = "collectorId"
+	maxCollectionContactChars = 200
+	collectionTaintHold       = "What a customer said is what a collector acts on " +
 		"next, and a promise to pay holds back reminders and moves the follow-up, so a run " +
 		"that has read outside text proposes it rather than writing it."
 )
@@ -65,9 +59,9 @@ var collectionRefs = map[string]permission.Resource{
 }
 
 var collectionLabels = map[string]string{
-	paramCollectionKind:       "Kind",
-	paramCollectionSummary:    "What happened",
-	paramCollectionContact:    "Spoke to",
+	paramKind:                 "Kind",
+	paramSummary:              "What happened",
+	paramContactName:          "Spoke to",
 	toolparams.ParamInvoiceID: "Invoice",
 	paramPromisedAmount:       "Promised amount",
 	paramPromisedOn:           "Promised to pay by",
@@ -232,11 +226,11 @@ func customerRecord(customerID pulid.ID) *agentrecord.RecordRef {
 func NewLogCollectionActivityTool(collections collectionports.Service) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolLogCollectionActivity,
+			Name: "receivable_record_collection_activity",
 			Recipe: []string{
-				toolListCollectionsWorklist,
-				toolGetCustomerStatement,
-				toolLogCollectionActivity,
+				"receivable_list_collection_worklist",
+				"receivable_get_statement",
+				"receivable_record_collection_activity",
 			},
 			Description: "Log a call, email, note or promise to pay against a customer's " +
 				"overdue receivables, so the next person chasing them knows what was said. " +
@@ -257,18 +251,18 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 			Artifact: changepreview.CustomerRecordEntity,
 			Properties: map[string]any{
 				toolparams.ParamCustomerID: collectionCustomerProperty(),
-				paramCollectionKind: agenttoolschema.Enum(
+				paramKind: agenttoolschema.Enum(
 					"Call or Email for a contact with the customer, Note for anything else "+
 						"worth knowing, PromiseToPay when they said they would pay an amount by "+
 						"a date.",
 					collectionContactKinds,
 				),
-				paramCollectionSummary: toolparams.StringProperty(
+				paramSummary: toolparams.StringProperty(
 					"What was said, in the customer's words where you have them. Required "+
 						"except for a promise to pay.",
 					collection.MaxSummaryLength,
 				),
-				paramCollectionContact: toolparams.StringProperty(
+				paramContactName: toolparams.StringProperty(
 					"Who you or the customer spoke to, if you know.",
 					maxCollectionContactChars,
 				),
@@ -288,7 +282,7 @@ func NewLogCollectionActivityTool(collections collectionports.Service) agenttool
 						"current follow-up, or for a promise, the day after it falls due.",
 				),
 			},
-			Required:    []string{toolparams.ParamCustomerID, paramCollectionKind},
+			Required:    []string{toolparams.ParamCustomerID, paramKind},
 			SearchTerms: []string{"promise to pay", "log a contact", "dunning"},
 		},
 		toolspec.ReceivablePlan[
@@ -338,7 +332,7 @@ func logActivityRequest(
 	}
 	kind, err := toolparams.RequireEnum(
 		params.Params,
-		paramCollectionKind,
+		paramKind,
 		collectionContactKinds.Values,
 	)
 	if err != nil {
@@ -346,7 +340,7 @@ func logActivityRequest(
 	}
 	summary, err := toolparams.BoundedText(
 		params.Params,
-		paramCollectionSummary,
+		paramSummary,
 		collection.MaxSummaryLength,
 	)
 	if err != nil {
@@ -354,7 +348,7 @@ func logActivityRequest(
 	}
 	contact, err := toolparams.BoundedText(
 		params.Params,
-		paramCollectionContact,
+		paramContactName,
 		maxCollectionContactChars,
 	)
 	if err != nil {
@@ -417,8 +411,8 @@ func activityNoun(kind collection.ActivityKind) string {
 func NewAssignCollectorTool(collections collectionports.Service) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name:   toolAssignCollector,
-			Recipe: []string{toolListCollectionsWorklist, toolAssignCollector},
+			Name:   "receivable_assign_collector",
+			Recipe: []string{"receivable_list_collection_worklist", "receivable_assign_collector"},
 			Description: "Give a customer's overdue receivables to a collector, or take them " +
 				"off whoever has them. The collector must be a member of the organization and " +
 				"is told the account is theirs. Use a collectorId receivable_list_collection_worklist " +
@@ -528,8 +522,11 @@ func NewScheduleCollectionFollowUpTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name:   toolScheduleCollectionFollowUp,
-			Recipe: []string{toolListCollectionsWorklist, toolScheduleCollectionFollowUp},
+			Name: "receivable_schedule_follow_up",
+			Recipe: []string{
+				"receivable_list_collection_worklist",
+				"receivable_schedule_follow_up",
+			},
 			Description: "Set the day a customer's overdue receivables are next chased, or " +
 				"clear the follow-up, with a note saying why. The account comes back up the " +
 				"worklist on that day. Leave followUpOn out only to clear it.",
@@ -550,7 +547,7 @@ func NewScheduleCollectionFollowUpTool(
 					"The day to chase the account next, today or later. Leave it out to clear " +
 						"the follow-up.",
 				),
-				paramCollectionNote: toolparams.StringProperty(
+				toolparams.ParamNote: toolparams.StringProperty(
 					"Why then, kept in the account's history.",
 					collection.MaxSummaryLength,
 				),
@@ -612,7 +609,7 @@ func scheduleFollowUpRequest(
 	}
 	note, err := toolparams.BoundedText(
 		params.Params,
-		paramCollectionNote,
+		toolparams.ParamNote,
 		collection.MaxSummaryLength,
 	)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemoryprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpageprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textfence"
 )
@@ -91,7 +90,7 @@ const scriptCalculationRule = "- Do not calculate in your head. Every figure you
 // one turn to the next and its cache holds.
 func trenovaRules(tools []agentturn.ToolSummary) string {
 	rule := calculationRule
-	if holdsTool(tools, codemode.ToolRunScript) {
+	if holdsTool(tools, "analysis_run") {
 		rule = scriptCalculationRule
 	}
 

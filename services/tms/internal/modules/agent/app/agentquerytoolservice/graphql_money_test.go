@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
-	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/settlementquerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -164,7 +163,8 @@ func TestWithBeside_KeepsThePagesMarks(t *testing.T) {
 func TestDriverEarnings_AreReadByTheWorkersID(t *testing.T) {
 	t.Parallel()
 
-	earnings, statement := graphqlread.Reads[settlementquerytools.ToolGetDriverEarnings], graphqlread.Reads[settlementquerytools.ToolGetDriverSettlement]
+	earnings := graphqlread.Reads["settlement_get_driver_earnings"]
+	statement := graphqlread.Reads["settlement_get_driver"]
 	assert.Equal(t, "workerId", earnings.GetKey())
 	assert.Equal(t, "id", statement.GetKey())
 }

@@ -6,11 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/extractionartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
@@ -40,7 +38,7 @@ type draftReader struct {
 	asked []map[string]any
 }
 
-func (r *draftReader) Name() string        { return artifactpayload.ToolGetShipmentDraft }
+func (r *draftReader) Name() string        { return "intake_get_draft" }
 func (r *draftReader) Description() string { return "Read a document's shipment draft." }
 func (r *draftReader) ParamSchema() map[string]any {
 	return map[string]any{
@@ -51,7 +49,7 @@ func (r *draftReader) ParamSchema() map[string]any {
 
 func (r *draftReader) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name: artifactpayload.ToolGetShipmentDraft, Kind: agenttooltrust.ToolKindQuery,
+		Name: "intake_get_draft", Kind: agenttooltrust.ToolKindQuery,
 		Resource: permission.ResourceDocument, Operation: permission.OpRead,
 	}
 }
@@ -202,7 +200,7 @@ func TestObserve_ReadingTheDraftAgainPointsAtTheAttachmentsCard(t *testing.T) {
 
 	again, err := recorder.Observe(agentruntimeports.ToolObservation{
 		Call: llmports.ToolCall{
-			ID: "call_draft", Name: artifactpayload.ToolGetShipmentDraft,
+			ID: "call_draft", Name: "intake_get_draft",
 			Arguments: map[string]any{extractionartifact.DraftDocumentIDParam: documentID.String()},
 		},
 		Data: readDraft(documentID),
@@ -277,7 +275,7 @@ func readAttachmentResult(documentID pulid.ID, reading string) *agentruntimeport
 	}
 
 	return &agentruntimeports.ToolObservation{
-		Call: llmports.ToolCall{ID: "call_read", Name: agentdefinition.CoreToolReadAttachment},
+		Call: llmports.ToolCall{ID: "call_read", Name: "agent_read_attachment"},
 		Data: data,
 	}
 }
@@ -346,7 +344,7 @@ func TestWaitOnUnreadFile_LeavesOtherWorkAlone(t *testing.T) {
 	documentID := pulid.MustNew("doc_")
 	thread := pulid.MustNew("athr_")
 	otherTool := readAttachmentResult(documentID, "Extracting")
-	otherTool.Call.Name = artifactpayload.ToolGetShipmentDraft
+	otherTool.Call.Name = "intake_get_draft"
 	failed := readAttachmentResult(documentID, "Extracting")
 	failed.Failed = true
 

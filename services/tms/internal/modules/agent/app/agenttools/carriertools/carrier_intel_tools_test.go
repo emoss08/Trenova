@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -278,9 +277,9 @@ func TestVetCarrier_PreviewsTheLookupAndIsAMoneyWrite(t *testing.T) {
 	intel := newFakeCarrierIntel()
 	tool := NewVetCarrierTool(intel)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamCarrierID:   intel.carrier.ID.String(),
-		paramDepth:                  "Lite",
-		toolparams.ParamForceResend: true,
+		toolparams.ParamCarrierID: intel.carrier.ID.String(),
+		paramDepth:                "Lite",
+		toolparams.ParamForce:     true,
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -329,7 +328,7 @@ func TestVetCustomerBroker_ChecksTheCustomer(t *testing.T) {
 	tool := NewVetCustomerBrokerTool(intel)
 	customerID := pulid.MustNew("cus_")
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{changepreview.FieldCustomerID: customerID.String()},
+		map[string]any{toolparams.ParamCustomerID: customerID.String()},
 	)
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -451,7 +450,7 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 
 	named := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamCarrierID: intel.carrier.ID.String(),
-		paramSuggestionFields:     []any{"city"},
+		paramFields:               []any{"city"},
 	})
 	require.NoError(t, tool.Execute(t.Context(), named))
 	assert.Equal(
@@ -468,7 +467,7 @@ func TestApplyCarrierIntelSuggestions_AppliesEverySuggestionWhenNoneAreNamed(t *
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			toolparams.ParamCarrierID: intel.carrier.ID.String(),
-			paramSuggestionFields:     []any{"fax"},
+			paramFields:               []any{"fax"},
 		})))
 }
 

@@ -39,11 +39,9 @@ const paramRateAgreementID = "rateAgreementId"
 
 const paramPartyType = "partyType"
 
-const paramAgreementCode = "code"
+const paramCode = "code"
 
-const paramAgreementName = "name"
-
-const paramDescription = "description"
+const paramName = "name"
 
 const paramAgreementType = "agreementType"
 
@@ -55,7 +53,7 @@ const paramAutoRenew = "autoRenew"
 
 const paramRenewalNoticeDays = "renewalNoticeDays"
 
-const paramAgreementCurrency = "currency"
+const paramCurrency = "currency"
 
 const paramInputs = "inputs"
 
@@ -63,7 +61,7 @@ const paramLanes = "lanes"
 
 const paramRuleID = "ruleId"
 
-const paramLaneLabel = "label"
+const paramLabel = "label"
 
 const paramOriginScopeType = "originScopeType"
 
@@ -71,7 +69,7 @@ const paramOriginValue = "originValue"
 
 const paramOriginCity = "originCity"
 
-const paramDestinationType = "destinationScopeType"
+const paramDestinationScopeType = "destinationScopeType"
 
 const paramDestinationValue = "destinationValue"
 
@@ -87,15 +85,13 @@ const paramTempControlOnly = "tempControlOnly"
 
 const paramSupersededRuleIDs = "supersededRuleIds"
 
-const paramReviewComment = "comment"
+const paramComment = "comment"
 
 const paramAgreementIDs = "agreementIds"
 
 const paramPercentChange = "percentChange"
 
 const paramRateImportID = "rateImportId"
-
-const paramSimulationName = "name"
 
 const paramSampleFrom = "sampleFrom"
 
@@ -251,7 +247,7 @@ func rateAgreementIDProperty() map[string]any {
 
 func laneProperty(forRevision bool) map[string]any {
 	properties := map[string]any{
-		paramLaneLabel: toolparams.StringProperty(
+		paramLabel: toolparams.StringProperty(
 			"A short name for the lane, such as Dallas to Atlanta.",
 			maxLaneLabel,
 		),
@@ -266,7 +262,7 @@ func laneProperty(forRevision bool) map[string]any {
 		),
 		paramOriginCity: toolparams.StringProperty("The origin city, for a CityState origin.",
 			maxLaneCity),
-		paramDestinationType: agenttoolschema.Enum("How the destination is named. "+
+		paramDestinationScopeType: agenttoolschema.Enum("How the destination is named. "+
 			"Defaults to Any.", laneScopeTypes),
 		paramDestinationValue: toolparams.StringProperty("The destination, read as originValue is.",
 			maxLaneValue),
@@ -454,7 +450,7 @@ func (r laneReader) applyPricing(
 }
 
 func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map[string]any) error {
-	label, err := toolparams.OptionalBoundedText(fields, paramLaneLabel, maxLaneLabel)
+	label, err := toolparams.OptionalBoundedText(fields, paramLabel, maxLaneLabel)
 	if err != nil {
 		return err
 	}
@@ -514,7 +510,7 @@ func (r laneReader) lane(
 		return nil, err
 	}
 	destination, err := r.end(ctx, fields,
-		[3]string{paramDestinationType, paramDestinationValue, paramDestinationCity},
+		[3]string{paramDestinationScopeType, paramDestinationValue, paramDestinationCity},
 		rule.DestinationScope())
 	if err != nil {
 		return nil, err
@@ -623,13 +619,13 @@ func (r laneReader) revisedLanes(
 
 func agreementHeaderProperties() map[string]any {
 	return map[string]any{
-		paramAgreementCode: toolparams.StringProperty(
+		paramCode: toolparams.StringProperty(
 			"A short code for the agreement, unique in the "+
 				"organization, such as ACME-2027.",
 			maxAgreementCode,
 		),
-		paramAgreementName: toolparams.StringProperty("The agreement's name.", maxAgreementName),
-		paramDescription: toolparams.StringProperty(
+		paramName: toolparams.StringProperty("The agreement's name.", maxAgreementName),
+		toolparams.ParamDescription: toolparams.StringProperty(
 			"What the agreement covers.",
 			maxAgreementText,
 		),
@@ -656,7 +652,7 @@ func agreementHeaderProperties() map[string]any {
 			0,
 			maxRenewalNotice,
 		),
-		paramAgreementCurrency: toolparams.StringProperty(
+		paramCurrency: toolparams.StringProperty(
 			"The ISO currency code it prices in. Defaults "+
 				"to USD.",
 			toolparams.CurrencyCodeLength,
@@ -681,10 +677,10 @@ func (h agreementHeader) applyTexts(entity *rateagreement.RateAgreement) error {
 		target *string
 		limit  int
 	}{
-		paramAgreementCode: {&entity.Code, maxAgreementCode},
-		paramAgreementName: {&entity.Name, maxAgreementName},
-		paramDescription:   {&entity.Description, maxAgreementText},
-		paramContractRef:   {&entity.ContractRef, maxContractRef},
+		paramCode:                   {&entity.Code, maxAgreementCode},
+		paramName:                   {&entity.Name, maxAgreementName},
+		toolparams.ParamDescription: {&entity.Description, maxAgreementText},
+		paramContractRef:            {&entity.ContractRef, maxContractRef},
 	} {
 		text, err := toolparams.OptionalBoundedText(h.values, key, field.limit)
 		if err != nil {
@@ -694,12 +690,12 @@ func (h agreementHeader) applyTexts(entity *rateagreement.RateAgreement) error {
 			*field.target = *text
 		}
 	}
-	if h.given(paramAgreementCurrency) {
+	if h.given(paramCurrency) {
 		code := strings.ToUpper(
-			strings.TrimSpace(toolparams.OptionalString(h.values, paramAgreementCurrency)),
+			strings.TrimSpace(toolparams.OptionalString(h.values, paramCurrency)),
 		)
 		if len(code) != toolparams.CurrencyCodeLength {
-			return fmt.Errorf("%s must be a three-letter code such as USD", paramAgreementCurrency)
+			return fmt.Errorf("%s must be a three-letter code such as USD", paramCurrency)
 		}
 		entity.Currency = code
 	}
@@ -979,7 +975,7 @@ func NewDraftRateAgreementTool(
 			"approves it; rate_archive_agreement retires it.",
 		Properties: properties,
 		Required: []string{
-			paramPartyType, paramAgreementCode, paramAgreementName, toolparams.ParamEffectiveFrom,
+			paramPartyType, paramCode, paramName, toolparams.ParamEffectiveFrom,
 		},
 		SearchTerms: []string{"tariff", "rate sheet", "quote", "pricing"},
 	}), toolspec.ReceivablePlan[agreementDraft, *rateagreement.RateAgreement]{
@@ -1194,12 +1190,12 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 			"until a person approves it.",
 		Properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			paramAgreementCode: toolparams.StringProperty(
+			paramCode: toolparams.StringProperty(
 				"The copy's code. Defaults to the original's "+
 					"with -COPY.",
 				maxAgreementCode,
 			),
-			paramAgreementName: toolparams.StringProperty(
+			paramName: toolparams.StringProperty(
 				"The copy's name. Defaults to the original's "+
 					"with (Copy).",
 				maxAgreementName,
@@ -1215,11 +1211,11 @@ func NewDuplicateRateAgreementTool(agreements RateAgreementKeeper) agenttoolport
 			if err != nil {
 				return nil, err
 			}
-			code, err := toolparams.BoundedText(params.Params, paramAgreementCode, maxAgreementCode)
+			code, err := toolparams.BoundedText(params.Params, paramCode, maxAgreementCode)
 			if err != nil {
 				return nil, err
 			}
-			name, err := toolparams.BoundedText(params.Params, paramAgreementName, maxAgreementName)
+			name, err := toolparams.BoundedText(params.Params, paramName, maxAgreementName)
 			if err != nil {
 				return nil, err
 			}
@@ -1296,9 +1292,9 @@ func (s *AgreementReviewStep) spec() *toolspec.ReceivableSpec {
 	comment := "A note on the review for whoever reads the agreement next."
 	if s.needsReason {
 		comment = "Why, in a sentence the agreement's owner can act on."
-		required = append(required, paramReviewComment)
+		required = append(required, paramComment)
 	}
-	properties[paramReviewComment] = toolparams.StringProperty(comment, maxReviewComment)
+	properties[paramComment] = toolparams.StringProperty(comment, maxReviewComment)
 
 	spec := &toolspec.ReceivableSpec{
 		Name:        s.name,
@@ -1331,7 +1327,7 @@ func (s *AgreementReviewStep) request(
 	if s.needsReason {
 		read = toolparams.RequireBoundedText
 	}
-	comment, err := read(params.Params, paramReviewComment, maxReviewComment)
+	comment, err := read(params.Params, paramComment, maxReviewComment)
 	if err != nil {
 		return nil, err
 	}

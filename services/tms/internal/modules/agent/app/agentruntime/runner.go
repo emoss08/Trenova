@@ -468,11 +468,11 @@ func (s *Service) runToolCall(t *Turn, effects TurnEffects, loop *driveLoop, rc 
 	}
 
 	switch call.Name {
-	case runtimetools.FindToolsName:
+	case "find_tools":
 		outcome := s.findTools(t, effects, call)
 		s.recordToolResult(t, effects, call, &outcome)
 		return false
-	case askuser.Name:
+	case "ask_user":
 		outcome, shown := s.askUser(t, effects, loop, call)
 		t.result.ToolCallsUsed++
 		s.recordToolResult(t, effects, call, &outcome)
@@ -489,8 +489,8 @@ func (s *Service) runToolCall(t *Turn, effects TurnEffects, loop *driveLoop, rc 
 	// working for another agent is told why it cannot. Any other turn
 	// that names it is answered as for any tool it does not hold, as
 	// it was before the tool existed.
-	if call.Name == runtimetools.DelegateTaskName &&
-		(t.Holds(runtimetools.DelegateTaskName) || t.req.Delegation != nil) {
+	if call.Name == "delegate_task" &&
+		(t.Holds("delegate_task") || t.req.Delegation != nil) {
 		outcome, ran := rc.fannedOut[call.ID]
 		if !ran {
 			outcome = delegation.Delegate(t, s.handing(t, effects), call)
@@ -571,14 +571,14 @@ func (s *Service) askUser(
 	_, repeated := t.questions[question]
 	content, shown := askuser.Resolve(t.localNow(effects), call.Arguments)
 	switch {
-	case !tools.Offers(askuser.Name) && t.req.Delegation != nil:
+	case !tools.Offers("ask_user") && t.req.Delegation != nil:
 		return toolcall.Refused(
 			aitrace.OutcomeDenied,
 			"a delegated task cannot ask the person",
 			"%s",
 			delegation.DelegatedAskRefusal,
 		), false
-	case !tools.Offers(askuser.Name):
+	case !tools.Offers("ask_user"):
 		return toolcall.Refused(aitrace.OutcomeDenied,
 			"nobody is in the conversation to ask", "%s", askuser.UnattendedRefusal), false
 	case question != "" && repeated:
@@ -730,7 +730,7 @@ func (t *Turn) dispatchCall(call *llmports.ToolCall, completionText string) tool
 // such name: Haiku guessed three spellings of the fuel read and spent the
 // turn's scripts on them.
 func (t *Turn) scriptReach(call *llmports.ToolCall) map[string]agent.AutonomyTier {
-	if call.Name != codemode.ToolRunScript || len(t.beyond) == 0 {
+	if call.Name != "analysis_run" || len(t.beyond) == 0 {
 		return nil
 	}
 

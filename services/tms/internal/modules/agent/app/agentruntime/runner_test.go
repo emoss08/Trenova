@@ -8,7 +8,6 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
@@ -167,7 +166,7 @@ func TestRun_RefusesAToolNotEnabledEvenWhenRegistered(t *testing.T) {
 	}
 	// ask_user is the runtime's own and rides every turn; it reads nothing, so
 	// it does not widen the agent. Nothing from the registry is offered.
-	assert.Equal(t, []string{askuser.Name}, offered, "an unenabled tool is not even offered")
+	assert.Equal(t, []string{"ask_user"}, offered, "an unenabled tool is not even offered")
 }
 
 // The agent runs as the person talking to it. Every tool call is checked against

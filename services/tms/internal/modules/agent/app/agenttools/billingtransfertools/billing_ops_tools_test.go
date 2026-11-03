@@ -89,8 +89,8 @@ func TestReassignBillingCharge_ShowsTheItemsItOpensAndCancels(t *testing.T) {
 		toolparams.ParamItemID: pulid.MustNew("bqi_").String(),
 		paramChargeKind:        "Freight",
 		allocationparams.ParamAllocations: []any{map[string]any{
-			allocationparams.ParamBillToCustomer: payer.String(), allocationparams.ParamAllocMethod: "Percent",
-			allocationparams.ParamAllocPercent: "100",
+			allocationparams.ParamBillToCustomerID: payer.String(), allocationparams.ParamMethod: "Percent",
+			allocationparams.ParamPercent: "100",
 		}},
 	})
 
@@ -224,8 +224,8 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	}
 	tool := NewManageBillingTransferRunTool(runs)
 	stop := agenttoolstest.ExecuteParams(map[string]any{
-		resultRunID:    runs.run.ID.String(),
-		paramRunAction: "Stop",
+		resultRunID: runs.run.ID.String(),
+		paramAction: "Stop",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -240,8 +240,8 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	assert.True(t, runs.canceled)
 
 	retry := agenttoolstest.ExecuteParams(map[string]any{
-		resultRunID:    runs.run.ID.String(),
-		paramRunAction: "Retry",
+		resultRunID: runs.run.ID.String(),
+		paramAction: "Retry",
 	})
 	retryPreview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -272,7 +272,7 @@ func TestManageBillingTransferRun_StopsOrRetries(t *testing.T) {
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(
-			map[string]any{resultRunID: runs.run.ID.String(), paramRunAction: "Pause"},
+			map[string]any{resultRunID: runs.run.ID.String(), paramAction: "Pause"},
 		),
 	))
 }

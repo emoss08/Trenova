@@ -45,29 +45,29 @@ func ExtensionsOn(
 func CommandRuntime(gate ExtensionGate, completion *ScriptedCompletion) *agentruntime.Service {
 	query := &StubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		&agenttest.StubQueryTool{
-			ToolName: agentextension.ToolListPortalSites,
+			ToolName: "web_list_portal_sites",
 			Resource: permission.ResourcePortalAutomation,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: agentextension.ToolReadPortal,
+			ToolName: "web_read_portal",
 			Resource: permission.ResourcePortalAutomation,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: agentextension.ToolWebSearch,
+			ToolName: "web_search",
 			Resource: permission.ResourceWebResearch,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: agentextension.ToolWebRead,
+			ToolName: "web_read",
 			Resource: permission.ResourceWebResearch,
 		},
 		&agenttest.StubQueryTool{
-			ToolName: agentextension.ToolListWebWatches,
+			ToolName: "web_list_watches",
 			Resource: permission.ResourceWebResearch,
 		},
 	}}
 	action := &StubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&agenttest.StubActionTool{
-			ToolName:  agentextension.ToolWatchWeb,
+			ToolName:  "web_watch",
 			Resource:  permission.ResourceWebResearch,
 			Operation: permission.OpRead,
 		},
@@ -94,19 +94,19 @@ var CommandCases = []commandCase{
 	{
 		Command:    agentextension.CommandBrowser,
 		Capability: agentextension.CapabilityPortalAutomation,
-		Tools:      []string{agentextension.ToolListPortalSites, agentextension.ToolReadPortal},
+		Tools:      []string{"web_list_portal_sites", "web_read_portal"},
 		Ask:        "/browser check the 9am slot at Acme DC",
 	},
 	{
 		Command:    agentextension.CommandSearch,
 		Capability: agentextension.CapabilityWebResearch,
-		Tools:      []string{agentextension.ToolWebSearch, agentextension.ToolWebRead},
+		Tools:      []string{"web_search", "web_read"},
 		Ask:        "/search FMCSA hours of service changes this year",
 	},
 	{
 		Command:    agentextension.CommandWatch,
 		Capability: agentextension.CapabilityWebResearch,
-		Tools:      []string{agentextension.ToolWatchWeb, agentextension.ToolListWebWatches},
+		Tools:      []string{"web_watch", "web_list_watches"},
 		Ask:        "/watch FMCSA finalizing the broker transparency rule",
 	},
 }

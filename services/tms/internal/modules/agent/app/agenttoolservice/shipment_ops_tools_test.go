@@ -385,7 +385,7 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamShipmentID:          shipments.shipment().ID.String(),
-		shipmentopstools.ParamCopyCount:     float64(2),
+		shipmentopstools.ParamCount:         float64(2),
 		shipmentopstools.ParamFirstPickupAt: "2030-03-17T12:46:40",
 	})
 	params.Timezone = "America/Chicago"
@@ -403,7 +403,7 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	assert.Equal(
 		t,
 		"BOL-COPY-01",
-		agenttoolstest.FieldByPath(t, created, changepreview.FieldBol).After,
+		agenttoolstest.FieldByPath(t, created, changepreview.FieldBOL).After,
 	)
 	assert.Contains(t, preview.Summary, "2 new shipments")
 
@@ -425,12 +425,12 @@ func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 	)
 	id := pulid.MustNew("shp_").String()
 	for name, raw := range map[string]map[string]any{
-		"too many copies":     {toolparams.ParamShipmentID: id, shipmentopstools.ParamCopyCount: float64(21)},
+		"too many copies":     {toolparams.ParamShipmentID: id, shipmentopstools.ParamCount: float64(21)},
 		"unix seconds":        {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: float64(1_900_000_000)},
 		"unix seconds text":   {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "1900000000"},
 		"a utc offset":        {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "2030-03-17T12:46:40Z"},
 		"a date without time": {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "2030-03-17"},
-		"no shipment":         {shipmentopstools.ParamCopyCount: float64(1)},
+		"no shipment":         {shipmentopstools.ParamCount: float64(1)},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -563,7 +563,7 @@ func TestUpdateShipmentHold_ChangesOnlyWhatIsSentAndKeepsTheVersion(t *testing.T
 		toolparams.ParamShipmentID:        holds.current.ShipmentID.String(),
 		shipmenttools.ParamHoldID:         holds.current.ID.String(),
 		shipmenttools.ParamBlocksBilling:  true,
-		shipmenttools.ParamHoldSeverity:   "Blocking",
+		shipmenttools.ParamSeverity:       "Blocking",
 		toolparams.ParamNote:              " BOL received, billing waits on the POD ",
 		shipmenttools.ParamBlocksDelivery: false,
 	})

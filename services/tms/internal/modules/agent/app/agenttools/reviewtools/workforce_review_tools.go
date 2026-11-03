@@ -25,17 +25,17 @@ import (
 
 const paramReviewID = "reviewId"
 
-const paramReviewTemplate = "templateId"
+const paramTemplateID = "templateId"
 
 const paramRatings = "ratings"
 
-const paramRatingKey = "key"
+const paramKey = "key"
 
-const paramRatingScore = "score"
+const paramScore = "score"
 
-const paramRatingComment = "comment"
+const paramComment = "comment"
 
-const paramReviewSummary = "summary"
+const paramSummary = "summary"
 
 const paramStrengths = "strengths"
 
@@ -43,11 +43,11 @@ const paramImprovements = "improvements"
 
 const paramGoals = "goals"
 
-const paramGoalTitle = "title"
+const paramTitle = "title"
 
-const paramGoalDueAt = "dueAt"
+const paramDueAt = "dueAt"
 
-const paramGoalStatus = "status"
+const paramStatus = "status"
 
 const kindReview = "performance review"
 
@@ -65,16 +65,16 @@ var reviewGoalStatuses = agenttoolschema.Source(
 )
 
 var reviewFields = []string{
-	workforcekit.FieldWorkerID,
-	paramReviewTemplate,
+	toolparams.ParamWorkerID,
+	paramTemplateID,
 	"reviewerId",
 	changepreview.FieldStatus,
 	workforcekit.ParamTitle,
-	changepreview.FieldPeriodStart,
-	changepreview.FieldPeriodEnd,
+	toolparams.ParamPeriodStart,
+	toolparams.ParamPeriodEnd,
 	paramRatings,
 	"overallScore",
-	paramReviewSummary,
+	paramSummary,
 	paramStrengths,
 	paramImprovements,
 	paramGoals,
@@ -150,7 +150,7 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 		permission.OpCreate,
 	), map[string]any{
 		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
-		paramReviewTemplate: agenttoolschema.RecordIDText(
+		paramTemplateID: agenttoolschema.RecordIDText(
 			permission.ResourcePerformanceReviewTemplate,
 			"The review template, from worker_list_performance_reviews. "+
 				"Never guess one.",
@@ -159,9 +159,9 @@ func newStartPerformanceReviewTool(reviews ReviewKeeper) agenttoolports.AgentToo
 			"A title; defaults to the template and period.",
 			120,
 		),
-		changepreview.FieldPeriodStart: agenttoolschema.Date("The first day the review covers."),
-		changepreview.FieldPeriodEnd:   agenttoolschema.Date("The last day the review covers."),
-	}, toolparams.ParamWorkerID, paramReviewTemplate, changepreview.FieldPeriodStart, changepreview.FieldPeriodEnd)
+		toolparams.ParamPeriodStart: agenttoolschema.Date("The first day the review covers."),
+		toolparams.ParamPeriodEnd:   agenttoolschema.Date("The last day the review covers."),
+	}, toolparams.ParamWorkerID, paramTemplateID, toolparams.ParamPeriodStart, toolparams.ParamPeriodEnd)
 
 	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
 		*performancereviewservice.CreateReviewRequest, *workerreview.PerformanceReview,
@@ -219,18 +219,18 @@ func createReviewRequest(
 	if err != nil {
 		return nil, err
 	}
-	templateID, err := toolparams.RequirePulid(params.Params, paramReviewTemplate)
+	templateID, err := toolparams.RequirePulid(params.Params, paramTemplateID)
 	if err != nil {
 		return nil, err
 	}
 	start, err := toolparams.RequireScheduleDay(
 		params.Params,
-		changepreview.FieldPeriodStart,
+		toolparams.ParamPeriodStart,
 	)
 	if err != nil {
 		return nil, err
 	}
-	end, err := toolparams.RequireScheduleDay(params.Params, changepreview.FieldPeriodEnd)
+	end, err := toolparams.RequireScheduleDay(params.Params, toolparams.ParamPeriodEnd)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func applyReviewText(
 		key  string
 		dest *string
 	}{
-		{paramReviewSummary, &req.Summary},
+		{paramSummary, &req.Summary},
 		{paramStrengths, &req.Strengths},
 		{paramImprovements, &req.Improvements},
 	} {
@@ -343,7 +343,7 @@ func applyReviewRatings(
 		index, known := byKey[rating.Key]
 		if !known {
 			return errortypes.NewValidationError(
-				fmt.Sprintf("%s[%d].%s", paramRatings, i, paramRatingKey),
+				fmt.Sprintf("%s[%d].%s", paramRatings, i, paramKey),
 				errortypes.ErrInvalid,
 				"This review has no item {0}", rating.Key,
 			)
@@ -351,7 +351,7 @@ func applyReviewRatings(
 		if rating.Score != nil &&
 			(*rating.Score < minReviewScore || *rating.Score > maxReviewScore) {
 			return fmt.Errorf("parameter %s[%d].%s must be %d to %d", paramRatings, i,
-				paramRatingScore, minReviewScore, maxReviewScore)
+				paramScore, minReviewScore, maxReviewScore)
 		}
 		req.Ratings[index].Score = rating.Score
 		req.Ratings[index].Comment = rating.Comment
@@ -377,16 +377,16 @@ func applyReviewGoals(
 			Status: workerreview.ReviewGoalStatusOpen,
 		}
 		if goal.Status != "" {
-			status, err := toolparams.RequireEnum(map[string]any{paramGoalStatus: goal.Status},
-				paramGoalStatus, reviewGoalStatuses.Values)
+			status, err := toolparams.RequireEnum(map[string]any{paramStatus: goal.Status},
+				paramStatus, reviewGoalStatuses.Values)
 			if err != nil {
 				return fmt.Errorf("%s[%d]: %w", paramGoals, i, err)
 			}
 			entry.Status = status
 		}
 		if goal.DueAt != "" {
-			due, err := toolparams.RequireScheduleDay(map[string]any{paramGoalDueAt: goal.DueAt},
-				paramGoalDueAt)
+			due, err := toolparams.RequireScheduleDay(map[string]any{paramDueAt: goal.DueAt},
+				paramDueAt)
 			if err != nil {
 				return fmt.Errorf("%s[%d]: %w", paramGoals, i, err)
 			}
@@ -409,27 +409,27 @@ func reviewDraftProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramRatingKey: toolparams.StringProperty(
+					paramKey: toolparams.StringProperty(
 						"The item's key.",
 						workforcekit.ShortChars,
 					),
-					paramRatingScore: toolparams.IntegerProperty(
+					paramScore: toolparams.IntegerProperty(
 						"The score, 1 to 5.",
 						minReviewScore,
 						maxReviewScore,
 					),
-					paramRatingComment: toolparams.StringProperty(
+					paramComment: toolparams.StringProperty(
 						"Why that score, from the record.",
 						workforcekit.NoteChars,
 					),
 				},
-				toolschema.KeyRequired:             []string{paramRatingKey},
+				toolschema.KeyRequired:             []string{paramKey},
 				toolschema.KeyAdditionalProperties: false,
 			},
 		},
-		paramReviewSummary: workforcekit.NoteProperty("The overall summary."),
-		paramStrengths:     workforcekit.NoteProperty("What went well."),
-		paramImprovements:  workforcekit.NoteProperty("What to work on."),
+		paramSummary:      workforcekit.NoteProperty("The overall summary."),
+		paramStrengths:    workforcekit.NoteProperty("What went well."),
+		paramImprovements: workforcekit.NoteProperty("What to work on."),
 		paramGoals: map[string]any{
 			toolschema.KeyType: toolschema.TypeArray,
 			toolschema.KeyDescription: "The goals for the next period. Given, they replace " +
@@ -438,12 +438,12 @@ func reviewDraftProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramGoalTitle: toolparams.StringProperty("The goal.", workforcekit.ShortChars),
-					paramGoalDueAt: agenttoolschema.Date("When it is due."),
-					paramGoalStatus: agenttoolschema.Enum("Open, Done or Dropped. Defaults "+
+					paramTitle: toolparams.StringProperty("The goal.", workforcekit.ShortChars),
+					paramDueAt: agenttoolschema.Date("When it is due."),
+					paramStatus: agenttoolschema.Enum("Open, Done or Dropped. Defaults "+
 						"to Open.", reviewGoalStatuses),
 				},
-				toolschema.KeyRequired:             []string{paramGoalTitle},
+				toolschema.KeyRequired:             []string{paramTitle},
 				toolschema.KeyAdditionalProperties: false,
 			},
 		},

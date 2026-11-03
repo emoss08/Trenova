@@ -97,7 +97,7 @@ type acceptFieldTool struct{}
 
 func newAcceptFieldTool() agenttoolports.AgentQueryTool { return &acceptFieldTool{} }
 
-func (t *acceptFieldTool) Name() string { return string(pagedraft.ActionAcceptField) }
+func (t *acceptFieldTool) Name() string { return "intake_accept_field" }
 
 func (t *acceptFieldTool) Description() string {
 	return "Accept one field read from the document as correct on the import page. Use it " +
@@ -147,9 +147,7 @@ func newAcceptAllConfidentTool() agenttoolports.AgentQueryTool {
 	return &acceptAllConfidentTool{}
 }
 
-func (t *acceptAllConfidentTool) Name() string {
-	return string(pagedraft.ActionAcceptAllConfident)
-}
+func (t *acceptAllConfidentTool) Name() string { return "intake_accept_confident" }
 
 func (t *acceptAllConfidentTool) Description() string {
 	return "Accept every field the page read from the document with high confidence, at " +
@@ -188,7 +186,7 @@ type setFieldValueTool struct{}
 
 func newSetFieldValueTool() agenttoolports.AgentQueryTool { return &setFieldValueTool{} }
 
-func (t *setFieldValueTool) Name() string { return string(pagedraft.ActionSetFieldValue) }
+func (t *setFieldValueTool) Name() string { return "intake_set_field" }
 
 func (t *setFieldValueTool) Description() string {
 	return "Set or correct the value of a field on the import page, such as the BOL, the " +
@@ -319,9 +317,9 @@ func codedLabel(code, name string) string {
 func requiredFieldSource(field pagedraft.RequiredField) string {
 	switch field {
 	case pagedraft.RequiredCustomer:
-		return querytool.ToolCustomerList
+		return "customer_list"
 	case pagedraft.RequiredServiceType:
-		return querytool.ToolMasterdataListServiceTypes
+		return "masterdata_list_service_types"
 	case pagedraft.RequiredShipmentType:
 		return "masterdata_list_shipment_types"
 	default:
@@ -350,7 +348,7 @@ func provideSetRequiredFieldTool(
 	}
 }
 
-func (t *setRequiredFieldTool) Name() string { return string(pagedraft.ActionSetRequiredField) }
+func (t *setRequiredFieldTool) Name() string { return "intake_set_required_field" }
 
 func (t *setRequiredFieldTool) Description() string {
 	return "Set the customer, service type or shipment type on the import page, by record id. " +
@@ -450,10 +448,10 @@ func provideSetStopLocationTool(
 	return &setStopLocationTool{locations: locations, access: fieldgate.NewAccess(permissions)}
 }
 
-func (t *setStopLocationTool) Name() string { return string(pagedraft.ActionSetStopLocation) }
+func (t *setStopLocationTool) Name() string { return "intake_set_stop_location" }
 
 func (t *setStopLocationTool) Recipe() []string {
-	return []string{querytool.ToolLocationList, string(pagedraft.ActionSetStopLocation)}
+	return []string{"location_list", "intake_set_stop_location"}
 }
 
 func (t *setStopLocationTool) Description() string {
@@ -539,7 +537,7 @@ type setStopScheduleTool struct{}
 
 func newSetStopScheduleTool() agenttoolports.AgentQueryTool { return &setStopScheduleTool{} }
 
-func (t *setStopScheduleTool) Name() string { return string(pagedraft.ActionSetStopSchedule) }
+func (t *setStopScheduleTool) Name() string { return "intake_set_stop_schedule" }
 
 func (t *setStopScheduleTool) Description() string {
 	return "Set when a stop on the import page is scheduled: the start of its window and, " +

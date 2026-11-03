@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcekit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -131,11 +130,11 @@ func TestRecordWorkerInjury_TakesTheNextCaseNumber(t *testing.T) {
 	injuries := newFakeInjuries()
 	tool := newRecordWorkerInjuryTool(injuries)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID:       injuries.injury.WorkerID.String(),
-		workforcekit.ParamOccurred:     "2026-09-22T06:15:00-05:00",
-		changepreview.FieldDescription: "Cut hand on a load strap",
-		paramTreatment:                 "FirstAid",
-		paramBodyPart:                  "Right hand",
+		toolparams.ParamWorkerID:     injuries.injury.WorkerID.String(),
+		workforcekit.ParamOccurredAt: "2026-09-22T06:15:00-05:00",
+		toolparams.ParamDescription:  "Cut hand on a load strap",
+		paramTreatment:               "FirstAid",
+		paramBodyPart:                "Right hand",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -155,15 +154,15 @@ func TestRecordWorkerInjury_TakesTheNextCaseNumber(t *testing.T) {
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			toolparams.ParamWorkerID:       injuries.injury.WorkerID.String(),
-			workforcekit.ParamOccurred:     "2026-09-22T06:15:00-05:00",
-			changepreview.FieldDescription: "Fractured wrist",
-			paramClassification:            "DaysAway",
+			toolparams.ParamWorkerID:     injuries.injury.WorkerID.String(),
+			workforcekit.ParamOccurredAt: "2026-09-22T06:15:00-05:00",
+			toolparams.ParamDescription:  "Fractured wrist",
+			paramClassification:          "DaysAway",
 		})), "validation runs the service's plan")
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			toolparams.ParamWorkerID:   injuries.injury.WorkerID.String(),
-			workforcekit.ParamOccurred: "2026-09-22T06:15:00-05:00",
+			toolparams.ParamWorkerID:     injuries.injury.WorkerID.String(),
+			workforcekit.ParamOccurredAt: "2026-09-22T06:15:00-05:00",
 		})), "a case says what happened")
 }
 

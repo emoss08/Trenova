@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -20,8 +21,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const fieldAccountingDate = "accountingDate"
-
 const fieldFiscalPeriodID = "fiscalPeriodId"
 
 const sideDebit = "debit"
@@ -29,7 +28,7 @@ const sideDebit = "debit"
 const sideCredit = "credit"
 
 var ledgerDateTypes = map[string]assistantartifact.DisplayType{
-	fieldAccountingDate: assistantartifact.DisplayDate,
+	toolparams.ParamAccountingDate: assistantartifact.DisplayDate,
 }
 
 var ledgerRefs = map[string]permission.Resource{

@@ -28,7 +28,6 @@ import (
 )
 
 const (
-
 	// MaxPerTurn bounds how many tasks one turn hands out. Each
 	// is a whole turn of another agent, paid for in model calls and in the
 	// reader's patience; a turn that needs more is doing too much at once.
@@ -453,7 +452,7 @@ func Outcome(
 
 	outcome := toolcall.Result{
 		Content: toolresult.Fence(
-			runtimetools.DelegateTaskName,
+			"delegate_task",
 			encoded,
 		) + "\n\n" + Note(
 			report,
@@ -469,7 +468,7 @@ func Outcome(
 	case assistantstreamports.DelegateStatusDeclined:
 		declined := toolcall.Failed(
 			"Tool %q was not run: %s",
-			runtimetools.DelegateTaskName,
+			"delegate_task",
 			report.Reason,
 		)
 		declined.DelegateReport = outcome.DelegateReport

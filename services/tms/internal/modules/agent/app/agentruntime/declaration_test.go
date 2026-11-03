@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,13 +21,13 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 	service, names := wideRuntime(t)
 	core := []agenttoolports.AgentQueryTool{
 		describedTool(
-			agentdefinition.CoreToolRecallMemory,
+			"agent_list_memories",
 			"Look up what the organization recorded.",
 		),
-		describedTool(agentdefinition.CoreToolWaitUntil,
+		describedTool("agent_create_wait",
 			"Wait until something happens: a truck arriving, a reply, a time."),
 		describedTool(
-			agentdefinition.CoreToolCancelWait,
+			"agent_cancel_wait",
 			"Stop waiting on something you were waiting for.",
 		),
 	}
@@ -41,8 +40,8 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 		})
 	})
 
-	return service, append(names, agentdefinition.CoreToolRecallMemory,
-		agentdefinition.CoreToolWaitUntil, agentdefinition.CoreToolCancelWait)
+	return service, append(names, "agent_list_memories",
+		"agent_create_wait", "agent_cancel_wait")
 }
 
 func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.T) {
@@ -56,10 +55,10 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 	})
 
 	require.True(t, set.Disclosed)
-	assert.True(t, set.Offers(agentdefinition.CoreToolRecallMemory), "memory stays loaded")
-	assert.False(t, set.Offers(agentdefinition.CoreToolWaitUntil))
-	assert.False(t, set.Offers(agentdefinition.CoreToolCancelWait))
-	assert.Contains(t, set.Deferred, agentdefinition.CoreToolWaitUntil,
+	assert.True(t, set.Offers("agent_list_memories"), "memory stays loaded")
+	assert.False(t, set.Offers("agent_create_wait"))
+	assert.False(t, set.Offers("agent_cancel_wait"))
+	assert.Contains(t, set.Deferred, "agent_create_wait",
 		"a core tool not loaded is still declared, so find_tools can load it")
 
 	asked := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
@@ -67,7 +66,7 @@ func TestNewToolSet_ATurnThatCanSearchDefersTheCoreToolsFewTurnsCall(t *testing.
 		Actor:      runtimetest.Actor(),
 		Input:      "wait until the truck is arriving at the dock",
 	})
-	assert.True(t, asked.Offers(agentdefinition.CoreToolWaitUntil),
+	assert.True(t, asked.Offers("agent_create_wait"),
 		"a request that names what a deferred core tool does opens with it")
 }
 
@@ -76,13 +75,13 @@ func TestNewToolSet_ATurnThatCannotSearchLoadsEveryCoreTool(t *testing.T) {
 
 	service, _ := deferredCoreRuntime(t)
 	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
-		Definition: runtimetest.Definition("worker_list", agentdefinition.CoreToolWaitUntil),
+		Definition: runtimetest.Definition("worker_list", "agent_create_wait"),
 		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
 
 	require.False(t, set.Searchable())
-	assert.True(t, set.Offers(agentdefinition.CoreToolWaitUntil))
+	assert.True(t, set.Offers("agent_create_wait"))
 	assert.Empty(t, set.Deferred, "with nothing to search, nothing is declared deferred")
 }
 

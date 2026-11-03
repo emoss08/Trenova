@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
-	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -23,7 +22,7 @@ narrows to the units free now.
 func TestEquipmentLists_NarrowToTheUnitsFreeNow(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{toolListTrailers, querytool.ToolListTractors} {
+	for _, name := range []string{"equipment_list_trailers", "equipment_list_tractors"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -43,7 +42,7 @@ func TestEquipmentLists_NarrowToTheUnitsFreeNow(t *testing.T) {
 				"hasInProgressMove": false,
 			}))
 			require.NoError(t, err)
-			filters, _ := querytooltest.SentInput(t, reader)[graphqlread.InputFieldFilters].([]map[string]any)
+			filters, _ := querytooltest.SentInput(t, reader)[graphqlread.FieldFieldFilters].([]map[string]any)
 			assert.Contains(t, filters, map[string]any{
 				"field": "inProgressMoveId", "operator": "isnull", "value": nil,
 			})
@@ -60,7 +59,7 @@ also what the list narrows by.
 func TestEquipmentLists_NameEachUnitByItsUnitNumber(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{toolListTrailers, querytool.ToolListTractors} {
+	for _, name := range []string{"equipment_list_trailers", "equipment_list_tractors"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
@@ -96,7 +95,7 @@ func TestEquipmentLists_NameEachUnitByItsUnitNumber(t *testing.T) {
 				"unitNumber": "1285",
 			}))
 			require.NoError(t, err)
-			filters, _ := querytooltest.SentInput(t, reader)[graphqlread.InputFieldFilters].([]map[string]any)
+			filters, _ := querytooltest.SentInput(t, reader)[graphqlread.FieldFieldFilters].([]map[string]any)
 			require.NotEmpty(t, filters)
 			assert.Equal(t, "code", filters[0]["field"], "the unit number narrows by the code")
 

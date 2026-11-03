@@ -110,7 +110,7 @@ func NewPostInvoiceTool(invoices invoicePoster) agenttoolports.AgentTool {
 	return &PostInvoiceTool{invoices: invoices}
 }
 
-func (t *PostInvoiceTool) Name() string { return toolInvoicePost }
+func (t *PostInvoiceTool) Name() string { return "invoice_post" }
 
 func (t *PostInvoiceTool) Description() string {
 	return "Propose posting a draft invoice, usually the one billing_approve_queue_item just " +
@@ -258,7 +258,7 @@ func NewSendInvoiceTool(invoices invoiceSender) agenttoolports.AgentTool {
 	return &SendInvoiceTool{invoices: invoices}
 }
 
-func (t *SendInvoiceTool) Name() string { return toolInvoiceSend }
+func (t *SendInvoiceTool) Name() string { return "invoice_send" }
 
 func (t *SendInvoiceTool) Description() string {
 	return "Propose emailing an invoice to the customer. The recipients, subject, wording " +

@@ -31,7 +31,7 @@ import (
 
 const paramPayDate = "payDate"
 
-const paramBatchName = "name"
+const paramName = "name"
 
 const maxBatchNameChars = 100
 
@@ -331,7 +331,7 @@ type batchText struct {
 
 func batchSchema() map[string]any {
 	properties := periodProperties("the batch")
-	properties[paramBatchName] = toolparams.StringProperty(
+	properties[paramName] = toolparams.StringProperty(
 		"A name for the batch; leave it out for "+
 			"\"Pay period ending\" and the period's last day.",
 		maxBatchNameChars,
@@ -375,7 +375,7 @@ func readBatchInput(params map[string]any) (batchInput, error) {
 	if err != nil {
 		return batchInput{}, err
 	}
-	name, err := toolparams.BoundedString(params, paramBatchName, maxBatchNameChars, false)
+	name, err := toolparams.BoundedString(params, paramName, maxBatchNameChars, false)
 	if err != nil {
 		return batchInput{}, err
 	}
@@ -415,7 +415,7 @@ func driverBatchText() batchText {
 		recipe: []string{
 			"settlement_list_pay_events",
 			"settlement_generate_driver_batch",
-			settlementpreview.ToolListDriverSettlements,
+			"settlement_list_driver",
 		},
 		resource: permission.ResourceDriverSettlement,
 		rationale: "Drafts the period's settlements from pay already accrued inside Trenova; " +
@@ -736,8 +736,8 @@ func (t *GenerateCarrierBatchTool) Preview(
 			toolpreview.Only(
 				toolparams.ParamCarrierID,
 				changepreview.FieldStatus,
-				changepreview.FieldPeriodStart,
-				changepreview.FieldPeriodEnd,
+				toolparams.ParamPeriodStart,
+				toolparams.ParamPeriodEnd,
 				settlementpreview.FieldPayDate,
 				"shipmentCount",
 			),

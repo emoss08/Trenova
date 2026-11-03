@@ -24,7 +24,7 @@ import (
 
 const ParamHoldID = "holdId"
 
-const ParamHoldSeverity = "severity"
+const ParamSeverity = "severity"
 
 const paramBlocksDispatch = "blocksDispatch"
 
@@ -137,7 +137,7 @@ func readHoldPatch(params *agenttoolports.ToolExecuteParams) (*holdPatch, error)
 	}}
 	severity, given, err := toolparams.OptionalEnum(
 		params.Params,
-		ParamHoldSeverity,
+		ParamSeverity,
 		holdSeverities.Values,
 	)
 	if err != nil {
@@ -276,7 +276,7 @@ func holdUpdateProperties() map[string]any {
 			"The hold to change, from the holds shipment_get lists or "+
 				"the page you are on. Never guess one.",
 		),
-		ParamHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
+		ParamSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
 		toolparams.ParamNote: toolparams.StringProperty(
 			"What the hold waits on, replacing the note on it.",
 			maxHoldNoteChars,

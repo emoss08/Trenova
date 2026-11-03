@@ -31,7 +31,7 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentruntimeports.RunR
 	result := t.result
 	call := llmports.ToolCall{
 		ID:   fx.NewCallID(),
-		Name: runtimetools.DelegateTaskName,
+		Name: "delegate_task",
 		Arguments: map[string]any{
 			runtimetools.DelegateAgentParam: directed.Delegate.ID.String(),
 			runtimetools.DelegateTaskParam:  directed.Task,

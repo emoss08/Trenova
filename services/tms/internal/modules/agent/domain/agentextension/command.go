@@ -74,7 +74,7 @@ func (s CommandSpec) ToolsIn(names []string) []string {
 var commands = map[Command]CommandSpec{
 	CommandBrowser: {
 		Capability:        CapabilityPortalAutomation,
-		Requires:          []string{ToolReadPortal, ToolActOnPortal},
+		Requires:          []string{"web_read_portal", "web_use_portal"},
 		MissingTaskReason: "Say what to do in the browser after /browser",
 		DirectedReason: "Work in the browser is done by this conversation's agent; " +
 			"send it without naming another",
@@ -83,7 +83,7 @@ var commands = map[Command]CommandSpec{
 	},
 	CommandSearch: {
 		Capability:        CapabilityWebResearch,
-		Requires:          []string{ToolWebSearch},
+		Requires:          []string{"web_search"},
 		MissingTaskReason: "Say what to search the web for after /search",
 		DirectedReason: "A web search is done by this conversation's agent; " +
 			"send it without naming another",
@@ -92,7 +92,7 @@ var commands = map[Command]CommandSpec{
 	},
 	CommandWatch: {
 		Capability:        CapabilityWebResearch,
-		Requires:          []string{ToolWatchWeb},
+		Requires:          []string{"web_watch"},
 		Honours:           WebWatchTools,
 		MissingTaskReason: "Say what to keep watching the web for after /watch",
 		DirectedReason: "A web watch is set by this conversation's agent; " +

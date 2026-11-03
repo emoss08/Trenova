@@ -539,17 +539,17 @@ func TestFormulaReads_SelectWhatTheirSummariesPromise(t *testing.T) {
 		return out
 	}
 	for tool, want := range map[string][]string{
-		toolGetFormulaTemplate:   {"source", "inputs", "imports", "status", "currentVersionNumber"},
-		toolGetFormulaLibrary:    {"source", "imports", "status", "currentVersionNumber"},
-		toolListFormulaTemplates: {"name", "description", "status", "testCount"},
-		toolListFormulaLibraries: {"path", "description", "status", "testCount"},
+		"formula_get_template":   {"source", "inputs", "imports", "status", "currentVersionNumber"},
+		"formula_get_library":    {"source", "imports", "status", "currentVersionNumber"},
+		"formula_list_templates": {"name", "description", "status", "testCount"},
+		"formula_list_libraries": {"path", "description", "status", "testCount"},
 	} {
 		fields := selected(tool)
 		for _, field := range want {
 			assert.True(t, fields[field], "%s selects %s", tool, field)
 		}
 	}
-	for _, tool := range []string{toolListFormulaTemplates, toolListFormulaLibraries} {
+	for _, tool := range []string{"formula_list_templates", "formula_list_libraries"} {
 		assert.False(t, selected(tool)["source"], "%s selects no source", tool)
 	}
 }

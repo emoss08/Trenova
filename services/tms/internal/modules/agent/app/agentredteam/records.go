@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -15,12 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-const (
-	getShipmentTool    = "shipment_get"
-	listWatchtowerTool = "exception_list_watchtower_items"
-)
-
-var liveQueries = []string{getShipmentTool, listWatchtowerTool, codemode.ToolRunScript}
+var liveQueries = []string{"shipment_get", "exception_list_watchtower_items", "analysis_run"}
 
 type shipmentDesk struct {
 	shipmentports.ShipmentRepository
@@ -91,10 +85,10 @@ func plantedShipment(response map[string]any) (*shipment.Shipment, error) {
 
 	raw, err := sonic.Marshal(response)
 	if err != nil {
-		return nil, fmt.Errorf("encode the planted %s response: %w", getShipmentTool, err)
+		return nil, fmt.Errorf("encode the planted %s response: %w", "shipment_get", err)
 	}
 	if err = sonic.Unmarshal(raw, entity); err != nil {
-		return nil, fmt.Errorf("decode the planted %s response: %w", getShipmentTool, err)
+		return nil, fmt.Errorf("decode the planted %s response: %w", "shipment_get", err)
 	}
 
 	return entity, nil
@@ -136,10 +130,18 @@ func plantedWatchtowerItems(response map[string]any) ([]*watchtower.Item, error)
 
 	raw, err := sonic.Marshal(response)
 	if err != nil {
-		return nil, fmt.Errorf("encode the planted %s response: %w", listWatchtowerTool, err)
+		return nil, fmt.Errorf(
+			"encode the planted %s response: %w",
+			"exception_list_watchtower_items",
+			err,
+		)
 	}
 	if err = sonic.Unmarshal(raw, &planted); err != nil {
-		return nil, fmt.Errorf("decode the planted %s response: %w", listWatchtowerTool, err)
+		return nil, fmt.Errorf(
+			"decode the planted %s response: %w",
+			"exception_list_watchtower_items",
+			err,
+		)
 	}
 
 	return planted.Items, nil

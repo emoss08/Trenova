@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -142,10 +141,10 @@ func TestStartPerformanceReview_OpensADraft(t *testing.T) {
 	reviews := newFakeReviews()
 	tool := newStartPerformanceReviewTool(reviews)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID:       reviews.review.WorkerID.String(),
-		paramReviewTemplate:            pulid.MustNew("prt_").String(),
-		changepreview.FieldPeriodStart: "2026-01-01",
-		changepreview.FieldPeriodEnd:   "2026-12-31",
+		toolparams.ParamWorkerID:    reviews.review.WorkerID.String(),
+		paramTemplateID:             pulid.MustNew("prt_").String(),
+		toolparams.ParamPeriodStart: "2026-01-01",
+		toolparams.ParamPeriodEnd:   "2026-12-31",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -174,13 +173,13 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramReviewID: reviews.review.ID.String(),
 		paramRatings: []any{map[string]any{
-			paramRatingKey:     "service",
-			paramRatingScore:   float64(4),
-			paramRatingComment: "Two customer compliments on file",
+			paramKey:     "service",
+			paramScore:   float64(4),
+			paramComment: "Two customer compliments on file",
 		}},
 		paramGoals: []any{map[string]any{
-			paramGoalTitle: "Finish hazmat training",
-			"dueAt":        "2027-03-31",
+			paramTitle: "Finish hazmat training",
+			"dueAt":    "2027-03-31",
 		}},
 	})
 
@@ -208,20 +207,20 @@ func TestDraftPerformanceReview_MergesRatingsByKey(t *testing.T) {
 	for name, raw := range map[string]map[string]any{
 		"unknown key": {
 			paramReviewID: reviews.review.ID.String(),
-			paramRatings:  []any{map[string]any{paramRatingKey: "punctuality"}},
+			paramRatings:  []any{map[string]any{paramKey: "punctuality"}},
 		},
 		"score out of range": {
 			paramReviewID: reviews.review.ID.String(),
 			paramRatings: []any{map[string]any{
-				paramRatingKey:   "safety",
-				paramRatingScore: float64(9),
+				paramKey:   "safety",
+				paramScore: float64(9),
 			}},
 		},
 		"unknown goal status": {
 			paramReviewID: reviews.review.ID.String(),
 			paramGoals: []any{map[string]any{
-				paramGoalTitle:  "x",
-				paramGoalStatus: "Abandoned",
+				paramTitle:  "x",
+				paramStatus: "Abandoned",
 			}},
 		},
 	} {

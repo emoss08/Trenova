@@ -272,19 +272,19 @@ func (f *fakeManualJournals) Post(
 
 func draftParams() map[string]any {
 	return map[string]any{
-		paramJournalDescription:        "Accrue September fuel",
+		toolparams.ParamDescription:    "Accrue September fuel",
 		toolparams.ParamReason:         "Fuel card statement arrives after close",
 		toolparams.ParamAccountingDate: "2026-09-30",
-		paramJournalLines: []any{
+		toolparams.ParamLines: []any{
 			map[string]any{
 				toolparams.ParamGLAccountID: fuelAccountID.String(),
-				paramJournalDescription:     "Fuel",
-				paramJournalLineDebit:       "25.00",
+				toolparams.ParamDescription: "Fuel",
+				paramDebit:                  "25.00",
 			},
 			map[string]any{
 				toolparams.ParamGLAccountID: accruedAccountID.String(),
-				paramJournalDescription:     "Accrual",
-				paramJournalLineCredit:      "25.00",
+				toolparams.ParamDescription: "Accrual",
+				paramCredit:                 "25.00",
 			},
 		},
 	}
@@ -336,13 +336,13 @@ func TestDraftManualJournal_RefusesLinesItCannotBook(t *testing.T) {
 
 	tool := newDraftManualJournalTool(&fakeManualJournals{}, fakeLedgerAccounts{})
 	both := draftParams()
-	both[paramJournalLines].([]any)[0].(map[string]any)[paramJournalLineCredit] = "25.00"
+	both[toolparams.ParamLines].([]any)[0].(map[string]any)[paramCredit] = "25.00"
 	neither := draftParams()
-	delete(neither[paramJournalLines].([]any)[1].(map[string]any), paramJournalLineCredit)
+	delete(neither[toolparams.ParamLines].([]any)[1].(map[string]any), paramCredit)
 	single := draftParams()
-	single[paramJournalLines] = single[paramJournalLines].([]any)[:1]
+	single[toolparams.ParamLines] = single[toolparams.ParamLines].([]any)[:1]
 	negative := draftParams()
-	negative[paramJournalLines].([]any)[0].(map[string]any)[paramJournalLineDebit] = "-5"
+	negative[toolparams.ParamLines].([]any)[0].(map[string]any)[paramDebit] = "-5"
 	badDate := draftParams()
 	badDate[toolparams.ParamAccountingDate] = "30 Sept"
 
@@ -369,8 +369,8 @@ func TestReviseManualJournalDraft_KeepsWhatItIsNotGiven(t *testing.T) {
 	journals := &fakeManualJournals{current: draftJournal(), guard: &agenttoolstest.WriteGuard{}}
 	tool := newReviseManualJournalDraftTool(journals, fakeLedgerAccounts{})
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramManualJournalID:    journals.current.ID.String(),
-		paramJournalDescription: "Accrue fuel for September",
+		paramManualJournalID:        journals.current.ID.String(),
+		toolparams.ParamDescription: "Accrue fuel for September",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -676,8 +676,8 @@ func TestRequestJournalReversal_OnlyAPersonRequestsOne(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramJournalEntryID:            reversals.change.OriginalEntry.ID.String(),
 		toolparams.ParamAccountingDate: "2026-09-21",
-		paramReversalReasonCode:        "WrongAccount",
-		paramReversalReasonText:        "Posted to fuel instead of tolls",
+		paramReasonCode:                "WrongAccount",
+		paramReasonText:                "Posted to fuel instead of tolls",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

@@ -29,9 +29,9 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const paramEDIChangeID = "changeId"
+const paramChangeID = "changeId"
 
-const paramEDIReviewDecision = "decision"
+const paramDecision = "decision"
 
 const reviewApply = "Apply"
 
@@ -126,19 +126,19 @@ func (t *EdiChangeReviewTool) Description() string { return t.kind.description }
 
 func (t *EdiChangeReviewTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIChangeID: agenttoolschema.KindID(t.kind.idGuidance, t.kind.changeKind),
-		paramEDIReviewDecision: agenttoolschema.Enum(
+		paramChangeID: agenttoolschema.KindID(t.kind.idGuidance, t.kind.changeKind),
+		paramDecision: agenttoolschema.Enum(
 			"Apply takes the change onto this organization's load; Reject leaves the load "+
 				"as it is.",
 			ediReviewDecisions,
 		),
-		changepreview.FieldReason: map[string]any{
+		toolparams.ParamReason: map[string]any{
 			toolschema.KeyType:      toolschema.TypeString,
 			toolschema.KeyMaxLength: maxChangeReviewReasonChars,
 			toolschema.KeyDescription: "Why, in a sentence the other side reads with the " +
 				"change's outcome. Give one for every rejection.",
 		},
-	}, paramEDIChangeID, paramEDIReviewDecision)
+	}, paramChangeID, paramDecision)
 }
 
 func (t *EdiChangeReviewTool) Policy() agenttoolports.ToolPolicy {
@@ -158,7 +158,7 @@ func (t *EdiChangeReviewTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *EdiChangeReviewTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramEDIChangeID, permission.ResourceEDI)
+	return toolparams.TargetOf(params, paramChangeID, permission.ResourceEDI)
 }
 
 func (t *EdiChangeReviewTool) call(
@@ -168,23 +168,23 @@ func (t *EdiChangeReviewTool) call(
 		return nil, err
 	}
 
-	changeID, err := toolparams.RequirePulid(params.Params, paramEDIChangeID)
+	changeID, err := toolparams.RequirePulid(params.Params, paramChangeID)
 	if err != nil {
 		return nil, err
 	}
 
-	decision := toolparams.OptionalString(params.Params, paramEDIReviewDecision)
+	decision := toolparams.OptionalString(params.Params, paramDecision)
 	if decision != reviewApply && decision != reviewReject {
 		return nil, fmt.Errorf(
-			"parameter %q must be Apply or Reject, not %q", paramEDIReviewDecision, decision,
+			"parameter %q must be Apply or Reject, not %q", paramDecision, decision,
 		)
 	}
 
-	reason := strings.TrimSpace(toolparams.OptionalString(params.Params, changepreview.FieldReason))
+	reason := strings.TrimSpace(toolparams.OptionalString(params.Params, toolparams.ParamReason))
 	if len(reason) > maxChangeReviewReasonChars {
 		return nil, fmt.Errorf(
 			"parameter %q is %d characters; a review keeps at most %d",
-			changepreview.FieldReason, len(reason), maxChangeReviewReasonChars,
+			toolparams.ParamReason, len(reason), maxChangeReviewReasonChars,
 		)
 	}
 

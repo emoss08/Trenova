@@ -23,14 +23,9 @@ import (
 )
 
 const (
-	toolIssueCarrierTrackingLink  = "dispatch_share_tracking_link"
-	toolRevokeCarrierTrackingLink = "dispatch_revoke_tracking_link"
-	toolShipmentGet               = "shipment_get"
-	toolShipmentList              = "shipment_list"
-	toolGetCarrier                = "carrier_get"
-	paramRecipientEmail           = "recipientEmail"
-	fieldExpiresAt                = "expiresAt"
-	fieldRevokedAt                = "revokedAt"
+	paramRecipientEmail = "recipientEmail"
+	fieldExpiresAt      = "expiresAt"
+	fieldRevokedAt      = "revokedAt"
 )
 
 type carrierTrackingLinker interface {
@@ -124,14 +119,14 @@ func ProvideIssueCarrierTrackingLinkTool(
 func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolIssueCarrierTrackingLink,
+			Name: "dispatch_share_tracking_link",
 			Recipe: []string{
-				toolShipmentList,
-				toolShipmentGet,
-				toolGetCarrier,
-				toolIssueCarrierTrackingLink,
+				"shipment_list",
+				"shipment_get",
+				"carrier_get",
+				"dispatch_share_tracking_link",
 			},
-			Prerequisites: []string{toolShipmentGet},
+			Prerequisites: []string{"shipment_get"},
 			Description: "Email the carrier covering a brokered move a tracking link, so their " +
 				"dispatcher or driver can post check calls, arrivals and departures without " +
 				"signing in. Issuing replaces any live link on the move, which stops working. " +
@@ -309,13 +304,13 @@ func ProvideRevokeCarrierTrackingLinkTool(
 func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(
 		&toolspec.ReceivableSpec{
-			Name: toolRevokeCarrierTrackingLink,
+			Name: "dispatch_revoke_tracking_link",
 			Recipe: []string{
-				toolShipmentList,
-				toolShipmentGet,
-				toolRevokeCarrierTrackingLink,
+				"shipment_list",
+				"shipment_get",
+				"dispatch_revoke_tracking_link",
 			},
-			Prerequisites: []string{toolShipmentGet},
+			Prerequisites: []string{"shipment_get"},
 			Description: "Stop the live carrier tracking link on a move from working, so nobody " +
 				"can post check calls through it. Use it when the link reached the wrong person, " +
 				"the carrier changed, or the person asks for it to end; issue a new one with " +

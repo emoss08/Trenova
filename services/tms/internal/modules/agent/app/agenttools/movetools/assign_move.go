@@ -30,7 +30,7 @@ func (t *AssignMoveTool) Name() string { return "dispatch_assign_move" }
 
 func (t *AssignMoveTool) Prerequisites() []string {
 	return []string{
-		toolShipmentGet,
+		"shipment_get",
 		"dispatch_rank_candidates",
 		"worker_list",
 		"equipment_list_tractors",
@@ -39,7 +39,7 @@ func (t *AssignMoveTool) Prerequisites() []string {
 }
 
 func (t *AssignMoveTool) Recipe() []string {
-	return []string{toolShipmentGet, "dispatch_rank_candidates", "dispatch_assign_move"}
+	return []string{"shipment_get", "dispatch_rank_candidates", "dispatch_assign_move"}
 }
 
 func (t *AssignMoveTool) Description() string {

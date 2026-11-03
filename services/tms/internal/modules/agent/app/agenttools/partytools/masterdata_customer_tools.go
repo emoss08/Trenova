@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -212,7 +211,7 @@ func NewCreateCustomerTool(
 ) agenttoolports.AgentTool {
 	return masterdatakit.NewCreateTool(&masterdatakit.CreateSpec[customer.Customer]{
 		Record: customerRecord,
-		Name:   agentpreset.ToolCreateCustomer,
+		Name:   "customer_create",
 		Description: "Add a customer the organization ships for: its code, name, billing " +
 			"address and DOT and MC numbers. Check customer_list first. Billing terms " +
 			"start from the organization's defaults; who is emailed status updates is " +

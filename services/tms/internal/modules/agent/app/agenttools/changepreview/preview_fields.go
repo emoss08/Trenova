@@ -8,13 +8,11 @@ const FieldBillToCustomerID = "billToCustomerId"
 
 const FieldBlastRadius = "blastRadius"
 
-const FieldBol = "bol"
+const FieldBOL = "bol"
 
 const FieldCategory = "category"
 
 const FieldContent = "content"
-
-const FieldCustomerID = "customerId"
 
 const FieldDefaultFormat = "defaultFormat"
 
@@ -36,8 +34,6 @@ const FieldMessage = "message"
 
 const FieldName = "name"
 
-const FieldNote = "note"
-
 const FieldNotes = "notes"
 
 const FieldOpenedByID = "openedById"
@@ -45,8 +41,6 @@ const FieldOpenedByID = "openedById"
 const FieldPieces = "pieces"
 
 const FieldPrimaryWorkerID = "primaryWorkerId"
-
-const FieldReason = "reason"
 
 const FieldReasonCodeID = "reasonCodeId"
 
@@ -63,8 +57,6 @@ const FieldSecondaryWorkerID = "secondaryWorkerId"
 const FieldServiceTypeID = "serviceTypeId"
 
 const FieldSeverity = "severity"
-
-const FieldShipmentID = "shipmentId"
 
 const FieldShipmentTypeID = "shipmentTypeId"
 
@@ -83,8 +75,6 @@ const FieldTemperatureMax = "temperatureMax"
 const FieldTemperatureMin = "temperatureMin"
 
 const FieldTiles = "tiles"
-
-const FieldTractorID = "tractorId"
 
 const FieldTrailerID = "trailerId"
 
@@ -121,8 +111,6 @@ const FieldCanceledByID = "canceledById"
 
 const ResultCreated = "created"
 
-const FieldDescription = "description"
-
 const FieldResolvedAt = "resolvedAt"
 
 const ShipmentRecordEntity = "shipment"
@@ -149,10 +137,6 @@ const FieldFreightChargeAmount = "freightChargeAmount"
 
 const FieldCanceledAt = "canceledAt"
 
-const FieldEffectiveTo = "effectiveTo"
-
-const FieldEffectiveFrom = "effectiveFrom"
-
 const PreviewFieldCustomerID = "customerId"
 
 const PreviewFieldDefinitionID = "definitionId"
@@ -173,16 +157,12 @@ const PreviewFieldTractorTypeID = "tractorTypeId"
 
 const PreviewFieldTrailerTypeID = "trailerTypeId"
 
-const FieldPeriodStart = "periodStart"
-
-const FieldPeriodEnd = "periodEnd"
-
 const FieldVoidedAt = "voidedAt"
 
 const ActionDeleted = "deleted"
 
 const ScannedDocument = "scanned document"
 
-const FieldRecurringStart = "startDate"
+const FieldStartDate = "startDate"
 
-const FieldRecurringEnd = "endDate"
+const FieldEndDate = "endDate"

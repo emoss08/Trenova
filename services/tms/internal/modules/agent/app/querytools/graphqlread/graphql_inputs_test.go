@@ -13,8 +13,8 @@ func TestTableShapedInputsHoldTheTablesFields(t *testing.T) {
 	t.Parallel()
 
 	table := []Field{
-		{Name: InputFirst}, {Name: InputAfter}, {Name: InputQuery},
-		{Name: InputFieldFilters}, {Name: InputSort}, {Name: "status"},
+		{Name: FieldFirst}, {Name: querytool.ParamAfter}, {Name: querytool.ParamQuery},
+		{Name: FieldFieldFilters}, {Name: FieldSort}, {Name: "status"},
 	}
 	assert.True(t, tableShaped(table))
 	assert.False(t, tableShaped(table[1:]), "an input with no first is not a table's")

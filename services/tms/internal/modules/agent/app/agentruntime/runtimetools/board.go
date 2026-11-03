@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	ShowBoardName      = "show_board"
 	maxBoardBriefRunes = 6000
 )
 
@@ -215,7 +214,7 @@ func ShowBoardSpec() kernelports.ToolSpec {
 	blocks[toolschema.KeyMinItems] = 1
 
 	return kernelports.ToolSpec{
-		Name:        ShowBoardName,
+		Name:        "show_board",
 		Description: showBoardDescription,
 		Parameters: schemaObject(map[string]any{
 			boardPropTitle: schemaWords(board.MaxTitleRunes, "What the board answers, in a few "+
@@ -258,7 +257,7 @@ func BoardStepOutcome(arguments map[string]any) toolcall.Result {
 	}
 	if len(problems) > 0 {
 		return toolcall.Failed(
-			"Tool %q was not run: %s.", ShowBoardName, strings.Join(problems, "; "),
+			"Tool %q was not run: %s.", "show_board", strings.Join(problems, "; "),
 		)
 	}
 
@@ -280,7 +279,7 @@ func showBoard(t Turn, arguments map[string]any) toolcall.Result {
 			"Tool %q was not run: the board names %s, which no tool in this "+
 				"conversation returned. Read them first, or leave them out; never write an id from "+
 				"memory.",
-			ShowBoardName,
+			"show_board",
 			strings.Join(unread, ", "),
 		)
 	}
@@ -321,7 +320,7 @@ func BoardContent(shown *agentruntimeports.ShownArtifact) string {
 		shown.ID.String(), shown.Title)
 	brief := stringutils.TruncateRunes(shown.Brief, maxBoardBriefRunes)
 
-	return toolresult.Fence(ShowBoardName, encoded+"\n\n"+brief) +
+	return toolresult.Fence("show_board", encoded+"\n\n"+brief) +
 		"\n\n[The board is beside the conversation, read live whenever it is opened. Above is " +
 		"what it shows now. Reply in one or two sentences that point to it and say what to " +
 		"do; do not repeat its figures or rows." + replycheck.ArtifactRefNote(shown) + "]"

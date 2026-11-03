@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -158,11 +157,11 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 	requests := newFakePTORequests()
 	tool := newRequestWorkerPTOTool(requests)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID:  requests.pto.WorkerID.String(),
-		paramPTOType:              "Vacation",
-		paramPTOStart:             "2026-10-05",
-		paramPTOEnd:               "2026-10-07",
-		changepreview.FieldReason: "Wedding",
+		toolparams.ParamWorkerID: requests.pto.WorkerID.String(),
+		paramType:                "Vacation",
+		paramPTOStart:            "2026-10-05",
+		paramPTOEnd:              "2026-10-07",
+		toolparams.ParamReason:   "Wedding",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -193,20 +192,20 @@ func TestRequestWorkerPTO_SaysWhenThePolicyBooksItAtOnce(t *testing.T) {
 	assert.Equal(t, permission.ResourceWorkerPTO, tool.Policy().Resource)
 
 	backwards := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID:  requests.pto.WorkerID.String(),
-		paramPTOType:              "Vacation",
-		paramPTOStart:             "2026-10-07",
-		paramPTOEnd:               "2026-10-05",
-		changepreview.FieldReason: "Wedding",
+		toolparams.ParamWorkerID: requests.pto.WorkerID.String(),
+		paramType:                "Vacation",
+		paramPTOStart:            "2026-10-07",
+		paramPTOEnd:              "2026-10-05",
+		toolparams.ParamReason:   "Wedding",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), backwards))
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			toolparams.ParamWorkerID:  requests.pto.WorkerID.String(),
-			paramPTOType:              "Sabbatical",
-			paramPTOStart:             "2026-10-05",
-			paramPTOEnd:               "2026-10-07",
-			changepreview.FieldReason: "x",
+			toolparams.ParamWorkerID: requests.pto.WorkerID.String(),
+			paramType:                "Sabbatical",
+			paramPTOStart:            "2026-10-05",
+			paramPTOEnd:              "2026-10-07",
+			toolparams.ParamReason:   "x",
 		})))
 }
 
@@ -216,11 +215,11 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 	requests := newFakePTORequests()
 	tool := newUpdateWorkerPTOTool(requests)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		"ptoId":                   requests.pto.ID.String(),
-		paramPTOEnd:               "2026-10-09",
-		paramPTOType:              "Personal",
-		changepreview.FieldReason: "Extended trip",
-		paramPTOStart:             "2026-10-05",
+		"ptoId":                requests.pto.ID.String(),
+		paramPTOEnd:            "2026-10-09",
+		paramType:              "Personal",
+		toolparams.ParamReason: "Extended trip",
+		paramPTOStart:          "2026-10-05",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -237,8 +236,8 @@ func TestUpdateWorkerPTO_OnlyAPendingRequest(t *testing.T) {
 	assert.Nil(t, requests.updated.Worker)
 
 	partial := agenttoolstest.ExecuteParams(map[string]any{
-		"ptoId":                   requests.pto.ID.String(),
-		changepreview.FieldReason: "Only the reason",
+		"ptoId":                requests.pto.ID.String(),
+		toolparams.ParamReason: "Only the reason",
 	})
 	require.NoError(t, tool.Execute(t.Context(), partial))
 	assert.Equal(t, requests.pto.Type, requests.updated.Type)
@@ -255,9 +254,9 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 	tool := newAdjustWorkerPTOBalanceTool(ledger)
 	raw := map[string]any{
 		toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(),
-		paramPTOType:             "Vacation",
+		paramType:                "Vacation",
 		paramAmountDays:          "2.5",
-		changepreview.FieldNote:  "Carried over from the previous payroll system",
+		toolparams.ParamNote:     "Carried over from the previous payroll system",
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -289,11 +288,11 @@ func TestAdjustWorkerPTOBalance_IsAPersonsDecision(t *testing.T) {
 
 	for name, params := range map[string]map[string]any{
 		"zero days": {
-			toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(), paramPTOType: "Vacation",
-			paramAmountDays: "0", changepreview.FieldNote: "x",
+			toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(), paramType: "Vacation",
+			paramAmountDays: "0", toolparams.ParamNote: "x",
 		},
 		"no note": {
-			toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(), paramPTOType: "Vacation",
+			toolparams.ParamWorkerID: pulid.MustNew("wrk_").String(), paramType: "Vacation",
 			paramAmountDays: "1",
 		},
 	} {

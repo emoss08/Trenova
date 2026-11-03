@@ -20,7 +20,7 @@ func TestNamePlan_NamesThePlanTheTurnFiles(t *testing.T) {
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		runtimetest.ToolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 		runtimetest.ToolTurn("shipment_create", map[string]any{"customerId": "cus_2"}),
-		runtimetest.ToolTurn(runtimetools.NamePlanName, map[string]any{
+		runtimetest.ToolTurn("name_plan", map[string]any{
 			"title": "  Enter the Acme\nand Globex loads  ",
 		}),
 		runtimetest.TextTurn("I proposed both loads."),
@@ -30,11 +30,11 @@ func TestNamePlan_NamesThePlanTheTurnFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "Enter the Acme and Globex loads", result.PlanTitle)
-	content, failed := toolResult(result, runtimetools.NamePlanName)
+	content, failed := toolResult(result, "name_plan")
 	assert.False(t, failed)
 	assert.Equal(t, `The plan this turn files will be named "Enter the Acme and Globex loads". `+
 		"Nothing has changed.", content)
-	assert.Contains(t, offered(completion.Requests[0]), runtimetools.NamePlanName,
+	assert.Contains(t, offered(completion.Requests[0]), "name_plan",
 		"declared before the first proposal, so the tool list never changes")
 	assertSameToolsEveryCall(t, completion.Requests)
 }
@@ -45,7 +45,7 @@ func TestNamePlan_SaysTheNameIsUnusedUntilTwoProposalsAreFiled(t *testing.T) {
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		runtimetest.ToolTurn("shipment_create", map[string]any{"customerId": "cus_1"}),
 		runtimetest.ToolTurn(
-			runtimetools.NamePlanName,
+			"name_plan",
 			map[string]any{"title": "Enter the Acme load"},
 		),
 		runtimetest.TextTurn("Proposed."),
@@ -54,7 +54,7 @@ func TestNamePlan_SaysTheNameIsUnusedUntilTwoProposalsAreFiled(t *testing.T) {
 	result, err := proposingRuntime(completion).Run(t.Context(), proposingRequest())
 	require.NoError(t, err)
 
-	content, failed := toolResult(result, runtimetools.NamePlanName)
+	content, failed := toolResult(result, "name_plan")
 	assert.False(t, failed)
 	assert.Contains(t, content, "It is used only if this turn files two or more proposals.")
 	assert.Equal(t, "Enter the Acme load", result.PlanTitle)
@@ -64,8 +64,8 @@ func TestNamePlan_TheLastNameGivenIsKept(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn(runtimetools.NamePlanName, map[string]any{"title": "First name"}),
-		runtimetest.ToolTurn(runtimetools.NamePlanName, map[string]any{"title": "Second name"}),
+		runtimetest.ToolTurn("name_plan", map[string]any{"title": "First name"}),
+		runtimetest.ToolTurn("name_plan", map[string]any{"title": "Second name"}),
 		runtimetest.TextTurn("Done."),
 	}}
 
@@ -94,14 +94,14 @@ func TestNamePlan_RefusesANameThatIsEmptyOrTooLong(t *testing.T) {
 				arguments["title"] = tc.title
 			}
 			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-				runtimetest.ToolTurn(runtimetools.NamePlanName, arguments),
+				runtimetest.ToolTurn("name_plan", arguments),
 				runtimetest.TextTurn("Done."),
 			}}
 
 			result, err := proposingRuntime(completion).Run(t.Context(), proposingRequest())
 			require.NoError(t, err)
 
-			content, failed := toolResult(result, runtimetools.NamePlanName)
+			content, failed := toolResult(result, "name_plan")
 			assert.True(t, failed)
 			assert.Equal(t, `Tool "name_plan" was not run: `+tc.want, content)
 			assert.Empty(t, result.PlanTitle)
@@ -114,7 +114,7 @@ func TestNamePlan_AcceptsANameOfExactlyTheLimit(t *testing.T) {
 
 	title := strings.Repeat("é", 80)
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn(runtimetools.NamePlanName, map[string]any{"title": title}),
+		runtimetest.ToolTurn("name_plan", map[string]any{"title": title}),
 		runtimetest.TextTurn("Done."),
 	}}
 
@@ -127,7 +127,7 @@ func TestNamePlan_IsNeverOfferedToADelegate(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn(runtimetools.NamePlanName, map[string]any{"title": "Mine"}),
+		runtimetest.ToolTurn("name_plan", map[string]any{"title": "Mine"}),
 		runtimetest.TextTurn("Proposed."),
 	}}
 	req := proposingRequest()
@@ -137,9 +137,9 @@ func TestNamePlan_IsNeverOfferedToADelegate(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, request := range completion.Requests {
-		assert.False(t, slices.Contains(offered(request), runtimetools.NamePlanName))
+		assert.False(t, slices.Contains(offered(request), "name_plan"))
 	}
-	content, failed := toolResult(result, runtimetools.NamePlanName)
+	content, failed := toolResult(result, "name_plan")
 	assert.True(t, failed)
 	assert.Equal(t, runtimetools.DelegatedNaming, content)
 	assert.Empty(t, result.PlanTitle)
@@ -149,7 +149,7 @@ func TestNamePlan_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
-		runtimetest.ToolTurn(runtimetools.NamePlanName, map[string]any{"title": "Nothing"}),
+		runtimetest.ToolTurn("name_plan", map[string]any{"title": "Nothing"}),
 		runtimetest.TextTurn("Nothing to do."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
@@ -162,8 +162,8 @@ func TestNamePlan_IsNotDeclaredWhereNothingCanBeProposed(t *testing.T) {
 		Input:      "where is S-1",
 	})
 	require.NoError(t, err)
-	assert.NotContains(t, offered(completion.Requests[0]), runtimetools.NamePlanName)
-	content, failed := toolResult(result, runtimetools.NamePlanName)
+	assert.NotContains(t, offered(completion.Requests[0]), "name_plan")
+	content, failed := toolResult(result, "name_plan")
 	assert.True(t, failed)
 	assert.Equal(t, runtimetools.UnofferedNaming, content)
 }

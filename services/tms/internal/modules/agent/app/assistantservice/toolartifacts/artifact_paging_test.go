@@ -60,7 +60,7 @@ func TestTableArtifact_KeepsWhereTheListGoesOn(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			artifact := tableArtifact("call_1", assistanttest.PagedTool, tc.result)
+			artifact := tableArtifact("call_1", "billing_list_queue_items", tc.result)
 			require.NotNil(t, artifact)
 			assert.Equal(t, tc.hasMore, artifact.Payload[artifactpayload.PayloadHasMore])
 			assert.Equal(t, tc.nextCursor, artifact.Payload[artifactpayload.PayloadNextCursor])
@@ -91,7 +91,7 @@ func TestTableArtifact_ATableCutToFitHasMoreButNoPlaceToGoOnFrom(t *testing.T) {
 		"nextCursor": "",
 	}
 
-	artifact := tableArtifact("call_1", assistanttest.PagedTool, result)
+	artifact := tableArtifact("call_1", "billing_list_queue_items", result)
 	require.NotNil(t, artifact)
 	assert.Equal(t, true, artifact.Payload[artifactpayload.PayloadTruncated])
 	assert.Equal(t, true, artifact.Payload[artifactpayload.PayloadHasMore])

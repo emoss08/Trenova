@@ -69,15 +69,13 @@ func locationChangeViewOf(entity *location.Location, states map[pulid.ID]string)
 	}
 }
 
-const Lister = "location_list"
-
 var locationRecord = &masterdatakit.Record[location.Location]{
 	Kind:     locationRecordEntity,
 	Resource: permission.ResourceLocation,
 	Entity:   locationRecordEntity,
 	IDParam:  paramLocationID,
 	IDsParam: "locationIds",
-	Lister:   Lister,
+	Lister:   "location_list",
 	Label:    func(entity *location.Location) string { return entity.Name },
 	ID:       func(entity *location.Location) pulid.ID { return entity.ID },
 	Version:  func(entity *location.Location) int64 { return entity.Version },

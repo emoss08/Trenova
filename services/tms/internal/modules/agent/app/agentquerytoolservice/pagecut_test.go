@@ -48,7 +48,7 @@ func workerList(t *testing.T) (*graphqllisttool.Tool, *querytooltest.KeyedReader
 	reader := &querytooltest.KeyedReader{Answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkers": workersAnswer(),
 	}}
-	tool, err := graphqllisttool.New(keyedSpec(t, querytool.ToolWorkerList), reader,
+	tool, err := graphqllisttool.New(keyedSpec(t, "worker_list"), reader,
 		&mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 
@@ -76,7 +76,7 @@ func TestGraphQLListOutcome_ACutPageResumesAfterItsLastRow(t *testing.T) {
 	assert.Len(t, short.Items, 2)
 	assert.True(t, short.HasMore, "a cut page always has more")
 
-	scope, err := querytool.CursorScope(querytool.ToolWorkerList, call.Params)
+	scope, err := querytool.CursorScope("worker_list", call.Params)
 	require.NoError(t, err)
 	resumed, err := pagination.DecodeKeyCursor(scope, short.NextCursor)
 	require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestGraphQLListOutcome_RankedRowsAreNotCut(t *testing.T) {
 	tool, _ := workerList(t)
 	data, err := tool.Query(
 		t.Context(),
-		querytooltest.KeyedCall(map[string]any{graphqlread.ParamQuery: "bo"}),
+		querytooltest.KeyedCall(map[string]any{querytool.ParamQuery: "bo"}),
 	)
 	require.NoError(t, err)
 	page, ok := data.(graphqllisttool.Outcome)
@@ -130,10 +130,10 @@ func TestGraphQLList_FieldsLeaveTheListWhole(t *testing.T) {
 	assert.Equal(t, "Dallas", page.Items[0]["city"], "the table keeps every column")
 	assert.Contains(t, page.Columns, "city")
 
-	plain, err := querytool.CursorScope(querytool.ToolWorkerList, map[string]any{})
+	plain, err := querytool.CursorScope("worker_list", map[string]any{})
 	require.NoError(t, err)
 	narrowed, err := querytool.CursorScope(
-		querytool.ToolWorkerList,
+		"worker_list",
 		map[string]any{agenttoolports.ListFieldsParam: []any{"wholeName"}},
 	)
 	require.NoError(t, err)

@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
-const fieldSeriesName = "name"
+const fieldName = "name"
 
 var recurringShipmentStatuses = []string{
 	string(recurringshipment.StatusActive),
@@ -94,7 +94,7 @@ func NewListRecurringShipmentsTool(
 				Values: recurringShipmentStatuses,
 				Note:   "Paused generates nothing until resumed; Expired has ended",
 			},
-			{Name: fieldSeriesName, Kind: filtercatalog.KindText, Sortable: true},
+			{Name: fieldName, Kind: filtercatalog.KindText, Sortable: true},
 			{Name: "autoGenerate", Kind: filtercatalog.KindBoolean},
 			{Name: "nextOccurrenceAt", Kind: filtercatalog.KindDate, Sortable: true},
 			{Name: querytool.FieldCreatedAt, Kind: filtercatalog.KindDate, Sortable: true},

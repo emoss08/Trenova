@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -183,7 +183,7 @@ func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T)
 
 		id := pulid.MustNew("editcg_")
 		target, ok := tool.(agenttoolports.TargetedTool).Target(
-			map[string]any{paramEDIChangeID: id.String()},
+			map[string]any{paramChangeID: id.String()},
 		)
 		require.True(t, ok, tool.Name())
 		assert.Equal(t, agenttoolports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
@@ -202,8 +202,8 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 	}
 	tool := NewReviewEDITenderChangeTool(changes).(*EdiChangeReviewTool)
 	args := map[string]any{
-		paramEDIChangeID:       changes.change.ID.String(),
-		paramEDIReviewDecision: reviewApply,
+		paramChangeID: changes.change.ID.String(),
+		paramDecision: reviewApply,
 	}
 	params.Params = args
 	proposing := *params
@@ -259,8 +259,8 @@ func TestReviewEDITenderChange_RefusesWhatTheServiceRefuses(t *testing.T) {
 			tool := NewReviewEDITenderChangeTool(fake).(*EdiChangeReviewTool)
 			call := *params
 			call.Params = map[string]any{
-				paramEDIChangeID:       change.ID.String(),
-				paramEDIReviewDecision: reviewReject,
+				paramChangeID: change.ID.String(),
+				paramDecision: reviewReject,
 			}
 
 			require.Error(t, tool.Validate(t.Context(), &call))
@@ -300,8 +300,8 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 	}
 	tool := NewReviewEDITransferChangeTool(changes).(*EdiChangeReviewTool)
 	args := map[string]any{
-		paramEDIChangeID:       changes.change.ID.String(),
-		paramEDIReviewDecision: reviewApply,
+		paramChangeID: changes.change.ID.String(),
+		paramDecision: reviewApply,
 	}
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -322,9 +322,9 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 	assert.Equal(t, "Completed", agenttoolstest.FieldByPath(t, moved, "status").After)
 
 	rejected := agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIChangeID:          changes.change.ID.String(),
-		paramEDIReviewDecision:    reviewReject,
-		changepreview.FieldReason: "The partner's 214 contradicts the driver's arrival",
+		paramChangeID:          changes.change.ID.String(),
+		paramDecision:          reviewReject,
+		toolparams.ParamReason: "The partner's 214 contradicts the driver's arrival",
 	})
 	rejectPreview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -351,8 +351,8 @@ func TestReviewEDIChanges_RefuseAnUnknownDecision(t *testing.T) {
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.AgentParamsFor(map[string]any{
-			paramEDIChangeID:       pulid.MustNew("editc_").String(),
-			paramEDIReviewDecision: "Approve",
+			paramChangeID: pulid.MustNew("editc_").String(),
+			paramDecision: "Approve",
 		}),
 	)
 	require.Error(t, err)

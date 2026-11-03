@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
@@ -63,7 +62,7 @@ func TestFire_Validation(t *testing.T) {
 		"a tier that is no tier": {
 			Agent: string(agenttemplate.TemplateLoadMonitor), Schedule: true,
 			ToolTiers: map[string]agent.AutonomyTier{
-				agentdefinition.CoreToolRaiseException: "Loud",
+				"agent_raise_exception": "Loud",
 			},
 		},
 		"a tier on a tool the agent does not hold": {
@@ -81,7 +80,7 @@ func TestFire_Validation(t *testing.T) {
 		Subject: "select id from billing_queue_items limit 1",
 		Ceiling: agent.TierPropose,
 		ToolTiers: map[string]agent.AutonomyTier{
-			agentdefinition.CoreToolRaiseException: agent.TierPropose,
+			"agent_raise_exception": agent.TierPropose,
 		},
 		StopWhileWaiting: true,
 	}

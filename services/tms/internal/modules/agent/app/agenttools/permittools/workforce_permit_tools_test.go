@@ -122,9 +122,9 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 		paramStateID:               permits.permit.StateID.String(),
 		paramPermitNumber:          "OH-99812",
 		changepreview.FieldStatus:  "Active",
-		paramPermitIssued:          "2026-09-29T00:00:00-04:00",
+		paramIssuedAt:              "2026-09-29T00:00:00-04:00",
 		paramPermitExpiry:          "2026-10-04T23:59:00-04:00",
-		paramPermitCost:            "85.00",
+		paramCost:                  "85.00",
 		toolparams.ParamNote:       "Daylight travel only",
 	})
 
@@ -161,7 +161,7 @@ func TestRecordShipmentPermit_ChecksWhatTheStateIssued(t *testing.T) {
 			toolparams.ParamShipmentID: permits.permit.ShipmentID.String(),
 			paramStateID:               permits.permit.StateID.String(),
 			paramPermitNumber:          "OH-99812",
-			paramPermitCost:            "-5",
+			paramCost:                  "-5",
 		})))
 }
 

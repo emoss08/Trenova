@@ -26,10 +26,10 @@ import (
 )
 
 const (
-	fieldProfileAbout    = "about"
-	fieldProfileGuidance = "guidance"
-	profileAboutMe       = "me"
-	profileAboutOrg      = "organization"
+	fieldAbout      = "about"
+	fieldGuidance   = "guidance"
+	profileAboutMe  = "me"
+	profileAboutOrg = "organization"
 )
 
 var profileSubjects = agenttoolschema.Source(
@@ -96,12 +96,12 @@ func (t *GuideProfileTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			fieldProfileAbout: agenttoolschema.Enum(
+			fieldAbout: agenttoolschema.Enum(
 				"organization for the business as a whole; me for the person in the "+
 					"conversation's own work.",
 				profileSubjects,
 			),
-			fieldProfileGuidance: map[string]any{
+			fieldGuidance: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: fmt.Sprintf("One plain sentence, at most %d "+
 					"characters, saying what the profile should take into account, written so "+
@@ -109,7 +109,7 @@ func (t *GuideProfileTool) ParamSchema() map[string]any {
 					agentprofile.MaxGuidanceChars),
 			},
 		},
-		toolschema.KeyRequired:             []string{fieldProfileAbout, fieldProfileGuidance},
+		toolschema.KeyRequired:             []string{fieldAbout, fieldGuidance},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -149,7 +149,7 @@ func classifyGuideProfile(
 	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if toolparams.OptionalString(params.Params, fieldProfileAbout) != profileAboutMe ||
+	if toolparams.OptionalString(params.Params, fieldAbout) != profileAboutMe ||
 		actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
 		actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
@@ -166,7 +166,7 @@ func (t *GuideProfileTool) request(
 		return nil, errGuidanceNeedsPerson
 	}
 
-	content := strings.TrimSpace(toolparams.OptionalString(params.Params, fieldProfileGuidance))
+	content := strings.TrimSpace(toolparams.OptionalString(params.Params, fieldGuidance))
 	switch {
 	case content == "":
 		return nil, errGuidanceRequired
@@ -177,7 +177,7 @@ func (t *GuideProfileTool) request(
 
 	tenant := toolparams.TenantFrom(params)
 	var ref agentprofileports.SubjectRef
-	switch toolparams.OptionalString(params.Params, fieldProfileAbout) {
+	switch toolparams.OptionalString(params.Params, fieldAbout) {
 	case profileAboutOrg:
 		ref = agentprofileports.OrganizationSubject(tenant)
 	case profileAboutMe:

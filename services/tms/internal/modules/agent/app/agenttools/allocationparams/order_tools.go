@@ -7,11 +7,11 @@ import (
 
 const ParamAllocations = "allocations"
 
-const ParamBillToCustomer = "billToCustomerId"
+const ParamBillToCustomerID = "billToCustomerId"
 
-const ParamAllocMethod = "method"
+const ParamMethod = "method"
 
-const ParamAllocPercent = "percent"
+const ParamPercent = "percent"
 
 const maxChargeAllocations = 20
 

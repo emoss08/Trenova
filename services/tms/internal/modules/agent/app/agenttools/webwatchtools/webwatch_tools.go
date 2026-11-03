@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
@@ -92,7 +91,7 @@ func NewWatchWebTool(
 	return &WatchWebTool{watches: watches, waits: waits, l: logger.Named("tool.watch-web")}
 }
 
-func (t *WatchWebTool) Name() string { return agentextension.ToolWatchWeb }
+func (t *WatchWebTool) Name() string { return "web_watch" }
 
 func (t *WatchWebTool) Description() string {
 	return "Keep watching the web for something new for the person, such as a rule being " +
@@ -104,7 +103,7 @@ func (t *WatchWebTool) Description() string {
 }
 
 func (t *WatchWebTool) Prerequisites() []string {
-	return []string{agentextension.ToolWebSearch}
+	return []string{"web_search"}
 }
 
 func (t *WatchWebTool) ParamSchema() map[string]any {
@@ -340,7 +339,7 @@ func NewStopWebWatchTool(
 	return &StopWebWatchTool{watches: watches, waits: waits}
 }
 
-func (t *StopWebWatchTool) Name() string { return agentextension.ToolStopWebWatch }
+func (t *StopWebWatchTool) Name() string { return "web_stop_watch" }
 
 func (t *StopWebWatchTool) Description() string {
 	return "Stop a web watch the person no longer needs, so the vendor stops searching and " +
@@ -348,7 +347,7 @@ func (t *StopWebWatchTool) Description() string {
 }
 
 func (t *StopWebWatchTool) Prerequisites() []string {
-	return []string{agentextension.ToolListWebWatches}
+	return []string{"web_list_watches"}
 }
 
 func (t *StopWebWatchTool) ParamSchema() map[string]any {

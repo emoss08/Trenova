@@ -31,7 +31,7 @@ const paramFuelPurchaseID = "fuelPurchaseId"
 
 const paramFuelCardID = "fuelCardId"
 
-const paramFuelImportID = "fuelPurchaseImportId"
+const paramFuelPurchaseImportID = "fuelPurchaseImportId"
 
 const paramPurchasedAt = "purchasedAt"
 
@@ -1067,7 +1067,7 @@ func targetFuelImport(
 	resource permission.Resource,
 ) func(map[string]any) (agenttoolports.ToolTarget, bool) {
 	return func(params map[string]any) (agenttoolports.ToolTarget, bool) {
-		return toolparams.TargetOf(params, paramFuelImportID, resource)
+		return toolparams.TargetOf(params, paramFuelPurchaseImportID, resource)
 	}
 }
 
@@ -1112,7 +1112,7 @@ func loadFuelImport(
 	imports FuelImportKeeper,
 	params *agenttoolports.ToolExecuteParams,
 ) (*fuelpurchase.ImportBatch, error) {
-	id, err := toolparams.RequirePulid(params.Params, paramFuelImportID)
+	id, err := toolparams.RequirePulid(params.Params, paramFuelPurchaseImportID)
 	if err != nil {
 		return nil, err
 	}
@@ -1121,7 +1121,7 @@ func loadFuelImport(
 }
 
 func fuelImportIDFrom(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-	return toolparams.RequirePulid(params.Params, paramFuelImportID)
+	return toolparams.RequirePulid(params.Params, paramFuelPurchaseImportID)
 }
 
 func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.AgentTool {
@@ -1137,10 +1137,12 @@ func NewCommitFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.Ag
 		Rationale: "Adds a statement's purchases inside Trenova, which the IFTA return counts; " +
 			"nothing is sent, but undoing it means deleting each purchase.",
 		Properties: map[string]any{
-			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
-				fuelImportSupplier),
+			paramFuelPurchaseImportID: agenttoolschema.RecordIDText(
+				permission.ResourceFuelPurchaseImport,
+				fuelImportSupplier,
+			),
 		},
-		Required: []string{paramFuelImportID},
+		Required: []string{paramFuelPurchaseImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchase),
 	}), toolspec.ReceivablePlan[pulid.ID, *fuelpurchaseservice.CommitPlan]{
 		Request: fuelImportIDFrom,
@@ -1226,10 +1228,12 @@ func NewResolveFuelPurchaseImportRowsTool(imports FuelImportKeeper) agenttoolpor
 		Rationale: "Re-matches held statement rows inside Trenova and, for a feed, posts the " +
 			"purchases that now resolve; nothing is sent.",
 		Properties: map[string]any{
-			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
-				fuelImportSupplier),
+			paramFuelPurchaseImportID: agenttoolschema.RecordIDText(
+				permission.ResourceFuelPurchaseImport,
+				fuelImportSupplier,
+			),
 		},
-		Required: []string{paramFuelImportID},
+		Required: []string{paramFuelPurchaseImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchaseImport),
 	}), toolspec.ReceivablePlan[pulid.ID, *fuelpurchaseservice.ResolveRowsPlan]{
 		Request: fuelImportIDFrom,
@@ -1328,19 +1332,21 @@ func NewDiscardFuelPurchaseImportTool(imports FuelImportKeeper) agenttoolports.A
 		Rationale: "Closes a staged statement inside Trenova without adding any purchase; it " +
 			"can be staged again.",
 		Properties: map[string]any{
-			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
-				fuelImportSupplier),
+			paramFuelPurchaseImportID: agenttoolschema.RecordIDText(
+				permission.ResourceFuelPurchaseImport,
+				fuelImportSupplier,
+			),
 			toolparams.ParamReason: toolparams.StringProperty(
 				"Why it is being discarded, for whoever finds it "+
 					"later.",
 				fuelDiscardReason,
 			),
 		},
-		Required: []string{paramFuelImportID},
+		Required: []string{paramFuelPurchaseImportID},
 		Target:   targetFuelImport(permission.ResourceFuelPurchase),
 	}), toolspec.ReceivablePlan[*fuelImportDiscard, *fuelpurchaseservice.ImportBatchChange]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*fuelImportDiscard, error) {
-			id, err := toolparams.RequirePulid(params.Params, paramFuelImportID)
+			id, err := toolparams.RequirePulid(params.Params, paramFuelPurchaseImportID)
 			if err != nil {
 				return nil, err
 			}

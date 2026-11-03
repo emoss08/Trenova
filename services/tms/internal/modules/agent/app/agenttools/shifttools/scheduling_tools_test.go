@@ -218,10 +218,10 @@ func TestAssignWorkerShift_PreviewsTheNewPatternAndTheOneItEnds(t *testing.T) {
 	tool := NewAssignWorkerShiftTool(schedules, NewTeamScope(permissions, nil))
 	workerID, templateID := pulid.MustNew("wrk_"), pulid.MustNew("shft_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID:         workerID.String(),
-		paramShiftTemplateID:             templateID.String(),
-		changepreview.FieldEffectiveFrom: "2026-10-12",
-		paramCycleOffsetWeeks:            float64(1),
+		toolparams.ParamWorkerID:      workerID.String(),
+		paramShiftTemplateID:          templateID.String(),
+		toolparams.ParamEffectiveFrom: "2026-10-12",
+		paramCycleOffsetWeeks:         float64(1),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -267,9 +267,9 @@ func TestAssignWorkerShift_ATeamGrantReachesOnlyTheTeam(t *testing.T) {
 	tool := NewAssignWorkerShiftTool(schedules, scope)
 	paramsFor := func(workerID pulid.ID) *agenttoolports.ToolExecuteParams {
 		return agenttoolstest.ExecuteParams(map[string]any{
-			toolparams.ParamWorkerID:         workerID.String(),
-			paramShiftTemplateID:             pulid.MustNew("shft_").String(),
-			changepreview.FieldEffectiveFrom: "2026-10-12",
+			toolparams.ParamWorkerID:      workerID.String(),
+			paramShiftTemplateID:          pulid.MustNew("shft_").String(),
+			toolparams.ParamEffectiveFrom: "2026-10-12",
 		})
 	}
 
@@ -301,8 +301,8 @@ func TestEndWorkerShiftAssignment_ChecksTheTeamOfTheAssignmentsWorker(t *testing
 		teams,
 	))
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramShiftAssignmentID:         schedules.assignment.ID.String(),
-		changepreview.FieldEffectiveTo: "2026-11-01",
+		paramShiftAssignmentID:      schedules.assignment.ID.String(),
+		toolparams.ParamEffectiveTo: "2026-11-01",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -322,8 +322,8 @@ func TestEndWorkerShiftAssignment_ChecksTheTeamOfTheAssignmentsWorker(t *testing
 
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramShiftAssignmentID:         schedules.assignment.ID.String(),
-			changepreview.FieldEffectiveTo: float64(1_900_000_000),
+			paramShiftAssignmentID:      schedules.assignment.ID.String(),
+			toolparams.ParamEffectiveTo: float64(1_900_000_000),
 		})))
 }
 
@@ -373,11 +373,11 @@ func TestProposeShiftSwap_RaisesATradeWithBothDays(t *testing.T) {
 	tool := NewProposeShiftSwapTool(schedules)
 	requesting, counterparty := pulid.MustNew("wrk_"), pulid.MustNew("wrk_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramRequestingWorkerID:   requesting.String(),
-		paramCounterpartyWorkerID: counterparty.String(),
-		paramShiftDate:            "2030-03-18",
-		paramCounterpartyDate:     "2030-03-20",
-		changepreview.FieldReason: "Wedding",
+		paramRequestingWorkerID:    requesting.String(),
+		paramCounterpartyWorkerID:  counterparty.String(),
+		paramShiftDate:             "2030-03-18",
+		paramCounterpartyShiftDate: "2030-03-20",
+		toolparams.ParamReason:     "Wedding",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

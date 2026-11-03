@@ -266,9 +266,9 @@ func TestParseBrowserUseSettingsDefaultsAndRefusals(t *testing.T) {
 func TestOnlyReadingAPortalReturnsOutsideContent(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, agentextension.ReturnsExternalContent(agentextension.ToolReadPortal))
-	assert.False(t, agentextension.ReturnsExternalContent(agentextension.ToolActOnPortal))
-	assert.False(t, agentextension.ReturnsExternalContent(agentextension.ToolListPortalSites))
+	assert.True(t, agentextension.ReturnsExternalContent("web_read_portal"))
+	assert.False(t, agentextension.ReturnsExternalContent("web_use_portal"))
+	assert.False(t, agentextension.ReturnsExternalContent("web_list_portal_sites"))
 
 	spec, ok := agentextension.SpecFor(agentextension.TypeBrowserUse)
 	require.True(t, ok)

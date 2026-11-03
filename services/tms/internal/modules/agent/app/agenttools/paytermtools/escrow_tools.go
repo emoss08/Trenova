@@ -24,27 +24,21 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const paramEscrowAccountID = "accountId"
+const paramAccountID = "accountId"
 
-const paramEscrowTarget = "targetAmount"
+const paramTargetAmount = "targetAmount"
 
-const paramEscrowInterestRate = "annualInterestRate"
+const paramAnnualInterestRate = "annualInterestRate"
 
-const paramEscrowOpenedDate = "openedDate"
+const paramOpenedDate = "openedDate"
 
-const paramEscrowDescription = "description"
-
-const paramEscrowOccurredDate = "occurredDate"
+const paramOccurredDate = "occurredDate"
 
 const maxEscrowDescription = 255
-
-const escrowSourcesTool = "settlement_list_escrow_accounts"
 
 const escrowBalanceMark = "balanceMinor"
 
 const escrowTargetMark = "targetAmountMinor"
-
-const fieldAnnualInterestRate = "annualInterestRate"
 
 const fieldClosedDate = "closedDate"
 
@@ -98,7 +92,7 @@ func escrowRecord(account *payescrow.EscrowAccount) toolpreview.Record {
 func escrowAccountProperty() map[string]any {
 	return agenttoolschema.RecordIDText(
 		permission.ResourceEscrowAccount,
-		"The escrow account, from "+escrowSourcesTool+". Never guess one.",
+		"The escrow account, from settlement_list_escrow_accounts. Never guess one.",
 	)
 }
 
@@ -108,12 +102,12 @@ func interestRateProperty() map[string]any {
 }
 
 func readInterestRate(params map[string]any) (decimal.Decimal, bool, error) {
-	rate, ok, err := toolparams.OptionalDecimal(params, paramEscrowInterestRate)
+	rate, ok, err := toolparams.OptionalDecimal(params, paramAnnualInterestRate)
 	if err != nil || !ok {
 		return rate, ok, err
 	}
 	if rate.IsNegative() || rate.GreaterThan(decimal.NewFromInt(100)) {
-		return rate, false, fmt.Errorf("%s must be between 0 and 100", paramEscrowInterestRate)
+		return rate, false, fmt.Errorf("%s must be between 0 and 100", paramAnnualInterestRate)
 	}
 
 	return rate, true, nil
@@ -124,7 +118,7 @@ func loadEscrow(
 	book escrowBook,
 	params *agenttoolports.ToolExecuteParams,
 ) (*payescrow.EscrowAccount, error) {
-	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
+	accountID, err := toolparams.RequirePulid(params.Params, paramAccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -163,13 +157,13 @@ func (t *OpenEscrowAccountTool) Description() string {
 func (t *OpenEscrowAccountTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
-		paramEscrowTarget: toolparams.AmountProperty(
+		paramTargetAmount: toolparams.AmountProperty(
 			"The balance the lease requires, as a decimal " +
 				"such as 2500.00.",
 		),
-		paramEscrowInterestRate: interestRateProperty(),
-		paramEscrowOpenedDate:   agenttoolschema.Date("The day it opens; leave it out for today."),
-	}, toolparams.ParamWorkerID, paramEscrowTarget)
+		paramAnnualInterestRate: interestRateProperty(),
+		paramOpenedDate:         agenttoolschema.Date("The day it opens; leave it out for today."),
+	}, toolparams.ParamWorkerID, paramTargetAmount)
 }
 
 func (t *OpenEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
@@ -192,7 +186,7 @@ func (t *OpenEscrowAccountTool) entity(
 	if err != nil {
 		return nil, err
 	}
-	target, err := toolparams.RequireMoney(params.Params, paramEscrowTarget)
+	target, err := toolparams.RequireMoney(params.Params, paramTargetAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +194,7 @@ func (t *OpenEscrowAccountTool) entity(
 	if err != nil {
 		return nil, err
 	}
-	opened, _, err := toolparams.OptionalDay(params.Params, paramEscrowOpenedDate)
+	opened, _, err := toolparams.OptionalDay(params.Params, paramOpenedDate)
 	if err != nil {
 		return nil, err
 	}
@@ -293,9 +287,9 @@ func (t *OpenEscrowAccountTool) Preview(
 	change, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceEscrowAccount, Label: "New escrow account"},
 		entity,
-		toolpreview.Only(toolparams.ParamWorkerID, changepreview.FieldStatus, paramEscrowOpenedDate,
-			fieldAnnualInterestRate),
-		toolpreview.Volatile(paramEscrowOpenedDate),
+		toolpreview.Only(toolparams.ParamWorkerID, changepreview.FieldStatus, paramOpenedDate,
+			paramAnnualInterestRate),
+		toolpreview.Volatile(paramOpenedDate),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			toolparams.ParamWorkerID: permission.ResourceWorker,
 		}),
@@ -337,10 +331,10 @@ func (t *UpdateEscrowAccountTool) SearchTerms() []string {
 
 func (t *UpdateEscrowAccountTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
-		paramEscrowAccountID:    escrowAccountProperty(),
-		paramEscrowTarget:       toolparams.AmountProperty("The new target balance, as a decimal."),
-		paramEscrowInterestRate: interestRateProperty(),
-	}, paramEscrowAccountID)
+		paramAccountID:          escrowAccountProperty(),
+		paramTargetAmount:       toolparams.AmountProperty("The new target balance, as a decimal."),
+		paramAnnualInterestRate: interestRateProperty(),
+	}, paramAccountID)
 }
 
 func (t *UpdateEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
@@ -354,7 +348,7 @@ func (t *UpdateEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *UpdateEscrowAccountTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
+	return toolparams.TargetOf(params, paramAccountID, permission.ResourceEscrowAccount)
 }
 
 type escrowUpdate struct {
@@ -370,7 +364,7 @@ func (t *UpdateEscrowAccountTool) planned(
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	target, hasTarget, err := toolparams.OptionalMoney(params.Params, paramEscrowTarget)
+	target, hasTarget, err := toolparams.OptionalMoney(params.Params, paramTargetAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +445,7 @@ func (t *UpdateEscrowAccountTool) Preview(
 		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 	change, err := toolpreview.Changed(escrowRecord(plan.before), plan.before, plan.after,
-		toolpreview.Only(fieldAnnualInterestRate))
+		toolpreview.Only(paramAnnualInterestRate))
 	if err != nil {
 		return nil, err
 	}
@@ -489,20 +483,20 @@ func (t *AdjustEscrowAccountTool) SearchTerms() []string {
 
 func (t *AdjustEscrowAccountTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
-		paramEscrowAccountID: escrowAccountProperty(),
-		settlementpreview.ParamDriverPayAmount: toolparams.AmountProperty(
+		paramAccountID: escrowAccountProperty(),
+		toolparams.ParamAmount: toolparams.AmountProperty(
 			"The amount as a decimal; negative to draw " +
 				"from the balance. Never zero.",
 		),
-		paramEscrowDescription: toolparams.StringProperty(
+		toolparams.ParamDescription: toolparams.StringProperty(
 			"What the adjustment is for, as it will read "+
 				"on the escrow ledger.",
 			maxEscrowDescription,
 		),
-		paramEscrowOccurredDate: agenttoolschema.Date(
+		paramOccurredDate: agenttoolschema.Date(
 			"The day it happened; leave it out for today.",
 		),
-	}, paramEscrowAccountID, settlementpreview.ParamDriverPayAmount, paramEscrowDescription)
+	}, paramAccountID, toolparams.ParamAmount, toolparams.ParamDescription)
 }
 
 func (t *AdjustEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
@@ -515,7 +509,7 @@ func (t *AdjustEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *AdjustEscrowAccountTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
+	return toolparams.TargetOf(params, paramAccountID, permission.ResourceEscrowAccount)
 }
 
 func (t *AdjustEscrowAccountTool) request(
@@ -524,27 +518,27 @@ func (t *AdjustEscrowAccountTool) request(
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
+	accountID, err := toolparams.RequirePulid(params.Params, paramAccountID)
 	if err != nil {
 		return nil, err
 	}
 	amount, err := toolparams.RequireSignedMoney(
 		params.Params,
-		settlementpreview.ParamDriverPayAmount,
+		toolparams.ParamAmount,
 	)
 	if err != nil {
 		return nil, err
 	}
 	description, err := toolparams.BoundedString(
 		params.Params,
-		paramEscrowDescription,
+		toolparams.ParamDescription,
 		maxEscrowDescription,
 		true,
 	)
 	if err != nil {
 		return nil, err
 	}
-	occurred, hasOccurred, err := toolparams.OptionalDay(params.Params, paramEscrowOccurredDate)
+	occurred, hasOccurred, err := toolparams.OptionalDay(params.Params, paramOccurredDate)
 	if err != nil {
 		return nil, err
 	}
@@ -677,8 +671,8 @@ func (t *CloseEscrowAccountTool) Description() string {
 
 func (t *CloseEscrowAccountTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
-		paramEscrowAccountID: escrowAccountProperty(),
-	}, paramEscrowAccountID)
+		paramAccountID: escrowAccountProperty(),
+	}, paramAccountID)
 }
 
 func (t *CloseEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
@@ -692,7 +686,7 @@ func (t *CloseEscrowAccountTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *CloseEscrowAccountTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramEscrowAccountID, permission.ResourceEscrowAccount)
+	return toolparams.TargetOf(params, paramAccountID, permission.ResourceEscrowAccount)
 }
 
 func (t *CloseEscrowAccountTool) planned(
@@ -744,7 +738,7 @@ func (t *CloseEscrowAccountTool) Execute(
 	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	accountID, err := toolparams.RequirePulid(params.Params, paramEscrowAccountID)
+	accountID, err := toolparams.RequirePulid(params.Params, paramAccountID)
 	if err != nil {
 		return err
 	}

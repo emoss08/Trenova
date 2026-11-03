@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -160,5 +159,5 @@ func TestDefinitionForHoldsEveryToolAutomatically(t *testing.T) {
 	for _, name := range definition.EffectiveToolNames() {
 		assert.Equal(t, agent.TierAutoExecute, definition.ToolTiers[name], name)
 	}
-	assert.Contains(t, definition.ToolTiers, agentdefinition.CoreToolRemember)
+	assert.Contains(t, definition.ToolTiers, "agent_create_memory")
 }

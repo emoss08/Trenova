@@ -32,7 +32,7 @@ const paramChargeKind = "chargeKind"
 
 const paramAdditionalChargeID = "additionalChargeId"
 
-const paramRunAction = "action"
+const paramAction = "action"
 
 var reassignableKinds = agenttoolschema.Source(
 	"shipment.reassignableChargeKind",
@@ -199,7 +199,7 @@ func renderReassignment(
 ) (*agentpreview.ToolPreview, error) {
 	changes := make([]*agentpreview.RecordChange, 0, len(plan.ToCreate)+len(plan.ToCancel))
 	refs := toolpreview.WithRefs(map[string]permission.Resource{
-		changepreview.FieldCustomerID: permission.ResourceCustomer,
+		toolparams.ParamCustomerID: permission.ResourceCustomer,
 	})
 	for _, share := range plan.ToCreate {
 		if share == nil {
@@ -313,12 +313,12 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.Agen
 					"result. Never guess one.",
 				recordkind.BillingTransferRun,
 			),
-			paramRunAction: agenttoolschema.Enum(
+			paramAction: agenttoolschema.Enum(
 				"Stop a running transfer, or Retry a finished one.",
 				transferRunActions,
 			),
 		},
-		Required: []string{resultRunID, paramRunAction},
+		Required: []string{resultRunID, paramAction},
 	}, toolspec.ReceivablePlan[*transferRunCall, *billingtransferservice.RunPreview]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (*transferRunCall, error) {
 			runID, err := toolparams.RequirePulid(params.Params, resultRunID)
@@ -327,7 +327,7 @@ func NewManageBillingTransferRunTool(runs transferRunKeeper) agenttoolports.Agen
 			}
 			action, err := toolparams.RequireEnum(
 				params.Params,
-				paramRunAction,
+				paramAction,
 				transferRunActions.Values,
 			)
 			if err != nil {

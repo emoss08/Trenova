@@ -23,11 +23,7 @@ import (
 
 const paramInboundChangeID = "inboundChangeId"
 
-const paramInboundNote = "note"
-
-const toolListInbound = "accounting_list_inbound_changes"
-
-const fieldInboundStatus = "status"
+const fieldStatus = "status"
 
 const maxInboundNoteRunes = 500
 
@@ -119,7 +115,7 @@ func (t *ApplyAccountingInboundChangeTool) SearchTerms() []string {
 }
 
 func (t *ApplyAccountingInboundChangeTool) Prerequisites() []string {
-	return []string{toolListInbound}
+	return []string{"accounting_list_inbound_changes"}
 }
 
 func (t *ApplyAccountingInboundChangeTool) ParamSchema() map[string]any {
@@ -238,7 +234,7 @@ func (t *IgnoreAccountingInboundChangeTool) SearchTerms() []string {
 }
 
 func (t *IgnoreAccountingInboundChangeTool) Prerequisites() []string {
-	return []string{toolListInbound}
+	return []string{"accounting_list_inbound_changes"}
 }
 
 func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
@@ -247,10 +243,10 @@ func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 			inboundChangeParamHelp,
 			recordkind.AccountingInboundChange,
 		),
-		paramInboundNote: jsonschemautils.Text(
+		toolparams.ParamNote: jsonschemautils.Text(
 			"Why it stays out of Trenova, in one sentence a bookkeeper would accept.",
 		),
-	}, paramInboundChangeID, paramInboundNote)
+	}, paramInboundChangeID, toolparams.ParamNote)
 }
 
 func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
@@ -280,10 +276,10 @@ func (t *IgnoreAccountingInboundChangeTool) request(
 	if err != nil {
 		return nil, nil, err
 	}
-	raw, err := toolparams.RequireString(params.Params, paramInboundNote)
+	raw, err := toolparams.RequireString(params.Params, toolparams.ParamNote)
 	if err != nil {
 		return nil, nil, errortypes.NewValidationError(
-			paramInboundNote,
+			toolparams.ParamNote,
 			errortypes.ErrRequired,
 			"Say why this payment stays out of Trenova",
 		)

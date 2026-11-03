@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -17,28 +18,26 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const fieldInboundNote = "note"
+const fieldDecidedByID = "decidedById"
 
-const fieldInboundDecidedByID = "decidedById"
-
-const fieldInboundDecidedAt = "decidedAt"
+const fieldDecidedAt = "decidedAt"
 
 func inboundChangeOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
-			fieldInboundStatus,
-			fieldInboundNote,
-			fieldInboundDecidedByID,
-			fieldInboundDecidedAt,
+			fieldStatus,
+			toolparams.ParamNote,
+			fieldDecidedByID,
+			fieldDecidedAt,
 		),
-		toolpreview.Volatile(fieldInboundDecidedAt),
+		toolpreview.Volatile(fieldDecidedAt),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			fieldInboundDecidedByID: permission.ResourceUser,
+			fieldDecidedByID: permission.ResourceUser,
 		}),
 		toolpreview.Labels(map[string]string{
-			fieldInboundNote:        "Why it stays out of Trenova",
-			fieldInboundDecidedByID: "Decided by",
-			fieldInboundDecidedAt:   "Decided at",
+			toolparams.ParamNote: "Why it stays out of Trenova",
+			fieldDecidedByID:     "Decided by",
+			fieldDecidedAt:       "Decided at",
 		}),
 	}
 }

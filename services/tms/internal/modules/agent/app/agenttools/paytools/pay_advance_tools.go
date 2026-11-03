@@ -25,21 +25,17 @@ import (
 
 const ParamAdvanceID = "advanceId"
 
-const ParamAdvanceSource = "source"
+const ParamSource = "source"
 
-const ParamAdvanceRef = "reference"
+const ParamReference = "reference"
 
 const ParamIssuedDate = "issuedDate"
-
-const ParamWriteOffReason = "reason"
 
 const maxWriteOffReason = 500
 
 const fieldWriteOffReason = "writeOffReason"
 
 const fieldWrittenOffAt = "writtenOffAt"
-
-const advanceSourcesTool = "settlement_list_advances"
 
 const advanceSensitiveMark = "amountMinor"
 
@@ -71,19 +67,19 @@ func (t *IssuePayAdvanceTool) Description() string {
 func (t *IssuePayAdvanceTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
-		settlementpreview.ParamDriverPayAmount: toolparams.AmountProperty(
+		toolparams.ParamAmount: toolparams.AmountProperty(
 			"The amount advanced, as a decimal such as 300.00.",
 		),
-		ParamAdvanceSource: agenttoolschema.Enum(
+		ParamSource: agenttoolschema.Enum(
 			"How it was given.",
 			settlementpreview.AdvanceSources,
 		),
-		ParamAdvanceRef: toolparams.StringProperty("The money code, card transaction or receipt "+
+		ParamReference: toolparams.StringProperty("The money code, card transaction or receipt "+
 			"number.", settlementpreview.MaxPayReferenceChars),
 		ParamIssuedDate: agenttoolschema.Date("The day it was given; leave it out for today."),
 		toolparams.ParamNote: toolparams.StringProperty("Why it was given, for payroll.",
 			settlementpreview.MaxDriverPayNotes),
-	}, toolparams.ParamWorkerID, settlementpreview.ParamDriverPayAmount, ParamAdvanceSource)
+	}, toolparams.ParamWorkerID, toolparams.ParamAmount, ParamSource)
 }
 
 func (t *IssuePayAdvanceTool) Policy() agenttoolports.ToolPolicy {
@@ -106,24 +102,24 @@ func (t *IssuePayAdvanceTool) entity(
 	if err != nil {
 		return nil, err
 	}
-	amount, err := toolparams.RequireMoney(params.Params, settlementpreview.ParamDriverPayAmount)
+	amount, err := toolparams.RequireMoney(params.Params, toolparams.ParamAmount)
 	if err != nil {
 		return nil, err
 	}
 	source, ok, err := toolparams.OptionalEnum(
 		params.Params,
-		ParamAdvanceSource,
+		ParamSource,
 		settlementpreview.AdvanceSources.Values,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if !ok {
-		return nil, fmt.Errorf("missing required parameter %q", ParamAdvanceSource)
+		return nil, fmt.Errorf("missing required parameter %q", ParamSource)
 	}
 	reference, err := toolparams.BoundedString(
 		params.Params,
-		ParamAdvanceRef,
+		ParamReference,
 		settlementpreview.MaxPayReferenceChars,
 		false,
 	)
@@ -216,8 +212,8 @@ func (t *IssuePayAdvanceTool) Preview(
 		toolpreview.Only(
 			toolparams.ParamWorkerID,
 			changepreview.FieldStatus,
-			ParamAdvanceSource,
-			ParamAdvanceRef,
+			ParamSource,
+			ParamReference,
 			ParamIssuedDate,
 			changepreview.FieldNotes,
 		),
@@ -277,12 +273,12 @@ func (t *WriteOffPayAdvanceTool) Description() string {
 func (t *WriteOffPayAdvanceTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
 		ParamAdvanceID: agenttoolschema.RecordIDText(permission.ResourcePayAdvance,
-			"The advance, from "+advanceSourcesTool+". Never guess one."),
-		ParamWriteOffReason: toolparams.StringProperty(
+			"The advance, from settlement_list_advances. Never guess one."),
+		toolparams.ParamReason: toolparams.StringProperty(
 			"Why it cannot be recovered.",
 			maxWriteOffReason,
 		),
-	}, ParamAdvanceID, ParamWriteOffReason)
+	}, ParamAdvanceID, toolparams.ParamReason)
 }
 
 func (t *WriteOffPayAdvanceTool) Policy() agenttoolports.ToolPolicy {
@@ -319,7 +315,7 @@ func (t *WriteOffPayAdvanceTool) plan(
 	}
 	reason, err := toolparams.BoundedString(
 		params.Params,
-		ParamWriteOffReason,
+		toolparams.ParamReason,
 		maxWriteOffReason,
 		true,
 	)

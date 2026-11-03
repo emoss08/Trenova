@@ -163,15 +163,15 @@ func TestCreateRecurringShipment_ReadsDaysInTheSeriesTimezone(t *testing.T) {
 	tool := NewCreateRecurringShipmentTool(series)
 	source := pulid.MustNew("shp_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramSourceShipmentID:             source.String(),
-		paramSeriesName:                   "Acme Dallas run",
-		ParamCronExpression:               "0 8 * * 1-5",
-		ParamTimezone:                     "America/Chicago",
-		changepreview.FieldRecurringStart: "2026-10-05",
-		changepreview.FieldRecurringEnd:   "2026-12-31",
-		paramBlackoutDates:                []any{"2026-11-26"},
-		paramExceptionPolicy:              "NextBusinessDay",
-		paramAutoGenerate:                 true,
+		paramSourceShipmentID:        source.String(),
+		paramName:                    "Acme Dallas run",
+		ParamCronExpression:          "0 8 * * 1-5",
+		ParamTimezone:                "America/Chicago",
+		changepreview.FieldStartDate: "2026-10-05",
+		changepreview.FieldEndDate:   "2026-12-31",
+		paramBlackoutDates:           []any{"2026-11-26"},
+		paramExceptionPolicy:         "NextBusinessDay",
+		paramAutoGenerate:            true,
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -211,7 +211,7 @@ func TestCreateRecurringShipment_RefusesBadArguments(t *testing.T) {
 	valid := func(extra map[string]any) map[string]any {
 		params := map[string]any{
 			paramSourceShipmentID: pulid.MustNew("shp_").String(),
-			paramSeriesName:       "Run",
+			paramName:             "Run",
 			ParamCronExpression:   "0 8 * * *",
 			ParamTimezone:         "UTC",
 		}
@@ -222,9 +222,9 @@ func TestCreateRecurringShipment_RefusesBadArguments(t *testing.T) {
 		return params
 	}
 	for name, raw := range map[string]map[string]any{
-		"no schedule":        {paramSourceShipmentID: pulid.MustNew("shp_").String(), paramSeriesName: "Run", ParamTimezone: "UTC"},
-		"a bad timezone":     valid(map[string]any{ParamTimezone: "Mars/Olympus", changepreview.FieldRecurringStart: "2026-10-05"}),
-		"a unix start":       valid(map[string]any{changepreview.FieldRecurringStart: float64(1_900_000_000)}),
+		"no schedule":        {paramSourceShipmentID: pulid.MustNew("shp_").String(), paramName: "Run", ParamTimezone: "UTC"},
+		"a bad timezone":     valid(map[string]any{ParamTimezone: "Mars/Olympus", changepreview.FieldStartDate: "2026-10-05"}),
+		"a unix start":       valid(map[string]any{changepreview.FieldStartDate: float64(1_900_000_000)}),
 		"a bad blackout":     valid(map[string]any{paramBlackoutDates: []any{"Nov 26"}}),
 		"an unknown policy":  valid(map[string]any{paramExceptionPolicy: "Whenever"}),
 		"too much lead time": valid(map[string]any{paramLeadTimeDays: float64(90)}),
@@ -342,7 +342,7 @@ func TestGenerateRecurringShipment_ShowsTheCopyAndSkipsAFilledSlot(t *testing.T)
 	assert.Equal(
 		t,
 		"BOL-2030",
-		agenttoolstest.FieldByPath(t, created, changepreview.FieldBol).After,
+		agenttoolstest.FieldByPath(t, created, changepreview.FieldBOL).After,
 	)
 
 	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)

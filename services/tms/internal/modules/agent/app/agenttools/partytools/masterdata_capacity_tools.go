@@ -27,7 +27,7 @@ import (
 
 const capacityRecordEntity = "carrierCapacityPosting"
 
-const paramPostingID = "carrierCapacityPostingId"
+const paramCarrierCapacityPostingID = "carrierCapacityPostingId"
 
 const capacityKind = "carrier capacity posting"
 
@@ -144,7 +144,7 @@ var capacityRecord = &masterdatakit.Record[carriercapacity.Posting]{
 	Kind:     capacityKind,
 	Resource: permission.ResourceCarrierCapacityPosting,
 	Entity:   capacityRecordEntity,
-	IDParam:  paramPostingID,
+	IDParam:  paramCarrierCapacityPostingID,
 	Lister:   "carrier_list_capacity_postings",
 	Label:    capacityLabel,
 	ID:       func(entity *carriercapacity.Posting) pulid.ID { return entity.ID },
@@ -325,18 +325,18 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 		Rationale: "Removes trucks a carrier offered from Trenova; nothing is sent, and " +
 			"carrier_create_capacity_posting records them again.",
 		Properties: map[string]any{
-			paramPostingID: agenttoolschema.RecordIDText(
+			paramCarrierCapacityPostingID: agenttoolschema.RecordIDText(
 				permission.ResourceCarrierCapacityPosting,
 				"The posting to remove, from "+capacityRecord.Lister+". Never guess one.",
 			),
 		},
-		Required:      []string{paramPostingID},
+		Required:      []string{paramCarrierCapacityPostingID},
 		SearchTerms:   []string{"remove carrier capacity", "withdraw truck posting"},
 		Prerequisites: []string{capacityRecord.Lister},
 		Target:        capacityRecord.Target,
 	}, toolspec.ReceivablePlan[pulid.ID, *carriercapacity.Posting]{
 		Request: func(params *agenttoolports.ToolExecuteParams) (pulid.ID, error) {
-			return toolparams.RequirePulid(params.Params, paramPostingID)
+			return toolparams.RequirePulid(params.Params, paramCarrierCapacityPostingID)
 		},
 		Plan: func(
 			ctx context.Context,
@@ -383,7 +383,7 @@ func NewDeleteCarrierCapacityPostingTool(keeper CapacityKeeper) agenttoolports.A
 			return &agentrecord.ToolExecutionResult{
 				Action: changepreview.ActionDeleted,
 				Kind:   capacityKind,
-				IDs:    map[string]string{paramPostingID: id.String()},
+				IDs:    map[string]string{paramCarrierCapacityPostingID: id.String()},
 			}, nil
 		},
 	})

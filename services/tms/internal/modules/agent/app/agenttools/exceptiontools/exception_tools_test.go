@@ -155,8 +155,8 @@ func TestAssignException_GivesTheItemToTheNamedPerson(t *testing.T) {
 	assignee := pulid.MustNew("usr_")
 	tool := NewAssignExceptionTool(exceptions)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramWatchtowerItemID:  exceptions.item.ID.String(),
-		paramExceptionAssignee: assignee.String(),
+		paramWatchtowerItemID: exceptions.item.ID.String(),
+		paramAssigneeID:       assignee.String(),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -184,7 +184,7 @@ func TestCommentOnException_PreviewsWithoutWriting(t *testing.T) {
 	tool := NewCommentOnExceptionTool(exceptions)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramWatchtowerItemID: exceptions.item.ID.String(),
-		paramCommentBody:      "Spot carrier quoting now",
+		paramBody:             "Spot carrier quoting now",
 	})
 
 	agenttoolstest.PreviewWithoutWrites(

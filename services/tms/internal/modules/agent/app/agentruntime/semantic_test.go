@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -46,7 +45,7 @@ func findToolsHistory(result conversation.Message) []conversation.Message {
 		{Role: conversation.RoleUser, Content: "say hello"},
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{{
 			ID:        "c1",
-			Name:      runtimetools.FindToolsName,
+			Name:      "find_tools",
 			Arguments: map[string]any{"need": "trailer inspection"},
 		}}},
 		result,
@@ -61,7 +60,7 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   runtimetools.FindToolsName,
+		ToolName:   "find_tools",
 		Content:    "These tools are now callable",
 		FoundTools: []string{"worker_list"},
 	})
@@ -87,7 +86,7 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   runtimetools.FindToolsName,
+		ToolName:   "find_tools",
 		Content:    "These tools are now callable",
 	})
 
@@ -122,7 +121,7 @@ func TestCarryOver_NeverWidensPastWhatTheAgentHolds(t *testing.T) {
 	history := findToolsHistory(conversation.Message{
 		Role:       conversation.RoleTool,
 		ToolCallID: "c1",
-		ToolName:   runtimetools.FindToolsName,
+		ToolName:   "find_tools",
 		FoundTools: []string{"worker_list"},
 	})
 
@@ -143,7 +142,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 	service, _, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			runtimetools.FindToolsName,
+			"find_tools",
 			map[string]any{"need": "driver medical card expiry"},
 		),
 		runtimetest.TextTurn("Two cards are due."),
@@ -157,7 +156,7 @@ func TestRun_RecordsWhatFindToolsFoundOnItsResult(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, runtimetools.FindToolsName, result.Messages[2].ToolName)
+	assert.Equal(t, "find_tools", result.Messages[2].ToolName)
 	assert.Contains(t, result.Messages[2].FoundTools, "worker_list_credentials")
 }
 

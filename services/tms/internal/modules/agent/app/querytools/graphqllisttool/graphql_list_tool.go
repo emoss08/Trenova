@@ -180,7 +180,7 @@ func pageSkips(
 	case tabled:
 		skip[input] = struct{}{}
 	case read.PagesByCursor():
-		skip[graphqlread.InputFirst], skip[graphqlread.InputAfter] = struct{}{}, struct{}{}
+		skip[graphqlread.FieldFirst], skip[querytool.ParamAfter] = struct{}{}, struct{}{}
 	case read.PagedInput() != "":
 	default:
 		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
@@ -618,7 +618,7 @@ func (t *Tool) Policy() agenttoolports.ToolPolicy {
 func (t *Tool) ParamSchema() map[string]any {
 	properties := make(map[string]any, len(t.Params)+5)
 	if t.Input != "" || t.search[0] != "" {
-		properties[graphqlread.ParamQuery] = map[string]any{
+		properties[querytool.ParamQuery] = map[string]any{
 			toolschema.KeyType:        toolschema.TypeString,
 			toolschema.KeyDescription: t.queryDescription(),
 		}
@@ -837,7 +837,7 @@ func (t *Tool) Query(
 	if err != nil {
 		return nil, err
 	}
-	req.query = strings.TrimSpace(querytool.OptionalString(params.Params, graphqlread.ParamQuery))
+	req.query = strings.TrimSpace(querytool.OptionalString(params.Params, querytool.ParamQuery))
 	req.sort = t.sort(params.Params)
 	req.limit = window.Limit
 	req.after = window.Info.After
@@ -1127,21 +1127,21 @@ func (t *Tool) variables(req *pageRequest) map[string]any {
 	for name, value := range req.inputs {
 		input[name] = value
 	}
-	input[graphqlread.InputFirst] = req.limit
+	input[graphqlread.FieldFirst] = req.limit
 	if req.after != "" {
-		input[graphqlread.InputAfter] = req.after
+		input[querytool.ParamAfter] = req.after
 	}
 	if req.query != "" {
-		input[graphqlread.InputQuery] = req.query
+		input[querytool.ParamQuery] = req.query
 	}
 	if len(req.filters) > 0 {
-		input[graphqlread.InputFieldFilters] = req.filters
+		input[graphqlread.FieldFieldFilters] = req.filters
 	}
 	if len(req.groups) > 0 {
-		input[graphqlread.InputFilterGroups] = req.groups
+		input[graphqlread.FieldFilterGroups] = req.groups
 	}
 	if len(req.sort) > 0 {
-		input[graphqlread.InputSort] = req.sort
+		input[graphqlread.FieldSort] = req.sort
 	}
 	variables[t.Input] = input
 	variables[IncludeTotalCount] = req.total
@@ -1162,9 +1162,9 @@ func (t *Tool) rootPage(variables map[string]any, req *pageRequest) {
 		variables[t.pageIn] = in
 		page = in
 	}
-	page[graphqlread.InputFirst] = req.limit
+	page[graphqlread.FieldFirst] = req.limit
 	if req.after != "" {
-		page[graphqlread.InputAfter] = req.after
+		page[querytool.ParamAfter] = req.after
 	}
 	if req.query != "" {
 		filter, _ := variables[t.search[0]].(map[string]any)

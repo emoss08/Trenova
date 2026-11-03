@@ -31,10 +31,6 @@ import (
 
 const paramWaitID = "waitId"
 
-const waitUntilName = "agent_create_wait"
-
-const cancelWaitName = "agent_cancel_wait"
-
 const maxWaitHours = agentwait.MaxLifetimeSeconds / 3600
 
 var waitKinds = agenttoolschema.Source("agent_wait_kinds", agentwait.AgentKinds())
@@ -73,7 +69,7 @@ func NewWaitUntilTool(waits agentwaitports.AgentWaitService) agenttoolports.Agen
 	return &waitUntilTool{waits: waits}
 }
 
-func (t *waitUntilTool) Name() string { return waitUntilName }
+func (t *waitUntilTool) Name() string { return "agent_create_wait" }
 
 func (t *waitUntilTool) Description() string {
 	return "Park your work until something happens (\"let me know when it delivers\", \"tell " +
@@ -93,7 +89,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"until": agenttoolschema.Enum("What to wait for.", waitKinds),
-			changepreview.FieldDescription: map[string]any{
+			toolparams.ParamDescription: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "What you are waiting for, in a few words a person reads " +
 					"beside the conversation: \"Truck 2214 to reach Kroger DC\".",
@@ -112,7 +108,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 			toolparams.ParamStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop, from shipment_get: required for AppointmentNear; for StopArrival "+
 					"and StopDeparture, leave it out to wait for the move's next one."),
-			changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"For Reply: a reply about this shipment, from shipment_list or the run subject.",
 			),
@@ -142,7 +138,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"anyway. Defaults to 24; at most 168.",
 			},
 		},
-		toolschema.KeyRequired:             []string{"until", changepreview.FieldDescription},
+		toolschema.KeyRequired:             []string{"until", toolparams.ParamDescription},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -239,7 +235,7 @@ func (t *waitUntilTool) request(
 		return nil, errortypes.NewValidationError("until", errortypes.ErrInvalid,
 			"until must be one of "+strings.Join(waitKinds.Names(), ", "))
 	}
-	description, err := toolparams.RequireString(params.Params, changepreview.FieldDescription)
+	description, err := toolparams.RequireString(params.Params, toolparams.ParamDescription)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +281,7 @@ func waitCondition(
 	}{
 		{toolparams.ParamShipmentMoveID, &condition.ShipmentMoveID},
 		{toolparams.ParamStopID, &condition.StopID},
-		{changepreview.FieldShipmentID, &condition.ShipmentID},
+		{toolparams.ParamShipmentID, &condition.ShipmentID},
 		{toolparams.ParamCarrierID, &condition.CarrierID},
 		{toolparams.ParamCustomerID, &condition.CustomerID},
 		{toolparams.ParamWorkerID, &condition.WorkerID},
@@ -329,7 +325,7 @@ func NewCancelWaitTool(waits agentwaitports.AgentWaitService) agenttoolports.Age
 	return &cancelWaitTool{waits: waits}
 }
 
-func (t *cancelWaitTool) Name() string { return cancelWaitName }
+func (t *cancelWaitTool) Name() string { return "agent_cancel_wait" }
 
 func (t *cancelWaitTool) Description() string {
 	return "Cancel a wait you set with agent_create_wait, when what you were waiting for no longer " +

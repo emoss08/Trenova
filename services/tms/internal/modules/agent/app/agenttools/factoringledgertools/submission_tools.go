@@ -26,9 +26,6 @@ const (
 	paramSubmissionID = "submissionId"
 	paramInvoiceIDs   = "invoiceIds"
 
-	toolListSubmissions = "factoring_list_submissions"
-	toolListReady       = "factoring_list_readiness"
-
 	maxCancelReason = 500
 )
 
@@ -44,20 +41,20 @@ func submissionRecord(sub *factoringsubmission.Submission) toolpreview.Record {
 func submissionPreviewOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
-			"status", factoringkit.FieldFactoringCompany, "transportMethod", "transportTarget",
+			"status", factoringkit.ParamFactoringCompanyID, "transportMethod", "transportTarget",
 			"invoiceCount", "sendAttemptGroup", "lastError", "cancelReason",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			factoringkit.FieldFactoringCompany: permission.ResourceFactoringCompany,
+			factoringkit.ParamFactoringCompanyID: permission.ResourceFactoringCompany,
 		}),
 		toolpreview.Labels(map[string]string{
-			factoringkit.FieldFactoringCompany: "Factor",
-			"transportMethod":                  "Sent by",
-			"transportTarget":                  "Sent to",
-			"invoiceCount":                     "Invoices",
-			"sendAttemptGroup":                 "Send",
-			"lastError":                        "Last error",
-			"cancelReason":                     "Why it was cancelled",
+			factoringkit.ParamFactoringCompanyID: "Factor",
+			"transportMethod":                    "Sent by",
+			"transportTarget":                    "Sent to",
+			"invoiceCount":                       "Invoices",
+			"sendAttemptGroup":                   "Send",
+			"lastError":                          "Last error",
+			"cancelReason":                       "Why it was cancelled",
 		}),
 	}
 }
@@ -121,11 +118,13 @@ func (t *SubmitInvoicesToFactorTool) SearchTerms() []string {
 	return []string{"factor invoices", "schedule of accounts", "submit to factor", "sell invoices"}
 }
 
-func (t *SubmitInvoicesToFactorTool) Prerequisites() []string { return []string{toolListReady} }
+func (t *SubmitInvoicesToFactorTool) Prerequisites() []string {
+	return []string{"factoring_list_readiness"}
+}
 
 func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		factoringkit.ParamFactorID: agenttoolschema.RecordIDText(
+		factoringkit.ParamFactoringCompanyID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
 			"The factor every invoice is assigned to, from factoring_list_readiness.",
 		),
@@ -134,7 +133,7 @@ func (t *SubmitInvoicesToFactorTool) ParamSchema() map[string]any {
 			"The Ready invoices to sell, from factoring_list_readiness.",
 			factoringsubmission.MaxSubmissionInvoices,
 		),
-	}, factoringkit.ParamFactorID, paramInvoiceIDs)
+	}, factoringkit.ParamFactoringCompanyID, paramInvoiceIDs)
 }
 
 func (t *SubmitInvoicesToFactorTool) Policy() agenttoolports.ToolPolicy {
@@ -155,7 +154,7 @@ func (t *SubmitInvoicesToFactorTool) Target(
 ) (agenttoolports.ToolTarget, bool) {
 	return toolparams.TargetOf(
 		params,
-		factoringkit.ParamFactorID,
+		factoringkit.ParamFactoringCompanyID,
 		permission.ResourceFactoringCompany,
 	)
 }
@@ -166,7 +165,7 @@ func (t *SubmitInvoicesToFactorTool) request(
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactorID)
+	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactoringCompanyID)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +332,7 @@ func (t *RetryFactoringSubmissionTool) SearchTerms() []string {
 }
 
 func (t *RetryFactoringSubmissionTool) Prerequisites() []string {
-	return []string{toolListSubmissions}
+	return []string{"factoring_list_submissions"}
 }
 
 func (t *RetryFactoringSubmissionTool) ParamSchema() map[string]any {
@@ -449,7 +448,7 @@ func (t *CancelFactoringSubmissionTool) SearchTerms() []string {
 }
 
 func (t *CancelFactoringSubmissionTool) Prerequisites() []string {
-	return []string{toolListSubmissions}
+	return []string{"factoring_list_submissions"}
 }
 
 func (t *CancelFactoringSubmissionTool) ParamSchema() map[string]any {
@@ -458,8 +457,8 @@ func (t *CancelFactoringSubmissionTool) ParamSchema() map[string]any {
 			"The failed schedule, from factoring_list_submissions.",
 		),
 		factoringkit.ParamVersion: submissionVersionParam(),
-		factoringkit.ParamReason:  jsonschemautils.Text("Why the schedule is cancelled."),
-	}, paramSubmissionID, factoringkit.ParamVersion, factoringkit.ParamReason)
+		toolparams.ParamReason:    jsonschemautils.Text("Why the schedule is cancelled."),
+	}, paramSubmissionID, factoringkit.ParamVersion, toolparams.ParamReason)
 }
 
 func (t *CancelFactoringSubmissionTool) Policy() agenttoolports.ToolPolicy {
@@ -490,7 +489,7 @@ func (t *CancelFactoringSubmissionTool) request(
 	}
 	reason, err := toolparams.RequireBoundedText(
 		params.Params,
-		factoringkit.ParamReason,
+		toolparams.ParamReason,
 		maxCancelReason,
 	)
 	if err != nil {

@@ -26,19 +26,19 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-const ParamOffCycleNote = "offCycleReason"
+const ParamOffCycleReason = "offCycleReason"
 
-const ParamVoidDisposition = "disposition"
+const ParamDisposition = "disposition"
 
-const paramMemoQuantity = "quantity"
+const paramQuantity = "quantity"
 
 const paramAccessorialChargeID = "accessorialChargeId"
 
 const paramReferenceInvoiceID = "referenceInvoiceId"
 
-const paramInvoiceMemo = "memo"
+const paramMemo = "memo"
 
-const paramRemittance = "remittanceInstructions"
+const paramRemittanceInstructions = "remittanceInstructions"
 
 const paramEmailSubject = "emailSubject"
 
@@ -214,9 +214,9 @@ func NewUpdateInvoiceDraftTool(invoices invoiceDraftEditor) agenttoolports.Agent
 			"person sends it, but the recipients decide where it goes then.",
 		Properties: map[string]any{
 			toolparams.ParamInvoiceID: invoiceIDProperty(),
-			paramInvoiceMemo: toolschema.KeepEmpty(toolparams.StringProperty(
+			paramMemo: toolschema.KeepEmpty(toolparams.StringProperty(
 				"The note printed on the invoice.", maxInvoiceTextChars)),
-			paramRemittance: toolschema.KeepEmpty(
+			paramRemittanceInstructions: toolschema.KeepEmpty(
 				toolparams.StringProperty("How the customer should "+
 					"pay, printed on the invoice.", maxInvoiceTextChars),
 			),
@@ -305,8 +305,8 @@ func draftUpdateRequest(
 		limit int
 		into  **string
 	}{
-		{paramInvoiceMemo, maxInvoiceTextChars, &req.Memo},
-		{paramRemittance, maxInvoiceTextChars, &req.RemittanceInstructions},
+		{paramMemo, maxInvoiceTextChars, &req.Memo},
+		{paramRemittanceInstructions, maxInvoiceTextChars, &req.RemittanceInstructions},
 		{paramEmailSubject, invoice.MaxEmailSubjectLength, &req.EmailSubject},
 		{paramEmailBody, maxInvoiceEmailBodyChars, &req.EmailBody},
 	}
@@ -521,7 +521,7 @@ func NewCreateInvoiceTool(invoices invoiceCreator) agenttoolports.AgentTool {
 					"shipment_get. With orderId, only these of the order's shipments.",
 				maxInvoiceShipments,
 			),
-			ParamOffCycleNote: toolparams.StringProperty(
+			ParamOffCycleReason: toolparams.StringProperty(
 				"Why this customer's freight is billed now "+
 					"rather than on their periodic statement. Required only for statement "+
 					"customers.",
@@ -602,7 +602,7 @@ func createInvoicesRequestFrom(
 		return nil, ErrOrderOrShipments
 	}
 	if req.OffCycleReason, err = toolparams.BoundedText(
-		params.Params, ParamOffCycleNote, maxInvoiceReasonChars,
+		params.Params, ParamOffCycleReason, maxInvoiceReasonChars,
 	); err != nil {
 		return nil, err
 	}
@@ -657,7 +657,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 				"Why the memo is raised; the customer sees it.",
 				maxInvoiceReasonChars,
 			),
-			toolparams.ParamAdjustmentLines: map[string]any{
+			toolparams.ParamLines: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The memo's lines, each a positive amount.",
 				toolschema.KeyMinItems:    1,
@@ -665,7 +665,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						toolparams.ParamLineDescription: toolparams.StringProperty(
+						toolparams.ParamDescription: toolparams.StringProperty(
 							"What the line is for.",
 							maxMemoLineTextChars,
 						),
@@ -674,14 +674,14 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 								"such as 125.00.",
 							0,
 						),
-						paramMemoQuantity: toolparams.StringProperty("How many; defaults to 1.", 0),
+						paramQuantity: toolparams.StringProperty("How many; defaults to 1.", 0),
 						paramAccessorialChargeID: agenttoolschema.RecordIDText(
 							permission.ResourceAccessorialCharge,
 							"The accessorial the line corrects, from invoice_get's lines.",
 						),
 					},
 					toolschema.KeyRequired: []string{
-						toolparams.ParamLineDescription,
+						toolparams.ParamDescription,
 						toolparams.ParamAmount,
 					},
 					toolschema.KeyAdditionalProperties: false,
@@ -692,7 +692,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 			toolparams.ParamInvoiceDate: agenttoolschema.Date(
 				"The memo's date; defaults to today.",
 			),
-			paramInvoiceMemo: toolparams.StringProperty(
+			paramMemo: toolparams.StringProperty(
 				"A note printed on the memo.",
 				maxInvoiceTextChars,
 			),
@@ -701,7 +701,7 @@ func NewCreateInvoiceMemoTool(invoices invoiceMemoRaiser) agenttoolports.AgentTo
 			toolparams.ParamCustomerID,
 			toolparams.ParamBillType,
 			toolparams.ParamReason,
-			toolparams.ParamAdjustmentLines,
+			toolparams.ParamLines,
 		},
 	}, toolspec.ReceivablePlan[*invoiceports.CreateMemoRequest, *invoice.Invoice]{
 		Request: memoRequest,
@@ -753,7 +753,7 @@ func memoRequest(
 	if err != nil {
 		return nil, err
 	}
-	note, err := toolparams.BoundedText(params.Params, paramInvoiceMemo, maxInvoiceTextChars)
+	note, err := toolparams.BoundedText(params.Params, paramMemo, maxInvoiceTextChars)
 	if err != nil {
 		return nil, err
 	}
@@ -792,21 +792,21 @@ func memoRequest(
 func memoLines(params map[string]any) ([]*invoiceports.CreateMemoLineInput, error) {
 	entries, err := toolparams.ReadObjects(
 		params,
-		toolparams.ParamAdjustmentLines,
+		toolparams.ParamLines,
 		maxMemoLineCount,
 	)
 	if err != nil {
 		return nil, err
 	}
 	if len(entries) == 0 {
-		return nil, fmt.Errorf("%s needs at least one line", toolparams.ParamAdjustmentLines)
+		return nil, fmt.Errorf("%s needs at least one line", toolparams.ParamLines)
 	}
 
 	lines := make([]*invoiceports.CreateMemoLineInput, 0, len(entries))
 	for idx, fields := range entries {
 		line, lineErr := memoLine(fields)
 		if lineErr != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamAdjustmentLines, idx, lineErr)
+			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamLines, idx, lineErr)
 		}
 		lines = append(lines, line)
 	}
@@ -817,7 +817,7 @@ func memoLines(params map[string]any) ([]*invoiceports.CreateMemoLineInput, erro
 func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) {
 	description, err := toolparams.RequireBoundedText(
 		fields,
-		toolparams.ParamLineDescription,
+		toolparams.ParamDescription,
 		maxMemoLineTextChars,
 	)
 	if err != nil {
@@ -828,10 +828,10 @@ func memoLine(fields map[string]any) (*invoiceports.CreateMemoLineInput, error) 
 		return nil, err
 	}
 	line := &invoiceports.CreateMemoLineInput{Description: description, Amount: amount}
-	if raw := strings.TrimSpace(toolparams.OptionalString(fields, paramMemoQuantity)); raw != "" {
+	if raw := strings.TrimSpace(toolparams.OptionalString(fields, paramQuantity)); raw != "" {
 		quantity, parseErr := decimal.NewFromString(raw)
 		if parseErr != nil || !quantity.IsPositive() {
-			return nil, fmt.Errorf("%s must be a positive number", paramMemoQuantity)
+			return nil, fmt.Errorf("%s must be a positive number", paramQuantity)
 		}
 		line.Quantity = quantity
 	}
@@ -868,10 +868,10 @@ func NewVoidInvoiceTool(invoices invoiceVoider) agenttoolports.AgentTool {
 				"Why it is voided; kept on the invoice.",
 				maxInvoiceReasonChars,
 			),
-			ParamVoidDisposition: agenttoolschema.Enum("Rebill puts its freight back on the "+
+			ParamDisposition: agenttoolschema.Enum("Rebill puts its freight back on the "+
 				"billing queue to be billed again; DoNotRebill cancels it.", voidDispositions),
 		},
-		Required: []string{toolparams.ParamInvoiceID, toolparams.ParamReason, ParamVoidDisposition},
+		Required: []string{toolparams.ParamInvoiceID, toolparams.ParamReason, ParamDisposition},
 		Target:   toolparams.TargetInvoice,
 	}, toolspec.ReceivablePlan[*invoiceports.VoidInvoiceRequest, *invoiceports.InvoiceVoidPreview]{
 		Request: voidRequest,
@@ -921,7 +921,7 @@ func voidRequest(
 	}
 	disposition, err := toolparams.RequireEnum(
 		params.Params,
-		ParamVoidDisposition,
+		ParamDisposition,
 		voidDispositions.Values,
 	)
 	if err != nil {
@@ -952,7 +952,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agenttoolports.AgentTool {
 			"cannot be called back; only a person sends it.",
 		Properties: map[string]any{
 			toolparams.ParamInvoiceID: invoiceIDProperty(),
-			toolparams.ParamForceResend: map[string]any{
+			toolparams.ParamForce: map[string]any{
 				toolschema.KeyType:        toolschema.TypeBoolean,
 				toolschema.KeyDescription: "Resend an invoice that was already sent by EDI.",
 			},
@@ -968,7 +968,7 @@ func NewSendInvoiceEDITool(invoices invoiceEDISender) agenttoolports.AgentTool {
 			return &invoiceports.SendInvoiceEDIRequest{
 				InvoiceID:  invoiceID,
 				TenantInfo: toolparams.TenantFrom(params),
-				Force:      toolparams.OptionalBool(params.Params, toolparams.ParamForceResend),
+				Force:      toolparams.OptionalBool(params.Params, toolparams.ParamForce),
 			}, nil
 		},
 		Plan: func(

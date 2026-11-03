@@ -29,7 +29,7 @@ const ParamAdjustmentID = "adjustmentId"
 
 const ParamDraftAdjustmentID = "draftAdjustmentId"
 
-const paramAdjustmentKind = "kind"
+const paramKind = "kind"
 
 const paramRebillStrategy = "rebillStrategy"
 
@@ -190,7 +190,7 @@ func adjustmentLinesProperty() map[string]any {
 					"The line's corrected amount on the reissued invoice, for a Manual rebill.", 0),
 				paramRebillQuantity: toolparams.StringProperty(
 					"The line's corrected quantity on the reissued invoice.", 0),
-				toolparams.ParamLineDescription: toolparams.StringProperty(
+				toolparams.ParamDescription: toolparams.StringProperty(
 					"The line's wording on the credit memo, when it should differ.",
 					maxAdjustmentLineTextChars),
 			},
@@ -223,7 +223,7 @@ func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal
 func readAdjustmentLines(
 	fields map[string]any,
 ) ([]*invoiceadjustmentports.InvoiceAdjustmentLineInput, error) {
-	raw, ok := fields[toolparams.ParamAdjustmentLines]
+	raw, ok := fields[toolparams.ParamLines]
 	if !ok || raw == nil {
 		return nil, nil
 	}
@@ -231,11 +231,11 @@ func readAdjustmentLines(
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s must be a list of {invoiceLineId, ...}",
-			toolparams.ParamAdjustmentLines,
+			toolparams.ParamLines,
 		)
 	}
 	if len(entries) > maxAdjustmentLines {
-		return nil, fmt.Errorf("%s lists %d lines; at most %d", toolparams.ParamAdjustmentLines,
+		return nil, fmt.Errorf("%s lists %d lines; at most %d", toolparams.ParamLines,
 			len(entries), maxAdjustmentLines)
 	}
 
@@ -244,7 +244,7 @@ func readAdjustmentLines(
 	for idx, entry := range entries {
 		line, lineErr := readAdjustmentLine(entry, seen)
 		if lineErr != nil {
-			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamAdjustmentLines, idx, lineErr)
+			return nil, fmt.Errorf("%s[%d]: %w", toolparams.ParamLines, idx, lineErr)
 		}
 		lines = append(lines, line)
 	}
@@ -284,7 +284,7 @@ func readAdjustmentLine(
 			return nil, err
 		}
 	}
-	if line.Description, err = toolparams.BoundedText(fields, toolparams.ParamLineDescription,
+	if line.Description, err = toolparams.BoundedText(fields, toolparams.ParamDescription,
 		maxAdjustmentLineTextChars); err != nil {
 		return nil, err
 	}
@@ -342,7 +342,7 @@ func NewSubmitInvoiceAdjustmentTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReportingReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "invoice_submit_adjustment",
-		Recipe:      []string{toolparams.ToolInvoiceGet, "invoice_submit_adjustment"},
+		Recipe:      []string{"invoice_get", "invoice_submit_adjustment"},
 		SearchTerms: []string{"credit and rebill", "rebill"},
 		Description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +
@@ -375,16 +375,16 @@ func NewSubmitInvoiceAdjustmentTool(
 							permission.ResourceInvoice,
 							"The posted invoice, from invoice_list or invoice_get.",
 						),
-						paramAdjustmentKind: adjustmentKindProperty(),
+						paramKind:           adjustmentKindProperty(),
 						paramRebillStrategy: rebillStrategyProperty(),
 						toolparams.ParamReason: toolparams.StringProperty(
 							"Why, as the customer or the biller would say it.",
 							maxAdjustmentReasonChars),
-						toolparams.ParamAdjustmentLines: adjustmentLinesProperty(),
-						paramSupportingDocumentIDs:      supportingDocumentsProperty(),
+						toolparams.ParamLines:      adjustmentLinesProperty(),
+						paramSupportingDocumentIDs: supportingDocumentsProperty(),
 					},
 					toolschema.KeyRequired: []string{
-						toolparams.ParamInvoiceID, paramAdjustmentKind, toolparams.ParamReason,
+						toolparams.ParamInvoiceID, paramKind, toolparams.ParamReason,
 					},
 					toolschema.KeyAdditionalProperties: false,
 				},
@@ -497,7 +497,7 @@ func readAdjustmentRequest(entry any) (*invoiceadjustmentports.InvoiceAdjustment
 	if err != nil {
 		return nil, err
 	}
-	kind, err := toolparams.RequireEnum(fields, paramAdjustmentKind, adjustmentKinds.Values)
+	kind, err := toolparams.RequireEnum(fields, paramKind, adjustmentKinds.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -707,16 +707,16 @@ func NewSaveInvoiceAdjustmentDraftTool(
 			toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The posted invoice a new draft adjusts, from invoice_list or invoice_get. "+
 					"Beside adjustmentId it must be that draft's invoice."),
-			paramAdjustmentKind: adjustmentKindProperty(),
+			paramKind:           adjustmentKindProperty(),
 			paramRebillStrategy: rebillStrategyProperty(),
 			toolparams.ParamReason: toolparams.StringProperty(
 				"Why, as the customer or the biller would say it.",
 				maxAdjustmentReasonChars,
 			),
-			toolparams.ParamAdjustmentLines: adjustmentLinesProperty(),
-			paramSupportingDocumentIDs:      supportingDocumentsProperty(),
+			toolparams.ParamLines:      adjustmentLinesProperty(),
+			paramSupportingDocumentIDs: supportingDocumentsProperty(),
 		},
-		Required: []string{paramAdjustmentKind},
+		Required: []string{paramKind},
 		Target:   toolparams.TargetInvoice,
 	}, toolspec.ReceivablePlan[*invoiceadjustmentports.SaveInvoiceAdjustmentDraftRequest, *invoiceadjustmentports.InvoiceAdjustmentDraftPreview]{
 		Request: draftRequest,
@@ -774,7 +774,7 @@ func draftRequest(
 	if adjustmentID.IsNil() && invoiceID.IsNil() {
 		return nil, errNoDraftTarget
 	}
-	kind, err := toolparams.RequireEnum(params.Params, paramAdjustmentKind, adjustmentKinds.Values)
+	kind, err := toolparams.RequireEnum(params.Params, paramKind, adjustmentKinds.Values)
 	if err != nil {
 		return nil, err
 	}

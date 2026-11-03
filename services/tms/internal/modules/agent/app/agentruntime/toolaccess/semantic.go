@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -139,7 +138,7 @@ func foundByCall(history []conversation.Message) map[string][]string {
 	for idx := range history {
 		message := &history[idx]
 		if message.Role != conversation.RoleTool ||
-			message.ToolName != runtimetools.FindToolsName ||
+			message.ToolName != "find_tools" ||
 			message.ToolCallID == "" ||
 			len(message.FoundTools) == 0 {
 			continue

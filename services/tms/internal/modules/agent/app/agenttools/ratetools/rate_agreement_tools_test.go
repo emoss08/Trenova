@@ -256,12 +256,12 @@ func agreementDraftParams(customerID pulid.ID) map[string]any {
 	return map[string]any{
 		paramPartyType:                "Customer",
 		toolparams.ParamCustomerID:    customerID.String(),
-		paramAgreementCode:            "ACME-2027",
-		paramAgreementName:            "Acme dry van 2027",
+		paramCode:                     "ACME-2027",
+		paramName:                     "Acme dry van 2027",
 		toolparams.ParamEffectiveFrom: "2027-01-01",
 		paramInputs:                   map[string]any{"minimumCharge": "$150"},
 		paramLanes: []any{map[string]any{
-			paramLaneLabel:         "Texas out",
+			paramLabel:             "Texas out",
 			paramOriginScopeType:   "State",
 			paramOriginValue:       "tx",
 			paramFormulaTemplateID: pulid.MustNew("ft_").String(),
@@ -405,7 +405,7 @@ func TestDuplicateRateAgreement_CopiesIntoADraft(t *testing.T) {
 	tool := NewDuplicateRateAgreementTool(agreements)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramRateAgreementID: agreements.stored.ID.String(),
-		paramAgreementCode:   "ACME-2027",
+		paramCode:            "ACME-2027",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -518,7 +518,7 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 		toolparams.ParamEffectiveFrom: "2026-11-01",
 		paramSupersededRuleIDs:        []any{agreements.stored.Rules[0].ID.String()},
 		paramLanes: []any{map[string]any{
-			paramLaneLabel:         "Texas out",
+			paramLabel:             "Texas out",
 			paramOriginScopeType:   "State",
 			paramOriginValue:       "TX",
 			paramFormulaTemplateID: pulid.MustNew("ft_").String(),

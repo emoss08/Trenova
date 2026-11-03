@@ -17,13 +17,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
-const paramDisputeReasonCode = "reasonCode"
+const paramReasonCode = "reasonCode"
 
 const paramDisputedAmount = "disputedAmount"
 
-const fieldDisputeNotes = "notes"
+const fieldNotes = "notes"
 
-const paramDisputeResolution = "resolution"
+const paramResolution = "resolution"
 
 const paramResolutionAdjustmentID = "resolutionAdjustmentId"
 
@@ -100,7 +100,7 @@ func disputeIDProperty() map[string]any {
 func NewOpenInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:   "invoice_open_dispute",
-		Recipe: []string{toolparams.ToolInvoiceGet, "invoice_open_dispute"},
+		Recipe: []string{"invoice_get", "invoice_open_dispute"},
 		Description: "Open a dispute on a posted invoice the customer is withholding payment on. " +
 			"The invoice is marked Disputed until the case is resolved or withdrawn. The disputed " +
 			"amount cannot exceed the open balance, and an invoice holds one open case at a time. " +
@@ -118,7 +118,7 @@ func NewOpenInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.AgentToo
 		Properties: map[string]any{
 			toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The posted invoice, from invoice_list or invoice_get."),
-			paramDisputeReasonCode: agenttoolschema.Enum(
+			paramReasonCode: agenttoolschema.Enum(
 				"Why the customer is withholding payment.", disputeReasonCodes),
 			paramDisputedAmount: toolparams.StringProperty(
 				"How much of the invoice the customer disputes, as a decimal such as 125.00.", 0),
@@ -126,7 +126,7 @@ func NewOpenInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.AgentToo
 				"What the customer said, in a sentence collections can act on.",
 				maxDisputeNoteChars),
 		},
-		Required: []string{toolparams.ParamInvoiceID, paramDisputeReasonCode, paramDisputedAmount},
+		Required: []string{toolparams.ParamInvoiceID, paramReasonCode, paramDisputedAmount},
 		Target:   toolparams.TargetInvoice,
 	}, toolspec.ReceivablePlan[*invoiceports.OpenInvoiceDisputeRequest, *invoiceports.InvoiceDisputePreview]{
 		Request: openDisputeRequest,
@@ -166,7 +166,7 @@ func openDisputeRequest(
 	}
 	reason, err := toolparams.RequireEnum(
 		params.Params,
-		paramDisputeReasonCode,
+		paramReasonCode,
 		disputeReasonCodes.Values,
 	)
 	if err != nil {
@@ -212,7 +212,7 @@ func NewResolveInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.Agent
 			"to collections; the outcome is a biller's call, so the agent proposes it.",
 		Properties: map[string]any{
 			toolparams.ParamDisputeID: disputeIDProperty(),
-			paramDisputeResolution: agenttoolschema.Enum(
+			paramResolution: agenttoolschema.Enum(
 				"How the dispute ended.", disputeResolutions),
 			paramResolutionAdjustmentID: agenttoolschema.KindID(
 				"The executed adjustment that credited or wrote off the amount, from "+
@@ -221,7 +221,7 @@ func NewResolveInvoiceDisputeTool(disputes invoiceDisputer) agenttoolports.Agent
 			paramResolutionNotes: toolparams.StringProperty(
 				"What was agreed with the customer.", maxDisputeNoteChars),
 		},
-		Required: []string{toolparams.ParamDisputeID, paramDisputeResolution},
+		Required: []string{toolparams.ParamDisputeID, paramResolution},
 		Target:   targetDispute,
 	}, toolspec.ReceivablePlan[*invoiceports.ResolveInvoiceDisputeRequest, *invoiceports.InvoiceDisputePreview]{
 		Request: resolveDisputeRequest,
@@ -262,7 +262,7 @@ func resolveDisputeRequest(
 	}
 	resolution, err := toolparams.RequireEnum(
 		params.Params,
-		paramDisputeResolution,
+		paramResolution,
 		disputeResolutions.Values,
 	)
 	if err != nil {

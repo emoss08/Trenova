@@ -6,7 +6,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -114,10 +113,10 @@ func (t *CancelTenderTool) ParamSchema() map[string]any {
 			permission.ResourceTender,
 			"The tender to withdraw, from dispatch_list_tenders.",
 		),
-		changepreview.FieldReason: jsonschemautils.Text(
+		toolparams.ParamReason: jsonschemautils.Text(
 			"Why the tender is withdrawn, in a sentence a person can check.",
 		),
-	}, fieldTenderID, changepreview.FieldReason)
+	}, fieldTenderID, toolparams.ParamReason)
 }
 
 func (t *CancelTenderTool) Policy() agenttoolports.ToolPolicy {
@@ -204,7 +203,7 @@ func (t *CancelTenderTool) request(
 	if err != nil {
 		return nil, err
 	}
-	reason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
+	reason, err := toolparams.RequireString(params.Params, toolparams.ParamReason)
 	if err != nil {
 		return nil, err
 	}

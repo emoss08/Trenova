@@ -59,7 +59,7 @@ func watchtowerItemViewOf(item *watchtower.Item) *watchtowerItemView {
 func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:   "exception_dismiss_watchtower_item",
-		Recipe: []string{toolListWatchtowerItems, "exception_dismiss_watchtower_item"},
+		Recipe: []string{"exception_list_watchtower_items", "exception_dismiss_watchtower_item"},
 		Description: "Take an item off the watchtower feed once it has been dealt with; the " +
 			"record behind it is left alone. Use it for a weather alert that has passed or a " +
 			"message already answered. Items about agents' own runs, proposals and " +

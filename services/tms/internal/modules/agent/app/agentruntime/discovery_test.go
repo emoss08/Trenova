@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -66,7 +64,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	service, completion, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			runtimetools.FindToolsName,
+			"find_tools",
 			map[string]any{"need": "trailers due inspection"},
 		),
 		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
@@ -88,7 +86,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	assert.Contains(t, loadedIn(completion.Requests[1]), "equipment_list_trailers",
 		"what find_tools loaded is loaded on the next request")
 	found := completion.Requests[1].Messages[len(completion.Requests[1].Messages)-1]
-	assert.Equal(t, runtimetools.FindToolsName, found.ToolName)
+	assert.Equal(t, "find_tools", found.ToolName)
 	assert.Contains(t, found.ToolReferences, "equipment_list_trailers", "the find result names it")
 	assert.Equal(t, completion.Requests[0].Tools, completion.Requests[1].Tools)
 	assert.Equal(t, "Two trailers are due.", result.Reply)
@@ -112,7 +110,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
 			{
 				ID:        "c1",
-				Name:      runtimetools.FindToolsName,
+				Name:      "find_tools",
 				Arguments: map[string]any{"need": "driver medical card expiry"},
 			},
 		}},
@@ -166,7 +164,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 	service, completion, names := wideRun(
 		t,
 		runtimetest.ToolTurn(
-			askuser.Name,
+			"ask_user",
 			map[string]any{"question": "Which terminal?", "allowOther": true},
 		),
 		runtimetest.TextTurn("Raised it for a person."),
@@ -180,7 +178,7 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.NotContains(t, requestTools(completion.Requests[0]), askuser.Name)
+	assert.NotContains(t, requestTools(completion.Requests[0]), "ask_user")
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "agent_raise_exception")
 }
@@ -194,7 +192,7 @@ func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	for range toolaccess.MaxFindCalls + 1 {
 		turns = append(
 			turns,
-			runtimetest.ToolTurn(runtimetools.FindToolsName, map[string]any{"need": "tractors"}),
+			runtimetest.ToolTurn("find_tools", map[string]any{"need": "tractors"}),
 		)
 	}
 	turns = append(turns, runtimetest.TextTurn("done"))
@@ -411,7 +409,7 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	found, called := unsent[0], unsent[1]
 
 	service, completion, _ := wideRun(t,
-		runtimetest.ToolTurn(runtimetools.FindToolsName, map[string]any{"need": found}),
+		runtimetest.ToolTurn("find_tools", map[string]any{"need": found}),
 		runtimetest.ToolTurn(called, map[string]any{}),
 		runtimetest.ToolTurn("list_trailer_inspection_dates", map[string]any{}),
 		runtimetest.TextTurn("Done."),

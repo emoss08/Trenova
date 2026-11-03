@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	paramMarkReady    = "markCompletedReadyToInvoice"
-	maxTransferIssues = 3
+	paramMarkCompletedReadyToInvoice = "markCompletedReadyToInvoice"
+	maxTransferIssues                = 3
 )
 
 type billingTransferCandidateLister interface {
@@ -60,7 +60,7 @@ func (t *listBillingTransferCandidatesTool) Description() string {
 
 func (t *listBillingTransferCandidatesTool) ParamSchema() map[string]any {
 	properties := billingtransfercriteria.Properties()
-	properties[paramMarkReady] = querytool.BoolParam(
+	properties[paramMarkCompletedReadyToInvoice] = querytool.BoolParam(
 		"Decide as a transfer that first marks completed " +
 			"shipments ready to invoice would. Defaults to false.",
 	)
@@ -130,8 +130,11 @@ func (t *listBillingTransferCandidatesTool) Query(
 				querytool.TenantOf(params),
 				pagination.Info{Limit: window.Limit, Offset: window.Offset},
 			),
-			Status:                      selection.Status,
-			MarkCompletedReadyToInvoice: querytool.OptionalBool(params.Params, paramMarkReady),
+			Status: selection.Status,
+			MarkCompletedReadyToInvoice: querytool.OptionalBool(
+				params.Params,
+				paramMarkCompletedReadyToInvoice,
+			),
 		},
 	)
 	if err != nil {

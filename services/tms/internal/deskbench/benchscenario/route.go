@@ -5,7 +5,6 @@ import (
 )
 
 const (
-	DelegateTool  = "delegate_task"
 	delegationTag = "delegation"
 )
 
@@ -30,7 +29,7 @@ func RouteOf(scenario *Scenario) Route {
 	case scenario.Unattended():
 		return RouteUnattended
 	case slices.Contains(scenario.Tags, delegationTag) ||
-		Labelled(DelegateTool, scenario.ExpectedTools):
+		Labelled("delegate_task", scenario.ExpectedTools):
 		return RouteDelegated
 	default:
 		return RouteChat

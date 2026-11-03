@@ -11,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
-const NamePlanName = "name_plan"
-
 const namePlanDescription = "Name the plan this turn's proposals are approved as. Two or " +
 	"more proposals filed in one turn reach the person as one plan, approved whole and run " +
 	"in order; its name is the line they read above the steps. Give a short phrase that says " +
@@ -31,7 +29,7 @@ const (
 
 func NamePlanSpec() kernelports.ToolSpec {
 	return kernelports.ToolSpec{
-		Name:        NamePlanName,
+		Name:        "name_plan",
 		Description: namePlanDescription,
 		Parameters: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
@@ -53,7 +51,7 @@ func NamePlanSpec() kernelports.ToolSpec {
 func namePlan(t Turn, arguments map[string]any) toolcall.Result {
 	title, err := agentplan.NamedPlanTitle(argcheck.String(arguments, paramPlanTitle))
 	if err != nil {
-		return toolcall.Failed("Tool %q was not run: %s", NamePlanName, err.Error())
+		return toolcall.Failed("Tool %q was not run: %s", "name_plan", err.Error())
 	}
 
 	t.Result().PlanTitle = title

@@ -219,7 +219,7 @@ func TestInvoiceDisputes_SendsTheInvoicesTheCallNames(t *testing.T) {
 	}}
 	var spec readspec.List
 	for _, candidate := range ReadSpecs() {
-		if candidate.Name == toolInvoiceListDisputes {
+		if candidate.Name == "invoice_list_disputes" {
 			spec = candidate
 		}
 	}
@@ -251,11 +251,11 @@ func TestBillingGets_TheOperationSelectsWhatTheSummaryPromises(t *testing.T) {
 	t.Parallel()
 
 	for tool, want := range map[string][]string{
-		toolInvoiceGet: {
+		"invoice_get": {
 			"lines", "settlementStatus", "disputeStatus", "sendStatus", "openBalance",
 			"totalAmount", "memo", "voidReason",
 		},
-		toolInvoiceGetAdjustment: {
+		"invoice_get_adjustment": {
 			"kind", "status", "approvalStatus", "creditMemoInvoiceId", "replacementInvoiceId",
 			"supportingDocumentIds", "lines", "reason",
 		},

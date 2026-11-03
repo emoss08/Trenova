@@ -36,7 +36,7 @@ const (
 
 const (
 	paramSource        = "source"
-	paramFormulaKind   = "kind"
+	paramKind          = "kind"
 	paramExplanation   = "explanation"
 	pricedByEngineNote = "Every amount here was computed by Trenova's Tariff engine. Quote " +
 		"these amounts; never state an amount you did not get from a tool."
@@ -44,10 +44,6 @@ const (
 		"shows in the page draft on your next turn."
 	sourceParamDescription = "The whole Tariff source file, exactly as it should read."
 
-	toolListFormulaTemplates  = "formula_list_templates"
-	toolGetFormulaTemplate    = "formula_get_template"
-	toolListFormulaLibraries  = "formula_list_libraries"
-	toolGetFormulaLibrary     = "formula_get_library"
 	pluralFormulaTemplates    = "formula templates"
 	pluralFormulaLibraries    = "formula libraries"
 	noteActiveFormulaTemplate = "Only Active ones price shipments."
@@ -69,14 +65,14 @@ const (
 func ReadSpecs() []readspec.List {
 	return []readspec.List{
 		{
-			Name:         toolListFormulaTemplates,
+			Name:         "formula_list_templates",
 			EntityPlural: pluralFormulaTemplates,
 			Summary:      formulaTemplatesSummary,
 			Resource:     permission.ResourceFormulaTemplate,
 			Notes:        map[string]string{querytool.ParamStatus: noteActiveFormulaTemplate},
 		},
 		{
-			Name:         toolListFormulaLibraries,
+			Name:         "formula_list_libraries",
 			EntityPlural: pluralFormulaLibraries,
 			Summary:      formulaLibrariesSummary,
 			SearchTerms:  []string{"list libraries", "shared libraries", "formula libraries"},
@@ -147,7 +143,7 @@ func NewListFormulaTemplatesTool(
 	repo formulatemplateports.FormulaTemplateRepository,
 ) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         toolListFormulaTemplates,
+		Name:         "formula_list_templates",
 		Row:          formulaTemplateRow{},
 		EntityPlural: pluralFormulaTemplates,
 		Summary:      formulaTemplatesSummary,
@@ -196,7 +192,7 @@ func NewListFormulaTemplatesTool(
 // DeskFormulaTemplateCard.
 func FormulaTemplateGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:   toolGetFormulaTemplate,
+		Name:   "formula_get_template",
 		Entity: "formula template",
 		SearchTerms: []string{
 			"formula template details", "read a formula", "tariff source", "formula inputs",
@@ -215,7 +211,7 @@ func FormulaTemplateGetSpec() readspec.Get {
 // DeskFormulaLibraryCard.
 func FormulaLibraryGetSpec() readspec.Get {
 	return readspec.Get{
-		Name:   toolGetFormulaLibrary,
+		Name:   "formula_get_library",
 		Entity: entityFormulaLibrary,
 		SearchTerms: []string{
 			entityFormulaLibrary, "library source", "shared functions", "org module", "use org",
@@ -302,12 +298,12 @@ func rawSource(params map[string]any) (string, error) {
 }
 
 func formulaKind(params map[string]any) (formulaassistantservice.Kind, error) {
-	kind := formulaassistantservice.Kind(querytool.OptionalString(params, paramFormulaKind))
+	kind := formulaassistantservice.Kind(querytool.OptionalString(params, paramKind))
 	if kind == "" {
 		return formulaassistantservice.KindTemplate, nil
 	}
 	if !kind.IsValid() {
-		return "", fmt.Errorf("parameter %q must be template or library", paramFormulaKind)
+		return "", fmt.Errorf("parameter %q must be template or library", paramKind)
 	}
 	return kind, nil
 }
@@ -315,7 +311,7 @@ func formulaKind(params map[string]any) (formulaassistantservice.Kind, error) {
 func sourceParams() map[string]any {
 	return map[string]any{
 		paramSource: querytool.StringParam(sourceParamDescription),
-		paramFormulaKind: agenttoolschema.Enum(
+		paramKind: agenttoolschema.Enum(
 			"template for a formula template (tariff \"…\"), library for an org library "+
 				"(library \"org.…\"); template when left out.",
 			formulaKinds,
@@ -611,6 +607,7 @@ func (t *previewFormulaTool) Query(
 }
 
 type proposeSourceSpec struct {
+	name        string
 	action      pagedraft.Action
 	surface     pagedraft.Surface
 	kind        formulaassistantservice.Kind
@@ -643,6 +640,7 @@ func provideProposeLibraryTool(
 }
 
 var proposeFormulaSpec = proposeSourceSpec{
+	name:        "formula_propose",
 	action:      pagedraft.ActionProposeFormula,
 	surface:     pagedraft.SurfaceFormula,
 	kind:        formulaassistantservice.KindTemplate,
@@ -665,6 +663,7 @@ var proposeFormulaSpec = proposeSourceSpec{
 }
 
 var proposeLibrarySpec = proposeSourceSpec{
+	name:        "formula_library_propose",
 	action:      pagedraft.ActionProposeLibrary,
 	surface:     pagedraft.SurfaceFormulaLibrary,
 	kind:        formulaassistantservice.KindLibrary,
@@ -696,14 +695,14 @@ func newProposeSourceTool(
 	}
 }
 
-func (t *proposeSourceTool) Name() string { return string(t.spec.action) }
+func (t *proposeSourceTool) Name() string { return t.spec.name }
 
 func (t *proposeSourceTool) Recipe() []string {
 	return []string{
 		"formula_describe_language",
 		"formula_check",
 		"formula_run_tests",
-		string(t.spec.action),
+		t.spec.name,
 	}
 }
 

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -23,8 +22,6 @@ import (
 )
 
 const paramEDIPartnerID = "ediPartnerId"
-
-const toolShipmentList = "shipment_list"
 
 const ParamServiceFailureID = "serviceFailureId"
 
@@ -77,15 +74,15 @@ func NewSendEDILoadTenderTool(tenders loadTenderSubmitter) agenttoolports.AgentT
 func (t *SendEDILoadTenderTool) Name() string { return "edi_send_tender" }
 
 func (t *SendEDILoadTenderTool) Prerequisites() []string {
-	return []string{toolShipmentList, "edi_list_partners"}
+	return []string{"shipment_list", "edi_list_partners"}
 }
 
 func (t *SendEDILoadTenderTool) Recipe() []string {
 	return []string{
-		toolShipmentList,
+		"shipment_list",
 		"edi_list_partners",
 		"edi_send_tender",
-		toolEDIListTransfers,
+		"edi_list_transfers",
 	}
 }
 
@@ -99,12 +96,12 @@ func (t *SendEDILoadTenderTool) Description() string {
 
 func (t *SendEDILoadTenderTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+		toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"The shipment to tender, from shipment_list or shipment_get. Never guess one."),
 		paramEDIPartnerID: agenttoolschema.KindID("The internal EDI partner that stands for "+
 			"the receiving organization, "+ediPartnerIDGuidance+" Leave it out to use the "+
 			"customer's.", recordkind.EDIPartner),
-	}, changepreview.FieldShipmentID)
+	}, toolparams.ParamShipmentID)
 }
 
 func (t *SendEDILoadTenderTool) Policy() agenttoolports.ToolPolicy {
@@ -114,7 +111,7 @@ func (t *SendEDILoadTenderTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *SendEDILoadTenderTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, changepreview.FieldShipmentID, permission.ResourceShipment)
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 func (t *SendEDILoadTenderTool) request(
@@ -124,7 +121,7 @@ func (t *SendEDILoadTenderTool) request(
 		return nil, err
 	}
 
-	shipmentID, err := toolparams.RequirePulid(params.Params, changepreview.FieldShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +194,7 @@ func (t *SendEDIStatusUpdateTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramEDIPartnerID: agenttoolschema.KindID("The trading partner to send it to, "+
 			ediPartnerIDGuidance, recordkind.EDIPartner),
-		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+		toolparams.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
 			"Report this shipment's current status. The shipment, from shipment_list or "+
 				"shipment_get."),
 		ParamServiceFailureID: agenttoolschema.RecordIDText(
@@ -235,8 +232,8 @@ func (t *SendEDIStatusUpdateTool) request(
 
 	sources := 0
 	for key, target := range map[string]*pulid.ID{
-		changepreview.FieldShipmentID: &req.ShipmentID,
-		ParamServiceFailureID:         &req.ServiceFailureID,
+		toolparams.ParamShipmentID: &req.ShipmentID,
+		ParamServiceFailureID:      &req.ServiceFailureID,
 	} {
 		id, given, idErr := toolparams.OptionalPulid(params.Params, key)
 		if idErr != nil {

@@ -12,10 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
 
-const (
-	ToolGetShipmentDraft = "intake_get_draft"
-)
-
 // StringsOf reads a JSON array of strings, dropping anything that is not one.
 func StringsOf(value any) []string {
 	if typed, isStrings := value.([]string); isStrings {

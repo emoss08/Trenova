@@ -23,9 +23,9 @@ import (
 )
 
 const (
-	paramReplyBody    = "body"
-	paramReplySubject = "subject"
-	maxReplySubject   = 500
+	paramBody       = "body"
+	paramSubject    = "subject"
+	maxReplySubject = 500
 )
 
 type triageReplies interface {
@@ -69,7 +69,7 @@ type replyDraftView struct {
 var replyDraftLabels = map[string]string{
 	"toAddress":     "To",
 	"subject":       "Subject",
-	paramReplyBody:  "Body",
+	paramBody:       "Body",
 	"draftedByNova": "Written by Nova",
 }
 
@@ -129,12 +129,12 @@ func newDraftInboundReplyTool(
 				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message to answer, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramReplyBody: toolparams.StringProperty(
+				paramBody: toolparams.StringProperty(
 					"The reply in plain prose, as the person should send it. Leave it out to "+
 						"have Triage's drafter write it.",
 					inboundtools.MaxReplyBody,
 				),
-				paramReplySubject: toolparams.StringProperty(
+				paramSubject: toolparams.StringProperty(
 					"Optional, with a body only: the subject. Defaults to Re: and the "+
 						"message's own subject.",
 					maxReplySubject,
@@ -142,7 +142,7 @@ func newDraftInboundReplyTool(
 			},
 			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"draft a reply", "prepare an answer", "write a response"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_draft_reply"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_draft_reply"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[*draftReplyCall, *inboundreplyservice.DraftPlan]{
@@ -199,11 +199,11 @@ func draftReplyRequest(params *agenttoolports.ToolExecuteParams) (*draftReplyCal
 	if err != nil {
 		return nil, err
 	}
-	body, err := toolparams.BoundedText(params.Params, paramReplyBody, inboundtools.MaxReplyBody)
+	body, err := toolparams.BoundedText(params.Params, paramBody, inboundtools.MaxReplyBody)
 	if err != nil {
 		return nil, err
 	}
-	subject, err := toolparams.BoundedText(params.Params, paramReplySubject, maxReplySubject)
+	subject, err := toolparams.BoundedText(params.Params, paramSubject, maxReplySubject)
 	if err != nil {
 		return nil, err
 	}
@@ -292,7 +292,7 @@ func newDiscardInboundReplyDraftTool(replies triageReplies) agenttoolports.Agent
 			},
 			Required:    []string{inboundtools.ParamMessageID},
 			SearchTerms: []string{"discard draft", "delete reply draft", "throw away reply"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_discard_reply_draft"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_discard_reply_draft"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[

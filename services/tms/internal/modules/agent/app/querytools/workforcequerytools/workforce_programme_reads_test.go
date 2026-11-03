@@ -39,7 +39,7 @@ func TestWorkerGetSchedule_ReadsTheWorkersAssignmentsPreferencesAndOpenSwaps(t *
 	workerID := pulid.MustNew("wrk_").String()
 	reader := &querytooltest.KeyedReader{Answers: scheduleAnswers(workerID)}
 	tool, err := graphqllisttool.NewUnpaged(
-		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), toolWorkerGetSchedule),
+		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), "worker_get_schedule"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -75,7 +75,7 @@ func TestWorkerGetSchedule_ReadsNoSwapsForAReaderWhoMayNotReadThem(t *testing.T)
 	workerID := pulid.MustNew("wrk_").String()
 	reader := &querytooltest.KeyedReader{Answers: scheduleAnswers(workerID)}
 	tool, err := graphqllisttool.NewUnpaged(
-		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), toolWorkerGetSchedule),
+		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), "worker_get_schedule"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{
 			Denied: []string{permission.ResourceShiftSwap.String()},
@@ -108,7 +108,7 @@ func TestWorkerGetSchedule_AReadTheServerRefusesIsARefusal(t *testing.T) {
 	}
 	reader := &querytooltest.KeyedReader{Answers: answers}
 	tool, err := graphqllisttool.NewUnpaged(
-		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), toolWorkerGetSchedule),
+		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), "worker_get_schedule"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -137,7 +137,7 @@ func TestListShiftTemplates_ReadsTheActivePatternsAndSpellsEachOut(t *testing.T)
 		}}}},
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), toolListShiftTemplates),
+		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), "worker_list_shift_templates"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -185,7 +185,7 @@ func TestListDOTRandomDraws_ReadsTheRoundsWithTheActivePoolsBeside(t *testing.T)
 		}}},
 	}}
 	tool, err := graphqllisttool.NewUnpaged(
-		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), toolListDOTRandomDraws),
+		querytooltest.ListSpecNamed(t, ProgrammeReadSpecs(), "worker_list_dot_random_draws"),
 		reader,
 		&mocks.DenyResourcesPermissionEngine{},
 	)
@@ -196,7 +196,7 @@ func TestListDOTRandomDraws_ReadsTheRoundsWithTheActivePoolsBeside(t *testing.T)
 
 	assert.Empty(t, reader.Sent("DotRandomDraws").Variables, "every pool's rounds")
 	assert.Equal(t, map[string]any{"input": map[string]any{
-		querytool.InputStatus: querytool.ActiveStatus, graphqlread.InputFirst: graphqlread.AlongsideMost,
+		querytool.ParamStatus: querytool.ActiveStatus, graphqlread.FieldFirst: graphqlread.AlongsideMost,
 	}}, reader.Sent(opDOTRandomPools).Variables)
 	outcome, _ := data.(map[string]any)
 	assert.Len(t, outcome["pools"], 1)

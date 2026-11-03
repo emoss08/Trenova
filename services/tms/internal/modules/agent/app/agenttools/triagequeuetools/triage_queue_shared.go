@@ -21,10 +21,8 @@ import (
 )
 
 const (
-	paramMessageIDs        = "messageIds"
-	maxTriageSelection     = 50
-	toolListInboundMessage = "inbox_list_inbound_messages"
-	toolListAssignees      = "inbox_list_triage_assignees"
+	paramMessageIDs    = "messageIds"
+	maxTriageSelection = 50
 )
 
 type triageQueue interface {

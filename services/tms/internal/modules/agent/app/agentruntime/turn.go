@@ -555,9 +555,9 @@ func (s *Service) describeToolSet(
 	if tools.Searchable() {
 		rc.ToolMap = s.access.ToolMap(slices.Concat(tools.Allowed, tools.Beyond))
 	}
-	rc.Artifacts = tools.Offers(runtimetools.PublishArtifactName)
+	rc.Artifacts = tools.Offers("publish_artifact")
 	rc.LooksUpOnly = mode == toolaccess.ProfileFanOut
-	rc.DecisionRequests = tools.Offers(runtimetools.RequestDecisionName)
+	rc.DecisionRequests = tools.Offers("request_decision")
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
 	// the system refusing rather than the person lacking the right.
@@ -774,9 +774,9 @@ func (s *Service) PublishStep(
 ) toolcall.Outcome {
 	var step toolcall.Result
 	switch call.Name {
-	case runtimetools.RequestDecisionName:
+	case "request_decision":
 		step = runtimetools.DecisionStepOutcome(call.Arguments)
-	case runtimetools.ShowBoardName:
+	case "show_board":
 		step = runtimetools.BoardStepOutcome(call.Arguments)
 	default:
 		step = runtimetools.PublishOutcome(call.Arguments)

@@ -184,13 +184,13 @@ type stubScriptTool struct {
 	data    any
 }
 
-func (t *stubScriptTool) Name() string                { return codemode.ToolRunScript }
+func (t *stubScriptTool) Name() string                { return "analysis_run" }
 func (t *stubScriptTool) Description() string         { return "Run a read-only script." }
 func (t *stubScriptTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
 
 func (t *stubScriptTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name:          codemode.ToolRunScript,
+		Name:          "analysis_run",
 		Kind:          agenttooltrust.ToolKindQuery,
 		Resource:      permission.ResourceCodeMode,
 		Operation:     permission.OpRead,
@@ -294,7 +294,7 @@ func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) toolcall.O
 	return h.rt.DispatchStep(ctx, h.req, &toolcall.Call{
 		Call: llmports.ToolCall{
 			ID:        "call_script",
-			Name:      codemode.ToolRunScript,
+			Name:      "analysis_run",
 			Arguments: map[string]any{},
 		},
 		Taint:          &agent.RunTaint{},
@@ -619,7 +619,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	denied := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
-		Call:     llmports.ToolCall{ID: "call_haiku", Name: codemode.ToolRunScript},
+		Call:     llmports.ToolCall{ID: "call_haiku", Name: "analysis_run"},
 		Taint:    &agent.RunTaint{},
 		Model:    "claude-haiku-5-5",
 		Provider: aiprovider.KindAnthropicMessages,
@@ -635,7 +635,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	h.req.CodeMode = codemode.OverrideDefault
 
 	fourth := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
-		Call:           llmports.ToolCall{ID: "call_fourth", Name: codemode.ToolRunScript},
+		Call:           llmports.ToolCall{ID: "call_fourth", Name: "analysis_run"},
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -673,13 +673,13 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 	rewire(h.rt, func(p *Params) { p.Scripts = scripts })
 
 	closed := h.rt.OpenTurn(t.Context(), h.req)
-	assert.False(t, closed.tools.Offers(codemode.ToolRunScript))
+	assert.False(t, closed.tools.Offers("analysis_run"))
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
-	assert.False(t, closed.tools.Offers(codemode.ToolRunScript),
+	assert.False(t, closed.tools.Offers("analysis_run"),
 		"turning scripts on mid-turn adds nothing to a turn already open")
 	open := h.rt.OpenTurn(t.Context(), h.req)
-	assert.True(t, open.tools.Offers(codemode.ToolRunScript))
+	assert.True(t, open.tools.Offers("analysis_run"))
 }
 
 func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
@@ -695,7 +695,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	scripts.set(aiprovider.ScriptSettings{})
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	turnedOff := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
-		Call:           llmports.ToolCall{ID: "call_second", Name: codemode.ToolRunScript},
+		Call:           llmports.ToolCall{ID: "call_second", Name: "analysis_run"},
 		Taint:          &agent.RunTaint{},
 		Ordinal:        1,
 		Model:          scriptModel,
@@ -708,7 +708,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
 	failover := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
-		Call:           llmports.ToolCall{ID: "call_failover", Name: codemode.ToolRunScript},
+		Call:           llmports.ToolCall{ID: "call_failover", Name: "analysis_run"},
 		Taint:          &agent.RunTaint{},
 		Model:          "claude-haiku-5-5",
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -728,13 +728,13 @@ func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 
 	earlier := llmports.ToolCall{
 		ID:        "call_printed",
-		Name:      codemode.ToolRunScript,
+		Name:      "analysis_run",
 		Arguments: map[string]any{"code": "total = len(lanes)"},
 	}
 	continuation := func(id string) llmports.ToolCall {
 		return llmports.ToolCall{
 			ID:   id,
-			Name: codemode.ToolRunScript,
+			Name: "analysis_run",
 			Arguments: map[string]any{
 				codemode.ParamScriptContinues: "call_printed",
 				"code":                        "show_figure('Lanes', total)",
@@ -786,7 +786,7 @@ func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
 	t.Parallel()
 
 	script := func(id string, arguments map[string]any) llmports.ToolCall {
-		return llmports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: arguments}
+		return llmports.ToolCall{ID: id, Name: "analysis_run", Arguments: arguments}
 	}
 	shown := script("call_shown", map[string]any{
 		"title": "Lanes", "code": "rows = lanes", "datasets": []any{"lanes"},
@@ -836,7 +836,7 @@ func TestScriptToolRefusesAContinuationOfNothingItMayContinue(t *testing.T) {
 	refused := h.rt.DispatchStep(t.Context(), h.req, &toolcall.Call{
 		Call: llmports.ToolCall{
 			ID:        "call_continues",
-			Name:      codemode.ToolRunScript,
+			Name:      "analysis_run",
 			Arguments: map[string]any{codemode.ParamScriptContinues: "call_unknown"},
 		},
 		Taint:          &agent.RunTaint{},
@@ -879,7 +879,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	}
 
 	anchor := aitrace.ForRun(h.req.StepOwner, h.req.Delegation)
-	parent := aitracetest.One(t, anchor.TraceID, "execute_tool "+codemode.ToolRunScript)
+	parent := aitracetest.One(t, anchor.TraceID, "execute_tool analysis_run")
 	assert.Equal(t, anchor.RootSpanID, parent.Parent.SpanID(), "the script hangs under the turn")
 	reads := aitracetest.Named(anchor.TraceID, "execute_tool shipment_list")
 	require.Len(t, reads, 3)
@@ -905,7 +905,7 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 
 	held := queryTool("shipment_list", map[string]any{}, nil)
 	external := &agenttest.StubQueryTool{
-		ToolName: agentextension.ToolWebSearch,
+		ToolName: "web_search",
 		Result:   map[string]any{},
 		Resource: permission.ResourceWebResearch,
 	}
@@ -926,7 +926,7 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 		"not the script tool itself, and not a web read")
 	encoded, err := sonic.Marshal(broker.Index())
 	require.NoError(t, err)
-	assert.False(t, strings.Contains(string(encoded), codemode.ToolRunScript))
+	assert.False(t, strings.Contains(string(encoded), "analysis_run"))
 }
 
 func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
@@ -934,20 +934,20 @@ func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
 	h := newScriptHarness(t, []agenttoolports.AgentQueryTool{tool}, nil, nil)
-	require.NotContains(t, h.req.Definition.ToolNames, codemode.ToolRunScript)
+	require.NotContains(t, h.req.Definition.ToolNames, "analysis_run")
 
-	assert.Contains(t, h.rt.access.HeldTools(h.req.Definition), codemode.ToolRunScript,
+	assert.Contains(t, h.rt.access.HeldTools(h.req.Definition), "analysis_run",
 		"no agent is configured with it; holding a tool for its work is enough")
-	assert.True(t, h.rt.OpenTurn(t.Context(), h.req).tools.Offers(codemode.ToolRunScript))
+	assert.True(t, h.rt.OpenTurn(t.Context(), h.req).tools.Offers("analysis_run"))
 	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
 
 	switchedOff := *h.req.Definition
-	switchedOff.DisabledToolNames = []string{codemode.ToolRunScript}
-	assert.NotContains(t, h.rt.access.HeldTools(&switchedOff), codemode.ToolRunScript,
+	switchedOff.DisabledToolNames = []string{"analysis_run"}
+	assert.NotContains(t, h.rt.access.HeldTools(&switchedOff), "analysis_run",
 		"an administrator may switch it off for one agent")
 
 	noReads := runtimetest.Definition()
-	assert.NotContains(t, h.rt.access.HeldTools(noReads), codemode.ToolRunScript,
+	assert.NotContains(t, h.rt.access.HeldTools(noReads), "analysis_run",
 		"an agent with only the core tools has nothing to script")
 }
 
@@ -968,7 +968,7 @@ func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
 	require.True(t, set.Disclosed)
 	assert.True(
 		t,
-		set.Offers(codemode.ToolRunScript),
+		set.Offers("analysis_run"),
 		"a fan-out question shows itself only after the first read, so the tool is there from the start",
 	)
 }
@@ -1020,7 +1020,7 @@ func TestATurnLeavesOutScriptsThatReadNothing(t *testing.T) {
 	t.Parallel()
 
 	script := func(id string) llmports.ToolCall {
-		return llmports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: map[string]any{
+		return llmports.ToolCall{ID: id, Name: "analysis_run", Arguments: map[string]any{
 			"title": "Fuel spend", "code": "trenova.fuel.list()",
 		}}
 	}

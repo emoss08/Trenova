@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -444,7 +443,7 @@ func TestSystemPrompt_AnAgentThatRunsScriptsWorksFiguresOutWithThem(t *testing.T
 	prompt := agentprompt.
 		BuildSystemPrompt(definitionWithInstructions("Help."),
 			agentturn.RuntimeContext{
-				Tools: []agentturn.ToolSummary{{Name: codemode.ToolRunScript}},
+				Tools: []agentturn.ToolSummary{{Name: "analysis_run"}},
 			})
 
 	assert.NotContains(t, prompt, "- Do not calculate. Every figure",

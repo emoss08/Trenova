@@ -205,11 +205,11 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	tests := newFakeDrugAlcohol()
 	tool := newScheduleDOTTestTool(tests)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		toolparams.ParamWorkerID:  tests.test.WorkerID.String(),
-		paramDOTTestType:          "PostAccident",
-		paramSubstance:            "Alcohol",
-		paramScheduledAt:          "2026-09-21T09:00:00-05:00",
-		changepreview.FieldReason: "Jackknife on I-80 with a tow-away",
+		toolparams.ParamWorkerID: tests.test.WorkerID.String(),
+		paramTestType:            "PostAccident",
+		paramSubstance:           "Alcohol",
+		paramScheduledAt:         "2026-09-21T09:00:00-05:00",
+		toolparams.ParamReason:   "Jackknife on I-80 with a tow-away",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -228,13 +228,13 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	assert.Equal(t, workerdot.DOTTestStatusScheduled, tests.recorded.Status)
 	assert.Equal(t, workerdot.DOTResultPending, tests.recorded.Result)
 	assert.True(t, tests.recorded.IsDOT)
-	assert.Contains(t, result.IDs, paramDOTTestID)
+	assert.Contains(t, result.IDs, paramTestID)
 	assert.Equal(t, permission.ResourceWorkerDOTTest, tool.Policy().Resource)
 	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
 
 	missingReason := agenttoolstest.ExecuteParams(map[string]any{
 		toolparams.ParamWorkerID: tests.test.WorkerID.String(),
-		paramDOTTestType:         "PostAccident",
+		paramTestType:            "PostAccident",
 		paramSubstance:           "Drug",
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missingReason),
@@ -242,7 +242,7 @@ func TestScheduleDOTTest_RecordsAnOrderAndNoResult(t *testing.T) {
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			toolparams.ParamWorkerID: tests.test.WorkerID.String(),
-			paramDOTTestType:         "Positive",
+			paramTestType:            "Positive",
 			paramSubstance:           "Drug",
 		})))
 }
@@ -253,8 +253,8 @@ func TestCancelDOTTest_RefusesATestWithAResult(t *testing.T) {
 	tests := newFakeDrugAlcohol()
 	tool := newCancelDOTTestTool(tests)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramDOTTestID:            tests.test.ID.String(),
-		changepreview.FieldReason: "Driver was on leave",
+		paramTestID:            tests.test.ID.String(),
+		toolparams.ParamReason: "Driver was on leave",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -287,7 +287,7 @@ func TestRunDOTRandomDraw_PreviewNamesNoOne(t *testing.T) {
 
 	draws := newFakeDrugAlcohol()
 	tool := newRunDOTRandomDrawTool(draws)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramDrawDay: "2026-08-15"})
+	params := agenttoolstest.ExecuteParams(map[string]any{paramDrawDate: "2026-08-15"})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -330,19 +330,19 @@ func TestUpdateDOTRandomSelection_AnExcuseSaysWhy(t *testing.T) {
 	tool := newUpdateDOTRandomSelectionTool(draws)
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramDrawEntryID:   draws.entry.ID.String(),
-			paramSelectionMove: "Excused",
+			paramDrawEntryID: draws.entry.ID.String(),
+			paramStatus:      "Excused",
 		})))
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			paramDrawEntryID:   draws.entry.ID.String(),
-			paramSelectionMove: "Completed",
+			paramDrawEntryID: draws.entry.ID.String(),
+			paramStatus:      "Completed",
 		})), "a selection completes only when its test is recorded")
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramDrawEntryID:   draws.entry.ID.String(),
-		paramSelectionMove: "Excused",
-		paramExcuseReason:  "Extended medical leave",
+		paramDrawEntryID:  draws.entry.ID.String(),
+		paramStatus:       "Excused",
+		paramExcuseReason: "Extended medical leave",
 	})
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,

@@ -1,7 +1,7 @@
 package workerquerytools
 
 const (
-	paramOutstanding     = "outstandingOnly"
-	paramCertOutstanding = "certificationOutstandingOnly"
-	paramIncludeArchived = "includeArchived"
+	paramOutstandingOnly              = "outstandingOnly"
+	paramCertificationOutstandingOnly = "certificationOutstandingOnly"
+	paramIncludeArchived              = "includeArchived"
 )

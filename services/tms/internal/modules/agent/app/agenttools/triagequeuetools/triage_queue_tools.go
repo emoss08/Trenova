@@ -21,11 +21,10 @@ import (
 )
 
 const (
-	paramOwnerID      = "ownerId"
-	paramToUserID     = "toUserId"
-	paramSnoozeUntil  = "until"
-	paramSnoozeEvent  = "event"
-	paramLinkedRecord = "record"
+	paramToUserID = "toUserId"
+	paramUntil    = "until"
+	paramEvent    = "event"
+	paramRecord   = "record"
 )
 
 var (
@@ -75,7 +74,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 				paramMessageIDs: messageIDsProperty(
 					"The messages, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramOwnerID: agenttoolschema.RecordIDText(
+				toolparams.ParamOwnerID: agenttoolschema.RecordIDText(
 					permission.ResourceUser,
 					"The person to give them to, from inbox_list_triage_assignees. Leave it out to "+
 						"take them off whoever has them.",
@@ -83,7 +82,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Required:    []string{paramMessageIDs},
 			SearchTerms: []string{"give to", "triage owner", "unassign", "take it"},
-			Recipe:      []string{toolListAssignees, "inbox_assign_inbound_message"},
+			Recipe:      []string{"inbox_list_triage_assignees", "inbox_assign_inbound_message"},
 		},
 		toolspec.ReceivablePlan[
 			*inboundqueue.AssignRequest,
@@ -96,7 +95,7 @@ func newAssignInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				owner, err := toolparams.OptionalID(params.Params, paramOwnerID)
+				owner, err := toolparams.OptionalID(params.Params, toolparams.ParamOwnerID)
 				if err != nil {
 					return nil, err
 				}
@@ -262,11 +261,11 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 					"The messages waiting on a person, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
-				paramSnoozeUntil: agenttoolschema.LocalDateTime(
+				paramUntil: agenttoolschema.LocalDateTime(
 					"When they return, at most 90 days out. Leave it out when waiting on " +
 						"an event.",
 				),
-				paramSnoozeEvent: agenttoolschema.Enum(
+				paramEvent: agenttoolschema.Enum(
 					"What returns them instead of a time: ShipmentDelivered, "+
 						"DocumentAttached (name the type) or InvoicePaid, on each message's "+
 						"linked shipment.",
@@ -280,7 +279,7 @@ func newSnoozeInboundMessagesTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Required:    []string{paramMessageIDs},
 			SearchTerms: []string{"snooze", "until delivered", "until the POD"},
-			Recipe:      []string{toolListInboundMessage, "inbox_snooze_inbound_message"},
+			Recipe:      []string{"inbox_list_inbound_messages", "inbox_snooze_inbound_message"},
 		},
 		toolspec.ReceivablePlan[
 			*inboundqueue.SnoozeRequest,
@@ -335,12 +334,12 @@ func snoozeRequest(
 	if err != nil {
 		return nil, err
 	}
-	until, err := toolparams.OptionalLocalTime(params.Params, paramSnoozeUntil,
+	until, err := toolparams.OptionalLocalTime(params.Params, paramUntil,
 		timeutils.LoadLocation(params.Timezone))
 	if err != nil {
 		return nil, err
 	}
-	event, given, err := toolparams.OptionalEnum(params.Params, paramSnoozeEvent,
+	event, given, err := toolparams.OptionalEnum(params.Params, paramEvent,
 		triageSnoozeEvents.Values)
 	if err != nil {
 		return nil, err
@@ -510,11 +509,11 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 					"The message waiting on a person, from inbox_list_inbound_messages, " +
 						"newest first or by query.",
 				),
-				paramSnoozeUntil: agenttoolschema.LocalDateTime(
+				paramUntil: agenttoolschema.LocalDateTime(
 					"When it returns if the sender has not replied, at most 30 days out.",
 				),
 			},
-			Required:    []string{inboundtools.ParamMessageID, paramSnoozeUntil},
+			Required:    []string{inboundtools.ParamMessageID, paramUntil},
 			SearchTerms: []string{"waiting on customer", "awaiting reply", "until they answer"},
 			Target:      inboundtools.TargetMessage,
 		},
@@ -529,7 +528,7 @@ func newWaitForInboundReplyTool(queue triageQueue) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				until, err := toolparams.RequireLocalTime(params.Params, paramSnoozeUntil,
+				until, err := toolparams.RequireLocalTime(params.Params, paramUntil,
 					timeutils.LoadLocation(params.Timezone))
 				if err != nil {
 					return nil, err
@@ -604,14 +603,14 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 				inboundtools.ParamMessageID: inboundtools.MessageIDProperty(
 					"The message, from inbox_list_inbound_messages, newest first or by query.",
 				),
-				paramLinkedRecord: agenttoolschema.Enum(
+				paramRecord: agenttoolschema.Enum(
 					"Which link to remove.",
 					triageLinkedRecords,
 				),
 			},
-			Required:    []string{inboundtools.ParamMessageID, paramLinkedRecord},
+			Required:    []string{inboundtools.ParamMessageID, paramRecord},
 			SearchTerms: []string{"unlink", "remove link"},
-			Recipe:      []string{inboundtools.ToolGetMessage, "inbox_unlink_inbound_message"},
+			Recipe:      []string{"inbox_get_inbound_message", "inbox_unlink_inbound_message"},
 			Target:      inboundtools.TargetMessage,
 		},
 		toolspec.ReceivablePlan[
@@ -625,7 +624,7 @@ func newUnlinkInboundMessageTool(queue triageQueue) agenttoolports.AgentTool {
 				if err != nil {
 					return nil, err
 				}
-				record, err := toolparams.RequireEnum(params.Params, paramLinkedRecord,
+				record, err := toolparams.RequireEnum(params.Params, paramRecord,
 					triageLinkedRecords.Values)
 				if err != nil {
 					return nil, err
@@ -701,7 +700,7 @@ func newHandOffTriageTool(queue triageQueue) agenttoolports.AgentTool {
 			},
 			Required:    []string{paramToUserID},
 			SearchTerms: []string{"end of day", "on call", "hand off the inbox", "night shift"},
-			Recipe:      []string{toolListAssignees, "inbox_assign_queue"},
+			Recipe:      []string{"inbox_list_triage_assignees", "inbox_assign_queue"},
 		},
 		toolspec.ReceivablePlan[
 			*inboundqueue.HandOffRequest,

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/locationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -49,7 +48,7 @@ const paramRegistrationState = "registrationState"
 
 const paramMaxLoadWeight = "maxLoadWeight"
 
-const paramLastInspection = "lastInspectionDate"
+const paramLastInspectionDate = "lastInspectionDate"
 
 const mdMaxLoadWeight = 200_000
 
@@ -61,7 +60,7 @@ const fleetCodeSupplier = "from masterdata_list_fleet_codes"
 
 var equipmentDates = toolpreview.Types(map[string]assistantartifact.DisplayType{
 	masterdatakit.MdRegistrationExpiry: assistantartifact.DisplayDate,
-	paramLastInspection:                assistantartifact.DisplayDate,
+	paramLastInspectionDate:            assistantartifact.DisplayDate,
 })
 
 var equipmentRefs = toolpreview.WithRefs(map[string]permission.Resource{
@@ -483,7 +482,7 @@ func trailerFields() []masterdatakit.Field[trailer.Trailer] {
 			func(t *trailer.Trailer) *pulid.ID { return &t.RegistrationStateID }),
 		masterdatakit.OptionalInt(paramMaxLoadWeight, "The most it may carry, in pounds.", 0,
 			mdMaxLoadWeight, func(t *trailer.Trailer) **int { return &t.MaxLoadWeight }),
-		masterdatakit.Day(paramLastInspection, "When it was last inspected.",
+		masterdatakit.Day(paramLastInspectionDate, "When it was last inspected.",
 			func(t *trailer.Trailer) **int64 { return &t.LastInspectionDate }),
 	)
 }
@@ -640,7 +639,7 @@ func NewLocateTractorTool(tractors TractorKeeper) agenttoolports.AgentTool {
 		),
 		Required:      []string{toolparams.ParamTractorID, paramNewLocationID},
 		SearchTerms:   []string{"locate tractor", "relocate truck", "move tractor", "yard"},
-		Prerequisites: []string{tractorRecord.Lister, locationtools.Lister},
+		Prerequisites: []string{tractorRecord.Lister, "location_list"},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return toolparams.TargetOf(
 				params,
@@ -717,7 +716,7 @@ func NewLocateTrailerTool(trailers TrailerKeeper) agenttoolports.AgentTool {
 			permission.ResourceTrailer),
 		Required:      []string{paramTrailerID, paramNewLocationID},
 		SearchTerms:   []string{"locate trailer", "trailer location", "move trailer", "drop yard"},
-		Prerequisites: []string{trailerRecord.Lister, locationtools.Lister},
+		Prerequisites: []string{trailerRecord.Lister, "location_list"},
 		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
 			return toolparams.TargetOf(params, paramTrailerID, permission.ResourceTrailer)
 		},

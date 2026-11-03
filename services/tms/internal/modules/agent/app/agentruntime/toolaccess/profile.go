@@ -5,7 +5,6 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/usableagents"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -56,7 +55,7 @@ func (s *Access) ProfileFor(
 		return !s.profileHolds(req, mode, name)
 	})
 	if req.MayDelegate() {
-		held = append(held, runtimetools.DelegateTaskName)
+		held = append(held, "delegate_task")
 	}
 
 	return profile{
@@ -72,13 +71,13 @@ func (s *Access) profileHolds(
 	name string,
 ) bool {
 	switch name {
-	case agentdefinition.CoreToolOpenPage:
+	case "agent_open_page":
 		return req.Delegation == nil
-	case agentdefinition.CoreToolRaiseException:
+	case "agent_raise_exception":
 		return req.RunID.IsNotNil()
-	case agentdefinition.CoreToolGuideProfile:
+	case "agent_guide_profile":
 		return mode == ProfileConversation && req.Actor.PersonUserID().IsNotNil()
-	case agentdefinition.CoreToolSchedule:
+	case "agent_create_schedule":
 		return mode == ProfileConversation && req.Actor.PersonUserID().IsNotNil() &&
 			req.ThreadID.IsNotNil()
 	}

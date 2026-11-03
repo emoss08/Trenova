@@ -300,7 +300,7 @@ func NewShipmentListTool(
 		repo:         repo,
 		parties:      *parties,
 		list:         list,
-		filterFields: agenttoolschema.Derived(querytool.ShipmentListName+".filterField", fields),
+		filterFields: agenttoolschema.Derived("shipment_list.filterField", fields),
 		columns:      list.Columns,
 	}
 }
@@ -315,7 +315,7 @@ func (t *shipmentListTool) WithHolds(
 	return t
 }
 
-func (t *shipmentListTool) Name() string { return querytool.ShipmentListName }
+func (t *shipmentListTool) Name() string { return "shipment_list" }
 
 func (t *shipmentListTool) Description() string {
 	return "Find shipments (loads) by the words people use for them, by status, by holds, or " +

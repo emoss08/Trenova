@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -27,11 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const (
-	toolEDIListTransfers = "edi_list_transfers"
-)
-
-const paramEDITransferID = "transferId"
+const paramTransferID = "transferId"
 
 const maxTenderDeclineChars = 500
 
@@ -116,18 +111,18 @@ func (t *EdiTransferDecisionTool) SearchTerms() []string { return t.decision.sea
 
 func (t *EdiTransferDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramEDITransferID: agenttoolschema.KindID(ediTransferIDGuidance,
+		paramTransferID: agenttoolschema.KindID(ediTransferIDGuidance,
 			recordkind.EDITransfer),
 	}
-	required := []string{paramEDITransferID}
+	required := []string{paramTransferID}
 	if t.decision.needsReason {
-		properties[changepreview.FieldReason] = map[string]any{
+		properties[toolparams.ParamReason] = map[string]any{
 			toolschema.KeyType:      toolschema.TypeString,
 			toolschema.KeyMaxLength: maxTenderDeclineChars,
 			toolschema.KeyDescription: "Why the tender is declined, in a sentence the " +
 				"trading partner reads on the response it is sent.",
 		}
-		required = append(required, changepreview.FieldReason)
+		required = append(required, toolparams.ParamReason)
 	}
 
 	return jsonschemautils.Object(properties, required...)
@@ -150,7 +145,7 @@ func (t *EdiTransferDecisionTool) Policy() agenttoolports.ToolPolicy {
 }
 
 func (t *EdiTransferDecisionTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
-	return toolparams.TargetOf(params, paramEDITransferID, permission.ResourceEDI)
+	return toolparams.TargetOf(params, paramTransferID, permission.ResourceEDI)
 }
 
 func (t *EdiTransferDecisionTool) call(
@@ -160,7 +155,7 @@ func (t *EdiTransferDecisionTool) call(
 		return nil, err
 	}
 
-	transferID, err := toolparams.RequirePulid(params.Params, paramEDITransferID)
+	transferID, err := toolparams.RequirePulid(params.Params, paramTransferID)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +170,7 @@ func (t *EdiTransferDecisionTool) call(
 	}
 
 	call.reason, err = edidecision.TransferRejectionReason(
-		toolparams.OptionalString(params.Params, changepreview.FieldReason),
+		toolparams.OptionalString(params.Params, toolparams.ParamReason),
 	)
 	if err != nil {
 		return nil, err
@@ -183,7 +178,7 @@ func (t *EdiTransferDecisionTool) call(
 	if len(call.reason) > maxTenderDeclineChars {
 		return nil, fmt.Errorf(
 			"parameter %q is %d characters; a tender response carries at most %d",
-			changepreview.FieldReason, len(call.reason), maxTenderDeclineChars,
+			toolparams.ParamReason, len(call.reason), maxTenderDeclineChars,
 		)
 	}
 
@@ -348,10 +343,10 @@ func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name: "edi_accept_tender",
 		recipe: []string{
-			toolEDIListTransfers,
+			"edi_list_transfers",
 			"edi_get_transfer",
 			"customer_get",
-			toolShipmentList,
+			"shipment_list",
 			"rate_quote",
 			"edi_accept_tender",
 		},
@@ -380,7 +375,7 @@ func NewAcceptEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:   "edi_decline_tender",
-		recipe: []string{toolEDIListTransfers, "edi_get_transfer", "edi_decline_tender"},
+		recipe: []string{"edi_list_transfers", "edi_get_transfer", "edi_decline_tender"},
 		description: "Propose declining a load tender a trading partner sent over EDI, with the " +
 			"reason they are given. Use it when the tender cannot be hauled as sent: a lane or " +
 			"equipment this organization does not run, dates it cannot make, a rate below the " +
@@ -406,7 +401,7 @@ func NewDeclineEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agen
 func NewCancelEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:        "edi_cancel_tender",
-		recipe:      []string{toolEDIListTransfers, "edi_cancel_tender"},
+		recipe:      []string{"edi_list_transfers", "edi_cancel_tender"},
 		searchTerms: []string{"recall tender", "withdraw edi tender"},
 		description: "Propose withdrawing a load tender this organization sent to another " +
 			"organization over EDI and that it has not yet answered. The shipment's tender is " +
@@ -430,7 +425,7 @@ func NewCancelEDILoadTenderTool(decider ediTransferDecider) agenttoolports.Agent
 func NewExpireEDILoadTenderTool(decider ediTransferDecider) agenttoolports.AgentTool {
 	return &EdiTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:   "edi_expire_tender",
-		recipe: []string{toolEDIListTransfers, "edi_expire_tender"},
+		recipe: []string{"edi_list_transfers", "edi_expire_tender"},
 		description: "Propose closing an EDI load tender that went unanswered past the time " +
 			"it had to be answered in, sent or received. Nobody can accept it afterwards, and " +
 			"the shipment it was tendered from is marked expired. Check the dates with " +

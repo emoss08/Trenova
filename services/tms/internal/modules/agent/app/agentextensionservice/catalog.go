@@ -23,17 +23,17 @@ var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 		Plan:  platformplan.CapabilityAgentPortalAutomation,
 		Tools: []agentextensionports.AgentExtensionTool{
 			{
-				Name:        agentextension.ToolListPortalSites,
+				Name:        "web_list_portal_sites",
 				Label:       "List portal sites",
 				Description: "Lists the portals set up for agents and what each is for.",
 			},
 			{
-				Name:        agentextension.ToolReadPortal,
+				Name:        "web_read_portal",
 				Label:       "Look something up on a portal",
 				Description: "Reads a portal the organization set up and says what it shows, without submitting anything.",
 			},
 			{
-				Name:        agentextension.ToolActOnPortal,
+				Name:        "web_use_portal",
 				Label:       "Do something on a portal",
 				Description: "Books, uploads, accepts or updates something on a portal after a person approves it.",
 			},
@@ -44,27 +44,27 @@ var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
 		Plan:  platformplan.CapabilityAgentWebSearch,
 		Tools: []agentextensionports.AgentExtensionTool{
 			{
-				Name:        agentextension.ToolWebSearch,
+				Name:        "web_search",
 				Label:       "Search the web",
 				Description: "Finds public pages about a topic and returns short passages from each.",
 			},
 			{
-				Name:        agentextension.ToolWebRead,
+				Name:        "web_read",
 				Label:       "Read a web page",
 				Description: "Reads the full text of a page a search returned.",
 			},
 			{
-				Name:        agentextension.ToolWatchWeb,
+				Name:        "web_watch",
 				Label:       "Watch the web",
 				Description: "Keeps searching on a schedule and brings back only what is new, until the watch ends.",
 			},
 			{
-				Name:        agentextension.ToolListWebWatches,
+				Name:        "web_list_watches",
 				Label:       "List web watches",
 				Description: "Lists the watches set for the person and what each has found.",
 			},
 			{
-				Name:        agentextension.ToolStopWebWatch,
+				Name:        "web_stop_watch",
 				Label:       "Stop a web watch",
 				Description: "Stops a watch the person no longer needs, so it searches and bills no more.",
 			},

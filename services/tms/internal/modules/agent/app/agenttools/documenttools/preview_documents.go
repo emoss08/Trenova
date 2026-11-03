@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -15,8 +16,8 @@ import (
 )
 
 var documentHomeLabels = map[string]string{
-	"resourceType":                "Filed under",
-	changepreview.FieldShipmentID: changepreview.LabelShipment,
+	"resourceType":             "Filed under",
+	toolparams.ParamShipmentID: changepreview.LabelShipment,
 }
 
 type documentHome struct {
@@ -36,7 +37,7 @@ func documentHomeOf(entity *document.Document) *documentHome {
 func documentHomeOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.WithRefs(map[string]permission.Resource{
-			changepreview.FieldShipmentID: permission.ResourceShipment,
+			toolparams.ParamShipmentID: permission.ResourceShipment,
 		}),
 		toolpreview.Labels(documentHomeLabels),
 	}

@@ -32,7 +32,7 @@ func NewPlaceShipmentHoldTool(
 func (t *PlaceShipmentHoldTool) Name() string { return "shipment_place_hold" }
 
 func (t *PlaceShipmentHoldTool) Recipe() []string {
-	return []string{ToolShipmentList, "masterdata_list_hold_reasons", "shipment_place_hold"}
+	return []string{"shipment_list", "masterdata_list_hold_reasons", "shipment_place_hold"}
 }
 
 func (t *PlaceShipmentHoldTool) Description() string {

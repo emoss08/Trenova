@@ -27,25 +27,17 @@ import (
 
 const paramMatchID = "matchId"
 
-const paramMatchNote = "note"
-
-const paramEDIInvoiceID = "ediCarrierInvoiceId"
-
-const paramMatchProNumber = "proNumber"
+const paramEDICarrierInvoiceID = "ediCarrierInvoiceId"
 
 const maxMatchNoteChars = 1000
 
 const maxMatchProNumberChars = 100
 
-const matchSourcesTool = "carrier_list_invoice_matches"
-
-const ediInvoiceSourcesTool = "edi_list_carrier_invoices"
-
 const fieldResolutionNote = "resolutionNote"
 
-const fieldMatchInvoiceNumber = "invoiceNumber"
+const fieldInvoiceNumber = "invoiceNumber"
 
-const fieldMatchStatus = "status"
+const fieldStatus = "status"
 
 const fieldMatchedVia = "matchedVia"
 
@@ -90,13 +82,13 @@ func (t *CarrierInvoiceMatchTool) SearchTerms() []string { return t.decision.sea
 func (t *CarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	required := []string{paramMatchID}
 	if t.decision.noteRequired {
-		required = append(required, paramMatchNote)
+		required = append(required, toolparams.ParamNote)
 	}
 
 	return toolparams.ObjectParams(map[string]any{
 		paramMatchID: agenttoolschema.RecordIDText(permission.ResourceCarrierInvoiceMatch,
-			"The carrier invoice match, from "+matchSourcesTool+". Never guess one."),
-		paramMatchNote: toolparams.StringProperty(t.decision.noteText, maxMatchNoteChars),
+			"The carrier invoice match, from carrier_list_invoice_matches. Never guess one."),
+		toolparams.ParamNote: toolparams.StringProperty(t.decision.noteText, maxMatchNoteChars),
 	}, required...)
 }
 
@@ -144,7 +136,7 @@ func (t *CarrierInvoiceMatchTool) request(
 	}
 	note, err := toolparams.BoundedString(
 		params.Params,
-		paramMatchNote,
+		toolparams.ParamNote,
 		maxMatchNoteChars,
 		t.decision.noteRequired,
 	)
@@ -254,7 +246,7 @@ func (t *CarrierInvoiceMatchTool) Preview(
 	}
 
 	change, err := toolpreview.Changed(record, plan.Before, plan.After,
-		toolpreview.Only(fieldMatchStatus, fieldResolutionNote, changepreview.FieldResolvedAt),
+		toolpreview.Only(fieldStatus, fieldResolutionNote, changepreview.FieldResolvedAt),
 		toolpreview.Volatile(changepreview.FieldResolvedAt),
 	)
 	if err != nil {
@@ -396,16 +388,16 @@ func (t *CreateCarrierInvoiceMatchTool) Description() string {
 
 func (t *CreateCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
-		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
-			ediInvoiceSourcesTool+". Never guess one.", recordkind.EDICarrierInvoice),
-		changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
+		paramEDICarrierInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
+			"edi_list_carrier_invoices. Never guess one.", recordkind.EDICarrierInvoice),
+		toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
 			"The shipment it bills, from shipment_list, when the "+
 				"invoice's own references do not find it.",
 		),
-		paramMatchProNumber: toolparams.StringProperty("The pro number it bills, when the invoice "+
+		paramProNumber: toolparams.StringProperty("The pro number it bills, when the invoice "+
 			"carries none.", maxMatchProNumberChars),
-	}, paramEDIInvoiceID)
+	}, paramEDICarrierInvoiceID)
 }
 
 func (t *CreateCarrierInvoiceMatchTool) Policy() agenttoolports.ToolPolicy {
@@ -431,17 +423,17 @@ func (t *CreateCarrierInvoiceMatchTool) request(
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := toolparams.RequirePulid(params.Params, paramEDIInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramEDICarrierInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	shipmentID, err := toolparams.OptionalPulidParam(params.Params, changepreview.FieldShipmentID)
+	shipmentID, err := toolparams.OptionalPulidParam(params.Params, toolparams.ParamShipmentID)
 	if err != nil {
 		return nil, err
 	}
 	proNumber, err := toolparams.BoundedString(
 		params.Params,
-		paramMatchProNumber,
+		paramProNumber,
 		maxMatchProNumberChars,
 		false,
 	)
@@ -525,7 +517,7 @@ func (t *CreateCarrierInvoiceMatchTool) Preview(
 	change, err := toolpreview.Create(
 		matchRecord(match),
 		match,
-		toolpreview.Only(fieldMatchStatus, fieldMatchInvoiceNumber, fieldMatchedVia,
+		toolpreview.Only(fieldStatus, fieldInvoiceNumber, fieldMatchedVia,
 			toolparams.ParamCarrierID),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			toolparams.ParamCarrierID: permission.ResourceCarrier,
@@ -579,14 +571,14 @@ func (t *LinkEDICarrierInvoiceTool) Description() string {
 
 func (t *LinkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 	return toolparams.ObjectParams(map[string]any{
-		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
-			ediInvoiceSourcesTool+". Never guess one.", recordkind.EDICarrierInvoice),
+		paramEDICarrierInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
+			"edi_list_carrier_invoices. Never guess one.", recordkind.EDICarrierInvoice),
 		toolparams.ParamCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
 			"The carrier it came from, from carrier_list or "+
-				ediInvoiceSourcesTool+"'s suggested carrier.",
+				"edi_list_carrier_invoices's suggested carrier.",
 		),
-	}, paramEDIInvoiceID, toolparams.ParamCarrierID)
+	}, paramEDICarrierInvoiceID, toolparams.ParamCarrierID)
 }
 
 func (t *LinkEDICarrierInvoiceTool) Policy() agenttoolports.ToolPolicy {
@@ -619,7 +611,7 @@ func (t *LinkEDICarrierInvoiceTool) request(
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := toolparams.RequirePulid(params.Params, paramEDIInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramEDICarrierInvoiceID)
 	if err != nil {
 		return nil, err
 	}

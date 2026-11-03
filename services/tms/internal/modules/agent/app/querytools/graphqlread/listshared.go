@@ -16,17 +16,14 @@ import (
 
 const (
 	VerbList           = "list"
-	ParamQuery         = "query"
 	ConnectionEdges    = "edges"
 	ConnectionNode     = "node"
 	ConnectionPageInfo = "pageInfo"
 	PageHasNext        = "hasNextPage"
 	typenameField      = "__typename"
-	InputFirst         = "first"
-	InputAfter         = "after"
-	InputQuery         = "query"
-	InputFieldFilters  = "fieldFilters"
-	InputSort          = "sort"
+	FieldFirst         = "first"
+	FieldFieldFilters  = "fieldFilters"
+	FieldSort          = "sort"
 )
 
 var ErrUnbound = errors.New("no GraphQL read is bound to this tool")

@@ -15,12 +15,12 @@ const (
 	carrierInvoiceEntity = "edi_carrier_invoice"
 	carrierSource        = "carrier_list or carrier_get"
 
-	fieldEDICarrierInvoiceID = "ediCarrierInvoiceId"
-	fieldDocumentExtraction  = "documentAiExtractionId"
-	fieldMatchSource         = "source"
-	fieldFieldPath           = "fieldPath"
-	fieldRuleCode            = "ruleCode"
-	fieldVendorChangedAt     = "vendorChangedAt"
+	fieldEDICarrierInvoiceID    = "ediCarrierInvoiceId"
+	fieldDocumentAiExtractionID = "documentAiExtractionId"
+	fieldSource                 = "source"
+	fieldFieldPath              = "fieldPath"
+	fieldRuleCode               = "ruleCode"
+	fieldVendorChangedAt        = "vendorChangedAt"
 
 	matchSourceEDI      = "EDI"
 	matchSourceDocument = "Document"
@@ -139,10 +139,10 @@ func invoiceMatchesListSpec() readspec.List {
 func matchSource(row map[string]any, _ map[string]struct{}, _ filtercatalog.Clock) {
 	switch {
 	case querytool.StringOf(row[fieldEDICarrierInvoiceID]) != "":
-		row[fieldMatchSource] = matchSourceEDI
-	case querytool.StringOf(row[fieldDocumentExtraction]) != "":
-		row[fieldMatchSource] = matchSourceDocument
+		row[fieldSource] = matchSourceEDI
+	case querytool.StringOf(row[fieldDocumentAiExtractionID]) != "":
+		row[fieldSource] = matchSourceDocument
 	default:
-		row[fieldMatchSource] = matchSourceManual
+		row[fieldSource] = matchSourceManual
 	}
 }

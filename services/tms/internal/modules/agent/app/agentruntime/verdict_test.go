@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -107,7 +106,7 @@ func TestRun_AnUnattendedQuestionIsDenied(t *testing.T) {
 	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(llmports.ToolCall{
 			ID:        "ask",
-			Name:      askuser.Name,
+			Name:      "ask_user",
 			Arguments: map[string]any{"question": "Which load?"},
 		}),
 		runtimetest.TextTurn("Nobody to ask."),

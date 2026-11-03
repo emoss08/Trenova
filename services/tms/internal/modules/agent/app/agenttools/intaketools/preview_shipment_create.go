@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -22,13 +23,13 @@ import (
 )
 
 var enteredShipmentFields = []string{
-	changepreview.FieldCustomerID,
+	toolparams.ParamCustomerID,
 	changepreview.FieldBillToCustomerID,
 	changepreview.FieldServiceTypeID,
 	changepreview.FieldShipmentTypeID,
 	changepreview.FieldFormulaTemplateID,
 	changepreview.FieldStatus,
-	changepreview.FieldBol,
+	changepreview.FieldBOL,
 	"freightTerms",
 	changepreview.FieldPieces,
 	changepreview.FieldWeight,
@@ -37,7 +38,7 @@ var enteredShipmentFields = []string{
 }
 
 var enteredShipmentRefs = map[string]permission.Resource{
-	changepreview.FieldCustomerID:        permission.ResourceCustomer,
+	toolparams.ParamCustomerID:           permission.ResourceCustomer,
 	changepreview.FieldBillToCustomerID:  permission.ResourceCustomer,
 	changepreview.FieldServiceTypeID:     permission.ResourceServiceType,
 	changepreview.FieldShipmentTypeID:    permission.ResourceShipmentType,
@@ -45,12 +46,12 @@ var enteredShipmentRefs = map[string]permission.Resource{
 }
 
 var enteredShipmentLabels = map[string]string{
-	changepreview.FieldCustomerID:        changepreview.LabelCustomer,
+	toolparams.ParamCustomerID:           changepreview.LabelCustomer,
 	changepreview.FieldBillToCustomerID:  "Bill to",
 	changepreview.FieldServiceTypeID:     "Service type",
 	changepreview.FieldShipmentTypeID:    "Shipment type",
 	changepreview.FieldFormulaTemplateID: "Rating method",
-	changepreview.FieldBol:               "BOL",
+	changepreview.FieldBOL:               "BOL",
 }
 
 var enteredStopFields = []string{

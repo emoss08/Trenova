@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -58,11 +59,11 @@ func Parse(params map[string]any, tenant pagination.TenantInfo) (*Input, error) 
 	if err != nil {
 		return nil, err
 	}
-	partnerID, err := optionalID(ParamPartnerID, raw.PartnerID)
+	partnerID, err := optionalID(ParamEDIPartnerID, raw.PartnerID)
 	if err != nil {
 		return nil, err
 	}
-	customerID, err := optionalID(ParamCustomerID, raw.CustomerID)
+	customerID, err := optionalID(toolparams.ParamCustomerID, raw.CustomerID)
 	if err != nil {
 		return nil, err
 	}

@@ -10,10 +10,9 @@ import (
 )
 
 const (
-	toolDraftEDIConnection = "edi_draft_connection"
-	draftKeyTitle          = "title"
-	draftKeyNote           = "note"
-	draftKeySummary        = "summary"
+	draftKeyTitle   = "title"
+	draftKeyNote    = "note"
+	draftKeySummary = "summary"
 )
 
 var (

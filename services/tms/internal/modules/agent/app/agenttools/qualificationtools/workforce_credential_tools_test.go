@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcekit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -162,7 +161,7 @@ func TestRecordWorkerCredential_RenewalShowsWhatItSupersedes(t *testing.T) {
 	raw := map[string]any{
 		toolparams.ParamWorkerID: credentials.credential.WorkerID.String(),
 		paramCredentialTypeID:    credentials.credential.CredentialTypeID.String(),
-		paramCredentialNumber:    "MC-2002",
+		paramNumber:              "MC-2002",
 		"expiresAt":              "2028-09-30",
 	}
 
@@ -199,8 +198,8 @@ func TestUpdateWorkerCredential_SaysWhenVerificationClears(t *testing.T) {
 	credentials := newFakeCredentials()
 	tool := newUpdateWorkerCredentialTool(credentials)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramCredentialID:     credentials.credential.ID.String(),
-		paramCredentialNumber: "MC-1002",
+		paramCredentialID: credentials.credential.ID.String(),
+		paramNumber:       "MC-1002",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -225,8 +224,8 @@ func TestAttachWorkerCredentialDocument_NamesTheDocument(t *testing.T) {
 	tool := newAttachWorkerCredentialDocumentTool(credentials)
 	documentID := pulid.MustNew("doc_")
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		paramCredentialID:          credentials.credential.ID.String(),
-		workforcekit.ParamDocument: documentID.String(),
+		paramCredentialID:            credentials.credential.ID.String(),
+		workforcekit.ParamDocumentID: documentID.String(),
 	})))
 	require.NotNil(t, credentials.attached)
 	assert.Equal(t, documentID, credentials.attached.DocumentID)
@@ -244,8 +243,8 @@ func TestArchiveWorkerCredential_IsOnlyProposed(t *testing.T) {
 	credentials := newFakeCredentials()
 	tool := newArchiveWorkerCredentialTool(credentials)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramCredentialID:         credentials.credential.ID.String(),
-		changepreview.FieldReason: "Endorsement surrendered",
+		paramCredentialID:      credentials.credential.ID.String(),
+		toolparams.ParamReason: "Endorsement surrendered",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(

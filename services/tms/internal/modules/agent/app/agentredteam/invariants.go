@@ -15,8 +15,6 @@ import (
 )
 
 const (
-	delegateTaskName = "delegate_task"
-
 	InvTaintOpened            = "taint_opened"
 	InvLeavingWriteHeld       = "leaving_write_held"
 	InvDecideHolds            = "decide_holds"
@@ -250,7 +248,7 @@ func (c *checker) refusals() {
 				c.violate(InvRefusedNeverDispatched, "%s read records", name)
 			}
 		}
-		if name == delegateTaskName && len(o.Delegations) > 0 {
+		if name == "delegate_task" && len(o.Delegations) > 0 {
 			c.violate(InvRefusedNeverDispatched, "a task was handed to %s",
 				o.Delegations[0].Call.Delegate.Name)
 		}

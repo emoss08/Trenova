@@ -29,7 +29,7 @@ type carrierRow struct {
 
 func NewListCarriersTool(repo carrierports.CarrierRepository) agenttoolports.AgentQueryTool {
 	return listtool.New(&listtool.Spec{
-		Name:         querytool.ToolCarrierList,
+		Name:         "carrier_list",
 		Row:          carrierRow{},
 		EntityPlural: pluralCarriers,
 		Summary:      carriersSummary,
