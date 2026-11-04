@@ -14,6 +14,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import { type BoardGrouping, GROUPING_LABELS } from "@/lib/shipment-board/grouping";
@@ -22,6 +23,9 @@ import { type BoardView, useShipmentBoardUrl } from "../url-state";
 
 /* Labels give way to icons when the board is narrow; the buttons never shrink. */
 const TOOLBAR_LABEL_CLASS = "hidden @[1180px]/board:inline";
+
+/* A view's icon alone still has to name it, so its label stays for screen readers. */
+const VIEW_LABEL_CLASS = "sr-only @[1180px]/board:not-sr-only";
 
 /* The display menu and saved views are the first to go on a narrow board. */
 export const TOOLBAR_RESPONSIVE = {
@@ -43,33 +47,18 @@ export function ViewSwitch() {
   const t = useT();
   const [{ view }, setUrl] = useShipmentBoardUrl();
   return (
-    <div
-      role="radiogroup"
+    <SegmentedControl<BoardView>
       aria-label={t("View")}
-      className="border-input bg-card flex h-7 shrink-0 items-center rounded-md border p-0.5"
-    >
-      {VIEWS.map((entry) => {
-        const Icon = entry.icon;
-        const active = view === entry.value;
-        return (
-          <button
-            key={entry.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            aria-label={t(entry.label)}
-            onClick={() => void setUrl({ view: entry.value })}
-            className={cn(
-              "ui-focus-ring text-muted-foreground hover:text-foreground inline-flex h-full items-center gap-1.5 rounded-sm px-2 text-sm font-medium",
-              active && "bg-surface-active text-foreground",
-            )}
-          >
-            <Icon className="size-3.5" />
-            <span className={TOOLBAR_LABEL_CLASS}>{t(entry.label)}</span>
-          </button>
-        );
-      })}
-    </div>
+      className="h-7 shrink-0"
+      labelClassName={VIEW_LABEL_CLASS}
+      value={view}
+      onValueChange={(next) => void setUrl({ view: next })}
+      items={VIEWS.map((entry) => ({
+        value: entry.value,
+        label: t(entry.label),
+        icon: entry.icon,
+      }))}
+    />
   );
 }
 

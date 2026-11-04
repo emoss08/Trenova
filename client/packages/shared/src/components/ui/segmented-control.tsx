@@ -28,6 +28,8 @@ type SegmentedControlProps<TValue extends string> = {
   fullWidth?: boolean;
   "aria-label"?: string;
   className?: string;
+  /** Classes for each label, for a control that drops to its icons when narrow. */
+  labelClassName?: string;
 };
 
 const INDICATOR_TRANSITION = {
@@ -53,6 +55,7 @@ export function SegmentedControl<TValue extends string>({
   onValueChange,
   fullWidth = false,
   className,
+  labelClassName,
   ...props
 }: SegmentedControlProps<TValue>) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -192,7 +195,7 @@ export function SegmentedControl<TValue extends string>({
           >
             <span className="flex min-w-0 items-center gap-1.5">
               {Icon && <Icon className="size-3.5 shrink-0" />}
-              <span className="truncate">{item.label}</span>
+              <span className={cn("truncate", labelClassName)}>{item.label}</span>
             </span>
             {item.caption !== undefined && (
               <span
