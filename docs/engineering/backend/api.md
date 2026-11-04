@@ -85,6 +85,11 @@ Resolver packages never import each other; shared code goes in `resolvercore` on
   CROSS JOIN LATERAL (… ORDER BY … LIMIT first))`, bounded by parents times `first`
   (`rateagreementrepository.ListFirstLanes`). It counts nothing; a total is its own field on the
   count loader.
+- **A loader's window has to outlast the rows reaching it.** Rows marshal in parallel, and a
+  batch closes `BatchWait` after its first key. At 1 ms a 25-row page split every loader into
+  about eight batches, 292 statements a request, each paying the tenant scope check; at 8 ms
+  each loader runs once and the page takes 77. Read `calls` per statement in
+  `pg_stat_statements` before calling a list batched.
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
 - Tests build `&QueryResolver{&Deps{Core: &resolvercore.Core{...}, ...}}`.

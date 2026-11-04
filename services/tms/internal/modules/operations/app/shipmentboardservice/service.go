@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type MapsReadiness interface {
@@ -31,6 +32,8 @@ type Params struct {
 	Organizations   tenantports.OrganizationRepository
 	Integrations    integrationports.IntegrationRepository
 	IntegrationsSvc *integrationservice.Service
+	Cache           shipmentboardports.ShipmentBoardCache
+	Logger          *zap.Logger
 }
 
 type Service struct {
@@ -40,6 +43,8 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 	integrations  integrationports.IntegrationRepository
 	maps          MapsReadiness
+	cache         shipmentboardports.ShipmentBoardCache
+	l             *zap.Logger
 }
 
 var (
@@ -57,5 +62,7 @@ func New(p Params) *Service {
 		organizations: p.Organizations,
 		integrations:  p.Integrations,
 		maps:          p.IntegrationsSvc,
+		cache:         p.Cache,
+		l:             p.Logger.Named("service.shipment-board"),
 	}
 }

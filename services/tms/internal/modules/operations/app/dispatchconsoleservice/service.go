@@ -124,7 +124,18 @@ func (s *Service) tenantDayStart(
 	return timeutils.DayStartUnix(now, location.String())
 }
 
-func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, error) {
+type boardScope struct {
+	control     *dispatchcontrol.DispatchControl
+	filter      *dispatchboardports.DispatchBoardFilter
+	now         int64
+	windowStart int64
+	windowEnd   int64
+}
+
+func (s *Service) resolveBoardScope(
+	ctx context.Context,
+	req *GetBoardRequest,
+) (*boardScope, error) {
 	control, err := s.dispatchControlRepo.GetOrCreate(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -166,12 +177,58 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		filter.LateAt = now
 	}
 
-	moves, err := s.consoleRepo.ListBoardMoves(ctx, filter)
+	return &boardScope{
+		control:     control,
+		filter:      filter,
+		now:         now,
+		windowStart: windowStart,
+		windowEnd:   windowEnd,
+	}, nil
+}
+
+func (s *Service) decorateBoardMoves(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moves []*dispatchboardports.BoardMove,
+	now int64,
+) []*BoardMove {
+	decorated := decorateMoves(moves, now)
+	if err := s.attachLiveTenders(ctx, tenantInfo, decorated); err != nil {
+		s.l.Warn(
+			"failed to attach live tenders to the dispatch board; rendering without tender chips",
+			zap.Error(err),
+		)
+	}
+
+	return decorated
+}
+
+func (s *Service) GetBoardMoves(ctx context.Context, req *GetBoardRequest) ([]*BoardMove, error) {
+	scope, err := s.resolveBoardScope(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	driverFilter := *filter
+	moves, err := s.consoleRepo.ListBoardMoves(ctx, scope.filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.decorateBoardMoves(ctx, req.TenantInfo, moves, scope.now), nil
+}
+
+func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, error) {
+	scope, err := s.resolveBoardScope(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	moves, err := s.consoleRepo.ListBoardMoves(ctx, scope.filter)
+	if err != nil {
+		return nil, err
+	}
+
+	driverFilter := *scope.filter
 	driverFilter.Query = ""
 	driverFilter.CustomerIDs = nil
 	driverFilter.ServiceTypeIDs = nil
@@ -181,7 +238,7 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
 		TenantInfo:  req.TenantInfo,
 		Filter:      &driverFilter,
-		Control:     control,
+		Control:     scope.control,
 		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
 		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
 	})
@@ -189,26 +246,18 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		return nil, err
 	}
 
-	summary, err := s.consoleRepo.GetBoardSummary(ctx, filter)
+	summary, err := s.consoleRepo.GetBoardSummary(ctx, scope.filter)
 	if err != nil {
 		return nil, err
 	}
 
-	decoratedMoves := decorateMoves(moves, now)
-	if err = s.attachLiveTenders(ctx, req.TenantInfo, decoratedMoves); err != nil {
-		s.l.Warn(
-			"failed to attach live tenders to the dispatch board; rendering without tender chips",
-			zap.Error(err),
-		)
-	}
-
 	return &Board{
-		Moves:       decoratedMoves,
-		Drivers:     decorateDrivers(snapshot, control, now),
+		Moves:       s.decorateBoardMoves(ctx, req.TenantInfo, moves, scope.now),
+		Drivers:     decorateDrivers(snapshot, scope.control, scope.now),
 		Summary:     summary,
-		WindowStart: windowStart,
-		WindowEnd:   windowEnd,
-		GeneratedAt: now,
+		WindowStart: scope.windowStart,
+		WindowEnd:   scope.windowEnd,
+		GeneratedAt: scope.now,
 	}, nil
 }
 

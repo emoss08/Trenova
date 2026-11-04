@@ -2,11 +2,16 @@ package shipmentboardservice
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardcache"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 )
@@ -133,6 +138,73 @@ func ZeroFilledStageSummary(
 }
 
 func (s *Service) QuickFilterCounts(
+	ctx context.Context,
+	req *shipmentboardports.ShipmentBoardScopeRequest,
+) ([]*shipmentboardports.ShipmentQuickFilterCount, error) {
+	if req == nil || req.Filter == nil {
+		return nil, errortypes.NewBusinessError("A shipment board scope is required")
+	}
+
+	variant, err := quickFilterCountsVariant(req)
+	if err != nil {
+		return nil, err
+	}
+
+	counts, err := shipmentboardcache.GetOrCompute(
+		ctx,
+		s.cache,
+		s.l,
+		&shipmentboardcache.Request{
+			Section:    shipmentboardports.ShipmentBoardSectionQuickFilterCounts,
+			TenantInfo: req.Filter.TenantInfo,
+			Timezone:   req.Timezone,
+			Variant:    variant,
+		},
+		func(ctx context.Context) (*[]*shipmentboardports.ShipmentQuickFilterCount, error) {
+			computed, computeErr := s.computeQuickFilterCounts(ctx, req)
+			if computeErr != nil {
+				return nil, computeErr
+			}
+			return &computed, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return *counts, nil
+}
+
+func quickFilterCountsVariant(
+	req *shipmentboardports.ShipmentBoardScopeRequest,
+) (string, error) {
+	raw, err := sonic.Marshal(struct {
+		Query            string
+		FieldFilters     []domaintypes.FieldFilter
+		FilterGroups     []domaintypes.FilterGroup
+		GeoFilters       []domaintypes.GeoFilter
+		AggregateFilters []domaintypes.AggregateFilter
+		QuickFilters     []quickfilter.QuickFilterSpec
+		Margins          bool
+	}{
+		Query:            req.Filter.Query,
+		FieldFilters:     req.Filter.FieldFilters,
+		FilterGroups:     req.Filter.FilterGroups,
+		GeoFilters:       req.Filter.GeoFilters,
+		AggregateFilters: req.Filter.AggregateFilters,
+		QuickFilters:     req.QuickFilters,
+		Margins:          req.Margins,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	sum := sha256.Sum256(raw)
+
+	return hex.EncodeToString(sum[:]), nil
+}
+
+func (s *Service) computeQuickFilterCounts(
 	ctx context.Context,
 	req *shipmentboardports.ShipmentBoardScopeRequest,
 ) ([]*shipmentboardports.ShipmentQuickFilterCount, error) {

@@ -13,7 +13,6 @@ import {
   getShipmentPreviousRatesGraphQL,
   getShipmentUIPolicyGraphQL,
   listShipmentCommentsGraphQL,
-  listShipmentsGraphQL,
   listUnassignedShipmentsGraphQL,
   previewShipmentContractRateGraphQL,
   recalculateShipmentDistanceGraphQL,
@@ -62,13 +61,6 @@ import type { ShipmentCommentListResponse } from "@/types/shipment-comment";
 const shipmentListSchema = createLimitOffsetResponse(shipmentSchema);
 
 export class ShipmentService {
-  public async list(_include?: string) {
-    const response = await listShipmentsGraphQL({
-      limit: 20,
-    });
-    return safeParse(shipmentListSchema, response, "Shipment");
-  }
-
   public async listUnassigned(req: { limit: number; after?: string | null }) {
     const response = await listUnassignedShipmentsGraphQL(req);
 

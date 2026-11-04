@@ -11,6 +11,13 @@ func shipmentLoads(opts *shipmentports.ShipmentOptions) []keel.Loader {
 	sp := shipmentdb.Shipments
 
 	switch {
+	case opts.BoardRows:
+		return []keel.Loader{
+			sp.Customer(),
+			commodityNames(),
+			sp.AdditionalCharges(),
+			movesForBoard(),
+		}
 	case opts.ExpandShipmentDetails:
 		return append(
 			[]keel.Loader{
@@ -82,6 +89,18 @@ func movesWithRoute() keel.Loader {
 		orderedStopsWithLocation(m.Stops()),
 		a.Where(a.ArchivedAt.IsNull()).Load(a.PrimaryWorker(), a.Tractor()),
 		ca.Where(ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled)),
+	)
+}
+
+func movesForBoard() keel.Loader {
+	m := shipmentdb.Shipments.Moves()
+	a := m.Assignment()
+	ca := m.CarrierAssignment()
+
+	return m.Order(m.Sequence.Asc()).LoadStrategy(keel.LoadPerLevel).Load(
+		orderedStopsWithLocation(m.Stops()),
+		a.Where(a.ArchivedAt.IsNull()).Load(a.Tractor(), a.PrimaryWorker()),
+		ca.Where(ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled)).Load(ca.Carrier()),
 	)
 }
 

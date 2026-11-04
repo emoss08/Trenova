@@ -31908,6 +31908,12 @@ input ShipmentsInput {
   Only Completed or Ready to Invoice shipments that are not in the billing queue.
   """
   billingTransferEligible: Boolean = false
+  """
+  Load what the shipment board's views draw and nothing else: the customer, commodity
+  names, charges, and each move's stops and coverage. Takes the place of
+  expandShipmentDetails, which reads far more than a row shows.
+  """
+  boardRows: Boolean = false
   """Only shipments with a live move tendered to one of these carriers."""
   carrierIds: [ID!]
   """

@@ -2,9 +2,11 @@ package shipmentboardservice
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -20,6 +22,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type stubBoardRepo struct {
@@ -126,6 +129,71 @@ func (s stubMaps) GetClientRuntimeConfig(
 	return &integrationservice.RuntimeConfig{Ready: s.ready}, nil
 }
 
+type Dependencies struct {
+	Repo          shipmentboardports.ShipmentBoardRepository
+	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
+	Nova          llmports.TaskRunner
+	Organizations tenantports.OrganizationRepository
+	Integrations  integrationports.IntegrationRepository
+	Maps          MapsReadiness
+	Cache         shipmentboardports.ShipmentBoardCache
+}
+
+func NewWithDependencies(d *Dependencies) *Service {
+	return &Service{
+		repo:          d.Repo,
+		quickFilters:  d.QuickFilters,
+		nova:          d.Nova,
+		organizations: d.Organizations,
+		integrations:  d.Integrations,
+		maps:          d.Maps,
+		cache:         d.Cache,
+		l:             zap.NewNop(),
+	}
+}
+
+type memoryBoardCache struct {
+	epoch   int64
+	entries map[string][]byte
+}
+
+func newMemoryBoardCache() *memoryBoardCache {
+	return &memoryBoardCache{entries: make(map[string][]byte)}
+}
+
+func memoryCacheKey(key *shipmentboardports.ShipmentBoardCacheKey) string {
+	return fmt.Sprintf("%s|%s|%d|%s", key.Section, key.Timezone, key.Epoch, key.Variant)
+}
+
+func (c *memoryBoardCache) Epoch(context.Context, pagination.TenantInfo) (int64, error) {
+	return c.epoch, nil
+}
+
+func (c *memoryBoardCache) Get(
+	_ context.Context,
+	key *shipmentboardports.ShipmentBoardCacheKey,
+	dest any,
+) (bool, error) {
+	raw, ok := c.entries[memoryCacheKey(key)]
+	if !ok {
+		return false, nil
+	}
+	return true, sonic.Unmarshal(raw, dest)
+}
+
+func (c *memoryBoardCache) Set(
+	_ context.Context,
+	key *shipmentboardports.ShipmentBoardCacheKey,
+	value any,
+) error {
+	raw, err := sonic.Marshal(value)
+	if err != nil {
+		return err
+	}
+	c.entries[memoryCacheKey(key)] = raw
+	return nil
+}
+
 func scopeRequest(
 	filters ...quickfilter.QuickFilterSpec,
 ) *shipmentboardports.ShipmentBoardScopeRequest {
@@ -222,6 +290,87 @@ func TestQuickFilterCountsCountsEveryCountableFilter(t *testing.T) {
 	assert.True(t, basis.last.Margin)
 	assert.True(t, basis.last.Detention)
 	assert.Len(t, repo.lastFilters, len(quickfilter.CountableQuickFilters()))
+}
+
+func TestQuickFilterCountsAreServedFromTheCacheForTheSameScope(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubBoardRepo{counts: map[quickfilter.QuickFilter]int{quickfilter.QuickFilterLate: 3}}
+	svc := NewWithDependencies(&Dependencies{
+		Repo:         repo,
+		QuickFilters: &stubBasis{},
+		Cache:        newMemoryBoardCache(),
+	})
+
+	first, err := svc.QuickFilterCounts(t.Context(), scopeRequest())
+	require.NoError(t, err)
+
+	repo.lastFilters = nil
+	second, err := svc.QuickFilterCounts(t.Context(), scopeRequest())
+	require.NoError(t, err)
+
+	assert.Nil(t, repo.lastFilters)
+	assert.Equal(t, first, second)
+}
+
+func TestQuickFilterCountsAreNotSharedAcrossScopes(t *testing.T) {
+	t.Parallel()
+
+	narrowed := scopeRequest()
+	narrowed.Filter.Query = "PRO-1"
+
+	cases := []struct {
+		name string
+		req  *shipmentboardports.ShipmentBoardScopeRequest
+	}{
+		{name: "a search", req: narrowed},
+		{name: "a reader without the margins group", req: scopeWithoutMargins()},
+		{name: "a quick filter", req: scopeRequest(quickfilter.Quick(quickfilter.QuickFilterLate))},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			repo := &stubBoardRepo{}
+			svc := NewWithDependencies(&Dependencies{
+				Repo:         repo,
+				QuickFilters: &stubBasis{},
+				Cache:        newMemoryBoardCache(),
+			})
+
+			_, err := svc.QuickFilterCounts(t.Context(), scopeRequest())
+			require.NoError(t, err)
+
+			repo.lastFilters = nil
+			_, err = svc.QuickFilterCounts(t.Context(), tc.req)
+			require.NoError(t, err)
+
+			assert.NotNil(t, repo.lastFilters)
+		})
+	}
+}
+
+func TestANewEpochRecountsTheQuickFilters(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubBoardRepo{}
+	cache := newMemoryBoardCache()
+	svc := NewWithDependencies(&Dependencies{
+		Repo:         repo,
+		QuickFilters: &stubBasis{},
+		Cache:        cache,
+	})
+
+	_, err := svc.QuickFilterCounts(t.Context(), scopeRequest())
+	require.NoError(t, err)
+
+	repo.lastFilters = nil
+	cache.epoch++
+	_, err = svc.QuickFilterCounts(t.Context(), scopeRequest())
+	require.NoError(t, err)
+
+	assert.NotNil(t, repo.lastFilters)
 }
 
 func TestALowMarginFilterIsRefusedWithoutTheMarginsGroup(t *testing.T) {

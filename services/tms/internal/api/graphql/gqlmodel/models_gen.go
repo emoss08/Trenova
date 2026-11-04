@@ -11585,8 +11585,12 @@ type ShipmentsInput struct {
 	// Only Completed or Ready to Invoice shipments that are not in the billing queue.
 	BillingTransferEligible *bool `json:"billingTransferEligible,omitempty"`
 	// Load each shipment's customer without expanding the rest of its details.
-	IncludeCustomer *bool                       `json:"includeCustomer,omitempty"`
-	QuickFilters    []*ShipmentQuickFilterInput `json:"quickFilters,omitempty"`
+	IncludeCustomer *bool `json:"includeCustomer,omitempty"`
+	// Load what the shipment board's views draw and nothing else: the customer, commodity
+	// names, charges, and each move's stops and coverage. Takes the place of
+	// expandShipmentDetails, which reads far more than a row shows.
+	BoardRows    *bool                       `json:"boardRows,omitempty"`
+	QuickFilters []*ShipmentQuickFilterInput `json:"quickFilters,omitempty"`
 	// IANA time zone for day and hour quick filters.
 	Timezone *string `json:"timezone,omitempty"`
 	// Only shipments with a live move assigned to one of these tractors.

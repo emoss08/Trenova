@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   ShipmentCommentsDocument,
-  ShipmentBoardTableDocument,
   ShipmentEventsDocument,
+  UnassignedShipmentsDocument,
 } from "@trenova/graphql/generated/graphql";
 import {
   listShipmentCommentsGraphQL,
   listShipmentEventsGraphQL,
-  listShipmentsGraphQL,
+  listUnassignedShipmentsGraphQL,
 } from "../graphql/shipment";
 
 const requestGraphQLMock = vi.hoisted(() => vi.fn());
@@ -17,9 +17,9 @@ vi.mock("@trenova/shared/lib/graphql", () => ({
 }));
 
 describe("shipment GraphQL helpers", () => {
-  it("maps shipment table requests to GraphQL variables and normalizes connections", async () => {
+  it("maps a shipment list request to GraphQL variables and normalizes the connection", async () => {
     requestGraphQLMock.mockResolvedValueOnce({
-      shipments: {
+      unassignedShipments: {
         edges: [{ node: { id: "shp_1", proNumber: "SHP-1" } }],
         pageInfo: {
           hasNextPage: true,
@@ -30,35 +30,12 @@ describe("shipment GraphQL helpers", () => {
       },
     });
 
-    const response = await listShipmentsGraphQL({
-      limit: 20,
-      after: "cursor-0",
-      query: "SHP",
-      fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
-      filterGroups: [
-        {
-          filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
-        },
-      ],
-    });
+    const response = await listUnassignedShipmentsGraphQL({ limit: 20, after: "cursor-0" });
 
     expect(requestGraphQLMock).toHaveBeenCalledWith({
-      document: ShipmentBoardTableDocument,
-      operationName: "ShipmentBoardTable",
-      variables: {
-        input: {
-          first: 20,
-          after: "cursor-0",
-          query: "SHP",
-          fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
-          filterGroups: [
-            {
-              filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
-            },
-          ],
-          expandShipmentDetails: true,
-        },
-      },
+      document: UnassignedShipmentsDocument,
+      operationName: "UnassignedShipments",
+      variables: { first: 20, after: "cursor-0" },
     });
     expect(response).toEqual({
       results: [{ id: "shp_1", proNumber: "SHP-1" }],
@@ -78,7 +55,7 @@ describe("shipment GraphQL helpers", () => {
 
   it("keeps a shipment total the server estimated marked as an estimate", async () => {
     requestGraphQLMock.mockResolvedValueOnce({
-      shipments: {
+      unassignedShipments: {
         edges: [{ node: { id: "shp_1", proNumber: "SHP-1" } }],
         pageInfo: { hasNextPage: true, endCursor: "cursor-1" },
         totalCount: 1_250_000,
@@ -86,7 +63,7 @@ describe("shipment GraphQL helpers", () => {
       },
     });
 
-    const response = await listShipmentsGraphQL({ limit: 20 });
+    const response = await listUnassignedShipmentsGraphQL({ limit: 20 });
 
     expect(response.count).toBe(1_250_000);
     expect(response.totalCountExact).toBe(false);

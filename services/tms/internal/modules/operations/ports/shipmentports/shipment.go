@@ -23,6 +23,7 @@ type ShipmentOptions struct {
 	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
 	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
 	IncludeCommodities      bool   `form:"-"                       json:"-"                       query:"-"`
+	BoardRows               bool   `form:"-"                       json:"-"                       query:"-"`
 
 	IDs              []pulid.ID                    `form:"-" json:"-" query:"-"`
 	Statuses         []shipmentvocab.Status        `form:"-" json:"-" query:"-"`

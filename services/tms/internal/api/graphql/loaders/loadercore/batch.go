@@ -15,7 +15,7 @@ import (
 
 const (
 	tracerName    = "trenova.graphql.loaders"
-	BatchWait     = time.Millisecond
+	BatchWait     = 8 * time.Millisecond
 	BatchCapacity = pagination.MaxLimit
 )
 

@@ -84,16 +84,6 @@ type ShipmentConnection = {
   totalCountExact?: boolean | null;
 };
 
-type ShipmentPageRequest = {
-  limit: number;
-  after?: string | null;
-  query?: string;
-  fieldFilters?: FieldFilterInput[];
-  filterGroups?: FilterGroupInput[];
-  activityWindowStart?: number;
-  activityWindowEnd?: number;
-};
-
 type ShipmentGraphQLParams<TVariables> = {
   document: GraphQLExecutableDocument;
   idempotencyKey?: string;
@@ -123,7 +113,7 @@ export function shipmentBoardTableGraphQLConfig({
     operationName: "ShipmentBoardTable",
     connectionKey: "shipments",
     inputExtraVariables: {
-      expandShipmentDetails: true,
+      boardRows: true,
       quickFilters,
       timezone,
     },
@@ -152,7 +142,7 @@ export function shipmentTimelineGraphQLConfig({
     operationName: "ShipmentTimeline",
     connectionKey: "shipments",
     inputExtraVariables: {
-      expandShipmentDetails: true,
+      boardRows: true,
       quickFilters,
       timezone,
       activityWindowStart: windowStart,
@@ -160,28 +150,6 @@ export function shipmentTimelineGraphQLConfig({
     },
     mapNode: (node) => node as unknown as Shipment,
   });
-}
-
-export async function listShipmentsGraphQL(
-  req: ShipmentPageRequest,
-): Promise<GenericLimitOffsetResponse<Shipment>> {
-  const data = await requestShipmentGraphQL({
-    document: ShipmentBoardTableDocument,
-    operationName: "ShipmentBoardTable",
-    variables: {
-      input: {
-        first: req.limit,
-        after: req.after ?? undefined,
-        query: req.query,
-        fieldFilters: req.fieldFilters ?? [],
-        filterGroups: req.filterGroups ?? [],
-        expandShipmentDetails: true,
-        activityWindowStart: req.activityWindowStart,
-        activityWindowEnd: req.activityWindowEnd,
-      },
-    },
-  });
-  return connectionToLimitOffset(data.shipments as ShipmentConnection);
 }
 
 export async function listUnassignedShipmentsGraphQL(req: {

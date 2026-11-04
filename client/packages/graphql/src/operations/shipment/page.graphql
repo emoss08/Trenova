@@ -697,11 +697,116 @@ fragment ShipmentEventFields on ShipmentEvent {
   }
 }
 
+# What the board's table draws, for rows the server loads with boardRows. A row is cast to
+# Shipment on the client, so the compiler cannot see a field missing here: add it when a
+# column, cell, row action or the expanded row starts reading one.
+fragment ShipmentBoardRowFields on Shipment {
+  id
+  customerId
+  ownerId
+  orderId
+  orderNumber
+  status
+  stage
+  tenderStatus
+  proNumber
+  bol
+  freightChargeAmount
+  totalChargeAmount
+  weight
+  billingTransferStatus
+  version
+  updatedAt
+  eta {
+    estimatedArrival
+    slackMinutes
+    verdict
+    reason
+  }
+  profitabilityEstimate {
+    shipmentId
+    totalMiles
+    costPerMile
+    estimatedCost
+    profit
+    marginPercent
+    targetMarginPercent
+  }
+  moves {
+    id
+    sequence
+    distance
+    coverageType
+    stops {
+      id
+      status
+      type
+      scheduleType
+      sequence
+      scheduledWindowStart
+      scheduledWindowEnd
+      actualArrival
+      actualDeparture
+      location {
+        id
+        name
+        code
+        city
+      }
+    }
+    assignment {
+      id
+      tractor {
+        ...ShipmentTractorFields
+      }
+      primaryWorker {
+        id
+        firstName
+        lastName
+      }
+    }
+    carrierAssignment {
+      id
+      status
+      externalDriverName
+      carrier {
+        id
+        name
+        scac
+      }
+    }
+  }
+  commodities {
+    id
+    commodity {
+      id
+      name
+    }
+  }
+  additionalCharges {
+    id
+    method
+    amount
+    unit
+    fuelSurchargeProgramId
+    fuelSurchargeDetail
+  }
+  customer {
+    id
+    name
+    ediPartner {
+      id
+      name
+      code
+    }
+  }
+}
+
 query ShipmentBoardTable($input: ShipmentsInput!, $includeTotalCount: Boolean = true) {
   shipments(input: $input) {
     edges {
       node {
-        ...ShipmentFields
+        ...ShipmentBoardRowFields
       }
     }
     totalCount @include(if: $includeTotalCount)

@@ -761,6 +761,7 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 			ActivityWindowEnd:       gqlscalar.Int64Value(input.ActivityWindowEnd),
 			BillingTransferEligible: gqlscalar.BoolValue(input.BillingTransferEligible),
 			IncludeCustomer:         gqlscalar.BoolValue(input.IncludeCustomer),
+			BoardRows:               gqlscalar.BoolValue(input.BoardRows),
 			QuickFilters:            quickFilters,
 			Timezone:                gqlscalar.StringValue(input.Timezone),
 		},

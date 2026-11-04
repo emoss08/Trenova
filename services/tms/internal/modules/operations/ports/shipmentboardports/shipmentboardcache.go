@@ -15,6 +15,8 @@ const ShipmentBoardSectionWatchlist = ShipmentBoardSection("watchlist")
 
 const ShipmentBoardSectionSuggestions = ShipmentBoardSection("suggestions")
 
+const ShipmentBoardSectionQuickFilterCounts = ShipmentBoardSection("quick-filter-counts")
+
 type ShipmentBoardCacheKey struct {
 	Section    ShipmentBoardSection
 	TenantInfo pagination.TenantInfo

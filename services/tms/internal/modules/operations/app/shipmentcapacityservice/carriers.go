@@ -107,7 +107,7 @@ func (s *Service) carrierCapacity(
 	if err != nil {
 		return nil, err
 	}
-	board, err := s.console.GetBoard(ctx, &dispatchconsoleservice.GetBoardRequest{
+	moves, err := s.console.GetBoardMoves(ctx, &dispatchconsoleservice.GetBoardRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -118,7 +118,7 @@ func (s *Service) carrierCapacity(
 		Posting:        len(facts.postings),
 		AvgRatePerMile: weightedRatePerMile(facts.performance),
 	}
-	for _, move := range board.Moves {
+	for _, move := range moves {
 		if move == nil || move.IsCovered {
 			continue
 		}
@@ -358,7 +358,7 @@ func (s *Service) carrierMatches(
 	if err != nil {
 		return nil, err
 	}
-	board, err := s.console.GetBoard(ctx, &dispatchconsoleservice.GetBoardRequest{
+	moves, err := s.console.GetBoardMoves(ctx, &dispatchconsoleservice.GetBoardRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -366,7 +366,7 @@ func (s *Service) carrierMatches(
 	}
 
 	return rankCarrierMatches(
-		board.Moves,
+		moves,
 		facts.postings[carrierID],
 		facts.performance[carrierID],
 		limit,

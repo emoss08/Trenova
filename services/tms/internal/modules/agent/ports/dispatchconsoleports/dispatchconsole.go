@@ -84,6 +84,10 @@ type DispatchConsoleService interface {
 		ctx context.Context,
 		req *dispatchconsoleservice.GetBoardRequest,
 	) (*dispatchconsoleservice.Board, error)
+	GetBoardMoves(
+		ctx context.Context,
+		req *dispatchconsoleservice.GetBoardRequest,
+	) ([]*dispatchconsoleservice.BoardMove, error)
 	GetMoveCandidates(
 		ctx context.Context,
 		req *dispatchconsoleservice.MoveCandidatesRequest,

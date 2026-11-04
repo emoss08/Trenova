@@ -29522,6 +29522,12 @@ input ShipmentsInput {
   billingTransferEligible: Boolean = false
   "Load each shipment's customer without expanding the rest of its details."
   includeCustomer: Boolean = false
+  """
+  Load what the shipment board's views draw and nothing else: the customer, commodity
+  names, charges, and each move's stops and coverage. Takes the place of
+  expandShipmentDetails, which reads far more than a row shows.
+  """
+  boardRows: Boolean = false
   quickFilters: [ShipmentQuickFilterInput!]
   "IANA time zone for day and hour quick filters."
   timezone: String

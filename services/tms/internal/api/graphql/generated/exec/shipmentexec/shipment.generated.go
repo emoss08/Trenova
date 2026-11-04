@@ -13219,8 +13219,11 @@ func unmarshalInputShipmentsInput(ctx context.Context, ec *gqlexec.Exec, obj any
 	if _, present := asMap["includeCustomer"]; !present {
 		asMap["includeCustomer"] = false
 	}
+	if _, present := asMap["boardRows"]; !present {
+		asMap["boardRows"] = false
+	}
 
-	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "expandShipmentDetails", "status", "activityWindowStart", "activityWindowEnd", "billingTransferEligible", "includeCustomer", "quickFilters", "timezone", "tractorIds", "trailerIds", "workerIds", "stopLocationIds", "carrierIds", "invoiceIds", "driverSettlementIds", "carrierSettlementIds"}
+	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "expandShipmentDetails", "status", "activityWindowStart", "activityWindowEnd", "billingTransferEligible", "includeCustomer", "boardRows", "quickFilters", "timezone", "tractorIds", "trailerIds", "workerIds", "stopLocationIds", "carrierIds", "invoiceIds", "driverSettlementIds", "carrierSettlementIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13311,6 +13314,13 @@ func unmarshalInputShipmentsInput(ctx context.Context, ec *gqlexec.Exec, obj any
 				return it, err
 			}
 			it.IncludeCustomer = data
+		case "boardRows":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardRows"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardRows = data
 		case "quickFilters":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("quickFilters"))
 			data, err := unmarshalOShipmentQuickFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentQuickFilterInputᚄ(ctx, ec, v)
