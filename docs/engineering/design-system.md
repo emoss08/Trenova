@@ -740,6 +740,11 @@ All of them sit on a 24px grid with a 2px round-capped stroke in
 `currentColor`. Size an icon with a class (`size-4`) and colour it with a text
 token; `strokeWidth` and `size` still work for the rare icon that needs them.
 
+An icon means one thing. An invoice, invoicing and the Billing module wear
+`InvoiceIcon`, a flat-footed sheet with the amount owed. `ReceiptIcon`'s torn foot
+says something was paid, so it marks payments, expenses and charges, never an
+invoice; `ReceiptTextIcon` marks rates, pay and statements.
+
 When Untitled has no icon for something, draw one rather than borrowing it from
 another library, whose stroke and corners will not match. The custom set is drawn
 in `packages/shared/scripts/icons/draw_custom_icons.py`, which builds its corners

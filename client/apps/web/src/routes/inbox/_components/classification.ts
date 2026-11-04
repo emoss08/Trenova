@@ -8,9 +8,9 @@ import {
   FileEditIcon,
   HelpCircleIcon,
   type IconComponent,
+  InvoiceIcon,
   PackagePlusIcon,
   RadarIcon,
-  ReceiptTextIcon,
 } from "@trenova/shared/components/icons";
 
 /** Every kind a message can be read as, in the order the server lists them. */
@@ -30,7 +30,7 @@ export const CLASSIFICATION_ICON: Record<InboundClassification, IconComponent> =
   Tender: PackagePlusIcon,
   RateConfirmation: FileEditIcon,
   ProofOfDelivery: FileCheck02Icon,
-  Invoice: ReceiptTextIcon,
+  Invoice: InvoiceIcon,
   StatusRequest: RadarIcon,
   DetentionDispute: ClockAlertIcon,
   FactorRemittance: CoinsHandIcon,

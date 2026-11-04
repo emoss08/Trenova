@@ -3,7 +3,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   Building03Icon,
   File06Icon,
-  ReceiptIcon,
+  InvoiceIcon,
   Truck01Icon,
   User01Icon,
 } from "@trenova/shared/components/icons";
@@ -24,7 +24,7 @@ export const PALETTE_ENTITY_ICONS = {
   customer: Building03Icon,
   worker: User01Icon,
   document: File06Icon,
-  invoice: ReceiptIcon,
+  invoice: InvoiceIcon,
 } as const satisfies Record<GlobalSearchEntityType, PaletteIcon> &
   Partial<Record<RecordKind, PaletteIcon>>;
 

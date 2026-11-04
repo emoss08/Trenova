@@ -5,7 +5,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import {
   File07Icon,
   type IconComponent,
-  ReceiptTextIcon,
+  InvoiceIcon,
   ShieldTickIcon,
   Tool01Icon,
   Truck01Icon,
@@ -21,7 +21,7 @@ type CategoryChrome = {
 const CATEGORY_CHROME: Record<string, CategoryChrome> = {
   operations: { icon: Truck01Icon, tile: "bg-info-subtle text-info-foreground" },
   billing: {
-    icon: ReceiptTextIcon,
+    icon: InvoiceIcon,
     tile: "bg-success-subtle text-success-foreground",
   },
   compliance: { icon: ShieldTickIcon, tile: "bg-warning-subtle text-warning-foreground" },

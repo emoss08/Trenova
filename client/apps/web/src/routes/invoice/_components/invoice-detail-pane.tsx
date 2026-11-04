@@ -50,9 +50,9 @@ import {
   Download01Icon,
   Edit05Icon,
   File06Icon,
+  InvoiceIcon,
   Mail01Icon,
   PackageCheckIcon,
-  ReceiptTextIcon,
   Send01Icon,
 } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
@@ -307,7 +307,7 @@ export default function InvoiceDetailPane({
                             billedShipmentCount,
                           )
                     }
-                    icons={[File06Icon, ReceiptTextIcon, PackageCheckIcon]}
+                    icons={[File06Icon, InvoiceIcon, PackageCheckIcon]}
                     className="max-w-xl border-none p-8 shadow-none"
                   />
                 </div>

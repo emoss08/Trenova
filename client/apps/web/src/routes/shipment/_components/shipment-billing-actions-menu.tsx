@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import { ChevronDownIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
+import { ChevronDownIcon, InvoiceIcon } from "@trenova/shared/components/icons";
 
 export function ShipmentBillingActionsMenu({ shipment }: { shipment: Shipment }) {
   const t = useT();
@@ -36,7 +36,7 @@ export function ShipmentBillingActionsMenu({ shipment }: { shipment: Shipment })
           />
         }
       >
-        <ReceiptTextIcon className="size-4" />
+        <InvoiceIcon className="size-4" />
         {t("Billing")}
         <ChevronDownIcon className="size-3.5" />
       </DropdownMenuTrigger>

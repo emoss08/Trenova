@@ -21,7 +21,7 @@ import {
   CheckCircleIcon,
   CurrencyDollarCircleIcon,
   InfoCircleIcon,
-  ReceiptIcon,
+  InvoiceIcon,
   RefreshCcw01Icon,
   RefreshCw02Icon,
   ShieldAlertIcon,
@@ -383,7 +383,7 @@ export function InvoiceAdjustmentPreviewPanel({
   if (!preview) {
     return (
       <div className="border-border flex flex-col items-center justify-center rounded-lg border border-dashed py-8">
-        <ReceiptIcon className="text-muted-foreground/30 mb-2 size-5" />
+        <InvoiceIcon className="text-muted-foreground/30 mb-2 size-5" />
         <p className="text-muted-foreground/60 text-xs">
           {t("Click Preview to see the adjustment summary")}
         </p>

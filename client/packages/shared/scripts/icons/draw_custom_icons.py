@@ -101,6 +101,16 @@ def arc(cx, cy, r, a0, a1):
     return f"M{P(p0)} A{f(r)} {f(r)} 0 {large} 1 {P(p1)}"
 
 
+def dollar(cx, cy, s, over):
+    """Untitled's CurrencyDollar scaled by s about (cx, cy); over is how far the stem passes the S."""
+    k = lambda v: f(v * s)
+    return (
+        f"M{f(cx - 6 * s)} {f(cy + 4 * s)}a{k(4)} {k(4)} 0 0 0 {k(4)} {k(4)}h{k(4)}a{k(4)} {k(4)} 0 0 0 0-{k(8)}"
+        f"h-{k(4)}a{k(4)} {k(4)} 0 0 1 0-{k(8)}h{k(4)}a{k(4)} {k(4)} 0 0 1 {k(4)} {k(4)}"
+        f"m-{k(6)}-{f(4 * s + over)}v{f(16 * s + 2 * over)}"
+    )
+
+
 def u(name):
     return " ".join(p["d"] for p in U[name])
 
@@ -293,6 +303,9 @@ C["GitCompareArrows"] = paths(
     "m9 15 3 3-3 3",
 )
 C["ReceiptText"] = paths(u("Receipt"), "M8 8h8M8 11.5h8M8 15h5")
+# An invoice asks for payment, so it stands on a flat foot where a receipt is torn: the
+# amount owed above one rule for the total.
+C["Invoice"] = paths(rect(4, 2, 20, 22, 4.8), dollar(12, 9.5, 0.45, 1), "M8 18h8")
 C["Handshake"] = paths(
     "M2 12.5 5.5 6.5l3.2 1.3",
     "M22 12.5 18.5 6.5l-3.8 1.4",

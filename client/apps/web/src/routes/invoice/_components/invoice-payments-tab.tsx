@@ -29,7 +29,7 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { CoinsHandIcon, ReceiptTextIcon } from "@trenova/shared/components/icons";
+import { CoinsHandIcon, InvoiceIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Link } from "react-router";
 import { ApplyCreditMemoDialog } from "./apply-credit-memo-dialog";
@@ -129,7 +129,7 @@ export function InvoicePaymentsTab({
           <div className="flex items-center gap-2">
             {canApplyCredit ? (
               <Button size="sm" variant="outline" onClick={() => setApplyOpen(true)}>
-                <ReceiptTextIcon className="size-3.5" />
+                <InvoiceIcon className="size-3.5" />
                 {t("Apply to invoices")}
               </Button>
             ) : null}
