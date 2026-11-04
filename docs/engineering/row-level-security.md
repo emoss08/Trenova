@@ -37,7 +37,7 @@ PostgreSQL ──▶ policy: (organization_id, business_unit_id)
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
 | Temporal binding | `internal/infrastructure/temporaljobs/interceptors/tenantscope.go` |
-| Guards | `schemalint/rls_integration_test.go`, `rlslint` (`TestEverySystemScopeIsReviewed`; repository methods run in a scoped transaction), `postgres/rls_integration_test.go` |
+| Guards | `schemalint/rls_integration_test.go`, `rlslint` (`TestEverySystemScopeIsReviewed`; repository methods run in a scoped transaction), `postgres/rls_integration_test.go`, `postgres/rls_scope_integration_test.go` (every refusal's SQLSTATE and message, re-verification on every change and transaction, key retirement, every mutation of a signed token, JIT off on every pool and on the provisioned login roles) |
 
 ## Roles
 
@@ -137,8 +137,9 @@ Any other shape (nullable tenant, two parties, owned through a parent) calls
 `trenova_rls.apply_policy('public.t', '<read expr>', '<write expr>')` with
 expressions that consult `trenova_rls.tenant()`, `org_id()`, `bu_id()` or `user_id()`. Each
 `(SELECT …)` over one of them is an InitPlan that verifies the signed scope once per table per
-statement, about 60 µs each: compare a row with `(SELECT t.org_id, t.bu_id FROM
-trenova_rls.tenant() AS t)` rather than writing two subqueries, as `standard_expr()` does. A table
+statement when the statement first needs it, about 30 µs each ([What the scope costs](#what-the-scope-costs)):
+compare a row with `(SELECT t.org_id, t.bu_id FROM trenova_rls.tenant() AS t)` rather than
+writing two subqueries, as `standard_expr()` does. A table
 with no tenant data is added to `trenova_rls.global_tables` with its reason. A table
 the application may only read and append to (an audit log) is added to
 `trenova_rls.append_only_tables`, and `reconcile()` keeps `UPDATE` and `DELETE`
@@ -232,6 +233,50 @@ deny, make sure the scope is the tenant the question is about.
   the same scope (any two system scopes count as the same). Switching tenant
   inside a transaction opens a second transaction on another connection, so do not
   do it for writes that must commit together.
+
+## What the scope costs
+
+Measured on PostgreSQL 18 with the development data set (November 2026):
+
+| Part of one `trenova_rls.claims()` call | µs |
+|---|---|
+| reading the key's pads from `trenova_rls.scope_keys` (one SPI query) | ~20 |
+| splitting the token, two `sha256()` and the hex compare | ~4 |
+| `SECURITY DEFINER` with `SET search_path` | ~0.2 |
+| the whole call, through `tenant()` or `org_id()` | ~30–35 |
+
+An InitPlan runs only when its statement first needs its value, so a plan's InitPlan count
+overstates the calls: detention intelligence's recovery read shows 18 InitPlans and calls
+`claims()` 4 times, a five-table join 6 times, about 0.1–0.2 ms a statement. Nothing caches a
+verification between InitPlans or statements, and nothing in SQL can: any setting or table a
+session can write could hold a forged result. A per-transaction cache in backend memory needs a
+Postgres extension, which the numbers do not justify yet
+([R4](../notes/rust/opportunities.md#r4-the-row-level-security-check-as-a-pgrx-extension)). Keep
+`SET search_path` on `claims()`: it costs nothing measurable and is what makes a
+`SECURITY DEFINER` function safe to call from any session.
+
+**JIT is off on every pool.** The real cost of row-level security was compilation, not the
+check. Policy subplans (a read-scope `EXISTS` and the policies of the tables it reads) make the
+planner's estimate enormous: a query that runs in 70 ms was estimated at 1.58 million, past every
+JIT threshold, and LLVM compiled 495 functions for 5.4 s before the first row. The tenant, system
+and reporting pools send `jit = off` as a connection parameter (`sessionParams` in
+`connection.go`), and `trenova db rls provision-roles` sets it on the application and system login
+roles (`ALTER ROLE … SET jit = off`), so it holds through a PgBouncer that drops startup
+parameters. Both work on managed Postgres. A deployment provisioned before this re-runs
+`provision-roles`.
+
+| Query | as `trenova_tenant`, JIT on | as `trenova_tenant`, JIT off | superuser, JIT off |
+|---|---|---|---|
+| recovery read with three `EXISTS` over `invoice_lines` and `invoices` | 4,624 ms | 69 ms | 47 ms |
+| recovery read as it ships (one CTE over invoices) | 38 ms | 36 ms | 40 ms |
+| five-table join (shipments, moves, stops, customers, locations) | 14 ms | 13 ms | 11 ms |
+
+**Measuring a query under the policies.** In one transaction as a superuser: sign a token from the
+stored pads (`m || '.' || encode(sha256(outer_pad || sha256(inner_pad || convert_to(m, 'UTF8'))),
+'hex')` with `m = 'v1.<key_id>.<org>.<bu>.-.<expires>'`), `SELECT set_config('trenova.scope',
+token, true)`, `SET LOCAL jit = off`, `SET LOCAL ROLE trenova_tenant`, then `EXPLAIN (ANALYZE,
+BUFFERS)` with costs on (`COSTS OFF` hides the JIT section). With `SET track_functions = 'pl'`
+beforehand, `pg_stat_xact_user_functions` counts the `claims()` calls before the transaction ends.
 
 ## Verifying a deployment
 

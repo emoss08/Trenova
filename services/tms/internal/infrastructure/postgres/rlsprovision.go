@@ -195,6 +195,10 @@ func provisionLoginRole(
 		verb, name, loginRoleAttributes, verifier); err != nil {
 		return err
 	}
+	if err = execFormatted(ctx, db, "SELECT format('ALTER ROLE %I SET jit = off', $1::text)",
+		name); err != nil {
+		return err
+	}
 
 	excludedMember, err := keel.QueryValue[bool](ctx, db,
 		"SELECT pg_has_role($1, $2, 'MEMBER')", name, excluded)

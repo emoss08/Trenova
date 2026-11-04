@@ -174,6 +174,7 @@ func sessionParams(statement, lock, idleInTx time.Duration) map[string]string {
 		"statement_timeout":                   milliseconds(statement),
 		"lock_timeout":                        milliseconds(lock),
 		"idle_in_transaction_session_timeout": milliseconds(idleInTx),
+		"jit":                                 "off",
 	}
 }
 

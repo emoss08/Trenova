@@ -334,6 +334,7 @@ security scoped.
 | Concern | Where it lives |
 |---|---|
 | Session timeouts (`statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`) | pgx runtime parameters, from `database.*Timeout` (`connection.go`, `sessionParams`) |
+| JIT off | `jit = off` is a pgx runtime parameter on every tenant, system and reporting pool (`sessionParams`) and a setting on the provisioned login roles (`provisionLoginRole`, for connections through PgBouncer): row-level security policy subplans inflate a plan's estimated cost far past `jit_above_cost`, and compiling them took seconds on queries that run in tens of milliseconds ([row-level-security.md](../row-level-security.md#what-the-scope-costs)) |
 | `application_name`, `connect_timeout`, `sslmode` | the DSN (`databaseconfig.Config.DSN`) |
 | Pool size and lifetimes | `maxOpenConns`, `connMaxLifetime`, `connMaxIdleTime` (and `database.system.maxOpenConns`) |
 | Enum types | keel registers every enum and its array type on each new connection with one catalog query |

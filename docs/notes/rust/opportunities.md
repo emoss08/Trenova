@@ -206,36 +206,40 @@ this way first is the right move whether or not the crate follows.
 
 ### R4. The row-level security check as a pgrx extension
 
-**Today.** `trenova_rls.claims()` (`internal/infrastructure/postgres/migrations/20261231007040_row_level_security.tx.up.sql:79-125`)
-is PL/pgSQL, `SECURITY DEFINER`, with `SET search_path`. Each call:
+**Measured (November 2026, PostgreSQL 18).** `trenova_rls.claims()` costs about 30 µs a call:
+about 20 µs reading the key's pads from `trenova_rls.scope_keys` (an SPI query), 4 µs parsing and
+two `sha256()` calls, and 0.2 µs for `SECURITY DEFINER` with `SET search_path`. InitPlans run
+lazily, so a statement calls it once per policed table it actually reads: 4 calls for detention
+intelligence's recovery read, 6 for a five-table join, about 0.1–0.2 ms a statement.
 
-- parses the `trenova.scope` setting with `string_to_array`
-- looks up the signing key in `trenova_rls.scope_keys` (an SPI query)
-- rebuilds HMAC-SHA256 by hand from two `sha256()` calls, hex-encodes it and compares it as text
-- checks expiry with a regex
+The slowdown that looked like this check was JIT. A query that read `invoices` three times through
+correlated `EXISTS` took 4.6 s as `trenova_tenant` and 0.1 s as the superuser while calling
+`claims()` 7 times: the policies' subplans pushed the estimate to 1.58 million, and LLVM compiled
+495 functions for 5.4 s. Every pool now sends `jit = off` and `provision-roles` sets it on the
+login roles; the same query takes 69 ms against the
+superuser's 47 ms. Figures and the measuring recipe are in
+[row-level-security.md](../../engineering/row-level-security.md#what-the-scope-costs).
 
-`org_id()`, `bu_id()` and `user_id()` each call it again. Every policy wraps them as
-`(SELECT trenova_rls.org_id())`, so they run once per statement per occurrence, not per row. But
-nothing caches the result: the standard policy (`standard_expr`, lines 256-267) verifies twice per
-table reference, read-scope policies add more, and policies that reference other tables pull in theirs.
-A five-table join verifies the same token about ten times, and nothing is reused across
-statements. Estimated at 10–30 µs per call
-(unmeasured), that adds roughly 0.1–0.4 ms to a typical statement.
+**SQL options, measured and rejected.** Dropping `SET search_path` saves 0.2 µs and removes the
+guard that makes a `SECURITY DEFINER` function safe. The standard policy already reads org and
+business unit from one `tenant()` InitPlan (migration `20261231021600`); making `tenant()`
+PL/pgSQL instead of a SQL wrapper saves 2–4 µs, inside the noise. A `BEGIN ATOMIC` SQL `claims()`
+is slower (about 45 µs). The 20 µs key read cannot be cached in SQL: every setting or table a
+session can write could hold a forged result.
 
-**With Rust.** A pgrx `claims()` that verifies once per transaction (keyed by the token and the local
-transaction id), keeps key pads in backend memory with invalidation, and skips SPI and the GUC
-save/restore. Later calls take well under a microsecond. The cache lives in process memory, not in a
-setting, so it cannot be forged.
+**With Rust.** A pgrx `claims()` that verifies once per transaction (keyed by the token and the
+local transaction id), keeps key pads in backend memory invalidated by a relcache callback on
+`scope_keys`, and skips SPI, would take each later check well under a microsecond, saving the
+0.1–0.2 ms a statement above.
 
-**Costs.** Managed Postgres is ruled out. The tenant boundary would run in native code, so the
-extension needs careful review and fuzzing.
+**Costs.** Managed Postgres is ruled out. The tenant boundary would run in native code, so it
+needs security review, fuzzing of the token parser, and tests that a cached verification never
+outlives its transaction or a change of `trenova.scope`
+(`postgres/rls_scope_integration_test.go` already pins today's refusals for it to keep).
 
-**Try in SQL first.**
-
-1. Measure with `track_functions = 'pl'` and `EXPLAIN ANALYZE`.
-2. Fully qualify names and drop `SET search_path`, likely the largest overhead.
-3. Return org and business unit from one row-returning function, so one InitPlan serves both columns.
-   Confirm it is still indexable.
+**Decision: not now.** Revisit when per-statement overhead under the policies, measured as above
+with JIT off, is a material share of hot-path latency, for example an OLTP read under 1 ms where
+0.2 ms of checks is a fifth of it.
 
 **Related, possibly larger, not a Rust issue.** No operator in the repo is `LEAKPROOF`. Under row-level
 security, a user condition that is not leakproof usually cannot become an index condition. The query
@@ -361,7 +365,7 @@ only if it shows up in a profile.
 | R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar (done) | Large | Binary encryption envelope; page cache |
 | R2 | Capture companion uploads results | Server CPU per scanned page | Existing desktop crate | Small | Shared JSON fixtures; CI path filter |
 | R3 | Shared calculation crate | One answer in browser and server; hard timeouts | Browser WASM plus wazero | Large | Fix TS rounding with shared fixtures first |
-| R4 | pgrx `claims()` | Per-statement overhead under RLS | Postgres extension | Medium | Measure; SQL fixes |
+| R4 | pgrx `claims()` | Per-statement overhead under RLS (measured: 0.1–0.2 ms) | Postgres extension | Medium | Done: JIT off; SQL fixes measured and rejected |
 | R5 | `pg_search` | Search under RLS, one fewer service | Postgres extension | Medium | — |
 | R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM (reading done) | Medium | — |
 | R7 | Local code-mode sandbox | No vendor, lower latency | wazero (done) | Medium | — |

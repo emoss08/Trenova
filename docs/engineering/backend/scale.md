@@ -92,4 +92,8 @@ fails it, fix it in the same change if it is small, or name it in your report.
   `llmports.BatchCompletionService` at the provider's batch discount, falling back to one
   call at a time on `ErrBatchUnsupported`.
 - Measure before and after when a change targets performance (`EXPLAIN (ANALYZE, BUFFERS)` on
-  the query, a benchmark for a hot function) and put the numbers in the PR.
+  the query, a benchmark for a hot function) and put the numbers in the PR. Explain a tenant
+  query as the application sees it: in one transaction, set a signed `trenova.scope`, `SET LOCAL
+  ROLE trenova_tenant` and `SET LOCAL jit = off` (as the pools do), and keep costs on, since
+  `COSTS OFF` hides the JIT section. A superuser plan skips every policy and is not the plan
+  production runs ([row-level-security.md](../row-level-security.md#what-the-scope-costs)).
