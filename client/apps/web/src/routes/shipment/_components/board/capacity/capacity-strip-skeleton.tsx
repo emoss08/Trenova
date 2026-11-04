@@ -15,7 +15,7 @@ const LEGEND_WIDTHS = ["w-12", "w-16", "w-12"] as const;
 export function CapacitySummarySkeleton() {
   return (
     <div className="contents" aria-hidden>
-      <div className="flex items-baseline gap-2 text-3xl">
+      <div className="flex min-h-11.25 items-baseline gap-2 text-3xl">
         <Skeleton className="inline-block h-6 w-10 align-middle" />
         <Skeleton className="h-3 w-32" />
       </div>

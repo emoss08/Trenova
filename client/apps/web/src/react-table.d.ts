@@ -19,6 +19,8 @@ declare module "@tanstack/react-table" {
   > {
     headerClassName?: string;
     cellClassName?: string;
+    /** This column's cell while its row loads; a plain bar when left out. */
+    skeleton?: React.ReactNode;
     label?: string;
     apiField?: string;
     filterable?: boolean;

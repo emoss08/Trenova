@@ -138,7 +138,9 @@ type BuildGroupedBodyParams<TRow> = {
  * are held open as `pending` items: under a group that has just opened, as
  * many as the group has and the page has room for, and at the foot of a page
  * that is not the last, as many as a just-collapsed group gave up, since the
- * next groups' rows move up to fill them.
+ * next groups' rows move up to fill them. When the page ended inside the group
+ * that collapsed, those rows are the next open group's, so its header stands
+ * above them at once.
  */
 export function buildGroupedBody<TRow>({
   rows,
@@ -216,12 +218,33 @@ export function buildGroupedBody<TRow>({
     shownRows += 1;
   });
 
+  const backfilling = !isLastPage && foldedRows > 0;
+  const lastRow = rows.at(-1);
+  const lastKey = lastRow === undefined ? undefined : getGroupKey(lastRow);
+  const nextOpen =
+    backfilling && lastKey !== undefined && collapsed.has(lastKey)
+      ? groups.find(
+          (group) =>
+            orderOf(group.key) > orderOf(lastKey) &&
+            !collapsed.has(group.key) &&
+            !loading.has(group.key) &&
+            (group.count ?? 1) > 0,
+        )
+      : undefined;
+
+  if (nextOpen) {
+    if (seenRow || isFirstPage) {
+      emitCollapsedBefore(orderOf(nextOpen.key));
+    }
+    items.push({ kind: "group", group: nextOpen, collapsed: false });
+    items.push({ kind: "pending", key: "backfill", count: foldedRows });
+  }
   if (isLastPage || !seenRow) {
     if (seenRow || isFirstPage) {
       emitCollapsedBefore(Number.POSITIVE_INFINITY);
     }
   }
-  if (!isLastPage && foldedRows > 0) {
+  if (backfilling && !nextOpen) {
     items.push({ kind: "pending", key: "backfill", count: foldedRows });
   }
 

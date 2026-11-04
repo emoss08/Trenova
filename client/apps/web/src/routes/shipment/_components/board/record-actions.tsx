@@ -1,13 +1,15 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatFileSize } from "@/components/documents/document-upload-zone";
 import type { RejectedFile } from "@/lib/document-upload-files";
-import { UploadPanel } from "@/components/documents/upload-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useGuardedRowActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { apiService } from "@/services/api";
+import { useOpenedOnce } from "@/hooks/use-opened-once";
+import { lazyComponent } from "@/lib/lazy-component";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { PanelMode, Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -18,12 +20,7 @@ import { recordPath } from "@/config/record-links";
 import { createContext, use, useCallback, useMemo, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { buildShipmentRowActions } from "./row-actions";
-import { ShipmentCancelDialog } from "../shipment-cancel-dialog";
-import { ShipmentDuplicateDialog } from "../shipment-duplicate-dialog";
-import { ShipmentSendEDIDialog } from "../shipment-send-edi-dialog";
-import { ShipmentPanel } from "../shipment-panel";
 import { shipmentPanelDetailQuery } from "../shipment-queries";
-import { ShipmentTransferOwnershipDialog } from "../shipment-transfer-ownership-dialog";
 import { useOpenShipmentRecord } from "./use-open-shipment-record";
 
 export type ShipmentDocumentUploadContext = {
@@ -39,6 +36,48 @@ type ShipmentRecordActions = {
   uploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
   addComment: (shipment: Shipment) => void;
 };
+
+const shipmentPanel = lazyComponent(
+  () => import("../shipment-panel"),
+  (module) => module.ShipmentPanel,
+);
+const uploadPanel = lazyComponent(
+  () => import("@/components/documents/upload-panel"),
+  (module) => module.UploadPanel,
+);
+const duplicateDialog = lazyComponent(
+  () => import("../shipment-duplicate-dialog"),
+  (module) => module.ShipmentDuplicateDialog,
+);
+const cancelDialog = lazyComponent(
+  () => import("../shipment-cancel-dialog"),
+  (module) => module.ShipmentCancelDialog,
+);
+const transferOwnershipDialog = lazyComponent(
+  () => import("../shipment-transfer-ownership-dialog"),
+  (module) => module.ShipmentTransferOwnershipDialog,
+);
+const sendEDIDialog = lazyComponent(
+  () => import("../shipment-send-edi-dialog"),
+  (module) => module.ShipmentSendEDIDialog,
+);
+
+/** For a link that opens on the panel, which should not wait for the page to go idle. */
+export const preloadShipmentPanel = shipmentPanel.preload;
+
+/** None of these is on screen at first, but the first click on one should not wait on it. */
+export function preloadRecordActions() {
+  for (const part of [
+    shipmentPanel,
+    uploadPanel,
+    duplicateDialog,
+    cancelDialog,
+    transferOwnershipDialog,
+    sendEDIDialog,
+  ]) {
+    void part.preload();
+  }
+}
 
 const RecordActionsContext = createContext<ShipmentRecordActions | null>(null);
 
@@ -98,6 +137,8 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
   const uploadBillingReadinessQuery = shipmentQueries.billingReadiness(uploadShipmentId);
 
   const isPanelOpen = panelType === "edit" || panelType === "create";
+  const panelOpened = useOpenedOnce(isPanelOpen);
+  const uploadOpened = useOpenedOnce(isUploadOpen);
 
   const { data: panelRow } = useQuery({
     ...shipmentPanelDetailQuery(panelEntityId ?? ""),
@@ -341,56 +382,72 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
   return (
     <RecordActionsContext value={value}>
       {children}
-      <ShipmentPanel
-        open={isPanelOpen}
-        onOpenChange={handlePanelOpenChange}
-        mode={panelMode}
-        row={panelMode === "edit" ? (panelRow ?? null) : null}
-      />
-      <UploadPanel
-        isOpen={isUploadOpen}
-        onClose={handleUploadClose}
-        uploads={uploads}
-        onFilesSelected={handleFilesSelected}
-        onFilesRejected={handleFilesRejected}
-        onCancel={cancelUpload}
-        onRetry={retryUpload}
-        onRemove={removeUpload}
-        onClearCompleted={clearCompleted}
-        disabled={!uploadShipmentId}
-        description={
-          uploadDocumentType
-            ? t("This upload will be classified as {0}.", uploadDocumentType.documentTypeName)
-            : undefined
-        }
-      />
+      {panelOpened ? (
+        <LazyComponent fallback={null}>
+          <shipmentPanel.Component
+            open={isPanelOpen}
+            onOpenChange={handlePanelOpenChange}
+            mode={panelMode}
+            row={panelMode === "edit" ? (panelRow ?? null) : null}
+          />
+        </LazyComponent>
+      ) : null}
+      {uploadOpened ? (
+        <LazyComponent fallback={null}>
+          <uploadPanel.Component
+            isOpen={isUploadOpen}
+            onClose={handleUploadClose}
+            uploads={uploads}
+            onFilesSelected={handleFilesSelected}
+            onFilesRejected={handleFilesRejected}
+            onCancel={cancelUpload}
+            onRetry={retryUpload}
+            onRemove={removeUpload}
+            onClearCompleted={clearCompleted}
+            disabled={!uploadShipmentId}
+            description={
+              uploadDocumentType
+                ? t("This upload will be classified as {0}.", uploadDocumentType.documentTypeName)
+                : undefined
+            }
+          />
+        </LazyComponent>
+      ) : null}
       {duplicateShipmentId && (
-        <ShipmentDuplicateDialog
-          open={!!duplicateShipmentId}
-          onOpenChange={handleDuplicateOpenChange}
-          shipmentId={duplicateShipmentId}
-        />
+        <LazyComponent fallback={null}>
+          <duplicateDialog.Component
+            open={!!duplicateShipmentId}
+            onOpenChange={handleDuplicateOpenChange}
+            shipmentId={duplicateShipmentId}
+          />
+        </LazyComponent>
       )}
       {cancelShipmentId && (
-        <ShipmentCancelDialog
-          open={!!cancelShipmentId}
-          onOpenChange={handleCancelOpenChange}
-          shipmentId={cancelShipmentId}
-        />
+        <LazyComponent fallback={null}>
+          <cancelDialog.Component
+            open={!!cancelShipmentId}
+            onOpenChange={handleCancelOpenChange}
+            shipmentId={cancelShipmentId}
+          />
+        </LazyComponent>
       )}
       {transferOwnershipShipmentId && (
-        <ShipmentTransferOwnershipDialog
-          open={!!transferOwnershipShipmentId}
-          onOpenChange={handleTransferOwnershipOpenChange}
-          shipmentId={transferOwnershipShipmentId}
-        />
+        <LazyComponent fallback={null}>
+          <transferOwnershipDialog.Component
+            open={!!transferOwnershipShipmentId}
+            onOpenChange={handleTransferOwnershipOpenChange}
+            shipmentId={transferOwnershipShipmentId}
+          />
+        </LazyComponent>
       )}
       {ediShipment && (
-        <ShipmentSendEDIDialog
-          open={!!ediShipment}
-          onOpenChange={handleEDIOpenChange}
-          shipment={ediShipment}
-        />
+        <LazyComponent fallback={null}>
+          <sendEDIDialog.Component
+            open={!!ediShipment}
+            onOpenChange={handleEDIOpenChange}
+            shipment={ediShipment}
+          />
+        </LazyComponent>
       )}
     </RecordActionsContext>
   );

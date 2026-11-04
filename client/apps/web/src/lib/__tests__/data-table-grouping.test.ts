@@ -324,6 +324,55 @@ describe("buildGroupedBody while the next page loads", () => {
     expect(shape(items)).toEqual(["group:1:collapsed", "group:3", "row:c@2", "pending:backfillx2"]);
   });
 
+  it("stands the next open group's header above the rows on their way when the page ended inside the collapsed group", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1), row("c", 1)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      pageSize: 3,
+      collapsedKeys: [1],
+      isFirstPage: true,
+      isLastPage: false,
+    });
+    expect(shape(items)).toEqual(["group:1:collapsed", "group:2", "pending:backfillx3"]);
+  });
+
+  it("passes over a collapsed or empty group to reach the next open header", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 1)],
+      groups: [
+        { key: 1, label: "Late" },
+        { key: 2, label: "Needs coverage", count: 0 },
+        { key: 3, label: "Moving" },
+        { key: 4, label: "Scheduled" },
+      ],
+      getGroupKey: getKey,
+      pageSize: 2,
+      collapsedKeys: [1, 3],
+      isFirstPage: true,
+      isLastPage: false,
+    });
+    expect(shape(items)).toEqual([
+      "group:1:collapsed",
+      "group:3:collapsed",
+      "group:4",
+      "pending:backfillx2",
+    ]);
+  });
+
+  it("promises no next header when the page ended in an open group, whose rows are the ones moving up", () => {
+    const items = buildGroupedBody({
+      rows: [row("a", 1), row("b", 3)],
+      groups: GROUPS,
+      getGroupKey: getKey,
+      pageSize: 2,
+      collapsedKeys: [1],
+      isFirstPage: true,
+      isLastPage: false,
+    });
+    expect(shape(items)).toEqual(["group:1:collapsed", "group:3", "row:b@1", "pending:backfillx1"]);
+  });
+
   it("holds nothing open after a collapse on the last page, where no rows are left to move up", () => {
     const items = buildGroupedBody({
       rows: [row("a", 1), row("b", 1), row("c", 3)],

@@ -12,6 +12,7 @@ import { CountdownCell } from "@/components/data-table/cells/countdown-cell";
 import type { ColumnDef, DataTableFilterField } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { Link } from "react-router";
+import { BOARD_CELL_SKELETONS } from "./board-cell-skeletons";
 import { ActionsCell } from "./cells/actions-cell";
 import { BillingCell } from "./cells/billing-cell";
 import { CoverageCell } from "./cells/coverage-cell";
@@ -91,8 +92,15 @@ export const SHIPMENT_HIDDEN_COLUMNS: Record<string, boolean> = {
   arrivalWindow: false,
 };
 
+function withCellSkeletons(columns: ColumnDef<Shipment>[]): ColumnDef<Shipment>[] {
+  return columns.map((column) => {
+    const skeleton = column.id ? BOARD_CELL_SKELETONS[column.id] : undefined;
+    return skeleton ? { ...column, meta: { ...column.meta, skeleton } } : column;
+  });
+}
+
 export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): ColumnDef<Shipment>[] {
-  return [
+  return withCellSkeletons([
     {
       id: "lane",
       header: t("Lane"),
@@ -469,5 +477,5 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
       enableHiding: false,
       meta: { label: t("Actions"), sortable: false, filterable: false },
     },
-  ];
+  ]);
 }

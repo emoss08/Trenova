@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/compone
 import { DataTableSaveConfigDialog } from "./data-table-save-config-dialog";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import { DEFAULT_CREATE_ACTION_ID, type FilterableField } from "@/lib/data-table";
+import { TABLE_TOOLBAR_CLASS } from "./data-table-chrome";
 
 const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 
@@ -176,7 +177,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
 
   return (
     <>
-      <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-2 flex items-center justify-between gap-2">
+      <div className={TABLE_TOOLBAR_CLASS}>
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Suspense fallback={<SearchSkeleton />}>
             <DataTableSearch

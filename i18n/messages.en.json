@@ -12034,7 +12034,7 @@
     ]
   },
   "A shipment board scope is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -18209,7 +18209,7 @@
     ]
   },
   "Actions": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -42513,7 +42513,7 @@
     ]
   },
   "Billing": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -68373,7 +68373,7 @@
     ]
   },
   "Coverage": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -71755,7 +71755,7 @@
     ]
   },
   "Customer": {
-    "sites": 96,
+    "sites": 97,
     "scope": [
       "go",
       "ts"
@@ -89758,7 +89758,7 @@
     ]
   },
   "ETA": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -136751,7 +136751,7 @@
     ]
   },
   "Lane": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -143325,13 +143325,14 @@
     ]
   },
   "Loading data...": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "packages/shared/components"
+      "packages/shared/components",
+      "routes/shipment"
     ]
   },
   "Loading detention intelligence": {
@@ -148783,7 +148784,7 @@
     ]
   },
   "Margin": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -186028,7 +186029,7 @@
     ]
   },
   "Order": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -189431,7 +189432,7 @@
     ]
   },
   "PRO / BOL": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -225158,7 +225159,7 @@
     ]
   },
   "Revenue": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -254262,7 +254263,7 @@
     ]
   },
   "Status": {
-    "sites": 332,
+    "sites": 333,
     "scope": [
       "go",
       "ts"
@@ -260973,7 +260974,7 @@
     ]
   },
   "Tender": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -344540,6 +344541,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {Loading # row} other {Loading # rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Looked up # record} other {Looked up # records}}": {

@@ -242,6 +242,26 @@ A message the module returns is shown with `translateMessage(message, t)`.
 - **A sticky cell's fill is opaque** (`bg-surface-selected`, never a `/10` tint), or what scrolls
   under it shows through.
 
+## Views of one set of records (`board/shipment-board.tsx`)
+
+Table, timeline and map are three views of the same rows, so switching between them
+redraws nothing: a view mounts the first time it is opened and then stays, in `Activity`.
+
+```tsx
+const [opened, setOpened] = useState<ReadonlySet<View>>(() => new Set([view]));
+if (!opened.has(view)) setOpened(new Set(opened).add(view));
+
+{opened.has("timeline") ? (
+  <Activity mode={view === "timeline" ? "visible" : "hidden"}>…</Activity>
+) : null}
+```
+
+Guard with `opened`: `Activity` renders a hidden child anyway, so an unguarded one loads
+its chunk (the Maps script, here) on a page that never shows it. A hidden tree loses its
+effects, which is what stops its queries and timers, and it keeps its state. A browser
+replays a CSS animation on anything that returns from `display: none`, so an entrance must
+not run twice: a row records that it has risen (`markRowEntered` in `data-table-body.tsx`).
+
 ## Dragging cards between lanes (`billing-queue-document-board.tsx`)
 
 - **dnd-kit, never native drag.** HTML5 drag gives no live preview, drags nothing in Firefox

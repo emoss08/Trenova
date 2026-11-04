@@ -4,6 +4,8 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { cn } from "@trenova/shared/lib/utils";
 import {
   Select,
   SelectContent,
@@ -15,6 +17,7 @@ import {
 import type { Table } from "@trenova/shared/types/data-table";
 import type { ReactNode } from "react";
 import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/hooks/data-table/use-data-table-state";
+import { TABLE_PAGER_CLASS } from "../data-table-chrome";
 import {
   ChevronLeftDoubleIcon,
   ChevronLeftIcon,
@@ -35,6 +38,8 @@ type DataTablePaginationProps<TData extends RowData> = {
   onPageSizeChange?: (pageSize: number) => void;
   /** Placed before the result count, such as a keyboard-shortcuts button. */
   leading?: ReactNode;
+  /** The figures here come from the server and are about to change: hold their place. */
+  figuresLoading?: boolean;
 };
 
 export function DataTablePagination<TData extends RowData>({
@@ -48,6 +53,7 @@ export function DataTablePagination<TData extends RowData>({
   onPageChange,
   onPageSizeChange,
   leading,
+  figuresLoading = false,
 }: DataTablePaginationProps<TData>) {
   const t = useT();
   const rt = useRichT();
@@ -95,10 +101,11 @@ export function DataTablePagination<TData extends RowData>({
   const shownPages = formatRowTotal(pageCount || 1, exact);
 
   return (
-    <div className="bleed:border-border bleed:min-h-10 bleed:shrink-0 bleed:border-t bleed:px-3 bleed:py-1.5 flex items-center justify-between gap-4 px-2 tabular-nums">
+    <div className={TABLE_PAGER_CLASS}>
       <div className="text-muted-foreground flex items-center gap-2 text-sm">
         {leading}
-        <span>
+        {figuresLoading ? <Skeleton data-slot="pager-figures" className="h-3.5 w-60" /> : null}
+        <span className={figuresLoading ? "hidden" : undefined}>
           {visibleRowCount < 1
             ? t("No results on this page")
             : shownTotal === null
@@ -164,7 +171,10 @@ export function DataTablePagination<TData extends RowData>({
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
-          <div className="text-muted-foreground px-2 text-sm">
+          {figuresLoading ? (
+            <Skeleton data-slot="pager-page" className="mx-2 h-3.5 w-28.75" />
+          ) : null}
+          <div className={cn("text-muted-foreground px-2 text-sm", figuresLoading && "hidden")}>
             {shownTotal === null || offsetEstimate
               ? rt("Page <b>{0}</b>", figure, formatNumber(pageIndex + 1))
               : exact

@@ -7961,6 +7961,7 @@
   "{0, plural, one {Found #+ record} other {Found #+ records}}": "{0, plural, other {找到 #+ 筆記錄}}",
   "{0, plural, one {Import # purchase} other {Import # purchases}}": "{0, plural, other {匯入 # 筆加油採購}}",
   "{0, plural, one {It refreshes in # day.} other {It refreshes in # days.}}": "{0, plural, other {將於 # 天後重新計算。}}",
+  "{0, plural, one {Loading # row} other {Loading # rows}}": "{0, plural, other {正在載入 # 列}}",
   "{0, plural, one {Looked up # record} other {Looked up # records}}": "{0, plural, other {已查詢 # 筆記錄}}",
   "{0, plural, one {Looped once} other {Looped # times}} over {1}": "對 {1} 迴圈執行 {0, plural, other {# 次}}",
   "{0, plural, one {New reply} other {New replies}}": "{0, plural, other {新回覆}}",

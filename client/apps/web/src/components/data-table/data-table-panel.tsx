@@ -5,6 +5,7 @@ import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { Dialog } from "@base-ui/react/dialog";
 import { XCloseIcon } from "@trenova/shared/components/icons";
+import { TABLE_PANEL_CLASS, TABLE_PANEL_CONTENT_CLASS } from "./data-table-chrome";
 
 const PANEL_SIZES = {
   sm: "400px",
@@ -105,10 +106,7 @@ type DataTablePanelWrapperProps = {
 
 export function DataTablePanelWrapper({ children, className }: DataTablePanelWrapperProps) {
   return (
-    <div
-      data-slot="data-table-panel"
-      className={cn("bleed:min-h-0 bleed:flex-1 flex h-full min-w-0", className)}
-    >
+    <div data-slot="data-table-panel" className={cn(TABLE_PANEL_CLASS, className)}>
       {children}
     </div>
   );
@@ -120,9 +118,5 @@ type DataTablePanelContentProps = {
 };
 
 export function DataTablePanelContent({ className, children }: DataTablePanelContentProps) {
-  return (
-    <div className={cn("bleed:gap-0 bleed:min-h-0 flex min-w-0 flex-1 flex-col gap-2", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(TABLE_PANEL_CONTENT_CLASS, className)}>{children}</div>;
 }

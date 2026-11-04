@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { hashKey, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { DataTable } from "../data-table";
@@ -666,11 +667,49 @@ describe("DataTable slots", () => {
     renderDataTable({ alternateView: { active: true, render } });
 
     expect(screen.getByTestId("timeline")).toBeTruthy();
-    expect(screen.queryByText("Alice")).toBeNull();
+    expect(screen.queryByRole("grid")).toBeNull();
     expect(screen.queryByText("Rows per page")).toBeNull();
     expect(render).toHaveBeenCalledWith({
       queryOptions: expect.objectContaining({ query: "", sort: [] }),
     });
+  });
+
+  it("does not draw an alternate view nobody has opened", () => {
+    const render = vi.fn(() => <div data-testid="timeline" />);
+    renderDataTable({ alternateView: { active: false, render } });
+
+    expect(render).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("timeline")).toBeNull();
+  });
+
+  it("keeps the same rows across a trip to an alternate view and back", async () => {
+    const queryClient = createQueryClient();
+    const alternate = (active: boolean) => ({
+      active,
+      render: () => <div data-testid="timeline" />,
+    });
+    const tree = (active: boolean) => (
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            alternateView={alternate(active)}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>
+    );
+    const { rerender } = render(tree(false));
+    const row = (await screen.findByText("Alice")).closest("tr");
+
+    rerender(tree(true));
+    expect(screen.queryByRole("grid")).toBeNull();
+
+    rerender(tree(false));
+    expect(screen.getByRole("grid")).toBeTruthy();
+    expect(screen.getByText("Alice").closest("tr")).toBe(row);
   });
 
   it("puts toolbar and footer slots where the table's own controls sit", () => {
@@ -815,5 +854,159 @@ describe("DataTable page sizes", () => {
     renderDataTable(undefined, "?pageSize=40");
 
     expect(lastPagination().pageSize).toBe(50);
+  });
+});
+
+function ShowAHundredRows() {
+  const [, setPageSize] = useQueryState("pageSize", parseAsInteger);
+  return (
+    <button type="button" onClick={() => void setPageSize(100)}>
+      Show 100
+    </button>
+  );
+}
+
+describe("DataTable while a page of another size loads", () => {
+  const queryClient = createQueryClient();
+  const tree = (
+    <QueryClientProvider client={queryClient}>
+      <NuqsTestingAdapter hasMemory>
+        <ShowAHundredRows />
+        <DataTable<TestRow>
+          columns={testColumns}
+          name="test-table"
+          queryKey="test"
+          graphql={testGraphQLConfig}
+        />
+      </NuqsTestingAdapter>
+    </QueryClientProvider>
+  );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useDataTableQueryMock.mockImplementation((...args: unknown[]) => ({
+      ...defaultQueryResult,
+      isPlaceholderData: (args[2] as { pageSize: number }).pageSize === 100,
+    }));
+  });
+
+  it("says how many rows are coming over the old rows, and holds the pager's figures", async () => {
+    render(tree);
+    expect(document.querySelector('[data-slot="pager-figures"]')).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Show 100" }));
+
+    expect(await screen.findByText("Loading 100 rows")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Loading 100 rows");
+    expect(screen.getByText("Alice")).toBeTruthy();
+    expect(document.querySelector('[data-slot="pager-figures"]')).not.toBeNull();
+    expect(document.querySelector('[data-slot="pager-page"]')).not.toBeNull();
+    expect(screen.getByRole("grid").getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("clears the overlay and the pager's placeholders when the page lands", async () => {
+    const { rerender } = render(tree);
+    fireEvent.click(screen.getByRole("button", { name: "Show 100" }));
+    await screen.findByText("Loading 100 rows");
+
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+    rerender(tree);
+
+    expect(screen.queryByText("Loading 100 rows")).toBeNull();
+    expect(document.querySelector('[data-slot="pager-figures"]')).toBeNull();
+  });
+
+  it("draws no overlay for a stand-in page of the same size, such as a group being toggled", () => {
+    useDataTableQueryMock.mockImplementation(() => ({
+      ...defaultQueryResult,
+      isPlaceholderData: true,
+    }));
+
+    render(tree);
+
+    expect(document.querySelector('[data-slot="table-page-loading"]')).toBeNull();
+    expect(document.querySelector('[data-slot="pager-figures"]')).toBeNull();
+  });
+});
+
+describe("DataTable while its first page loads", () => {
+  const pending = { data: undefined, isLoading: true, isError: false, error: null };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useDataTableQueryMock.mockImplementation(() => pending);
+  });
+
+  it("draws a column's own cell shape in the loading rows", () => {
+    renderDataTable({
+      columns: testColumns.map((column, index) =>
+        index === 0
+          ? { ...column, meta: { ...column.meta, skeleton: <i data-testid="cell-shape" /> } }
+          : column,
+      ),
+    });
+
+    expect(screen.getAllByTestId("cell-shape").length).toBeGreaterThan(0);
+  });
+
+  it("opens a grouped table with a group header above the loading rows", () => {
+    renderDataTable({ grouping: grouping() });
+
+    const first = document.querySelector("tbody > tr");
+    expect(first?.getAttribute("aria-busy")).toBeNull();
+    expect(first?.nextElementSibling?.getAttribute("aria-busy")).toBe("true");
+  });
+});
+
+describe("DataTable's totals row", () => {
+  const totalled = testColumns.map((column, index) =>
+    index === 0
+      ? {
+          ...column,
+          meta: { ...column.meta, apiField: "amount", aggregate: { kind: "sum" as const } },
+        }
+      : column,
+  );
+  const clientWithTotals = () => {
+    const client = createQueryClient();
+    client.setQueryData(["dataTableInsight-fields"], {
+      dataTableInsightFields: [{ name: "amount", summable: true, facetable: false }],
+    });
+    return client;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("sits under the rows of a table that can total them", () => {
+    renderDataTable(
+      { columns: totalled, resource: "Shipment" as never },
+      undefined,
+      clientWithTotals(),
+    );
+
+    expect(document.querySelector("tfoot")).not.toBeNull();
+  });
+
+  it("is left out when every group is collapsed and no rows are left to total", () => {
+    useDataTableQueryMock.mockImplementation(() => ({
+      ...defaultQueryResult,
+      data: { ...defaultQueryResult.data, results: [], count: 0 },
+    }));
+
+    renderDataTable(
+      {
+        columns: totalled,
+        resource: "Shipment" as never,
+        grouping: grouping({ collapsedKeys: [1, 2, 3] }),
+      },
+      undefined,
+      clientWithTotals(),
+    );
+
+    expect(document.querySelectorAll("tr[data-group-key]")).toHaveLength(3);
+    expect(document.querySelector("tfoot")).toBeNull();
   });
 });

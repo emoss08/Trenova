@@ -7961,6 +7961,7 @@
   "{0, plural, one {Found #+ record} other {Found #+ records}}": "{0, plural, one {Encontró #+ registro} other {Encontró #+ registros}}",
   "{0, plural, one {Import # purchase} other {Import # purchases}}": "{0, plural, one {Importar # compra} other {Importar # compras}}",
   "{0, plural, one {It refreshes in # day.} other {It refreshes in # days.}}": "{0, plural, one {Se renueva en # día.} other {Se renueva en # días.}}",
+  "{0, plural, one {Loading # row} other {Loading # rows}}": "{0, plural, one {Cargando # fila} other {Cargando # filas}}",
   "{0, plural, one {Looked up # record} other {Looked up # records}}": "{0, plural, one {Consultó # registro} other {Consultó # registros}}",
   "{0, plural, one {Looped once} other {Looped # times}} over {1}": "{0, plural, one {Iteró una vez} other {Iteró # veces}} sobre {1}",
   "{0, plural, one {New reply} other {New replies}}": "{0, plural, one {Nueva respuesta} other {Nuevas respuestas}}",

@@ -18,6 +18,7 @@ import {
   type DataTableHeaderFacets,
 } from "./data-table-header-facet-filter";
 import type { FilterableField } from "@/lib/data-table";
+import { TABLE_HEAD_CELL_CLASS } from "./data-table-chrome";
 
 type DataTableHeaderCellProps<TData extends RowData> = {
   header: Header<TData, unknown>;
@@ -61,7 +62,8 @@ export function DataTableHeaderCell<TData extends RowData>({
       ref={setNodeRef}
       className={cn(
         // design-tokens-ignore: column heads are uppercase across every data table by product decision
-        "group/head border-border relative border-b uppercase",
+        "group/head",
+        TABLE_HEAD_CELL_CLASS,
         pinClass,
         // A pinned head needs to be opaque over the scrolling content, not a
         // different colour from the heads beside it, and above the resize

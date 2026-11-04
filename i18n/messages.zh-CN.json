@@ -36791,6 +36791,7 @@
   "{0, plural, one {Last changed # day ago.} other {Last changed # days ago.}}": "{0, plural, other {上次更改于 # 天前。}}",
   "{0, plural, one {Last day} other {Last # days}}": "{0, plural, other {最近 # 天}}",
   "{0, plural, one {Last invoice} other {Last # invoices}}": "{0, plural, other {最近 # 张发票}}",
+  "{0, plural, one {Loading # row} other {Loading # rows}}": "{0, plural, other {正在加载 # 行}}",
   "{0, plural, one {Looked up # record} other {Looked up # records}}": "{0, plural, other {已查询 # 条记录}}",
   "{0, plural, one {Looped once} other {Looped # times}} over {1}": "对 {1} 循环执行 {0, plural, other {# 次}}",
   "{0, plural, one {Marked # message handled} other {Marked # messages handled}}": "{0, plural, other {已将 # 封邮件标记为已处理}}",

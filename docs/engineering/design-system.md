@@ -703,6 +703,10 @@ open as a grid of table rows and then jump into a layout that shared nothing wit
 
 - **A data table** sits in `DataTableLazyComponent`, which draws the table's skeleton.
   It takes no other fallback and wraps nothing but components that render `DataTable`.
+  A board, which puts its own toolbar and views around a table, sits in `LazyComponent`
+  with a skeleton of that frame: `shipment-board-skeleton.tsx` reads the table's classes
+  from `data-table-chrome.ts`, and a column's `meta.skeleton` is the cell the fallback and
+  the table's own loading rows both draw, so neither hand-off moves a row.
 - **Anything else** sits in `LazyComponent` from
   `@trenova/shared/components/error-boundary`, whose `fallback` is required: the
   skeleton of what loads, in a `<name>-skeleton.tsx` beside it. The page imports that
@@ -718,6 +722,9 @@ open as a grid of table rows and then jump into a layout that shared nothing wit
 - The skeleton's root carries `aria-busy` and an `aria-label` naming what loads; the
   placeholders sit under `aria-hidden`.
 - A spinner (`ComponentLoader`) is not a page or section loading state.
+- **Rows rise once, when a page arrives.** A row a person put there by toggling a group,
+  or a table coming back from another view, takes its place at once: a staggered entrance
+  costs over half a second, which reads as the table still loading.
 
 `pnpm lint:skeletons` (`scripts/check-loading-skeletons.mjs`) runs in CI. It follows
 each child of a `DataTableLazyComponent` to its module (through `lazy`,
@@ -933,6 +940,13 @@ the ink and every syntax role to AA on both tints and the bar to 3:1 on the fiel
 5. Note it here if it introduces a new concept rather than a rung on an existing
    ladder.
 
+A scoped stylesheet may retune a token for its own ground (`.aic` deepens `--sunken`),
+but never gives a token's name another meaning. `@theme inline` maps utilities straight
+onto these variables, so `bg-muted` reads whichever `--muted` is nearest: when `.aic`
+aliased it to a text colour, every segmented control, row hover and table head inside
+AI control filled with mid-grey. Name a private alias something no token uses, or use the
+token itself.
+
 The audit is not a substitute for looking at it. It catches the failures that are
 invisible in review — a 2.1:1 badge passes a screenshot check because the text is
 *there* — but it has nothing to say about whether the colour is right.
@@ -941,13 +955,6 @@ invisible in review — a 2.1:1 badge passes a screenshot check because the text
 
 Some colours genuinely cannot be tokens. Roughly 200 hex literals remain, and
 each falls into one of these:
-
-A scoped stylesheet may retune a token for its own ground (`.aic` deepens `--sunken`),
-but never gives a token's name another meaning. `@theme inline` maps utilities straight
-onto these variables, so `bg-muted` reads whichever `--muted` is nearest: when `.aic`
-aliased it to a text colour, every segmented control, row hover and table head inside
-AI control filled with mid-grey. Name a private alias something no token uses, or use the
-token itself.
 
 | Category | Why it stays |
 |---|---|

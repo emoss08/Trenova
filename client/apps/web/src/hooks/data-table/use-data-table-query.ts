@@ -5,6 +5,7 @@ import type {
 } from "@trenova/shared/types/data-table";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { PREFETCH_STALE_TIME_MS } from "@/lib/route-prefetch";
 import {
   resolveExtraVariables,
   resolveGraphQLVariableSources,
@@ -150,6 +151,7 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
         signal,
       }),
     placeholderData: keepPreviousData,
+    staleTime: PREFETCH_STALE_TIME_MS,
     enabled,
   });
 }

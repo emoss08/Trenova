@@ -1,4 +1,5 @@
 import { ChevronDownIcon } from "@trenova/shared/components/icons";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TableCell, TableRow } from "@trenova/shared/components/ui/table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -11,6 +12,31 @@ import { useEffect, useRef } from "react";
  * that the page is in flight well before the click lands.
  */
 export const GROUP_TOGGLE_INTENT_DELAY_MS = 80;
+
+const GROUP_HEADER_CELL_CLASS =
+  "bg-canvas border-border sticky top-(--row-head-h) z-15 h-9 border-b p-0";
+const GROUP_HEADER_BAR_CLASS =
+  "sticky left-0 flex w-(--dt-viewport-w,100%) items-center gap-2 px-3";
+
+/** A group's header while its rows load, so the first group's rows land under it. */
+export function DataTableGroupHeaderSkeleton({ colSpan }: { colSpan: number }) {
+  return (
+    <TableRow aria-hidden className="hover:bg-transparent">
+      <TableCell colSpan={colSpan} className={GROUP_HEADER_CELL_CLASS}>
+        <div className={GROUP_HEADER_BAR_CLASS}>
+          <span className="grid size-5 place-items-center">
+            <Skeleton className="size-3.5" />
+          </span>
+          <Skeleton className="size-2 shrink-0 rounded-xs" />
+          <Skeleton className="h-3 w-28" />
+          <Skeleton className="h-3 w-10" />
+          <span className="flex-1" />
+          <Skeleton className="h-3 w-28" />
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 type DataTableGroupHeaderProps = {
   group: DataTableGroup;
@@ -60,10 +86,10 @@ export function DataTableGroupHeader({
     >
       <TableCell
         colSpan={colSpan}
-        className="bg-canvas border-border sticky top-(--row-head-h) z-15 h-9 cursor-pointer border-b p-0"
+        className={cn(GROUP_HEADER_CELL_CLASS, "cursor-pointer")}
         onClick={toggle}
       >
-        <div className="sticky left-0 flex w-(--dt-viewport-w,100%) items-center gap-2 px-3">
+        <div className={GROUP_HEADER_BAR_CLASS}>
           <button
             type="button"
             aria-expanded={!collapsed}

@@ -1,9 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@trenova/shared/components/ui/button";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
+import { lazyComponent } from "@/lib/lazy-component";
 import { tableConfiguration } from "@/lib/queries/table-configuration";
 import type { RoutePrefetch, RoutePrefetchQuery } from "@/lib/route-prefetch";
 import { ShipmentCapabilitiesProvider } from "@/lib/shipment-board/capabilities";
@@ -18,8 +19,11 @@ import { CapacityStrip } from "./_components/board/capacity/capacity-strip";
 import { CapacityStripSkeleton } from "./_components/board/capacity/capacity-strip-skeleton";
 import { ShipmentSidePanel } from "./_components/board/panel/side-panel";
 import { ShipmentSidePanelSkeleton } from "./_components/board/panel/side-panel-skeleton";
-import { ShipmentRecordActionsProvider } from "./_components/board/record-actions";
-import { ShipmentBoard } from "./_components/board/shipment-board";
+import {
+  preloadShipmentPanel,
+  ShipmentRecordActionsProvider,
+} from "./_components/board/record-actions";
+import { ShipmentBoardSkeleton } from "./_components/board/shipment-board-skeleton";
 import { BoardRefreshButton } from "./_components/board/toolbar/board-refresh-button";
 import { useBoardPanel } from "./_components/board/use-board-panel";
 import {
@@ -29,13 +33,21 @@ import {
 
 const loadPanelSearch = createLoader(panelSearchParamsParser);
 
+const board = lazyComponent(
+  () => import("./_components/board/shipment-board"),
+  (module) => module.ShipmentBoard,
+);
+
 export const prefetch: RoutePrefetch = ({ request }) => {
+  void board.preload();
+
   const list: RoutePrefetchQuery[] = [
     { ...shipmentBoard.capabilities(), staleTime: 60_000 },
     { ...tableConfiguration.default(SHIPMENT_TABLE_RESOURCE_NAME), staleTime: Infinity },
   ];
 
   const { panelType, panelEntityId } = loadPanelSearch(request);
+  if (panelType) void preloadShipmentPanel();
   if (panelType === "edit" && panelEntityId) {
     list.push(shipmentPanelDetailQuery(panelEntityId));
   }
@@ -57,9 +69,9 @@ function ShipmentWorkspace() {
         </LazyComponent>
       </div>
       <div className="flex min-h-0 min-w-0 flex-col">
-        <DataTableLazyComponent>
-          <ShipmentBoard panelOpen={panelOpen} onPanelOpenChange={setPanelOpen} />
-        </DataTableLazyComponent>
+        <LazyComponent fallback={<ShipmentBoardSkeleton />}>
+          <board.Component panelOpen={panelOpen} onPanelOpenChange={setPanelOpen} />
+        </LazyComponent>
       </div>
       {panelOpen ? (
         <LazyComponent fallback={<ShipmentSidePanelSkeleton />}>

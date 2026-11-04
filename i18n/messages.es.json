@@ -36791,6 +36791,7 @@
   "{0, plural, one {Last changed # day ago.} other {Last changed # days ago.}}": "{0, plural, one {Último cambio hace # día.} other {Último cambio hace # días.}}",
   "{0, plural, one {Last day} other {Last # days}}": "{0, plural, one {Último día} other {Últimos # días}}",
   "{0, plural, one {Last invoice} other {Last # invoices}}": "{0, plural, one {Última factura} other {Últimas # facturas}}",
+  "{0, plural, one {Loading # row} other {Loading # rows}}": "{0, plural, one {Cargando # fila} other {Cargando # filas}}",
   "{0, plural, one {Looked up # record} other {Looked up # records}}": "{0, plural, one {Consultó # registro} other {Consultó # registros}}",
   "{0, plural, one {Looped once} other {Looped # times}} over {1}": "{0, plural, one {Iteró una vez} other {Iteró # veces}} sobre {1}",
   "{0, plural, one {Marked # message handled} other {Marked # messages handled}}": "{0, plural, one {Se marcó # mensaje como gestionado} other {Se marcaron # mensajes como gestionados}}",

@@ -10,22 +10,24 @@ import type {
   DataTableAlternateView,
   DataTableExpansion,
   DataTableKeyboard,
+  DataTableQueryOptions,
   DataTableToolbarSlots,
   DockAction,
 } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { Shipment } from "@trenova/shared/types/shipment";
+import { whenIdle } from "@/lib/when-idle";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { lazy, Suspense, useCallback, useMemo, useState } from "react";
+import { Activity, lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { ShipmentExpandedRow } from "./expanded-row/shipment-expanded-row";
-import { useShipmentRecordActions } from "./record-actions";
+import { preloadRecordActions, useShipmentRecordActions } from "./record-actions";
 import { getColumns, getShipmentFilterFields, SHIPMENT_HIDDEN_COLUMNS } from "./shipment-columns";
 import { GroupMenu, PanelToggle, TOOLBAR_RESPONSIVE, ViewSwitch } from "./toolbar/board-controls";
 import { useBoardActions } from "./use-board-actions";
 import { useBoardGrouping } from "./use-board-grouping";
 import { useQuickFilterSearch } from "./use-quick-filter-search";
-import { useShipmentBoardUrl } from "./url-state";
+import { type BoardView, useShipmentBoardUrl } from "./url-state";
 // The timeline's skeleton is light (the canvas and its geometry), so the board
 // draws the real axis while the timeline's code loads, not a blank sheet.
 import { ShipmentTimelineSkeleton } from "./views/shipment-timeline-skeleton";
@@ -35,6 +37,40 @@ const ShipmentMapView = lazy(() => import("./views/shipment-map-view"));
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 const PINNED_COLUMNS = { left: ["select", "lane"], right: [] };
+
+type BoardAlternateViewsProps = {
+  view: BoardView;
+  queryOptions: Omit<DataTableQueryOptions, "cursor">;
+};
+
+/**
+ * The timeline and map. Neither loads until it is first opened, which is what keeps the
+ * Maps script and the timeline's page of rows off a board that only ever shows the table;
+ * once open a view stays, hidden, so going back to it is immediate and keeps its place.
+ */
+function BoardAlternateViews({ view, queryOptions }: BoardAlternateViewsProps) {
+  const [opened, setOpened] = useState<ReadonlySet<BoardView>>(() => new Set([view]));
+  if (!opened.has(view)) setOpened(new Set(opened).add(view));
+
+  return (
+    <>
+      {opened.has("timeline") ? (
+        <Activity mode={view === "timeline" ? "visible" : "hidden"}>
+          <Suspense fallback={<ShipmentTimelineSkeleton />}>
+            <ShipmentTimeline queryOptions={queryOptions} />
+          </Suspense>
+        </Activity>
+      ) : null}
+      {opened.has("map") ? (
+        <Activity mode={view === "map" ? "visible" : "hidden"}>
+          <Suspense fallback={null}>
+            <ShipmentMapView />
+          </Suspense>
+        </Activity>
+      ) : null}
+    </>
+  );
+}
 
 type ShipmentBoardProps = {
   panelOpen: boolean;
@@ -50,6 +86,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
   const actions = useBoardActions();
   const openShortcuts = useAppDialogsStore((state) => state.openDialog);
   const [cursorRowId, setCursorRowId] = useState<string | null>(null);
+  useEffect(() => whenIdle(preloadRecordActions), []);
   const { searchSuggestions, chips } = useQuickFilterSearch();
 
   const graphql = useMemo(
@@ -160,16 +197,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
   const alternateView = useMemo<DataTableAlternateView>(
     () => ({
       active: view !== "table",
-      render: ({ queryOptions }) =>
-        view === "timeline" ? (
-          <Suspense fallback={<ShipmentTimelineSkeleton />}>
-            <ShipmentTimeline queryOptions={queryOptions} />
-          </Suspense>
-        ) : (
-          <Suspense fallback={null}>
-            <ShipmentMapView />
-          </Suspense>
-        ),
+      render: ({ queryOptions }) => <BoardAlternateViews view={view} queryOptions={queryOptions} />,
     }),
     [view],
   );

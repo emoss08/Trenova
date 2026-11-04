@@ -23,7 +23,7 @@ import type {
 import type { RowData, RowSelectionState } from "@tanstack/react-table";
 import { flexRender } from "@tanstack/react-table";
 import { Edit02Icon } from "@trenova/shared/components/icons";
-import { Fragment, memo, useCallback, useMemo, useRef } from "react";
+import { Fragment, memo, useCallback, useMemo, useRef, useState } from "react";
 import { buildGroupedBody } from "@/lib/data-table-grouping";
 import { gridCellMove } from "@/lib/data-table-grid";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -33,10 +33,12 @@ import { DataTableCellEditor } from "./data-table-cell-editor";
 import { DataTableContextMenu } from "./_components/data-table-context-menu";
 import { DataTableExpandedRow } from "./data-table-expanded-row";
 import { DataTableVirtualRows, type VirtualRowSlot } from "./data-table-virtual-rows";
-import { DataTableGroupHeader } from "./data-table-group-header";
+import { TABLE_BODY_CELL_CLASS } from "./data-table-chrome";
+import { DataTableGroupHeader, DataTableGroupHeaderSkeleton } from "./data-table-group-header";
 import { DataTablePinnedHeader } from "./data-table-pinned-header";
 
 const ROW_STAGGER_MS = 18;
+const ROW_ENTRANCE_ANIMATION = "rise";
 const NO_ROW_ACTIONS: never[] = [];
 const NO_ROWS: never[] = [];
 
@@ -63,6 +65,17 @@ function parseRowCellSelection(key: string): RowCellSelection {
   return { selected: new Set(selected ? selected.split("\u0000") : []), focused: focused ?? "" };
 }
 const ROW_STAGGER_CAP = 14;
+
+/**
+ * Marks a row whose entrance has played. Hiding a table takes its rows out of layout,
+ * and a browser replays a CSS animation on anything that comes back, so a table
+ * revealed by a view switch would rise in all over again. The mark lives on the element
+ * so finishing an entrance redraws nothing.
+ */
+function markRowEntered(event: React.AnimationEvent<HTMLTableSectionElement>) {
+  if (event.animationName !== ROW_ENTRANCE_ANIMATION) return;
+  if (event.target instanceof HTMLTableRowElement) event.target.dataset.entered = "";
+}
 
 type VirtualEntry<TData extends RowData> = {
   kind: "row" | "expanded";
@@ -224,7 +237,7 @@ function DataTableRowInner<TData extends RowData>({
           return (
             <TableCell
               className={cn(
-                "border-border truncate border-b font-sans",
+                TABLE_BODY_CELL_CLASS,
                 isLastRow && "border-b-0",
                 pinned && pinnedCellClass(cell.column),
                 // A pinned cell hides what scrolls beneath it, so it is opaque; once
@@ -352,7 +365,7 @@ function DataTableSkeletonRows<TData extends Record<string, any>>({
             <TableCell
               key={column.id}
               className={cn(
-                "border-border border-b",
+                TABLE_BODY_CELL_CLASS,
                 rowIndex === count - 1 && "border-b-0",
                 pinnedCellClass(column),
               )}
@@ -360,7 +373,9 @@ function DataTableSkeletonRows<TData extends Record<string, any>>({
             >
               {rowIndex === 0 && columnIndex === 0 && <span className="sr-only">{label}</span>}
               {column.id === "select" ? (
-                <span className="border-border-strong block size-4 rounded-sm border" />
+                <span className="border-border-strong block size-4 translate-y-0.5 rounded-sm border" />
+              ) : column.columnDef.meta?.skeleton ? (
+                column.columnDef.meta.skeleton
               ) : (
                 <Skeleton className={cn("h-2.5", skeletonWidth(column.id))} />
               )}
@@ -427,6 +442,12 @@ export function DataTableBody<TData extends Record<string, any>>({
   estimatedRowHeight?: number;
 }) {
   const t = useT();
+  // Toggling a group is a person rearranging what is on screen, not a page arriving, so
+  // from the first toggle on rows take their place without rising in.
+  const collapsedKeys = grouping?.collapsedKeys;
+  const [openingCollapsedKeys] = useState(collapsedKeys);
+  const [groupsToggled, setGroupsToggled] = useState(false);
+  if (!groupsToggled && collapsedKeys !== openingCollapsedKeys) setGroupsToggled(true);
 
   const { openPanelEdit, hasPanel, canOpenPanel, canUpdate } = useDataTable<TData, unknown>();
   // Pinned rows come first, then the page; the keyboard, a shift-click range and
@@ -693,6 +714,9 @@ export function DataTableBody<TData extends Record<string, any>>({
       tabIndex={-1}
       onKeyDown={handleKeyDown}
       onClickCapture={handleClickCapture}
+      onAnimationEnd={markRowEntered}
+      data-groups-toggled={groupsToggled || undefined}
+      className="data-groups-toggled:[&>tr]:animate-none [&>tr[data-entered]]:animate-none"
       // REMINDER: avoids scroll (skipping the table header) when using skip to content
       style={{
         scrollMarginTop: 40,
@@ -754,7 +778,10 @@ export function DataTableBody<TData extends Record<string, any>>({
           })}
         </DataTableRowActionsContext>
       ) : isLoading ? (
-        <DataTableSkeletonRows table={table} label={t("Loading data...")} />
+        <>
+          {grouping ? <DataTableGroupHeaderSkeleton colSpan={colSpan} /> : null}
+          <DataTableSkeletonRows table={table} label={t("Loading data...")} />
+        </>
       ) : null}
     </TableBody>
   );
