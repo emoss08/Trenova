@@ -942,6 +942,13 @@ invisible in review — a 2.1:1 badge passes a screenshot check because the text
 Some colours genuinely cannot be tokens. Roughly 200 hex literals remain, and
 each falls into one of these:
 
+A scoped stylesheet may retune a token for its own ground (`.aic` deepens `--sunken`),
+but never gives a token's name another meaning. `@theme inline` maps utilities straight
+onto these variables, so `bg-muted` reads whichever `--muted` is nearest: when `.aic`
+aliased it to a text colour, every segmented control, row hover and table head inside
+AI control filled with mid-grey. Name a private alias something no token uses, or use the
+token itself.
+
 | Category | Why it stays |
 |---|---|
 | Brand marks and national flags | A Microsoft logo and a US flag are specific colours, not themeable ones |

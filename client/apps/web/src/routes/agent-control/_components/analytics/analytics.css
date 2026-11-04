@@ -257,7 +257,7 @@
     gap: 8px;
     margin: -4px 0 12px;
     font-size: 12.5px;
-    color: var(--muted);
+    color: var(--foreground-muted);
   }
   .aic .an-ins svg {
     color: var(--subtle);
@@ -400,7 +400,7 @@
     margin: -6px 0 14px;
     font-size: 12.5px;
     line-height: 1.45;
-    color: var(--muted);
+    color: var(--foreground-muted);
     text-wrap: pretty;
   }
   .aic .an-say b {
@@ -430,7 +430,7 @@
   }
   .aic .an-vv {
     font-size: 11px;
-    color: var(--muted);
+    color: var(--foreground-muted);
     white-space: nowrap;
     padding-top: 4px;
     max-width: 100%;
@@ -479,7 +479,7 @@
   .aic .an-vl em {
     font-style: normal;
     font-size: 10.5px;
-    color: var(--muted);
+    color: var(--foreground-muted);
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -666,7 +666,7 @@
   }
   .aic .an-bfv {
     font-size: 12px;
-    color: var(--muted);
+    color: var(--foreground-muted);
   }
   .aic .an-bfr .an-bfv:first-child {
     text-align: right;
@@ -705,7 +705,7 @@
     padding-top: 12px;
     border-top: 1px solid var(--b-sub);
     font-size: 12px;
-    color: var(--muted);
+    color: var(--foreground-muted);
   }
   .aic .an-bff b {
     font-weight: 500;
@@ -954,7 +954,7 @@
   .aic .an-hh.c b {
     font-size: 11px;
     font-weight: 500;
-    color: var(--muted);
+    color: var(--foreground-muted);
     line-height: 1.2;
     white-space: nowrap;
   }
@@ -1084,7 +1084,7 @@
   }
   .aic .an-whv {
     font-size: 11.5px;
-    color: var(--muted);
+    color: var(--foreground-muted);
     text-align: right;
   }
   .aic .an-whv.r {
@@ -1315,7 +1315,7 @@
   }
   .aic .an-ex span {
     font-size: 12.5px;
-    color: var(--muted);
+    color: var(--foreground-muted);
     overflow-wrap: anywhere;
   }
   .aic .an-ex em {
