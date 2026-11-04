@@ -79,7 +79,6 @@ function CauseCard({ totals }: { totals: DetentionIntelligence["totals"] }) {
           )}
         </Finding>
         <PointerHoverCard<CauseSlice>
-          follow="pointer"
           itemId={(slice) => slice.key}
           render={(slice) => <CauseSliceDetail slice={slice} />}
         >

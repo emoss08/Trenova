@@ -229,8 +229,8 @@ A message the module returns is shown with `translateMessage(message, t)`.
   (`createTimelineScale(range, days, minWidth)` with the measured width), or a wide or
   zoomed-out window shows empty sheet past the range's end.
 - **One hover card for the whole sheet, not a tooltip per row.** A per-row `Tooltip` mounts a
-  provider, root and trigger hundreds of times. `timeline-hover-card.tsx` holds one card fed by a
-  tiny external store: a bar calls `enter`/`move`/`leave` from context and holds no state, so
+  provider, root and trigger hundreds of times. `timeline-hover-card.tsx` is the shared
+  `PointerHoverCard`, fed by a tiny external store: a bar calls `enter`/`move`/`leave` from context and holds no state, so
   hovering redraws only the card, and following the pointer writes its position to the DOM once a
   frame. It opens after a short rest, switches bars at once while open, opens on keyboard focus
   only, and closes on scroll, Escape, pointer-down and when its bar unmounts (`release`).

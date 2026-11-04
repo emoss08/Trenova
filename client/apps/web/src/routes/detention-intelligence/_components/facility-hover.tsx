@@ -49,7 +49,6 @@ export function FacilityHoverCard({
 }) {
   return (
     <PointerHoverCard<DetentionFacility>
-      follow="pointer"
       itemId={(facility) => facility.locationId}
       render={render ?? ((facility) => <FacilityDetail facility={facility} />)}
     >

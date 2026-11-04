@@ -182,7 +182,6 @@ export function ArrivalGrid({
 
   return (
     <PointerHoverCard<HeatSlot>
-      follow="pointer"
       itemId={(slot) => slot.id}
       render={(slot) => <HeatSlotDetail slot={slot} />}
     >

@@ -21,26 +21,17 @@ const OPEN_DELAY_MS = 80;
 /** How long a card waits after the pointer leaves, so moving to the next mark switches it in place. */
 const CLOSE_GRACE_MS = 90;
 const EDGE = 8;
-/** Below this much room above the mark, the card opens under it. */
-const ROOM_ABOVE = 220;
-/** Where a card that follows the pointer sits from it: right of and below, as a chart's tooltip does. */
+/** Where a card sits from the pointer: right of and below, as a chart's tooltip does. */
 const POINTER_OFFSET_X = 14;
 const POINTER_OFFSET_Y = 18;
 
-/**
- * Where a card sits. `mark` holds it above or below the mark and follows the pointer along it, for
- * a bar read in place (a timeline). `pointer` holds it by the pointer in both directions, for a
- * chart whose marks are tall hit areas.
- */
-export type HoverCardFollow = "mark" | "pointer";
-
-type Anchor<T> = { item: T; x: number; y: number; top: number; bottom: number };
+type Anchor<T> = { item: T; x: number; y: number };
 
 /** What a mark does with its hover: it never holds state, so hovering redraws no mark. */
 export type PointerHover<T> = {
   enter: (item: T, element: Element, pointerX?: number, pointerY?: number) => void;
-  /** The pointer moved along the mark: the card follows it without a render. */
-  move: (pointerX: number, pointerY?: number) => void;
+  /** The pointer moved over the mark: the card follows it without a render. */
+  move: (pointerX: number, pointerY: number) => void;
   leave: () => void;
   dismiss: () => void;
   /** A mark going away closes its own card: no pointer leave will come from it. */
@@ -95,8 +86,6 @@ function createPointerHover<T>(store: AnchorStore<T>, itemId: (item: T) => strin
         item,
         x: pointerX ?? rect.left + rect.width / 2,
         y: pointerY ?? rect.top + rect.height / 2,
-        top: rect.top,
-        bottom: rect.bottom,
       };
       const open = store.get() !== null;
       clear();
@@ -115,14 +104,14 @@ function createPointerHover<T>(store: AnchorStore<T>, itemId: (item: T) => strin
     move: (pointerX, pointerY) => {
       if (waiting) {
         waiting.x = pointerX;
-        waiting.y = pointerY ?? waiting.y;
+        waiting.y = pointerY;
         return;
       }
       const anchor = store.get();
       if (!anchor) return;
       // The anchor keeps the latest position, so a render of the card lands where it is.
       anchor.x = pointerX;
-      anchor.y = pointerY ?? anchor.y;
+      anchor.y = pointerY;
       store.follow(anchor.x, anchor.y);
     },
     leave: () => {
@@ -150,14 +139,15 @@ function createPointerHover<T>(store: AnchorStore<T>, itemId: (item: T) => strin
   return hover;
 }
 
-/** The card's left edge for a pointer x: centered on it, kept inside the window. */
-function cardLeft(x: number, width: number) {
-  return Math.min(Math.max(x - width / 2, EDGE), window.innerWidth - width - EDGE);
+/** A card's edge along one axis, moved back inside the window when it would leave it. */
+function insideWindow(start: number, size: number, windowSize: number) {
+  return Math.max(Math.min(start, windowSize - size - EDGE), EDGE);
 }
 
 /**
  * Beside the pointer, right of and below it; on the other side of it where the window ends, so
- * the card never covers the pointer or leaves the screen.
+ * the card never covers the pointer or leaves the screen. Keyboard focus anchors on a mark's
+ * center, which on a long bar can lie past the window, so the result is kept inside it.
  */
 function besidePointer(x: number, y: number, width: number, height: number) {
   const right = x + POINTER_OFFSET_X;
@@ -165,7 +155,10 @@ function besidePointer(x: number, y: number, width: number, height: number) {
   const left = right + width > window.innerWidth - EDGE ? x - POINTER_OFFSET_X - width : right;
   const top = below + height > window.innerHeight - EDGE ? y - POINTER_OFFSET_X - height : below;
 
-  return { left: Math.max(left, EDGE), top: Math.max(top, EDGE) };
+  return {
+    left: insideWindow(left, width, window.innerWidth),
+    top: insideWindow(top, height, window.innerHeight),
+  };
 }
 
 const PointerHoverContext = createContext<PointerHover<unknown> | null>(null);
@@ -197,14 +190,13 @@ export function usePointerHoverTarget<T>(item: T, id: string) {
 /**
  * One hover card for a set of marks: timeline bars, chart columns, heatmap cells. Each mark
  * reports where the pointer rests and this card alone redraws, on the raised floating surface the
- * menus use. It opens after a short rest, follows the pointer along a mark and from mark to mark,
- * and closes when the pointer leaves.
+ * menus use. It opens after a short rest, sits beside the pointer and follows it over a mark and
+ * from mark to mark, and closes when the pointer leaves.
  */
 export function PointerHoverCard<T>({
   itemId,
   render,
   width,
-  follow = "mark",
   children,
 }: {
   /** Identifies a mark's item, so a mark going away closes only its own card. */
@@ -212,7 +204,6 @@ export function PointerHoverCard<T>({
   render: (item: T) => ReactNode;
   /** A fixed width; without one the card fits its content, as a chart's tooltip does. */
   width?: number;
-  follow?: HoverCardFollow;
   children: ReactNode;
 }) {
   const [store] = useState(createAnchorStore<T>);
@@ -223,7 +214,7 @@ export function PointerHoverCard<T>({
   return (
     <PointerHoverContext.Provider value={hover as PointerHover<unknown>}>
       {children}
-      <HoverCardSurface store={store} render={render} width={width} follow={follow} />
+      <HoverCardSurface store={store} render={render} width={width} />
     </PointerHoverContext.Provider>
   );
 }
@@ -232,30 +223,24 @@ function HoverCardSurface<T>({
   store,
   render,
   width,
-  follow,
 }: {
   store: AnchorStore<T>;
   render: (item: T) => ReactNode;
   width: number | undefined;
-  follow: HoverCardFollow;
 }) {
   const anchor = useSyncExternalStore(store.subscribe, store.get, store.get);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // The card is placed once it is drawn, so a card that fits its content is centered on its real
-  // width. While open, the pointer moves it directly, at most once a frame.
+  // The card is placed once it is drawn, so a card that fits its content is kept on screen by its
+  // real size. While open, the pointer moves it directly, at most once a frame.
   useLayoutEffect(() => {
     if (!anchor) return;
     const place = (x: number, y: number) => {
       const card = cardRef.current;
       if (!card) return;
-      if (follow === "pointer") {
-        const at = besidePointer(x, y, width ?? card.offsetWidth, card.offsetHeight);
-        card.style.left = `${at.left}px`;
-        card.style.top = `${at.top}px`;
-        return;
-      }
-      card.style.left = `${cardLeft(x, width ?? card.offsetWidth)}px`;
+      const at = besidePointer(x, y, width ?? card.offsetWidth, card.offsetHeight);
+      card.style.left = `${at.left}px`;
+      card.style.top = `${at.top}px`;
     };
     place(anchor.x, anchor.y);
     let frame: number | null = null;
@@ -273,10 +258,9 @@ function HoverCardSurface<T>({
       store.setFollower(null);
       if (frame !== null) window.cancelAnimationFrame(frame);
     };
-  }, [anchor, store, width, follow]);
+  }, [anchor, store, width]);
 
   if (!anchor || typeof document === "undefined") return null;
-  const above = follow === "mark" && anchor.top > ROOM_ABOVE;
 
   return createPortal(
     // Floating surfaces are drawn in the dark scope in both themes.
@@ -290,15 +274,7 @@ function HoverCardSurface<T>({
             ? "flex max-w-72 min-w-44 flex-col gap-0.5 px-2.5 py-2"
             : "px-3 py-2.5",
         )}
-        style={
-          follow === "pointer"
-            ? { width }
-            : {
-                width,
-                top: above ? anchor.top - EDGE : anchor.bottom + EDGE,
-                transform: above ? "translateY(-100%)" : undefined,
-              }
-        }
+        style={{ width }}
       >
         {render(anchor.item)}
       </div>

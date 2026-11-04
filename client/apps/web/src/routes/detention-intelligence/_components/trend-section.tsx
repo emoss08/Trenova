@@ -242,7 +242,6 @@ export function WeeklyHoursChart({
 
   return (
     <PointerHoverCard<TrendTip>
-      follow="pointer"
       itemId={(tip) => (tip.kind === "week" ? String(tip.week.weekStart) : tip.cluster.id)}
       render={(tip) =>
         tip.kind === "week" ? (

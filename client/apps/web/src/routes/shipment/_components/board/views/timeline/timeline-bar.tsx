@@ -144,9 +144,10 @@ export function TimelineBar({
         onClick={() => onSelect(load.id)}
         onPointerEnter={(event) => {
           setHighlightId(load.id);
-          if (!drag?.dragging) hover?.enter(load, event.currentTarget, event.clientX);
+          if (!drag?.dragging)
+            hover?.enter(load, event.currentTarget, event.clientX, event.clientY);
         }}
-        onPointerMove={(event) => hover?.move(event.clientX)}
+        onPointerMove={(event) => hover?.move(event.clientX, event.clientY)}
         onPointerLeave={() => {
           if (useShipmentBoardStore.getState().highlightId === load.id) setHighlightId(null);
           hover?.leave();

@@ -1,10 +1,10 @@
-import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   DataTableDescription,
   DataTableLink,
 } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { recordPath } from "@/config/record-links";
 import {
   findChoice,
   serviceFailureSourceChoices,
@@ -13,8 +13,8 @@ import {
   stopTypeChoices,
 } from "@/lib/choices";
 import type { ServiceFailureRow } from "@/lib/graphql/service-failure-table";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { recordPath } from "@/config/record-links";
 
 function statusBadge(value: ServiceFailureRow["status"]) {
   const choice = findChoice(serviceFailureStatusChoices, value);
@@ -167,9 +167,6 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureRow>[] {
         row.original.reasonCode ? (
           <div className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{row.original.reasonCode.code}</span>
-            <span className="text-2xs text-muted-foreground truncate">
-              {t(row.original.reasonCode.label)}
-            </span>
           </div>
         ) : (
           <span className="text-muted-foreground">{t("Unassigned")}</span>

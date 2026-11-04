@@ -872,8 +872,10 @@ differently depending on the theme.
 
 A chart mark's tooltip is `PointerHoverCard` (`apps/web/src/components/pointer-hover-card.tsx`),
 never an SVG `<title>` or a `title` attribute. One card serves every mark inside it and is the only
-thing that redraws on hover: it opens after a short rest, follows the pointer along a mark and
-from mark to mark, and closes when the mark goes away. A mark spreads
+thing that redraws on hover: it opens after a short rest, sits right of and below the pointer
+(on the other side of it where the window ends), follows it over a mark and from mark to mark,
+and closes when the mark goes away. Placement is the same on every surface; only the card's
+content and `width` differ. A mark spreads
 `usePointerHoverTarget(item, id)`; one that also drags or selects (a timeline bar) calls
 `usePointerHover()` itself. Without a `width` the card fits its content, and its content is
 `HoverCardHeading` then `HoverCardRow`s: a muted label, with the series swatch when it names

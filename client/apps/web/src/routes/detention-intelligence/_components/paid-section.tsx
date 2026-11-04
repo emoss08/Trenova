@@ -235,7 +235,6 @@ function RecoveryCard({ data }: { data: DetentionIntelligence }) {
       description={t("Each row takes away what never reached an invoice, and names the fix.")}
     >
       <PointerHoverCard<LeakTip | null>
-        follow="pointer"
         itemId={(leak) => leak?.id ?? ""}
         render={(leak) => (leak ? <LeakDetail leak={leak} /> : null)}
       >

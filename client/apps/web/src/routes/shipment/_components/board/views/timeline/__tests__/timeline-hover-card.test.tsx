@@ -12,8 +12,10 @@ const TUE = Date.UTC(2026, 10, 3) / 1000;
 const HOUR = 3_600;
 const at = (hours: number) => TUE + hours * HOUR;
 const scale = createTimelineScale("day", [TUE, TUE + 24 * HOUR]);
-/** The card is 288px wide and centered on the pointer. */
-const HALF_CARD = 144;
+/** The card is 288px wide and sits right of and below the pointer. */
+const CARD_WIDTH = 288;
+const BESIDE_X = 14;
+const BESIDE_Y = 18;
 
 function shipment(id: string, from: string, to: string, startHour: number): Shipment {
   const stop = (stopId: string, city: string, hour: number, type: string) => ({
@@ -99,26 +101,51 @@ describe("TimelineHoverCard", () => {
     expect(card()?.textContent).toContain("Not covered");
   });
 
-  it("follows the pointer along the bar", () => {
+  it("sits beside the pointer and follows it in both directions over the bar", () => {
     renderBars([laredo]);
     const target = bar("PRO-1, Laredo → Dallas");
-    fireEvent.pointerEnter(target, { clientX: 400 });
+    fireEvent.pointerEnter(target, { clientX: 400, clientY: 200 });
     act(() => vi.advanceTimersByTime(80));
-    expect(card()?.style.left).toBe(`${400 - HALF_CARD}px`);
+    expect(card()?.style.left).toBe(`${400 + BESIDE_X}px`);
+    expect(card()?.style.top).toBe(`${200 + BESIDE_Y}px`);
 
-    fireEvent.pointerMove(target, { clientX: 600 });
+    fireEvent.pointerMove(target, { clientX: 600, clientY: 210 });
     act(() => vi.advanceTimersToNextFrame());
-    expect(card()?.style.left).toBe(`${600 - HALF_CARD}px`);
+    expect(card()?.style.left).toBe(`${600 + BESIDE_X}px`);
+    expect(card()?.style.top).toBe(`${210 + BESIDE_Y}px`);
+  });
+
+  it("moves to the other side of the pointer where the window ends", () => {
+    renderBars([laredo]);
+    const x = window.innerWidth - 20;
+    const y = window.innerHeight - 4;
+    fireEvent.pointerEnter(bar("PRO-1, Laredo → Dallas"), { clientX: x, clientY: y });
+    act(() => vi.advanceTimersByTime(80));
+
+    expect(card()?.style.left).toBe(`${x - BESIDE_X - CARD_WIDTH}px`);
+    expect(card()?.style.top).toBe(`${y - BESIDE_X}px`);
+  });
+
+  it("stays inside the window when the point it opens at lies past it", () => {
+    renderBars([laredo]);
+    fireEvent.pointerEnter(bar("PRO-1, Laredo → Dallas"), {
+      clientX: window.innerWidth + 900,
+      clientY: 200,
+    });
+    act(() => vi.advanceTimersByTime(80));
+
+    expect(card()?.style.left).toBe(`${window.innerWidth - CARD_WIDTH - 8}px`);
   });
 
   it("opens where the pointer is when it moved while the card was waiting", () => {
     renderBars([laredo]);
     const target = bar("PRO-1, Laredo → Dallas");
-    fireEvent.pointerEnter(target, { clientX: 300 });
-    fireEvent.pointerMove(target, { clientX: 500 });
+    fireEvent.pointerEnter(target, { clientX: 300, clientY: 100 });
+    fireEvent.pointerMove(target, { clientX: 500, clientY: 120 });
     act(() => vi.advanceTimersByTime(80));
 
-    expect(card()?.style.left).toBe(`${500 - HALF_CARD}px`);
+    expect(card()?.style.left).toBe(`${500 + BESIDE_X}px`);
+    expect(card()?.style.top).toBe(`${120 + BESIDE_Y}px`);
   });
 
   it("switches to the next bar at once while open", () => {
@@ -127,10 +154,11 @@ describe("TimelineHoverCard", () => {
     act(() => vi.advanceTimersByTime(80));
 
     fireEvent.pointerLeave(bar("PRO-1, Laredo → Dallas"));
-    fireEvent.pointerEnter(bar("PRO-2, Houston → Austin"), { clientX: 700 });
+    fireEvent.pointerEnter(bar("PRO-2, Houston → Austin"), { clientX: 700, clientY: 300 });
 
     expect(card()?.textContent).toContain("PRO-2");
-    expect(card()?.style.left).toBe(`${700 - HALF_CARD}px`);
+    expect(card()?.style.left).toBe(`${700 + BESIDE_X}px`);
+    expect(card()?.style.top).toBe(`${300 + BESIDE_Y}px`);
   });
 
   it("closes shortly after the pointer leaves the bars", () => {
