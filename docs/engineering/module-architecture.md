@@ -186,6 +186,7 @@ with any typed query, so no SQL is written by hand.
 | `workerscheduleports.RotaAssignments` | `schedulingrepository` (rota) | assignment worker, created and archived |
 | `equipmentcontinuityports.LocationColumns` | tractor and trailer last-known location | location id, name, coordinates |
 | `equipmentcontinuityports.MoveColumns` | tractor and trailer move in progress (`inprogressmove`) | assignment unit and move, move status, shipment PRO, stop windows |
+| `detentionports.InvoiceSettlementColumns` | detention intelligence (`detentionrepository/intelligence.go`) | invoice line charge and invoice; posted and paid as predicates |
 
 Tests build repositories with the same `crossref` functions, so a test and the running
 process read the same columns. Add a column port when the need is a read of another module's

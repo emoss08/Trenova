@@ -87,7 +87,7 @@ func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 		exec.Use(ext)
 	}
 	exec.SetErrorPresenter(gqlext.ErrorPresenter(p.AppConfig))
-	exec.SetRecoverFunc(gqlext.Recover)
+	exec.SetRecoverFunc(gqlext.Recover(p.Logger))
 
 	operations := make(map[string]Operation, len(Operations()))
 	for _, op := range Operations() {

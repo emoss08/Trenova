@@ -25,6 +25,14 @@ var (
 	)
 )
 
+// protectedElsewhere are tables every migration of one kind creates with IF NOT EXISTS, whose
+// row-level security one migration declares once: each generated rollup migration creates keel's
+// rollup bookkeeping, and 20261231023146_detention_rollup_upkeep gives it its policy and grants.
+var protectedElsewhere = map[string]bool{
+	"keel_rollup_dirty": true,
+	"keel_rollup_state": true,
+}
+
 func LintRules() []migrate.LintRule {
 	return []migrate.LintRule{
 		{Name: RuleReconcile, Check: byPointer(checkReconcile)},
@@ -96,7 +104,8 @@ func checkTenantRLS(m *migrate.Migration) []migrate.Finding {
 		}
 
 		body := tableBody(code, loc[1]-1)
-		if hasStandardTenantColumns(body) || mentionsPolicy(lower, table) {
+		if protectedElsewhere[strings.ToLower(table)] || hasStandardTenantColumns(body) ||
+			mentionsPolicy(lower, table) {
 			continue
 		}
 

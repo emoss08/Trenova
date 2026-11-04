@@ -135,3 +135,15 @@ func TestLintSkipsTablesOutsideThePublicSchema(t *testing.T) {
 
 	assert.Empty(t, lintOne(t, `CREATE TABLE trenova_rls.scope_keys ("key_id" text NOT NULL);`))
 }
+
+func TestLintAcceptsKeelRollupBookkeepingWhoseSecurityOneMigrationDeclares(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, lintOne(t, `CREATE TABLE IF NOT EXISTS keel_rollup_dirty (
+    rollup text COLLATE "C" NOT NULL,
+    tenant_key text COLLATE "C" NOT NULL
+);
+CREATE TABLE IF NOT EXISTS keel_rollup_state (
+    rollup text COLLATE "C" PRIMARY KEY
+);`))
+}

@@ -535,7 +535,11 @@ are no down migrations: fix forward with a new migration, and rebuild a developm
 `task db-reset`. `trenova-db up` (`cmd/db`) is the deploy step that applies them, `trenova-devdb up`
 (`cmd/devdb`, `task db-migrate`) the development one; each migration waits at most 5s for a lock
 and is retried, and after a run that applied anything `SELECT trenova_rls.reconcile()` runs once,
-so a new migration does not call it (the files written before keel still do). A new table
+so a new migration does not call it (the files written before keel still do). Every run that leaves
+nothing pending ends with the `Ensure` statements of `migrations.Options()`, for state a dump,
+`pg_upgrade` or a hand edit can lose: `SELECT trenova_rls.mark_leakproof_operators()`
+([row-level-security.md](../row-level-security.md#what-the-scope-costs)). An `Ensure` statement
+is idempotent and cheap, since it runs on every deploy. A new table
 (`20261231009920_agent_web_watches.sql` is the model, less its closing `reconcile()`):
 
 - composite primary key `pk_<table>` on `(id, organization_id, business_unit_id)`, named `fk_`
@@ -587,6 +591,45 @@ A new column, relation or table needs `task keel-gen` in the same change, and
 - Service tests fake `kernelports.Transactor` with `dbtest.NopConnection`, and list fakes build
   pages with `internal/testutil/pagetest`.
 - Statement shapes and budgets in tests: [testing.md](testing.md#shapes-and-budgets).
+
+## Rollups
+
+A read that adds up a tenant's history (an analytics page, a scorecard) reads a rollup, not its
+source rows, once its cost grows with the tenant. A rollup is keel's `analytics/rollup`: a table
+of sums by tenant, bucket and dimensions, kept by statement triggers that mark the tenant buckets
+a write touched (`keel_rollup_dirty`) and a refresh that recomputes them. The detention rollups in
+`operations/adapters/postgres/detentionrollup` are the reference.
+
+- **Declare** it in the module's adapters next to its reads, and add it to
+  `bootstrap/rollups.All()`, the one list the generator and the worker share. `task db-rollups`
+  writes its migration; rename the file into the migration sequence like any other and run
+  `task db-stamp`. `task db-rollups-check` fails when a declaration and its migration drift.
+- **Days are the organization's.** `rollup.TenantZone(detentionrollup.OrganizationZone())`
+  buckets each row in its organization's zone, and a time zone change marks the organization
+  for a whole rebuild (`trg_organizations_timezone_rollups`). Windows are whole local days: the
+  service turns "the last N days" into instants in the organization's zone, never the reader's.
+- **Group only as finely as the readers need.** A dimension multiplies the rows: grouped by
+  facility, customer and policy at once, a day held nearly as many rows as stops. Keep one narrow
+  rollup per question (the organization's days; each facility's; each customer's) and give a
+  rollup read narrowed to one dimension value an index (`rollup.IndexBy`).
+- **Long windows read months.** A dimension's rollup is kept by day and by month; a read takes
+  the whole months inside its window from the monthly one and only the edge days from the daily
+  one, one `UNION ALL` of three index ranges (`detentionrollup.Union`). A year then costs about
+  14 rows per facility instead of 365.
+- **Rank, then widen.** A top-N list over a rollup ranks on its plain sums first, then sums the
+  wide columns (histogram bins) and joins names for the ranked rows alone
+  (`detentionrepository.facilities`).
+- **Medians are histograms.** A quantile does not add up, so a rollup stores bin counts
+  (`rollup.Histogram`) and the read interpolates (`rollup.Quantile`). Choose bins so a quantile
+  lands within the precision the page shows. A distinct count does not add up either: read it
+  live, through an index on its filter (detention waivers' approvers).
+- **Refresh** runs every minute on the system queue (`temporaljobs/rollupjobs`), a transaction
+  per batch under the system scope, with backlog and throughput in the `rollup_*` metrics. A
+  migration's new rollup marks every tenant, and the first refresh builds it.
+- **Row-level security.** A rollup table carries the tenant columns `NOT NULL`, so `reconcile()`
+  protects it, and `reconcile()` revokes the application role's writes on every table named in
+  `keel_rollup_state`: only the refresh writes a rollup. A tenant writes only its own dirty
+  marks and reads none ([row-level-security.md](../row-level-security.md)).
 
 ## Caching
 
@@ -723,8 +766,16 @@ application would: service failures where a stop arrived past its window and the
 (`servicefailurevolume`), tenders, offers and state-lane routing guides for most carrier-covered
 moves and a share of open ones (`tendervolume`), a position and HOS state per crewed tractor and a
 geofence event per driver stop visit (`telematicsvolume`), ETAs for the open stops of tracked
-shipments (`stopetavolume`), and capture batches for the paperwork of shipments delivered inside
-the tenant's capture retention (`capturevolume`). `billingvolume` settles invoices the way a
+shipments (`stopetavolume`), detention for every arrived stop (`detentionvolume`), and capture batches for the paperwork of shipments delivered inside
+the tenant's capture retention (`capturevolume`). Detention is derived inside the shipment build, through
+the detention engine's own `ResolvePolicy` and `Compute` with the tenant's active policies and each
+driver's detention pay, because a billed occurrence is the shipment's `DET` charge: the charge is
+priced at what the occurrences billed and each one points at it, so the invoice line, the payment
+and the intelligence page agree. The rest are approved, waived for a coded reason by different
+people, disputed or still waiting, by age. A stop's dwell comes from its facility's dock pace
+(fixed by a hash of the location code, a sixth of docks slow, some drifting worse or better over
+the history), early-morning and Friday arrivals, and drop handling on about a sixth of deliveries.
+`billingvolume` settles invoices the way a
 carrier's receivables age (most paid by 30 days past due, under 2% left after 90) and holds a
 quarter of those still unpaid two weeks past due under an open dispute. A new phase is appended after its dependencies,
 so the faker stream, and with it every earlier table, stays the same for a seed. When an entity

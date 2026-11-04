@@ -20,7 +20,7 @@ var localeNumberSymbols = map[Locale]numberSymbols{
 
 const maxCountFractionDigits = 3
 
-func formatCount(locale Locale, value float64) string {
+func FormatNumber(locale Locale, value float64) string {
 	if math.IsNaN(value) || math.IsInf(value, 0) {
 		return strconv.FormatFloat(value, 'f', -1, 64)
 	}

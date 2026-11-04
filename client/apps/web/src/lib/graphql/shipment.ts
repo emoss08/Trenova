@@ -801,6 +801,7 @@ function toShipmentMoveInput(move: Shipment["moves"][number]): ShipmentMoveInput
         status: stop.status,
         type: stop.type,
         scheduleType: stop.scheduleType,
+        handling: stop.handling,
         sequence: stop.sequence,
         pieces: stop.pieces,
         weight: stop.weight,

@@ -46,7 +46,7 @@ func NewServer(p ServerParams) *gqlhandler.Server {
 	}
 
 	srv.SetErrorPresenter(gqlext.ErrorPresenter(p.AppConfig))
-	srv.SetRecoverFunc(gqlext.Recover)
+	srv.SetRecoverFunc(gqlext.Recover(p.Logger))
 
 	return srv
 }

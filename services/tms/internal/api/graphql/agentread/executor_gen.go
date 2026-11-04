@@ -207,6 +207,7 @@ import (
 	permissionports "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	detentionintelligence "github.com/emoss08/trenova/internal/modules/operations/app/detentionintelligence"
 	detentionnoticeservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	detentionreview "github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
@@ -349,6 +350,7 @@ type ResolverParams struct {
 	CustomerService                   *customerservice.Service
 	CustomerTrackingService           customertrackingports.CustomerTrackingService
 	DashControlService                *dashcontrolservice.Service
+	DetentionIntelligenceService      *detentionintelligence.Service
 	DetentionNotices                  *detentionnoticeservice.Service
 	DetentionPolicyService            *detentionpolicyservice.Service
 	DetentionReview                   *detentionreview.Service
@@ -1392,11 +1394,12 @@ func NewSchema(p ResolverParams) Schema {
 		CustomerTrackingService: p.CustomerTrackingService,
 	}
 	detentionDeps := &detentionresolver.Deps{
-		Core:                   core,
-		DetentionReview:        p.DetentionReview,
-		DetentionSimulation:    p.DetentionSimulation,
-		DetentionNotices:       p.DetentionNotices,
-		DetentionPolicyService: p.DetentionPolicyService,
+		Core:                         core,
+		DetentionReview:              p.DetentionReview,
+		DetentionSimulation:          p.DetentionSimulation,
+		DetentionIntelligenceService: p.DetentionIntelligenceService,
+		DetentionNotices:             p.DetentionNotices,
+		DetentionPolicyService:       p.DetentionPolicyService,
 	}
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
 		Core:                      core,

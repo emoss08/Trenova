@@ -24,6 +24,7 @@ type Stop struct {
 	Status                 shipmentvocab.StopStatus       `json:"status"                 keel:"status"`
 	Type                   shipmentvocab.StopType         `json:"type"                   keel:"type"`
 	ScheduleType           shipmentvocab.StopScheduleType `json:"scheduleType"           keel:"schedule_type"`
+	Handling               shipmentvocab.StopHandling     `json:"handling"               keel:"handling"`
 	Sequence               int64                          `json:"sequence"               keel:"sequence,dimension"`
 	Pieces                 *int64                         `json:"pieces"                 keel:"pieces,format=count"`
 	Weight                 *int64                         `json:"weight"                 keel:"weight,format=weight"`
@@ -50,6 +51,9 @@ func (s *Stop) BeforeCreate(ctx context.Context) error {
 	if s.ScheduleType == "" {
 		s.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
+	if s.Handling == "" {
+		s.Handling = shipmentvocab.StopHandlingLive
+	}
 
 	return nil
 }
@@ -57,6 +61,9 @@ func (s *Stop) BeforeCreate(ctx context.Context) error {
 func (s *Stop) BeforeUpdate(ctx context.Context) error {
 	if s.ScheduleType == "" {
 		s.ScheduleType = shipmentvocab.StopScheduleTypeOpen
+	}
+	if s.Handling == "" {
+		s.Handling = shipmentvocab.StopHandlingLive
 	}
 
 	return nil
@@ -133,6 +140,9 @@ func (s *Stop) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&s.ScheduleType,
 			validation.Required.Error("Schedule type is required"),
 			domainvalidation.ValidEnum[shipmentvocab.StopScheduleType]("Schedule type is invalid"),
+		),
+		validation.Field(&s.Handling,
+			domainvalidation.ValidEnum[shipmentvocab.StopHandling]("Handling is invalid"),
 		),
 		validation.Field(&s.Sequence,
 			validation.Min(int64(0)).Error("Sequence cannot be negative"),

@@ -199,6 +199,7 @@ import type {
   MoveStatus,
   ShipmentStatus,
   ShipmentTenderStatus,
+  StopHandling,
   StopScheduleType,
   StopStatus,
   StopType,
@@ -772,6 +773,19 @@ export const stopScheduleTypeChoices = [
   { label: "Open", value: "Open" },
   { label: "Appointment", value: "Appointment" },
 ] satisfies ReadonlyArray<GenericSelectOption<StopScheduleType>>;
+
+export const stopHandlingChoices = [
+  {
+    label: "Live load",
+    value: "Live",
+    description: "The truck waits while the facility loads or unloads it.",
+  },
+  {
+    label: "Drop trailer",
+    value: "Drop",
+    description: "A trailer is left or taken, and the tractor goes on.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<StopHandling>>;
 
 export const equipmentClassChoices = [
   { value: "Tractor", label: "Tractor", color: "var(--success)" },

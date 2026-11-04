@@ -13,10 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/placesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionintelligence"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
@@ -388,58 +390,34 @@ func (r *QueryResolver) DetentionFacilityStats(ctx context.Context, input gqlmod
 	return result, nil
 }
 
-func (r *QueryResolver) DetentionCustomerStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.CustomerDetentionStat, error) {
+func (r *QueryResolver) DetentionIntelligence(ctx context.Context, input gqlmodel.DetentionIntelligenceInput) (*gqlmodel.DetentionIntelligence, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := detentionStatsRequest(&input, resolvercore.TenantInfo(authCtx))
+	locationID, err := gqlid.OptionalID(input.LocationID)
 	if err != nil {
 		return nil, err
 	}
 
-	stats, err := r.DetentionSimulation.CustomerProfiles(ctx, req)
+	through := ""
+	if input.Through != nil {
+		through = *input.Through
+	}
+
+	result, err := r.DetentionIntelligenceService.Build(ctx, &detentionintelligence.Request{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Days:       input.Days,
+		Through:    through,
+		LocationID: locationID,
+		Visible:    r.VisibleFieldGroups(ctx, authCtx),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*gqlmodel.CustomerDetentionStat, 0, len(stats))
-	for _, stat := range stats {
-		if stat == nil {
-			continue
-		}
-		result = append(result, customerDetentionStatToModel(stat))
-	}
-
-	return result, nil
-}
-
-func (r *QueryResolver) DetentionWaiverStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.DetentionWaiverLeakageStat, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := detentionStatsRequest(&input, resolvercore.TenantInfo(authCtx))
-	if err != nil {
-		return nil, err
-	}
-
-	stats, err := r.DetentionSimulation.WaiverLeakage(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make([]*gqlmodel.DetentionWaiverLeakageStat, 0, len(stats))
-	for _, stat := range stats {
-		if stat == nil {
-			continue
-		}
-		result = append(result, detentionWaiverStatToModel(stat))
-	}
-
-	return result, nil
+	return detentionIntelligenceToModel(result), nil
 }
 
 func (r *QueryResolver) DetentionPolicyPreview(ctx context.Context, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) (*gqlmodel.DetentionPreviewResult, error) {

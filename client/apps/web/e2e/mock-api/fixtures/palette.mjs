@@ -483,7 +483,7 @@ function buildShipment(raw, index, anchor) {
     locationId: `loc_${id}_${suffix}`,
     status: left ? "Completed" : reached ? "InTransit" : "New",
     type,
-    scheduleType: "Appointment",
+    scheduleType: "Appointment", handling: "Live",
     sequence,
     pieces: 22,
     weight: 38400,

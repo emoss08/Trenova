@@ -1,40 +1,70 @@
+import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CustomerMargin } from "./customer-margin";
+import { describeError } from "@trenova/shared/lib/error-presentation";
+import { cn } from "@trenova/shared/lib/utils";
+import { useState } from "react";
 import { DetentionIntelligenceEmpty } from "./detention-intelligence-empty";
-import { DetentionLedger, DetentionLedgerSkeleton } from "./detention-ledger";
-import { FacilityProfiles } from "./facility-profiles";
-import { PanelError } from "./intelligence-panel";
+import { DetentionIntelligenceSkeleton } from "./detention-intelligence-skeleton";
+import { FacilityScorecardSheet } from "./facility-scorecard-sheet";
+import { FocusSection } from "./focus-section";
+import { hasDetention } from "./intelligence-model";
+import { IntelligenceBrief, IntelligenceFigures, NextSteps } from "./intelligence-overview";
 import {
-  DETENTION_WINDOW_OPTIONS,
-  useDetentionIntelligence,
-  type DetentionWindowValue,
-  detentionWindowDays,
-} from "./use-detention-intelligence";
-import { WaiverLeakage } from "./waiver-leakage";
-
-const WIDEST_WINDOW = DETENTION_WINDOW_OPTIONS[DETENTION_WINDOW_OPTIONS.length - 1];
+  FacilityHighlightProvider,
+  scrollToSection,
+  type NarrativeTargets,
+} from "./intelligence-parts";
+import { PaidSection } from "./paid-section";
+import { TrendSection } from "./trend-section";
+import { useDetentionIntelligence } from "./use-detention-intelligence";
+import { WhenSection } from "./when-section";
+import { WhySection } from "./why-section";
 
 /**
- * Detention intelligence: which facilities cost the most, which customers are
- * unprofitable once driver pay is netted off, and where discretionary revenue
- * is going.
+ * Detention intelligence: what an organization needs to know to lower detention. Every figure,
+ * the summary and the next steps come from one read, so they agree.
  */
 export function DetentionIntelligence({
-  windowValue,
+  days,
   onWiden,
 }: {
-  windowValue: DetentionWindowValue;
-  /** Moves the page's window to its widest; absent once it is already there. */
+  /** How many whole days of the organization's time zone the page reads, ending today. */
+  days: number;
+  /** Moves the page to its widest window; absent once it is there. */
   onWiden?: () => void;
 }) {
   const t = useT();
+  const query = useDetentionIntelligence(days);
+  const [openFacility, setOpenFacility] = useState<string | null>(null);
+  const data = query.data;
 
-  const days = detentionWindowDays(windowValue);
-  const { facilities, customers, waivers, rollup } = useDetentionIntelligence(days);
+  if (query.isError && !data) {
+    return (
+      <Alert size="sm" variant="destructive">
+        <AlertDescription>
+          {describeError(query.error).detail ?? t("The detention analytics could not be loaded.")}
+        </AlertDescription>
+        <AlertAction>
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
+          >
+            {t("Try again")}
+          </Button>
+        </AlertAction>
+      </Alert>
+    );
+  }
 
-  // Facilities cover every settled stop exactly once, so an empty facility
-  // list means the whole window is empty, not just one panel of it.
-  if (!facilities.isLoading && !facilities.isError && (facilities.data ?? []).length === 0) {
+  if (!data) {
+    return <DetentionIntelligenceSkeleton />;
+  }
+
+  if (!hasDetention(data)) {
     return (
       <DetentionIntelligenceEmpty
         title={t("No detention in this window")}
@@ -42,48 +72,44 @@ export function DetentionIntelligence({
           "{0, plural, one {No stop settled detention at any facility in the last # day. Look back further, or check that the detention engine is switched on for this organization.} other {No stop settled detention at any facility in the last # days. Look back further, or check that the detention engine is switched on for this organization.}}",
           days,
         )}
-        onWiden={windowValue === WIDEST_WINDOW.value ? undefined : onWiden}
-        widenLabel={t(
-          "{0, plural, one {Look back # day} other {Look back # days}}",
-          WIDEST_WINDOW.days,
-        )}
+        onWiden={onWiden}
+        widenLabel={t("Look back 180 days")}
       />
     );
   }
 
+  const targets: NarrativeTargets = {
+    onFacility: setOpenFacility,
+    onCustomer: () => scrollToSection("customers"),
+    onSection: scrollToSection,
+  };
+  const facility = data.facilities.find((row) => row.locationId === openFacility) ?? null;
+
   return (
-    <div className="flex flex-col gap-4">
-      {facilities.isError ? (
-        <div className="border-border bg-card overflow-hidden rounded-lg border">
-          <PanelError onRetry={() => void facilities.refetch()} />
+    <FacilityHighlightProvider>
+      <div
+        className={cn(
+          "flex flex-col gap-10 transition-opacity",
+          query.isPlaceholderData && "opacity-70",
+        )}
+      >
+        <div className="flex flex-col gap-5">
+          <IntelligenceBrief data={data} targets={targets} updatedAt={query.dataUpdatedAt} />
+          <IntelligenceFigures data={data} />
+          <NextSteps steps={data.nextSteps} targets={targets} />
         </div>
-      ) : facilities.isLoading ? (
-        <DetentionLedgerSkeleton />
-      ) : (
-        <DetentionLedger rollup={rollup} />
-      )}
-
-      <FacilityProfiles
-        rows={facilities.data ?? []}
-        isLoading={facilities.isLoading}
-        isError={facilities.isError}
-        onRetry={() => void facilities.refetch()}
-      />
-
-      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-        <CustomerMargin
-          rows={customers.data ?? []}
-          isLoading={customers.isLoading}
-          isError={customers.isError}
-          onRetry={() => void customers.refetch()}
-        />
-        <WaiverLeakage
-          rows={waivers.data ?? []}
-          isLoading={waivers.isLoading}
-          isError={waivers.isError}
-          onRetry={() => void waivers.refetch()}
-        />
+        <FocusSection data={data} onOpenFacility={setOpenFacility} />
+        <WhySection data={data} onOpenFacility={setOpenFacility} />
+        <WhenSection data={data} />
+        <PaidSection data={data} />
+        <TrendSection data={data} onOpenFacility={setOpenFacility} />
       </div>
-    </div>
+      <FacilityScorecardSheet
+        page={data}
+        facility={facility}
+        days={days}
+        onClose={() => setOpenFacility(null)}
+      />
+    </FacilityHighlightProvider>
   );
 }

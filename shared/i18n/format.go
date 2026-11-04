@@ -159,7 +159,7 @@ func renderPlaceholder(locale Locale, body string, args []any) (string, bool) {
 		return stringifyIn(locale, value), true
 	}
 
-	return strings.ReplaceAll(unquote(chosen), "#", formatCount(locale, number)), true
+	return strings.ReplaceAll(unquote(chosen), "#", FormatNumber(locale, number)), true
 }
 
 func pluralBranch(forms string, want pluralForm) (string, bool) {

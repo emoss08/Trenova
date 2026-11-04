@@ -117,6 +117,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionintelligence"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
@@ -350,6 +351,7 @@ type Params struct {
 	CostingService                    *costingservice.Service
 	DetentionReview                   *detentionreview.Service
 	DetentionSimulation               *detentionsimulation.Service
+	DetentionIntelligenceService      *detentionintelligence.Service
 	DetentionNotices                  *detentionnoticeservice.Service
 	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
 	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
@@ -636,6 +638,7 @@ type Services struct {
 	CostingService                    *costingservice.Service
 	DetentionReview                   *detentionreview.Service
 	DetentionSimulation               *detentionsimulation.Service
+	DetentionIntelligenceService      *detentionintelligence.Service
 	DetentionNotices                  *detentionnoticeservice.Service
 	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
 	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
@@ -928,6 +931,7 @@ func newServices(p *Params) *Services {
 		CostingService:                    p.CostingService,
 		DetentionReview:                   p.DetentionReview,
 		DetentionSimulation:               p.DetentionSimulation,
+		DetentionIntelligenceService:      p.DetentionIntelligenceService,
 		DetentionNotices:                  p.DetentionNotices,
 		AccountingConnectionStatus:        p.AccountingConnectionStatus,
 		AccountingAuthorization:           p.AccountingAuthorization,

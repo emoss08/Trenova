@@ -158,6 +158,20 @@ func StopScheduleTypeValues() []StopScheduleType {
 	return []StopScheduleType{StopScheduleTypeOpen, StopScheduleTypeAppointment}
 }
 
+// StopHandling is how the freight changes hands at a stop. A live stop holds the truck while
+// the facility loads or unloads it; a drop leaves or takes a trailer and the tractor goes on,
+// which is the first remedy for a dock that detains trucks.
+type StopHandling string
+
+const (
+	StopHandlingLive = StopHandling("Live")
+	StopHandlingDrop = StopHandling("Drop")
+)
+
+func StopHandlingValues() []StopHandling {
+	return []StopHandling{StopHandlingLive, StopHandlingDrop}
+}
+
 type CommentType string
 
 const (
@@ -344,6 +358,16 @@ func (v StopScheduleType) IsValid() bool {
 	switch v {
 	case StopScheduleTypeOpen,
 		StopScheduleTypeAppointment:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopHandling) IsValid() bool {
+	switch v {
+	case StopHandlingLive,
+		StopHandlingDrop:
 		return true
 	default:
 		return false

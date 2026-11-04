@@ -858,6 +858,27 @@ Do not hand-pick series colours. Before this, light was a five-hue rainbow and
 dark was two hues plus three greys, so the same chart encoded its data
 differently depending on the theme.
 
+A chart mark's tooltip is `PointerHoverCard` (`apps/web/src/components/pointer-hover-card.tsx`),
+never an SVG `<title>` or a `title` attribute. One card serves every mark inside it and is the only
+thing that redraws on hover: it opens after a short rest, follows the pointer along a mark and
+from mark to mark, and closes when the mark goes away. A mark spreads
+`usePointerHoverTarget(item, id)`; one that also drags or selects (a timeline bar) calls
+`usePointerHover()` itself. Without a `width` the card fits its content, and its content is
+`HoverCardHeading` then `HoverCardRow`s: a muted label, with the series swatch when it names
+one, and the figure in mono on the right. The shipment timeline and the detention charts use it.
+
+Pointing at one item to dim the rest across several charts (a facility in detention
+intelligence) never puts the pointed-at id in React state the marks read: every mark would
+re-render on each pointer move. Each mark carries `data-<kind>="<id>"`, the provider keeps the id
+and renders one `<style>` rule that dims every other mark, and the context carries only the
+setter, which never changes (`FacilityHighlightProvider` in `intelligence-parts.tsx`).
+
+A heat map mixes one hue into the card, from about 8% for the lowest value to 90% for the highest
+(`color-mix(in oklch, var(--accent-orange) n%, var(--color-card))`), so it shades continuously
+rather than in a few steps. Its figures are `text-foreground` on the light half of the ramp and
+light on the deep half in both themes (`text-foreground-on-solid dark:text-foreground`). A cell
+with nothing behind it is hatched and marked `–`, and the caption says so.
+
 ## Code
 
 Code is shown with `HighlightedCode` from

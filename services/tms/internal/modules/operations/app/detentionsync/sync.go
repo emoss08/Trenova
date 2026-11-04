@@ -59,6 +59,7 @@ func buildOccurrence(
 		CalculationTrace:   computed.Trace,
 		StopType:           p.stop.Type,
 		ScheduleType:       p.stop.ScheduleType,
+		Handling:           p.stop.Handling,
 		AppointmentStart:   appointmentStart(p.stop),
 		AppointmentEnd:     p.stop.ScheduledWindowEnd,
 		ArrivedAt:          p.stop.ActualArrival,

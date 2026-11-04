@@ -58,6 +58,14 @@ enum StopScheduleType {
   Appointment
 }
 
+"How the freight changes hands at a stop."
+enum StopHandling {
+  "The truck waits while the facility loads or unloads it."
+  Live
+  "A trailer is left or taken, and the tractor goes on."
+  Drop
+}
+
 enum ShipmentCommentType {
   Internal
   Dispatch
@@ -674,6 +682,7 @@ type ShipmentStop {
   status: StopStatus!
   type: StopType!
   scheduleType: StopScheduleType!
+  handling: StopHandling!
   sequence: Int!
   pieces: Int
   weight: Int
@@ -1831,6 +1840,7 @@ input ShipmentStopInput {
   status: StopStatus = New
   type: StopType = Pickup
   scheduleType: StopScheduleType = Open
+  handling: StopHandling = Live
   sequence: Int = 0
   pieces: Int
   weight: Int

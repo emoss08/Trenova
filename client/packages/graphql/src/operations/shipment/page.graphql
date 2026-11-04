@@ -84,6 +84,7 @@ fragment ShipmentStopFields on ShipmentStop {
   status
   type
   scheduleType
+  handling
   sequence
   pieces
   weight

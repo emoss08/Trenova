@@ -10,7 +10,6 @@
   "Any service type": "任何服务类型",
   "Any shipment type": "任何运单类型",
   "Arrivals inside this buffer are not treated as late.": "在此缓冲范围内到达不视为迟到。",
-  "Arrived late": "迟到",
   "Arrives 90m after the window, departs 5h later": "于时段后 90 分钟到达，5 小时后离开",
   "Assume notices were sent on time": "假设通知已如期发出",
   "Attach the notice as a PDF": "以 PDF 附加此通知",
@@ -161,5 +160,6 @@
   "{0} negative margin": "{0} 负毛利",
   "{0} of {1} stops matched": "{1} 个停靠点中有 {0} 个匹配",
   "{0} stops · {1} billable": "{0} 个停靠点 · {1} 可计费",
+  "{0} suppressed, no notice": "{0} 已抑制，未通知",
   "{0} would bill": "{0} 原本会收取"
 }

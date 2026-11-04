@@ -380,19 +380,6 @@ type FacilityDetentionStat struct {
 	SuppressedCount    int                 `json:"suppressedCount"`
 }
 
-type CustomerDetentionStat struct {
-	CustomerID      pulid.ID            `json:"customerId"`
-	CustomerName    string              `json:"customerName"`
-	StopCount       int                 `json:"stopCount"`
-	BreachCount     int                 `json:"breachCount"`
-	BilledAmount    decimal.Decimal     `json:"billedAmount"`
-	DriverPayAmount decimal.NullDecimal `json:"driverPayAmount"`
-	NetMargin       decimal.NullDecimal `json:"netMargin"`
-	WaivedAmount    decimal.Decimal     `json:"waivedAmount"`
-	DisputeCount    int                 `json:"disputeCount"`
-	SuppressedCount int                 `json:"suppressedCount"`
-}
-
 type WaiverLeakageStat struct {
 	Reason        string          `json:"reason"`
 	WaiverCount   int             `json:"waiverCount"`
@@ -418,13 +405,6 @@ type DetentionAnalyticsRepository interface {
 		ctx context.Context,
 		req *DetentionStatsRequest,
 	) ([]*FacilityDetentionStat, error)
-
-	CustomerStats(
-		ctx context.Context,
-		req *DetentionStatsRequest,
-	) ([]*CustomerDetentionStat, error)
-
-	WaiverStats(ctx context.Context, req *DetentionStatsRequest) ([]*WaiverLeakageStat, error)
 
 	EntityNames(
 		ctx context.Context,

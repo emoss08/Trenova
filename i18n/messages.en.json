@@ -412,6 +412,15 @@
       "routes/billing-queue"
     ]
   },
+  "+{0} h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "+{0} mi since the fill on {1}": {
     "sites": 1,
     "scope": [
@@ -1017,6 +1026,15 @@
       "packages/shared/components"
     ]
   },
+  "10a–12p": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "11–50 trucks": {
     "sites": 1,
     "scope": [
@@ -1069,6 +1087,28 @@
     ],
     "areas": [
       "routes/onboarding"
+    ]
+  },
+  "12–2p": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/detention-intelligence"
+    ]
+  },
+  "12–6a": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/detention-intelligence"
     ]
   },
   "13w": {
@@ -1380,6 +1420,17 @@
       "routes/onboarding"
     ]
   },
+  "2–4p": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/detention-intelligence"
+    ]
+  },
   "2–6h": {
     "sites": 1,
     "scope": [
@@ -1655,6 +1706,17 @@
       "routes/edi"
     ]
   },
+  "4–6p": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/detention-intelligence"
+    ]
+  },
   "5 And 1": {
     "sites": 1,
     "scope": [
@@ -1772,6 +1834,35 @@
       "template/customer.statement.pdf"
     ]
   },
+  "6p–12": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "6p–12a": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "6–8a": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/detention-intelligence"
+    ]
+  },
   "7 days": {
     "sites": 3,
     "scope": [
@@ -1807,6 +1898,17 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "8–10a": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/detention-intelligence"
     ]
   },
   "90 days, weekly": {
@@ -1898,6 +2000,51 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "<1 h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "<a>Approve and bill them</a> from the detention desk.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "<a>Require a coded reason and a note</a> on every waiver.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "<a>Send notice</a> when free time runs out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "<a>Work the disputes</a> in the detention desk.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "<a>{0, plural, one {# API key expires} other {# API keys expire}}</a> within {1, plural, one {# day} other {# days}}.": {
@@ -2467,6 +2614,15 @@
       "routes/inbox"
     ]
   },
+  "<b>{0, plural, one {# facility causes} other {# facilities cause}}</b> {1} of the hours past free time. Fixing those first is worth up to <b>{2} h</b> a window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "<b>{0, plural, one {# run} other {# runs}}</b> today, <f>{1} failed</f>.": {
     "sites": 1,
     "scope": [
@@ -2512,6 +2668,15 @@
       "routes/inbox"
     ]
   },
+  "<b>{0} of {1}</b> customers cost more in driver pay than they are billed. <b>{2}</b> is the largest: {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "<b>{0}% sure</b>": {
     "sites": 1,
     "scope": [
@@ -2546,15 +2711,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "<b>{0}</b> completed {1} on <p>{2}</p> but {3} on <q>{4}</q>. It's the same model, so the gap comes from the connection.": {
@@ -2647,6 +2803,15 @@
       "routes/agent-control"
     ]
   },
+  "<b>{0}</b> is ours to fix: trucks that arrived early and waited for their slot, or late and forfeited their free time.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "<b>{0}</b> is rated helpful {1} of the time.": {
     "sites": 1,
     "scope": [
@@ -2663,6 +2828,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "<b>{0}</b> is {1} of everything forgiven, granted by {2, plural, one {# person} other {# people}} across {3, plural, one {# waiver} other {# waivers}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "<b>{0}</b> is {1} of the {2} forgiven.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "<b>{0}</b> reaches {1, plural, one {# person} other {# people}}. They will fall back to the next home screen that matches them. This cannot be undone.": {
@@ -2773,6 +2956,15 @@
       "routes/inbox"
     ]
   },
+  "<c>{0}</c> costs <b>{1}</b> more in driver pay than it is billed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "<c>{0}</c> falls as <c>{1}</c> grows:": {
     "sites": 1,
     "scope": [
@@ -2798,6 +2990,42 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "<f>{0}</f> moved most: <b>{1} h less</b> past free time than the window before, after it moved to {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "<f>{0}</f> moved most: <b>{1} h less</b> past free time than the window before.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "<f>{0}</f> moved most: <b>{1} h more</b> past free time than the window before, after it moved to {2}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "<f>{0}</f> moved most: <b>{1} h more</b> past free time than the window before.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "<name>{0}</name> activated {1}": {
@@ -3005,6 +3233,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "<s>{0} facilities</s> account for <b>{1}</b> of it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "<s>{0} of {1} facilities</s> account for <b>{2}</b> of it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "<s>{0}</s> gets tool calls wrong <b>{1}</b> as often as the rest, mostly {2}.": {
@@ -13288,6 +13534,15 @@
       "packages/shared/types"
     ]
   },
+  "A trailer is left or taken, and the tractor goes on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "A transfer can include at most 5000 shipments": {
     "sites": 1,
     "scope": [
@@ -15244,6 +15499,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "ATRI, 2023: drivers reported detention at 39.3% of stops": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Abbreviation is required": {
@@ -17259,7 +17523,7 @@
     ]
   },
   "Accrued": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -17267,7 +17531,8 @@
     "areas": [
       "go/other",
       "packages/shared/components",
-      "routes/carrier-cost-event"
+      "routes/carrier-cost-event",
+      "routes/detention-intelligence"
     ]
   },
   "Accrued YTD": {
@@ -18135,7 +18400,7 @@
     ]
   },
   "Active": {
-    "sites": 94,
+    "sites": 93,
     "scope": [
       "go",
       "ts"
@@ -24344,6 +24609,15 @@
       "routes/home"
     ]
   },
+  "All invoices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "All kinds": {
     "sites": 1,
     "scope": [
@@ -28866,6 +29140,15 @@
       "apps/web/components"
     ]
   },
+  "Another <d>{0}</d> never reached an invoice because notice went out late.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Another PTO policy is already the default": {
     "sites": 1,
     "scope": [
@@ -30910,7 +31193,7 @@
     ]
   },
   "Appointment": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -30921,7 +31204,8 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
-      "routes/desk"
+      "routes/desk",
+      "routes/detention-intelligence"
     ]
   },
   "Appointment #": {
@@ -33192,12 +33476,22 @@
       "routes/factoring-remittance"
     ]
   },
-  "Arrived late": {
+  "Arrived early": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Arrived late": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence",
       "routes/detention-policy"
     ]
   },
@@ -34037,6 +34331,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Ask the facility for appointments, or book the stop as a drop.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Ask the model": {
@@ -35633,6 +35936,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "At <b>{0, plural, one {# facility} other {# facilities}}</b> the median stop runs past the free time granted, so detention is built into the schedule; <f>{1}</f> grants {2} for a {3} stop.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "At <b>{0, plural, one {# facility} other {# facilities}}</b> the median stop takes longer than its free time, so detention is built into the schedule. <b>{1}</b> grants {2} for a {3} stop.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "At Maintenance": {
@@ -38655,13 +38976,12 @@
     ]
   },
   "Average dwell": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
-      "routes/detention-intelligence"
+      "routes/desk"
     ]
   },
   "Average fleet fuel efficiency used to convert diesel price per gallon into cost per mile.": {
@@ -39698,6 +40018,15 @@
     "areas": [
       "routes/detention-policy",
       "routes/formula-template"
+    ]
+  },
+  "Backtest a policy": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Backtest candidate": {
@@ -41672,7 +42001,7 @@
     ]
   },
   "Bill to": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -41926,7 +42255,7 @@
     ]
   },
   "Billed": {
-    "sites": 14,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -41998,6 +42327,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Billed less driver pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Billed miles": {
@@ -42175,7 +42513,7 @@
     ]
   },
   "Billing": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -42191,6 +42529,7 @@
       "routes/admin",
       "routes/billing-queue",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/shipment"
     ]
   },
@@ -43000,11 +43339,12 @@
     ]
   },
   "Bills": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue",
       "routes/desk"
     ]
@@ -44310,15 +44650,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Breach": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Breadcrumb": {
@@ -45752,13 +46083,12 @@
     ]
   },
   "CDL": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -45788,15 +46118,6 @@
     "areas": [
       "routes/desk",
       "routes/worker"
-    ]
-  },
-  "CDL class {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "CDL drivers": {
@@ -48133,6 +48454,15 @@
       "routes/desk"
     ]
   },
+  "Caps and minimums": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Caps lock": {
     "sites": 1,
     "scope": [
@@ -49141,12 +49471,14 @@
     ]
   },
   "Carrier fault": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Carrier finding": {
@@ -51292,6 +51624,15 @@
       "routes/agent-control"
     ]
   },
+  "Change in hours past free time against the window before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Change keys": {
     "sites": 1,
     "scope": [
@@ -52600,7 +52941,7 @@
     ]
   },
   "Charges": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -59136,14 +59477,15 @@
     ]
   },
   "Collected": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
       "routes/accounting-dashboard",
-      "routes/customer-ledger"
+      "routes/customer-ledger",
+      "routes/detention-intelligence"
     ]
   },
   "Collected by month": {
@@ -65087,6 +65429,15 @@
       "routes/agent-control"
     ]
   },
+  "Copy invoice number": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Copy link": {
     "sites": 13,
     "scope": [
@@ -70688,7 +71039,7 @@
     ]
   },
   "Current": {
-    "sites": 34,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -71404,7 +71755,7 @@
     ]
   },
   "Customer": {
-    "sites": 94,
+    "sites": 96,
     "scope": [
       "go",
       "ts"
@@ -71426,6 +71777,7 @@
       "routes/customer-ledger",
       "routes/customer-payments",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/detention-policy",
       "routes/distance-override",
       "routes/edi",
@@ -71807,12 +72159,14 @@
     ]
   },
   "Customer goodwill": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Customer invoices": {
@@ -71871,15 +72225,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Customer margin": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Customer name": {
@@ -72342,6 +72687,15 @@
       "go/other"
     ]
   },
+  "Customers whose terms cost us": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.": {
     "sites": 1,
     "scope": [
@@ -72436,7 +72790,7 @@
     ]
   },
   "Cycle": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -73284,7 +73638,7 @@
     ]
   },
   "Data": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -73362,12 +73716,14 @@
     ]
   },
   "Data correction": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Data entry case formatting settings": {
@@ -78045,6 +78401,15 @@
       "template/customertracking.status.email"
     ]
   },
+  "Deliveries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Deliveries are verified": {
     "sites": 1,
     "scope": [
@@ -80268,7 +80633,7 @@
       "go/other"
     ]
   },
-  "Detention billed against detention paid. A negative margin means the customer's free-time concession is wider than the driver contract grants.": {
+  "Detention billed against detention paid to drivers, with how often notice went out on time.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -80419,6 +80784,15 @@
       "go/other"
     ]
   },
+  "Detention figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Detention has started — shipment {0} at {1}": {
     "sites": 1,
     "scope": [
@@ -80429,12 +80803,21 @@
     ]
   },
   "Detention intelligence": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "Detention intelligence looks back between a day and a year": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Detention lane": {
@@ -80463,15 +80846,6 @@
     "areas": [
       "apps/web/config",
       "routes/shipment-control"
-    ]
-  },
-  "Detention margin by customer needs access to margins.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Detention notice due": {
@@ -80536,6 +80910,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Detention paid out to drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Detention pays only for dwell beyond this threshold.": {
@@ -82133,7 +82516,7 @@
     ]
   },
   "Dispatch": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -82146,6 +82529,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/admin",
+      "routes/detention-intelligence",
       "routes/inbox",
       "routes/worker"
     ]
@@ -82346,6 +82730,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Dispatch to the appointment at <f>{0}</f>, not ahead of it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Dispatch to the appointment, not ahead of it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Dispatchable": {
@@ -82609,12 +83011,13 @@
     ]
   },
   "Disputed": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
@@ -82622,6 +83025,7 @@
       "routes/accounting-dashboard",
       "routes/ar-open-items",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/invoice-register",
       "routes/shipment"
     ]
@@ -83729,7 +84133,7 @@
     ]
   },
   "Document": {
-    "sites": 44,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -85153,7 +85557,7 @@
     ]
   },
   "Draft": {
-    "sites": 57,
+    "sites": 58,
     "scope": [
       "go",
       "ts"
@@ -85959,7 +86363,7 @@
     ]
   },
   "Drive": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -86349,15 +86753,6 @@
       "routes/settlement-workspace"
     ]
   },
-  "Driver detention pay exceeded what was billed — the free-time concessions granted to customers are wider than the driver contract allows for.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Driver expense": {
     "sites": 1,
     "scope": [
@@ -86612,7 +87007,7 @@
     ]
   },
   "Driver or carrier": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -86677,6 +87072,15 @@
     ]
   },
   "Driver pay package configuration and worker pay assignments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Driver pay ran {0} past billed detention over {1, plural, one {# stop} other {# stops}}. Raise the free time or the detention rate at renewal.": {
     "sites": 1,
     "scope": [
       "go"
@@ -87375,6 +87779,15 @@
       "apps/web/components"
     ]
   },
+  "Drop stops": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Drop to attach": {
     "sites": 1,
     "scope": [
@@ -87382,6 +87795,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Drop trailer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Dropped": {
@@ -88359,15 +88781,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "Duty window": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Dwell distribution": {
@@ -89578,6 +89991,15 @@
       "apps/web/components"
     ]
   },
+  "Each column is split by who caused the wait. Click a facility for its scorecard.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Each component computes pay per completed move; team splits apply on top.": {
     "sites": 1,
     "scope": [
@@ -90124,6 +90546,15 @@
       "go/other"
     ]
   },
+  "Each row takes away what never reached an invoice, and names the fix.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Each row totals every cost of the same kind. The statement lists each cost by load.": {
     "sites": 1,
     "scope": [
@@ -90290,6 +90721,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Each week of this window. Policy changes are marked where they took effect.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Each word capitalised: DALLAS becomes Dallas": {
@@ -96296,12 +96736,14 @@
     ]
   },
   "Equipment issue": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Equipment management": {
@@ -97933,6 +98375,15 @@
       "routes/fuel-management"
     ]
   },
+  "Every billable minute past free time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Every billing queue item must belong to a shipment on this invoice": {
     "sites": 1,
     "scope": [
@@ -98187,7 +98638,7 @@
       "routes/desk"
     ]
   },
-  "Every customer clears a positive detention margin": {
+  "Every customer's detention covers what drivers are paid for it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98370,6 +98821,24 @@
       "apps/web/components"
     ]
   },
+  "Every facility": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Every facility's median stop finishes inside its free time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Every few minutes": {
     "sites": 1,
     "scope": [
@@ -98449,6 +98918,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Every hour past free time, by whether the truck kept its appointment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Every id must be a user id": {
@@ -99295,6 +99773,15 @@
       "routes/detention-desk"
     ]
   },
+  "Every stop in this window finished inside its free time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Every stop on the move needs a location before jurisdiction miles can be requested": {
     "sites": 1,
     "scope": [
@@ -99788,6 +100275,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "Everything else · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Everything for this employment is settled.": {
@@ -102876,7 +103372,7 @@
     ]
   },
   "Expires": {
-    "sites": 22,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -102953,7 +103449,7 @@
     ]
   },
   "Expires {0}": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -103420,7 +103916,7 @@
     ]
   },
   "Export": {
-    "sites": 69,
+    "sites": 70,
     "scope": [
       "go",
       "ts"
@@ -103432,6 +103928,7 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/formula-template",
       "routes/reports"
     ]
@@ -103845,6 +104342,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Export scorecard": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Export selection evidence": {
@@ -104859,13 +105365,14 @@
     ]
   },
   "Facility": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/detention-intelligence",
       "routes/detention-policy",
       "template/rateconfirmation.pdf"
     ]
@@ -104889,15 +105396,17 @@
     ]
   },
   "Facility closure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
-  "Facility profiles": {
+  "Facility scorecard · last {0} days": {
     "sites": 1,
     "scope": [
       "ts"
@@ -106080,7 +106589,7 @@
     ]
   },
   "Failed to download document": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -108077,6 +108586,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Fewer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Fewer agents to choose from in Desk": {
     "sites": 1,
     "scope": [
@@ -108351,7 +108869,7 @@
     ]
   },
   "File": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -110470,6 +110988,15 @@
       "apps/web/components"
     ]
   },
+  "First come, first served docks, where the queue decides the wait.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "First day": {
     "sites": 2,
     "scope": [
@@ -111048,6 +111575,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Fix the plan: this time is ours to absorb.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Fix the project's errors and try again.": {
@@ -112304,12 +112840,14 @@
     ]
   },
   "Force majeure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "go/other"
     ]
   },
   "Forcing a pull may incur a charge even when the cache would have answered.": {
@@ -112395,7 +112933,7 @@
     ]
   },
   "Forgiven": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -113233,7 +113771,7 @@
     ]
   },
   "Free time": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -113241,7 +113779,26 @@
       "apps/web/components",
       "packages/shared/lib",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/detention-policy"
+    ]
+  },
+  "Free time against how long the dock takes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Free time at <f>{0}</f> is shorter than its typical stop": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Free time ending": {
@@ -113290,6 +113847,33 @@
       "template/detention.notice.email"
     ]
   },
+  "Free time for <c>{0}</c> costs more than it bills": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Free time forfeited; not billable under the contract.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Free time granted": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Free time is labeled; a red outline is an overlap": {
     "sites": 1,
     "scope": [
@@ -113315,6 +113899,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Free time {0} · p90 {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Free units": {
@@ -113704,13 +114297,16 @@
     ]
   },
   "Fri": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -113820,6 +114416,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "From accrued to kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "From another Trenova organization": {
@@ -116681,6 +117286,24 @@
       "routes/settings"
     ]
   },
+  "Getting better": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Getting paid for it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Getting ready to leave {0}.": {
     "sites": 1,
     "scope": [
@@ -116700,11 +117323,12 @@
     ]
   },
   "Getting worse": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/detention-intelligence",
       "routes/insights"
     ]
   },
@@ -118972,6 +119596,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Hatched cells had no arrivals.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Haul fit": {
@@ -121507,6 +122140,69 @@
       "apps/dash/routes"
     ]
   },
+  "Hours past free time": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Hours past free time are <b>{0} down</b> on the window before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Hours past free time are <b>{0} up</b> on the window before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Hours past free time by facility, split by who caused the wait": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Hours past free time each week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Hours past free time, by facility": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Hours past free time, weekly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Hours rather than days, so intermittent leave can be taken in the increment the organisation actually uses.": {
     "sites": 1,
     "scope": [
@@ -122526,15 +123222,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "How much of each billed detention dollar survives driver pay needs access to margins.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "How much of the result the sample covers.": {
@@ -124428,11 +125115,12 @@
     ]
   },
   "Image": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -125308,6 +125996,15 @@
       "template/customer.statement.pdf"
     ]
   },
+  "In dispute: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "In effect": {
     "sites": 1,
     "scope": [
@@ -125671,7 +126368,7 @@
     ]
   },
   "Inactive": {
-    "sites": 48,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -126902,6 +127599,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Industry {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Ineligible": {
@@ -128866,15 +129572,6 @@
       "api/graphql"
     ]
   },
-  "Invalid global search entity type": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
   "Invalid hold severity": {
     "sites": 3,
     "scope": [
@@ -129556,12 +130253,13 @@
     ]
   },
   "Invoice": {
-    "sites": 56,
+    "sites": 57,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
       "apps/web/hooks",
       "apps/web/lib",
@@ -130327,6 +131025,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Invoice number copied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Invoice number format": {
@@ -131109,7 +131816,7 @@
     ]
   },
   "Invoices": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -131170,6 +131877,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "Invoices paid in full": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Invoices posted after it ends are not ready to factor until another agreement is active. Invoices already posted keep the terms they were posted under.": {
@@ -131360,6 +132076,15 @@
     "areas": [
       "apps/web/types",
       "routes/table-change-alert"
+    ]
+  },
+  "Is it getting better": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Is last quarter's IFTA return drafted, and what still blocks finalizing it?": {
@@ -135051,6 +135776,15 @@
       "routes/organization"
     ]
   },
+  "Kept after driver pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Kept alongside the original record as the reason for the correction.": {
     "sites": 1,
     "scope": [
@@ -137241,6 +137975,15 @@
       "routes/shipment"
     ]
   },
+  "Last {0} days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Last: {0}": {
     "sites": 1,
     "scope": [
@@ -137905,15 +138648,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Leakage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Learn from their work": {
@@ -139649,7 +140383,7 @@
     ]
   },
   "License": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -141543,6 +142277,24 @@
       "routes/edi"
     ]
   },
+  "Live holds the truck while the facility loads or unloads; a drop leaves or takes a trailer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Live load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Live map": {
     "sites": 2,
     "scope": [
@@ -141559,6 +142311,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Live or drop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Live polling status for the Samsara telematics feed.": {
@@ -141579,6 +142340,24 @@
       "routes/admin",
       "routes/detention-policy",
       "routes/reports"
+    ]
+  },
+  "Live stops": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Live stops are detained <b>{0}</b> of the time against <b>{1}</b> for drops. Pickups wait {2}, deliveries {3}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Live tender": {
@@ -142544,6 +143323,15 @@
     "areas": [
       "apps/web/components",
       "packages/shared/components"
+    ]
+  },
+  "Loading detention intelligence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Loading difference...": {
@@ -145370,6 +146158,15 @@
       "routes/agent-control"
     ]
   },
+  "Look back 180 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Look back over a conversation once it goes quiet and keep what the agent learned": {
     "sites": 1,
     "scope": [
@@ -145852,15 +146649,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Loss": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Lost": {
@@ -147986,7 +148774,7 @@
     ]
   },
   "Margin": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -147996,7 +148784,6 @@
       "go/other",
       "routes/billing-queue",
       "routes/desk",
-      "routes/detention-intelligence",
       "routes/home",
       "routes/shipment"
     ]
@@ -148017,6 +148804,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Margin by customer needs access to margins. Hours and notice are shown to everyone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Margin floor": {
@@ -148057,15 +148853,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Margin per stop": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Margin threshold used to color-code shipment profitability. Margins below this show as thin; defaults to 10% when unset.": {
@@ -150435,7 +151222,7 @@
     ]
   },
   "Measure": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -150443,6 +151230,7 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/home",
       "routes/reports"
     ]
@@ -150611,6 +151399,24 @@
       "routes/agent-control"
     ]
   },
+  "Median stop": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Median vs free": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Medical": {
     "sites": 7,
     "scope": [
@@ -150652,12 +151458,11 @@
     ]
   },
   "Medical card": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -153470,13 +154275,16 @@
     ]
   },
   "Mon": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -153519,7 +154327,7 @@
     ]
   },
   "Money": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -153528,7 +154336,8 @@
       "apps/dash/routes",
       "apps/web/lib",
       "apps/web/types",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/detention-intelligence"
     ]
   },
   "Money agents move on their own": {
@@ -154201,7 +155010,7 @@
     ]
   },
   "More": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -154209,6 +155018,7 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/inbox"
     ]
   },
@@ -154350,15 +155160,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Most billed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Most cargo weight is near the doors. Move heavier items toward the nose to improve traction on the drive axle.": {
@@ -155143,6 +155944,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Moved to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Moved without asking": {
@@ -157360,6 +158170,15 @@
       "routes/shipment"
     ]
   },
+  "Needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Needs access to ratings": {
     "sites": 2,
     "scope": [
@@ -157665,12 +158484,13 @@
     ]
   },
   "Net": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-settlement-batch",
+      "routes/detention-intelligence",
       "routes/journal-entry",
       "routes/settlement-batch",
       "routes/settlement-dispute",
@@ -157852,15 +158672,6 @@
       "routes/invoice-approval"
     ]
   },
-  "Net detention margin": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Net impact by account": {
     "sites": 1,
     "scope": [
@@ -157889,12 +158700,13 @@
     ]
   },
   "Net margin": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/detention-desk",
+      "routes/detention-intelligence",
       "routes/detention-policy"
     ]
   },
@@ -159785,11 +160597,12 @@
     ]
   },
   "Next page": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
       "routes/agent-control",
       "routes/billing-queue",
@@ -161182,11 +161995,12 @@
     ]
   },
   "No appointment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/detention-intelligence",
       "routes/dispatch-console"
     ]
   },
@@ -161235,6 +162049,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "No arrivals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "No artifacts match “{0}”": {
@@ -162346,15 +163169,6 @@
       "routes/shipment"
     ]
   },
-  "No customer accrued settled detention in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "No customer found": {
     "sites": 1,
     "scope": [
@@ -162635,15 +163449,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "No detention settled at any facility in this window. Widen the range, or check that the detention engine is switched on for this organization.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "No directories": {
@@ -163390,6 +164195,24 @@
       "apps/web/components"
     ]
   },
+  "No facility got better.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "No facility got worse.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "No factoring companies yet": {
     "sites": 1,
     "scope": [
@@ -163826,6 +164649,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No hour has enough arrivals yet to name the worst; the shaded cells show what there is so far.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "No hours reported": {
@@ -165825,6 +166657,15 @@
       "routes/inbox"
     ]
   },
+  "No preview of this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No preview was recorded when this was decided; the parameters it was proposed with are shown.": {
     "sites": 1,
     "scope": [
@@ -167593,6 +168434,15 @@
       "routes/desk"
     ]
   },
+  "No stop settled detention in the last {0} days.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No stops configured": {
     "sites": 1,
     "scope": [
@@ -168251,6 +169101,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "No truck waited past its free time in the last {0} days.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No two-factor devices enrolled yet": {
@@ -169741,7 +170600,7 @@
     ]
   },
   "Not billable": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -169750,7 +170609,8 @@
       "go/other",
       "packages/shared/lib",
       "routes/billing-queue",
-      "routes/desk"
+      "routes/desk",
+      "routes/detention-intelligence"
     ]
   },
   "Not billed": {
@@ -170282,6 +171142,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Not in the window before": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Not in use": {
@@ -171037,6 +171906,15 @@
       "routes/desk"
     ]
   },
+  "Not signed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Not stackable": {
     "sites": 1,
     "scope": [
@@ -171219,12 +172097,13 @@
     ]
   },
   "Not yet billed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/detention-intelligence"
     ]
   },
   "Not yet certified": {
@@ -173682,6 +174561,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing to compare yet: no truck waited past free time in the window before.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Nothing to count yet": {
     "sites": 1,
     "scope": [
@@ -174026,7 +174914,7 @@
       "routes/inbox"
     ]
   },
-  "Nothing was waived in this window. Every accrued detention charge stood.": {
+  "Nothing was waived in this window. Every accrued charge stood.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174201,6 +175089,15 @@
       "routes/shipment"
     ]
   },
+  "Notice missed its deadline": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Notice missed; billing anyway": {
     "sites": 1,
     "scope": [
@@ -174289,6 +175186,15 @@
     ],
     "areas": [
       "template/factoring.noa.pdf"
+    ]
+  },
+  "Notice on time": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Notice overdue": {
@@ -174685,13 +175591,14 @@
     ]
   },
   "Nova": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/detention-intelligence",
       "routes/inbox",
       "routes/onboarding"
     ]
@@ -175707,6 +176614,15 @@
       "routes/agent-control"
     ]
   },
+  "Number, customer, PRO or PO…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Numbered list": {
     "sites": 1,
     "scope": [
@@ -176204,6 +177120,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Of <b>{0}</b> the clock accrued, <b>{1}</b> was billed and <b>{2}</b> has been collected. Each leak below names its fix.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Of <b>{0}</b> the clock accrued, <s>{1} was billed</s> and <b>{2}</b> has been collected.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Off": {
@@ -176997,6 +177931,24 @@
       "apps/web/types"
     ]
   },
+  "On <b>{0}</b> of the hours the truck was on time and the dock was slow. <b>{1}</b> is ours to fix: early arrivals waiting for their slot, and late ones that forfeited free time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "On <b>{0}</b> of the hours the truck was on time, so the wait was the dock's.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "On Hold": {
     "sites": 1,
     "scope": [
@@ -177044,6 +177996,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "On a posted invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "On a schedule": {
@@ -177628,6 +178589,15 @@
       "routes/desk"
     ]
   },
+  "On time, the dock was slow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "On vendor bill post": {
     "sites": 1,
     "scope": [
@@ -177824,6 +178794,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "On-time waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "On-time {0} percent": {
@@ -180314,6 +181293,15 @@
       "go/other"
     ]
   },
+  "Only fully paid invoices count; a partly paid one is still open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Only functions can be called": {
     "sites": 2,
     "scope": [
@@ -181043,6 +182031,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Only the facilities with the most hours are listed; the totals cover every stop.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Only the final tier may be open-ended": {
@@ -182152,6 +183149,15 @@
       "routes/invoice"
     ]
   },
+  "Open dock": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Open documents": {
     "sites": 1,
     "scope": [
@@ -182235,11 +183241,12 @@
     ]
   },
   "Open file": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -182445,12 +183452,13 @@
     ]
   },
   "Open invoice": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
       "routes/factoring",
       "routes/invoice",
@@ -182552,12 +183560,13 @@
     ]
   },
   "Open location": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/detention-intelligence"
     ]
   },
   "Open mappings": {
@@ -182757,6 +183766,15 @@
     ],
     "areas": [
       "routes/review-template"
+    ]
+  },
+  "Open scorecard": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Open service failure": {
@@ -183023,12 +184041,13 @@
     ]
   },
   "Open the detention desk": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/detention-intelligence"
     ]
   },
   "Open the disputes": {
@@ -183540,7 +184559,7 @@
     ]
   },
   "Open {0}": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -185275,6 +186294,15 @@
       "routes/order"
     ]
   },
+  "Ordered by {0}; the columns show hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Ordered: its variants compare in this order, so a range of them means something.": {
     "sites": 1,
     "scope": [
@@ -186137,7 +187165,7 @@
     ]
   },
   "Other": {
-    "sites": 55,
+    "sites": 56,
     "scope": [
       "go",
       "ts"
@@ -186580,6 +187608,15 @@
       "routes/desk",
       "routes/fleet-safety",
       "routes/worker"
+    ]
+  },
+  "Out to p90": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Out until Monday. Jordan has my loads.": {
@@ -188114,7 +189151,7 @@
     ]
   },
   "PDF": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -189002,7 +190039,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -189070,11 +190107,12 @@
     ]
   },
   "Page {0} of {1}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue",
       "routes/collections",
       "routes/desk",
@@ -189296,12 +190334,13 @@
     ]
   },
   "Paid": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
@@ -189667,6 +190706,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Palette question": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Paper scanned and documents printed into Trenova, split into documents and waiting to be filed onto their records": {
@@ -190962,13 +192010,23 @@
       "go/other"
     ]
   },
-  "Past free time": {
+  "Past free": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/detention-intelligence"
+    ]
+  },
+  "Past free time": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk",
+      "routes/detention-intelligence"
     ]
   },
   "Past free time and billing by the minute": {
@@ -196324,6 +197382,33 @@
       "apps/web/lib"
     ]
   },
+  "Pickups": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Pickups against deliveries, appointments against open docks, live stops against drops.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Pickups are detained <b>{0}</b> of the time against <b>{1}</b> of deliveries, and open docks <b>{2}</b>. Mark drop stops on the shipment to see what dropping trailers saves.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Pickups show as <b>{0}</b>": {
     "sites": 1,
     "scope": [
@@ -197645,13 +198730,14 @@
     ]
   },
   "Policy": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
+      "routes/detention-intelligence",
       "routes/policies",
       "routes/worker"
     ]
@@ -197672,6 +198758,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Policy change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Policy decision": {
@@ -199713,11 +200808,12 @@
     ]
   },
   "Preparing…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -200445,11 +201541,12 @@
     ]
   },
   "Previous page": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
       "routes/agent-control",
       "routes/billing-queue",
@@ -204731,11 +205828,12 @@
     ]
   },
   "Qualifications": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -206250,20 +207348,12 @@
     ]
   },
   "Rank by": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Rank customers by": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "apps/web/components",
       "routes/detention-intelligence"
     ]
   },
@@ -206332,6 +207422,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Ranked by the hours or dollars each would recover": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Ranked by the shortest offer window, for a load that has to move now.": {
@@ -210986,15 +212085,6 @@
       "routes/shipment"
     ]
   },
-  "Recalculate detention intelligence": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Recalculate distance": {
     "sites": 1,
     "scope": [
@@ -211020,15 +212110,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Recalculating…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Recall what was recorded": {
@@ -211966,6 +213047,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Recompute the rollup days writes marked dirty": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Recomputing...": {
@@ -213853,7 +214943,7 @@
     ]
   },
   "Recovered": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -213861,6 +214951,7 @@
     "areas": [
       "go/other",
       "packages/shared/components",
+      "routes/detention-intelligence",
       "routes/pay-advance"
     ]
   },
@@ -214695,14 +215786,13 @@
     ]
   },
   "Refresh": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/carrier-settlement-workspace",
-      "routes/detention-intelligence",
       "routes/fleet-safety",
       "routes/settlement-workspace",
       "routes/shipment",
@@ -215918,7 +217008,7 @@
     ]
   },
   "Rejected: {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -218000,6 +219090,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Renegotiate free time, ask for drop trailers, or bring the scorecard to the next review.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Renew": {
@@ -224166,15 +225265,6 @@
       "go/other"
     ]
   },
-  "Revenue forgiven at someone's discretion, grouped by the coded reason given.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Revenue from brokered loads": {
     "sites": 1,
     "scope": [
@@ -230069,13 +231159,16 @@
     ]
   },
   "Sat": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -235367,6 +236460,15 @@
       "apps/web/components"
     ]
   },
+  "See customers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "See detailed breakdown": {
     "sites": 1,
     "scope": [
@@ -235401,6 +236503,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "See occurrences": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "See personal details": {
@@ -238965,6 +240076,24 @@
       "apps/web/components",
       "routes/desk",
       "routes/detention-desk"
+    ]
+  },
+  "Send notice before the deadline": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Send notice before the deadline at <f>{0}</f>": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Send notice of assignment": {
@@ -243292,15 +244421,6 @@
       "routes/dispatch-console"
     ]
   },
-  "Share of billed detention retained after driver pay": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Share of each tool's calls that failed. Click a cell to see real examples.": {
     "sites": 1,
     "scope": [
@@ -243326,6 +244446,33 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Share of stops detained": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Share of stops detained by weekday and arrival hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "Share of stops detained, by arrival": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Share of the invoice paid when the factor funds it.": {
@@ -243781,7 +244928,7 @@
     ]
   },
   "Shipment": {
-    "sites": 50,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -245578,7 +246725,7 @@
     ]
   },
   "Shipper": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -245588,6 +246735,7 @@
       "go/other",
       "routes/agent-control",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/invoice-register",
       "routes/shipment",
       "template/invoice.pdf"
@@ -247523,7 +248671,7 @@
     ]
   },
   "Signature": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -247574,12 +248722,13 @@
     ]
   },
   "Signed": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/lib",
@@ -247777,6 +248926,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Signed {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Signed · {0}": {
@@ -248592,6 +249750,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Slowest one in ten": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Slug": {
@@ -251172,11 +252339,12 @@
     ]
   },
   "Spreadsheet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -254597,7 +255765,7 @@
     ]
   },
   "Stops": {
-    "sites": 17,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -254607,6 +255775,7 @@
       "go/other",
       "routes/billing-queue",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/distance-override",
       "routes/shipment",
       "routes/shipment-tracking-public",
@@ -254647,6 +255816,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Stops detained": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Stops dwelling past the detention threshold, longest first": {
@@ -256097,7 +257275,7 @@
     ]
   },
   "Summary": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -256107,6 +257285,7 @@
       "go/other",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/detention-intelligence",
       "routes/worker"
     ]
   },
@@ -256156,13 +257335,16 @@
     ]
   },
   "Sun": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -257994,6 +259176,15 @@
     ]
   },
   "Take shipments off an invoice run that is still a proposal, put them back, or move them to another of the same customer's invoices on it. An excluded shipment stays approved and rolls into the next period. Every exclusion needs a reason the next biller can read.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Take the scorecard to <f>{0}</f>": {
     "sites": 1,
     "scope": [
       "go"
@@ -267212,6 +268403,15 @@
       "go/other"
     ]
   },
+  "The detention analytics could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "The detention charge, unformatted. Combine with Currency, or use the money function.": {
     "sites": 1,
     "scope": [
@@ -267322,6 +268522,24 @@
       "rules/tariff"
     ]
   },
+  "The dock's share": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "The dock's wait and ours need different fixes, and free time shorter than the dock's real pace guarantees detention whatever anyone does.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "The document": {
     "sites": 2,
     "scope": [
@@ -267387,6 +268605,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "The document's file could not be found in storage": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The documents could not be read.": {
@@ -267513,6 +268740,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The driver arrived before the slot and waited for it. Most docks won't work a truck early.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "The driver arrives at a stop": {
@@ -279411,6 +280647,15 @@
       "rules/tariff"
     ]
   },
+  "The solid line is this window; the dashed line, the window before as a weekly average. Policy changes are marked where they took effect.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "The source document was attached to the new shipment successfully.": {
     "sites": 1,
     "scope": [
@@ -281504,6 +282749,15 @@
       "routes/inbox"
     ]
   },
+  "The truck arrived inside its appointment and still waited past free time. This wait is the facility's.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "The truck arrived inside the window and was held {0}, so the charge stands.": {
     "sites": 1,
     "scope": [
@@ -281558,6 +282812,15 @@
       "routes/inbox"
     ]
   },
+  "The truck missed its appointment, so the free time was forfeited.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "The truck stop or station, as it appears on the receipt.": {
     "sites": 1,
     "scope": [
@@ -281565,6 +282828,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "The truck waits while the facility loads or unloads it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The truncation warning text.": {
@@ -281637,6 +282909,15 @@
     ],
     "areas": [
       "routes/location-category"
+    ]
+  },
+  "The typical stop here takes {0} longer than the free time granted, so detention is built into the schedule.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "The underlying timestamps were wrong; the charge should not stand.": {
@@ -282296,7 +283577,25 @@
       "rules/tariff"
     ]
   },
+  "The window before": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "The window cannot close before it opens": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The window ends on a day no later than today, written as YYYY-MM-DD": {
     "sites": 1,
     "scope": [
       "go"
@@ -282483,6 +283782,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "The worst arrival window is <b>{0} {1}</b>, detained {2} of the time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "The year on its way to a posted 300A. OSHA wants the summary certified by a company executive and posted where employees can see it from 1 February to 30 April of the following year (29 CFR 1904.32).": {
@@ -283575,15 +284883,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "These figures could not be loaded. The window may be too wide, or the aggregation timed out.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "These figures could not be read": {
@@ -291083,6 +292382,15 @@
       "routes/formula-template"
     ]
   },
+  "This window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "This work item has been {0}. No further actions available.": {
     "sites": 1,
     "scope": [
@@ -291456,7 +292764,7 @@
     ]
   },
   "Through {0}": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -291531,13 +292839,16 @@
     ]
   },
   "Thu": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -297643,6 +298954,24 @@
       "apps/web/components"
     ]
   },
+  "Trucks arriving <b>{0} {1}</b> are detained <b>{2}</b> of the time, against {3} after noon.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trucks arriving <b>{0} {1}</b> are detained <b>{2}</b> of the time; after noon, {3}. Book appointments away from the dark cells.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Trucks carriers say they have available, with lane, window and rate": {
     "sites": 1,
     "scope": [
@@ -297659,6 +298988,51 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Trucks reach <f>{0}</f> late": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trucks waited <b>{0} h</b> past free time in the last {1} days, <b>{2} h less</b> than the {1} days before.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trucks waited <b>{0} h</b> past free time in the last {1} days, <b>{2} h more</b> than the {1} days before.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trucks waited <b>{0} h</b> past free time in the last {1} days, as long as the {1} days before.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Trucks waited <b>{0} h</b> past free time in the last {1} days.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "True / false": {
@@ -298040,13 +299414,16 @@
     ]
   },
   "Tue": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -302481,7 +303858,7 @@
     ]
   },
   "Updated {0}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -302491,7 +303868,8 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
-      "routes/detention-desk"
+      "routes/detention-desk",
+      "routes/detention-intelligence"
     ]
   },
   "Updated {0}{1}": {
@@ -304912,7 +306290,7 @@
     ]
   },
   "Value": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -304920,6 +306298,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/billing-queue",
+      "routes/detention-intelligence",
       "routes/edi",
       "routes/reports",
       "routes/table-change-alert"
@@ -307992,12 +309371,13 @@
     ]
   },
   "Voided": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
@@ -309303,6 +310683,15 @@
       "routes/desk"
     ]
   },
+  "Waived at someone's discretion, by the coded reason.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Waived before approval · nothing was posted to {0}": {
     "sites": 1,
     "scope": [
@@ -309364,15 +310753,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Waiver leakage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Waiving": {
@@ -310400,7 +311780,7 @@
     ]
   },
   "Weather": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -310714,13 +312094,16 @@
     ]
   },
   "Wed": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/reports",
       "routes/settings"
     ]
@@ -310796,11 +312179,12 @@
     ]
   },
   "Week of {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/detention-intelligence",
       "routes/fuel-management",
       "routes/time-attendance"
     ]
@@ -310821,6 +312205,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Weekday against the hour the truck arrived, in the organization's time zone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Weekday mornings": {
@@ -310923,6 +312316,15 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "Weekly hours past free time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Weekly on {0} at {1}": {
@@ -313723,6 +315125,15 @@
       "routes/accounting-sync"
     ]
   },
+  "What to do next": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "What to search for must be 400 characters or fewer": {
     "sites": 1,
     "scope": [
@@ -313820,6 +315231,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "What was forgiven, and why": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "What was it for? Lumper at the receiver, tolls, scale ticket...": {
@@ -314633,6 +316053,15 @@
       "go/other"
     ]
   },
+  "When it happens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "When it runs": {
     "sites": 3,
     "scope": [
@@ -315269,6 +316698,15 @@
       "routes/time-attendance"
     ]
   },
+  "When they wait": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "When this customer is a freight broker, vet its authority, bond and insurance before booking its loads": {
     "sites": 1,
     "scope": [
@@ -315379,15 +316817,6 @@
     ],
     "areas": [
       "routes/factoring-company"
-    ]
-  },
-  "Where detention actually accrues — the docks worth renegotiating or replanning around. Open a row for the full ledger behind it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Where do I approve a change the billing agent proposed?": {
@@ -315824,6 +317253,15 @@
       "go/other"
     ]
   },
+  "Where the median stop runs past the free time granted, the stop is detained before anyone is late.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Where the money goes": {
     "sites": 1,
     "scope": [
@@ -316063,6 +317501,15 @@
       "routes/admin"
     ]
   },
+  "Where to focus": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Where to improve": {
     "sites": 1,
     "scope": [
@@ -316079,6 +317526,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Where trucks wait past free time, who caused it, when it happens, how much of the money is recovered and what to do next": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Where volume is concentrating, origin against destination": {
@@ -317070,15 +318526,6 @@
       "apps/web/components"
     ]
   },
-  "Which facilities cost the most, which customers are unprofitable once driver pay is netted off, and where discretionary revenue is going": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "Which freight this policy governs. An empty dimension is a wildcard, and the most specific matching policy wins: facility beats customer beats commodity beats type.": {
     "sites": 1,
     "scope": [
@@ -317358,6 +318805,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Which stops wait": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Which swaps to show": {
     "sites": 1,
     "scope": [
@@ -317531,6 +318987,15 @@
       "routes/factoring-company"
     ]
   },
+  "Who caused the wait": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Who customers and your team reach at the factor": {
     "sites": 1,
     "scope": [
@@ -317676,6 +319141,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Who moved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Who pays the freight": {
@@ -318695,6 +320169,15 @@
       "go/other"
     ]
   },
+  "Why trucks wait": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "Why you are seeing this": {
     "sites": 1,
     "scope": [
@@ -318870,7 +320353,7 @@
     ]
   },
   "Window": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -318880,6 +320363,7 @@
       "apps/web/lib",
       "routes/agent-control",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/shipment",
       "template/rateconfirmation.pdf"
     ]
@@ -320675,15 +322159,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Worst margin": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "Worst rated": {
@@ -326776,6 +328251,15 @@
       "edi/lading"
     ]
   },
+  "after late arrivals": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -328226,6 +329710,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "detained · {0, plural, one {# stop} other {# stops}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "detention disputes": {
@@ -330809,15 +332302,6 @@
       "go/other"
     ]
   },
-  "every charge noticed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "every day": {
     "sites": 3,
     "scope": [
@@ -332405,6 +333889,15 @@
       "go/other"
     ]
   },
+  "lost to late notice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "lower is better": {
     "sites": 1,
     "scope": [
@@ -332560,7 +334053,7 @@
       "apps/web/components"
     ]
   },
-  "median dwell": {
+  "median {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -332842,6 +334335,15 @@
       "routes/desk"
     ]
   },
+  "net this window": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "never past approval": {
     "sites": 1,
     "scope": [
@@ -332885,15 +334387,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "no billed detention": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "no change": {
@@ -333123,15 +334616,6 @@
       "rules/tariff"
     ]
   },
-  "nothing billed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "nothing failed": {
     "sites": 1,
     "scope": [
@@ -333166,15 +334650,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "nothing waived": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "null": {
@@ -333251,15 +334726,6 @@
       "routes/desk"
     ]
   },
-  "of every billed detention dollar survives driver pay": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "of today's runs": {
     "sites": 1,
     "scope": [
@@ -333279,7 +334745,7 @@
     ]
   },
   "of {0}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -333537,6 +335003,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "on-time waiting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "onTermination must be Forfeit or PayOut": {
@@ -333841,15 +335316,6 @@
       "routes/shipment"
     ]
   },
-  "p90 tail": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "page {0}": {
     "sites": 1,
     "scope": [
@@ -333916,6 +335382,15 @@
     ]
   },
   "passing score": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "past free time there": {
     "sites": 1,
     "scope": [
       "go"
@@ -336954,6 +338429,15 @@
       "apps/dash/_components"
     ]
   },
+  "waiting for a slot": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "waiting on you": {
     "sites": 1,
     "scope": [
@@ -337697,6 +339181,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# arrival} other {# arrivals}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0, plural, one {# artifact} other {# artifacts}}": {
     "sites": 1,
     "scope": [
@@ -338036,6 +339529,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {# charge held} other {# charges held}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0, plural, one {# charge waits on approval} other {# charges wait on approval}}": {
     "sites": 1,
     "scope": [
@@ -338043,6 +339545,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# charge was held} other {# charges were held}} because notice missed its deadline.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0, plural, one {# charge was held} other {# charges were held}} because notice missed its deadline. Notice goes out on time on {1} of stops there.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0, plural, one {# charge was never billed} other {# charges were never billed}}": {
@@ -338055,13 +339575,14 @@
     ]
   },
   "{0, plural, one {# charge} other {# charges}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/invoice"
     ]
   },
@@ -338275,11 +339796,12 @@
     ]
   },
   "{0, plural, one {# day past due} other {# days past due}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -338771,6 +340293,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0, plural, one {# facility} other {# facilities}} · {1} of the hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0, plural, one {# factor} other {# factors}} contributed nothing": {
@@ -339724,6 +341255,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# more charge} other {# more charges}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# more column is} other {# more columns are}} in the file": {
     "sites": 1,
     "scope": [
@@ -339834,6 +341374,15 @@
       "routes/billing-queue"
     ]
   },
+  "{0, plural, one {# more stop} other {# more stops}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# more tool} other {# more tools}}": {
     "sites": 1,
     "scope": [
@@ -339868,6 +341417,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# more} other {# more}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0, plural, one {# move} other {# moves}}": {
@@ -340434,6 +341992,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "{0, plural, one {# policy change} other {# policy changes}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0, plural, one {# policy requires two-factor} other {# policies require two-factor}}": {
@@ -341469,14 +343036,16 @@
     ]
   },
   "{0, plural, one {# stop} other {# stops}}": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
+      "apps/web/components",
       "packages/shared/lib",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/shipment"
     ]
   },
@@ -341507,7 +343076,7 @@
       "routes/billing-queue"
     ]
   },
-  "{0, plural, one {# stop} other {# stops}} · {1} past free time {2}": {
+  "{0, plural, one {# stop} other {# stops}} · {1, plural, one {# detained} other {# detained}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -341916,7 +343485,16 @@
       "routes/inbox"
     ]
   },
-  "{0, plural, one {# waiver} other {# waivers}} · {1, plural, one {# approver} other {# approvers}} · {2} each": {
+  "{0, plural, one {# waiver} other {# waivers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0, plural, one {# waiver} other {# waivers}} · {1, plural, one {# approver} other {# approvers}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -342937,15 +344515,6 @@
       "routes/billing-queue"
     ]
   },
-  "{0, plural, one {Look back # day} other {Look back # days}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "{0, plural, one {Looked up # record} other {Looked up # records}}": {
     "sites": 1,
     "scope": [
@@ -343614,15 +345183,6 @@
     ]
   },
   "{0, plural, one {Show # more customer} other {Show # more customers}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0, plural, one {Show # more facility} other {Show # more facilities}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -346190,6 +347750,15 @@
       "routes/detention-desk"
     ]
   },
+  "{0} billed of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} billed of {1} dwell": {
     "sites": 1,
     "scope": [
@@ -346197,15 +347766,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "{0} billed · {1} paid out · {2, plural, one {# stop} other {# stops}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0} bills about {1} for each matched lookup.": {
@@ -347279,6 +348839,15 @@
       "go/other"
     ]
   },
+  "{0} detained": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} detention billed on {1, plural, one {# stop} other {# stops}}": {
     "sites": 1,
     "scope": [
@@ -347403,15 +348972,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0} disputed": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0} divides {1} by {2}.": {
@@ -347678,11 +349238,12 @@
     ]
   },
   "{0} due": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/customer-statement",
       "routes/desk"
     ]
@@ -348196,6 +349757,15 @@
       "routes/desk"
     ]
   },
+  "{0} free time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} from the partner": {
     "sites": 1,
     "scope": [
@@ -348287,13 +349857,59 @@
     ]
   },
   "{0} h": {
-    "sites": 6,
+    "sites": 15,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
+      "routes/detention-intelligence",
       "routes/worker"
+    ]
+  },
+  "{0} h a week the window before": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0} h of waiting with the truck on time for its appointment. Ask for later appointments, more free time or drop trailers.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} h vs prior": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0} h went to waiting for a slot after arriving early.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} h with the truck on time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0} handed it off to {1}": {
@@ -352436,15 +354052,6 @@
       "go/other"
     ]
   },
-  "{0} lost to no notice": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "{0} made a rule": {
     "sites": 1,
     "scope": [
@@ -352580,15 +354187,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "{0} med · {1} p90": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0} median": {
@@ -352785,6 +354383,15 @@
       "routes/worker"
     ]
   },
+  "{0} min per detained stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} min {1} s": {
     "sites": 1,
     "scope": [
@@ -352894,6 +354501,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} more · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0} moved.": {
@@ -353320,15 +354936,6 @@
       "routes/detention-policy"
     ]
   },
-  "{0} net": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "{0} never assigned": {
     "sites": 1,
     "scope": [
@@ -353519,6 +355126,15 @@
       "apps/web/components"
     ]
   },
+  "{0} of 7 days in this window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} of Trenova's change subscriptions at {1} could not be kept": {
     "sites": 1,
     "scope": [
@@ -353564,6 +355180,15 @@
       "routes/desk"
     ]
   },
+  "{0} of accrued": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} of answers": {
     "sites": 1,
     "scope": [
@@ -353571,6 +355196,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of billed": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0} of charges on shipment {1}. A payer who gains a share gets a queue item; a payer left with nothing has theirs canceled.": {
@@ -353591,6 +355225,15 @@
       "routes/shipment"
     ]
   },
+  "{0} of free time against a {1} median stop, so most stops are detained before anyone is late.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} of grace": {
     "sites": 1,
     "scope": [
@@ -353607,6 +355250,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} of its {1} h past free time followed a missed appointment, so the free time was forfeited.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} of linehaul": {
@@ -353634,6 +355286,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} of the hours: {1}. {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0} of {1, plural, one {# call} other {# calls}}": {
@@ -353943,15 +355604,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "{0} of {1} lose money on detention": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0} of {1} mapped": {
@@ -354578,7 +356230,7 @@
     ]
   },
   "{0} open": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -354586,6 +356238,7 @@
       "apps/web/components",
       "routes/collections",
       "routes/desk",
+      "routes/detention-intelligence",
       "routes/fleet-safety"
     ]
   },
@@ -355085,15 +356738,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "{0} put in play": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0} radius must be greater than zero": {
@@ -355998,24 +357642,6 @@
       "routes/inbox"
     ]
   },
-  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time · top facilities only": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "{0} setup": {
     "sites": 5,
     "scope": [
@@ -356374,12 +358000,11 @@
     ]
   },
   "{0} suppressed, no notice": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-intelligence",
       "routes/detention-policy"
     ]
   },
@@ -356408,15 +358033,6 @@
     ],
     "areas": [
       "packages/shared/components"
-    ]
-  },
-  "{0} tail over median": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0} takes 0 to 28 places, not {1}": {
@@ -356678,7 +358294,7 @@
     ]
   },
   "{0} time remaining": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -356871,12 +358487,11 @@
     ]
   },
   "{0} total": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-intelligence",
       "routes/edi"
     ]
   },
@@ -357202,13 +358817,14 @@
     ]
   },
   "{0} waiting": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/carrier-monitoring",
+      "routes/detention-intelligence",
       "routes/fuel-feed-run",
       "routes/home"
     ]
@@ -358442,6 +360058,15 @@
       "routes/invoice"
     ]
   },
+  "{0} · {1, plural, one {# stop} other {# stops}} · {2, plural, one {# detained} other {# detained}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0} · {1, plural, one {read # time} other {read # times}}": {
     "sites": 1,
     "scope": [
@@ -358485,6 +360110,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "{0} · {1} h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0} · {1} hidden by filters": {
@@ -358828,15 +360462,6 @@
       "routes/shipment"
     ]
   },
-  "{0}% breach": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "{0}% clear": {
     "sites": 1,
     "scope": [
@@ -358899,33 +360524,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "{0}% of billed": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0}% of exposure": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
-  "{0}% of leakage": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
     ]
   },
   "{0}% of line haul": {
@@ -359546,6 +361144,15 @@
       "routes/desk"
     ]
   },
+  "{0}: no arrivals": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0}: not read": {
     "sites": 1,
     "scope": [
@@ -359611,6 +361218,15 @@
       "routes/desk"
     ]
   },
+  "{0}: {1, plural, one {# arrival} other {# arrivals}}, {2} detained": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
   "{0}: {1, plural, one {# call} other {# calls}}": {
     "sites": 1,
     "scope": [
@@ -359636,6 +361252,24 @@
     ],
     "areas": [
       "template/agent.proposal_reminder.email"
+    ]
+  },
+  "{0}: {1} free time, {2} median stop, {3} p90": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
+    ]
+  },
+  "{0}: {1} h past free time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "{0}: {1} of {2, plural, one {# covered person} other {# covered people}}": {
@@ -359976,11 +361610,14 @@
     ]
   },
   "{0}h": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
+      "routes/detention-intelligence",
       "routes/inbox"
     ]
   },
@@ -360022,22 +361659,26 @@
     ]
   },
   "{0}h {1}m": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "routes/desk"
     ]
   },
   "{0}m": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "routes/desk",
       "routes/inbox",
       "routes/time-attendance"
@@ -360935,15 +362576,6 @@
       "routes/benefits"
     ]
   },
-  "· {0} disputed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/detention-intelligence"
-    ]
-  },
   "· {0} drive left": {
     "sites": 1,
     "scope": [
@@ -361411,6 +363043,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "−{0} h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "−{0} removed": {

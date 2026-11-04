@@ -32,7 +32,7 @@ GraphQL / REST / agent tool ──▶ reporting.Service.Prepare ──▶ report
 | Piece | Where |
 |---|---|
 | Catalog, engine (two keel runners), fx module | `internal/infrastructure/reportengine/` |
-| Generators: message catalog and client module | `reportengine/generate.go`, `reportengine/gen` |
+| Generators: message catalog, client module and rollup migrations | `reportengine/generate.go`, `cmd/analytics` (`task db-rollups`) |
 | Engine and renderer ports | `internal/modules/workspace/ports/reportports/reporting.go` |
 | Repository ports | `reportports/report.go` |
 | Access policy: entity kinds, decisions, refusals | `internal/modules/workspace/app/reporting/reportaccess/` |
@@ -216,8 +216,9 @@ bumps after a write through it commits
 session setting rather than an argument, which is why a narrowed run never reads the cache. The
 TTL (`resultCache.ttl`, 15 min) is the backstop for writes keel does not see.
 
-No rollups are declared and the runners have no rollup router, so every report reads its base
-tables. `Primary: true`: reports run on the primary, not a replica.
+The runners have no rollup router, so every report reads its base tables. The detention rollups
+([backend/data-access.md](backend/data-access.md#rollups)) are bucketed in each organization's own
+zone, which keel's router refuses, and are read directly by detention intelligence. `Primary: true`: reports run on the primary, not a replica.
 
 ### Preparing a request
 

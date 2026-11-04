@@ -14,6 +14,11 @@ type SectionPanelProps = {
   action?: ReactNode;
   /** A plain-words note behind an info icon: what the panel counts, what it leaves out. */
   help?: ReactNode;
+  /**
+   * One line under the title saying what the panel shows, for a panel read as an argument (an
+   * analytics page) rather than scanned. The header then flows into the body without a rule.
+   */
+  description?: ReactNode;
   className?: string;
   children: ReactNode;
 };
@@ -30,6 +35,7 @@ export function SectionPanel({
   count,
   action,
   help,
+  description,
   className,
   children,
 }: SectionPanelProps) {
@@ -38,15 +44,25 @@ export function SectionPanel({
       aria-label={title}
       className={cn("bg-card flex flex-col overflow-hidden rounded-lg border", className)}
     >
-      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
-        <div className="flex min-w-0 items-center gap-2">
-          {icon ? (
-            <span className="text-muted-foreground shrink-0 [&>svg]:size-3.5">{icon}</span>
-          ) : null}
-          <h3 className="truncate text-sm font-semibold">{title}</h3>
-          {help ? <InfoPopover title={title}>{help}</InfoPopover> : null}
-          {count !== undefined && count > 0 ? (
-            <span className="text-muted-foreground text-xs tabular-nums">{count}</span>
+      <header
+        className={cn(
+          "flex min-h-9 justify-between gap-2 px-3",
+          description ? "items-start pt-3" : "border-border items-center border-b py-1.5",
+        )}
+      >
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-2">
+            {icon ? (
+              <span className="text-muted-foreground shrink-0 [&>svg]:size-3.5">{icon}</span>
+            ) : null}
+            <h3 className="truncate text-sm font-semibold">{title}</h3>
+            {help ? <InfoPopover title={title}>{help}</InfoPopover> : null}
+            {count !== undefined && count > 0 ? (
+              <span className="text-muted-foreground text-xs tabular-nums">{count}</span>
+            ) : null}
+          </div>
+          {description ? (
+            <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
           ) : null}
         </div>
         <div className="flex min-w-0 shrink-0 items-center gap-2">

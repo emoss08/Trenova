@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
@@ -32,6 +34,7 @@ type TenantRefs struct {
 	BuID          pulid.ID
 	BuCode        string
 	OrgName       string
+	Timezone      *time.Location
 	AdminID       pulid.ID
 	UserIDs       []pulid.ID
 	StateIDs      map[string]pulid.ID
@@ -61,8 +64,14 @@ func LoadTenantRefs(ctx context.Context, db *keel.DB, orgID pulid.ID) (*TenantRe
 		return nil, fmt.Errorf("load business unit: %w", err)
 	}
 
+	timezone := time.UTC
+	if loc, err := time.LoadLocation(timeutils.NormalizeTimezone(org.Timezone)); err == nil {
+		timezone = loc
+	}
+
 	return &TenantRefs{
 		OrgID:        org.ID,
+		Timezone:     timezone,
 		BuID:         org.BusinessUnitID,
 		BuCode:       bu.Code,
 		OrgName:      org.Name,
@@ -199,6 +208,15 @@ func (r *TenantRefs) Accessorial(codes ...string) *accessorialcharge.Accessorial
 	for _, code := range codes {
 		if c, ok := r.accessorials[strings.ToUpper(code)]; ok {
 			return c
+		}
+	}
+	return nil
+}
+
+func (r *TenantRefs) AccessorialByID(id pulid.ID) *accessorialcharge.AccessorialCharge {
+	for _, acc := range r.accessorials {
+		if acc.ID == id {
+			return acc
 		}
 	}
 	return nil

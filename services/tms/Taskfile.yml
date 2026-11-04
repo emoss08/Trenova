@@ -555,6 +555,16 @@ tasks:
       - "{{.DEVDB_PATH}} migrate status"
       - "{{.DEVDB_PATH}} seed status"
 
+  db-rollups:
+    desc: "Write migrations for new and changed rollups (bootstrap/rollups) into schema/migrations, then run task db-stamp"
+    cmds:
+      - go run ./cmd/analytics rollups migration -out schema/migrations
+
+  db-rollups-check:
+    desc: "Fail when a declared rollup has no up-to-date migration"
+    cmds:
+      - go run ./cmd/analytics rollups migration -check -out schema/migrations
+
   db-create-migration:
     desc: "Create a migration in schema/migrations (name=add_holds [kind=tx|notx|repeatable])"
     deps: [build-devdb]

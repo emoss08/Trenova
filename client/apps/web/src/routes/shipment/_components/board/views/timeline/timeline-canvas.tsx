@@ -1,4 +1,5 @@
-"use no memo";
+import { usePointerHover } from "@/components/pointer-hover-card";
+("use no memo");
 
 import { ScrollArea, ScrollBar } from "@trenova/shared/components/ui/scroll-area";
 import { useNow } from "@trenova/shared/hooks/use-now";
@@ -7,7 +8,6 @@ import { formatUnixMonthDay, formatUnixTime, formatUnixWeekday } from "@trenova/
 import { cn } from "@trenova/shared/lib/utils";
 import { defaultRangeExtractor, useVirtualizer, type Range } from "@tanstack/react-virtual";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type Ref } from "react";
-import { useBarHover } from "./timeline-hover-card";
 import {
   AXIS_HEIGHT,
   GROUP_HEIGHT,
@@ -91,7 +91,7 @@ export function TimelineCanvas({
 }: TimelineCanvasProps) {
   // The canvas reads the clock itself: a minute passing moves the now line only.
   const now = useNow("minute");
-  const hover = useBarHover();
+  const hover = usePointerHover();
   const [viewport, setViewport] = useState<HTMLDivElement | null>(null);
   const nowRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef<number | null>(null);

@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -36,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/seeds/volume/detentionvolume"
 	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -63,6 +66,7 @@ const (
 	shpTableCarrierAssignments = "carrier_assignments"
 	shpTableCommodities        = "shipment_commodities"
 	shpTableCharges            = "additional_charges"
+	shpTableDetention          = "detention_occurrences"
 	shpTableComments           = "shipment_comments"
 	shpTableHolds              = "shipment_holds"
 )
@@ -132,6 +136,7 @@ type shpBatch struct {
 	holds              []*shipmenthold.ShipmentHold
 	releases           []shpRelease
 	checkCalls         []*checkcall.CheckCall
+	detention          []*detention.DetentionOccurrence
 	stamps             map[string][]volumegen.Stamp
 }
 
@@ -150,6 +155,7 @@ type shpRelease struct {
 
 type shpBuilder struct {
 	g               *volumegen.Generator
+	det             *detentionvolume.Deriver
 	now             int64
 	coord           *shipmentstate.Coordinator
 	look            *shpLookups
@@ -183,6 +189,9 @@ func (g *shipmentPhase) seedShipments(ctx context.Context) error {
 	}
 
 	b := g.shpNewBuilder(look)
+	if b.det, err = detentionvolume.Load(ctx, g.Generator); err != nil {
+		return err
+	}
 	plans := b.planAll(g.Opts.Shipments)
 
 	proSlots := make([]volumegen.NumberSlot, len(plans))
@@ -231,6 +240,7 @@ func (g *shipmentPhase) seedShipments(ctx context.Context) error {
 	} {
 		g.Report.Add(entity.label, b.counts[entity.table])
 	}
+	b.det.Report()
 	for _, status := range []shipmentvocab.Status{
 		shipmentvocab.StatusNew, shipmentvocab.StatusPartiallyAssigned, shipmentvocab.StatusAssigned,
 		shipmentvocab.StatusInTransit, shipmentvocab.StatusDelayed, shipmentvocab.StatusPartiallyCompleted,
@@ -709,6 +719,7 @@ type shpTimedStop struct {
 	windowStart int64
 	windowEnd   int64
 	appointment bool
+	handling    shipmentvocab.StopHandling
 	arrival     int64
 	departure   int64
 	miles       float64
@@ -768,11 +779,8 @@ func (b *shpBuilder) schedule(p *shpPlan) [][]*shpTimedStop {
 					ts.arrival += f.Between64(shpHour, 6*shpHour)
 				}
 			}
-			dwell := f.Between64(45*shpMinute, 3*shpHour)
-			if m == len(p.moves)-1 && s == detentionStop {
-				dwell = f.Between64(3*shpHour+15*shpMinute, 6*shpHour)
-			}
-			ts.departure = ts.arrival + dwell
+			ts.handling = b.handling(sp)
+			ts.departure = ts.arrival + b.dwell(ts, zone, m == len(p.moves)-1 && s == detentionStop)
 			plannedDeparture = max(ts.windowStart, plannedArrival) + shpHour
 			actualDeparture = ts.departure
 			timed[s] = ts
@@ -1035,6 +1043,7 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 				LocationID:           ts.plan.loc.ID,
 				Type:                 ts.plan.typ,
 				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
+				Handling:             ts.handling,
 				Sequence:             int64(s),
 				Pieces:               volumegen.Ptr(pieces),
 				Weight:               volumegen.Ptr(weight),
@@ -1190,7 +1199,24 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 	rec.Moves = shpMoveRecords(entity, timeline, moveCrews)
 
 	b.planBilling(entity, rec)
-	b.price(entity, rec, p, totalMiles, totalStops, batch)
+	held := b.det.Derive(&detentionvolume.Shipment{
+		Entity:       entity,
+		CommodityIDs: shpCommodityIDs(p),
+		Delivered:    shpDelivered(entity.Status),
+		CustomerCode: p.customer.Code,
+	})
+	b.price(
+		entity,
+		rec,
+		p,
+		&shpPricing{miles: totalMiles, stops: totalStops, detention: held.Billed},
+		batch,
+	)
+	held.Bind(shpDetentionCharge(rec))
+	batch.detention = append(batch.detention, held.Occurrences...)
+	for _, stamp := range held.Stamps {
+		batch.stamp(shpTableDetention, stamp.Id, stamp.Created, stamp.Updated)
+	}
 	rec.Status = entity.Status
 	b.statuses[entity.Status]++
 
@@ -1315,6 +1341,7 @@ func shpMoveRecords(
 				Status:      stop.Status,
 				Location:    ts.plan.loc,
 				Appointment: ts.appointment,
+				Handling:    ts.handling,
 				WindowStart: ts.windowStart,
 				WindowEnd:   ts.windowEnd,
 				Miles:       ts.miles,
@@ -1473,11 +1500,11 @@ func (b *shpBuilder) price(
 	entity *shipment.Shipment,
 	rec *volumegen.ShipmentRecord,
 	p *shpPlan,
-	miles float64,
-	stops int,
+	pricing *shpPricing,
 	batch *shpBatch,
 ) {
 	f := b.g.Fake
+	miles, stops := pricing.miles, pricing.stops
 	rpm := 2.15 + 160/(miles+40)
 	rpm *= b.customerFactor[p.customer.ID] * (0.92 + f.Float()*0.16)
 	if p.reefer {
@@ -1533,9 +1560,7 @@ func (b *shpBuilder) price(
 		freight = baseRate.Mul(unit.quantity).Round(2)
 	}
 
-	delivered := entity.Status == shipmentvocab.StatusCompleted ||
-		entity.Status == shipmentvocab.StatusReadyToInvoice ||
-		entity.Status == shipmentvocab.StatusInvoiced
+	delivered := shpDelivered(entity.Status)
 
 	var charges []volumegen.ChargeRecord
 	add := func(code string, amount decimal.Decimal, unit int64, at int64) {
@@ -1607,8 +1632,8 @@ func (b *shpBuilder) price(
 	}
 	if delivered {
 		at := rec.DeliveredAt
-		if p.detention {
-			add("DET", rate("DET", 75), f.Between64(1, 4), at)
+		if pricing.detention.GreaterThan(decimal.Zero) {
+			add("DET", pricing.detention, 1, at)
 		}
 		if f.Chance(0.07) {
 			add("LUMP", b.g.Fake.Money(150, 450), 1, at)
@@ -2469,6 +2494,9 @@ func (b *shpBuilder) write(ctx context.Context, tx *keel.DB, batch *shpBatch) er
 			len(batch.charges),
 			func() error { return volumegen.InsertRows(ctx, tx, shipmentdb.AdditionalCharges, batch.charges) },
 		},
+		{shpTableDetention, len(batch.detention), func() error {
+			return volumegen.InsertRows(ctx, tx, detentiondb.DetentionOccurrences, batch.detention)
+		}},
 		{
 			shpTableComments,
 			len(batch.comments),

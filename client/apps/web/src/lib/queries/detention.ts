@@ -1,12 +1,10 @@
 import { fetchDeskDetention } from "@/lib/graphql/detention-card";
+import {
+  fetchDetentionIntelligence,
+  type DetentionIntelligenceInput,
+} from "@/lib/graphql/detention-intelligence";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
-
-/**
- * Ranked detention analytics are grouped rollups, so a generous ceiling keeps
- * the page's derived totals honest while still bounding the aggregation.
- */
-export const DETENTION_STATS_LIMIT = 100;
 
 export const detention = createQueryKeys("detention", {
   desk: () => ({
@@ -25,34 +23,10 @@ export const detention = createQueryKeys("detention", {
     queryKey: ["occurrence", id],
     queryFn: async ({ signal }) => apiService.detentionService.getOccurrence(id, { signal }),
   }),
-  facilities: (from: number, to: number) => ({
-    queryKey: ["facilities", from, to],
-    queryFn: async ({ signal }) =>
-      apiService.detentionAnalyticsService.facilities(
-        {
-          from,
-          to,
-          limit: DETENTION_STATS_LIMIT,
-        },
-        { signal },
-      ),
-  }),
-  customers: (from: number, to: number) => ({
-    queryKey: ["customers", from, to],
-    queryFn: async ({ signal }) =>
-      apiService.detentionAnalyticsService.customers(
-        {
-          from,
-          to,
-          limit: DETENTION_STATS_LIMIT,
-        },
-        { signal },
-      ),
-  }),
-  waivers: (from: number, to: number) => ({
-    queryKey: ["waivers", from, to],
-    queryFn: async ({ signal }) =>
-      apiService.detentionAnalyticsService.waivers({ from, to }, { signal }),
+  intelligence: (input: DetentionIntelligenceInput) => ({
+    queryKey: ["intelligence", input.days, input.through ?? null, input.locationId ?? null],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      fetchDetentionIntelligence(input, { signal }),
   }),
   disputePacket: (id: string) => ({
     queryKey: ["disputePacket", id],

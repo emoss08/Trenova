@@ -1,6 +1,7 @@
 package detentionfixtures
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -835,6 +836,7 @@ type detentionStopDef struct {
 	location        string
 	stopType        shipmentvocab.StopType
 	scheduleType    shipmentvocab.StopScheduleType
+	handling        shipmentvocab.StopHandling
 	apptStartAgo    int64
 	apptWindow      int64
 	arrivalOffset   int64
@@ -933,6 +935,7 @@ func detentionShipmentDefs() []detentionShipmentDef {
 				},
 				{
 					location: "WH-DAL", stopType: shipmentvocab.StopTypeDelivery,
+					handling:     shipmentvocab.StopHandlingDrop,
 					scheduleType: shipmentvocab.StopScheduleTypeAppointment,
 					apptStartAgo: 3 * 24 * 60, apptWindow: 120, arrivalOffset: 20, dwell: 480,
 					arrivalSource:   detentionevidence.EvidenceSourceGeofence,
@@ -1333,6 +1336,7 @@ func (s *DetentionSeed) buildStop(
 		LocationID:           loc.ID,
 		Type:                 def.stopType,
 		ScheduleType:         def.scheduleType,
+		Handling:             cmp.Or(def.handling, shipmentvocab.StopHandlingLive),
 		Status:               shipmentvocab.StopStatusInTransit,
 		Sequence:             sequence,
 		ScheduledWindowStart: apptStart,
@@ -1450,7 +1454,7 @@ func (s *DetentionSeed) createOccurrences(
 			FreeMinutes:     policy.FreeMinutesForStopType(stop.Type),
 			AccessorialCode: accessorial.Code,
 			FlatRate:        accessorial.Amount,
-			FlatRateUnit:    detentionTierUnit(accessorial.RateUnit),
+			FlatRateUnit:    detentionengine.TierUnitFromAccessorial(accessorial.RateUnit),
 			CapturedAt:      p.now,
 		})
 
@@ -1544,6 +1548,7 @@ func buildDetentionOccurrence(
 		CalculationTrace:   computed.Trace,
 		StopType:           stop.Type,
 		ScheduleType:       stop.ScheduleType,
+		Handling:           stop.Handling,
 		AppointmentStart:   new(stop.ScheduledWindowStart),
 		AppointmentEnd:     stop.ScheduledWindowEnd,
 		ArrivedAt:          stop.ActualArrival,
@@ -2027,21 +2032,6 @@ func (s *DetentionSeed) createNotice(
 }
 
 // -- Formatting --
-
-// detentionTierUnit maps an accessorial's rate unit onto the tier vocabulary the
-// snapshot speaks, mirroring how the service freezes a flat-rate policy.
-func detentionTierUnit(unit accessorialcharge.RateUnit) detentionpolicy.TierRateUnit {
-	switch unit {
-	case accessorialcharge.RateUnitHour:
-		return detentionpolicy.TierRateUnitHour
-	case accessorialcharge.RateUnitDay:
-		return detentionpolicy.TierRateUnitDay
-	case accessorialcharge.RateUnitStop, accessorialcharge.RateUnitMile:
-		return detentionpolicy.TierRateUnitFlat
-	default:
-		return detentionpolicy.TierRateUnitHour
-	}
-}
 
 func formatDetentionStamp(ts int64, loc *time.Location) string {
 	if loc == nil {

@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionintelligence"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
@@ -192,6 +193,7 @@ func SharedOptions() fx.Option {
 			detentionrepository.NewEvidenceRepository,
 			detentionrepository.NewNoticeRepository,
 			detentionrepository.NewAnalyticsRepository,
+			detentionrepository.NewIntelligenceRepository,
 			orderservice.NewValidator,
 			shipmentvalidator.New,
 			recurringshipmentservice.NewValidator,
@@ -317,6 +319,7 @@ func SharedOptions() fx.Option {
 			detentioneffects.New,
 			detentionsync.New,
 			detentionsimulation.New,
+			detentionintelligence.New,
 			detentionnoticeservice.New,
 			detentionreview.New,
 			shipmentquickfilterservice.New,

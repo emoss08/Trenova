@@ -1,7 +1,10 @@
 package crossref
 
 import (
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -9,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -74,5 +78,24 @@ func MoveColumns() equipmentcontinuityports.MoveColumns {
 		StopSequence:         st.Sequence,
 		StopWindowStart:      st.ScheduledWindowStart,
 		StopWindowEnd:        st.ScheduledWindowEnd,
+	}
+}
+
+func InvoiceSettlementColumns() detentionports.InvoiceSettlementColumns {
+	line := invoicedb.InvoiceLines
+	inv := invoicedb.Invoices
+	return detentionports.InvoiceSettlementColumns{
+		LineInvoiceID: line.InvoiceID,
+		LineChargeID:  line.AdditionalChargeID,
+		InvoiceID:     inv.ID,
+		InvoicePosted: keel.And(
+			inv.Status.Eq(invoice.StatusPosted),
+			inv.BillType.Ne(billingvocab.BillTypeCreditMemo),
+		),
+		InvoicePaid: keel.And(
+			inv.Status.Eq(invoice.StatusPosted),
+			inv.BillType.Ne(billingvocab.BillTypeCreditMemo),
+			inv.SettlementStatus.Eq(invoice.SettlementStatusPaid),
+		),
 	}
 }

@@ -620,6 +620,7 @@
   "{0} onboarding step(s) remaining before this partner is production-ready.": "此合作方还需完成 {0} 个建档步骤才能正式上线。",
   "{0} saved": "已保存 {0}",
   "{0} stops": "{0} 个停靠点",
+  "{0} total": "共 {0}",
   "{0} unresolved": "{0} 项未解决",
   "{0} unresolved mappings": "{0} 项未解决的映射",
   "{0} without a test": "{0} 没有测试"

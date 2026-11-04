@@ -222,11 +222,16 @@ export type StopType = z.infer<typeof stopTypeSchema>;
 export const stopScheduleTypeSchema = z.enum(["Open", "Appointment"]);
 export type StopScheduleType = z.infer<typeof stopScheduleTypeSchema>;
 
+/** Live: the truck waits while the facility loads or unloads. Drop: a trailer is left or taken. */
+export const stopHandlingSchema = z.enum(["Live", "Drop"]);
+export type StopHandling = z.infer<typeof stopHandlingSchema>;
+
 const stopBaseSchema = z.object({
   locationId: z.string().min(1, { error: () => translate("Location is required") }),
   status: stopStatusSchema.default("New"),
   type: stopTypeSchema.default("Pickup"),
   scheduleType: stopScheduleTypeSchema.default("Open"),
+  handling: stopHandlingSchema.default("Live"),
   sequence: z.number().int().nonnegative().default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,

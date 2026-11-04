@@ -103,6 +103,7 @@ type StopRecord struct {
 	Status          shipmentvocab.StopStatus
 	Location        *LocationRecord
 	Appointment     bool
+	Handling        shipmentvocab.StopHandling
 	WindowStart     int64
 	WindowEnd       int64
 	ActualArrival   int64

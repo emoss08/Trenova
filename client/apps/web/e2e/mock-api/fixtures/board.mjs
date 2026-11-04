@@ -265,7 +265,7 @@ function buildShipment(raw, index, anchor) {
   const covered = !!driver;
   const pickup = {
     id: `stp_${id}_p`, businessUnitId: "bu_mock", organizationId: "org_mock", shipmentMoveId: moveId,
-    locationId: `loc_${o}`, status: pct > 0 ? "Completed" : "New", type: "Pickup", scheduleType: "Appointment",
+    locationId: `loc_${o}`, status: pct > 0 ? "Completed" : "New", type: "Pickup", scheduleType: "Appointment", handling: "Live",
     sequence: 0, pieces: 22, weight, scheduledWindowStart: at(pickupH), scheduledWindowEnd: at(pickupH + 2),
     actualArrival: pct > 0 ? at(pickupH - 0.2) : null, actualDeparture: pct > 0 ? at(pickupH + 0.4) : null,
     countLateOverride: null, countDetentionOverride: null, addressLine: null, version: 1, createdAt: 0, updatedAt: 0,
@@ -274,7 +274,7 @@ function buildShipment(raw, index, anchor) {
   const delivery = {
     id: `stp_${id}_d`, businessUnitId: "bu_mock", organizationId: "org_mock", shipmentMoveId: moveId,
     locationId: `loc_${d}`, status: st === "done" ? "Completed" : moving ? "InTransit" : "New", type: "Delivery",
-    scheduleType: "Appointment", sequence: 1, pieces: 22, weight,
+    scheduleType: "Appointment", handling: "Live", sequence: 1, pieces: 22, weight,
     scheduledWindowStart: at(deliveryH), scheduledWindowEnd: at(deliveryH + 1),
     actualArrival: st === "done" ? at(deliveryH - 0.3) : null, actualDeparture: st === "done" ? at(deliveryH + 0.2) : null,
     countLateOverride: null, countDetentionOverride: null, addressLine: null, version: 1, createdAt: 0, updatedAt: 0,

@@ -52,6 +52,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	crossref.RotaAssignments,
 	crossref.LocationColumns,
 	crossref.MoveColumns,
+	crossref.InvoiceSettlementColumns,
 	fx.Annotate(
 		internaledistatussync.New,
 		fx.As(new(shipmenteventports.ShipmentEventObserver)),

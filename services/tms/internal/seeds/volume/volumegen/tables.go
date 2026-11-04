@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
@@ -53,6 +54,7 @@ var tableBackdates = map[string]tableBackdate{
 	"billing_queue_events":    backdater(billingqueueeventdb.ItemEvents),
 	"billing_queue_items":     backdater(billingqueuedb.BillingQueueItems),
 	"carrier_assignments":     backdater(shipmentdb.CarrierAssignments),
+	"detention_occurrences":   backdater(detentiondb.DetentionOccurrences),
 	"carrier_cost_events":     backdater(carriersettlementdb.CostEvents),
 	"carrier_edi_channels":    backdater(carrierdb.CarrierEDIChannels),
 	"carrier_invoice_matches": backdater(carriersettlementdb.InvoiceMatches),

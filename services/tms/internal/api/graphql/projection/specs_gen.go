@@ -25972,6 +25972,10 @@ func init() {
 				Column: "schedule_type",
 			},
 			{
+				Name:   "handling",
+				Column: "handling",
+			},
+			{
 				Name:   "sequence",
 				Column: "sequence",
 			},

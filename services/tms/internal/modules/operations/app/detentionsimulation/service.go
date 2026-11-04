@@ -344,23 +344,6 @@ func (s *Service) FacilityProfiles(
 	return s.analyticsRepo.FacilityStats(ctx, req)
 }
 
-// CustomerProfiles rolls detention up per customer, carrying both sides of the
-// ledger so an unprofitable detention arrangement is visible.
-func (s *Service) CustomerProfiles(
-	ctx context.Context,
-	req *detentionports.DetentionStatsRequest,
-) ([]*detentionports.CustomerDetentionStat, error) {
-	return s.analyticsRepo.CustomerStats(ctx, req)
-}
-
-// WaiverLeakage reports where discretionary revenue went, by coded reason.
-func (s *Service) WaiverLeakage(
-	ctx context.Context,
-	req *detentionports.DetentionStatsRequest,
-) ([]*detentionports.WaiverLeakageStat, error) {
-	return s.analyticsRepo.WaiverStats(ctx, req)
-}
-
 type Params struct {
 	fx.In
 

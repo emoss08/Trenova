@@ -22,6 +22,15 @@ fails it, fix it in the same change if it is small, or name it in your report.
   the repeated SQL and its call sites when one does ([data-access.md](data-access.md#budgets)).
   Treat that warning as a defect, and pin a hot path with a hard `keel.Budget` in its test.
 - **Projected.** Select the columns asked for, not `*`, on anything a table or connection reads.
+- **Each policied table once.** Under row-level security every reference to a table brings its
+  policy's checks: an InitPlan that verifies the signed tenant scope (about 30 µs, once per
+  statement) and, for the heavier policies (invoices, with their owner-scope checks), subplans
+  over other policied tables. Two `EXISTS` against the same table pay twice. Read what several
+  predicates need from a policied table once, in a CTE limited to the rows in play, and join it:
+  detention intelligence's recovery read takes 36 ms this way against 69 ms with three `EXISTS`
+  (`detentionrepository/intelligence.go`, `invoiced`). Measure under the application role, not
+  as the superuser, who skips the policies
+  ([row-level-security.md](../row-level-security.md#what-the-scope-costs)).
 - **History in one pass.** A balance or state "as of" a series of dates is never a correlated
   subquery per row per date. Read the changes once, fold them into segments with a window
   function, expand each segment onto the dates it covers, and read only rows open now or
@@ -69,6 +78,8 @@ fails it, fix it in the same change if it is small, or name it in your report.
 
 ## Data growth
 
+- A read that adds up a tenant's history reads a rollup kept by day and month, not the rows
+  ([data-access.md](data-access.md#rollups)).
 - Append-only tables (events, audit, usage, tracking) have a retention or rollup plan and an
   index on what the sweep deletes or folds by.
 - Large text and files live in object storage through `storedobject`, never in a row.

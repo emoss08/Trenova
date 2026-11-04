@@ -49,6 +49,7 @@ type DetentionOccurrence struct {
 
 	StopType           shipmentvocab.StopType         `json:"stopType"           keel:"stop_type"`
 	ScheduleType       shipmentvocab.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
+	Handling           shipmentvocab.StopHandling     `json:"handling"           keel:"handling"`
 	AppointmentStart   *int64                         `json:"appointmentStart"   keel:"appointment_start"`
 	AppointmentEnd     *int64                         `json:"appointmentEnd"     keel:"appointment_end"`
 	ArrivedAt          *int64                         `json:"arrivedAt"          keel:"arrived_at"`
@@ -411,6 +412,9 @@ func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
 	if o.NotificationStatus == "" {
 		o.NotificationStatus = NotificationStatusNotRequired
 	}
+	if o.Handling == "" {
+		o.Handling = shipmentvocab.StopHandlingLive
+	}
 	if !o.NetMargin.Valid {
 		o.NetMargin = decimal.NewNullDecimal(o.BillableAmount.Sub(o.DriverPayAmount.Decimal))
 	}
@@ -421,6 +425,9 @@ func (o *DetentionOccurrence) BeforeCreate(ctx context.Context) error {
 func (o *DetentionOccurrence) BeforeUpdate(ctx context.Context) error {
 	if o.Currency == "" {
 		o.Currency = "USD"
+	}
+	if o.Handling == "" {
+		o.Handling = shipmentvocab.StopHandlingLive
 	}
 	if o.CapApplied == "" {
 		o.CapApplied = CapKindNone

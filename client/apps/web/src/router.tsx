@@ -803,7 +803,13 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/detention/intelligence",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Detention)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Detention),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/detention-intelligence/page")),
+              ),
+            ),
             async lazy() {
               const { DetentionIntelligencePage } =
                 await import("@/routes/detention-intelligence/page");

@@ -59,7 +59,7 @@ func restMargins() []restMargin {
 		},
 		{
 			build: func() protectedfield.Withholder {
-				return &detentionports.CustomerDetentionStat{
+				return &detentionports.CustomerIntelligence{
 					DriverPayAmount: margin("75"),
 					NetMargin:       margin("150"),
 				}

@@ -9240,6 +9240,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNStopScheduleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopScheduleType),
 			},
 			{
+				Name:     "handling",
+				NonNull:  true,
+				ChildErr: errNoChild43,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentStop)
+					return obj.Handling, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNStopHandling2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopHandling),
+			},
+			{
 				Name:     "sequence",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -10299,7 +10309,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild43,
+				ChildErr: errNoChild44,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Source, nil
@@ -10309,7 +10319,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild44,
+				ChildErr: errNoChild45,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Kind, nil
@@ -10319,7 +10329,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "matchMethod",
 				NonNull:  true,
-				ChildErr: errNoChild45,
+				ChildErr: errNoChild46,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.MatchMethod, nil
@@ -10394,7 +10404,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild46,
+				ChildErr: errNoChild47,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Outcome, nil
@@ -10591,10 +10601,11 @@ var (
 	errNoChild40 = errors.New("field of type StopStatus does not have child fields")
 	errNoChild41 = errors.New("field of type StopType does not have child fields")
 	errNoChild42 = errors.New("field of type StopScheduleType does not have child fields")
-	errNoChild43 = errors.New("field of type TrackingEventSource does not have child fields")
-	errNoChild44 = errors.New("field of type StopVisitKind does not have child fields")
-	errNoChild45 = errors.New("field of type TrackingMatchMethod does not have child fields")
-	errNoChild46 = errors.New("field of type TrackingEventOutcome does not have child fields")
+	errNoChild43 = errors.New("field of type StopHandling does not have child fields")
+	errNoChild44 = errors.New("field of type TrackingEventSource does not have child fields")
+	errNoChild45 = errors.New("field of type StopVisitKind does not have child fields")
+	errNoChild46 = errors.New("field of type TrackingMatchMethod does not have child fields")
+	errNoChild47 = errors.New("field of type TrackingEventOutcome does not have child fields")
 )
 
 func marshalAbstractShipmentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
@@ -12968,6 +12979,9 @@ func unmarshalInputShipmentStopInput(ctx context.Context, ec *gqlexec.Exec, obj 
 	if _, present := asMap["scheduleType"]; !present {
 		asMap["scheduleType"] = "Open"
 	}
+	if _, present := asMap["handling"]; !present {
+		asMap["handling"] = "Live"
+	}
 	if _, present := asMap["sequence"]; !present {
 		asMap["sequence"] = 0
 	}
@@ -12975,7 +12989,7 @@ func unmarshalInputShipmentStopInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap["scheduledWindowStart"] = 0
 	}
 
-	fieldsInOrder := [...]string{"id", "shipmentMoveId", "locationId", "status", "type", "scheduleType", "sequence", "pieces", "weight", "scheduledWindowStart", "scheduledWindowEnd", "actualArrival", "actualDeparture", "countLateOverride", "countDetentionOverride", "addressLine", "version"}
+	fieldsInOrder := [...]string{"id", "shipmentMoveId", "locationId", "status", "type", "scheduleType", "handling", "sequence", "pieces", "weight", "scheduledWindowStart", "scheduledWindowEnd", "actualArrival", "actualDeparture", "countLateOverride", "countDetentionOverride", "addressLine", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13024,6 +13038,13 @@ func unmarshalInputShipmentStopInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.ScheduleType = data
+		case "handling":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("handling"))
+			data, err := unmarshalOStopHandling2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopHandling(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Handling = data
 		case "sequence":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sequence"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
@@ -13799,6 +13820,15 @@ func unmarshalOSortFieldInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return nil, nil
 	}
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNSortFieldInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSortFieldInput)
+}
+
+func unmarshalOStopHandling2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopHandling(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.StopHandling, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.StopHandling)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOStopScheduleType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopScheduleType(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.StopScheduleType, error) {
@@ -14807,6 +14837,10 @@ func marshalNShipmentValidationResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ShipmentValidationResponse", v)
+}
+
+func marshalNStopHandling2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopHandling(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.StopHandling) graphql.Marshaler {
+	return v
 }
 
 func marshalNStopScheduleType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐStopScheduleType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.StopScheduleType) graphql.Marshaler {

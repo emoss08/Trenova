@@ -174,6 +174,7 @@ func shipmentStopsToModel(entities []*shipmentdomain.Stop) []*gqlmodel.ShipmentS
 			Status:                 gqlmodel.StopStatus(entity.Status),
 			Type:                   gqlmodel.StopType(entity.Type),
 			ScheduleType:           gqlmodel.StopScheduleType(entity.ScheduleType),
+			Handling:               gqlmodel.StopHandling(entity.Handling),
 			Sequence:               int(entity.Sequence),
 			Pieces:                 gqlscalar.IntPtr(entity.Pieces),
 			Weight:                 gqlscalar.IntPtr(entity.Weight),

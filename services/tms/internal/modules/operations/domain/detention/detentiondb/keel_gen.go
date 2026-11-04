@@ -44,6 +44,7 @@ var detentionOccurrencesTable = schema.Table{
 		{Name: "calculation_trace", Quoted: `"calculation_trace"`, Field: "CalculationTrace", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Calculation Trace`, JSON: `calculationTrace`},
 		{Name: "stop_type", Quoted: `"stop_type"`, Field: "StopType", Kind: schema.KindString, Flags: 0, Label: `Stop Type`, JSON: `stopType`, Enum: enumShipmentvocabStopType[:]},
 		{Name: "schedule_type", Quoted: `"schedule_type"`, Field: "ScheduleType", Kind: schema.KindString, Flags: 0, Label: `Schedule Type`, JSON: `scheduleType`, Enum: enumShipmentvocabStopScheduleType[:]},
+		{Name: "handling", Quoted: `"handling"`, Field: "Handling", Kind: schema.KindString, Flags: 0, Label: `Handling`, JSON: `handling`, Enum: enumShipmentvocabStopHandling[:]},
 		{Name: "appointment_start", Quoted: `"appointment_start"`, Field: "AppointmentStart", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Appointment Start`, JSON: `appointmentStart`},
 		{Name: "appointment_end", Quoted: `"appointment_end"`, Field: "AppointmentEnd", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Appointment End`, JSON: `appointmentEnd`},
 		{Name: "arrived_at", Quoted: `"arrived_at"`, Field: "ArrivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Arrived At`, JSON: `arrivedAt`},
@@ -100,14 +101,14 @@ var detentionOccurrencesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 57},
-	Returning:    []int32{33},
-	Version:      55,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 58},
+	Returning:    []int32{34},
+	Version:      56,
 	AutoID:       0,
-	AutoCreate:   56,
-	AutoUpdate:   57,
+	AutoCreate:   57,
+	AutoUpdate:   58,
 	IDPrefix:     "dto_",
 	New:          newDetentionOccurrence,
 	NewN:         newNDetentionOccurrence,
@@ -137,6 +138,7 @@ type DetentionOccurrencesTable struct {
 	CalculationTrace    keel.JSONBCol
 	StopType            keelkinds.ShipmentvocabStopTypeCol
 	ScheduleType        keelkinds.ShipmentvocabStopScheduleTypeCol
+	Handling            keelkinds.ShipmentvocabStopHandlingCol
 	AppointmentStart    keel.Int64Col
 	AppointmentEnd      keel.Int64Col
 	ArrivedAt           keel.Int64Col
@@ -203,54 +205,55 @@ var DetentionOccurrences = &DetentionOccurrencesTable{
 	CalculationTrace:    keel.JSONBCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 10}},
 	StopType:            keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 11}}},
 	ScheduleType:        keelkinds.ShipmentvocabStopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 12}}},
-	AppointmentStart:    keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 13}},
-	AppointmentEnd:      keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 14}},
-	ArrivedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 15}},
-	DepartedAt:          keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 16}},
-	ClockStartAt:        keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 17}},
-	ClockStopAt:         keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 18}},
-	FreeTimeExpiresAt:   keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 19}},
-	NoticeDueAt:         keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 20}},
-	NoticeDeadlineAt:    keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 21}},
-	IsOpen:              keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 22}},
-	ArrivedLate:         keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 23}},
-	LateByMinutes:       keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 24}},
-	FreeMinutesGranted:  keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 25}},
-	RawDwellMinutes:     keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 26}},
-	BillableMinutes:     keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 27}},
-	RoundedMinutes:      keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 28}},
-	BillableUnits:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 29}}},
-	GrossAmount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 30}}},
-	BillableAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 31}}},
-	DriverPayMinutes:    keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 32}},
-	DriverPayAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 33}}},
-	NetMargin:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 34}}},
-	CapApplied:          CapKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 35}}},
-	ConvertedToLayover:  keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 36}},
-	Currency:            keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 37}},
-	Status:              OccurrenceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 38}}},
-	NotificationStatus:  NotificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 39}}},
-	NoticeSentAt:        keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 40}},
-	SuppressedByGate:    keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 41}},
-	RequiresApproval:    keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 42}},
-	ApprovedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 43}}},
-	ApprovedAt:          keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 44}},
-	WaiverReason:        WaiverReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 45}}},
-	WaiverNote:          keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 46}},
-	WaivedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 47}}},
-	WaivedAt:            keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 48}},
-	WaivedAmount:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 49}}},
-	DisputeNote:         keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 50}},
-	DisputedAt:          keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 51}},
-	CollectabilityScore: keel.Int16Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 52}},
-	EvidenceHead:        keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 53}},
-	AdditionalChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 54}}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 55}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 56}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 57}},
-	LocationName:        keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 58}},
-	CustomerName:        keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 59}},
-	ShipmentProNumber:   keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 60}},
+	Handling:            keelkinds.ShipmentvocabStopHandlingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 13}}},
+	AppointmentStart:    keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 14}},
+	AppointmentEnd:      keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 15}},
+	ArrivedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 16}},
+	DepartedAt:          keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 17}},
+	ClockStartAt:        keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 18}},
+	ClockStopAt:         keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 19}},
+	FreeTimeExpiresAt:   keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 20}},
+	NoticeDueAt:         keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 21}},
+	NoticeDeadlineAt:    keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 22}},
+	IsOpen:              keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 23}},
+	ArrivedLate:         keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 24}},
+	LateByMinutes:       keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 25}},
+	FreeMinutesGranted:  keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 26}},
+	RawDwellMinutes:     keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 27}},
+	BillableMinutes:     keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 28}},
+	RoundedMinutes:      keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 29}},
+	BillableUnits:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 30}}},
+	GrossAmount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 31}}},
+	BillableAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 32}}},
+	DriverPayMinutes:    keel.Int32Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 33}},
+	DriverPayAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 34}}},
+	NetMargin:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 35}}},
+	CapApplied:          CapKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 36}}},
+	ConvertedToLayover:  keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 37}},
+	Currency:            keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 38}},
+	Status:              OccurrenceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 39}}},
+	NotificationStatus:  NotificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 40}}},
+	NoticeSentAt:        keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 41}},
+	SuppressedByGate:    keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 42}},
+	RequiresApproval:    keel.BoolCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 43}},
+	ApprovedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 44}}},
+	ApprovedAt:          keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 45}},
+	WaiverReason:        WaiverReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 46}}},
+	WaiverNote:          keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 47}},
+	WaivedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 48}}},
+	WaivedAt:            keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 49}},
+	WaivedAmount:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 50}}},
+	DisputeNote:         keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 51}},
+	DisputedAt:          keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 52}},
+	CollectabilityScore: keel.Int16Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 53}},
+	EvidenceHead:        keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 54}},
+	AdditionalChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 55}}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 56}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 57}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 58}},
+	LocationName:        keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 59}},
+	CustomerName:        keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 60}},
+	ShipmentProNumber:   keel.StringCol{Col: keel.Col{Ref: &detentionOccurrencesRef, Index: 61}},
 }
 
 // BuildDetentionOccurrences builds the table of detention_occurrences for ref. Generated relation and alias methods call it.
@@ -270,54 +273,55 @@ func BuildDetentionOccurrences(r *keel.Ref) *DetentionOccurrencesTable {
 		CalculationTrace:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		StopType:            keelkinds.ShipmentvocabStopTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ScheduleType:        keelkinds.ShipmentvocabStopScheduleTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		AppointmentStart:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		AppointmentEnd:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		ArrivedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		DepartedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		ClockStartAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		ClockStopAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		FreeTimeExpiresAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		NoticeDueAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		NoticeDeadlineAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		IsOpen:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 22}},
-		ArrivedLate:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 23}},
-		LateByMinutes:       keel.Int32Col{Col: keel.Col{Ref: r, Index: 24}},
-		FreeMinutesGranted:  keel.Int32Col{Col: keel.Col{Ref: r, Index: 25}},
-		RawDwellMinutes:     keel.Int32Col{Col: keel.Col{Ref: r, Index: 26}},
-		BillableMinutes:     keel.Int32Col{Col: keel.Col{Ref: r, Index: 27}},
-		RoundedMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 28}},
-		BillableUnits:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 29}}},
-		GrossAmount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 30}}},
-		BillableAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 31}}},
-		DriverPayMinutes:    keel.Int32Col{Col: keel.Col{Ref: r, Index: 32}},
-		DriverPayAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 33}}},
-		NetMargin:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 34}}},
-		CapApplied:          CapKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		ConvertedToLayover:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 36}},
-		Currency:            keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
-		Status:              OccurrenceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
-		NotificationStatus:  NotificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
-		NoticeSentAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		SuppressedByGate:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
-		RequiresApproval:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
-		ApprovedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 43}}},
-		ApprovedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
-		WaiverReason:        WaiverReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 45}}},
-		WaiverNote:          keel.StringCol{Col: keel.Col{Ref: r, Index: 46}},
-		WaivedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 47}}},
-		WaivedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
-		WaivedAmount:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 49}}},
-		DisputeNote:         keel.StringCol{Col: keel.Col{Ref: r, Index: 50}},
-		DisputedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
-		CollectabilityScore: keel.Int16Col{Col: keel.Col{Ref: r, Index: 52}},
-		EvidenceHead:        keel.StringCol{Col: keel.Col{Ref: r, Index: 53}},
-		AdditionalChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 54}}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 55}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 56}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 57}},
-		LocationName:        keel.StringCol{Col: keel.Col{Ref: r, Index: 58}},
-		CustomerName:        keel.StringCol{Col: keel.Col{Ref: r, Index: 59}},
-		ShipmentProNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 60}},
+		Handling:            keelkinds.ShipmentvocabStopHandlingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		AppointmentStart:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		AppointmentEnd:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		ArrivedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		DepartedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		ClockStartAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		ClockStopAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		FreeTimeExpiresAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		NoticeDueAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		NoticeDeadlineAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		IsOpen:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 23}},
+		ArrivedLate:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
+		LateByMinutes:       keel.Int32Col{Col: keel.Col{Ref: r, Index: 25}},
+		FreeMinutesGranted:  keel.Int32Col{Col: keel.Col{Ref: r, Index: 26}},
+		RawDwellMinutes:     keel.Int32Col{Col: keel.Col{Ref: r, Index: 27}},
+		BillableMinutes:     keel.Int32Col{Col: keel.Col{Ref: r, Index: 28}},
+		RoundedMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 29}},
+		BillableUnits:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 30}}},
+		GrossAmount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 31}}},
+		BillableAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
+		DriverPayMinutes:    keel.Int32Col{Col: keel.Col{Ref: r, Index: 33}},
+		DriverPayAmount:     keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 34}}},
+		NetMargin:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 35}}},
+		CapApplied:          CapKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		ConvertedToLayover:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 37}},
+		Currency:            keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
+		Status:              OccurrenceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		NotificationStatus:  NotificationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 40}}},
+		NoticeSentAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		SuppressedByGate:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
+		RequiresApproval:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
+		ApprovedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 44}}},
+		ApprovedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
+		WaiverReason:        WaiverReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 46}}},
+		WaiverNote:          keel.StringCol{Col: keel.Col{Ref: r, Index: 47}},
+		WaivedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 48}}},
+		WaivedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		WaivedAmount:        keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 50}}},
+		DisputeNote:         keel.StringCol{Col: keel.Col{Ref: r, Index: 51}},
+		DisputedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 52}},
+		CollectabilityScore: keel.Int16Col{Col: keel.Col{Ref: r, Index: 53}},
+		EvidenceHead:        keel.StringCol{Col: keel.Col{Ref: r, Index: 54}},
+		AdditionalChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 55}}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 56}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 57}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 58}},
+		LocationName:        keel.StringCol{Col: keel.Col{Ref: r, Index: 59}},
+		CustomerName:        keel.StringCol{Col: keel.Col{Ref: r, Index: 60}},
+		ShipmentProNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 61}},
 	}
 }
 
@@ -746,100 +750,102 @@ func ptrDetentionOccurrence(p unsafe.Pointer, c int32) any {
 	case 12:
 		return (*string)(unsafe.Pointer(&r.ScheduleType))
 	case 13:
-		return &r.AppointmentStart
+		return (*string)(unsafe.Pointer(&r.Handling))
 	case 14:
-		return &r.AppointmentEnd
+		return &r.AppointmentStart
 	case 15:
-		return &r.ArrivedAt
+		return &r.AppointmentEnd
 	case 16:
-		return &r.DepartedAt
+		return &r.ArrivedAt
 	case 17:
-		return &r.ClockStartAt
+		return &r.DepartedAt
 	case 18:
-		return &r.ClockStopAt
+		return &r.ClockStartAt
 	case 19:
-		return &r.FreeTimeExpiresAt
+		return &r.ClockStopAt
 	case 20:
-		return &r.NoticeDueAt
+		return &r.FreeTimeExpiresAt
 	case 21:
-		return &r.NoticeDeadlineAt
+		return &r.NoticeDueAt
 	case 22:
-		return &r.IsOpen
+		return &r.NoticeDeadlineAt
 	case 23:
-		return &r.ArrivedLate
+		return &r.IsOpen
 	case 24:
-		return &r.LateByMinutes
+		return &r.ArrivedLate
 	case 25:
-		return &r.FreeMinutesGranted
+		return &r.LateByMinutes
 	case 26:
-		return &r.RawDwellMinutes
+		return &r.FreeMinutesGranted
 	case 27:
-		return &r.BillableMinutes
+		return &r.RawDwellMinutes
 	case 28:
-		return &r.RoundedMinutes
+		return &r.BillableMinutes
 	case 29:
-		return &r.BillableUnits
+		return &r.RoundedMinutes
 	case 30:
-		return &r.GrossAmount
+		return &r.BillableUnits
 	case 31:
-		return &r.BillableAmount
+		return &r.GrossAmount
 	case 32:
-		return &r.DriverPayMinutes
+		return &r.BillableAmount
 	case 33:
-		return &r.DriverPayAmount
+		return &r.DriverPayMinutes
 	case 34:
-		return &r.NetMargin
+		return &r.DriverPayAmount
 	case 35:
-		return (*string)(unsafe.Pointer(&r.CapApplied))
+		return &r.NetMargin
 	case 36:
-		return &r.ConvertedToLayover
+		return (*string)(unsafe.Pointer(&r.CapApplied))
 	case 37:
-		return &r.Currency
+		return &r.ConvertedToLayover
 	case 38:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return &r.Currency
 	case 39:
-		return (*string)(unsafe.Pointer(&r.NotificationStatus))
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 40:
-		return &r.NoticeSentAt
+		return (*string)(unsafe.Pointer(&r.NotificationStatus))
 	case 41:
-		return &r.SuppressedByGate
+		return &r.NoticeSentAt
 	case 42:
-		return &r.RequiresApproval
+		return &r.SuppressedByGate
 	case 43:
-		return (**string)(unsafe.Pointer(&r.ApprovedByID))
+		return &r.RequiresApproval
 	case 44:
-		return &r.ApprovedAt
+		return (**string)(unsafe.Pointer(&r.ApprovedByID))
 	case 45:
-		return (**string)(unsafe.Pointer(&r.WaiverReason))
+		return &r.ApprovedAt
 	case 46:
-		return &r.WaiverNote
+		return (**string)(unsafe.Pointer(&r.WaiverReason))
 	case 47:
-		return (**string)(unsafe.Pointer(&r.WaivedByID))
+		return &r.WaiverNote
 	case 48:
-		return &r.WaivedAt
+		return (**string)(unsafe.Pointer(&r.WaivedByID))
 	case 49:
-		return &r.WaivedAmount
+		return &r.WaivedAt
 	case 50:
-		return &r.DisputeNote
+		return &r.WaivedAmount
 	case 51:
-		return &r.DisputedAt
+		return &r.DisputeNote
 	case 52:
-		return &r.CollectabilityScore
+		return &r.DisputedAt
 	case 53:
-		return &r.EvidenceHead
+		return &r.CollectabilityScore
 	case 54:
-		return (**string)(unsafe.Pointer(&r.AdditionalChargeID))
+		return &r.EvidenceHead
 	case 55:
-		return &r.Version
+		return (**string)(unsafe.Pointer(&r.AdditionalChargeID))
 	case 56:
-		return &r.CreatedAt
+		return &r.Version
 	case 57:
-		return &r.UpdatedAt
+		return &r.CreatedAt
 	case 58:
-		return &r.LocationName
+		return &r.UpdatedAt
 	case 59:
-		return &r.CustomerName
+		return &r.LocationName
 	case 60:
+		return &r.CustomerName
+	case 61:
 		return &r.ShipmentProNumber
 	}
 	return nil
@@ -884,154 +890,156 @@ func valueDetentionOccurrence(p unsafe.Pointer, c int32) any {
 	case 12:
 		return string(r.ScheduleType)
 	case 13:
+		return string(r.Handling)
+	case 14:
 		if r.AppointmentStart == nil {
 			return nil
 		}
 		return *r.AppointmentStart
-	case 14:
+	case 15:
 		if r.AppointmentEnd == nil {
 			return nil
 		}
 		return *r.AppointmentEnd
-	case 15:
+	case 16:
 		if r.ArrivedAt == nil {
 			return nil
 		}
 		return *r.ArrivedAt
-	case 16:
+	case 17:
 		if r.DepartedAt == nil {
 			return nil
 		}
 		return *r.DepartedAt
-	case 17:
-		return r.ClockStartAt
 	case 18:
+		return r.ClockStartAt
+	case 19:
 		if r.ClockStopAt == nil {
 			return nil
 		}
 		return *r.ClockStopAt
-	case 19:
-		return r.FreeTimeExpiresAt
 	case 20:
+		return r.FreeTimeExpiresAt
+	case 21:
 		if r.NoticeDueAt == nil {
 			return nil
 		}
 		return *r.NoticeDueAt
-	case 21:
+	case 22:
 		if r.NoticeDeadlineAt == nil {
 			return nil
 		}
 		return *r.NoticeDeadlineAt
-	case 22:
-		return r.IsOpen
 	case 23:
-		return r.ArrivedLate
+		return r.IsOpen
 	case 24:
-		return r.LateByMinutes
+		return r.ArrivedLate
 	case 25:
-		return r.FreeMinutesGranted
+		return r.LateByMinutes
 	case 26:
-		return r.RawDwellMinutes
+		return r.FreeMinutesGranted
 	case 27:
-		return r.BillableMinutes
+		return r.RawDwellMinutes
 	case 28:
-		return r.RoundedMinutes
+		return r.BillableMinutes
 	case 29:
-		return r.BillableUnits
+		return r.RoundedMinutes
 	case 30:
-		return r.GrossAmount
+		return r.BillableUnits
 	case 31:
-		return r.BillableAmount
+		return r.GrossAmount
 	case 32:
-		return r.DriverPayMinutes
+		return r.BillableAmount
 	case 33:
-		return r.DriverPayAmount
+		return r.DriverPayMinutes
 	case 34:
-		return r.NetMargin
+		return r.DriverPayAmount
 	case 35:
-		return string(r.CapApplied)
+		return r.NetMargin
 	case 36:
-		return r.ConvertedToLayover
+		return string(r.CapApplied)
 	case 37:
-		return r.Currency
+		return r.ConvertedToLayover
 	case 38:
-		return string(r.Status)
+		return r.Currency
 	case 39:
-		return string(r.NotificationStatus)
+		return string(r.Status)
 	case 40:
+		return string(r.NotificationStatus)
+	case 41:
 		if r.NoticeSentAt == nil {
 			return nil
 		}
 		return *r.NoticeSentAt
-	case 41:
-		return r.SuppressedByGate
 	case 42:
-		return r.RequiresApproval
+		return r.SuppressedByGate
 	case 43:
+		return r.RequiresApproval
+	case 44:
 		if r.ApprovedByID == nil {
 			return nil
 		}
 		return string(*r.ApprovedByID)
-	case 44:
+	case 45:
 		if r.ApprovedAt == nil {
 			return nil
 		}
 		return *r.ApprovedAt
-	case 45:
+	case 46:
 		if r.WaiverReason == nil {
 			return nil
 		}
 		return string(*r.WaiverReason)
-	case 46:
+	case 47:
 		if r.WaiverNote == "" {
 			return nil
 		}
 		return r.WaiverNote
-	case 47:
+	case 48:
 		if r.WaivedByID == nil {
 			return nil
 		}
 		return string(*r.WaivedByID)
-	case 48:
+	case 49:
 		if r.WaivedAt == nil {
 			return nil
 		}
 		return *r.WaivedAt
-	case 49:
-		return r.WaivedAmount
 	case 50:
+		return r.WaivedAmount
+	case 51:
 		if r.DisputeNote == "" {
 			return nil
 		}
 		return r.DisputeNote
-	case 51:
+	case 52:
 		if r.DisputedAt == nil {
 			return nil
 		}
 		return *r.DisputedAt
-	case 52:
-		return r.CollectabilityScore
 	case 53:
+		return r.CollectabilityScore
+	case 54:
 		if r.EvidenceHead == "" {
 			return nil
 		}
 		return r.EvidenceHead
-	case 54:
+	case 55:
 		if r.AdditionalChargeID == nil {
 			return nil
 		}
 		return string(*r.AdditionalChargeID)
-	case 55:
-		return r.Version
 	case 56:
-		return r.CreatedAt
+		return r.Version
 	case 57:
-		return r.UpdatedAt
+		return r.CreatedAt
 	case 58:
-		return r.LocationName
+		return r.UpdatedAt
 	case 59:
-		return r.CustomerName
+		return r.LocationName
 	case 60:
+		return r.CustomerName
+	case 61:
 		return r.ShipmentProNumber
 	}
 	return nil
@@ -1089,6 +1097,11 @@ var enumOccurrenceStatus = [...]schema.EnumValue{
 	{Value: `Waived`, Label: `Waived`},
 	{Value: `Disputed`, Label: `Disputed`},
 	{Value: `NotBillable`, Label: `Not Billable`},
+}
+
+var enumShipmentvocabStopHandling = [...]schema.EnumValue{
+	{Value: `Live`, Label: `Live`},
+	{Value: `Drop`, Label: `Drop`},
 }
 
 var enumShipmentvocabStopScheduleType = [...]schema.EnumValue{

@@ -10,7 +10,6 @@
   "Any service type": "Cualquier tipo de servicio",
   "Any shipment type": "Cualquier tipo de envío",
   "Arrivals inside this buffer are not treated as late.": "Las llegadas dentro de este margen no se consideran tardías.",
-  "Arrived late": "Llegó tarde",
   "Arrives 90m after the window, departs 5h later": "Llega 90 min después de la ventana y sale 5 h más tarde",
   "Assume notices were sent on time": "Suponer que los avisos se enviaron a tiempo",
   "Attach the notice as a PDF": "Adjuntar el aviso en PDF",
@@ -161,5 +160,6 @@
   "{0} negative margin": "{0} de margen negativo",
   "{0} of {1} stops matched": "{0} de {1} paradas coincidieron",
   "{0} stops · {1} billable": "{0} paradas · {1} facturables",
+  "{0} suppressed, no notice": "{0} suprimido, sin aviso",
   "{0} would bill": "{0} facturaría"
 }

@@ -1827,6 +1827,43 @@ func (c ShipmentvocabStatusCol) NotIn(vs ...shipmentvocab.Status) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
+// ShipmentvocabStopHandlingCol is a column of shipmentvocab.StopHandling values.
+type ShipmentvocabStopHandlingCol struct{ keel.StringCol }
+
+func (c ShipmentvocabStopHandlingCol) Eq(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) Ne(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) Gt(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) Gte(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) Lt(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) Lte(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) IsDistinctFrom(v shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) Between(lo, hi shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c ShipmentvocabStopHandlingCol) To(v shipmentvocab.StopHandling) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c ShipmentvocabStopHandlingCol) In(vs ...shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c ShipmentvocabStopHandlingCol) NotIn(vs ...shipmentvocab.StopHandling) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
 // ShipmentvocabStopScheduleTypeCol is a column of shipmentvocab.StopScheduleType values.
 type ShipmentvocabStopScheduleTypeCol struct{ keel.StringCol }
 

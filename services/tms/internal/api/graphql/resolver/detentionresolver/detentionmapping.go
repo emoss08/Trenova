@@ -698,27 +698,6 @@ func facilityDetentionStatToModel(
 	}
 }
 
-func customerDetentionStatToModel(
-	stat *detentionports.CustomerDetentionStat,
-) *gqlmodel.CustomerDetentionStat {
-	if stat == nil {
-		return nil
-	}
-
-	return &gqlmodel.CustomerDetentionStat{
-		CustomerID:      stat.CustomerID.String(),
-		CustomerName:    stat.CustomerName,
-		StopCount:       stat.StopCount,
-		BreachCount:     stat.BreachCount,
-		BilledAmount:    stat.BilledAmount.String(),
-		DriverPayAmount: gqldecimal.NullDecimalStringPtr(stat.DriverPayAmount),
-		NetMargin:       gqldecimal.NullDecimalStringPtr(stat.NetMargin),
-		WaivedAmount:    stat.WaivedAmount.String(),
-		DisputeCount:    stat.DisputeCount,
-		SuppressedCount: stat.SuppressedCount,
-	}
-}
-
 func detentionWaiverStatToModel(
 	stat *detentionports.WaiverLeakageStat,
 ) *gqlmodel.DetentionWaiverLeakageStat {

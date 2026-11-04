@@ -143,7 +143,11 @@ writing two subqueries, as `standard_expr()` does. A table
 with no tenant data is added to `trenova_rls.global_tables` with its reason. A table
 the application may only read and append to (an audit log) is added to
 `trenova_rls.append_only_tables`, and `reconcile()` keeps `UPDATE` and `DELETE`
-revoked from `trenova_tenant`; see [security-audit.md](security-audit.md).
+revoked from `trenova_tenant`; see [security-audit.md](security-audit.md). A rollup's table
+(named in `keel_rollup_state`) is computed by the system-scoped refresh alone, so `reconcile()`
+revokes every write on it from `trenova_tenant`. Its refresh marks (`keel_rollup_dirty`) name
+tenants and the days they were busy: their policy lets a tenant append marks for its own tenant
+key and read none ([backend/data-access.md](backend/data-access.md#rollups)).
 `schemalint` fails on a table with neither, on a tenant policy that does not read
 the scope, on a view that is not `security_invoker`, and on a new
 `SECURITY DEFINER` function.

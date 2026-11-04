@@ -22,123 +22,78 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "detention",
 	Objects: []*gqlexec.Object{
-		{Name: "CustomerDetentionStat", Implementors: []string{"CustomerDetentionStat"}},
+		{Name: "DetentionArrivalCell", Implementors: []string{"DetentionArrivalCell"}},
 		{Name: "DetentionBacktestBucket", Implementors: []string{"DetentionBacktestBucket"}},
 		{Name: "DetentionBacktestResult", Implementors: []string{"DetentionBacktestResult"}},
 		{Name: "DetentionClockPrice", Implementors: []string{"DetentionClockPrice"}},
 		{Name: "DetentionCollectability", Implementors: []string{"DetentionCollectability"}},
+		{Name: "DetentionCustomerIntelligence", Implementors: []string{"DetentionCustomerIntelligence"}},
 		{Name: "DetentionDeskEntry", Implementors: []string{"DetentionDeskEntry"}},
 		{Name: "DetentionDisputePacket", Implementors: []string{"DetentionDisputePacket"}},
 		{Name: "DetentionEvidence", Implementors: []string{"DetentionEvidence"}},
+		{Name: "DetentionFacilityIntelligence", Implementors: []string{"DetentionFacilityIntelligence"}},
+		{Name: "DetentionIntelligence", Implementors: []string{"DetentionIntelligence"}},
+		{Name: "DetentionIntelligenceTotals", Implementors: []string{"DetentionIntelligenceTotals"}},
+		{Name: "DetentionNarrativeParagraph", Implementors: []string{"DetentionNarrativeParagraph"}},
+		{Name: "DetentionNarrativeSegment", Implementors: []string{"DetentionNarrativeSegment"}},
+		{Name: "DetentionNextStep", Implementors: []string{"DetentionNextStep"}},
 		{Name: "DetentionNotice", Implementors: []string{"DetentionNotice"}},
 		{Name: "DetentionOccurrence", Implementors: []string{"DetentionOccurrence"}},
 		{Name: "DetentionOccurrenceDetail", Implementors: []string{"DetentionOccurrenceDetail"}},
 		{Name: "DetentionPolicy", Implementors: []string{"DetentionPolicy"}},
+		{Name: "DetentionPolicyChange", Implementors: []string{"DetentionPolicyChange"}},
 		{Name: "DetentionPolicyConnection", Implementors: []string{"DetentionPolicyConnection"}},
 		{Name: "DetentionPolicyEdge", Implementors: []string{"DetentionPolicyEdge"}},
 		{Name: "DetentionPolicyTier", Implementors: []string{"DetentionPolicyTier"}},
 		{Name: "DetentionPreviewResult", Implementors: []string{"DetentionPreviewResult"}},
+		{Name: "DetentionRecovery", Implementors: []string{"DetentionRecovery"}},
+		{Name: "DetentionRecoveryStep", Implementors: []string{"DetentionRecoveryStep"}},
 		{Name: "DetentionScoreFactor", Implementors: []string{"DetentionScoreFactor"}},
+		{Name: "DetentionSplitFigure", Implementors: []string{"DetentionSplitFigure"}},
+		{Name: "DetentionStopSplits", Implementors: []string{"DetentionStopSplits"}},
 		{Name: "DetentionWaiverLeakageStat", Implementors: []string{"DetentionWaiverLeakageStat"}},
+		{Name: "DetentionWeek", Implementors: []string{"DetentionWeek"}},
 		{Name: "FacilityDetentionStat", Implementors: []string{"FacilityDetentionStat"}},
 	},
 	Fields: []gqlexec.Fields{
-		{Object: "CustomerDetentionStat", Fields: []*gqlexec.Field{
+		{Object: "DetentionArrivalCell", Fields: []*gqlexec.Field{
 			{
-				Name:     "customerId",
+				Name:     "weekday",
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.CustomerID, nil
+					obj := o.(*gqlmodel.DetentionArrivalCell)
+					return obj.Weekday, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2string),
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:     "customerName",
+				Name:     "hour",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.CustomerName, nil
+					obj := o.(*gqlmodel.DetentionArrivalCell)
+					return obj.Hour, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "stopCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
+					obj := o.(*gqlmodel.DetentionArrivalCell)
 					return obj.StopCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:     "breachCount",
+				Name:     "detainedCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.BreachCount, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
-				Name:     "billedAmount",
-				NonNull:  true,
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.BilledAmount, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
-			},
-			{
-				Name:     "driverPayAmount",
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.DriverPayAmount, nil
-				},
-				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
-			},
-			{
-				Name:     "netMargin",
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.NetMargin, nil
-				},
-				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
-			},
-			{
-				Name:     "waivedAmount",
-				NonNull:  true,
-				ChildErr: errNoChild3,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.WaivedAmount, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
-			},
-			{
-				Name:     "disputeCount",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.DisputeCount, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
-			},
-			{
-				Name:     "suppressedCount",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.CustomerDetentionStat)
-					return obj.SuppressedCount, nil
+					obj := o.(*gqlmodel.DetentionArrivalCell)
+					return obj.DetainedCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
@@ -167,7 +122,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.StopCount, nil
@@ -177,7 +132,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.BillableCount, nil
@@ -187,7 +142,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "proposedAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.ProposedAmount, nil
@@ -197,7 +152,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "baselineAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.BaselineAmount, nil
@@ -207,7 +162,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delta",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.Delta, nil
@@ -216,7 +171,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driverPayAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.DriverPayAmount, nil
@@ -225,7 +180,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "netMargin",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestBucket)
 					return obj.NetMargin, nil
@@ -237,7 +192,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopsEvaluated",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.StopsEvaluated, nil
@@ -247,7 +202,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopsMatched",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.StopsMatched, nil
@@ -257,7 +212,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopsBillable",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.StopsBillable, nil
@@ -267,7 +222,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopsForfeited",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.StopsForfeited, nil
@@ -277,7 +232,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopsSuppressed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.StopsSuppressed, nil
@@ -287,7 +242,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "proposedRevenue",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.ProposedRevenue, nil
@@ -297,7 +252,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "baselineRevenue",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.BaselineRevenue, nil
@@ -307,7 +262,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "revenueDelta",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.RevenueDelta, nil
@@ -316,7 +271,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proposedDriverPay",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.ProposedDriverPay, nil
@@ -325,7 +280,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "proposedNetMargin",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.ProposedNetMargin, nil
@@ -334,7 +289,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "negativeMarginStops",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.NegativeMarginStops, nil
@@ -366,7 +321,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "from",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.From, nil
@@ -376,7 +331,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "to",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.To, nil
@@ -386,7 +341,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "truncated",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionBacktestResult)
 					return obj.Truncated, nil
@@ -398,7 +353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionClockPrice)
 					return obj.BillableMinutes, nil
@@ -408,7 +363,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionClockPrice)
 					return obj.BillableAmount, nil
@@ -418,7 +373,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "asOf",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionClockPrice)
 					return obj.AsOf, nil
@@ -430,7 +385,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "score",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionCollectability)
 					return obj.Score, nil
@@ -440,7 +395,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "band",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionCollectability)
 					return obj.Band, nil
@@ -461,7 +416,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "chainValid",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionCollectability)
 					return obj.ChainValid, nil
@@ -479,6 +434,126 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "DetentionCustomerIntelligence", Fields: []*gqlexec.Field{
+			{
+				Name:     "customerId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "customerName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.CustomerName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "stopCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.StopCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "detainedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.DetainedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pastFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.PastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "billedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.BilledAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "driverPayAmount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.DriverPayAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "netMargin",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.NetMargin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "waivedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.WaivedAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "disputeCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.DisputeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "noticeDueCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.NoticeDueCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "noticeOnTimeCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionCustomerIntelligence)
+					return obj.NoticeOnTimeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "DetentionDeskEntry", Fields: []*gqlexec.Field{
 			{
 				Name:      "occurrence",
@@ -494,7 +569,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "minutesUntilFreeEnds",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDeskEntry)
 					return obj.MinutesUntilFreeEnds, nil
@@ -503,7 +578,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "minutesUntilNoticeDue",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDeskEntry)
 					return obj.MinutesUntilNoticeDue, nil
@@ -513,7 +588,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "noticeWindowOpen",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDeskEntry)
 					return obj.NoticeWindowOpen, nil
@@ -523,7 +598,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amountAtRisk",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDeskEntry)
 					return obj.AmountAtRisk, nil
@@ -533,7 +608,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDeskEntry)
 					return obj.BillableMinutes, nil
@@ -616,7 +691,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "chainVerified",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDisputePacket)
 					return obj.ChainVerified, nil
@@ -626,7 +701,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "generatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionDisputePacket)
 					return obj.GeneratedAt, nil
@@ -638,7 +713,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.ID, nil
@@ -648,7 +723,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "detentionOccurrenceId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.DetentionOccurrenceID, nil
@@ -658,7 +733,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sequence",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.Sequence, nil
@@ -698,7 +773,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "observedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.ObservedAt, nil
@@ -708,7 +783,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "recordedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.RecordedAt, nil
@@ -717,7 +792,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "recordedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.RecordedByID, nil
@@ -726,7 +801,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "documentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.DocumentID, nil
@@ -765,7 +840,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionEvidence)
 					return obj.CreatedAt, nil
@@ -773,11 +848,755 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
 		}},
+		{Object: "DetentionFacilityIntelligence", Fields: []*gqlexec.Field{
+			{
+				Name:     "locationId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.LocationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "locationName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.LocationName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationCity",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.LocationCity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationState",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.LocationState, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "stopCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.StopCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "detainedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.DetainedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pastFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.PastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "previousPastFreeMinutes",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.PreviousPastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "dockMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.DockMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "openMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.OpenMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "earlyMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.EarlyMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "lateMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.LateMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "avgDwellMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.AvgDwellMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "medianDwellMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.MedianDwellMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "p90DwellMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.P90DwellMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "medianFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.MedianFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "billedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.BilledAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "driverPayAmount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.DriverPayAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "netMargin",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.NetMargin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "waivedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.WaivedAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "disputeCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.DisputeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "suppressedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.SuppressedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "noticeDueCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.NoticeDueCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "noticeOnTimeCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionFacilityIntelligence)
+					return obj.NoticeOnTimeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "DetentionIntelligence", Fields: []*gqlexec.Field{
+			{
+				Name:     "days",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Days, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "through",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Through, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "from",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.From, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "to",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.To, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "previousFrom",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.PreviousFrom, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "previousTo",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.PreviousTo, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "timezone",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Timezone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "totals",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionIntelligenceTotals",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Totals, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionIntelligenceTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligenceTotals),
+			},
+			{
+				Name:      "previous",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionIntelligenceTotals",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Previous, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionIntelligenceTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligenceTotals),
+			},
+			{
+				Name:      "facilities",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionFacilityIntelligence",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Facilities, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionFacilityIntelligence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityIntelligenceᚄ),
+			},
+			{
+				Name:      "customers",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionCustomerIntelligence",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Customers, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionCustomerIntelligence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCustomerIntelligenceᚄ),
+			},
+			{
+				Name:      "waivers",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionWaiverLeakageStat",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Waivers, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionWaiverLeakageStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStatᚄ),
+			},
+			{
+				Name:      "recovery",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionRecovery",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Recovery, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionRecovery2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecovery),
+			},
+			{
+				Name:      "arrivals",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionArrivalCell",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Arrivals, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionArrivalCell2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionArrivalCellᚄ),
+			},
+			{
+				Name:      "splits",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionStopSplits",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Splits, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionStopSplits2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStopSplits),
+			},
+			{
+				Name:      "weeks",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionWeek",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Weeks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionWeek2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWeekᚄ),
+			},
+			{
+				Name:      "policyChanges",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionPolicyChange",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.PolicyChanges, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionPolicyChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyChangeᚄ),
+			},
+			{
+				Name:      "summary",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionNarrativeParagraph",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Summary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionNarrativeParagraph2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeParagraphᚄ),
+			},
+			{
+				Name:      "nextSteps",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionNextStep",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.NextSteps, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionNextStep2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNextStepᚄ),
+			},
+			{
+				Name:     "truncated",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligence)
+					return obj.Truncated, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "DetentionIntelligenceTotals", Fields: []*gqlexec.Field{
+			{
+				Name:     "stopCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.StopCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "detainedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.DetainedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pastFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.PastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "dockMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.DockMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "openMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.OpenMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "earlyMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.EarlyMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "lateMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.LateMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "billedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.BilledAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "driverPayAmount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.DriverPayAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "netMargin",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.NetMargin, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "waivedAmount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.WaivedAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "disputeCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.DisputeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "suppressedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.SuppressedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "noticeDueCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.NoticeDueCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "noticeOnTimeCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionIntelligenceTotals)
+					return obj.NoticeOnTimeCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "DetentionNarrativeParagraph", Fields: []*gqlexec.Field{
+			{
+				Name:      "segments",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionNarrativeSegment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNarrativeParagraph)
+					return obj.Segments, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionNarrativeSegment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeSegmentᚄ),
+			},
+		}},
+		{Object: "DetentionNarrativeSegment", Fields: []*gqlexec.Field{
+			{
+				Name:     "text",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNarrativeSegment)
+					return obj.Text, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "strong",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNarrativeSegment)
+					return obj.Strong, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "tone",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNarrativeSegment)
+					return obj.Tone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "target",
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNarrativeSegment)
+					return obj.Target, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODetentionSegmentTarget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSegmentTarget),
+			},
+			{
+				Name:     "targetId",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNarrativeSegment)
+					return obj.TargetID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "DetentionNextStep", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionNextStepKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNextStepKind),
+			},
+			{
+				Name:      "title",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionNarrativeSegment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.Title, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionNarrativeSegment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeSegmentᚄ),
+			},
+			{
+				Name:     "detail",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.Detail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "impactMinutes",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.ImpactMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "impactAmount",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.ImpactAmount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "impactCaption",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.ImpactCaption, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "locationId",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.LocationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "customerId",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionNextStep)
+					return obj.CustomerID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+		}},
 		{Object: "DetentionNotice", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.ID, nil
@@ -787,7 +1606,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "detentionOccurrenceId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.DetentionOccurrenceID, nil
@@ -807,7 +1626,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.Kind, nil
@@ -817,7 +1636,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "channel",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.Channel, nil
@@ -827,7 +1646,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "deliveryStatus",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.DeliveryStatus, nil
@@ -866,7 +1685,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scheduledFor",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.ScheduledFor, nil
@@ -875,7 +1694,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sentAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.SentAt, nil
@@ -884,7 +1703,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "deliveredAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.DeliveredAt, nil
@@ -893,7 +1712,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "openedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.OpenedAt, nil
@@ -902,7 +1721,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "failedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.FailedAt, nil
@@ -921,7 +1740,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sentById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.SentByID, nil
@@ -931,7 +1750,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "wasAutomatic",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.WasAutomatic, nil
@@ -941,7 +1760,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "satisfiesRequirement",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.SatisfiesRequirement, nil
@@ -951,7 +1770,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quotedFreeMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.QuotedFreeMinutes, nil
@@ -960,7 +1779,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quotedRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.QuotedRate, nil
@@ -969,7 +1788,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "quotedAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.QuotedAmount, nil
@@ -979,7 +1798,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionNotice)
 					return obj.CreatedAt, nil
@@ -991,7 +1810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ID, nil
@@ -1001,7 +1820,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.BusinessUnitID, nil
@@ -1011,7 +1830,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.OrganizationID, nil
@@ -1021,7 +1840,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ShipmentID, nil
@@ -1031,7 +1850,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentMoveId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ShipmentMoveID, nil
@@ -1041,7 +1860,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.StopID, nil
@@ -1051,7 +1870,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "customerId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.CustomerID, nil
@@ -1061,7 +1880,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "locationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.LocationID, nil
@@ -1082,7 +1901,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "detentionPolicyId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.DetentionPolicyID, nil
@@ -1131,7 +1950,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "appointmentStart",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.AppointmentStart, nil
@@ -1140,7 +1959,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "appointmentEnd",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.AppointmentEnd, nil
@@ -1149,7 +1968,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "arrivedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ArrivedAt, nil
@@ -1158,7 +1977,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "departedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.DepartedAt, nil
@@ -1168,7 +1987,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "clockStartAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ClockStartAt, nil
@@ -1177,7 +1996,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "clockStopAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ClockStopAt, nil
@@ -1187,7 +2006,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freeTimeExpiresAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.FreeTimeExpiresAt, nil
@@ -1196,7 +2015,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "noticeDueAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.NoticeDueAt, nil
@@ -1205,7 +2024,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "noticeDeadlineAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.NoticeDeadlineAt, nil
@@ -1215,7 +2034,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isOpen",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.IsOpen, nil
@@ -1225,7 +2044,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "arrivedLate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ArrivedLate, nil
@@ -1235,7 +2054,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lateByMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.LateByMinutes, nil
@@ -1245,7 +2064,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freeMinutesGranted",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.FreeMinutesGranted, nil
@@ -1255,7 +2074,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rawDwellMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.RawDwellMinutes, nil
@@ -1265,7 +2084,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.BillableMinutes, nil
@@ -1275,7 +2094,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "roundedMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.RoundedMinutes, nil
@@ -1285,7 +2104,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableUnits",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.BillableUnits, nil
@@ -1295,7 +2114,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "grossAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.GrossAmount, nil
@@ -1305,7 +2124,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.BillableAmount, nil
@@ -1315,7 +2134,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "driverPayMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.DriverPayMinutes, nil
@@ -1324,7 +2143,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driverPayAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.DriverPayAmount, nil
@@ -1333,7 +2152,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "netMargin",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.NetMargin, nil
@@ -1343,7 +2162,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "capApplied",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.CapApplied, nil
@@ -1353,7 +2172,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "convertedToLayover",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ConvertedToLayover, nil
@@ -1373,7 +2192,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.Status, nil
@@ -1383,7 +2202,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notificationStatus",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.NotificationStatus, nil
@@ -1392,7 +2211,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "noticeSentAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.NoticeSentAt, nil
@@ -1402,7 +2221,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "suppressedByGate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.SuppressedByGate, nil
@@ -1412,7 +2231,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requiresApproval",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.RequiresApproval, nil
@@ -1421,7 +2240,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ApprovedByID, nil
@@ -1430,7 +2249,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.ApprovedAt, nil
@@ -1451,7 +2270,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "waiverReason",
-				ChildErr: errNoChild17,
+				ChildErr: errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.WaiverReason, nil
@@ -1470,7 +2289,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "waivedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.WaivedAt, nil
@@ -1479,7 +2298,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "waivedById",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.WaivedByID, nil
@@ -1501,7 +2320,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "waivedAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.WaivedAmount, nil
@@ -1520,7 +2339,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "disputedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.DisputedAt, nil
@@ -1530,7 +2349,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "collectabilityScore",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.CollectabilityScore, nil
@@ -1549,7 +2368,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "additionalChargeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.AdditionalChargeID, nil
@@ -1589,7 +2408,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.Version, nil
@@ -1599,7 +2418,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.CreatedAt, nil
@@ -1609,7 +2428,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionOccurrence)
 					return obj.UpdatedAt, nil
@@ -1685,7 +2504,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.ID, nil
@@ -1695,7 +2514,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.BusinessUnitID, nil
@@ -1705,7 +2524,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.OrganizationID, nil
@@ -1745,7 +2564,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild18,
+				ChildErr: errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.Status, nil
@@ -1755,7 +2574,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isOrgDefault",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.IsOrgDefault, nil
@@ -1765,7 +2584,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "priority",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.Priority, nil
@@ -1775,7 +2594,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "specificityScore",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.SpecificityScore, nil
@@ -1784,7 +2603,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "customerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.CustomerID, nil
@@ -1793,7 +2612,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "locationId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.LocationID, nil
@@ -1803,7 +2622,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shipmentTypeIds",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.ShipmentTypeIds, nil
@@ -1813,7 +2632,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "serviceTypeIds",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.ServiceTypeIds, nil
@@ -1823,7 +2642,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "commodityIds",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.CommodityIds, nil
@@ -1833,7 +2652,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopTypes",
 				NonNull:  true,
-				ChildErr: errNoChild19,
+				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.StopTypes, nil
@@ -1843,7 +2662,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "appointmentStopsOnly",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.AppointmentStopsOnly, nil
@@ -1852,7 +2671,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveStartDate",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.EffectiveStartDate, nil
@@ -1861,7 +2680,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "effectiveEndDate",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.EffectiveEndDate, nil
@@ -1871,7 +2690,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "clockStartBasis",
 				NonNull:  true,
-				ChildErr: errNoChild20,
+				ChildErr: errNoChild23,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.ClockStartBasis, nil
@@ -1881,7 +2700,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lateArrivalRule",
 				NonNull:  true,
-				ChildErr: errNoChild21,
+				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.LateArrivalRule, nil
@@ -1891,7 +2710,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lateArrivalGraceMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.LateArrivalGraceMinutes, nil
@@ -1901,7 +2720,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingFreeMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.BillingFreeMinutes, nil
@@ -1910,7 +2729,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "pickupFreeMinutes",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.PickupFreeMinutes, nil
@@ -1919,7 +2738,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "deliveryFreeMinutes",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.DeliveryFreeMinutes, nil
@@ -1928,7 +2747,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "payFreeMinutes",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.PayFreeMinutes, nil
@@ -1938,7 +2757,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "minimumBillableMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.MinimumBillableMinutes, nil
@@ -1948,7 +2767,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingIncrementMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.BillingIncrementMinutes, nil
@@ -1958,7 +2777,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "roundingMode",
 				NonNull:  true,
-				ChildErr: errNoChild22,
+				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.RoundingMode, nil
@@ -1968,7 +2787,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateSource",
 				NonNull:  true,
-				ChildErr: errNoChild23,
+				ChildErr: errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.RateSource, nil
@@ -1978,7 +2797,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accessorialChargeId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.AccessorialChargeID, nil
@@ -1998,7 +2817,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxBillableMinutesPerStop",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.MaxBillableMinutesPerStop, nil
@@ -2007,7 +2826,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxChargePerStop",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.MaxChargePerStop, nil
@@ -2016,7 +2835,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxChargePerDay",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.MaxChargePerDay, nil
@@ -2025,7 +2844,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxChargePerShipment",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.MaxChargePerShipment, nil
@@ -2035,7 +2854,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dayBoundaryMode",
 				NonNull:  true,
-				ChildErr: errNoChild24,
+				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.DayBoundaryMode, nil
@@ -2044,7 +2863,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "convertToLayoverAtMinutes",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.ConvertToLayoverAtMinutes, nil
@@ -2053,7 +2872,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "layoverAccessorialChargeId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.LayoverAccessorialChargeID, nil
@@ -2063,7 +2882,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notificationRequirement",
 				NonNull:  true,
-				ChildErr: errNoChild25,
+				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.NotificationRequirement, nil
@@ -2073,7 +2892,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notificationLeadMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.NotificationLeadMinutes, nil
@@ -2083,7 +2902,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notificationDeadlineMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.NotificationDeadlineMinutes, nil
@@ -2093,7 +2912,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unnotifiedBehavior",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.UnnotifiedBehavior, nil
@@ -2103,7 +2922,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoSendNotice",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.AutoSendNotice, nil
@@ -2113,7 +2932,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "attachNoticePdf",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.AttachNoticePDF, nil
@@ -2123,7 +2942,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sendDepartureSummary",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.SendDepartureSummary, nil
@@ -2132,7 +2951,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "requireApprovalOverAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.RequireApprovalOverAmount, nil
@@ -2141,7 +2960,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "autoApproveUnderAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.AutoApproveUnderAmount, nil
@@ -2171,7 +2990,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.Version, nil
@@ -2181,7 +3000,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.CreatedAt, nil
@@ -2191,10 +3010,62 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicy)
 					return obj.UpdatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+		}},
+		{Object: "DetentionPolicyChange", Fields: []*gqlexec.Field{
+			{
+				Name:     "locationId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionPolicyChange)
+					return obj.LocationID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "locationName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionPolicyChange)
+					return obj.LocationName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "policyId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionPolicyChange)
+					return obj.PolicyID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "policyName",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionPolicyChange)
+					return obj.PolicyName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "changedAt",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionPolicyChange)
+					return obj.ChangedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
@@ -2224,7 +3095,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyConnection)
 					return obj.TotalCount, nil
@@ -2234,7 +3105,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyConnection)
 					return obj.TotalCountExact, nil
@@ -2268,7 +3139,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "DetentionPolicyTier", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.ID, nil
@@ -2278,7 +3149,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fromMinute",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.FromMinute, nil
@@ -2287,7 +3158,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "toMinute",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.ToMinute, nil
@@ -2297,7 +3168,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rate",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.Rate, nil
@@ -2307,7 +3178,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rateUnit",
 				NonNull:  true,
-				ChildErr: errNoChild27,
+				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.RateUnit, nil
@@ -2327,7 +3198,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sortOrder",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPolicyTier)
 					return obj.SortOrder, nil
@@ -2349,7 +3220,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rawDwellMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.RawDwellMinutes, nil
@@ -2359,7 +3230,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freeMinutesGranted",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.FreeMinutesGranted, nil
@@ -2369,7 +3240,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.BillableMinutes, nil
@@ -2379,7 +3250,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "roundedMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.RoundedMinutes, nil
@@ -2389,7 +3260,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.BillableAmount, nil
@@ -2399,7 +3270,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "grossAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.GrossAmount, nil
@@ -2408,7 +3279,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driverPayAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.DriverPayAmount, nil
@@ -2417,7 +3288,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "netMargin",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.NetMargin, nil
@@ -2427,7 +3298,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "arrivedLate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.ArrivedLate, nil
@@ -2437,7 +3308,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "capApplied",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.CapApplied, nil
@@ -2447,7 +3318,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.Status, nil
@@ -2457,7 +3328,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notificationStatus",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.NotificationStatus, nil
@@ -2467,7 +3338,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "suppressedByGate",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionPreviewResult)
 					return obj.SuppressedByGate, nil
@@ -2496,6 +3367,91 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "DetentionRecovery", Fields: []*gqlexec.Field{
+			{
+				Name:     "accrued",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecovery)
+					return obj.Accrued, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:      "steps",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionRecoveryStep",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecovery)
+					return obj.Steps, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionRecoveryStep2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecoveryStepᚄ),
+			},
+			{
+				Name:     "billed",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecovery)
+					return obj.Billed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "invoiced",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecovery)
+					return obj.Invoiced, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "collected",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecovery)
+					return obj.Collected, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
+		{Object: "DetentionRecoveryStep", Fields: []*gqlexec.Field{
+			{
+				Name:     "bucket",
+				NonNull:  true,
+				ChildErr: errNoChild31,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecoveryStep)
+					return obj.Bucket, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionRecoveryBucket2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecoveryBucket),
+			},
+			{
+				Name:     "occurrenceCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecoveryStep)
+					return obj.OccurrenceCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "amount",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionRecoveryStep)
+					return obj.Amount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
 		{Object: "DetentionScoreFactor", Fields: []*gqlexec.Field{
 			{
 				Name:     "key",
@@ -2520,7 +3476,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "earned",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionScoreFactor)
 					return obj.Earned, nil
@@ -2530,7 +3486,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "possible",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionScoreFactor)
 					return obj.Possible, nil
@@ -2558,6 +3514,106 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "DetentionSplitFigure", Fields: []*gqlexec.Field{
+			{
+				Name:     "stopCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionSplitFigure)
+					return obj.StopCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "detainedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionSplitFigure)
+					return obj.DetainedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pastFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionSplitFigure)
+					return obj.PastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "DetentionStopSplits", Fields: []*gqlexec.Field{
+			{
+				Name:      "pickup",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionSplitFigure",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStopSplits)
+					return obj.Pickup, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure),
+			},
+			{
+				Name:      "delivery",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionSplitFigure",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStopSplits)
+					return obj.Delivery, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure),
+			},
+			{
+				Name:      "appointment",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionSplitFigure",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStopSplits)
+					return obj.Appointment, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure),
+			},
+			{
+				Name:      "open",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionSplitFigure",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStopSplits)
+					return obj.Open, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure),
+			},
+			{
+				Name:      "live",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionSplitFigure",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStopSplits)
+					return obj.Live, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure),
+			},
+			{
+				Name:      "drop",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DetentionSplitFigure",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionStopSplits)
+					return obj.Drop, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure),
+			},
+		}},
 		{Object: "DetentionWaiverLeakageStat", Fields: []*gqlexec.Field{
 			{
 				Name:     "reason",
@@ -2572,7 +3628,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "waiverCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionWaiverLeakageStat)
 					return obj.WaiverCount, nil
@@ -2582,7 +3638,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "approverCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionWaiverLeakageStat)
 					return obj.ApproverCount, nil
@@ -2592,7 +3648,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "waivedAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DetentionWaiverLeakageStat)
 					return obj.WaivedAmount, nil
@@ -2600,11 +3656,53 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 		}},
+		{Object: "DetentionWeek", Fields: []*gqlexec.Field{
+			{
+				Name:     "weekStart",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionWeek)
+					return obj.WeekStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "stopCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionWeek)
+					return obj.StopCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "detainedCount",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionWeek)
+					return obj.DetainedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "pastFreeMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionWeek)
+					return obj.PastFreeMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "FacilityDetentionStat", Fields: []*gqlexec.Field{
 			{
 				Name:     "locationId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.LocationID, nil
@@ -2624,7 +3722,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.StopCount, nil
@@ -2634,7 +3732,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "breachCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.BreachCount, nil
@@ -2644,7 +3742,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "avgDwellMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.AvgDwellMinutes, nil
@@ -2654,7 +3752,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "medianDwellMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.MedianDwellMinutes, nil
@@ -2664,7 +3762,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "p90DwellMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild28,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.P90DwellMinutes, nil
@@ -2674,7 +3772,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billedAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.BilledAmount, nil
@@ -2683,7 +3781,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "driverPayAmount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.DriverPayAmount, nil
@@ -2692,7 +3790,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "netMargin",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.NetMargin, nil
@@ -2702,7 +3800,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "waivedAmount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.WaivedAmount, nil
@@ -2712,7 +3810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "disputeCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.DisputeCount, nil
@@ -2722,7 +3820,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "suppressedCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.FacilityDetentionStat)
 					return obj.SuppressedCount, nil
@@ -2761,7 +3859,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "deleteDetentionPolicy",
 				NonNull:    true,
 				IsResolver: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild4,
 				Args:       field_Mutation_deleteDetentionPolicy_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
@@ -2934,32 +4032,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNFacilityDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStatᚄ),
 			},
 			{
-				Name:       "detentionCustomerStats",
+				Name:       "detentionIntelligence",
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
-				ChildType:  "CustomerDetentionStat",
-				Args:       field_Query_detentionCustomerStats_args,
+				ChildType:  "DetentionIntelligence",
+				Args:       field_Query_detentionIntelligence_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionCustomerStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionIntelligence(ctx, fc.Args["input"].(gqlmodel.DetentionIntelligenceInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomerDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStatᚄ),
-			},
-			{
-				Name:       "detentionWaiverStats",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "DetentionWaiverLeakageStat",
-				Args:       field_Query_detentionWaiverStats_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@detention").DetentionWaiverStats(ctx, fc.Args["input"].(gqlmodel.DetentionStatsInput))
-				},
-				Marshal: gqlexec.Marshal(marshalNDetentionWaiverLeakageStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWaiverLeakageStatᚄ),
+				Marshal: gqlexec.Marshal(marshalNDetentionIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligence),
 			},
 			{
 				Name:       "detentionPolicyPreview",
@@ -2980,6 +4064,7 @@ var Shard = &gqlexec.Shard{
 	Inputs: []gqlexec.Input{
 		{Name: "DetentionBacktestInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionBacktestInput)},
 		{Name: "DetentionDisputeInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionDisputeInput)},
+		{Name: "DetentionIntelligenceInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionIntelligenceInput)},
 		{Name: "DetentionPolicyInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionPolicyInput)},
 		{Name: "DetentionPreviewScenarioInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionPreviewScenarioInput)},
 		{Name: "DetentionStatsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputDetentionStatsInput)},
@@ -3024,41 +4109,43 @@ type QueryResolver interface {
 	ShipmentDetention(ctx context.Context, shipmentID string) ([]*gqlmodel.DetentionOccurrence, error)
 	DetentionDisputePacket(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionDisputePacket, error)
 	DetentionFacilityStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.FacilityDetentionStat, error)
-	DetentionCustomerStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.CustomerDetentionStat, error)
-	DetentionWaiverStats(ctx context.Context, input gqlmodel.DetentionStatsInput) ([]*gqlmodel.DetentionWaiverLeakageStat, error)
+	DetentionIntelligence(ctx context.Context, input gqlmodel.DetentionIntelligenceInput) (*gqlmodel.DetentionIntelligence, error)
 	DetentionPolicyPreview(ctx context.Context, policy gqlmodel.DetentionPolicyInput, scenario gqlmodel.DetentionPreviewScenarioInput) (*gqlmodel.DetentionPreviewResult, error)
 }
 
 var (
-	errNoChild0  = errors.New("field of type ID does not have child fields")
+	errNoChild0  = errors.New("field of type Int does not have child fields")
 	errNoChild1  = errors.New("field of type String does not have child fields")
-	errNoChild2  = errors.New("field of type Int does not have child fields")
-	errNoChild3  = errors.New("field of type Decimal does not have child fields")
-	errNoChild4  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5  = errors.New("field of type Boolean does not have child fields")
-	errNoChild6  = errors.New("field of type DetentionScoreBand does not have child fields")
+	errNoChild2  = errors.New("field of type Decimal does not have child fields")
+	errNoChild3  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild4  = errors.New("field of type Boolean does not have child fields")
+	errNoChild5  = errors.New("field of type DetentionScoreBand does not have child fields")
+	errNoChild6  = errors.New("field of type ID does not have child fields")
 	errNoChild7  = errors.New("field of type DetentionDeskUrgency does not have child fields")
 	errNoChild8  = errors.New("field of type JSON does not have child fields")
 	errNoChild9  = errors.New("field of type DetentionEvidenceKind does not have child fields")
 	errNoChild10 = errors.New("field of type DetentionEvidenceSource does not have child fields")
-	errNoChild11 = errors.New("field of type DetentionNoticeKind does not have child fields")
-	errNoChild12 = errors.New("field of type DetentionNoticeChannel does not have child fields")
-	errNoChild13 = errors.New("field of type DetentionNoticeDeliveryStatus does not have child fields")
-	errNoChild14 = errors.New("field of type DetentionCapKind does not have child fields")
-	errNoChild15 = errors.New("field of type DetentionOccurrenceStatus does not have child fields")
-	errNoChild16 = errors.New("field of type DetentionNotificationStatus does not have child fields")
-	errNoChild17 = errors.New("field of type DetentionWaiverReason does not have child fields")
-	errNoChild18 = errors.New("field of type DetentionPolicyStatus does not have child fields")
-	errNoChild19 = errors.New("field of type StopType does not have child fields")
-	errNoChild20 = errors.New("field of type DetentionClockStartBasis does not have child fields")
-	errNoChild21 = errors.New("field of type DetentionLateArrivalRule does not have child fields")
-	errNoChild22 = errors.New("field of type DetentionRoundingMode does not have child fields")
-	errNoChild23 = errors.New("field of type DetentionRateSource does not have child fields")
-	errNoChild24 = errors.New("field of type DetentionCapScope does not have child fields")
-	errNoChild25 = errors.New("field of type DetentionNotificationRequirement does not have child fields")
-	errNoChild26 = errors.New("field of type DetentionUnnotifiedBehavior does not have child fields")
-	errNoChild27 = errors.New("field of type DetentionTierRateUnit does not have child fields")
-	errNoChild28 = errors.New("field of type Float does not have child fields")
+	errNoChild11 = errors.New("field of type Float does not have child fields")
+	errNoChild12 = errors.New("field of type DetentionSegmentTarget does not have child fields")
+	errNoChild13 = errors.New("field of type DetentionNextStepKind does not have child fields")
+	errNoChild14 = errors.New("field of type DetentionNoticeKind does not have child fields")
+	errNoChild15 = errors.New("field of type DetentionNoticeChannel does not have child fields")
+	errNoChild16 = errors.New("field of type DetentionNoticeDeliveryStatus does not have child fields")
+	errNoChild17 = errors.New("field of type DetentionCapKind does not have child fields")
+	errNoChild18 = errors.New("field of type DetentionOccurrenceStatus does not have child fields")
+	errNoChild19 = errors.New("field of type DetentionNotificationStatus does not have child fields")
+	errNoChild20 = errors.New("field of type DetentionWaiverReason does not have child fields")
+	errNoChild21 = errors.New("field of type DetentionPolicyStatus does not have child fields")
+	errNoChild22 = errors.New("field of type StopType does not have child fields")
+	errNoChild23 = errors.New("field of type DetentionClockStartBasis does not have child fields")
+	errNoChild24 = errors.New("field of type DetentionLateArrivalRule does not have child fields")
+	errNoChild25 = errors.New("field of type DetentionRoundingMode does not have child fields")
+	errNoChild26 = errors.New("field of type DetentionRateSource does not have child fields")
+	errNoChild27 = errors.New("field of type DetentionCapScope does not have child fields")
+	errNoChild28 = errors.New("field of type DetentionNotificationRequirement does not have child fields")
+	errNoChild29 = errors.New("field of type DetentionUnnotifiedBehavior does not have child fields")
+	errNoChild30 = errors.New("field of type DetentionTierRateUnit does not have child fields")
+	errNoChild31 = errors.New("field of type DetentionRecoveryBucket does not have child fields")
 )
 
 func field_Mutation_createDetentionPolicy_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -3288,24 +4375,11 @@ func field_Query_detentionFacilityStats_args(ctx context.Context, ec *gqlexec.Ex
 	return args, nil
 }
 
-func field_Query_detentionCustomerStats_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+func field_Query_detentionIntelligence_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.DetentionStatsInput, error) {
-			return unmarshalNDetentionStatsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStatsInput(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func field_Query_detentionWaiverStats_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
-		func(ctx context.Context, v any) (gqlmodel.DetentionStatsInput, error) {
-			return unmarshalNDetentionStatsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStatsInput(ctx, ec, v)
+		func(ctx context.Context, v any) (gqlmodel.DetentionIntelligenceInput, error) {
+			return unmarshalNDetentionIntelligenceInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligenceInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -3432,6 +4506,50 @@ func unmarshalInputDetentionDisputeInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.Note = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputDetentionIntelligenceInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DetentionIntelligenceInput, error) {
+	var it gqlmodel.DetentionIntelligenceInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"days", "through", "locationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "days":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("days"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Days = data
+		case "through":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("through"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Through = data
+		case "locationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locationId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.LocationID = data
 		}
 	}
 	return it, nil
@@ -4118,6 +5236,11 @@ func unmarshalNDetentionDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNDetentionIntelligenceInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligenceInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DetentionIntelligenceInput, error) {
+	res, err := unmarshalInputDetentionIntelligenceInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNDetentionPolicyInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DetentionPolicyInput, error) {
 	res, err := unmarshalInputDetentionPolicyInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4353,28 +5476,28 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCustomerDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStatᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.CustomerDetentionStat) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.CustomerDetentionStat]{
-		Elem:        marshalNCustomerDetentionStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStat,
-		NonNull:     true,
-		NonNullElem: true,
-	}.Marshal(ctx, ec, sel, v)
-}
-
-func marshalNCustomerDetentionStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCustomerDetentionStat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.CustomerDetentionStat) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "CustomerDetentionStat", v)
-}
-
 func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNDetentionArrivalCell2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionArrivalCellᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionArrivalCell) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionArrivalCell]{
+		Elem:        marshalNDetentionArrivalCell2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionArrivalCell,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionArrivalCell2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionArrivalCell(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionArrivalCell) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionArrivalCell", v)
 }
 
 func marshalNDetentionBacktestBucket2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionBacktestBucketᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionBacktestBucket) graphql.Marshaler {
@@ -4433,6 +5556,22 @@ func marshalNDetentionCollectability2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "DetentionCollectability", v)
 }
 
+func marshalNDetentionCustomerIntelligence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCustomerIntelligenceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionCustomerIntelligence) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionCustomerIntelligence]{
+		Elem:        marshalNDetentionCustomerIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCustomerIntelligence,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionCustomerIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionCustomerIntelligence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionCustomerIntelligence) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionCustomerIntelligence", v)
+}
+
 func marshalNDetentionDeskEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionDeskEntry) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.DetentionDeskEntry]{
 		Elem:        marshalNDetentionDeskEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntry,
@@ -4485,12 +5624,96 @@ func marshalNDetentionEvidenceSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
+func marshalNDetentionFacilityIntelligence2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityIntelligenceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionFacilityIntelligence) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionFacilityIntelligence]{
+		Elem:        marshalNDetentionFacilityIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityIntelligence,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionFacilityIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionFacilityIntelligence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionFacilityIntelligence) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionFacilityIntelligence", v)
+}
+
+func marshalNDetentionIntelligence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionIntelligence) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionIntelligence", v)
+}
+
+func marshalNDetentionIntelligenceTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionIntelligenceTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionIntelligenceTotals) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionIntelligenceTotals", v)
+}
+
 func marshalNDetentionLateArrivalRule2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionpolicyᚐLateArrivalRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detentionpolicy.LateArrivalRule) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNDetentionNarrativeParagraph2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeParagraphᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionNarrativeParagraph) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionNarrativeParagraph]{
+		Elem:        marshalNDetentionNarrativeParagraph2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeParagraph,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionNarrativeParagraph2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeParagraph(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionNarrativeParagraph) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionNarrativeParagraph", v)
+}
+
+func marshalNDetentionNarrativeSegment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeSegmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionNarrativeSegment) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionNarrativeSegment]{
+		Elem:        marshalNDetentionNarrativeSegment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeSegment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionNarrativeSegment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNarrativeSegment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionNarrativeSegment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionNarrativeSegment", v)
+}
+
+func marshalNDetentionNextStep2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNextStepᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionNextStep) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionNextStep]{
+		Elem:        marshalNDetentionNextStep2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNextStep,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionNextStep2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNextStep(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionNextStep) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionNextStep", v)
+}
+
+func marshalNDetentionNextStepKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNextStepKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.DetentionNextStepKind) graphql.Marshaler {
+	return v
 }
 
 func marshalNDetentionNotice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionNotice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionNotice) graphql.Marshaler {
@@ -4581,6 +5804,22 @@ func marshalNDetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "DetentionPolicy", v)
 }
 
+func marshalNDetentionPolicyChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionPolicyChange) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionPolicyChange]{
+		Elem:        marshalNDetentionPolicyChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyChange,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionPolicyChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionPolicyChange) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionPolicyChange", v)
+}
+
 func marshalNDetentionPolicyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionPolicyConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionPolicyConnection) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -4645,6 +5884,34 @@ func marshalNDetentionRateSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
+func marshalNDetentionRecovery2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecovery(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionRecovery) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionRecovery", v)
+}
+
+func marshalNDetentionRecoveryBucket2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecoveryBucket(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.DetentionRecoveryBucket) graphql.Marshaler {
+	return v
+}
+
+func marshalNDetentionRecoveryStep2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecoveryStepᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionRecoveryStep) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionRecoveryStep]{
+		Elem:        marshalNDetentionRecoveryStep2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecoveryStep,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionRecoveryStep2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionRecoveryStep(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionRecoveryStep) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionRecoveryStep", v)
+}
+
 func marshalNDetentionRoundingMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionpolicyᚐRoundingMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detentionpolicy.RoundingMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -4677,6 +5944,22 @@ func marshalNDetentionScoreFactor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "DetentionScoreFactor", v)
 }
 
+func marshalNDetentionSplitFigure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSplitFigure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionSplitFigure) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionSplitFigure", v)
+}
+
+func marshalNDetentionStopSplits2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionStopSplits(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionStopSplits) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionStopSplits", v)
+}
+
 func marshalNDetentionTierRateUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionpolicyᚐTierRateUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v detentionpolicy.TierRateUnit) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -4707,6 +5990,22 @@ func marshalNDetentionWaiverLeakageStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DetentionWaiverLeakageStat", v)
+}
+
+func marshalNDetentionWeek2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWeekᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DetentionWeek) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DetentionWeek]{
+		Elem:        marshalNDetentionWeek2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWeek,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDetentionWeek2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionWeek(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionWeek) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DetentionWeek", v)
 }
 
 func marshalNFacilityDetentionStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFacilityDetentionStatᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.FacilityDetentionStat) graphql.Marshaler {
@@ -4842,6 +6141,13 @@ func marshalODetentionPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋap
 	return ec.MarshalType(ctx, sel, "DetentionPolicy", v)
 }
 
+func marshalODetentionSegmentTarget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionSegmentTarget(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DetentionSegmentTarget) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func marshalODetentionWaiverReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐWaiverReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *detention.WaiverReason) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -4887,6 +6193,14 @@ func marshalOString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 		NonNullElem: true,
 		Scalar:      true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
 }
 
 func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {

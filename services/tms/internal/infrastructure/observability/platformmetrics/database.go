@@ -24,6 +24,10 @@ type Database struct {
 	operatorActions  *prometheus.CounterVec
 	rlsScopeEvents   *prometheus.CounterVec
 	slowWaits        *prometheus.CounterVec
+	rollupSlices     *prometheus.CounterVec
+	rollupRows       *prometheus.CounterVec
+	rollupPending    *prometheus.GaugeVec
+	rollupDuration   prometheus.Histogram
 	stats            func() PoolStats
 }
 
@@ -76,6 +80,7 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 		[]string{"component", "pool", "kind"},
 	)
 
+	m.registerRollups()
 	m.MustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents, m.slowWaits)
 
 	return m

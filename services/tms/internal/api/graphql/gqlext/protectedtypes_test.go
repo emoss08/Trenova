@@ -98,9 +98,25 @@ func protectedTypes() map[string]protectedType {
 				}
 			},
 		},
-		"CustomerDetentionStat": {
+		"DetentionIntelligenceTotals": {
 			entity: func() protectedfield.Withholder {
-				return &detentionports.CustomerDetentionStat{
+				return &detentionports.IntelligenceTotals{
+					DriverPayAmount: amount("75"),
+					NetMargin:       amount("150"),
+				}
+			},
+		},
+		"DetentionFacilityIntelligence": {
+			entity: func() protectedfield.Withholder {
+				return &detentionports.FacilityIntelligence{
+					DriverPayAmount: amount("75"),
+					NetMargin:       amount("150"),
+				}
+			},
+		},
+		"DetentionCustomerIntelligence": {
+			entity: func() protectedfield.Withholder {
+				return &detentionports.CustomerIntelligence{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
 				}

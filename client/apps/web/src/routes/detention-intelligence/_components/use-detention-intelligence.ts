@@ -1,112 +1,44 @@
+import type {
+  DetentionIntelligence,
+  DetentionIntelligenceInput,
+} from "@/lib/graphql/detention-intelligence";
 import { detention } from "@/lib/queries/detention";
-import { DETENTION_STATS_LIMIT } from "@/lib/queries/detention";
-import type { FacilityDetentionStat } from "@trenova/shared/types/detention";
-import { useQuery } from "@tanstack/react-query";
-import { useNow } from "@trenova/shared/hooks/use-now";
-import { useMemo, useState } from "react";
-
-export type DetentionWindowValue = "30" | "90" | "180";
-
-export const DETENTION_WINDOW_OPTIONS: {
-  value: DetentionWindowValue;
-  label: string;
-  days: number;
-}[] = [
-  { value: "30", label: "30d", days: 30 },
-  { value: "90", label: "90d", days: 90 },
-  { value: "180", label: "180d", days: 180 },
-];
-
-const SECONDS_PER_DAY = 86_400;
-
-export function detentionWindowDays(value: DetentionWindowValue): number {
-  return (
-    DETENTION_WINDOW_OPTIONS.find((option) => option.value === value)?.days ??
-    DETENTION_WINDOW_OPTIONS[1].days
-  );
-}
-
-/** Every stop in the window, netted down to the numbers a controller argues with. */
-export type DetentionRollup = {
-  facilityCount: number;
-  stopCount: number;
-  breachCount: number;
-  billed: number;
-  /** Null when the reader does not hold the margins field group. */
-  driverPay: number | null;
-  /** Null when the reader does not hold the margins field group. */
-  netMargin: number | null;
-  waived: number;
-  disputeCount: number;
-  suppressedCount: number;
-  /** True when the ranked query hit its ceiling, so the totals under-count. */
-  truncated: boolean;
-};
-
-const EMPTY_ROLLUP: DetentionRollup = {
-  facilityCount: 0,
-  stopCount: 0,
-  breachCount: 0,
-  billed: 0,
-  driverPay: 0,
-  netMargin: 0,
-  waived: 0,
-  disputeCount: 0,
-  suppressedCount: 0,
-  truncated: false,
-};
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 /**
- * Facilities are the one grouping that covers every settled stop exactly once,
- * so the page-level ledger is folded from them rather than from the customer
- * roll-up, which would double-count nothing but truncate differently.
+ * How long a read stays fresh. The window is whole days of the organization's time zone, so a
+ * read only changes as stops inside it settle; reopening a scorecard or switching facilities
+ * within this reuses the read instead of reading again.
  */
-function rollupFacilities(rows: FacilityDetentionStat[] | undefined): DetentionRollup {
-  if (!rows || rows.length === 0) {
-    return EMPTY_ROLLUP;
-  }
+export const INTELLIGENCE_STALE_MS = 5 * 60_000;
 
-  const rollup = rows.reduce<DetentionRollup>(
-    (totals, row) => {
-      totals.stopCount += row.stopCount;
-      totals.breachCount += row.breachCount;
-      totals.billed += row.billedAmount;
-      totals.driverPay =
-        totals.driverPay === null || row.driverPayAmount === null
-          ? null
-          : totals.driverPay + row.driverPayAmount;
-      totals.netMargin =
-        totals.netMargin === null || row.netMargin === null
-          ? null
-          : totals.netMargin + row.netMargin;
-      totals.waived += row.waivedAmount;
-      totals.disputeCount += row.disputeCount;
-      totals.suppressedCount += row.suppressedCount;
-      return totals;
-    },
-    { ...EMPTY_ROLLUP },
-  );
-
-  rollup.facilityCount = rows.length;
-  rollup.truncated = rows.length >= DETENTION_STATS_LIMIT;
-
-  return rollup;
+/** The read the page and its route prefetch share, so the prefetched result is the one used. */
+export function intelligenceInput(days: number): DetentionIntelligenceInput {
+  return { days };
 }
 
+/** Detention intelligence over the last `days` whole days, ending today in the organization's zone. */
 export function useDetentionIntelligence(days: number) {
-  const now = useNow("minute");
-  const [anchor, setAnchor] = useState({ days, to: now });
-  if (anchor.days !== days) {
-    setAnchor({ days, to: now });
-  }
-  const to = anchor.days === days ? anchor.to : now;
-  const range = useMemo(() => ({ from: to - days * SECONDS_PER_DAY, to }), [days, to]);
+  return useQuery({
+    ...detention.intelligence(intelligenceInput(days)),
+    staleTime: INTELLIGENCE_STALE_MS,
+    placeholderData: keepPreviousData,
+  });
+}
 
-  const facilities = useQuery(detention.facilities(range.from, range.to));
-  const customers = useQuery(detention.customers(range.from, range.to));
-  const waivers = useQuery(detention.waivers(range.from, range.to));
-
-  const rollup = useMemo(() => rollupFacilities(facilities.data), [facilities.data]);
-
-  return { range, facilities, customers, waivers, rollup };
+/**
+ * The same window narrowed to one facility, for its scorecard and its arrival grid. It asks for
+ * the days the page's read came back with, so it covers the same window even past midnight, and
+ * reads nothing until a facility is chosen.
+ */
+export function useFacilityIntelligence(page: DetentionIntelligence, locationId: string | null) {
+  return useQuery({
+    ...detention.intelligence({
+      days: page.days,
+      through: page.through,
+      locationId: locationId ?? undefined,
+    }),
+    enabled: locationId !== null,
+    staleTime: INTELLIGENCE_STALE_MS,
+  });
 }

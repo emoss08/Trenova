@@ -3,14 +3,11 @@ import {
   CreateDetentionPolicyDocument,
   DeleteDetentionPolicyDocument,
   DetentionBacktestDocument,
-  DetentionCustomerStatsDocument,
   DetentionDeskDocument,
   DetentionDisputePacketDocument,
-  DetentionFacilityStatsDocument,
   DetentionOccurrenceDetailDocument,
   DetentionPolicyDocument,
   DetentionPolicyPreviewDocument,
-  DetentionWaiverStatsDocument,
   DisputeDetentionOccurrenceDocument,
   SendDetentionNoticeDocument,
   ShipmentDetentionDocument,
@@ -20,15 +17,12 @@ import {
   type CreateDetentionPolicyMutation,
   type DeleteDetentionPolicyMutation,
   type DetentionBacktestMutation,
-  type DetentionCustomerStatsQuery,
   type DetentionDeskQuery,
   type DetentionDisputePacketQuery,
-  type DetentionFacilityStatsQuery,
   type DetentionOccurrenceDetailQuery,
   type DetentionPolicyInput,
   type DetentionPolicyPreviewQuery,
   type DetentionPolicyQuery,
-  type DetentionWaiverStatsQuery,
   type DisputeDetentionOccurrenceMutation,
   type SendDetentionNoticeMutation,
   type ShipmentDetentionQuery,
@@ -41,26 +35,20 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResultSchema,
-  customerDetentionStatSchema,
   deskEntrySchema,
   detentionOccurrenceSchema,
   detentionPolicySchema,
   disputePacketSchema,
-  facilityDetentionStatSchema,
   occurrenceDetailSchema,
   previewResultSchema,
-  waiverLeakageStatSchema,
   type BacktestResult,
-  type CustomerDetentionStat,
   type DeskEntry,
   type DetentionOccurrence,
   type DetentionPolicy,
   type DisputePacket,
-  type FacilityDetentionStat,
   type OccurrenceDetail,
   type PreviewResult,
   type PreviewScenario,
-  type WaiverLeakageStat,
   type WaiverReason,
 } from "@trenova/shared/types/detention";
 import { z } from "zod";
@@ -277,72 +265,6 @@ export class DetentionAnalyticsService {
     })) as DetentionBacktestMutation;
 
     return safeParse(backtestResultSchema, response.detentionBacktest, "Detention Backtest");
-  }
-
-  public async facilities(
-    params: {
-      from: number;
-      to: number;
-      limit?: number;
-    },
-    options?: { signal?: AbortSignal },
-  ): Promise<FacilityDetentionStat[]> {
-    const response = (await requestGraphQL({
-      document: DetentionFacilityStatsDocument,
-      operationName: "DetentionFacilityStats",
-      variables: {
-        input: { from: params.from, to: params.to, limit: params.limit ?? null },
-      },
-      signal: options?.signal,
-    })) as DetentionFacilityStatsQuery;
-
-    return safeParse(
-      z.array(facilityDetentionStatSchema),
-      response.detentionFacilityStats,
-      "Facility Detention Stats",
-    );
-  }
-
-  public async customers(
-    params: {
-      from: number;
-      to: number;
-      limit?: number;
-    },
-    options?: { signal?: AbortSignal },
-  ): Promise<CustomerDetentionStat[]> {
-    const response = (await requestGraphQL({
-      document: DetentionCustomerStatsDocument,
-      operationName: "DetentionCustomerStats",
-      variables: {
-        input: { from: params.from, to: params.to, limit: params.limit ?? null },
-      },
-      signal: options?.signal,
-    })) as DetentionCustomerStatsQuery;
-
-    return safeParse(
-      z.array(customerDetentionStatSchema),
-      response.detentionCustomerStats,
-      "Customer Detention Stats",
-    );
-  }
-
-  public async waivers(
-    params: { from: number; to: number },
-    options?: { signal?: AbortSignal },
-  ): Promise<WaiverLeakageStat[]> {
-    const response = (await requestGraphQL({
-      document: DetentionWaiverStatsDocument,
-      operationName: "DetentionWaiverStats",
-      variables: { input: { from: params.from, to: params.to } },
-      signal: options?.signal,
-    })) as DetentionWaiverStatsQuery;
-
-    return safeParse(
-      z.array(waiverLeakageStatSchema),
-      response.detentionWaiverStats,
-      "Detention Waiver Leakage",
-    );
   }
 }
 

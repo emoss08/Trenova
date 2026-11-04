@@ -3184,21 +3184,6 @@ type CustomerConnection struct {
 	TotalCountExact bool `json:"totalCountExact"`
 }
 
-type CustomerDetentionStat struct {
-	CustomerID   string `json:"customerId"`
-	CustomerName string `json:"customerName"`
-	StopCount    int    `json:"stopCount"`
-	BreachCount  int    `json:"breachCount"`
-	BilledAmount string `json:"billedAmount"`
-	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
-	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
-	// Null to a reader without the margins field group.
-	NetMargin       *string `json:"netMargin,omitempty"`
-	WaivedAmount    string  `json:"waivedAmount"`
-	DisputeCount    int     `json:"disputeCount"`
-	SuppressedCount int     `json:"suppressedCount"`
-}
-
 type CustomerEdge struct {
 	Node   *customer.Customer `json:"node"`
 	Cursor string             `json:"cursor"`
@@ -3793,6 +3778,14 @@ type DetentionAccrual struct {
 	Amount        string `json:"amount"`
 }
 
+// Stops by the ISO weekday (1 is Monday) and hour the truck arrived, in the request's time zone.
+type DetentionArrivalCell struct {
+	Weekday       int `json:"weekday"`
+	Hour          int `json:"hour"`
+	StopCount     int `json:"stopCount"`
+	DetainedCount int `json:"detainedCount"`
+}
+
 type DetentionBacktestBucket struct {
 	Key            string `json:"key"`
 	Label          string `json:"label"`
@@ -3854,6 +3847,23 @@ type DetentionCollectability struct {
 	Summary    string                            `json:"summary"`
 }
 
+type DetentionCustomerIntelligence struct {
+	CustomerID      string `json:"customerId"`
+	CustomerName    string `json:"customerName"`
+	StopCount       int    `json:"stopCount"`
+	DetainedCount   int    `json:"detainedCount"`
+	PastFreeMinutes int    `json:"pastFreeMinutes"`
+	BilledAmount    string `json:"billedAmount"`
+	// Null to a reader without the margins field group.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin         *string `json:"netMargin,omitempty"`
+	WaivedAmount      string  `json:"waivedAmount"`
+	DisputeCount      int     `json:"disputeCount"`
+	NoticeDueCount    int     `json:"noticeDueCount"`
+	NoticeOnTimeCount int     `json:"noticeOnTimeCount"`
+}
+
 type DetentionDeskEntry struct {
 	Occurrence            *DetentionOccurrence `json:"occurrence"`
 	MinutesUntilFreeEnds  int                  `json:"minutesUntilFreeEnds"`
@@ -3896,6 +3906,137 @@ type DetentionEvidence struct {
 	PrevHash              string                           `json:"prevHash"`
 	Hash                  string                           `json:"hash"`
 	CreatedAt             int                              `json:"createdAt"`
+}
+
+type DetentionFacilityIntelligence struct {
+	LocationID   string `json:"locationId"`
+	LocationName string `json:"locationName"`
+	// The facility's city, or empty when the location has none.
+	LocationCity string `json:"locationCity"`
+	// The two-letter abbreviation of the facility's state, or empty when it has none.
+	LocationState   string `json:"locationState"`
+	StopCount       int    `json:"stopCount"`
+	DetainedCount   int    `json:"detainedCount"`
+	PastFreeMinutes int    `json:"pastFreeMinutes"`
+	// Minutes past free time in the window before. Null when the facility did not rank there.
+	PreviousPastFreeMinutes *int    `json:"previousPastFreeMinutes,omitempty"`
+	DockMinutes             int     `json:"dockMinutes"`
+	OpenMinutes             int     `json:"openMinutes"`
+	EarlyMinutes            int     `json:"earlyMinutes"`
+	LateMinutes             int     `json:"lateMinutes"`
+	AvgDwellMinutes         int     `json:"avgDwellMinutes"`
+	MedianDwellMinutes      float64 `json:"medianDwellMinutes"`
+	P90DwellMinutes         float64 `json:"p90DwellMinutes"`
+	// The free time a typical stop here is granted.
+	MedianFreeMinutes float64 `json:"medianFreeMinutes"`
+	BilledAmount      string  `json:"billedAmount"`
+	// Null to a reader without the margins field group.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin         *string `json:"netMargin,omitempty"`
+	WaivedAmount      string  `json:"waivedAmount"`
+	DisputeCount      int     `json:"disputeCount"`
+	SuppressedCount   int     `json:"suppressedCount"`
+	NoticeDueCount    int     `json:"noticeDueCount"`
+	NoticeOnTimeCount int     `json:"noticeOnTimeCount"`
+}
+
+type DetentionIntelligence struct {
+	// How many whole days the window covers.
+	Days int `json:"days"`
+	// The window's last day, YYYY-MM-DD in the organization's time zone: a read of one facility passes it to cover the same days.
+	Through string `json:"through"`
+	// The first instant of the window's first day.
+	From         int `json:"from"`
+	To           int `json:"to"`
+	PreviousFrom int `json:"previousFrom"`
+	PreviousTo   int `json:"previousTo"`
+	// The organization's IANA time zone, which the days, weekdays, arrival hours and weeks are counted in.
+	Timezone string                       `json:"timezone"`
+	Totals   *DetentionIntelligenceTotals `json:"totals"`
+	// The same figures over the window before.
+	Previous *DetentionIntelligenceTotals `json:"previous"`
+	// Facilities, most hours past free time first.
+	Facilities []*DetentionFacilityIntelligence `json:"facilities"`
+	// Customers, most hours past free time first.
+	Customers     []*DetentionCustomerIntelligence `json:"customers"`
+	Waivers       []*DetentionWaiverLeakageStat    `json:"waivers"`
+	Recovery      *DetentionRecovery               `json:"recovery"`
+	Arrivals      []*DetentionArrivalCell          `json:"arrivals"`
+	Splits        *DetentionStopSplits             `json:"splits"`
+	Weeks         []*DetentionWeek                 `json:"weeks"`
+	PolicyChanges []*DetentionPolicyChange         `json:"policyChanges"`
+	// Nova's briefing on the window, in the reader's language: how long trucks waited and whose wait
+	// it was; where the schedule guarantees detention and when trucks wait; where the money went; and
+	// what moved against the window before. A paragraph with nothing to say is left out.
+	Summary []*DetentionNarrativeParagraph `json:"summary"`
+	// At most four moves, ranked by what each would recover.
+	NextSteps []*DetentionNextStep `json:"nextSteps"`
+	// More facilities had detention than the list holds.
+	Truncated bool `json:"truncated"`
+}
+
+type DetentionIntelligenceInput struct {
+	// How many whole days the window covers, in the organization's time zone: 1 to 366.
+	Days int `json:"days"`
+	// The window's last day, YYYY-MM-DD in the organization's time zone, no later than today. Defaults to today.
+	Through *string `json:"through,omitempty"`
+	// Only the stops made at this location, for its scorecard.
+	LocationID *string `json:"locationId,omitempty"`
+}
+
+// Minutes past free time are measured from the dwell: how long the truck waited beyond the free
+// time it was granted, whether or not it was billed. Each stop's wait is put down to one cause, the
+// first of: arrived late, no appointment (an open dock), arrived before its appointment, or on time
+// with the dock slow.
+type DetentionIntelligenceTotals struct {
+	StopCount       int    `json:"stopCount"`
+	DetainedCount   int    `json:"detainedCount"`
+	PastFreeMinutes int    `json:"pastFreeMinutes"`
+	DockMinutes     int    `json:"dockMinutes"`
+	OpenMinutes     int    `json:"openMinutes"`
+	EarlyMinutes    int    `json:"earlyMinutes"`
+	LateMinutes     int    `json:"lateMinutes"`
+	BilledAmount    string `json:"billedAmount"`
+	// What drivers were paid for the wait. Null to a reader without the margins field group.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
+	// Charges whose notice had a deadline.
+	NoticeDueCount int `json:"noticeDueCount"`
+	// Of those, the ones whose notice went out by the deadline.
+	NoticeOnTimeCount int `json:"noticeOnTimeCount"`
+}
+
+// One paragraph of the briefing.
+type DetentionNarrativeParagraph struct {
+	Segments []*DetentionNarrativeSegment `json:"segments"`
+}
+
+// One run of a sentence: plain, strong, or a reference that opens what it names.
+type DetentionNarrativeSegment struct {
+	Text   string `json:"text"`
+	Strong bool   `json:"strong"`
+	// danger for a loss or a leak, good for an improvement.
+	Tone   *string                 `json:"tone,omitempty"`
+	Target *DetentionSegmentTarget `json:"target,omitempty"`
+	// A location or customer ID, or a section of the page: focus, paid or customers.
+	TargetID *string `json:"targetId,omitempty"`
+}
+
+// One move the figures point to, sized by what it would recover.
+type DetentionNextStep struct {
+	Kind          DetentionNextStepKind        `json:"kind"`
+	Title         []*DetentionNarrativeSegment `json:"title"`
+	Detail        string                       `json:"detail"`
+	ImpactMinutes *int                         `json:"impactMinutes,omitempty"`
+	ImpactAmount  *string                      `json:"impactAmount,omitempty"`
+	ImpactCaption string                       `json:"impactCaption"`
+	LocationID    *string                      `json:"locationId,omitempty"`
+	CustomerID    *string                      `json:"customerId,omitempty"`
 }
 
 type DetentionNotice struct {
@@ -4061,6 +4202,15 @@ type DetentionPolicy struct {
 	UpdatedAt                   int                                     `json:"updatedAt"`
 }
 
+// A facility moving to another detention policy partway through the window.
+type DetentionPolicyChange struct {
+	LocationID   string `json:"locationId"`
+	LocationName string `json:"locationName"`
+	PolicyID     string `json:"policyId"`
+	PolicyName   string `json:"policyName"`
+	ChangedAt    int    `json:"changedAt"`
+}
+
 type DetentionPolicyConnection struct {
 	Edges      []*DetentionPolicyEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
@@ -4166,6 +4316,21 @@ type DetentionPreviewScenarioInput struct {
 	DriverPayRate    *string          `json:"driverPayRate,omitempty"`
 }
 
+// From what the clock accrued to what was billed, invoiced on a posted invoice and collected on a paid one.
+type DetentionRecovery struct {
+	Accrued   string                   `json:"accrued"`
+	Steps     []*DetentionRecoveryStep `json:"steps"`
+	Billed    string                   `json:"billed"`
+	Invoiced  string                   `json:"invoiced"`
+	Collected string                   `json:"collected"`
+}
+
+type DetentionRecoveryStep struct {
+	Bucket          DetentionRecoveryBucket `json:"bucket"`
+	OccurrenceCount int                     `json:"occurrenceCount"`
+	Amount          string                  `json:"amount"`
+}
+
 type DetentionScoreFactor struct {
 	Key      string `json:"key"`
 	Label    string `json:"label"`
@@ -4175,12 +4340,27 @@ type DetentionScoreFactor struct {
 	Remedy   string `json:"remedy"`
 }
 
+type DetentionSplitFigure struct {
+	StopCount       int `json:"stopCount"`
+	DetainedCount   int `json:"detainedCount"`
+	PastFreeMinutes int `json:"pastFreeMinutes"`
+}
+
 type DetentionStatsInput struct {
 	From  int  `json:"from"`
 	To    int  `json:"to"`
 	Limit *int `json:"limit,omitempty"`
 	// Only the stops made at this location.
 	LocationID *string `json:"locationId,omitempty"`
+}
+
+type DetentionStopSplits struct {
+	Pickup      *DetentionSplitFigure `json:"pickup"`
+	Delivery    *DetentionSplitFigure `json:"delivery"`
+	Appointment *DetentionSplitFigure `json:"appointment"`
+	Open        *DetentionSplitFigure `json:"open"`
+	Live        *DetentionSplitFigure `json:"live"`
+	Drop        *DetentionSplitFigure `json:"drop"`
 }
 
 type DetentionTierInput struct {
@@ -4203,6 +4383,14 @@ type DetentionWaiverLeakageStat struct {
 	WaiverCount   int    `json:"waiverCount"`
 	ApproverCount int    `json:"approverCount"`
 	WaivedAmount  string `json:"waivedAmount"`
+}
+
+// One week of the window. weekStart is the local Monday at midnight written as if it were UTC.
+type DetentionWeek struct {
+	WeekStart       int `json:"weekStart"`
+	StopCount       int `json:"stopCount"`
+	DetainedCount   int `json:"detainedCount"`
+	PastFreeMinutes int `json:"pastFreeMinutes"`
 }
 
 type DiscardFactoringRemittanceInput struct {
@@ -11140,6 +11328,7 @@ type ShipmentStop struct {
 	Status                 StopStatus         `json:"status"`
 	Type                   StopType           `json:"type"`
 	ScheduleType           StopScheduleType   `json:"scheduleType"`
+	Handling               StopHandling       `json:"handling"`
 	Sequence               int                `json:"sequence"`
 	Pieces                 *int               `json:"pieces,omitempty"`
 	Weight                 *int               `json:"weight,omitempty"`
@@ -11169,6 +11358,7 @@ type ShipmentStopInput struct {
 	Status                 *StopStatus       `json:"status,omitempty"`
 	Type                   *StopType         `json:"type,omitempty"`
 	ScheduleType           *StopScheduleType `json:"scheduleType,omitempty"`
+	Handling               *StopHandling     `json:"handling,omitempty"`
 	Sequence               *int              `json:"sequence,omitempty"`
 	Pieces                 *int              `json:"pieces,omitempty"`
 	Weight                 *int              `json:"weight,omitempty"`
@@ -13914,6 +14104,199 @@ func (e DetentionDeskUrgency) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type DetentionNextStepKind string
+
+const (
+	DetentionNextStepKindShipperReview DetentionNextStepKind = "ShipperReview"
+	DetentionNextStepKindFreeTime      DetentionNextStepKind = "FreeTime"
+	DetentionNextStepKindNotice        DetentionNextStepKind = "Notice"
+	DetentionNextStepKindCustomerTerms DetentionNextStepKind = "CustomerTerms"
+	DetentionNextStepKindLateArrivals  DetentionNextStepKind = "LateArrivals"
+	DetentionNextStepKindEarlyArrivals DetentionNextStepKind = "EarlyArrivals"
+)
+
+var AllDetentionNextStepKind = []DetentionNextStepKind{
+	DetentionNextStepKindShipperReview,
+	DetentionNextStepKindFreeTime,
+	DetentionNextStepKindNotice,
+	DetentionNextStepKindCustomerTerms,
+	DetentionNextStepKindLateArrivals,
+	DetentionNextStepKindEarlyArrivals,
+}
+
+func (e DetentionNextStepKind) IsValid() bool {
+	switch e {
+	case DetentionNextStepKindShipperReview, DetentionNextStepKindFreeTime, DetentionNextStepKindNotice, DetentionNextStepKindCustomerTerms, DetentionNextStepKindLateArrivals, DetentionNextStepKindEarlyArrivals:
+		return true
+	}
+	return false
+}
+
+func (e DetentionNextStepKind) String() string {
+	return string(e)
+}
+
+func (e *DetentionNextStepKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionNextStepKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionNextStepKind", str)
+	}
+	return nil
+}
+
+func (e DetentionNextStepKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionNextStepKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionNextStepKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Where accrued money ended up.
+type DetentionRecoveryBucket string
+
+const (
+	// The truck arrived late, so the free time was forfeited and the charge was not billable.
+	DetentionRecoveryBucketLate DetentionRecoveryBucket = "Late"
+	// Held because notice missed its deadline.
+	DetentionRecoveryBucketNotice DetentionRecoveryBucket = "Notice"
+	// Forgiven at someone's discretion.
+	DetentionRecoveryBucketWaived DetentionRecoveryBucket = "Waived"
+	// The customer disputed it.
+	DetentionRecoveryBucketDisputed DetentionRecoveryBucket = "Disputed"
+	// Accruing, pending or approved, not yet billed.
+	DetentionRecoveryBucketPending DetentionRecoveryBucket = "Pending"
+	// Not billable for another reason.
+	DetentionRecoveryBucketOther DetentionRecoveryBucket = "Other"
+	// What billed charges lost to caps, minimums and rounding.
+	DetentionRecoveryBucketCapped DetentionRecoveryBucket = "Capped"
+)
+
+var AllDetentionRecoveryBucket = []DetentionRecoveryBucket{
+	DetentionRecoveryBucketLate,
+	DetentionRecoveryBucketNotice,
+	DetentionRecoveryBucketWaived,
+	DetentionRecoveryBucketDisputed,
+	DetentionRecoveryBucketPending,
+	DetentionRecoveryBucketOther,
+	DetentionRecoveryBucketCapped,
+}
+
+func (e DetentionRecoveryBucket) IsValid() bool {
+	switch e {
+	case DetentionRecoveryBucketLate, DetentionRecoveryBucketNotice, DetentionRecoveryBucketWaived, DetentionRecoveryBucketDisputed, DetentionRecoveryBucketPending, DetentionRecoveryBucketOther, DetentionRecoveryBucketCapped:
+		return true
+	}
+	return false
+}
+
+func (e DetentionRecoveryBucket) String() string {
+	return string(e)
+}
+
+func (e *DetentionRecoveryBucket) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionRecoveryBucket(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionRecoveryBucket", str)
+	}
+	return nil
+}
+
+func (e DetentionRecoveryBucket) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionRecoveryBucket) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionRecoveryBucket) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DetentionSegmentTarget string
+
+const (
+	DetentionSegmentTargetFacility DetentionSegmentTarget = "Facility"
+	DetentionSegmentTargetCustomer DetentionSegmentTarget = "Customer"
+	DetentionSegmentTargetSection  DetentionSegmentTarget = "Section"
+)
+
+var AllDetentionSegmentTarget = []DetentionSegmentTarget{
+	DetentionSegmentTargetFacility,
+	DetentionSegmentTargetCustomer,
+	DetentionSegmentTargetSection,
+}
+
+func (e DetentionSegmentTarget) IsValid() bool {
+	switch e {
+	case DetentionSegmentTargetFacility, DetentionSegmentTargetCustomer, DetentionSegmentTargetSection:
+		return true
+	}
+	return false
+}
+
+func (e DetentionSegmentTarget) String() string {
+	return string(e)
+}
+
+func (e *DetentionSegmentTarget) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DetentionSegmentTarget(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DetentionSegmentTarget", str)
+	}
+	return nil
+}
+
+func (e DetentionSegmentTarget) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DetentionSegmentTarget) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DetentionSegmentTarget) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type EDISummaryAttentionKind string
 
 const (
@@ -16324,6 +16707,64 @@ func (e *ShipmentTenderStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e ShipmentTenderStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How the freight changes hands at a stop.
+type StopHandling string
+
+const (
+	// The truck waits while the facility loads or unloads it.
+	StopHandlingLive StopHandling = "Live"
+	// A trailer is left or taken, and the tractor goes on.
+	StopHandlingDrop StopHandling = "Drop"
+)
+
+var AllStopHandling = []StopHandling{
+	StopHandlingLive,
+	StopHandlingDrop,
+}
+
+func (e StopHandling) IsValid() bool {
+	switch e {
+	case StopHandlingLive, StopHandlingDrop:
+		return true
+	}
+	return false
+}
+
+func (e StopHandling) String() string {
+	return string(e)
+}
+
+func (e *StopHandling) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StopHandling(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StopHandling", str)
+	}
+	return nil
+}
+
+func (e StopHandling) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StopHandling) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StopHandling) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

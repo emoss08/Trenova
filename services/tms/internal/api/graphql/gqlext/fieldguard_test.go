@@ -70,7 +70,9 @@ func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 		"CapacityMatch":                  margins("quote", "marginPercent"),
 		"DetentionOccurrence":            detentionPay,
 		"FacilityDetentionStat":          detentionPay,
-		"CustomerDetentionStat":          detentionPay,
+		"DetentionIntelligenceTotals":    detentionPay,
+		"DetentionFacilityIntelligence":  detentionPay,
+		"DetentionCustomerIntelligence":  detentionPay,
 		"DetentionPreviewResult":         detentionPay,
 		"DetentionBacktestBucket":        detentionPay,
 		"DetentionBacktestResult": margins(

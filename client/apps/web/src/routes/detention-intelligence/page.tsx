@@ -1,66 +1,53 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { detention } from "@/lib/queries/detention";
-import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { cn } from "@trenova/shared/lib/utils";
-import { useIsFetching, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw01Icon } from "@trenova/shared/components/icons";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useState } from "react";
 import { DetentionIntelligence } from "./_components/detention-intelligence";
 import {
   DETENTION_WINDOW_OPTIONS,
+  detentionWindowDays,
   type DetentionWindowValue,
-} from "./_components/use-detention-intelligence";
+} from "./_components/intelligence-model";
+import { INTELLIGENCE_STALE_MS, intelligenceInput } from "./_components/use-detention-intelligence";
 
-function RefreshAction() {
-  const t = useT();
+const DEFAULT_WINDOW: DetentionWindowValue = "90";
 
-  const queryClient = useQueryClient();
-  const isFetching = useIsFetching({ queryKey: detention._def }) > 0;
-
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      className="h-7"
-      disabled={isFetching}
-      aria-label={t("Recalculate detention intelligence")}
-      onClick={() => void queryClient.invalidateQueries({ queryKey: detention._def })}
-    >
-      <RefreshCw01Icon className={cn("mr-1.5 size-3.5", isFetching && "animate-spin")} />
-      {isFetching ? t("Recalculating…") : t("Refresh")}
-    </Button>
-  );
+/** Warms the read the page makes on mount: the default window, ending today. */
+export function prefetch() {
+  return [
+    {
+      ...detention.intelligence(intelligenceInput(detentionWindowDays(DEFAULT_WINDOW))),
+      staleTime: INTELLIGENCE_STALE_MS,
+    },
+  ];
 }
 
 export function DetentionIntelligencePage() {
   const t = useT();
-
-  const [windowValue, setWindowValue] = useState<DetentionWindowValue>("90");
+  const [windowValue, setWindowValue] = useState<DetentionWindowValue>(DEFAULT_WINDOW);
 
   return (
     <PageLayout
       pageHeaderProps={{
         title: t("Detention intelligence"),
         description: t(
-          "Which facilities cost the most, which customers are unprofitable once driver pay is netted off, and where discretionary revenue is going",
+          "Where trucks wait past free time, who caused it, when it happens, how much of the money is recovered and what to do next",
         ),
         actions: (
-          <>
-            <SegmentedControl
-              items={DETENTION_WINDOW_OPTIONS}
-              value={windowValue}
-              onValueChange={setWindowValue}
-              aria-label={t("Analysis window")}
-            />
-            <RefreshAction />
-          </>
+          <SegmentedControl
+            items={DETENTION_WINDOW_OPTIONS}
+            value={windowValue}
+            onValueChange={setWindowValue}
+            aria-label={t("Analysis window")}
+          />
         ),
       }}
     >
-      <DetentionIntelligence windowValue={windowValue} onWiden={() => setWindowValue("180")} />
+      <DetentionIntelligence
+        days={detentionWindowDays(windowValue)}
+        onWiden={windowValue === "180" ? undefined : () => setWindowValue("180")}
+      />
     </PageLayout>
   );
 }

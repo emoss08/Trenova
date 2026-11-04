@@ -12746,19 +12746,235 @@ type FacilityDetentionStat {
   suppressedCount: Int!
 }
 
-type CustomerDetentionStat {
-  customerId: ID!
-  customerName: String!
+"""
+Minutes past free time are measured from the dwell: how long the truck waited beyond the free
+time it was granted, whether or not it was billed. Each stop's wait is put down to one cause, the
+first of: arrived late, no appointment (an open dock), arrived before its appointment, or on time
+with the dock slow.
+"""
+type DetentionIntelligenceTotals {
   stopCount: Int!
-  breachCount: Int!
+  detainedCount: Int!
+  pastFreeMinutes: Int!
+  dockMinutes: Int!
+  openMinutes: Int!
+  earlyMinutes: Int!
+  lateMinutes: Int!
   billedAmount: Decimal!
-  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  "What drivers were paid for the wait. Null to a reader without the margins field group."
   driverPayAmount: Decimal @protected(group: Margins)
   "Null to a reader without the margins field group."
   netMargin: Decimal @protected(group: Margins)
   waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
+  "Charges whose notice had a deadline."
+  noticeDueCount: Int!
+  "Of those, the ones whose notice went out by the deadline."
+  noticeOnTimeCount: Int!
+}
+
+type DetentionFacilityIntelligence {
+  locationId: ID!
+  locationName: String!
+  "The facility's city, or empty when the location has none."
+  locationCity: String!
+  "The two-letter abbreviation of the facility's state, or empty when it has none."
+  locationState: String!
+  stopCount: Int!
+  detainedCount: Int!
+  pastFreeMinutes: Int!
+  "Minutes past free time in the window before. Null when the facility did not rank there."
+  previousPastFreeMinutes: Int
+  dockMinutes: Int!
+  openMinutes: Int!
+  earlyMinutes: Int!
+  lateMinutes: Int!
+  avgDwellMinutes: Int!
+  medianDwellMinutes: Float!
+  p90DwellMinutes: Float!
+  "The free time a typical stop here is granted."
+  medianFreeMinutes: Float!
+  billedAmount: Decimal!
+  "Null to a reader without the margins field group."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
+  waivedAmount: Decimal!
+  disputeCount: Int!
+  suppressedCount: Int!
+  noticeDueCount: Int!
+  noticeOnTimeCount: Int!
+}
+
+type DetentionCustomerIntelligence {
+  customerId: ID!
+  customerName: String!
+  stopCount: Int!
+  detainedCount: Int!
+  pastFreeMinutes: Int!
+  billedAmount: Decimal!
+  "Null to a reader without the margins field group."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
+  waivedAmount: Decimal!
+  disputeCount: Int!
+  noticeDueCount: Int!
+  noticeOnTimeCount: Int!
+}
+
+"Where accrued money ended up."
+enum DetentionRecoveryBucket {
+  "The truck arrived late, so the free time was forfeited and the charge was not billable."
+  Late
+  "Held because notice missed its deadline."
+  Notice
+  "Forgiven at someone's discretion."
+  Waived
+  "The customer disputed it."
+  Disputed
+  "Accruing, pending or approved, not yet billed."
+  Pending
+  "Not billable for another reason."
+  Other
+  "What billed charges lost to caps, minimums and rounding."
+  Capped
+}
+
+type DetentionRecoveryStep {
+  bucket: DetentionRecoveryBucket!
+  occurrenceCount: Int!
+  amount: Decimal!
+}
+
+"From what the clock accrued to what was billed, invoiced on a posted invoice and collected on a paid one."
+type DetentionRecovery {
+  accrued: Decimal!
+  steps: [DetentionRecoveryStep!]!
+  billed: Decimal!
+  invoiced: Decimal!
+  collected: Decimal!
+}
+
+"Stops by the ISO weekday (1 is Monday) and hour the truck arrived, in the request's time zone."
+type DetentionArrivalCell {
+  weekday: Int!
+  hour: Int!
+  stopCount: Int!
+  detainedCount: Int!
+}
+
+type DetentionSplitFigure {
+  stopCount: Int!
+  detainedCount: Int!
+  pastFreeMinutes: Int!
+}
+
+type DetentionStopSplits {
+  pickup: DetentionSplitFigure!
+  delivery: DetentionSplitFigure!
+  appointment: DetentionSplitFigure!
+  open: DetentionSplitFigure!
+  live: DetentionSplitFigure!
+  drop: DetentionSplitFigure!
+}
+
+"One week of the window. weekStart is the local Monday at midnight written as if it were UTC."
+type DetentionWeek {
+  weekStart: Timestamp!
+  stopCount: Int!
+  detainedCount: Int!
+  pastFreeMinutes: Int!
+}
+
+"A facility moving to another detention policy partway through the window."
+type DetentionPolicyChange {
+  locationId: ID!
+  locationName: String!
+  policyId: ID!
+  policyName: String!
+  changedAt: Timestamp!
+}
+
+enum DetentionSegmentTarget {
+  Facility
+  Customer
+  Section
+}
+
+"One run of a sentence: plain, strong, or a reference that opens what it names."
+type DetentionNarrativeSegment {
+  text: String!
+  strong: Boolean!
+  "danger for a loss or a leak, good for an improvement."
+  tone: String
+  target: DetentionSegmentTarget
+  "A location or customer ID, or a section of the page: focus, paid or customers."
+  targetId: String
+}
+
+enum DetentionNextStepKind {
+  ShipperReview
+  FreeTime
+  Notice
+  CustomerTerms
+  LateArrivals
+  EarlyArrivals
+}
+
+"One paragraph of the briefing."
+type DetentionNarrativeParagraph {
+  segments: [DetentionNarrativeSegment!]!
+}
+
+"One move the figures point to, sized by what it would recover."
+type DetentionNextStep {
+  kind: DetentionNextStepKind!
+  title: [DetentionNarrativeSegment!]!
+  detail: String!
+  impactMinutes: Int
+  impactAmount: Decimal
+  impactCaption: String!
+  locationId: ID
+  customerId: ID
+}
+
+type DetentionIntelligence {
+  "How many whole days the window covers."
+  days: Int!
+  "The window's last day, YYYY-MM-DD in the organization's time zone: a read of one facility passes it to cover the same days."
+  through: String!
+  "The first instant of the window's first day."
+  from: Timestamp!
+  to: Timestamp!
+  previousFrom: Timestamp!
+  previousTo: Timestamp!
+  "The organization's IANA time zone, which the days, weekdays, arrival hours and weeks are counted in."
+  timezone: String!
+  totals: DetentionIntelligenceTotals!
+  "The same figures over the window before."
+  previous: DetentionIntelligenceTotals!
+  "Facilities, most hours past free time first."
+  facilities: [DetentionFacilityIntelligence!]!
+  "Customers, most hours past free time first."
+  customers: [DetentionCustomerIntelligence!]!
+  waivers: [DetentionWaiverLeakageStat!]!
+  recovery: DetentionRecovery!
+  arrivals: [DetentionArrivalCell!]!
+  splits: DetentionStopSplits!
+  weeks: [DetentionWeek!]!
+  policyChanges: [DetentionPolicyChange!]!
+  """
+  Nova's briefing on the window, in the reader's language: how long trucks waited and whose wait
+  it was; where the schedule guarantees detention and when trucks wait; where the money went; and
+  what moved against the window before. A paragraph with nothing to say is left out.
+  """
+  summary: [DetentionNarrativeParagraph!]!
+  "At most four moves, ranked by what each would recover."
+  nextSteps: [DetentionNextStep!]!
+  "More facilities had detention than the list holds."
+  truncated: Boolean!
 }
 
 type DetentionWaiverLeakageStat {
@@ -12857,6 +13073,15 @@ input DetentionDisputeInput {
   note: String!
 }
 
+input DetentionIntelligenceInput {
+  "How many whole days the window covers, in the organization's time zone: 1 to 366."
+  days: Int!
+  "The window's last day, YYYY-MM-DD in the organization's time zone, no later than today. Defaults to today."
+  through: String
+  "Only the stops made at this location, for its scorecard."
+  locationId: ID
+}
+
 input DetentionStatsInput {
   from: Timestamp!
   to: Timestamp!
@@ -12882,8 +13107,8 @@ extend type Query {
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
   detentionFacilityStats(input: DetentionStatsInput!): [FacilityDetentionStat!]!
-  detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
-  detentionWaiverStats(input: DetentionStatsInput!): [DetentionWaiverLeakageStat!]!
+  "What an organization needs to lower detention, over a window, compared with the window before it."
+  detentionIntelligence(input: DetentionIntelligenceInput!): DetentionIntelligence!
   detentionPolicyPreview(
     policy: DetentionPolicyInput!
     scenario: DetentionPreviewScenarioInput!
@@ -27332,6 +27557,14 @@ enum StopScheduleType {
   Appointment
 }
 
+"How the freight changes hands at a stop."
+enum StopHandling {
+  "The truck waits while the facility loads or unloads it."
+  Live
+  "A trailer is left or taken, and the tractor goes on."
+  Drop
+}
+
 enum ShipmentCommentType {
   Internal
   Dispatch
@@ -27948,6 +28181,7 @@ type ShipmentStop {
   status: StopStatus!
   type: StopType!
   scheduleType: StopScheduleType!
+  handling: StopHandling!
   sequence: Int!
   pieces: Int
   weight: Int
@@ -29105,6 +29339,7 @@ input ShipmentStopInput {
   status: StopStatus = New
   type: StopType = Pickup
   scheduleType: StopScheduleType = Open
+  handling: StopHandling = Live
   sequence: Int = 0
   pieces: Int
   weight: Int

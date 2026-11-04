@@ -3716,11 +3716,28 @@ export type DetentionEvidenceSource =
   | 'System'
   | 'Telematics';
 
+export type DetentionIntelligenceInput = {
+  /** How many whole days the window covers, in the organization's time zone: 1 to 366. */
+  days: number;
+  /** Only the stops made at this location, for its scorecard. */
+  locationId?: string | number | null | undefined;
+  /** The window's last day, YYYY-MM-DD in the organization's time zone, no later than today. Defaults to today. */
+  through?: string | null | undefined;
+};
+
 export type DetentionLateArrivalRule =
   | 'ClockFromAppointment'
   | 'Forfeit'
   | 'NoEffect'
   | 'ReduceFreeTime';
+
+export type DetentionNextStepKind =
+  | 'CustomerTerms'
+  | 'EarlyArrivals'
+  | 'FreeTime'
+  | 'LateArrivals'
+  | 'Notice'
+  | 'ShipperReview';
 
 export type DetentionNoticeChannel =
   | 'EDI'
@@ -3834,6 +3851,23 @@ export type DetentionRateSource =
   | 'Accessorial'
   | 'Tiers';
 
+/** Where accrued money ended up. */
+export type DetentionRecoveryBucket =
+  /** What billed charges lost to caps, minimums and rounding. */
+  | 'Capped'
+  /** The customer disputed it. */
+  | 'Disputed'
+  /** The truck arrived late, so the free time was forfeited and the charge was not billable. */
+  | 'Late'
+  /** Held because notice missed its deadline. */
+  | 'Notice'
+  /** Not billable for another reason. */
+  | 'Other'
+  /** Accruing, pending or approved, not yet billed. */
+  | 'Pending'
+  /** Forgiven at someone's discretion. */
+  | 'Waived';
+
 export type DetentionRoundingMode =
   | 'Down'
   | 'Exact'
@@ -3846,13 +3880,10 @@ export type DetentionScoreBand =
   | 'Strong'
   | 'Weak';
 
-export type DetentionStatsInput = {
-  from: number;
-  limit?: number | null | undefined;
-  /** Only the stops made at this location. */
-  locationId?: string | number | null | undefined;
-  to: number;
-};
+export type DetentionSegmentTarget =
+  | 'Customer'
+  | 'Facility'
+  | 'Section';
 
 export type DetentionTierInput = {
   fromMinute: number;
@@ -8122,6 +8153,7 @@ export type ShipmentStopInput = {
   addressLine?: string | null | undefined;
   countDetentionOverride?: boolean | null | undefined;
   countLateOverride?: boolean | null | undefined;
+  handling?: StopHandling | null | undefined;
   id?: string | number | null | undefined;
   locationId: string | number;
   pieces?: number | null | undefined;
@@ -8310,6 +8342,13 @@ export type StartWorkerChecklistInput = {
   templateId: string | number;
   workerId: string | number;
 };
+
+/** How the freight changes hands at a stop. */
+export type StopHandling =
+  /** A trailer is left or taken, and the tractor goes on. */
+  | 'Drop'
+  /** The truck waits while the facility loads or unloads it. */
+  | 'Live';
 
 export type StopScheduleType =
   | 'Appointment'
@@ -13002,26 +13041,18 @@ export type DataTableSeriesQueryVariables = Exact<{
 
 export type DataTableSeriesQuery = { dataTableSeries: { periodStarts: Array<number>, groups: Array<{ value: string, points: Array<string> }> } };
 
-export type DetentionFacilityStatsQueryVariables = Exact<{
-  input: DetentionStatsInput;
+export type DetentionIntelligenceTotalsFieldsFragment = { stopCount: number, detainedCount: number, pastFreeMinutes: number, dockMinutes: number, openMinutes: number, earlyMinutes: number, lateMinutes: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, suppressedCount: number, noticeDueCount: number, noticeOnTimeCount: number } & { ' $fragmentName'?: 'DetentionIntelligenceTotalsFieldsFragment' };
+
+export type DetentionNarrativeSegmentFieldsFragment = { text: string, strong: boolean, tone: string | null, target: DetentionSegmentTarget | null, targetId: string | null } & { ' $fragmentName'?: 'DetentionNarrativeSegmentFieldsFragment' };
+
+export type DetentionSplitFigureFieldsFragment = { stopCount: number, detainedCount: number, pastFreeMinutes: number } & { ' $fragmentName'?: 'DetentionSplitFigureFieldsFragment' };
+
+export type DetentionIntelligenceQueryVariables = Exact<{
+  input: DetentionIntelligenceInput;
 }>;
 
 
-export type DetentionFacilityStatsQuery = { detentionFacilityStats: Array<{ locationId: string, locationName: string, stopCount: number, breachCount: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
-
-export type DetentionCustomerStatsQueryVariables = Exact<{
-  input: DetentionStatsInput;
-}>;
-
-
-export type DetentionCustomerStatsQuery = { detentionCustomerStats: Array<{ customerId: string, customerName: string, stopCount: number, breachCount: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
-
-export type DetentionWaiverStatsQueryVariables = Exact<{
-  input: DetentionStatsInput;
-}>;
-
-
-export type DetentionWaiverStatsQuery = { detentionWaiverStats: Array<{ reason: string, waiverCount: number, approverCount: number, waivedAmount: string }> };
+export type DetentionIntelligenceQuery = { detentionIntelligence: { days: number, through: string, from: number, to: number, previousFrom: number, previousTo: number, timezone: string, truncated: boolean, totals: { ' $fragmentRefs'?: { 'DetentionIntelligenceTotalsFieldsFragment': DetentionIntelligenceTotalsFieldsFragment } }, previous: { ' $fragmentRefs'?: { 'DetentionIntelligenceTotalsFieldsFragment': DetentionIntelligenceTotalsFieldsFragment } }, facilities: Array<{ locationId: string, locationName: string, locationCity: string, locationState: string, stopCount: number, detainedCount: number, pastFreeMinutes: number, previousPastFreeMinutes: number | null, dockMinutes: number, openMinutes: number, earlyMinutes: number, lateMinutes: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, medianFreeMinutes: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, suppressedCount: number, noticeDueCount: number, noticeOnTimeCount: number }>, customers: Array<{ customerId: string, customerName: string, stopCount: number, detainedCount: number, pastFreeMinutes: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, noticeDueCount: number, noticeOnTimeCount: number }>, waivers: Array<{ reason: string, waiverCount: number, approverCount: number, waivedAmount: string }>, recovery: { accrued: string, billed: string, invoiced: string, collected: string, steps: Array<{ bucket: DetentionRecoveryBucket, occurrenceCount: number, amount: string }> }, arrivals: Array<{ weekday: number, hour: number, stopCount: number, detainedCount: number }>, splits: { pickup: { ' $fragmentRefs'?: { 'DetentionSplitFigureFieldsFragment': DetentionSplitFigureFieldsFragment } }, delivery: { ' $fragmentRefs'?: { 'DetentionSplitFigureFieldsFragment': DetentionSplitFigureFieldsFragment } }, appointment: { ' $fragmentRefs'?: { 'DetentionSplitFigureFieldsFragment': DetentionSplitFigureFieldsFragment } }, open: { ' $fragmentRefs'?: { 'DetentionSplitFigureFieldsFragment': DetentionSplitFigureFieldsFragment } }, live: { ' $fragmentRefs'?: { 'DetentionSplitFigureFieldsFragment': DetentionSplitFigureFieldsFragment } }, drop: { ' $fragmentRefs'?: { 'DetentionSplitFigureFieldsFragment': DetentionSplitFigureFieldsFragment } } }, weeks: Array<{ weekStart: number, stopCount: number, detainedCount: number, pastFreeMinutes: number }>, policyChanges: Array<{ locationId: string, locationName: string, policyId: string, policyName: string, changedAt: number }>, summary: Array<{ segments: Array<{ ' $fragmentRefs'?: { 'DetentionNarrativeSegmentFieldsFragment': DetentionNarrativeSegmentFieldsFragment } }> }>, nextSteps: Array<{ kind: DetentionNextStepKind, detail: string, impactMinutes: number | null, impactAmount: string | null, impactCaption: string, locationId: string | null, customerId: string | null, title: Array<{ ' $fragmentRefs'?: { 'DetentionNarrativeSegmentFieldsFragment': DetentionNarrativeSegmentFieldsFragment } }> }> } };
 
 export type DetentionPolicyPreviewQueryVariables = Exact<{
   policy: DetentionPolicyInput;
@@ -18521,7 +18552,7 @@ export type ShipmentTrailerFieldsFragment = { id: string, code: string, equipmen
 
 export type ShipmentAssignmentFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, primaryWorkerId: string | null, tractorId: string | null, trailerId: string | null, secondaryWorkerId: string | null, status: AssignmentStatus, archivedAt: number | null, version: number, createdAt: number, updatedAt: number, tractor: { ' $fragmentRefs'?: { 'ShipmentTractorFieldsFragment': ShipmentTractorFieldsFragment } } | null, trailer: { ' $fragmentRefs'?: { 'ShipmentTrailerFieldsFragment': ShipmentTrailerFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'ShipmentWorkerFieldsFragment': ShipmentWorkerFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'ShipmentWorkerFieldsFragment': ShipmentWorkerFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentAssignmentFieldsFragment' };
 
-export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, locationId: string, status: StopStatus, type: StopType, scheduleType: StopScheduleType, sequence: number, pieces: number | null, weight: number | null, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null, countLateOverride: boolean | null, countDetentionOverride: boolean | null, addressLine: string, version: number, createdAt: number, updatedAt: number, location: { ' $fragmentRefs'?: { 'ShipmentLocationFieldsFragment': ShipmentLocationFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentStopFieldsFragment' };
+export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentMoveId: string | null, locationId: string, status: StopStatus, type: StopType, scheduleType: StopScheduleType, handling: StopHandling, sequence: number, pieces: number | null, weight: number | null, scheduledWindowStart: number, scheduledWindowEnd: number | null, actualArrival: number | null, actualDeparture: number | null, countLateOverride: boolean | null, countDetentionOverride: boolean | null, addressLine: string, version: number, createdAt: number, updatedAt: number, location: { ' $fragmentRefs'?: { 'ShipmentLocationFieldsFragment': ShipmentLocationFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentStopFieldsFragment' };
 
 export type ShipmentMoveFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string | null, status: MoveStatus, loaded: boolean, sequence: number, distance: number | null, distanceSource: string | null, distanceProvider: string | null, distanceCalculatedAt: number | null, distanceRouteSignature: string | null, distanceDataVersion: string | null, distanceRoutingType: string | null, distanceUnits: string | null, distanceMetadata: unknown, version: number, createdAt: number, updatedAt: number, coverageType: MoveCoverageType, stops: Array<{ ' $fragmentRefs'?: { 'ShipmentStopFieldsFragment': ShipmentStopFieldsFragment } }>, assignment: { ' $fragmentRefs'?: { 'ShipmentAssignmentFieldsFragment': ShipmentAssignmentFieldsFragment } } | null, carrierAssignment: { ' $fragmentRefs'?: { 'ShipmentCarrierAssignmentFieldsFragment': ShipmentCarrierAssignmentFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentMoveFieldsFragment' };
 
@@ -20542,7 +20573,7 @@ export { CreateCustomerDocument, UpdateCustomerDocument, PatchCustomerDocument, 
 export { ShipmentCustomerBillingRulesDocument } from "./documents/customer/shipment-billing-rules";
 export { CustomerBillingProfileFieldsFragmentDoc, CustomerEmailProfileFieldsFragmentDoc, CustomerTableRowFieldsFragmentDoc, CustomerTableDocument } from "./documents/customer/table";
 export { DataTableInsightFieldsDocument, DataTableFacetsDocument, DataTableAggregatesDocument, DataTableSeriesDocument } from "./documents/data-table-insight/operations";
-export { DetentionFacilityStatsDocument, DetentionCustomerStatsDocument, DetentionWaiverStatsDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";
+export { DetentionIntelligenceTotalsFieldsFragmentDoc, DetentionNarrativeSegmentFieldsFragmentDoc, DetentionSplitFigureFieldsFragmentDoc, DetentionIntelligenceDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";
 export { DeskDetentionCardDocument } from "./documents/detention/card";
 export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDoc, DetentionNoticeFieldsFragmentDoc, DetentionCollectabilityFieldsFragmentDoc, DetentionDeskDocument, DetentionOccurrenceDetailDocument, ShipmentDetentionDocument, DetentionDisputePacketDocument, WaiveDetentionOccurrenceDocument, ApproveDetentionOccurrenceDocument, DisputeDetentionOccurrenceDocument, SendDetentionNoticeDocument } from "./documents/detention/desk";
 export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";

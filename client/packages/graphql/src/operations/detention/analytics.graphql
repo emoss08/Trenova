@@ -1,42 +1,164 @@
-query DetentionFacilityStats($input: DetentionStatsInput!) {
-  detentionFacilityStats(input: $input) {
-    locationId
-    locationName
-    stopCount
-    breachCount
-    avgDwellMinutes
-    medianDwellMinutes
-    p90DwellMinutes
-    billedAmount
-    driverPayAmount
-    netMargin
-    waivedAmount
-    disputeCount
-    suppressedCount
-  }
+fragment DetentionIntelligenceTotalsFields on DetentionIntelligenceTotals {
+  stopCount
+  detainedCount
+  pastFreeMinutes
+  dockMinutes
+  openMinutes
+  earlyMinutes
+  lateMinutes
+  billedAmount
+  driverPayAmount
+  netMargin
+  waivedAmount
+  disputeCount
+  suppressedCount
+  noticeDueCount
+  noticeOnTimeCount
 }
 
-query DetentionCustomerStats($input: DetentionStatsInput!) {
-  detentionCustomerStats(input: $input) {
-    customerId
-    customerName
-    stopCount
-    breachCount
-    billedAmount
-    driverPayAmount
-    netMargin
-    waivedAmount
-    disputeCount
-    suppressedCount
-  }
+fragment DetentionNarrativeSegmentFields on DetentionNarrativeSegment {
+  text
+  strong
+  tone
+  target
+  targetId
 }
 
-query DetentionWaiverStats($input: DetentionStatsInput!) {
-  detentionWaiverStats(input: $input) {
-    reason
-    waiverCount
-    approverCount
-    waivedAmount
+fragment DetentionSplitFigureFields on DetentionSplitFigure {
+  stopCount
+  detainedCount
+  pastFreeMinutes
+}
+
+query DetentionIntelligence($input: DetentionIntelligenceInput!) {
+  detentionIntelligence(input: $input) {
+    days
+    through
+    from
+    to
+    previousFrom
+    previousTo
+    timezone
+    truncated
+    totals {
+      ...DetentionIntelligenceTotalsFields
+    }
+    previous {
+      ...DetentionIntelligenceTotalsFields
+    }
+    facilities {
+      locationId
+      locationName
+      locationCity
+      locationState
+      stopCount
+      detainedCount
+      pastFreeMinutes
+      previousPastFreeMinutes
+      dockMinutes
+      openMinutes
+      earlyMinutes
+      lateMinutes
+      avgDwellMinutes
+      medianDwellMinutes
+      p90DwellMinutes
+      medianFreeMinutes
+      billedAmount
+      driverPayAmount
+      netMargin
+      waivedAmount
+      disputeCount
+      suppressedCount
+      noticeDueCount
+      noticeOnTimeCount
+    }
+    customers {
+      customerId
+      customerName
+      stopCount
+      detainedCount
+      pastFreeMinutes
+      billedAmount
+      driverPayAmount
+      netMargin
+      waivedAmount
+      disputeCount
+      noticeDueCount
+      noticeOnTimeCount
+    }
+    waivers {
+      reason
+      waiverCount
+      approverCount
+      waivedAmount
+    }
+    recovery {
+      accrued
+      billed
+      invoiced
+      collected
+      steps {
+        bucket
+        occurrenceCount
+        amount
+      }
+    }
+    arrivals {
+      weekday
+      hour
+      stopCount
+      detainedCount
+    }
+    splits {
+      pickup {
+        ...DetentionSplitFigureFields
+      }
+      delivery {
+        ...DetentionSplitFigureFields
+      }
+      appointment {
+        ...DetentionSplitFigureFields
+      }
+      open {
+        ...DetentionSplitFigureFields
+      }
+      live {
+        ...DetentionSplitFigureFields
+      }
+      drop {
+        ...DetentionSplitFigureFields
+      }
+    }
+    weeks {
+      weekStart
+      stopCount
+      detainedCount
+      pastFreeMinutes
+    }
+    policyChanges {
+      locationId
+      locationName
+      policyId
+      policyName
+      changedAt
+    }
+    summary {
+      segments {
+        ...DetentionNarrativeSegmentFields
+      }
+    }
+    nextSteps {
+      kind
+      title {
+        ...DetentionNarrativeSegmentFields
+      }
+      detail
+      impactMinutes
+      impactAmount
+      impactCaption
+      locationId
+      customerId
+    }
   }
 }
 

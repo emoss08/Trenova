@@ -127,24 +127,4 @@ func TestDetentionStats_NarrowToTheLocationAsked(t *testing.T) {
 	}
 	assert.True(t, seen[at])
 	assert.True(t, seen[elsewhere])
-
-	customers, err := repo.CustomerStats(ctx, &detentionports.DetentionStatsRequest{
-		TenantInfo: tenant,
-		LocationID: at,
-	})
-	require.NoError(t, err)
-	stopCount := 0
-	for _, customer := range customers {
-		stopCount += customer.StopCount
-	}
-	assert.Equal(t, 2, stopCount)
-
-	waivers, err := repo.WaiverStats(ctx, &detentionports.DetentionStatsRequest{
-		TenantInfo: tenant,
-		LocationID: at,
-	})
-	require.NoError(t, err)
-	require.Len(t, waivers, 1)
-	assert.Equal(t, 2, waivers[0].WaiverCount)
-	assert.Equal(t, "190", waivers[0].WaivedAmount.String())
 }

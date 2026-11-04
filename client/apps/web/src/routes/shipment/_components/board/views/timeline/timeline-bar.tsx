@@ -1,3 +1,4 @@
+import { usePointerHover } from "@/components/pointer-hover-card";
 import { STAGE_META } from "@/lib/shipment-board/stage";
 import type { TimelineLoad } from "@/lib/shipment-board/timeline";
 import { useNow } from "@trenova/shared/hooks/use-now";
@@ -7,7 +8,6 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, type CSSProperties, type HTMLAttributes, type Ref } from "react";
 import { useShipmentBoardStore } from "../../store";
 import { captionWidth, formatTimelineTime } from "./timeline-format";
-import { useBarHover } from "./timeline-hover-card";
 import type { TimelineScale } from "./timeline-scale";
 
 export type BarDragHandle = {
@@ -50,7 +50,7 @@ export function TimelineBar({
   drag,
 }: TimelineBarProps) {
   const t = useT();
-  const hover = useBarHover();
+  const hover = usePointerHover<TimelineLoad>();
   const hovered = useShipmentBoardStore((s) => s.highlightId === load.id);
   const setHighlightId = useShipmentBoardStore((s) => s.setHighlightId);
 

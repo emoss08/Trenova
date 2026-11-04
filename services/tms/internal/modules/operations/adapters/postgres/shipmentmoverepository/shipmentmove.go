@@ -690,6 +690,9 @@ func (r *repository) updateStop(
 	if stop.ScheduleType == "" {
 		stop.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
+	if stop.Handling == "" {
+		stop.Handling = shipmentvocab.StopHandlingLive
+	}
 	stop.Version = existingStop.Version
 
 	st := shipmentdb.Stops
@@ -701,6 +704,7 @@ func (r *repository) updateStop(
 		st.Status,
 		st.Type,
 		st.ScheduleType,
+		st.Handling,
 		st.Sequence,
 		st.Pieces,
 		st.Weight,

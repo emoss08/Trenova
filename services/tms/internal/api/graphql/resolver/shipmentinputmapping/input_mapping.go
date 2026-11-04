@@ -300,6 +300,10 @@ func shipmentStopsFromInput(
 		if input.ScheduleType != nil {
 			scheduleType = shipmentvocab.StopScheduleType(*input.ScheduleType)
 		}
+		handling := shipmentvocab.StopHandlingLive
+		if input.Handling != nil {
+			handling = shipmentvocab.StopHandling(*input.Handling)
+		}
 		stop := &shipmentdomain.Stop{
 			ID:                     id,
 			BusinessUnitID:         authCtx.BusinessUnitID,
@@ -309,6 +313,7 @@ func shipmentStopsFromInput(
 			Status:                 status,
 			Type:                   stopType,
 			ScheduleType:           scheduleType,
+			Handling:               handling,
 			Sequence:               gqlscalar.Int64Value(input.Sequence),
 			Pieces:                 gqlscalar.Int64Ptr(input.Pieces),
 			Weight:                 gqlscalar.Int64Ptr(input.Weight),

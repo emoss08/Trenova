@@ -5,10 +5,12 @@ import (
 
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/bootstrap/rollups"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/rollupjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	accountingworker "github.com/emoss08/trenova/internal/modules/accounting/jobs"
 	agentworker "github.com/emoss08/trenova/internal/modules/agent/jobs"
@@ -47,6 +49,8 @@ func Modules() fx.Option {
 		billingworker.WorkerOptions(),
 		settlementworker.WorkerOptions(),
 		agentworker.WorkerOptions(),
+		fx.Supply(rollupjobs.Rollups(rollups.All())),
+		rollupjobs.Module,
 		schedule.Module,
 	)
 }

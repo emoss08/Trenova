@@ -18,6 +18,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import {
   moveStatusChoices,
+  stopHandlingChoices,
   stopScheduleTypeChoices,
   stopStatusChoices,
   stopTypeChoices,
@@ -143,6 +144,7 @@ function StopsList({ moveIndex }: { moveIndex: number }) {
       status: "New",
       type: "Pickup",
       scheduleType: "Open",
+      handling: "Live",
       locationId: "",
       sequence,
       scheduledWindowStart: 0,
@@ -315,7 +317,7 @@ function StopCard({
             <span className="text-2xs text-muted-foreground font-medium">{t("Scheduling")}</span>
           </div>
           <div className="space-y-1">
-            <FormGroup cols={1} dense>
+            <FormGroup cols={2} dense>
               <FormControl>
                 <SelectField
                   control={control}
@@ -326,6 +328,18 @@ function StopCard({
                     "How this stop is scheduled — an open arrival window or a fixed appointment time",
                   )}
                   options={stopScheduleTypeChoices}
+                />
+              </FormControl>
+              <FormControl>
+                <SelectField
+                  control={control}
+                  name={`moves.${moveIndex}.stops.${stopIndex}.handling`}
+                  rules={{ required: true }}
+                  label={t("Live or drop")}
+                  description={t(
+                    "Live holds the truck while the facility loads or unloads; a drop leaves or takes a trailer",
+                  )}
+                  options={stopHandlingChoices}
                 />
               </FormControl>
             </FormGroup>

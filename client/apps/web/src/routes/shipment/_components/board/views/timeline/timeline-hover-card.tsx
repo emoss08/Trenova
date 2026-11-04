@@ -1,159 +1,16 @@
+import { PointerHoverCard } from "@/components/pointer-hover-card";
 import type { TimelineLoad } from "@/lib/shipment-board/timeline";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan } from "@trenova/shared/lib/date";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from "react";
-import { createPortal } from "react-dom";
+import type { ReactNode } from "react";
 import { formatTimelineTime } from "./timeline-format";
 import type { TimelineScale } from "./timeline-scale";
 
-/**
- * How long the pointer rests on a bar before its card opens: quick to read,
- * yet long enough that sweeping across the sheet opens nothing on the way.
- */
-const OPEN_DELAY_MS = 80;
-/** How long a card waits after the pointer leaves, so moving to the next bar switches it in place. */
-const CLOSE_GRACE_MS = 90;
-const CARD_WIDTH = 288;
-const EDGE = 8;
-/** Below this much room above the bar, the card opens under it. */
-const ROOM_ABOVE = 220;
-
-type Anchor = { load: TimelineLoad; x: number; top: number; bottom: number };
-
-/** What a bar does with its hover: it never holds state, so hovering redraws no bar. */
-export type BarHover = {
-  enter: (load: TimelineLoad, element: Element, pointerX?: number) => void;
-  /** The pointer moved along the bar: the card follows it without a render. */
-  move: (pointerX: number) => void;
-  leave: () => void;
-  dismiss: () => void;
-  /** A bar going away closes its own card: no pointer leave will come from it. */
-  release: (loadId: string) => void;
-};
-
-function createAnchorStore() {
-  let anchor: Anchor | null = null;
-  let follower: ((x: number) => void) | null = null;
-  const listeners = new Set<() => void>();
-  return {
-    get: () => anchor,
-    set: (next: Anchor | null) => {
-      // Scrolling dismisses on every frame; a card already closed redraws nothing.
-      if (next === anchor) return;
-      anchor = next;
-      for (const listener of listeners) listener();
-    },
-    subscribe: (listener: () => void) => {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
-    /** Places the open card at a pointer x straight on the DOM. */
-    follow: (x: number) => follower?.(x),
-    /** The open card registers how it follows the pointer; null when it closes. */
-    setFollower: (next: ((x: number) => void) | null) => {
-      follower = next;
-    },
-  };
-}
-
-type AnchorStore = ReturnType<typeof createAnchorStore>;
-
-function createBarHover(store: AnchorStore): BarHover {
-  let openTimer: number | null = null;
-  let closeTimer: number | null = null;
-  /** The anchor a card waiting to open will take; the pointer keeps moving it. */
-  let waiting: Anchor | null = null;
-  const clear = () => {
-    if (openTimer !== null) window.clearTimeout(openTimer);
-    if (closeTimer !== null) window.clearTimeout(closeTimer);
-    openTimer = null;
-    closeTimer = null;
-    waiting = null;
-  };
-  return {
-    enter: (load, element, pointerX) => {
-      const rect = element.getBoundingClientRect();
-      const next = {
-        load,
-        x: pointerX ?? rect.left + rect.width / 2,
-        top: rect.top,
-        bottom: rect.bottom,
-      };
-      const open = store.get() !== null;
-      clear();
-      // A card already open follows the pointer to the next bar at once.
-      if (open) {
-        store.set(next);
-        return;
-      }
-      waiting = next;
-      openTimer = window.setTimeout(() => {
-        openTimer = null;
-        store.set(waiting);
-        waiting = null;
-      }, OPEN_DELAY_MS);
-    },
-    move: (pointerX) => {
-      if (waiting) {
-        waiting.x = pointerX;
-        return;
-      }
-      const anchor = store.get();
-      if (!anchor) return;
-      // The anchor keeps the latest x, so a render of the card lands where it is.
-      anchor.x = pointerX;
-      store.follow(pointerX);
-    },
-    leave: () => {
-      // A pointer leave and a blur both arrive as a bar is left: one close is pending at most.
-      clear();
-      if (store.get() === null) return;
-      closeTimer = window.setTimeout(() => {
-        closeTimer = null;
-        store.set(null);
-      }, CLOSE_GRACE_MS);
-    },
-    dismiss: () => {
-      clear();
-      store.set(null);
-    },
-    release: (loadId) => {
-      if (waiting?.load.id === loadId) clear();
-      if (store.get()?.load.id === loadId) {
-        clear();
-        store.set(null);
-      }
-    },
-  };
-}
-
-/** The card's left edge for a pointer x: centered on it, kept inside the window. */
-function cardLeft(x: number) {
-  return Math.min(Math.max(x - CARD_WIDTH / 2, EDGE), window.innerWidth - CARD_WIDTH - EDGE);
-}
-
-const BarHoverContext = createContext<BarHover | null>(null);
-
-export function useBarHover(): BarHover | null {
-  return useContext(BarHoverContext);
-}
+const TIMELINE_CARD_WIDTH = 288;
 
 /**
- * The timeline's one hover card. Each bar reports where the pointer rests and
- * this card alone redraws, on the raised floating surface the menus use. It
- * opens after a short rest, follows the pointer along a bar and from bar to
- * bar, and closes on scroll or as a drag begins.
+ * The timeline's one hover card: the shared pointer card, showing a load's stops, how late it
+ * runs and who has it. Bars reach it through `usePointerHover<TimelineLoad>()`.
  */
 export function TimelineHoverCard({
   scale,
@@ -162,62 +19,14 @@ export function TimelineHoverCard({
   scale: TimelineScale;
   children: ReactNode;
 }) {
-  const [store] = useState(createAnchorStore);
-  const [hover] = useState(() => createBarHover(store));
-  // A card waiting to open never opens after the sheet is gone.
-  useEffect(() => () => hover.dismiss(), [hover]);
-
   return (
-    <BarHoverContext.Provider value={hover}>
+    <PointerHoverCard<TimelineLoad>
+      itemId={(load) => load.id}
+      width={TIMELINE_CARD_WIDTH}
+      render={(load) => <BarDetail load={load} scale={scale} />}
+    >
       {children}
-      <HoverCardSurface store={store} scale={scale} />
-    </BarHoverContext.Provider>
-  );
-}
-
-function HoverCardSurface({ store, scale }: { store: AnchorStore; scale: TimelineScale }) {
-  const anchor = useSyncExternalStore(store.subscribe, store.get, store.get);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // While open, the pointer moves the card directly, at most once a frame.
-  useLayoutEffect(() => {
-    if (!anchor) return;
-    let frame: number | null = null;
-    let x = anchor.x;
-    store.setFollower((next) => {
-      x = next;
-      frame ??= window.requestAnimationFrame(() => {
-        frame = null;
-        if (cardRef.current) cardRef.current.style.left = `${cardLeft(x)}px`;
-      });
-    });
-    return () => {
-      store.setFollower(null);
-      if (frame !== null) window.cancelAnimationFrame(frame);
-    };
-  }, [anchor, store]);
-
-  if (!anchor || typeof document === "undefined") return null;
-  const above = anchor.top > ROOM_ABOVE;
-
-  return createPortal(
-    // Floating surfaces are drawn in the dark scope in both themes.
-    <div className="dark contents">
-      <div
-        ref={cardRef}
-        role="tooltip"
-        className="bg-raised text-foreground ui-lift-float pointer-events-none fixed z-50 rounded-lg px-3 py-2.5 text-xs"
-        style={{
-          width: CARD_WIDTH,
-          left: cardLeft(anchor.x),
-          top: above ? anchor.top - EDGE : anchor.bottom + EDGE,
-          transform: above ? "translateY(-100%)" : undefined,
-        }}
-      >
-        <BarDetail load={anchor.load} scale={scale} />
-      </div>
-    </div>,
-    document.body,
+    </PointerHoverCard>
   );
 }
 
