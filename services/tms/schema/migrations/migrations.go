@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	SourceName   = "core"
-	Dir          = "schema/migrations"
-	ReconcileRLS = "SELECT trenova_rls.reconcile()"
+	SourceName    = "core"
+	Dir           = "schema/migrations"
+	ReconcileRLS  = "SELECT trenova_rls.reconcile()"
+	MarkLeakproof = "SELECT trenova_rls.mark_leakproof_operators()"
 )
 
 //go:embed *.sql
@@ -26,7 +27,7 @@ func Set() migrate.Set {
 }
 
 func Options() migrate.Options {
-	return migrate.Options{After: []string{ReconcileRLS}}
+	return migrate.Options{After: []string{ReconcileRLS}, Ensure: []string{MarkLeakproof}}
 }
 
 func Dirs() []migrate.Dir {

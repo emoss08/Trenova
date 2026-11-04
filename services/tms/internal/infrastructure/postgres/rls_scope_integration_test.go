@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -344,4 +345,46 @@ func currentSetting(ctx context.Context, conn *Connection, setting string) (stri
 	}
 
 	return values[0], nil
+}
+
+func TestRLS_StatusFiltersReachTheirIndexUnderThePolicies(t *testing.T) {
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
+	conn := f.appSession(t)
+	token := f.signedToken(t, "ktest", f.key, f.tenantA)
+
+	var (
+		leakproof bool
+		plan      []string
+	)
+	err := pgx.BeginFunc(t.Context(), conn, func(tx pgx.Tx) error {
+		for _, stmt := range []string{
+			"SET LOCAL enable_seqscan = off",
+			"SET LOCAL enable_bitmapscan = off",
+		} {
+			if _, err := tx.Exec(t.Context(), stmt); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(t.Context(), setScopeForTestSQL, token); err != nil {
+			return err
+		}
+		if err := tx.QueryRow(t.Context(), leakproofOperatorsSQL).Scan(&leakproof); err != nil {
+			return err
+		}
+		rows, err := tx.Query(
+			t.Context(),
+			"EXPLAIN SELECT id FROM detention_occurrences WHERE status = 'Waived'",
+		)
+		if err != nil {
+			return err
+		}
+		plan, err = pgx.CollectRows(rows, pgx.RowTo[string])
+		return err
+	})
+	require.NoError(t, err)
+
+	assert.True(t, leakproof, "trenova-db up marks enum comparisons LEAKPROOF")
+	assert.True(t, slices.ContainsFunc(plan, func(line string) bool {
+		return strings.Contains(line, "Index Cond") && strings.Contains(line, "status")
+	}), "the status filter is not an index condition:\n%s", strings.Join(plan, "\n"))
 }

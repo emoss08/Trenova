@@ -253,7 +253,10 @@ func (c *Connection) verifyRLS(ctx context.Context) error {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	})
 
-	var attrs roleAttributes
+	var (
+		attrs     roleAttributes
+		leakproof bool
+	)
 	err := keel.Read(probe, c.tenantKeel, func(ctx context.Context) error {
 		var err error
 		if attrs, err = readRoleAttributes(ctx, c.tenantKeel); err != nil {
@@ -268,10 +271,22 @@ func (c *Connection) verifyRLS(ctx context.Context) error {
 			return fmt.Errorf("%w: %w", ErrRLSScopeKeyNotInstalled, err)
 		}
 
+		if leakproof, err = keel.QueryValue[bool](
+			ctx,
+			c.tenantKeel,
+			leakproofOperatorsSQL,
+		); err != nil {
+			return fmt.Errorf("read leakproof operators: %w", err)
+		}
+
 		return nil
 	})
 	if err != nil {
 		return c.rlsProblem(ctx, err)
+	}
+
+	if !leakproof {
+		c.logger.Warn(ctx, leakproofOperatorsWarning)
 	}
 
 	if attrs.Superuser || attrs.BypassRLS || attrs.BypassMember || attrs.OwnsTables {
@@ -294,6 +309,13 @@ func (c *Connection) verifyRLS(ctx context.Context) error {
 
 	return c.verifySystemRole(ctx)
 }
+
+const (
+	leakproofOperatorsSQL     = "SELECT trenova_rls.leakproof_operators()"
+	leakproofOperatorsWarning = "Enum comparisons are not LEAKPROOF, so under row-level security a " +
+		"status filter cannot use its index and reads every row of the tenant; run trenova-db up " +
+		"as a superuser to mark them (docs/engineering/row-level-security.md)"
+)
 
 func (c *Connection) verifySystemRole(ctx context.Context) error {
 	if c.systemKeel == nil {

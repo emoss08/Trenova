@@ -41,6 +41,7 @@ func TestAppAppliesTheMigrationsThenReconcilesRowLevelSecurity(t *testing.T) {
 	require.NoError(t, app.Migrations.Err())
 	assert.Equal(t, schema.Version, app.Migrations.Version())
 	assert.Equal(t, []string{migrations.ReconcileRLS}, app.Migrate.After)
+	assert.Equal(t, []string{migrations.MarkLeakproof}, app.Migrate.Ensure)
 	assert.Equal(t, StampPath, app.Stamp)
 	assert.Len(t, app.Lint, len(migrations.LintRules()))
 	assert.Empty(t, app.Dirs, "the deploy binary writes no migration files")

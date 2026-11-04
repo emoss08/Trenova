@@ -246,10 +246,11 @@ func execFormatted(ctx context.Context, db *keel.DB, format string, args ...any)
 }
 
 type RLSStatus struct {
-	ActiveKeys        []string
-	ProtectedTables   int
-	GlobalTables      int
-	UnprotectedTables []string
+	ActiveKeys         []string
+	ProtectedTables    int
+	GlobalTables       int
+	UnprotectedTables  []string
+	LeakproofOperators bool
 }
 
 func ReadRLSStatus(ctx context.Context, db *keel.DB) (*RLSStatus, error) {
@@ -287,6 +288,14 @@ func ReadRLSStatus(ctx context.Context, db *keel.DB) (*RLSStatus, error) {
 		return nil, fmt.Errorf("list tables without row-level security: %w", err)
 	}
 	status.UnprotectedTables = unprotected
+
+	if status.LeakproofOperators, err = keel.QueryValue[bool](
+		ctx,
+		db,
+		leakproofOperatorsSQL,
+	); err != nil {
+		return nil, fmt.Errorf("read leakproof operators: %w", err)
+	}
 
 	return status, nil
 }

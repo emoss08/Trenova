@@ -165,6 +165,15 @@ func runRLSStatus(_ *cobra.Command, _ []string) error {
 	color.Cyan("Protected tables:     %d", status.ProtectedTables)
 	color.Cyan("Global tables:        %d", status.GlobalTables)
 
+	if status.LeakproofOperators {
+		color.Green("✓ Enum comparisons are LEAKPROOF, so status filters use their indexes")
+	} else {
+		color.Yellow(
+			"⚠ Enum comparisons are not LEAKPROOF: status filters read every row of the tenant; " +
+				"run trenova-db up as a superuser",
+		)
+	}
+
 	if len(status.UnprotectedTables) == 0 {
 		color.Green("✓ Every non-global table has row-level security")
 		return nil

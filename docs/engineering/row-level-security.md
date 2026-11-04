@@ -275,6 +275,23 @@ parameters. Both work on managed Postgres. A deployment provisioned before this 
 | recovery read as it ships (one CTE over invoices) | 38 ms | 36 ms | 40 ms |
 | five-table join (shipments, moves, stops, customers, locations) | 14 ms | 13 ms | 11 ms |
 
+**Status filters need LEAKPROOF enum comparisons.** PostgreSQL takes a query's own condition into an
+index scan under row-level security only when the condition's function is `LEAKPROOF`, since a
+condition evaluated before the policy must not reveal the rows the policy hides. Text and integer
+comparisons are; `pg_catalog` leaves enum equality unmarked, so `status = 'Waived'` never reached
+the status column of an index and the query read every row of the tenant: the detention waiver
+read took 15.5 ms as `trenova_tenant` against 0.8 ms as the superuser, and 1.1 ms once marked.
+`trenova_rls.mark_leakproof_operators()` marks `enum_eq` and `enum_ne` (the list is
+`trenova_rls.leakproof_functions()`), which compare two value oids and raise no error.
+`trenova-db up` calls it at the end of every run (`migrate.Options.Ensure` in
+`schema/migrations`), because only a superuser can set the mark and `pg_dump` and `pg_upgrade`
+drop it. Under a migrator that is not a superuser, managed Postgres included, it changes nothing:
+the application warns at startup, `trenova db rls status` reports it, and status filters still
+work, only without their index. Ordering comparisons, `ILIKE`, full-text search and PostGIS
+predicates can raise errors that depend on their input and stay unmarked; a filter of that kind
+reads the tenant's rows under the policies, so give it a leakproof equality to narrow on first.
+`postgres/rls_scope_integration_test.go` pins the indexed plan.
+
 **Measuring a query under the policies.** In one transaction as a superuser: sign a token from the
 stored pads (`m || '.' || encode(sha256(outer_pad || sha256(inner_pad || convert_to(m, 'UTF8'))),
 'hex')` with `m = 'v1.<key_id>.<org>.<bu>.-.<expires>'`), `SELECT set_config('trenova.scope',

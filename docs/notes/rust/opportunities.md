@@ -241,12 +241,15 @@ outlives its transaction or a change of `trenova.scope`
 with JIT off, is a material share of hot-path latency, for example an OLTP read under 1 ms where
 0.2 ms of checks is a fifth of it.
 
-**Related, possibly larger, not a Rust issue.** No operator in the repo is `LEAKPROOF`. Under row-level
-security, a user condition that is not leakproof usually cannot become an index condition. The query
-builder emits exactly those: `ILIKE '%v%'` against trigram indexes (`pkg/querybuilder/querybuilder.go:318-326`),
-`@@ websearch_to_tsquery` against about 80 tsvector GIN indexes (`:767`, `:807`), `ST_DWithin`
-(`:1052`). In `enforce` mode these searches may scan the whole tenant. Check with
-`SET ROLE trenova_tenant; EXPLAIN …`.
+**Related, and larger: `LEAKPROOF`.** Under row-level security a user condition that is not leakproof
+cannot become an index condition. Enum equality was the costly case, every status filter reading
+the tenant's rows (the detention waiver read: 15.5 ms against 1.1 ms); `trenova-db up` now marks
+`enum_eq` and `enum_ne` `LEAKPROOF` as a superuser on every run (keel's `migrate.Options.Ensure`,
+[row-level-security.md](../../engineering/row-level-security.md#what-the-scope-costs)). Still
+unmarked, because their errors can depend on their input: `ILIKE '%v%'` against trigram indexes
+(`pkg/querybuilder/querybuilder.go:318-326`), `@@ websearch_to_tsquery` against about 80 tsvector
+GIN indexes (`:767`, `:807`), `ST_DWithin` (`:1052`). These searches read the tenant's rows unless
+a leakproof condition narrows them first.
 
 ### R5. Search inside Postgres with `pg_search`
 

@@ -623,6 +623,10 @@ TLS, and nothing published except Caddy. Beyond that:
   `trenova db rls generate-key`, setting `database.migrator` to the current owner role,
   `trenova db rls provision-roles`, a period in `observe`, then `enforce` with
   `database.user` switched to the new application role. GTC keeps connecting as the owner.
+  Run `trenova-db` as a PostgreSQL superuser if you can: each run marks enum comparisons
+  `LEAKPROOF`, which lets status filters use their indexes under row-level security. Managed
+  PostgreSQL (RDS, Cloud SQL) gives no superuser; Trenova works there, but those filters read
+  every row of the organization, and `trenova db rls status` says so.
 - **Malware scanning.** Turn on ClamAV (see [Malware scanning](#malware-scanning)) when files
   arrive from outside your company: email attachments, EDI partners, customers' portals.
 - **Encryption key.** The local key manager keeps `TRENOVA_SECURITY_ENCRYPTION_KEY` in `.env`.
