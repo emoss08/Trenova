@@ -19,6 +19,12 @@ const (
 
 var documentLabelKeys = []string{"originalName", "fileName"}
 
+// shipmentLabelKey is a shipment's PRO number. It names a shipment; on any
+// other record (an invoice, a carrier invoice) it is the shipment that record
+// belongs to, so it names that record only when nothing of its own does: an
+// unnamed record would not be cited at all.
+const shipmentLabelKey = "proNumber"
+
 // CitedRecords names the records a tool's result describes: every object in
 // it whose id carries a record kind's prefix and that opens on a page of its
 // own, or in the document viewer.
@@ -118,6 +124,13 @@ func citedRecordLabel(resource permission.Resource, record map[string]any) strin
 			if value := assistantartifact.ReadableString(record[key]); value != "" {
 				return value
 			}
+		}
+	}
+
+	if resource != permission.ResourceShipment {
+		own := strings.TrimSpace(assistantartifact.RecordLabelSkipping(record, shipmentLabelKey))
+		if own != "" {
+			return own
 		}
 	}
 

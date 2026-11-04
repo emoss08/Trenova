@@ -24,6 +24,12 @@ export function subjectQuestions(type: string, t: TranslateFn): string[] {
         t("What's expiring soon?"),
         t("Summarize this week's hours"),
       ];
+    case "invoice":
+      return [
+        t("Why hasn't it been paid?"),
+        t("What's in dispute, and for how much?"),
+        t("Draft a payment reminder for this invoice"),
+      ];
     case "document":
       return [
         t("What did Nova pull from this?"),

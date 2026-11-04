@@ -705,7 +705,17 @@ var recordLabelKeys = []string{
 // record's id is never its name: a card titled "Insight inst_01M37R…" says
 // nothing a person can use.
 func RecordLabel(record map[string]any) string {
+	return RecordLabelSkipping(record)
+}
+
+// RecordLabelSkipping is RecordLabel with some keys passed over: keys that on
+// this record name another one, such as the PRO number on an invoice, which is
+// the shipment it bills.
+func RecordLabelSkipping(record map[string]any, skipped ...string) string {
 	for _, key := range recordLabelKeys {
+		if slices.Contains(skipped, key) {
+			continue
+		}
 		if value := ReadableString(record[key]); value != "" {
 			return value
 		}

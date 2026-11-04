@@ -85600,6 +85600,15 @@
       "apps/web/components"
     ]
   },
+  "Draft a payment reminder for this invoice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Draft a rate agreement with a customer or a carrier from a rate sheet or a quote the person agreed: its code, name, dates, currency and lanes. It is saved as a draft and prices nothing until rate_submit_agreement sends it for review and a person approves it.": {
     "sites": 1,
     "scope": [
@@ -315485,6 +315494,15 @@
       "apps/web/components"
     ]
   },
+  "What's in dispute, and for how much?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What's in these?": {
     "sites": 1,
     "scope": [
@@ -319597,6 +319615,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Why hasn't it been paid?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Why is PRO S12345 missing from Maria Ortiz's settlement?": {

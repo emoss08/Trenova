@@ -44,6 +44,32 @@ func TestCitedRecordsLabelsADocumentByItsFileName(t *testing.T) {
 	)
 }
 
+// An invoice row carries the PRO of the shipment it bills beside its own
+// number; the invoice is named by its number, and the shipment keeps its PRO.
+func TestCitedRecordsNamesAnInvoiceByItsNumberAndNotItsShipmentsPRO(t *testing.T) {
+	refs := CitedRecords(`{"items": [
+		{"id": "inv_01", "number": "INV-1042", "proNumber": "S-240193", "billTo": "Acme Foods"},
+		{"id": "shp_01", "proNumber": "S-240193", "number": "7"}
+	]}`)
+
+	require.ElementsMatch(t, []agentpagecontext.EntityRef{
+		{Type: "invoice", ID: "inv_01", Label: "INV-1042"},
+		{Type: "shipment", ID: "shp_01", Label: "S-240193"},
+	}, refs)
+}
+
+// A record with nothing of its own to be called by is still cited, under the
+// PRO of its shipment, rather than left out of what the answer was built from.
+func TestCitedRecordsFallsBackToTheShipmentsPROWhenARecordHasNoNameOfItsOwn(t *testing.T) {
+	refs := CitedRecords(`[{"id": "inv_02", "proNumber": "S-240193", "status": "Draft"}]`)
+
+	require.Equal(
+		t,
+		[]agentpagecontext.EntityRef{{Type: "invoice", ID: "inv_02", Label: "S-240193"}},
+		refs,
+	)
+}
+
 func TestCitedRecordsIgnoresTextAndOversizedResults(t *testing.T) {
 	require.Nil(t, CitedRecords("Shipment S-240193 (shp_01) is late."))
 	require.Nil(t, CitedRecords(""))
