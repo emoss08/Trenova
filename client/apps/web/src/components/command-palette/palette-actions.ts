@@ -97,6 +97,8 @@ function openPhrase(record: PaletteRecord, t: TranslateFn): string {
       return t("Open worker");
     case "document":
       return t("Preview document");
+    case "invoice":
+      return t("Open invoice");
   }
 }
 
@@ -121,6 +123,14 @@ function copyIdAction(
         label: t("Copy file name"),
         icon: Copy01Icon,
         intent: { type: "copy", text: record.title, what: "file-name" },
+        shortcut,
+      };
+    case "invoice":
+      return {
+        id: ACTION_COPY_ID,
+        label: t("Copy invoice number"),
+        icon: Copy01Icon,
+        intent: { type: "copy", text: record.title, what: "invoice-number" },
         shortcut,
       };
     default:
@@ -279,6 +289,8 @@ function recordActions(
         return workerActions(record, t);
       case "document":
         return documentActions(record, t);
+      case "invoice":
+        return [];
     }
   })();
 

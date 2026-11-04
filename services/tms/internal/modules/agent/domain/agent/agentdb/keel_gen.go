@@ -1643,6 +1643,7 @@ var enumProposalStatus = [...]schema.EnumValue{
 var enumRunOwnerKind = [...]schema.EnumValue{
 	{Value: `AgentRun`, Label: `Run Owner Agent Run`},
 	{Value: `AssistantTurn`, Label: `Run Owner Assistant Turn`},
+	{Value: `PaletteQuestion`, Label: `Run Owner Palette Question`},
 }
 
 var enumRunStatus = [...]schema.EnumValue{

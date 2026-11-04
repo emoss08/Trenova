@@ -92,6 +92,8 @@ export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunne
           return t("Name copied");
         case "file-name":
           return t("File name copied");
+        case "invoice-number":
+          return t("Invoice number copied");
         case "answer":
           return t("Answer copied");
         case "text":

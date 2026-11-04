@@ -532,7 +532,7 @@ type AIAuditEvent {
   outcome: AIAuditEventOutcome!
   outputTokens: Int!
   ownerId: ID
-  ownerKind: AgentRunEventOwnerKind
+  ownerKind: AIAuditOwnerKind
   parentOwnerId: ID
   planId: ID
   prevHash: String!
@@ -694,6 +694,16 @@ enum AIAuditExportStatus {
   Pending
   Running
   Succeeded
+}
+
+"""
+The unit of work an event belongs to: a background agent run, a Desk conversation turn, or a
+question asked from the command palette.
+"""
+enum AIAuditOwnerKind {
+  AgentRun
+  AssistantTurn
+  PaletteQuestion
 }
 
 """Who an AI audit event's action was taken as."""

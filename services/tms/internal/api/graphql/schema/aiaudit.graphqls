@@ -51,6 +51,16 @@ enum AIAuditPrincipalType {
 }
 
 """
+The unit of work an event belongs to: a background agent run, a Desk conversation turn, or a
+question asked from the command palette.
+"""
+enum AIAuditOwnerKind {
+  AgentRun
+  AssistantTurn
+  PaletteQuestion
+}
+
+"""
 Live work, or an evaluation replaying a run against the agent as it is now.
 """
 enum AIAuditPurpose {
@@ -120,7 +130,7 @@ type AIAuditEvent {
   agentName: String
   agent: AgentDefinition
 
-  ownerKind: AgentRunEventOwnerKind
+  ownerKind: AIAuditOwnerKind
   ownerId: ID
   runId: ID
   turnId: ID

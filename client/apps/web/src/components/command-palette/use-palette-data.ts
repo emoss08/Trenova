@@ -6,7 +6,7 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { pageFavorite } from "@/lib/queries/page-favorite";
 import { apiService } from "@/services/api";
-import type { GlobalSearchGroup } from "@/services/global-search";
+import type { GlobalSearchEntityType, GlobalSearchGroup } from "@/services/global-search";
 import { useRecentRecords } from "@/stores/recent-records-store";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
@@ -43,6 +43,7 @@ import {
   type RemoteState,
 } from "./palette-sections";
 import { buildRouteCommandGroups } from "./route-command-data";
+import { PALETTE_RECORD_TYPES, PALETTE_SEARCH_RESOURCES } from "./palette-entities";
 
 const QUICK_ACTION_IDS = [
   "quick:create-shipment",
@@ -106,6 +107,25 @@ export interface PaletteCatalog {
   commands: PaletteCommand[];
   quickActions: PaletteCommand[];
   actionContext: Omit<ActionContext, "pinnedUrls">;
+}
+
+/**
+ * The kinds of record the person may read, of those the palette searches: the
+ * scopes the palette offers. Null until the permission manifest has loaded,
+ * when no one can yet say which kinds those are.
+ */
+export function useReadableRecordTypes(): readonly GlobalSearchEntityType[] | null {
+  const hasPermission = usePermissionStore((state) => state.hasPermission);
+  const manifest = usePermissionStore((state) => state.manifest);
+  return useMemo(
+    () =>
+      manifest
+        ? PALETTE_RECORD_TYPES.filter((type) =>
+            hasPermission(PALETTE_SEARCH_RESOURCES[type], Operation.Read),
+          )
+        : null,
+    [hasPermission, manifest],
+  );
 }
 
 /**
@@ -213,23 +233,30 @@ export function useUnreadCount(): number {
   return data ?? 0;
 }
 
+/**
+ * The records the person opened lately, of the kinds they may still read: a
+ * record opened before a role lost a kind is not offered again.
+ */
 export function useRecentPaletteRecords(): readonly RecentPaletteRecord[] {
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
   const recent = useRecentRecords(organizationId);
+  const readable = useReadableRecordTypes();
   return useMemo(
     () =>
-      recent.map((entry) => ({
-        record: {
-          entityType: entry.entityType,
-          id: entry.id,
-          title: entry.title,
-          subtitle: entry.subtitle,
-          href: entry.href,
-          metadata: entry.metadata ?? {},
-        },
-        visitedAt: entry.visitedAt,
-      })),
-    [recent],
+      recent
+        .filter((entry) => readable?.includes(entry.entityType) ?? false)
+        .map((entry) => ({
+          record: {
+            entityType: entry.entityType,
+            id: entry.id,
+            title: entry.title,
+            subtitle: entry.subtitle,
+            href: entry.href,
+            metadata: entry.metadata ?? {},
+          },
+          visitedAt: entry.visitedAt,
+        })),
+    [readable, recent],
   );
 }
 

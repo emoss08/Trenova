@@ -551,11 +551,638 @@ func valueQuestion(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
+// toolCallsTable is the schema of palettequestion.ToolCall.
+var toolCallsTable = schema.Table{
+	Name:   "assistant_palette_tool_calls",
+	Quoted: `"assistant_palette_tool_calls"`,
+	Alias:  "aptc",
+	Model:  "palettequestion.ToolCall",
+	Label:  `Tool Call`,
+	Plural: `Tool Calls`,
+	Doc:    `ToolCall is one read Nova made while answering a palette question: the palette tool the model called, the Desk read it went to and what that read was asked, how it ended and why, and how long it took. It keeps what is needed to tell why an answer came out as it did, never what the read returned: the result stays in the answer's stream. The AI audit trail reads these rows (with the arguments redacted by the read's own policy) as the question's tool calls.`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "question_id", Quoted: `"question_id"`, Field: "QuestionID", Kind: schema.KindString, Flags: 0, Label: `Question ID`, Doc: `QuestionID is the question the read was made for.`, JSON: `questionId`},
+		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, Doc: `UserID is the person who asked, whom every read is made as.`, JSON: `userId`},
+		{Name: "call_id", Quoted: `"call_id"`, Field: "CallID", Kind: schema.KindString, Flags: 0, Label: `Call ID`, Doc: `CallID is the model's id for the call, as the answer's stream names it.`, JSON: `callId`},
+		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`, Doc: `Sequence is the call's place among the question's reads, from 1.`, JSON: `sequence`},
+		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Model`, Doc: `Model is the model that asked for the read.`, JSON: `model`},
+		{Name: "tool", Quoted: `"tool"`, Field: "Tool", Kind: schema.KindString, Flags: 0, Label: `Tool`, Doc: `Tool is the palette tool the model called: search_records, get_record or list_records.`, JSON: `tool`},
+		{Name: "arguments", Quoted: `"arguments"`, Field: "Arguments", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Arguments`, Doc: `Arguments is what the model sent the palette tool.`, JSON: `arguments`},
+		{Name: "read", Quoted: `"read"`, Field: "Read", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Read`, Doc: `Read is the Desk read the call went to (customer_get, invoice_list); empty for a search, or for a call refused before a read was chosen.`, JSON: `read`},
+		{Name: "params", Quoted: `"params"`, Field: "Params", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Params`, Doc: `Params is what the read was asked, after the palette fitted the arguments to it.`, JSON: `params`},
+		{Name: "outcome", Quoted: `"outcome"`, Field: "Outcome", Kind: schema.KindString, Flags: 0, Label: `Outcome`, Doc: `Outcome is how the read ended.`, JSON: `outcome`, Enum: enumToolCallOutcome[:]},
+		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reason`, Doc: `Reason is why a read was refused or failed, as the model was told.`, JSON: `reason`},
+		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Summary`, Doc: `Summary is what a read that ran returned, in a few words ("16 records").`, JSON: `summary`},
+		{Name: "records", Quoted: `"records"`, Field: "Records", Kind: schema.KindInt64, Flags: 0, Label: `Records`, Doc: `Records is how many records the result named.`, JSON: `records`},
+		{Name: "started_at_ms", Quoted: `"started_at_ms"`, Field: "StartedAtMs", Kind: schema.KindInt64, Flags: 0, Label: `Started At Ms`, Doc: `StartedAtMs is when the read began, in Unix milliseconds.`, JSON: `startedAtMs`},
+		{Name: "duration_ms", Quoted: `"duration_ms"`, Field: "DurationMs", Kind: schema.KindInt64, Flags: 0, Label: `Duration Ms`, Doc: `DurationMs is how long the read took.`, JSON: `durationMs`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Returning:  nil,
+	Version:    18,
+	AutoID:     0,
+	AutoCreate: 19,
+	AutoUpdate: -1,
+	IDPrefix:   "patc_",
+	New:        newToolCall,
+	NewN:       newNToolCall,
+	Size:       unsafe.Sizeof(palettequestion.ToolCall{}),
+	Ptr:        ptrToolCall,
+	Value:      valueToolCall,
+}
+
+var toolCallsRef = keel.Ref{Table: &toolCallsTable}
+
+// ToolCallsTable is the table of palettequestion.ToolCall.
+type ToolCallsTable struct {
+	keel.TableBase
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	QuestionID     keelkinds.PulidIDCol
+	UserID         keelkinds.PulidIDCol
+	CallID         keel.StringCol
+	Sequence       keel.Int64Col
+	Model          keel.StringCol
+	Tool           keel.StringCol
+	Arguments      keel.JSONBCol
+	Read           keel.StringCol
+	Params         keel.JSONBCol
+	Outcome        ToolCallOutcomeCol
+	Reason         keel.StringCol
+	Summary        keel.StringCol
+	Records        keel.Int64Col
+	StartedAtMs    keel.Int64Col
+	DurationMs     keel.Int64Col
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+}
+
+// ToolCalls references the assistant_palette_tool_calls table.
+var ToolCalls = &ToolCallsTable{
+	TableBase:      keel.TableBase{Ref: &toolCallsRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 2}}},
+	QuestionID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 3}}},
+	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 4}}},
+	CallID:         keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 5}},
+	Sequence:       keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 6}},
+	Model:          keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 7}},
+	Tool:           keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 8}},
+	Arguments:      keel.JSONBCol{Col: keel.Col{Ref: &toolCallsRef, Index: 9}},
+	Read:           keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 10}},
+	Params:         keel.JSONBCol{Col: keel.Col{Ref: &toolCallsRef, Index: 11}},
+	Outcome:        ToolCallOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 12}}},
+	Reason:         keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 13}},
+	Summary:        keel.StringCol{Col: keel.Col{Ref: &toolCallsRef, Index: 14}},
+	Records:        keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 15}},
+	StartedAtMs:    keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 16}},
+	DurationMs:     keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 17}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 18}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &toolCallsRef, Index: 19}},
+}
+
+// BuildToolCalls builds the table of assistant_palette_tool_calls for ref. Generated relation and alias methods call it.
+func BuildToolCalls(r *keel.Ref) *ToolCallsTable {
+	return &ToolCallsTable{
+		TableBase:      keel.TableBase{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		QuestionID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CallID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		Sequence:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		Model:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		Tool:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		Arguments:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
+		Read:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
+		Params:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
+		Outcome:        ToolCallOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Reason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		Summary:        keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
+		Records:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		StartedAtMs:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		DurationMs:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+	}
+}
+
+// ToolCallsSchema returns the schema of assistant_palette_tool_calls.
+func ToolCallsSchema() *schema.Table { return &toolCallsTable }
+
+// As returns a handle that references assistant_palette_tool_calls under its own alias.
+func (t *ToolCallsTable) As(alias string) *ToolCallsTable {
+	return keel.Alias(t.Ref, alias, BuildToolCalls)
+}
+
+// Get returns the assistant_palette_tool_calls row with the given key, or keel.ErrNotFound.
+func (t *ToolCallsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*palettequestion.ToolCall, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ToolCallsQuery is a query over palettequestion.ToolCall.
+type ToolCallsQuery struct{ keel.QueryCore }
+
+var _ keel.Handle[*palettequestion.ToolCall] = (*ToolCallsTable)(nil)
+
+var _ keel.Query[*palettequestion.ToolCall] = (*ToolCallsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ToolCallsTable) Query() keel.Query[*palettequestion.ToolCall] {
+	return &ToolCallsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ToolCallsQuery.Where.
+func (t *ToolCallsTable) Where(ps ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ToolCallsQuery.Pick.
+func (t *ToolCallsTable) Pick(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ToolCallsQuery.Load.
+func (t *ToolCallsTable) Load(ls ...keel.Loader) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ToolCallsQuery.Omit.
+func (t *ToolCallsTable) Omit(cols ...keel.Column) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ToolCallsQuery.Order.
+func (t *ToolCallsTable) Order(os ...keel.Order) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ToolCallsQuery.Limit.
+func (t *ToolCallsTable) Limit(n int) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ToolCallsQuery.Group.
+func (t *ToolCallsTable) Group(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ToolCallsQuery.GroupingSets.
+func (t *ToolCallsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ToolCallsQuery.Rollup.
+func (t *ToolCallsTable) Rollup(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ToolCallsQuery.Cube.
+func (t *ToolCallsTable) Cube(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ToolCallsQuery.AllTenants.
+func (t *ToolCallsTable) AllTenants() keel.Query[*palettequestion.ToolCall] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ToolCallsQuery.Join.
+func (t *ToolCallsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ToolCallsQuery.LeftJoin.
+func (t *ToolCallsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ToolCallsQuery.LeftJoinLateral.
+func (t *ToolCallsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ToolCallsQuery.JoinLateral.
+func (t *ToolCallsTable) JoinLateral(sub keel.LateralSource) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ToolCallsQuery.Lock.
+func (t *ToolCallsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ToolCallsQuery.DistinctOn.
+func (t *ToolCallsTable) DistinctOn(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ToolCallsQuery.Cache.
+func (t *ToolCallsTable) Cache(opts ...keel.CacheOption) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ToolCallsQuery.LoadStrategy.
+func (t *ToolCallsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ToolCallsQuery.With.
+func (t *ToolCallsTable) With(ctes ...*keel.CTETable) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ToolCallsQuery.Compute.
+func (t *ToolCallsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ToolCallsTable) Create(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall) error {
+	return keel.Create(ctx, db, &t.TableBase, row)
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ToolCallsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall) error {
+	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+}
+
+// Save updates row by its primary key.
+func (t *ToolCallsTable) Save(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall, cols ...keel.Column) error {
+	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ToolCallsTable) SaveExcept(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall, cols ...keel.Column) error {
+	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ToolCallsTable) DeleteRow(ctx context.Context, db *keel.DB, row *palettequestion.ToolCall) error {
+	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ToolCallsTable) Upsert(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall, c keel.Conflict) ([]bool, error) {
+	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ToolCallsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ToolCallsTable) Copy(ctx context.Context, db *keel.DB, rows []*palettequestion.ToolCall) (int64, error) {
+	return keel.Copy(ctx, db, &t.TableBase, rows)
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ToolCallsQuery) Where(ps ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ToolCallsQuery) Pick(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ToolCallsQuery) Omit(cols ...keel.Column) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ToolCallsQuery) Load(ls ...keel.Loader) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ToolCallsQuery) Order(os ...keel.Order) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ToolCallsQuery) Distinct() keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ToolCallsQuery) Group(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ToolCallsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ToolCallsQuery) Rollup(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ToolCallsQuery) Cube(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ToolCallsQuery) Window(name string, w keel.Window) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ToolCallsQuery) Having(ps ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ToolCallsQuery) Limit(n int) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ToolCallsQuery) Offset(n int) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ToolCallsQuery) DistinctOn(es ...keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ToolCallsQuery) AllTenants() keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ToolCallsQuery) CustomPlan() keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ToolCallsQuery) Timeout(d time.Duration) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ToolCallsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ToolCallsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ToolCallsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ToolCallsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ToolCallsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ToolCallsQuery) Cache(opts ...keel.CacheOption) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ToolCallsQuery) With(ctes ...*keel.CTETable) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ToolCallsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ToolCallsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*palettequestion.ToolCall] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ToolCallsQuery) Clone() keel.Query[*palettequestion.ToolCall] {
+	return &ToolCallsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ToolCallsQuery) One(ctx context.Context, db *keel.DB) (*palettequestion.ToolCall, error) {
+	return keel.One[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ToolCallsQuery) First(ctx context.Context, db *keel.DB) (*palettequestion.ToolCall, error) {
+	return keel.First[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ToolCallsQuery) List(ctx context.Context, db *keel.DB) ([]*palettequestion.ToolCall, error) {
+	return keel.List[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ToolCallsQuery) All(ctx context.Context, db *keel.DB) ([]*palettequestion.ToolCall, error) {
+	return keel.All[*palettequestion.ToolCall](ctx, db, &q.QueryCore)
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ToolCallsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*palettequestion.ToolCall, error) {
+	return keel.UpdateReturning[*palettequestion.ToolCall](ctx, db, &q.QueryCore, sets...)
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ToolCallsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*palettequestion.ToolCall], error) {
+	return keel.PageOf[*palettequestion.ToolCall](ctx, db, &q.QueryCore, p)
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ToolCallsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*palettequestion.ToolCall) error) error {
+	return keel.Each[*palettequestion.ToolCall](ctx, db, &q.QueryCore, size, fn)
+}
+
+func newToolCall() unsafe.Pointer { return unsafe.Pointer(new(palettequestion.ToolCall)) }
+
+func newNToolCall(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]palettequestion.ToolCall, n)))
+}
+
+func ptrToolCall(p unsafe.Pointer, c int32) any {
+	r := (*palettequestion.ToolCall)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.QuestionID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.UserID))
+	case 5:
+		return &r.CallID
+	case 6:
+		return (*int64)(unsafe.Pointer(&r.Sequence))
+	case 7:
+		return &r.Model
+	case 8:
+		return &r.Tool
+	case 9:
+		return &r.Arguments
+	case 10:
+		return &r.Read
+	case 11:
+		return &r.Params
+	case 12:
+		return (*string)(unsafe.Pointer(&r.Outcome))
+	case 13:
+		return &r.Reason
+	case 14:
+		return &r.Summary
+	case 15:
+		return (*int64)(unsafe.Pointer(&r.Records))
+	case 16:
+		return &r.StartedAtMs
+	case 17:
+		return &r.DurationMs
+	case 18:
+		return &r.Version
+	case 19:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueToolCall(p unsafe.Pointer, c int32) any {
+	r := (*palettequestion.ToolCall)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.QuestionID)
+	case 4:
+		return string(r.UserID)
+	case 5:
+		return r.CallID
+	case 6:
+		return int64(r.Sequence)
+	case 7:
+		if r.Model == "" {
+			return nil
+		}
+		return r.Model
+	case 8:
+		return r.Tool
+	case 9:
+		if r.Arguments == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.Arguments
+	case 10:
+		if r.Read == "" {
+			return nil
+		}
+		return r.Read
+	case 11:
+		if r.Params == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.Params
+	case 12:
+		return string(r.Outcome)
+	case 13:
+		if r.Reason == "" {
+			return nil
+		}
+		return r.Reason
+	case 14:
+		if r.Summary == "" {
+			return nil
+		}
+		return r.Summary
+	case 15:
+		return int64(r.Records)
+	case 16:
+		return r.StartedAtMs
+	case 17:
+		return r.DurationMs
+	case 18:
+		return r.Version
+	case 19:
+		return r.CreatedAt
+	}
+	return nil
+}
+
+// intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
+const intIs64 = unsafe.Sizeof(int(0)) - 8
+
 var enumStatus = [...]schema.EnumValue{
 	{Value: `Asking`, Label: `Asking`},
 	{Value: `Answered`, Label: `Answered`},
 	{Value: `Failed`, Label: `Failed`},
 	{Value: `Stopped`, Label: `Stopped`},
+}
+
+var enumToolCallOutcome = [...]schema.EnumValue{
+	{Value: `Ran`, Label: `Tool Call Ran`, Doc: `ToolCallRan is a read that returned what it was asked for.`},
+	{Value: `Refused`, Label: `Tool Call Refused`, Doc: `ToolCallRefused is a read refused before it ran: the person may not read the kind, the arguments did not fit the read, or the id names no kind the palette opens.`},
+	{Value: `Failed`, Label: `Tool Call Failed`, Doc: `ToolCallFailed is a read that ran and failed.`},
 }
 
 // StatusCol is a column of palettequestion.Status values.
@@ -578,5 +1205,42 @@ func (c StatusCol) In(vs ...palettequestion.Status) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c StatusCol) NotIn(vs ...palettequestion.Status) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// ToolCallOutcomeCol is a column of palettequestion.ToolCallOutcome values.
+type ToolCallOutcomeCol struct{ keel.StringCol }
+
+func (c ToolCallOutcomeCol) Eq(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c ToolCallOutcomeCol) Ne(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c ToolCallOutcomeCol) Gt(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c ToolCallOutcomeCol) Gte(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c ToolCallOutcomeCol) Lt(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c ToolCallOutcomeCol) Lte(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c ToolCallOutcomeCol) IsDistinctFrom(v palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c ToolCallOutcomeCol) Between(lo, hi palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c ToolCallOutcomeCol) To(v palettequestion.ToolCallOutcome) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c ToolCallOutcomeCol) In(vs ...palettequestion.ToolCallOutcome) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c ToolCallOutcomeCol) NotIn(vs ...palettequestion.ToolCallOutcome) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }

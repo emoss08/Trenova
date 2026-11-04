@@ -44,6 +44,7 @@ const PAGE_RECORD_TYPES: Readonly<Record<string, GlobalSearchEntityType>> = {
   "/shipment-management/shipments": "shipment",
   "/billing/configuration-files/customers": "customer",
   "/hr/workers": "worker",
+  "/billing/invoices": "invoice",
 };
 
 export interface RouteCommandItem {

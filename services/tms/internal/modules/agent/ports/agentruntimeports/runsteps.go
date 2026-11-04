@@ -15,6 +15,11 @@ const RunStepOwnerAgentRun kernelports.RunStepOwnerKind = "AgentRun"
 
 const RunStepOwnerAssistantTurn kernelports.RunStepOwnerKind = "AssistantTurn"
 
+// RunStepOwnerPaletteQuestion is a question asked from the command palette. It
+// owns the model calls made to answer it, and the reads it keeps of its own;
+// it never owns a step.
+const RunStepOwnerPaletteQuestion kernelports.RunStepOwnerKind = "PaletteQuestion"
+
 // RunStepKind distinguishes a model reply from a tool call.
 type RunStepKind string
 

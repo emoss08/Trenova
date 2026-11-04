@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -127,6 +128,7 @@ type tenantRows struct {
 	events    map[pulid.ID]*agentrunevent.AgentRunEvent
 	proposals map[pulid.ID]*agent.AgentProposal
 	decisions map[pulid.ID]*agentdecision.AgentDecision
+	palette   map[pulid.ID]*palettequestion.ToolCall
 }
 
 func newTenantRows(tenant pagination.TenantInfo) *tenantRows {
@@ -139,6 +141,7 @@ func newTenantRows(tenant pagination.TenantInfo) *tenantRows {
 		events:    map[pulid.ID]*agentrunevent.AgentRunEvent{},
 		proposals: map[pulid.ID]*agent.AgentProposal{},
 		decisions: map[pulid.ID]*agentdecision.AgentDecision{},
+		palette:   map[pulid.ID]*palettequestion.ToolCall{},
 	}
 }
 
@@ -371,6 +374,16 @@ func (p *Projector) readPage(
 		}
 		last := rows[len(rows)-1]
 		return len(rows), cursor{ts: last.CreatedAt, id: last.ID.String()}, nil
+	case aiaudit.SourcePaletteCalls:
+		rows, err := p.source.ListPaletteToolCalls(ctx, page)
+		if err != nil || len(rows) == 0 {
+			return 0, cursor{}, err
+		}
+		for _, row := range rows {
+			current.rows(row.OrganizationID, row.BusinessUnitID).palette[row.ID] = row
+		}
+		last := rows[len(rows)-1]
+		return len(rows), cursor{ts: last.CreatedAt, id: last.ID.String()}, nil
 	default:
 		return 0, cursor{}, fmt.Errorf("unknown AI audit source %q", source)
 	}
@@ -529,7 +542,7 @@ func collectNeeds(need *needs, rows *tenantRows) {
 func (p *Projector) derive(found *lookups, rows *tenantRows) ([]*aiaudit.AIAuditEvent, error) {
 	events := make([]*aiaudit.AIAuditEvent, 0,
 		2*len(rows.runs)+2*len(rows.turns)+len(rows.usage)+len(rows.steps)+
-			len(rows.events)+2*len(rows.proposals)+len(rows.decisions))
+			len(rows.events)+2*len(rows.proposals)+len(rows.decisions)+len(rows.palette))
 
 	for _, run := range rows.runs {
 		events = append(events, p.deriver.runEvents(found, run)...)
@@ -581,6 +594,13 @@ func (p *Projector) derive(found *lookups, rows *tenantRows) ([]*aiaudit.AIAudit
 		if event != nil {
 			events = append(events, event)
 		}
+	}
+	for _, call := range rows.palette {
+		event, err := p.deriver.paletteCallEvent(found, call)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
 	}
 
 	return events, nil

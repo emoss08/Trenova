@@ -108,8 +108,10 @@ func (c *conversation) request(last bool) *llmports.ChatCompletionRequest {
 		ToolChoiceNone: last,
 		MaxTokens:      c.talk.MaxTokens,
 		Attribution: aiusageports.AIUsageAttribution{
-			UserID:  c.talk.UserID,
-			Feature: c.talk.Feature,
+			UserID:    c.talk.UserID,
+			Feature:   c.talk.Feature,
+			OwnerKind: c.talk.OwnerKind,
+			OwnerID:   c.talk.OwnerID,
 		},
 		Nova: true,
 	}

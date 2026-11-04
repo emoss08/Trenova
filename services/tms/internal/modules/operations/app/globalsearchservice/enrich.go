@@ -415,6 +415,18 @@ var hitMetadata = map[search.EntityType]map[string]hitSource{
 		"currentLoad":          linkedField(permission.ResourceShipment, "proNumber"),
 		"currentLoadStatus":    linkedField(permission.ResourceShipment, "status"),
 	},
+	search.EntityTypeInvoice: {
+		fieldStatus:        own(),
+		"billType":         own(),
+		"settlementStatus": own(),
+		"disputeStatus":    own(),
+		"billToName":       own(),
+		"proNumber":        own(),
+		"currencyCode":     own(),
+		"dueDate":          own(),
+		"totalAmount":      own(),
+		"balanceDue":       own(),
+	},
 	search.EntityTypeDocument: {
 		fieldStatus:     own(),
 		"resourceType":  own(),

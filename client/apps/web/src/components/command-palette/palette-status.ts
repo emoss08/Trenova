@@ -71,5 +71,45 @@ export function recordStatus(record: PaletteRecord, t: TranslateFn): RecordStatu
       return workerStatus(record, t);
     case "document":
       return null;
+    case "invoice":
+      return invoiceStatus(record, t);
   }
+}
+
+const DAY_SECONDS = 86_400;
+
+/**
+ * Where an invoice stands, from its search hit: a draft or a void says so, a
+ * paid one is settled, and a posted one with money still due past its due
+ * date counts the days late, which no row stores, since the count changes
+ * every day. A dispute shows when nothing is late.
+ */
+export function invoiceStatus(
+  record: PaletteRecord,
+  t: TranslateFn,
+  now: number = Date.now() / 1000,
+): RecordStatus | null {
+  const meta = record.metadata;
+  if (meta.status === "Voided") {
+    return { label: t("Voided"), state: "neutral" };
+  }
+  if (meta.status === "Draft") {
+    return { label: t("Draft"), state: "neutral" };
+  }
+  if (meta.settlementStatus === "Paid") {
+    return { label: t("Paid"), state: "ok" };
+  }
+  const due = Number(meta.dueDate);
+  const balance = Number(meta.balanceDue);
+  if (meta.status === "Posted" && balance > 0 && Number.isFinite(due) && due > 0 && due < now) {
+    const days = Math.max(1, Math.floor((now - due) / DAY_SECONDS));
+    return {
+      label: t("{0, plural, one {# day past due} other {# days past due}}", days),
+      state: "warn",
+    };
+  }
+  if (meta.disputeStatus === "Disputed") {
+    return { label: t("Disputed"), state: "warn" };
+  }
+  return null;
 }

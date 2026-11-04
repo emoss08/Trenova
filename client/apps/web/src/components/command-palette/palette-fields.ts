@@ -120,6 +120,12 @@ export function recordFields(record: PaletteRecord): MatchField<RecordFieldKey>[
         { key: "record", text: meta.attachedLabel ?? "", weight: 0.8 },
         { key: "type", text: documentKind(record), weight: 0.75 },
       ];
+    case "invoice":
+      return [
+        { key: "title", text: record.title },
+        { key: "customer", text: meta.billToName ?? "", weight: 0.9 },
+        { key: "bol", text: meta.proNumber ?? "", weight: 0.8 },
+      ];
   }
 }
 

@@ -13199,6 +13199,65 @@ func (e AIAnalyticsTarget) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// The unit of work an event belongs to: a background agent run, a Desk conversation turn, or a
+// question asked from the command palette.
+type AIAuditOwnerKind string
+
+const (
+	AIAuditOwnerKindAgentRun        AIAuditOwnerKind = "AgentRun"
+	AIAuditOwnerKindAssistantTurn   AIAuditOwnerKind = "AssistantTurn"
+	AIAuditOwnerKindPaletteQuestion AIAuditOwnerKind = "PaletteQuestion"
+)
+
+var AllAIAuditOwnerKind = []AIAuditOwnerKind{
+	AIAuditOwnerKindAgentRun,
+	AIAuditOwnerKindAssistantTurn,
+	AIAuditOwnerKindPaletteQuestion,
+}
+
+func (e AIAuditOwnerKind) IsValid() bool {
+	switch e {
+	case AIAuditOwnerKindAgentRun, AIAuditOwnerKindAssistantTurn, AIAuditOwnerKindPaletteQuestion:
+		return true
+	}
+	return false
+}
+
+func (e AIAuditOwnerKind) String() string {
+	return string(e)
+}
+
+func (e *AIAuditOwnerKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AIAuditOwnerKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AIAuditOwnerKind", str)
+	}
+	return nil
+}
+
+func (e AIAuditOwnerKind) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AIAuditOwnerKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AIAuditOwnerKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Where a model's listed price came from.
 type AIModelPriceSource string
 

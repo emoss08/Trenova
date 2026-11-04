@@ -77,6 +77,9 @@ func (n *needs) owner(kind string, id pulid.ID) {
 	switch {
 	case id.Prefix() == agentevaluation.EvaluationIDPrefix:
 		n.evaluations[id] = struct{}{}
+	case kind == string(agent.RunOwnerPaletteQuestion):
+		// A palette question carries nothing the trail reads back: its
+		// rows name the person who asked.
 	case kind == string(agent.RunOwnerAssistantTurn):
 		n.turns[id] = struct{}{}
 	default:
@@ -300,8 +303,25 @@ func (l *lookups) ownerOf(kind string, id pulid.ID) owner {
 	if kind == string(agent.RunOwnerAssistantTurn) {
 		return l.turnOwner(id)
 	}
+	if kind == string(agent.RunOwnerPaletteQuestion) {
+		return paletteOwner(id)
+	}
 
 	return l.runOwner(id)
+}
+
+// paletteOwner is a question asked from the command palette. Nova answers it
+// as the person who asked, live, in one sitting; each row it owns names that
+// person itself.
+func paletteOwner(id pulid.ID) owner {
+	return owner{
+		kind:          agent.RunOwnerPaletteQuestion,
+		id:            id,
+		principalType: aiaudit.PrincipalUser,
+		purpose:       aiaudit.PurposeLive,
+		terminal:      true,
+		known:         true,
+	}
 }
 
 func (l *lookups) evaluationOwner(id pulid.ID) owner {

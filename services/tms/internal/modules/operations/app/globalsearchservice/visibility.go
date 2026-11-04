@@ -14,13 +14,15 @@ import (
 // person read. The index holds every record of the tenant, so a shipment,
 // order, invoice or worker hit, or a document attached to one, is checked
 // against the database before it is shown; a check that fails hides them.
-// A narrowed group reports only what it shows, so its total cannot count
-// records the person may not see.
+// A narrowed group reports only the visible hits it found, so its total
+// cannot count records the person may not see; it was fetched past the limit
+// (fetchLimit) and is cut back to it here, once the hidden hits are gone.
 func (s *Service) restrictToVisible(
 	ctx context.Context,
 	req *kernelports.GlobalSearchRequest,
 	access *searchAccess,
 	results []*indexResult,
+	limit int,
 ) {
 	visible := s.visibleRecords(ctx, req, access, scopedHitIDs(s.visibility, results))
 
@@ -40,10 +42,10 @@ func (s *Service) restrictToVisible(
 			}
 		}
 		removed := len(result.hits) - len(kept)
-		result.hits = kept
 		if removed > 0 || s.groupNarrowed(access, &result.definition) {
 			result.total = len(kept)
 		}
+		result.hits = kept[:min(len(kept), limit)]
 	}
 }
 

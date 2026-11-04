@@ -22,7 +22,13 @@ export interface GlobalSearchResponse {
   groups: GlobalSearchGroup[];
 }
 
-export const globalSearchEntityTypes = ["shipment", "customer", "worker", "document"] as const;
+export const globalSearchEntityTypes = [
+  "shipment",
+  "customer",
+  "worker",
+  "document",
+  "invoice",
+] as const;
 
 export type GlobalSearchEntityType = (typeof globalSearchEntityTypes)[number];
 

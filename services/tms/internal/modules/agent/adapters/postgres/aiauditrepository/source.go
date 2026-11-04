@@ -24,6 +24,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion/palettequestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -132,6 +134,25 @@ func (r *sourceRepository) ListUsage(
 		rows, err := keyset(u.Query(), u.CreatedAt, u.ID, page).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read AI usage for the AI audit trail: %w", err)
+		}
+
+		return rows, nil
+	})
+}
+
+func (r *sourceRepository) ListPaletteToolCalls(
+	ctx context.Context,
+	page aiauditports.AIAuditSourcePage,
+) ([]*palettequestion.ToolCall, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"project palette reads into the AI audit chain across every organization",
+	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*palettequestion.ToolCall, error) {
+		c := palettequestiondb.ToolCalls
+		rows, err := keyset(c.Query(), c.CreatedAt, c.ID, page).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("read palette reads for the AI audit trail: %w", err)
 		}
 
 		return rows, nil

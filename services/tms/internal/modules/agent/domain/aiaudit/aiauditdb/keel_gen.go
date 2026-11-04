@@ -3482,6 +3482,7 @@ var enumSource = [...]schema.EnumValue{
 	{Value: `agent_run_events`, Label: `Run Events`},
 	{Value: `agent_proposals`, Label: `Proposals`},
 	{Value: `agent_decisions`, Label: `Decisions`},
+	{Value: `assistant_palette_tool_calls`, Label: `Palette Calls`},
 }
 
 var enumVerificationStatus = [...]schema.EnumValue{

@@ -144,7 +144,7 @@ func TestEveryHitMetadataKeyIsClassified(t *testing.T) {
 	balance := &kernelports.CustomerOpenBalance{CustomerID: customerID}
 	fill(t, balance)
 
-	svc := &Service{logger: zaptest.NewLogger(t), config: indexConfig()}
+	svc := &Service{logger: zaptest.NewLogger(t), config: indexConfig(), views: searchViews()}
 	attributes := make(map[search.EntityType][]string, 4)
 	for _, definition := range svc.definitions() {
 		attributes[definition.entityType] = definition.attributes
@@ -190,7 +190,7 @@ func TestEveryHitMetadataKeyIsClassified(t *testing.T) {
 	req := &kernelports.GlobalSearchRequest{Query: "v", TenantInfo: searchTenant()}
 	access, err := svc.resolveAccess(t.Context(), req)
 	require.NoError(t, err)
-	results := svc.searchIndexes(t.Context(), req, access.definitions, req.Query, maxSearchLimit)
+	results := svc.searchIndexes(t.Context(), req, access, req.Query, maxSearchLimit)
 	enricher := &hitEnricher{
 		service: svc,
 		req:     req,

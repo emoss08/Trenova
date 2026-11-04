@@ -25,6 +25,15 @@ type NovaToolResult struct {
 	Failed  bool                         `json:"failed,omitempty"`
 	Summary string                       `json:"summary,omitempty"`
 	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
+	// Refused says the call was turned away before anything was read: the
+	// person may not read the kind, or the arguments did not fit. A refused
+	// call is also Failed.
+	Refused bool `json:"refused,omitempty"`
+	// Read is the read the call went to, and Params what that read was asked,
+	// when the tool reads through another (the palette's get_record runs
+	// customer_get). They are what the call's record keeps to explain it.
+	Read   string         `json:"read,omitempty"`
+	Params map[string]any `json:"params,omitempty"`
 }
 
 // NovaConversation is one question Nova answers from a few reads, with the
@@ -43,6 +52,10 @@ type NovaConversation struct {
 	MaxTokens  int
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
+	// OwnerKind and OwnerID name what the conversation answers (a palette
+	// question), so its model calls are kept with it on the AI audit trail.
+	OwnerKind kernelports.RunStepOwnerKind
+	OwnerID   pulid.ID
 }
 
 // NovaAnswer is the finished answer and the records it read.

@@ -7,6 +7,8 @@ import { Profiler } from "react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { Operation } from "@trenova/shared/types/permission";
 import type { PaletteIntent } from "../palette-model";
 import type { HomeInput, RemoteState } from "../palette-sections";
 import { command, page, record } from "./palette-test-fixtures";
@@ -134,6 +136,15 @@ function input(): HTMLInputElement {
   return screen.getByRole("combobox");
 }
 
+/** Read on every kind of record the palette searches. */
+const READS_EVERY_KIND = {
+  shipment: Operation.Read,
+  customer: Operation.Read,
+  worker: Operation.Read,
+  document: Operation.Read,
+  invoice: Operation.Read,
+};
+
 beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
@@ -157,13 +168,38 @@ beforeEach(() => {
     user: { currentOrganizationId: "org_1" } as ReturnType<typeof useAuthStore.getState>["user"],
   });
   useCommandPaletteStore.setState({ open: true });
+  seedPermissions(READS_EVERY_KIND);
 });
 
 afterEach(() => {
   useCommandPaletteStore.setState({ open: false });
+  clearPermissions();
 });
 
 describe("CommandPalette", () => {
+  it("offers a tab for each kind of record the person may read, and none for the rest", () => {
+    seedPermissions({ shipment: Operation.Read, customer: Operation.Read });
+    renderPalette();
+
+    const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
+    expect(tabs).toEqual(["All", "Shipments", "Customers", "Pages", "Commands"]);
+  });
+
+  it("offers invoices to someone who may read them", () => {
+    renderPalette();
+
+    expect(screen.getByRole("tab", { name: /Invoices/ })).toBeInTheDocument();
+  });
+
+  it("holds the record tabs' place until the person's permissions have loaded", () => {
+    clearPermissions();
+    renderPalette();
+
+    const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
+    expect(tabs).toEqual(["All", "Pages", "Commands"]);
+    expect(screen.getAllByTestId("pending-scope")).toHaveLength(5);
+  });
+
   it("shows where the person just was and quick actions before anything is typed", () => {
     renderPalette();
 

@@ -5,10 +5,6 @@ import {
   creditUse,
   type AgingStretch,
 } from "@/routes/desk/_components/artifacts/cards/customer/customer-card";
-import type {
-  CardCheckState,
-  CardTone,
-} from "@/routes/desk/_components/artifacts/record-card/record-card";
 import { customerPaymentTermChoices, findChoice } from "@/lib/choices";
 import type { RecordShipment } from "@/lib/graphql/record-shipments";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -35,25 +31,8 @@ import {
   OPEN_LOADS_SHOWN,
   openShipmentsQuery,
 } from "./preview-queries";
+import { CHECK_STATE, TONE_STATE } from "./preview-tones";
 import type { RecordPreviewProps } from "./record-preview-props";
-
-const CHECK_STATE: Record<CardCheckState, StatusState> = {
-  ok: "neutral",
-  info: "neutral",
-  warn: "warn",
-  bad: "bad",
-};
-
-/** The Desk's standing tones as the palette's pill draws them. */
-const TONE_STATE: Record<CardTone, StatusState> = {
-  success: "ok",
-  warn: "warn",
-  danger: "bad",
-  progress: "neutral",
-  ink: "neutral",
-  muted: "neutral",
-  draft: "neutral",
-};
 
 function money(minor: number): string {
   return formatCurrency(minor / 100);

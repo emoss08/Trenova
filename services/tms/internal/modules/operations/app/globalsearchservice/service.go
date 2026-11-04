@@ -3,6 +3,7 @@ package globalsearchservice
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/searchfilter"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -66,6 +68,18 @@ const (
 	maxSearchLimit = 25
 	fieldStatus    = "status"
 	fieldCity      = "city"
+
+	// maxQueryRunes is the most of a query that is searched. Meilisearch reads
+	// only a query's first ten words, so a pasted page would cost the index a
+	// long parse for nothing.
+	maxQueryRunes = 200
+
+	// narrowedOverfetch is how many more hits a group asks the index for when
+	// the database hides some of what the index holds (a team or own data
+	// scope): most of a narrowed person's hits may be records they cannot see,
+	// and a group fetched at the limit would come back nearly empty.
+	narrowedOverfetch = 4
+	maxNarrowedFetch  = 100
 )
 
 func New(p Params) kernelports.GlobalSearchService {
@@ -94,7 +108,11 @@ func (s *Service) Search(
 	ctx context.Context,
 	req *kernelports.GlobalSearchRequest,
 ) (*kernelports.GlobalSearchResult, error) {
-	query := strings.TrimSpace(req.Query)
+	if err := s.checkEntityTypes(req.EntityTypes); err != nil {
+		return nil, err
+	}
+
+	query := boundedQuery(req.Query)
 	if query == "" && len(req.EntityTypes) != 1 {
 		return &kernelports.GlobalSearchResult{
 			Query:  "",
@@ -114,8 +132,8 @@ func (s *Service) Search(
 	}
 
 	limit := limitForRequest(req.Limit, s.config.GetDefaultLimit())
-	results := s.searchIndexes(ctx, req, access.definitions, query, limit)
-	s.restrictToVisible(ctx, req, access, results)
+	results := s.searchIndexes(ctx, req, access, query, limit)
+	s.restrictToVisible(ctx, req, access, results, limit)
 
 	enricher := &hitEnricher{
 		service: s,
@@ -145,13 +163,56 @@ func (s *Service) Search(
 	}, nil
 }
 
+// checkEntityTypes refuses a kind no definition searches, so a caller naming
+// one learns it rather than getting an empty answer.
+func (s *Service) checkEntityTypes(entityTypes []search.EntityType) error {
+	definitions := s.definitions()
+	for _, entityType := range entityTypes {
+		known := slices.ContainsFunc(definitions, func(definition entitySearchDefinition) bool {
+			return definition.entityType == entityType
+		})
+		if !known {
+			return errortypes.NewValidationError(
+				"entityTypes",
+				errortypes.ErrInvalid,
+				fmt.Sprintf("%q is not a kind of record the search finds", entityType),
+			)
+		}
+	}
+	return nil
+}
+
+// boundedQuery is the query as it is searched: trimmed, and cut to
+// maxQueryRunes on a character boundary.
+func boundedQuery(raw string) string {
+	query := strings.TrimSpace(raw)
+	if runes := []rune(query); len(runes) > maxQueryRunes {
+		query = strings.TrimSpace(string(runes[:maxQueryRunes]))
+	}
+	return query
+}
+
+// fetchLimit is how many hits a group asks the index for: the limit, or more
+// when the database will hide some of them (narrowedOverfetch).
+func (s *Service) fetchLimit(
+	access *searchAccess,
+	definition *entitySearchDefinition,
+	limit int,
+) int {
+	if !s.groupNarrowed(access, definition) {
+		return limit
+	}
+	return min(limit*narrowedOverfetch, maxNarrowedFetch)
+}
+
 func (s *Service) searchIndexes(
 	ctx context.Context,
 	req *kernelports.GlobalSearchRequest,
-	definitions []entitySearchDefinition,
+	access *searchAccess,
 	query string,
 	limit int,
 ) []*indexResult {
+	definitions := access.definitions
 	results := make([]*indexResult, len(definitions))
 	filter := tenantFilter(req)
 
@@ -161,12 +222,13 @@ func (s *Service) searchIndexes(
 		if definition.index == "" {
 			continue
 		}
+		fetch := s.fetchLimit(access, &definition, limit)
 
 		searchPool.Go(func(c context.Context) error {
 			page, searchErr := s.searchRepo.SearchPage(c, customerports.SearchRequest{
 				Index:      definition.index,
 				Query:      query,
-				Limit:      limit,
+				Limit:      fetch,
 				Filter:     filter,
 				Attributes: definition.attributes,
 			})
@@ -387,6 +449,26 @@ func (s *Service) definitions() []entitySearchDefinition {
 				"created_at",
 			},
 		},
+		{
+			entityType: search.EntityTypeInvoice,
+			label:      "Invoices",
+			index:      s.config.Meilisearch.Indexes.Invoices,
+			resource:   permission.ResourceInvoice,
+			attributes: []string{
+				"id",
+				"number",
+				"bill_type",
+				fieldStatus,
+				"settlement_status",
+				"dispute_status",
+				"bill_to_name",
+				"shipment_pro_number",
+				"currency_code",
+				"total_amount_minor",
+				"balance_due_minor",
+				"due_date",
+			},
+		},
 	}
 }
 
@@ -420,6 +502,8 @@ func mapHit(entityType search.EntityType, document map[string]any) *kernelports.
 		return workerHit(id, document)
 	case search.EntityTypeDocument:
 		return documentHit(id, document)
+	case search.EntityTypeInvoice:
+		return invoiceHit(id, document)
 	default:
 		return nil
 	}
@@ -497,6 +581,57 @@ func workerHit(id string, document map[string]any) *kernelports.GlobalSearchHit 
 		Subtitle:   subtitle,
 		Href:       recordHref("worker", id),
 		Metadata:   metadata,
+	}
+}
+
+// invoiceHit is an invoice by its number, with who it bills and what it is
+// for under it; its amounts are the minor units the projection keeps, read
+// back as decimals.
+func invoiceHit(id string, document map[string]any) *kernelports.GlobalSearchHit {
+	title := stringutils.FirstNonEmpty(stringValue(document, "number"), id)
+	subtitle := stringutils.FirstNonEmpty(
+		stringValue(document, "bill_to_name"),
+		stringValue(document, "shipment_pro_number"),
+	)
+	metadata := map[string]string{
+		fieldStatus: stringutils.FirstNonEmpty(stringValue(document, fieldStatus), "Unknown"),
+	}
+	putIfPresent(metadata, "billType", stringValue(document, "bill_type"))
+	putIfPresent(metadata, "settlementStatus", stringValue(document, "settlement_status"))
+	putIfPresent(metadata, "disputeStatus", stringValue(document, "dispute_status"))
+	putIfPresent(metadata, "billToName", stringValue(document, "bill_to_name"))
+	putIfPresent(metadata, "proNumber", stringValue(document, "shipment_pro_number"))
+	putIfPresent(metadata, "currencyCode", stringValue(document, "currency_code"))
+	putIfPresent(metadata, "dueDate", stringValue(document, "due_date"))
+	if total, ok := minorValue(document, "total_amount_minor"); ok {
+		metadata["totalAmount"] = minorToDecimal(total)
+	}
+	if due, ok := minorValue(document, "balance_due_minor"); ok {
+		metadata["balanceDue"] = minorToDecimal(due)
+	}
+
+	return &kernelports.GlobalSearchHit{
+		ID:         id,
+		EntityType: search.EntityTypeInvoice,
+		Title:      title,
+		Subtitle:   subtitle,
+		Href:       recordHref("invoice", id),
+		Metadata:   metadata,
+	}
+}
+
+// minorValue reads an amount in minor units from an index document, where
+// Meilisearch hands numbers back as floats.
+func minorValue(document map[string]any, key string) (int64, bool) {
+	switch typed := document[key].(type) {
+	case float64:
+		return int64(math.Round(typed)), true
+	case int64:
+		return typed, true
+	case int:
+		return int64(typed), true
+	default:
+		return 0, false
 	}
 }
 

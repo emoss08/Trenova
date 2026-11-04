@@ -14,6 +14,8 @@ function recordSub(record: PaletteRecord): string {
       return meta.city ?? record.subtitle ?? "";
     case "document":
       return meta.attachedLabel ?? "";
+    case "invoice":
+      return meta.billToName ?? record.subtitle ?? "";
   }
 }
 
@@ -34,7 +36,11 @@ export function RecordLink({
       icon={PALETTE_ENTITY_ICONS[record.entityType]}
       initials={record.entityType === "worker" ? getNameInitials(record.title) : undefined}
       title={record.title}
-      mono={record.entityType === "shipment" || record.entityType === "document"}
+      mono={
+        record.entityType === "shipment" ||
+        record.entityType === "document" ||
+        record.entityType === "invoice"
+      }
       sub={sub || recordSub(record) || undefined}
       note={note}
       onOpen={() => onOpen(record)}

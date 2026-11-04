@@ -340,6 +340,7 @@ func All() []*schema.Table {
 		briefingdb.BriefingsSchema(),
 		conversationdb.MessagesSchema(),
 		palettequestiondb.QuestionsSchema(),
+		palettequestiondb.ToolCallsSchema(),
 		conversationqueuedb.QueuedMessagesSchema(),
 		conversationchapterdb.ChaptersSchema(),
 		conversationdb.ThreadsSchema(),

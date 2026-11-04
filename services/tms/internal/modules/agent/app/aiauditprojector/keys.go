@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -51,10 +52,15 @@ func stepKey(step *agentrunstep.AgentRunStep) string {
 	return sourceKey("step", step.OwnerID.String(), step.StepKey)
 }
 
+// paletteCallKey names one read made for a palette question.
+func paletteCallKey(call *palettequestion.ToolCall) string {
+	return sourceKey("palette", call.QuestionID.String(), call.ID.String())
+}
+
 func candidateKeys(rows *tenantRows) []string {
 	keys := make([]string, 0,
 		2*len(rows.runs)+2*len(rows.turns)+len(rows.usage)+len(rows.steps)+
-			len(rows.events)+3*len(rows.proposals)+len(rows.decisions))
+			len(rows.events)+3*len(rows.proposals)+len(rows.decisions)+len(rows.palette))
 
 	for _, run := range rows.runs {
 		keys = append(keys, runKeys(run)...)
@@ -76,6 +82,9 @@ func candidateKeys(rows *tenantRows) []string {
 	}
 	for _, decision := range rows.decisions {
 		keys = append(keys, sourceKey("decision", decision.ID.String()))
+	}
+	for _, call := range rows.palette {
+		keys = append(keys, paletteCallKey(call))
 	}
 
 	return keys
@@ -128,6 +137,11 @@ func pendingRows(rows *tenantRows, existing map[string]struct{}) *tenantRows {
 	for id, decision := range rows.decisions {
 		if !allHeld(existing, []string{sourceKey("decision", decision.ID.String())}) {
 			pending.decisions[id] = decision
+		}
+	}
+	for id, call := range rows.palette {
+		if !allHeld(existing, []string{paletteCallKey(call)}) {
+			pending.palette[id] = call
 		}
 	}
 

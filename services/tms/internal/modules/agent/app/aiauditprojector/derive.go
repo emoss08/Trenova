@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -210,6 +211,9 @@ func (d *deriver) usageEvent(l *lookups, record *aiusage.AIUsageRecord) *aiaudit
 	}
 	event.OccurredAt = record.CreatedAt
 	event.Reconstructed = reconstructed
+	if o.kind == agent.RunOwnerPaletteQuestion {
+		event.PrincipalType, event.PrincipalID = usagePrincipal(record)
+	}
 
 	applyUsageAttribution(event, record, o.id)
 	applyUsageCall(event, record)
@@ -419,6 +423,60 @@ func (d *deriver) stepBase(
 	}
 
 	return event, nil
+}
+
+// paletteCallEvent is one read Nova made answering a palette question, kept as
+// the trail keeps a Desk tool call: the read it went to and what that read was
+// asked (redacted by the read's own policy), how it ended, why, and how long
+// it took. A search, which goes to no Desk read, keeps the model's arguments.
+func (d *deriver) paletteCallEvent(
+	l *lookups,
+	call *palettequestion.ToolCall,
+) (*aiaudit.AIAuditEvent, error) {
+	o := l.ownerOf(string(agent.RunOwnerPaletteQuestion), call.QuestionID)
+	o.principalID = call.UserID.String()
+	o.onBehalfOf = call.UserID
+
+	event := d.base(&o)
+	event.SourceKey = paletteCallKey(call)
+	event.Kind = aiaudit.KindToolCall
+	event.Outcome = paletteCallOutcome(call.Outcome)
+	event.OccurredAt = call.StartedAtMs / 1000
+	event.WindowStart = event.OccurredAt
+	event.WindowEnd = (call.StartedAtMs + call.DurationMs) / 1000
+	event.CallID = call.CallID
+	event.Model = call.Model
+	latency := call.DurationMs
+	event.LatencyMs = &latency
+	event.Reason = d.redactor.Text(call.Reason, aiaudit.MaxReasonLength)
+	event.ResultSummary = d.redactor.Text(call.Summary, aiaudit.MaxResultSummaryLength)
+
+	toolName, args := call.Tool, call.Arguments
+	if call.Read != "" {
+		toolName, args = call.Read, call.Params
+	}
+	event.ToolName = toolName
+	if policy, ok := d.redactor.Policy(toolName); ok {
+		event.ToolEffect = string(policy.EffectiveEffect())
+	}
+	if err := d.recordArguments(event, toolName, args); err != nil {
+		return nil, err
+	}
+
+	return event, nil
+}
+
+func paletteCallOutcome(outcome palettequestion.ToolCallOutcome) aiaudit.Outcome {
+	switch outcome {
+	case palettequestion.ToolCallRan:
+		return aiaudit.OutcomeRan
+	case palettequestion.ToolCallRefused:
+		return aiaudit.OutcomeRefused
+	case palettequestion.ToolCallFailed:
+		return aiaudit.OutcomeFailed
+	default:
+		return aiaudit.OutcomeUnknown
+	}
 }
 
 func stepOutcome(

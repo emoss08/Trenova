@@ -9,7 +9,8 @@ verified. Compliance reads it in AI Control and exports it as CSV or JSON.
 
 The trail adds no writes to the agent runtime. A projector reads what the runtime already
 records and derives the trail from it: `agent_runs`, `assistant_turns`, `ai_usage_records`,
-`agent_run_steps`, `agent_run_events`, `agent_proposals` and `agent_decisions`. It is the
+`agent_run_steps`, `agent_run_events`, `agent_proposals`, `agent_decisions` and, for the
+command palette, `assistant_palette_tool_calls`. It is the
 trail's only writer. How those source rows get their trace and owner links is described in
 [ai-tracing.md](ai-tracing.md).
 
@@ -45,6 +46,7 @@ source row and moment, so projecting the same row twice writes nothing the secon
 | `agent_run_steps` (tool steps) | Settled: `ToolCall` with outcome `Ran` / `Proposed` / `Simulated` / `Failed` / `Denied` / `Refused`, plus tier, what held it, egress, tier source, proposal, record versions and redacted arguments. Still `Started` when its run or turn ended: `ToolCall` with outcome `Unknown` | `step:{owner}:{step_key}` |
 | `agent_run_events` | `tool_finished` failed with no step for that call: `ToolRefused`, outcome from the event's verdict (`Refused` when it has none). `delegate_started` / `delegate_finished`: `DelegationStarted` / `DelegationEnded` (`Completed` / `Exhausted` / `Refused` / `Declined` / `Stopped` / `Failed`) | `event:{id}` |
 | `agent_proposals` | `ProposalFiled`. `ProposalExecuted` / `ProposalExecutionFailed` / `ProposalSimulated`, with the principal set to the executing user (the instance's system user for an automatic write of an unattended run), or the agent for an auto-execution filed with no executor. `ProposalExpired`, with the principal set to the system | `proposal:{id}:filed`, `…:executed`, `…:expired` |
+| `assistant_palette_tool_calls` | `ToolCall` for each read Nova made answering a palette question, owned by the question (`PaletteQuestion`) and acted as the person who asked: the Desk read it went to and what it was asked, redacted by that read's policy (a search keeps the palette tool and the model's arguments), `Ran` / `Refused` / `Failed`, the reason, the result summary and the latency. The question's model calls, from `ai_usage_records`, carry the same owner | `palette:{question}:{call}` |
 | `agent_decisions` (proposal decisions) | `ProposalDecided` (`Accepted` / `Modified` / `Rejected`): who decided, the redacted modifications, and what they were shown: `result_summary` is "Reviewed preview sha256:…" when the decision named the digest of the preview it recorded, "Preview not reviewed; sha256:…" when it recorded one it did not name, and empty for a decision before previews; `version_before` is the target's version the preview was read at | `decision:{id}` |
 
 A call that did not run takes its outcome from the verdict the runtime recorded

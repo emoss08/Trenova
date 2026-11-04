@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -67,6 +69,7 @@ func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInf
 // answer to events.
 func (s *Service) Answer(
 	ctx context.Context,
+	askID pulid.ID,
 	question *paletteports.Question,
 	actor *permissionports.RequestActor,
 	events llmports.NovaEvents,
@@ -92,6 +95,8 @@ func (s *Service) Answer(
 		MaxTokens:    maxTokens,
 		TenantInfo:   tenantInfo,
 		UserID:       actor.UserID,
+		OwnerKind:    agentruntimeports.RunStepOwnerPaletteQuestion,
+		OwnerID:      askID,
 	}, events)
 }
 

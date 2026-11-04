@@ -1,6 +1,7 @@
 package paletteanswer
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -201,6 +202,57 @@ func TestGetRecord_OpensADocumentThroughItsRead(t *testing.T) {
 	assert.Equal(t, map[string]any{"documentId": id}, read.LastParams.Params)
 }
 
+// What a call's record keeps to explain it: the read it went to and what that
+// read was asked.
+func TestGetRecord_NamesTheReadAndWhatItWasAsked(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	id := pulid.MustNew("shp_").String()
+
+	result := (&getTool{reader: f.reader}).Call(t.Context(), map[string]any{"id": id})
+
+	assert.Equal(t, "shipment_get", result.Read)
+	assert.Equal(t, map[string]any{"shipmentId": id}, result.Params)
+	assert.False(t, result.Refused)
+}
+
+func TestGetRecord_MarksAReadThePersonMayNotMakeAsRefused(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.permissions.Denied["shipment:read"] = true
+
+	result := (&getTool{reader: f.reader}).Call(t.Context(), map[string]any{
+		"id": pulid.MustNew("shp_").String(),
+	})
+
+	assert.True(t, result.Failed)
+	assert.True(t, result.Refused)
+	assert.Equal(t, "shipment_get", result.Read)
+}
+
+// A read that ran and went wrong is a failure, not a refusal: the person may
+// read it, and something underneath did not work.
+func TestListRecords_MarksAReadThatFailedAsFailedNotRefused(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.list.Err = errors.New("an agent read needs the tool call's read scope")
+
+	result := (&listTool{reader: f.reader}).Call(t.Context(), map[string]any{
+		"kind":    "shipment",
+		"filters": map[string]any{"status": "InTransit"},
+	})
+
+	assert.True(t, result.Failed)
+	assert.False(t, result.Refused)
+	assert.Equal(t, "shipment_list", result.Read)
+	assert.Equal(t, map[string]any{"status": "InTransit"}, result.Params)
+	assert.Equal(t,
+		"shipment_list failed: an agent read needs the tool call's read scope", result.Content)
+}
+
 func TestGetRecord_RefusesWhatThePersonCannotRead(t *testing.T) {
 	t.Parallel()
 
@@ -242,6 +294,62 @@ func TestListRecords_ListsAKindWithItsFiltersAndCountsThem(t *testing.T) {
 	require.Equal(t, 1, f.list.Calls)
 	assert.Equal(t, map[string]any{"status": "InTransit"}, f.list.LastParams.Params)
 	assert.True(t, f.list.LastParams.IncludeTotal)
+}
+
+// A model wrote {"kind": "shipment", "late": true, "query": "Gordon & Romero"}
+// and the list ran with no filters at all, its most recent shipments read
+// back as the customer's late ones.
+func TestListRecords_ReadsAFilterWrittenBesideKind(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+
+	result := (&listTool{reader: f.reader}).Call(t.Context(), map[string]any{
+		"kind":    "shipment",
+		"status":  "InTransit",
+		"filters": map[string]any{"after": "c1"},
+	})
+
+	require.False(t, result.Failed, result.Content)
+	require.Equal(t, 1, f.list.Calls)
+	assert.Equal(t, map[string]any{"status": "InTransit", "after": "c1"}, f.list.LastParams.Params)
+}
+
+func TestListRecords_ReadsAFilterNamedTwiceFromFilters(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+
+	(&listTool{reader: f.reader}).Call(t.Context(), map[string]any{
+		"kind":    "shipment",
+		"status":  "New",
+		"filters": map[string]any{"status": "InTransit"},
+	})
+
+	require.Equal(t, 1, f.list.Calls)
+	assert.Equal(t, map[string]any{"status": "InTransit"}, f.list.LastParams.Params)
+}
+
+func TestListRecords_RefusesAFilterBesideKindTheListDoesNotTake(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.list.Schema = map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"status": map[string]any{"type": "string"},
+		},
+		"additionalProperties": false,
+	}
+
+	result := (&listTool{reader: f.reader}).Call(t.Context(), map[string]any{
+		"kind":  "shipment",
+		"color": "blue",
+	})
+
+	assert.True(t, result.Failed)
+	assert.Contains(t, result.Content, "color")
+	assert.Zero(t, f.list.Calls, "a filter the list does not take is refused, never dropped")
 }
 
 func TestListRecords_RefusesAKindItCannotList(t *testing.T) {

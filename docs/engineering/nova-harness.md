@@ -111,6 +111,21 @@ palette card is unchanged, and ends with `done` naming only the question.
   its message counts instead; the plan's assistant-message and spend meters are checked before
   it starts (`AssertMayAsk`); and a person has at most `palettequestion.MaxAsking` being
   answered at once. The assistant retention sweep removes rows after two months.
+- **Its reads.** Every read Nova makes for a question is a row in
+  `assistant_palette_tool_calls` (`palettequestion.ToolCall`), written by the answer activity
+  as each call finishes: the palette tool and its arguments, the Desk read it went to
+  (`customer_get`) and what that read was asked, `Ran`, `Refused` (nothing was read: the
+  person may not read the kind, or the arguments did not fit) or `Failed` (the read ran and
+  went wrong) with the words the model was told, the result's summary and record count, the
+  model, and the timing. What a read returned is never kept. The rows go with their question,
+  and the AI audit trail shows them as the question's tool calls beside its model calls, which
+  the question owns (`RunOwnerPaletteQuestion`), so a refused or empty answer is traced in AI
+  Control instead of in the person's stream.
+- **Scope.** The answer activity runs every read in the person's tenant and under their data
+  scopes (`dbscope.WithTenant`, `readscope.With`), as a Desk tool call's activity does; a
+  GraphQL read without a read scope is refused (`agentread.ErrNoReadScope`). `list_records`
+  reads a filter written beside `kind` as one of `filters`, and the list's argument check
+  refuses one it does not take; nothing the model asked is dropped.
 - **Open in Desk.** `Keep` claims the row (so a second press reuses the first conversation),
   reads the workflow's result and starts a Desk conversation with the general assistant that
   opens with the question and the answer. The palette's own reads are not replayed (the Desk

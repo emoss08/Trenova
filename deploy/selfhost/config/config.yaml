@@ -124,6 +124,7 @@ search:
       customers: customers
       workers: workers
       documents: documents
+      invoices: invoices
 
 storage:
   provider: minio

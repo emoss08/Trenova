@@ -92,6 +92,10 @@ func (q *questions) MarkKept(_ context.Context, ref paletteports.AskRef, threadI
 	return nil
 }
 
+func (q *questions) RecordToolCall(context.Context, *palettequestion.ToolCall) error {
+	return nil
+}
+
 func (q *questions) ReleaseKeep(_ context.Context, ref paletteports.AskRef) error {
 	q.rows[ref.AskID].KeepClaimedAt = nil
 

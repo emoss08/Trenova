@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -233,6 +234,11 @@ type AIAuditSourceRepository interface {
 		ctx context.Context,
 		page AIAuditSourcePage,
 	) ([]*agentdecision.AgentDecision, error)
+	// ListPaletteToolCalls is the reads Nova made answering palette questions.
+	ListPaletteToolCalls(
+		ctx context.Context,
+		page AIAuditSourcePage,
+	) ([]*palettequestion.ToolCall, error)
 
 	RunsByIDs(
 		ctx context.Context,

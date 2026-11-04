@@ -30,7 +30,7 @@ import { prefetchRecordPreview } from "./_components/preview/preview-queries";
 import { answerSources, plainAnswer } from "./ask-answer";
 import { askQuestion, commandModeQuery, questionSearchText } from "./ask-question";
 import "./command-palette.css";
-import { PALETTE_ENTITY_ICONS } from "./palette-entities";
+import { isPaletteRecordType, PALETTE_ENTITY_ICONS } from "./palette-entities";
 import {
   ACTION_ASK,
   ACTION_COPY_ID,
@@ -57,7 +57,12 @@ import {
   type PaletteScope,
   type PaletteSection,
 } from "./palette-model";
-import { nextScope, PaletteScopeTabs, scopePresentation } from "./palette-scope-tabs";
+import {
+  nextScope,
+  paletteScopes,
+  PaletteScopeTabs,
+  scopePresentation,
+} from "./palette-scope-tabs";
 import {
   buildHomeSections,
   buildSearchSections,
@@ -72,6 +77,8 @@ import {
   getMentionState,
   resolveMentionCommit,
   stripMentionToken,
+  type AvailableScopes,
+  type SearchableEntityType,
   type SearchEntityOption,
 } from "./search-entity-filter";
 import {
@@ -81,6 +88,7 @@ import {
   usePaletteHome,
   usePaletteRemoteSearch,
   usePinnedPages,
+  useReadableRecordTypes,
   useUnreadCount,
 } from "./use-palette-data";
 import { usePaletteIntentRunner } from "./use-palette-intents";
@@ -148,7 +156,7 @@ function caretAtEnd(input: HTMLInputElement): boolean {
 
 /** A record an answer cited, as a palette record, when the palette can draw and open it. */
 function recordFromRef(ref: AssistantEntityRef): PaletteRecord | null {
-  if (!isGlobalSearchEntityType(ref.type)) {
+  if (!isPaletteRecordType(ref.type)) {
     return null;
   }
   const href = isRecordEntityType(ref.type) ? recordPath(ref.type, ref.id) : "";
@@ -198,6 +206,12 @@ export function CommandPalette() {
 
   const unread = useUnreadCount();
   const catalog = usePaletteCatalog(unread);
+  const readableTypes = useReadableRecordTypes();
+  const scopes = useMemo(() => paletteScopes(readableTypes), [readableTypes]);
+  const available = useMemo<AvailableScopes>(
+    () => new Set(scopes.filter((option): option is SearchableEntityType => option !== "all")),
+    [scopes],
+  );
   const pinned = usePinnedPages(open, catalog.pageIndex);
   const home = usePaletteHome({ catalog, pinned });
 
@@ -420,20 +434,31 @@ export function CommandPalette() {
     }
   }, [firstRecord, open, queryClient]);
 
+  // What the person opened is kept for "recent" only when the palette searches
+  // its kind; a record only an answer can cite is not.
+  const rememberOpened = useCallback(
+    (record: PaletteRecord) => {
+      if (isGlobalSearchEntityType(record.entityType)) {
+        recordOpen(organizationId, { ...record, entityType: record.entityType });
+      }
+    },
+    [organizationId, recordOpen],
+  );
+
   const openRecord = useCallback(
     (record: PaletteRecord) => {
       if (record.entityType === "document") {
-        recordOpen(organizationId, record);
+        rememberOpened(record);
         runIntent({ type: "open-document", documentId: record.id, disposition: "view" });
         return;
       }
       if (record.href === "") {
         return;
       }
-      recordOpen(organizationId, record);
+      rememberOpened(record);
       runIntent({ type: "navigate", href: record.href });
     },
-    [organizationId, recordOpen, runIntent],
+    [rememberOpened, runIntent],
   );
 
   const openCited = useCallback(
@@ -508,7 +533,7 @@ export function CommandPalette() {
         action.id !== "open-customer" &&
         action.id !== "open-current-load"
       ) {
-        recordOpen(organizationId, item.record);
+        rememberOpened(item.record);
       }
       if (intentKeepsPaletteOpen(intent)) {
         setActionsOpen(false);
@@ -516,7 +541,7 @@ export function CommandPalette() {
       }
       runIntent(intent);
     },
-    [focusInput, organizationId, recordOpen, runIntent],
+    [focusInput, rememberOpened, runIntent],
   );
 
   const changeScope = useCallback(
@@ -579,7 +604,10 @@ export function CommandPalette() {
     ],
   );
 
-  const mentionOptions = useMemo(() => filterMentionOptions(mention.text), [mention.text]);
+  const mentionOptions = useMemo(
+    () => filterMentionOptions(mention.text, available),
+    [available, mention.text],
+  );
 
   const pickMention = useCallback(
     (option: SearchEntityOption) => {
@@ -604,7 +632,7 @@ export function CommandPalette() {
       }
       const committed = value.match(/(?:^|\s)@([a-zA-Z]+)\s$/);
       if (committed) {
-        const entity = resolveMentionCommit(committed[1] ?? "");
+        const entity = resolveMentionCommit(committed[1] ?? "", available);
         if (entity) {
           setScope(entity);
           setQuery(stripMentionToken(value));
@@ -612,7 +640,7 @@ export function CommandPalette() {
           return;
         }
       }
-      const state = value.startsWith(">") ? null : getMentionState(value);
+      const state = value.startsWith(">") ? null : getMentionState(value, available);
       setMention(
         state && state.mentionOpen
           ? { open: true, text: state.mentionText, index: 0 }
@@ -620,7 +648,7 @@ export function CommandPalette() {
       );
       setQuery(value);
     },
-    [askSubject, asked, clearAnswer],
+    [askSubject, asked, available, clearAnswer],
   );
 
   const runShortcut = useCallback(
@@ -675,7 +703,7 @@ export function CommandPalette() {
     if (event.key === "Tab") {
       event.preventDefault();
       if (askSubject === null) {
-        changeScope(nextScope(scope, event.shiftKey ? -1 : 1));
+        changeScope(nextScope(scope, event.shiftKey ? -1 : 1, scopes));
       }
       return;
     }
@@ -902,7 +930,13 @@ export function CommandPalette() {
         }}
       />
       {askSubject === null ? (
-        <PaletteScopeTabs scope={scope} onScopeChange={changeScope} counts={counts} />
+        <PaletteScopeTabs
+          scopes={scopes}
+          scope={scope}
+          onScopeChange={changeScope}
+          counts={counts}
+          pending={readableTypes === null}
+        />
       ) : (
         <div aria-hidden className="border-border-subtle border-b" />
       )}

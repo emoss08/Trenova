@@ -888,6 +888,7 @@ const intIs64 = unsafe.Sizeof(int(0)) - 8
 var enumAgentRunOwnerKind = [...]schema.EnumValue{
 	{Value: `AgentRun`, Label: `Run Owner Agent Run`},
 	{Value: `AssistantTurn`, Label: `Run Owner Assistant Turn`},
+	{Value: `PaletteQuestion`, Label: `Run Owner Palette Question`},
 }
 
 var enumAiproviderKind = [...]schema.EnumValue{

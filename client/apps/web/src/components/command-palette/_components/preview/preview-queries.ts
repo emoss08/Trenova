@@ -2,7 +2,7 @@ import { getFileCategory } from "@/components/documents/document-utils";
 import { fetchRecordShipments, type ShipmentScope } from "@/lib/graphql/record-shipments";
 import { fetchDeskWorker } from "@/lib/graphql/worker-card";
 import { ar } from "@/lib/queries/ar";
-import { documentPage, PAGE_IMAGE_CACHE } from "@/lib/queries/document-page";
+import { invoice } from "@/lib/queries/invoice";
 import { shipment } from "@/lib/queries/shipment";
 import { telematics } from "@/lib/queries/telematics";
 import { apiService } from "@/services/api";
@@ -88,17 +88,17 @@ export function hasPages(document: Pick<Document, "fileType" | "originalName">):
   return category === "pdf" || category === "image";
 }
 
-/** The document's first page as the server draws it, the query its preview reads. */
-export function documentFirstPageQuery(id: string) {
-  return { ...documentPage.image(id, 1), ...PAGE_IMAGE_CACHE };
-}
-
 export function documentExtractionQuery(id: string) {
   return {
     queryKey: ["command-palette", "document-extraction", id] as const,
     queryFn: () => apiService.documentService.getShipmentDraft(id),
     staleTime: PREVIEW_STALE_TIME,
   };
+}
+
+/** The invoice as the Desk's invoice card reads it, so the two share one cached read. */
+export function invoicePreviewQuery(id: string) {
+  return { ...invoice.card(id), staleTime: PREVIEW_STALE_TIME };
 }
 
 export function shipmentPreviewQuery(id: string) {
@@ -112,7 +112,12 @@ export function shipmentEventsQuery(id: string) {
   return { ...shipment.events(id, SHIPMENT_EVENTS_SHOWN), staleTime: PREVIEW_STALE_TIME };
 }
 
-/** Starts loading a record's preview before it is shown; a cached one is left alone. */
+/**
+ * Starts loading a record's preview before it is shown; a cached one is left
+ * alone. A document's record is warmed but never its page: the server logs
+ * every page it draws as the document being viewed, and a page fetched for a
+ * preview nobody opened would put a view in the access log that never happened.
+ */
 export function prefetchRecordPreview(queryClient: QueryClient, record: PaletteRecord): void {
   switch (record.entityType) {
     case "shipment":
@@ -125,15 +130,11 @@ export function prefetchRecordPreview(queryClient: QueryClient, record: PaletteR
     case "worker":
       void queryClient.prefetchQuery(workerPreviewQuery(record.id));
       return;
+    case "invoice":
+      void queryClient.prefetchQuery(invoicePreviewQuery(record.id));
+      return;
     case "document":
-      void queryClient
-        .fetchQuery(documentPreviewQuery(record.id))
-        .then((document) =>
-          hasPages(document)
-            ? queryClient.prefetchQuery(documentFirstPageQuery(record.id))
-            : undefined,
-        )
-        .catch(() => undefined);
+      void queryClient.prefetchQuery(documentPreviewQuery(record.id));
       return;
   }
 }

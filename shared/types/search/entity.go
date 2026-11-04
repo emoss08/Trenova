@@ -7,4 +7,5 @@ const (
 	EntityTypeCustomer = EntityType("customer")
 	EntityTypeWorker   = EntityType("worker")
 	EntityTypeDocument = EntityType("document")
+	EntityTypeInvoice  = EntityType("invoice")
 )

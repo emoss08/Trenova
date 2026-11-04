@@ -66,11 +66,11 @@ func (r *AIAuditEventResolver) Agent(ctx context.Context, obj *aiaudit.AIAuditEv
 	return definition, nil
 }
 
-func (r *AIAuditEventResolver) OwnerKind(ctx context.Context, obj *aiaudit.AIAuditEvent) (*gqlmodel.AgentRunEventOwnerKind, error) {
+func (r *AIAuditEventResolver) OwnerKind(ctx context.Context, obj *aiaudit.AIAuditEvent) (*gqlmodel.AIAuditOwnerKind, error) {
 	if obj.OwnerKind == "" {
 		return nil, nil
 	}
-	kind := gqlmodel.AgentRunEventOwnerKind(obj.OwnerKind)
+	kind := gqlmodel.AIAuditOwnerKind(obj.OwnerKind)
 	if !kind.IsValid() {
 		return nil, nil
 	}

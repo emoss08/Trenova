@@ -27,6 +27,8 @@ type QuestionRepository interface {
 	MarkKept(ctx context.Context, ref AskRef, threadID pulid.ID) error
 	ReleaseKeep(ctx context.Context, ref AskRef) error
 	// DeleteBefore removes questions asked before then, across every
-	// organization, at most limit at a time.
+	// organization, at most limit at a time. Their reads go with them.
 	DeleteBefore(ctx context.Context, before int64, limit int) (int, error)
+	// RecordToolCall keeps one read Nova made answering a question.
+	RecordToolCall(ctx context.Context, call *palettequestion.ToolCall) error
 }

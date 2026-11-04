@@ -478,9 +478,12 @@ func callUnitKey(u *aiusagedb.AIUsageRecordsTable) keel.StringExpr {
 		Else(u.ID)
 }
 
+// standaloneCalls are the model calls no run or turn owns. A palette
+// question owns its calls only to keep them with the question on the AI audit
+// trail; for the analytics they are still calls of their own.
 func standaloneCalls(u *aiusagedb.AIUsageRecordsTable) []keel.Pred {
 	return []keel.Pred{
-		u.OwnerID.IsNull(),
+		keel.Or(u.OwnerID.IsNull(), u.OwnerKind.Eq(agent.RunOwnerPaletteQuestion)),
 		u.RunID.IsNull(),
 		u.ThreadID.IsNull(),
 		u.Surface.NotIn(

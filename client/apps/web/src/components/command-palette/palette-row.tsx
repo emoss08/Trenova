@@ -199,6 +199,36 @@ function RecordContext({ record, match }: { record: PaletteRecord; match?: Palet
         />
       );
     }
+    case "invoice": {
+      const due = Number(meta.balanceDue);
+      return (
+        <ContextLine
+          parts={[
+            (meta.billToName ?? record.subtitle) && (
+              <MatchText
+                key="customer"
+                text={meta.billToName ?? record.subtitle ?? ""}
+                ranges={ranges(match, "customer")}
+                className="text-foreground-muted"
+              />
+            ),
+            meta.proNumber && (
+              <MatchText
+                key="pro"
+                text={meta.proNumber}
+                ranges={ranges(match, "bol")}
+                className="font-mono"
+              />
+            ),
+            Number.isFinite(due) && due > 0 && (
+              <span key="due" className="text-foreground-muted">
+                {t("{0} due", formatCurrency(due, meta.currencyCode || "USD"))}
+              </span>
+            ),
+          ]}
+        />
+      );
+    }
   }
 }
 
@@ -227,7 +257,10 @@ function RecordRow({ item }: { item: Extract<PaletteItem, { kind: "record" }> })
   const now = useNow();
   const { record, match } = item;
   const status = recordStatus(record, t);
-  const mono = record.entityType === "shipment" || record.entityType === "document";
+  const mono =
+    record.entityType === "shipment" ||
+    record.entityType === "document" ||
+    record.entityType === "invoice";
   return (
     <>
       <PaletteTile

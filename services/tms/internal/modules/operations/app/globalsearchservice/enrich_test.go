@@ -121,6 +121,7 @@ func indexConfig() *searchconfig.Config {
 				Customers: "customers",
 				Workers:   "workers",
 				Documents: "documents",
+				Invoices:  "invoices",
 			},
 		},
 	}
@@ -194,6 +195,7 @@ func TestSearchFindsACustomersShipmentsAndAWorkersCurrentLoad(t *testing.T) {
 	}
 
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
@@ -255,6 +257,7 @@ func TestSearchNamesNoShipmentWithoutShipmentAccess(t *testing.T) {
 	reader := &fakeCardReader{}
 
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
@@ -291,6 +294,7 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 		{CustomerID: customerID, OpenMinor: 4821050, OverdueMinor: 1701000, CurrencyCode: "USD"},
 	}}
 	svc := &Service{
+		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
 		searchRepo:   repoReturning(t, pages),
@@ -313,6 +317,7 @@ func TestSearchShowsOpenBalancesOnlyWithReceivablesAccess(t *testing.T) {
 
 	denied := &fakeBalances{}
 	svc = &Service{
+		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
 		searchRepo:   repoReturning(t, pages),
@@ -344,6 +349,7 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 	}}
 
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
@@ -391,6 +397,7 @@ func TestSearchLabelsTheRecordADocumentIsAttachedToWhenReadable(t *testing.T) {
 
 func TestSearchReportsTheIndexTotalBeyondTheReturnedHits(t *testing.T) {
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
@@ -436,6 +443,7 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
 		searchRepo:   repo,
@@ -462,6 +470,7 @@ func TestSearchBrowsesOneKindOfRecordOnABlankQuery(t *testing.T) {
 
 func TestSearchDoesNotBrowseEverythingOnABlankQuery(t *testing.T) {
 	svc := &Service{
+		views:       searchViews(),
 		logger:      zaptest.NewLogger(t),
 		config:      indexConfig(),
 		searchRepo:  customerportsmock.NewMockSearchRepository(t),

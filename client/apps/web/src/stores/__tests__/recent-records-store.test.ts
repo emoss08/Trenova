@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { clearSessionCache } from "@/lib/session-cache";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   RECENT_RECORDS_LIMIT,
   useRecentRecords,
@@ -101,5 +102,37 @@ describe("recent records store", () => {
     forget(ORG_A, "shipment", "1");
 
     expect(idsFor(ORG_A)).toEqual(["shipment:2"]);
+  });
+
+  it("writes nothing about a record to the browser's storage", () => {
+    useRecentRecordsStore.getState().recordOpen(ORG_A, shipment("1", "PRO-SECRET"));
+
+    const stored = [localStorage, sessionStorage].flatMap((storage) =>
+      Object.keys(storage).map((key) => storage.getItem(key) ?? ""),
+    );
+    expect(stored.some((value) => value.includes("PRO-SECRET"))).toBe(false);
+  });
+
+  it("forgets every record when the session ends", async () => {
+    const { recordOpen } = useRecentRecordsStore.getState();
+    recordOpen(ORG_A, shipment("1"));
+    recordOpen(ORG_B, shipment("2"));
+
+    await clearSessionCache();
+
+    expect(idsFor(ORG_A)).toEqual([]);
+    expect(idsFor(ORG_B)).toEqual([]);
+  });
+
+  it("deletes the records an earlier build left on disk", async () => {
+    localStorage.setItem(
+      "recent-records-storage",
+      JSON.stringify({ state: { recordsByOrganization: { [ORG_A]: [shipment("1")] } } }),
+    );
+
+    vi.resetModules();
+    await import("../recent-records-store");
+
+    expect(localStorage.getItem("recent-records-storage")).toBeNull();
   });
 });

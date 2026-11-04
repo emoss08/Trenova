@@ -46,6 +46,7 @@ func page(documents ...map[string]any) *customerports.SearchPage {
 func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 	repo := customerportsmock.NewMockSearchRepository(t)
 	svc := &Service{
+		views:       searchViews(),
 		logger:      zaptest.NewLogger(t),
 		config:      &searchconfig.Config{},
 		searchRepo:  repo,
@@ -83,6 +84,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: &searchconfig.Config{
 			Enabled: true,
@@ -143,6 +145,7 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: &searchconfig.Config{
 			Enabled: true,
@@ -201,6 +204,7 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 		Once()
 
 	svc := &Service{
+		views:  searchViews(),
 		logger: zaptest.NewLogger(t),
 		config: &searchconfig.Config{
 			Enabled: true,

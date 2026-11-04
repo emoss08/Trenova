@@ -420,7 +420,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiaudit.AIAuditEvent)
 					return gqlexec.Resolver[AIAuditEventResolver](ec, "AIAuditEvent@aiaudit").OwnerKind(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentRunEventOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind),
+				Marshal: gqlexec.Marshal(marshalOAIAuditOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAuditOwnerKind),
 			},
 			{
 				Name:     "ownerId",
@@ -1458,7 +1458,7 @@ type AIAuditEventResolver interface {
 	OnBehalfOf(ctx context.Context, obj *aiaudit.AIAuditEvent) (*tenant.User, error)
 	DecidedBy(ctx context.Context, obj *aiaudit.AIAuditEvent) (*tenant.User, error)
 	Agent(ctx context.Context, obj *aiaudit.AIAuditEvent) (*agentdefinition.Definition, error)
-	OwnerKind(ctx context.Context, obj *aiaudit.AIAuditEvent) (*gqlmodel.AgentRunEventOwnerKind, error)
+	OwnerKind(ctx context.Context, obj *aiaudit.AIAuditEvent) (*gqlmodel.AIAuditOwnerKind, error)
 	TraceURL(ctx context.Context, obj *aiaudit.AIAuditEvent) (*string, error)
 	CostUsd(ctx context.Context, obj *aiaudit.AIAuditEvent) (*string, error)
 	Arguments(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error)
@@ -1498,7 +1498,7 @@ var (
 	errNoChild7  = errors.New("field of type AIAuditEventOutcome does not have child fields")
 	errNoChild8  = errors.New("field of type AIAuditPurpose does not have child fields")
 	errNoChild9  = errors.New("field of type AIAuditPrincipalType does not have child fields")
-	errNoChild10 = errors.New("field of type AgentRunEventOwnerKind does not have child fields")
+	errNoChild10 = errors.New("field of type AIAuditOwnerKind does not have child fields")
 	errNoChild11 = errors.New("field of type Decimal does not have child fields")
 	errNoChild12 = errors.New("field of type JSON does not have child fields")
 	errNoChild13 = errors.New("field of type AIAuditExportFormat does not have child fields")
@@ -1972,6 +1972,13 @@ func marshalOAIAuditExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "AIAuditExport", v)
 }
 
+func marshalOAIAuditOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAuditOwnerKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIAuditOwnerKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func marshalOAIAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiauditᚐVerificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiaudit.VerificationStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -1985,13 +1992,6 @@ func marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentDefinition", v)
-}
-
-func marshalOAgentRunEventOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AgentRunEventOwnerKind) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {

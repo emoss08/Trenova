@@ -26,6 +26,12 @@ meilisearch:
       primary_key: id
       searchable_attributes: [first_name, last_name, type]
       filterable_attributes: [organization_id, business_unit_id]
+    public.invoice_search_projections:
+      index: invoices
+      primary_key: id
+      searchable_attributes:
+        [number, bill_to_name, bill_to_code, shipment_pro_number, shipment_bol, po_number, order_number]
+      filterable_attributes: [organization_id, business_unit_id]
     public.document_search_projections:
       index: documents
       primary_key: id

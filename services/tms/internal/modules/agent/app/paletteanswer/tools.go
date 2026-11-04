@@ -87,7 +87,7 @@ func (t *searchTool) Call(ctx context.Context, arguments map[string]any) llmport
 		Limit: searchLimit,
 	})
 	if err != nil {
-		return refused("The search failed: " + err.Error())
+		return failed("The search failed: " + err.Error())
 	}
 
 	hits := make([]searchHit, 0, searchLimit)
@@ -170,7 +170,7 @@ func (t *listTool) Spec() kernelports.ToolSpec {
 				},
 				"filters": map[string]any{
 					toolschema.KeyType:        toolschema.TypeObject,
-					toolschema.KeyDescription: "The kind's filters by name; leave out the ones you do not need.",
+					toolschema.KeyDescription: "The kind's filters by name; leave out the ones you do not need. A filter named beside kind is read as one of these.",
 				},
 			},
 			toolschema.KeyRequired: []string{"kind"},
@@ -184,27 +184,63 @@ func (t *listTool) Call(ctx context.Context, arguments map[string]any) llmports.
 	if !ok {
 		return refused(fmt.Sprintf("%q is not a kind list_records can list.", kind))
 	}
-	filters, _ := arguments["filters"].(map[string]any)
-	if filters == nil {
-		filters = map[string]any{}
-	}
-
-	return t.reader.query(ctx, tool, filters, true)
+	return t.reader.query(ctx, tool, listFilters(arguments), true)
 }
 
+// listFilters is what the list is asked for. A model often writes a filter
+// beside kind rather than inside filters (`{"kind": "shipment", "late": true}`);
+// it is the list's filter either way, so it is read as one, and the list's own
+// argument check refuses a name the list does not take. Dropping it would list
+// everything and present it as the answer. A filter named in both places is
+// read from filters.
+func listFilters(arguments map[string]any) map[string]any {
+	filters := map[string]any{}
+	for name, value := range arguments {
+		if name != "kind" && name != "filters" {
+			filters[name] = value
+		}
+	}
+	if nested, ok := arguments["filters"].(map[string]any); ok {
+		for name, value := range nested {
+			filters[name] = value
+		}
+	}
+
+	return filters
+}
+
+// query runs one Desk read as the person asking, and names the read and what
+// it was asked on the result, so the call's record says what was tried.
 func (r *reader) query(
 	ctx context.Context,
 	tool agenttoolports.AgentQueryTool,
 	params map[string]any,
 	list bool,
 ) llmports.NovaToolResult {
+	result, asked := r.read(ctx, tool, params, list)
+	result.Read = tool.Name()
+	result.Params = asked
+
+	return result
+}
+
+func (r *reader) read(
+	ctx context.Context,
+	tool agenttoolports.AgentQueryTool,
+	params map[string]any,
+	list bool,
+) (llmports.NovaToolResult, map[string]any) {
 	resource := tool.Policy().Resource
 	check, err := r.permissions.Check(ctx, r.actor.PermissionCheck(resource, permission.OpRead))
 	if err != nil {
-		return refused("Whether you may read this could not be checked. Try again in a moment.")
+		return failed(
+			"Whether you may read this could not be checked. Try again in a moment.",
+		), params
 	}
 	if !check.Allowed {
-		return refused(fmt.Sprintf("The person asking cannot read %s records.", resource.String()))
+		return refused(
+			fmt.Sprintf("The person asking cannot read %s records.", resource.String()),
+		), params
 	}
 
 	schema := tool.ParamSchema()
@@ -215,7 +251,7 @@ func (r *reader) query(
 	if err != nil {
 		// The refusal names each argument that does not fit and what the
 		// tool wanted there, so the next round can send it right.
-		return refused(argcheck.Refusal(tool.Name(), schema, err).Content)
+		return refused(argcheck.Refusal(tool.Name(), schema, err).Content), params
 	}
 	params = contract.Args
 
@@ -233,10 +269,10 @@ func (r *reader) query(
 	})
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			return refused("The read was stopped.")
+			return failed("The read was stopped."), params
 		}
 
-		return refused(fmt.Sprintf("%s failed: %s", tool.Name(), err.Error()))
+		return failed(fmt.Sprintf("%s failed: %s", tool.Name(), err.Error())), params
 	}
 
 	result := r.encode(tool.Name(), data)
@@ -244,7 +280,7 @@ func (r *reader) query(
 		result.Content += "\n\n[" + note + "]"
 	}
 
-	return result
+	return result, params
 }
 
 // encode turns a read into what the model reads, cut to fit when it is a long
@@ -253,7 +289,7 @@ func (r *reader) encode(name string, data any) llmports.NovaToolResult {
 	now := timeutils.NowUnix()
 	encoded, document, err := toolresult.EncodeModelDocument(data, now, r.timezone, nil)
 	if err != nil {
-		return refused(name + " returned data that could not be read.")
+		return failed(name + " returned data that could not be read.")
 	}
 	note := ""
 	if fitted, cut := toolresult.FitPage(data, encoded, now, r.timezone, nil); cut {
@@ -277,6 +313,12 @@ func resourceOf(id string) (permission.Resource, bool) {
 	return recordkind.ResourceOfIDPrefix(id[:separator+1])
 }
 
+// refused is a call turned away before anything was read.
 func refused(content string) llmports.NovaToolResult {
+	return llmports.NovaToolResult{Content: content, Failed: true, Refused: true}
+}
+
+// failed is a call whose read ran, or could not be checked, and went wrong.
+func failed(content string) llmports.NovaToolResult {
 	return llmports.NovaToolResult{Content: content, Failed: true}
 }

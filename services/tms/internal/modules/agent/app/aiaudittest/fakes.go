@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -440,17 +441,18 @@ func (EmptyRetention) List(
 type FakeSource struct {
 	aiauditports.AIAuditSourceRepository
 
-	Runs        []*agent.AgentRun
-	Turns       []*conversationturn.AssistantTurn
-	Usage       []*aiusage.AIUsageRecord
-	Steps       []*agentrunstep.AgentRunStep
-	Events      []*agentrunevent.AgentRunEvent
-	Proposals   []*agent.AgentProposal
-	Decisions   []*agentdecision.AgentDecision
-	Threads     []*conversation.Thread
-	Evaluations []*agentevaluation.Evaluation
-	Users       map[pulid.ID]string
-	Agents      map[pulid.ID]string
+	Runs         []*agent.AgentRun
+	Turns        []*conversationturn.AssistantTurn
+	Usage        []*aiusage.AIUsageRecord
+	Steps        []*agentrunstep.AgentRunStep
+	Events       []*agentrunevent.AgentRunEvent
+	Proposals    []*agent.AgentProposal
+	Decisions    []*agentdecision.AgentDecision
+	PaletteCalls []*palettequestion.ToolCall
+	Threads      []*conversation.Thread
+	Evaluations  []*agentevaluation.Evaluation
+	Users        map[pulid.ID]string
+	Agents       map[pulid.ID]string
 }
 
 func page[T any](
@@ -541,6 +543,14 @@ func (f *FakeSource) ListDecisions(
 ) ([]*agentdecision.AgentDecision, error) {
 	return page(f.Decisions, func(r *agentdecision.AgentDecision) int64 { return r.CreatedAt },
 		func(r *agentdecision.AgentDecision) string { return r.ID.String() }, req, nil), nil
+}
+
+func (f *FakeSource) ListPaletteToolCalls(
+	_ context.Context,
+	req aiauditports.AIAuditSourcePage,
+) ([]*palettequestion.ToolCall, error) {
+	return page(f.PaletteCalls, func(r *palettequestion.ToolCall) int64 { return r.CreatedAt },
+		func(r *palettequestion.ToolCall) string { return r.ID.String() }, req, nil), nil
 }
 
 func byIDs[T any](rows []T, id func(T) pulid.ID, ids []pulid.ID) []T {

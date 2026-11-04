@@ -205,6 +205,11 @@ export function AuditEventDetailSections({ event }: { event: AIAuditEventDetail 
           <DescriptionItem label={t("Turn")}>
             <Mono value={event.turnId} />
           </DescriptionItem>
+          {event.ownerKind === "PaletteQuestion" ? (
+            <DescriptionItem label={t("Palette question")}>
+              <Mono value={event.ownerId} />
+            </DescriptionItem>
+          ) : null}
           <DescriptionItem label={t("Proposal")}>
             <Mono value={event.proposalId} />
           </DescriptionItem>

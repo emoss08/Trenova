@@ -18,6 +18,7 @@ import { ShortcutKeys } from "../../palette-parts";
 import type { RecentPaletteRecord } from "../../palette-sections";
 import { CustomerPreview } from "./customer-preview";
 import { DocumentPreview } from "./document-preview";
+import { InvoicePreview } from "./invoice-preview";
 import {
   PreviewFields,
   PreviewFrame,
@@ -240,6 +241,8 @@ function RecordBody({ record, context }: { record: PaletteRecord; context: Previ
       return <WorkerPreview {...props} />;
     case "document":
       return <DocumentPreview {...props} />;
+    case "invoice":
+      return <InvoicePreview {...props} />;
   }
 }
 

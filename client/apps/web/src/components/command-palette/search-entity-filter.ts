@@ -21,6 +21,11 @@ export const searchEntityOptions: SearchEntityOption[] = [
     aliases: ["c", "cust", "customer", "customers"],
   },
   {
+    key: "invoice",
+    label: "Invoices",
+    aliases: ["i", "inv", "invoice", "invoices", "bill", "bills"],
+  },
+  {
     key: "worker",
     label: "Workers",
     aliases: ["w", "worker", "workers", "driver", "drivers"],
@@ -48,14 +53,27 @@ export interface SearchMentionState {
   mentionText: string;
 }
 
-export function resolveEntityAlias(value: string): SearchableEntityType | null {
+/**
+ * The scopes an `@` mention may settle on: the ones the palette offers, so a
+ * kind of record the person may not read is never a filter they can type.
+ */
+export type AvailableScopes = ReadonlySet<SearchableEntityType>;
+
+function offered(available: AvailableScopes): SearchEntityOption[] {
+  return searchEntityOptions.filter((option) => available.has(option.key));
+}
+
+export function resolveEntityAlias(
+  value: string,
+  available: AvailableScopes,
+): SearchableEntityType | null {
   const normalized = value.trim().toLowerCase();
   if (!normalized) {
     return null;
   }
 
   const exactMatch =
-    searchEntityOptions.find(
+    offered(available).find(
       (option) => option.label.toLowerCase() === normalized || option.aliases.includes(normalized),
     ) ?? null;
 
@@ -72,7 +90,7 @@ export function getSearchEntityOption(
   return searchEntityOptions.find((option) => option.key === entityType) ?? null;
 }
 
-export function getMentionState(input: string): SearchMentionState {
+export function getMentionState(input: string, available: AvailableScopes): SearchMentionState {
   const lastAtIndex = input.lastIndexOf("@");
   if (lastAtIndex < 0 || (lastAtIndex > 0 && !/\s/.test(input.charAt(lastAtIndex - 1)))) {
     return { activeFilter: null, mentionOpen: false, mentionText: "" };
@@ -84,7 +102,7 @@ export function getMentionState(input: string): SearchMentionState {
   }
 
   const normalized = suffix.trim().toLowerCase();
-  const activeFilter = resolveEntityAlias(normalized);
+  const activeFilter = resolveEntityAlias(normalized, available);
 
   return {
     activeFilter,
@@ -93,13 +111,16 @@ export function getMentionState(input: string): SearchMentionState {
   };
 }
 
-export function filterMentionOptions(mentionText: string): SearchEntityOption[] {
+export function filterMentionOptions(
+  mentionText: string,
+  available: AvailableScopes,
+): SearchEntityOption[] {
   const normalized = mentionText.trim().toLowerCase();
   if (!normalized) {
-    return searchEntityOptions;
+    return offered(available);
   }
 
-  return searchEntityOptions.filter(
+  return offered(available).filter(
     (option) =>
       option.label.toLowerCase().startsWith(normalized) ||
       option.aliases.some((alias) => alias.startsWith(normalized)),
@@ -120,14 +141,17 @@ export function stripMentionToken(input: string): string {
  * alias, or the only type the typed prefix can still mean ("@work" is
  * workers). An ambiguous or unknown prefix settles on nothing.
  */
-export function resolveMentionCommit(value: string): SearchableEntityType | null {
-  const exact = resolveEntityAlias(value);
+export function resolveMentionCommit(
+  value: string,
+  available: AvailableScopes,
+): SearchableEntityType | null {
+  const exact = resolveEntityAlias(value, available);
   if (exact) {
     return exact;
   }
   if (value.trim() === "") {
     return null;
   }
-  const candidates = filterMentionOptions(value);
+  const candidates = filterMentionOptions(value, available);
   return candidates.length === 1 ? (candidates[0]?.key ?? null) : null;
 }

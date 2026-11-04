@@ -121,11 +121,15 @@ func scopedSearchService(
 		Maybe()
 
 	return &Service{
-		logger:      zaptest.NewLogger(t),
-		config:      indexConfig(),
-		searchRepo:  repo,
-		permissions: engine,
-		visibility:  visibility,
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
+		searchRepo:   repo,
+		shipmentRead: &fakeCardReader{},
+		balances:     &fakeBalances{},
+		recordLabels: &fakeLabels{},
+		permissions:  engine,
+		visibility:   visibility,
 	}, &requests
 }
 
@@ -327,7 +331,7 @@ func TestSearch_AsksEachIndexForOnlyTheFieldsAHitShows(t *testing.T) {
 		TenantInfo: searchTenant(),
 	})
 	require.NoError(t, err)
-	require.Len(t, *requests, 4)
+	require.Len(t, *requests, 5)
 	for _, req := range *requests {
 		require.NotEmpty(t, req.Attributes, req.Index)
 		assert.Contains(t, req.Attributes, "id", req.Index)

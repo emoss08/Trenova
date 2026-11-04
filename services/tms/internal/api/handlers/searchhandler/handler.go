@@ -2,12 +2,12 @@ package searchhandler
 
 import (
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/types/search"
 	"github.com/gin-gonic/gin"
@@ -40,12 +40,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 func (h *Handler) globalSearch(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	entityTypes, err := parseEntityTypes(c.Query("entityTypes"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
 	result, err := h.service.Search(c.Request.Context(), &kernelports.GlobalSearchRequest{
 		Query:      strings.TrimSpace(c.Query("query")),
 		TenantInfo: pagination.FromAuth(authCtx),
@@ -56,7 +50,7 @@ func (h *Handler) globalSearch(c *gin.Context) {
 			APIKeyID: authCtx.APIKeyID,
 		},
 		Limit:       helpers.QueryInt(c, "limit", 8),
-		EntityTypes: entityTypes,
+		EntityTypes: parseEntityTypes(c.Query("entityTypes")),
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -66,44 +60,22 @@ func (h *Handler) globalSearch(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, result)
 }
 
-func parseEntityTypes(value string) ([]search.EntityType, error) {
+// parseEntityTypes reads the comma-separated kinds, each once. Whether the
+// search finds a kind is the search service's to say.
+func parseEntityTypes(value string) []search.EntityType {
 	if strings.TrimSpace(value) == "" {
-		return nil, nil
+		return nil
 	}
 
 	parts := strings.Split(value, ",")
 	entityTypes := make([]search.EntityType, 0, len(parts))
-	seen := make(map[search.EntityType]struct{}, len(parts))
 	for _, part := range parts {
 		entityType := search.EntityType(strings.TrimSpace(part))
-		if entityType == "" {
+		if entityType == "" || slices.Contains(entityTypes, entityType) {
 			continue
 		}
-		if !isValidEntityType(entityType) {
-			return nil, errortypes.NewValidationError(
-				"entityTypes",
-				errortypes.ErrInvalid,
-				"Invalid global search entity type",
-			)
-		}
-		if _, ok := seen[entityType]; ok {
-			continue
-		}
-		seen[entityType] = struct{}{}
 		entityTypes = append(entityTypes, entityType)
 	}
 
-	return entityTypes, nil
-}
-
-func isValidEntityType(entityType search.EntityType) bool {
-	switch entityType {
-	case search.EntityTypeShipment,
-		search.EntityTypeCustomer,
-		search.EntityTypeWorker,
-		search.EntityTypeDocument:
-		return true
-	default:
-		return false
-	}
+	return entityTypes
 }

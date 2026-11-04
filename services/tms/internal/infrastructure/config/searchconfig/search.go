@@ -37,6 +37,7 @@ type MeilisearchIndexConfig struct {
 	Customers string `mapstructure:"customers"`
 	Workers   string `mapstructure:"workers"`
 	Documents string `mapstructure:"documents"`
+	Invoices  string `mapstructure:"invoices"`
 }
 
 func Defaults() map[string]any {
@@ -49,5 +50,6 @@ func Defaults() map[string]any {
 		"meilisearch.indexes.customers": "customers",
 		"meilisearch.indexes.workers":   "workers",
 		"meilisearch.indexes.documents": "documents",
+		"meilisearch.indexes.invoices":  "invoices",
 	}
 }

@@ -50,6 +50,18 @@ func (r *repository) Create(ctx context.Context, question *palettequestion.Quest
 	})
 }
 
+func (r *repository) RecordToolCall(ctx context.Context, call *palettequestion.ToolCall) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if err := palettequestiondb.ToolCalls.Create(ctx, r.db.Keel(ctx), call); err != nil {
+			r.l.Error("failed to record a palette read", zap.Error(err))
+
+			return err
+		}
+
+		return nil
+	})
+}
+
 func (r *repository) Get(
 	ctx context.Context,
 	ref paletteports.AskRef,
@@ -71,7 +83,12 @@ func (r *repository) CountAsking(
 	tenant pagination.TenantInfo,
 	since int64,
 ) (int, error) {
-	return r.count(ctx, tenant, since, palettequestiondb.Questions.Status.Eq(palettequestion.StatusAsking))
+	return r.count(
+		ctx,
+		tenant,
+		since,
+		palettequestiondb.Questions.Status.Eq(palettequestion.StatusAsking),
+	)
 }
 
 func (r *repository) CountUnkeptSince(
@@ -170,7 +187,10 @@ func (r *repository) ReleaseKeep(ctx context.Context, ref paletteports.AskRef) e
 }
 
 func (r *repository) DeleteBefore(ctx context.Context, before int64, limit int) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "delete palette questions past retention across every organization")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"delete palette questions past retention across every organization",
+	)
 	if before <= 0 {
 		return 0, nil
 	}

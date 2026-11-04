@@ -261,6 +261,7 @@ const (
 	SourceRunEvents      = Source("agent_run_events")
 	SourceProposals      = Source("agent_proposals")
 	SourceDecisions      = Source("agent_decisions")
+	SourcePaletteCalls   = Source("assistant_palette_tool_calls")
 )
 
 func AllSources() []Source {
@@ -272,6 +273,7 @@ func AllSources() []Source {
 		SourceRunEvents,
 		SourceProposals,
 		SourceDecisions,
+		SourcePaletteCalls,
 	}
 }
 

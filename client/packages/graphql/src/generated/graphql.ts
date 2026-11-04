@@ -93,6 +93,15 @@ export type AiAuditExportStatus =
   | 'Running'
   | 'Succeeded';
 
+/**
+ * The unit of work an event belongs to: a background agent run, a Desk conversation turn, or a
+ * question asked from the command palette.
+ */
+export type AiAuditOwnerKind =
+  | 'AgentRun'
+  | 'AssistantTurn'
+  | 'PaletteQuestion';
+
 /** Who an AI audit event's action was taken as. */
 export type AiAuditPrincipalType =
   | 'Agent'
@@ -10641,7 +10650,7 @@ export type RouteAiTaskMutationVariables = Exact<{
 
 export type RouteAiTaskMutation = { routeAITask: Array<{ id: string, tasks: Array<AiTask>, priority: number, version: number }> };
 
-export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
+export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AiAuditOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, heldBy: Array<string>, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean, traceId: string | null, traceUrl: string | null } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
 
 export type AiAuditEventDetailFieldsFragment = (
   { organizationId: string, businessUnitId: string, sourceKey: string, planId: string | null, decisionId: string | null, stepKey: string | null, callId: string | null, delegateCallId: string | null, parentOwnerId: string | null, spanId: string | null, providerId: string | null, attempt: number | null, failover: boolean, reasoningTokens: number, cacheReadTokens: number, cacheWriteTokens: number, toolEffect: string | null, egressClass: string | null, tierSource: string | null, arguments: unknown, argumentSensitivity: unknown, argumentsTruncated: boolean, redactedPaths: Array<string>, versionBefore: number | null, versionAfter: number | null, windowStart: number | null, windowEnd: number | null, taint: unknown, prevHash: string, hash: string, hashKeyId: string | null, hashVersion: number, createdAt: number, onBehalfOf: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null, decidedBy: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null, agent: { id: string, name: string } | null, auditEntries: Array<{ ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } }> }

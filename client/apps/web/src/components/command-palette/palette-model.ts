@@ -1,5 +1,6 @@
 import type { AppDialog } from "@/stores/app-dialogs-store";
 import type { GlobalSearchEntityType } from "@/services/global-search";
+import type { PaletteRecordType } from "./palette-entities";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { sameFieldsMatch, type FieldsMatch } from "@trenova/shared/lib/fuzzy-score";
 import type { PageGlanceKey } from "./route-command-data";
@@ -30,7 +31,14 @@ export type PaletteIntent =
   | { type: "open-document"; documentId: string; disposition: "view" | "download" };
 
 /** What a copy put on the clipboard, so the confirmation can say so. */
-export type PaletteCopyKind = "pro" | "bol" | "name" | "file-name" | "answer" | "text";
+export type PaletteCopyKind =
+  | "pro"
+  | "bol"
+  | "name"
+  | "file-name"
+  | "invoice-number"
+  | "answer"
+  | "text";
 
 /**
  * The intents that leave the palette open: they change nothing on the page
@@ -72,7 +80,7 @@ export interface PaletteCommand {
 }
 
 export interface PaletteRecord {
-  entityType: GlobalSearchEntityType;
+  entityType: PaletteRecordType;
   id: string;
   title: string;
   subtitle?: string;
@@ -162,7 +170,7 @@ export function isRecordScope(scope: PaletteScope): scope is GlobalSearchEntityT
   return scope !== "all" && scope !== "pages" && scope !== "commands";
 }
 
-export function recordItemKey(entityType: GlobalSearchEntityType, id: string): string {
+export function recordItemKey(entityType: PaletteRecordType, id: string): string {
   return `record:${entityType}:${id}`;
 }
 

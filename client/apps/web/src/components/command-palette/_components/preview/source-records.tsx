@@ -81,5 +81,7 @@ export function SourceRecord({ record, detailed, onOpen }: SourceProps & { detai
       return <WorkerSource record={record} onOpen={onOpen} />;
     case "document":
       return <DocumentSource record={record} onOpen={onOpen} />;
+    case "invoice":
+      return <RecordLink record={record} onOpen={onOpen} />;
   }
 }
