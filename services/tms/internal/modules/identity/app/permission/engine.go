@@ -1085,12 +1085,8 @@ func (e *engine) GetEffectivePermissions(
 		return nil, err
 	}
 
-	roleIDs := make([]pulid.ID, 0, len(assignments))
-	for _, a := range assignments {
-		if !a.IsExpired() {
-			roleIDs = append(roleIDs, a.RoleID)
-		}
-	}
+	roleActivation, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
+	roleIDs := activePermissionRoleIDs(assignments, roleActivation, hasRoleActivation)
 
 	roles, err := e.roleRepo.GetRolesWithInheritance(ctx, roleIDs)
 	if err != nil {

@@ -1029,6 +1029,62 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 	cacheRepo.AssertExpectations(t)
 }
 
+func TestGetEffectivePermissions_CountsOnlyActivatedRoles(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	activeID := pulid.MustNew("rol_")
+	idleID := pulid.MustNew("rol_")
+	ctx := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{activeID}, true)
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: activeID, UserID: userID, OrganizationID: orgID},
+			{RoleID: idleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeID}).Return([]*rbac.Role{
+		{ID: activeID, MaxSensitivity: permission.SensitivityInternal},
+	}, nil)
+
+	result, err := eng.GetEffectivePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, permission.SensitivityInternal, result.MaxSensitivity)
+	roleRepo.AssertNotCalled(
+		t,
+		"GetRolesWithInheritance",
+		ctx,
+		[]pulid.ID{activeID, idleID},
+	)
+}
+
+func TestGetEffectivePermissions_WithoutActivationCountsEveryRole(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	firstID := pulid.MustNew("rol_")
+	secondID := pulid.MustNew("rol_")
+	bound := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{firstID}, true)
+	ctx := authctx.WithoutSessionRoleActivation(bound)
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: firstID, UserID: userID, OrganizationID: orgID},
+			{RoleID: secondID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{firstID, secondID}).
+		Return([]*rbac.Role{}, nil).
+		Once()
+
+	_, err := eng.GetEffectivePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+}
+
 func TestGetEffectivePermissions_Error(t *testing.T) {
 	t.Parallel()
 

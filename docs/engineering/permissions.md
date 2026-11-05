@@ -611,6 +611,11 @@ resource, operation, data scope or sensitivity the person saving does not hold:
   never be made to inherit);
 - API key create and update.
 
+What the person holds is `GetEffectivePermissions`, which counts only the roles active in
+their session when the organization requires role activation. Comparing two people
+(`accountguard`) or reading someone else's access clears the activation first with
+`authctx.WithoutSessionRoleActivation`.
+
 A refused grant is recorded in the security audit trail ("Refused a grant beyond the
 actor's own permissions") with what was refused. An API key is also held, at request
 time, to what its creator holds now; see [security-audit.md](security-audit.md).
