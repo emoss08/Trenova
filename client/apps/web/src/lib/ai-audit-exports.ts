@@ -1,4 +1,5 @@
 import { recordPath } from "@/config/record-links";
+import { isAppPath } from "@/lib/app-path";
 import { fetchAIAuditExportDownload } from "@/lib/graphql/ai-audit";
 import { downloadFromUrl } from "@trenova/shared/lib/utils";
 
@@ -33,9 +34,7 @@ export type AIAuditExportNotice =
   | { kind: "open"; link: string };
 
 function sameOriginPath(value: unknown): string | null {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : null;
+  return typeof value === "string" && isAppPath(value) ? value : null;
 }
 
 /**

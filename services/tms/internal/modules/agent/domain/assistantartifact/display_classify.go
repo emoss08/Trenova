@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/shared/pulid"
@@ -467,10 +468,13 @@ func linksOf(value any) []map[string]any {
 
 // IsAppPath is a path inside the app: one leading slash, and never the
 // protocol-relative or backslashed forms that browsers read as another host.
+// Browsers drop tabs and newlines before reading a link, so a path holding a
+// control character is refused rather than judged by how it looks here.
 func IsAppPath(path string) bool {
 	return strings.HasPrefix(path, "/") &&
 		!strings.HasPrefix(path, "//") &&
-		!strings.HasPrefix(path, "/\\")
+		!strings.HasPrefix(path, "/\\") &&
+		!strings.ContainsFunc(path, unicode.IsControl)
 }
 
 // allInstants reports a column of dates: epoch seconds in a plausible range,
