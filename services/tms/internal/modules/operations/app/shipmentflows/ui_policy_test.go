@@ -1,7 +1,12 @@
 package shipmentflows
 
 import (
+	"context"
+	"errors"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -13,6 +18,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type unresolvedModeProfiles struct {
+	modeprofileports.ModeProfileService
+}
+
+func (unresolvedModeProfiles) Resolve(
+	context.Context,
+	*modeprofileports.ResolveModeProfileRequest,
+) (*modeprofile.ResolvedPolicy, error) {
+	return nil, errors.New("no mode profile")
+}
 
 func TestServiceGetUIPolicy_MapsShipmentControl(t *testing.T) {
 	t.Parallel()
@@ -33,8 +49,9 @@ func TestServiceGetUIPolicy_MapsShipmentControl(t *testing.T) {
 		Once()
 
 	svc := assembled(&rig{
-		l:           zap.NewNop(),
-		controlRepo: controlRepo,
+		l:                  zap.NewNop(),
+		controlRepo:        controlRepo,
+		modeProfileService: unresolvedModeProfiles{},
 	})
 
 	policy, err := svc.reader.GetUIPolicy(t.Context(), tenantInfo)

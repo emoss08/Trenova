@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
@@ -47,8 +49,40 @@ type StackOptions struct {
 	Catalog    []*accessorialcharge.AccessorialCharge
 }
 
+type NoHydration struct{}
+
+func (NoHydration) HydrateShipment(
+	context.Context,
+	*ratequoteports.HydrateShipmentRequest,
+) error {
+	return nil
+}
+
+func (NoHydration) HydrateShipments(
+	context.Context,
+	*ratequoteports.HydrateShipmentsRequest,
+) error {
+	return nil
+}
+
+type noModeProfile struct {
+	modeprofileports.ModeProfileService
+}
+
+func (noModeProfile) Resolve(
+	context.Context,
+	*modeprofileports.ResolveModeProfileRequest,
+) (*modeprofile.ResolvedPolicy, error) {
+	return nil, modeprofileports.ErrNoModeProfileConfigured
+}
+
 func NewStack(t *testing.T, opts StackOptions) *Stack {
 	t.Helper()
+
+	hydrator := opts.Hydrator
+	if hydrator == nil {
+		hydrator = NoHydration{}
+	}
 
 	stack := &Stack{
 		Templates: tarifftest.NewTemplates(opts.Templates...),
@@ -100,7 +134,8 @@ func NewStack(t *testing.T, opts StackOptions) *Stack {
 		Fuel:          fuel,
 		Accessorials:  accessorials,
 		Exchange:      exchangerateportsmock.NewMockExchangeRateService(t),
-		Hydrator:      opts.Hydrator,
+		ModeProfile:   noModeProfile{},
+		Hydrator:      hydrator,
 	})
 
 	return stack

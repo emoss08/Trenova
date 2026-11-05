@@ -8,13 +8,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,46 +38,141 @@ type fakeSamsaraDriverService struct {
 	updateFunc  func(id string, req drivers.UpdateRequest) (drivers.Driver, error)
 }
 
-func (f *fakeSamsaraDriverService) List(
-	_ context.Context,
-	params drivers.ListParams,
-) (drivers.ListResponse, error) {
-	items, err := f.ListAll(context.Background(), params)
+func (f *fakeSamsaraDriverService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	id, _ := strings.CutPrefix(strings.TrimPrefix(r.URL.Path, "/fleet/drivers"), "/")
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return drivers.ListResponse{}, err
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+
+	var payload any
+	switch r.Method {
+	case http.MethodGet:
+		payload, err = f.list(r)
+	case http.MethodPost:
+		payload, err = f.create(body)
+	case http.MethodPatch:
+		payload, err = f.update(id, body)
+	default:
+		err = errors.New("unexpected method " + r.Method)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	encoded, err := sonic.Marshal(payload)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(encoded)
+}
+
+func (f *fakeSamsaraDriverService) list(r *http.Request) (any, error) {
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		return nil, err
+	}
+
+	items := []drivers.Driver{}
+	if f.listAllFunc != nil {
+		items, err = f.listAllFunc(drivers.ListParams{
+			Limit:                  limit,
+			DriverActivationStatus: r.URL.Query().Get("driverActivationStatus"),
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return drivers.ListResponse{Data: &items}, nil
 }
 
-func (f *fakeSamsaraDriverService) ListAll(
-	_ context.Context,
-	params drivers.ListParams,
-) ([]drivers.Driver, error) {
-	if f.listAllFunc == nil {
-		return []drivers.Driver{}, nil
+func (f *fakeSamsaraDriverService) create(body []byte) (any, error) {
+	var req drivers.CreateRequest
+	if err := sonic.Unmarshal(body, &req); err != nil {
+		return nil, err
 	}
-	return f.listAllFunc(params)
-}
-
-func (f *fakeSamsaraDriverService) Create(
-	_ context.Context,
-	req drivers.CreateRequest,
-) (drivers.Driver, error) {
 	if f.createFunc == nil {
-		return drivers.Driver{}, nil
+		return samsaraDriverEnvelope{Data: drivers.Driver{}}, nil
 	}
-	return f.createFunc(req)
+
+	driver, err := f.createFunc(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return samsaraDriverEnvelope{Data: driver}, nil
 }
 
-func (f *fakeSamsaraDriverService) Update(
-	_ context.Context,
-	id string,
-	req drivers.UpdateRequest,
-) (drivers.Driver, error) {
-	if f.updateFunc == nil {
-		return drivers.Driver{}, nil
+func (f *fakeSamsaraDriverService) update(id string, body []byte) (any, error) {
+	var req drivers.UpdateRequest
+	if err := sonic.Unmarshal(body, &req); err != nil {
+		return nil, err
 	}
-	return f.updateFunc(id, req)
+	if f.updateFunc == nil {
+		return samsaraDriverEnvelope{Data: drivers.Driver{}}, nil
+	}
+
+	driver, err := f.updateFunc(id, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return samsaraDriverEnvelope{Data: driver}, nil
+}
+
+type samsaraDriverEnvelope struct {
+	Data drivers.Driver `json:"data"`
+}
+
+type fakeIntegrationRepo struct {
+	integrationports.IntegrationRepository
+	record *integration.Integration
+}
+
+func (f *fakeIntegrationRepo) GetByType(
+	context.Context,
+	pagination.TenantInfo,
+	integration.Type,
+) (*integration.Integration, error) {
+	if f.record == nil {
+		return nil, errortypes.NewNotFoundError("integration not found")
+	}
+	return f.record, nil
+}
+
+func samsaraIntegration(
+	t *testing.T,
+	fake *fakeSamsaraDriverService,
+) *integrationservice.Service {
+	t.Helper()
+
+	server := httptest.NewServer(fake)
+	t.Cleanup(server.Close)
+
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
+	token, err := encryption.EncryptString("samsara-test-token")
+	require.NoError(t, err)
+
+	return integrationservice.New(integrationservice.Params{
+		Logger: zap.NewNop(),
+		Repo: &fakeIntegrationRepo{record: &integration.Integration{
+			Type:    integration.TypeSamsara,
+			Enabled: true,
+			Configuration: map[string]any{
+				"token":   token,
+				"baseUrl": server.URL,
+			},
+		}},
+		Encryption: encryption,
+		Config:     &integrationconfig.Config{AllowPrivateNetworks: true},
+	})
 }
 
 func activeDrivers(
@@ -77,7 +182,7 @@ func activeDrivers(
 	t.Helper()
 	return func(params drivers.ListParams) ([]drivers.Driver, error) {
 		assert.Equal(t, drivers.MaxListLimit, params.Limit)
-		require.NoError(t, params.Validate())
+		assert.NoError(t, params.Validate())
 		if params.DriverActivationStatus == drivers.ActivationStatusActive {
 			return active, nil
 		}
@@ -89,10 +194,14 @@ func activeDrivers(
 func setupTestService(t *testing.T) (*Service, *workerportsmock.MockWorkerRepository) {
 	t.Helper()
 	repo := workerportsmock.NewMockWorkerRepository(t)
-	return &Service{
-		l:    zap.NewNop(),
-		repo: repo,
-	}, repo
+	return New(Params{
+		Logger: zap.NewNop(),
+		Repo:   repo,
+		IntegrationService: integrationservice.New(integrationservice.Params{
+			Logger: zap.NewNop(),
+			Repo:   &fakeIntegrationRepo{},
+		}),
+	}), repo
 }
 
 func newTestWorker() *worker.Worker {
@@ -142,13 +251,11 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 
 		driverID := "1654973"
 		externalIDs := map[string]any{samsaraWorkerExternalIDKey: w.ID.String()}
-		svc.samsaraClient = &sharedsamsara.Client{
-			Drivers: &fakeSamsaraDriverService{
-				listAllFunc: activeDrivers(t, []drivers.Driver{
-					{Id: &driverID, ExternalIds: &externalIDs},
-				}),
-			},
-		}
+		svc.integrationService = samsaraIntegration(t, &fakeSamsaraDriverService{
+			listAllFunc: activeDrivers(t, []drivers.Driver{
+				{Id: &driverID, ExternalIds: &externalIDs},
+			}),
+		})
 
 		total := 1
 		repo.On("List", mock.Anything, mock.Anything).
@@ -180,17 +287,20 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 		w := newTestWorker()
 		w.ExternalID = "1654977"
 
-		svc.samsaraClient = &sharedsamsara.Client{
-			Drivers: &fakeSamsaraDriverService{
-				listAllFunc: activeDrivers(t, []drivers.Driver{{Id: &w.ExternalID}}),
-				updateFunc: func(id string, req drivers.UpdateRequest) (drivers.Driver, error) {
-					assert.Equal(t, w.ExternalID, id)
-					require.NotNil(t, req.ExternalIds)
-					assert.Equal(t, w.ID.String(), (*req.ExternalIds)[samsaraWorkerExternalIDKey])
-					return drivers.Driver{Id: &id}, nil
-				},
+		svc.integrationService = samsaraIntegration(t, &fakeSamsaraDriverService{
+			listAllFunc: activeDrivers(t, []drivers.Driver{{Id: &w.ExternalID}}),
+			updateFunc: func(id string, req drivers.UpdateRequest) (drivers.Driver, error) {
+				assert.Equal(t, w.ExternalID, id)
+				if assert.NotNil(t, req.ExternalIds) {
+					assert.Equal(
+						t,
+						w.ID.String(),
+						(*req.ExternalIds)[samsaraWorkerExternalIDKey],
+					)
+				}
+				return drivers.Driver{Id: &id}, nil
 			},
-		}
+		})
 
 		total := 1
 		repo.On("List", mock.Anything, mock.Anything).
@@ -221,15 +331,13 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 
 		createdDriverID := "1655001"
 		var capturedCreateReq drivers.CreateRequest
-		svc.samsaraClient = &sharedsamsara.Client{
-			Drivers: &fakeSamsaraDriverService{
-				listAllFunc: activeDrivers(t, []drivers.Driver{}),
-				createFunc: func(req drivers.CreateRequest) (drivers.Driver, error) {
-					capturedCreateReq = req
-					return drivers.Driver{Id: &createdDriverID}, nil
-				},
+		svc.integrationService = samsaraIntegration(t, &fakeSamsaraDriverService{
+			listAllFunc: activeDrivers(t, []drivers.Driver{}),
+			createFunc: func(req drivers.CreateRequest) (drivers.Driver, error) {
+				capturedCreateReq = req
+				return drivers.Driver{Id: &createdDriverID}, nil
 			},
-		}
+		})
 
 		total := 1
 		repo.On("List", mock.Anything, mock.Anything).
@@ -274,22 +382,20 @@ func TestSyncWorkersToSamsaraMapsDeactivatedDriverInsteadOfCreating(t *testing.T
 	driverID := "1654999"
 	externalIDs := map[string]any{samsaraWorkerExternalIDKey: w.ID.String()}
 	statuses := make([]string, 0, 2)
-	svc.samsaraClient = &sharedsamsara.Client{
-		Drivers: &fakeSamsaraDriverService{
-			listAllFunc: func(params drivers.ListParams) ([]drivers.Driver, error) {
-				require.NoError(t, params.Validate())
-				statuses = append(statuses, params.DriverActivationStatus)
-				if params.DriverActivationStatus == drivers.ActivationStatusDeactivated {
-					return []drivers.Driver{{Id: &driverID, ExternalIds: &externalIDs}}, nil
-				}
-				return []drivers.Driver{}, nil
-			},
-			createFunc: func(drivers.CreateRequest) (drivers.Driver, error) {
-				t.Fatal("a driver already carrying the worker external id must not be recreated")
-				return drivers.Driver{}, nil
-			},
+	svc.integrationService = samsaraIntegration(t, &fakeSamsaraDriverService{
+		listAllFunc: func(params drivers.ListParams) ([]drivers.Driver, error) {
+			assert.NoError(t, params.Validate())
+			statuses = append(statuses, params.DriverActivationStatus)
+			if params.DriverActivationStatus == drivers.ActivationStatusDeactivated {
+				return []drivers.Driver{{Id: &driverID, ExternalIds: &externalIDs}}, nil
+			}
+			return []drivers.Driver{}, nil
 		},
-	}
+		createFunc: func(drivers.CreateRequest) (drivers.Driver, error) {
+			t.Error("a driver already carrying the worker external id must not be recreated")
+			return drivers.Driver{}, nil
+		},
+	})
 
 	total := 1
 	repo.On("List", mock.Anything, mock.Anything).

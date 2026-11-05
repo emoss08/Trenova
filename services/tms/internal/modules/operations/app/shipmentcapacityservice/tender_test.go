@@ -21,6 +21,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type shipmentBook struct {
@@ -127,11 +128,9 @@ func newTenderFixture(shipments ...*shipment.Shipment) *tenderFixture {
 		tenderer: &fakeTenderer{},
 		book:     book,
 	}
-	f.service = NewWithDependencies(&Dependencies{
-		Shipments: book,
-		Shopper:   f.shopper,
-		Tenderer:  f.tenderer,
-	})
+	f.service = New(Params{Shipments: book, Logger: zap.NewNop()})
+	f.service.shopper = f.shopper
+	f.service.tenderer = f.tenderer
 
 	return f
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -24,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -181,11 +181,7 @@ func setupCreateTest(t *testing.T) *createTestDeps {
 		workflows:             deps.workflows,
 		eventService:          deps.events,
 		auditService:          deps.audit,
-		notifications: notificationservice.New(notificationservice.Params{
-			Logger:   zap.NewNop(),
-			Repo:     deps.notifRepo,
-			Realtime: &mocks.NoopRealtimeService{},
-		}),
+		notifications:         notificationtest.New(deps.notifRepo, &mocks.NoopRealtimeService{}),
 	}
 	deps.svc.assemble()
 

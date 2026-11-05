@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -22,11 +23,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type stubShipments struct{ entities []*shipment.Shipment }
@@ -39,7 +42,9 @@ func (s *stubShipments) ListTrackingShipments(
 }
 
 type stubBoard struct {
-	moves []*dispatchboardports.BoardMove
+	dispatchboardports.DispatchConsoleRepository
+	moves   []*dispatchboardports.BoardMove
+	workers []*worker.Worker
 }
 
 func (s *stubBoard) ListBoardMoves(
@@ -49,9 +54,7 @@ func (s *stubBoard) ListBoardMoves(
 	return s.moves, nil
 }
 
-type stubWorkers struct{ workers []*worker.Worker }
-
-func (s *stubWorkers) ListWorkersByIDs(
+func (s *stubBoard) ListWorkersByIDs(
 	context.Context,
 	pagination.TenantInfo,
 	[]pulid.ID,
@@ -60,6 +63,7 @@ func (s *stubWorkers) ListWorkersByIDs(
 }
 
 type stubTelematics struct {
+	telematicsports.TelematicsRepository
 	positions []*telematics.VehiclePosition
 	states    []*telematics.WorkerHOSState
 }
@@ -79,6 +83,7 @@ func (s *stubTelematics) ListWorkerHOSStates(
 }
 
 type stubFailures struct {
+	servicefailureports.ServiceFailureRepository
 	failures []*servicefailure.ServiceFailure
 }
 
@@ -90,6 +95,7 @@ func (s *stubFailures) ListUnresolvedByShipmentIDs(
 }
 
 type stubCalls struct {
+	checkcallports.CheckCallRepository
 	latest map[pulid.ID]*checkcall.CheckCall
 }
 
@@ -105,6 +111,7 @@ func (s *stubCalls) LatestForMoves(
 }
 
 type stubControls struct {
+	dispatchcontrolports.DispatchControlRepository
 	control *dispatchcontrol.DispatchControl
 }
 
@@ -228,19 +235,20 @@ func (r *recordingObserver) StopEtasRefreshed(
 func ptr[T any](v T) *T { return &v }
 
 type fixture struct {
-	now      time.Time
-	tenant   pagination.TenantInfo
-	entity   *shipment.Shipment
-	delivery *shipment.Stop
-	moveID   pulid.ID
-	tractor  pulid.ID
-	worker   pulid.ID
-	etas     *memoryEtas
-	observer *recordingObserver
-	svc      *Service
-	failures *stubFailures
-	routes   *stubRoutes
-	control  *dispatchcontrol.DispatchControl
+	now       time.Time
+	tenant    pagination.TenantInfo
+	entity    *shipment.Shipment
+	delivery  *shipment.Stop
+	moveID    pulid.ID
+	tractor   pulid.ID
+	worker    pulid.ID
+	etas      *memoryEtas
+	observer  *recordingObserver
+	reader    *Reader
+	refresher *Refresher
+	failures  *stubFailures
+	routes    *stubRoutes
+	control   *dispatchcontrol.DispatchControl
 }
 
 func newFixture(windowEndFromNow time.Duration) *fixture {
@@ -302,15 +310,14 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 		routes:   &stubRoutes{hoursPerLeg: 2},
 		control:  dispatchcontrol.NewDefaultDispatchControl(tenant.OrgID, tenant.BuID),
 	}
-	f.svc = NewWithDependencies(&Dependencies{
-		Shipments: &stubShipments{entities: []*shipment.Shipment{entity}},
-		Board: &stubBoard{moves: []*dispatchboardports.BoardMove{{
+	shipments := &stubShipments{entities: []*shipment.Shipment{entity}}
+	sources := NewSources(SourcesParams{
+		Console: &stubBoard{moves: []*dispatchboardports.BoardMove{{
 			MoveID:            moveID,
 			AssignedTractorID: tractor,
 			AssignedWorkerID:  workerID,
 			CoverageType:      string(shipmentvocab.MoveCoverageTypeDriver),
 		}}},
-		Workers: &stubWorkers{},
 		Telematics: &stubTelematics{positions: []*telematics.VehiclePosition{{
 			TractorID:  tractor,
 			Latitude:   41.5,
@@ -319,12 +326,22 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 		}}},
 		ServiceFailures: f.failures,
 		StopEtas:        f.etas,
-		CheckCalls:      &stubCalls{},
-		Controls:        &stubControls{control: f.control},
-		Routes:          f.routes,
-		Observers:       []stopetaports.Observer{f.observer},
-		Now:             func() time.Time { return f.now },
 	})
+	clock := func() time.Time { return f.now }
+	f.reader = NewReader(ReaderParams{Shipments: shipments, Sources: sources})
+	f.reader.now = clock
+	f.refresher = NewRefresher(RefresherParams{
+		Shipments:        shipments,
+		Sources:          sources,
+		StopEtas:         f.etas,
+		CheckCalls:       &stubCalls{},
+		DispatchControls: &stubControls{control: f.control},
+		Routes:           f.routes,
+		Realtime:         &mocks.NoopRealtimeService{},
+		Observers:        []stopetaports.Observer{f.observer},
+		Logger:           zap.NewNop(),
+	})
+	f.refresher.now = clock
 
 	return f
 }
@@ -333,7 +350,7 @@ func TestRefreshShipments_StoresRowsAndNotifiesOnChange(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(3 * time.Hour)
-	result, err := f.svc.RefreshShipments(
+	result, err := f.refresher.RefreshShipments(
 		t.Context(),
 		f.tenant,
 		[]pulid.ID{f.entity.ID, f.entity.ID},
@@ -352,7 +369,7 @@ func TestRefreshShipments_StoresRowsAndNotifiesOnChange(t *testing.T) {
 	require.Len(t, f.observer.calls, 1)
 	assert.Equal(t, []pulid.ID{f.entity.ID}, f.observer.calls[0])
 
-	_, err = f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	_, err = f.refresher.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 	assert.Len(t, f.observer.calls, 1, "an unchanged projection is not announced again")
 }
@@ -363,7 +380,7 @@ func TestRefreshShipments_CustomerThresholdMakesItAtRisk(t *testing.T) {
 	f := newFixture(3 * time.Hour)
 	f.entity.Customer.EtaRiskThresholdMinutes = ptr(int16(90))
 
-	result, err := f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	result, err := f.refresher.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 	assert.Equal(t, 1, result.Attention)
 	row := f.etas.rows[f.delivery.ID]
@@ -375,41 +392,29 @@ func TestRefreshShipments_FinishedShipmentClearsRows(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(3 * time.Hour)
-	_, err := f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	_, err := f.refresher.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 	require.Len(t, f.etas.rows, 1)
 
 	f.entity.Status = shipmentvocab.StatusCompleted
-	_, err = f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	_, err = f.refresher.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 	assert.Empty(t, f.etas.rows)
 	assert.Len(t, f.observer.calls, 2)
-}
-
-func TestRefreshShipments_RequiresDependencies(t *testing.T) {
-	t.Parallel()
-
-	svc := NewWithDependencies(&Dependencies{})
-	_, err := svc.RefreshShipments(
-		t.Context(),
-		pagination.TenantInfo{},
-		[]pulid.ID{pulid.MustNew("shp_")},
-	)
-	require.Error(t, err)
 }
 
 func TestEtasByShipmentIDs_ReadsStoredRowsWithFailureReason(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(time.Hour)
-	_, err := f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	_, err := f.refresher.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 
 	f.failures.failures = []*servicefailure.ServiceFailure{{
 		ShipmentID: f.entity.ID,
 		ReasonCode: &servicefailure.ReasonCode{Label: "Shipper delay"},
 	}}
-	etas, err := f.svc.EtasByShipmentIDs(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	etas, err := f.reader.EtasByShipmentIDs(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 
 	eta := etas[f.entity.ID]
@@ -426,10 +431,10 @@ func TestTrackingSnapshots_UseStoredEstimate(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(3 * time.Hour)
-	_, err := f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
+	_, err := f.refresher.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 
-	snapshots, err := f.svc.TrackingSnapshots(t.Context(), f.tenant, []pulid.ID{f.entity.ID}, "UTC")
+	snapshots, err := f.reader.TrackingSnapshots(t.Context(), f.tenant, []pulid.ID{f.entity.ID}, "UTC")
 	require.NoError(t, err)
 	snapshot := snapshots[f.entity.ID]
 	require.NotNil(t, snapshot)

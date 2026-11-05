@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 // fakeRepo is a hand-rolled in-memory stand-in for the testing programme's
@@ -398,9 +400,12 @@ func newHarness(t *testing.T) *harness {
 	repo := newFakeRepo()
 
 	return &harness{
-		svc: workerdrugalcoholservice.NewWithDeps(workerdrugalcoholservice.Deps{
-			Repo:       repo,
-			WorkerRepo: workerRepo,
+		svc: workerdrugalcoholservice.New(workerdrugalcoholservice.Params{
+			Logger:       zap.NewNop(),
+			Repo:         repo,
+			WorkerRepo:   workerRepo,
+			AuditService: &mocks.NoopAuditService{},
+			Realtime:     &mocks.NoopRealtimeService{},
 		}),
 		repo:     repo,
 		tenant:   pagination.TenantInfo{OrgID: orgID, BuID: buID},

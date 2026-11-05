@@ -8,11 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type fakeBenefitRepo struct {
@@ -111,9 +113,11 @@ func newBenefitService(
 ) (*benefitsservice.Service, *fakeBenefitRepo, *fakeDeductionRepo) {
 	repo := &fakeBenefitRepo{plan: plan}
 	deductions := &fakeDeductionRepo{}
-	svc := benefitsservice.NewWithDeps(benefitsservice.Deps{
+	svc := benefitsservice.New(benefitsservice.Params{
+		Logger:        zap.NewNop(),
 		Repo:          repo,
 		DeductionRepo: deductions,
+		AuditService:  &mocks.NoopAuditService{},
 	})
 	return svc, repo, deductions
 }

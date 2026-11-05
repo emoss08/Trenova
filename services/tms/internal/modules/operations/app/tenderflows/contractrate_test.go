@@ -234,37 +234,3 @@ func TestCreateWaterfall_ContractEntryIsSkippedWhenTheEngineFails(t *testing.T) 
 	assert.Equal(t, other.ID, created.Offers[0].CarrierID)
 	require.Len(t, created.Screening.Skipped, 1)
 }
-
-// A deployment without the engine wired keeps working: a contract-priced entry
-// falls back to the rate the guide carries rather than refusing to tender.
-func TestCreateWaterfall_ContractEntryFallsBackWhenNoEngineIsWired(t *testing.T) {
-	deps := setupCreateTest(t)
-	tenantInfo := createTestTenant()
-	move := tenderableMove()
-	expectTenderableMove(deps, tenantInfo, move)
-	expectNotifications(deps)
-
-	healthy := eligibleCarrier("acme")
-	deps.guideRepo.matched = &tender.RoutingGuide{
-		ID:      pulid.MustNew("rgd_"),
-		Status:  "Active",
-		Entries: []*tender.RoutingGuideEntry{contractEntry(healthy.ID, 1)},
-	}
-	deps.carrierRepo.On("GetByIDs", mock.Anything, mock.Anything).
-		Return([]*carrier.Carrier{healthy}, nil)
-
-	deps.svc.rateEngine = nil
-	deps.svc.assemble()
-
-	created, err := deps.svc.creator.CreateWaterfall(
-		t.Context(),
-		&tendercreate.CreateWaterfallTenderRequest{
-			TenantInfo:     tenantInfo,
-			ShipmentMoveID: move.ID,
-		},
-	)
-
-	require.NoError(t, err)
-	require.Len(t, created.Offers, 1)
-	assert.True(t, created.Offers[0].Rate.Equal(decimal.NewFromInt(1200)))
-}

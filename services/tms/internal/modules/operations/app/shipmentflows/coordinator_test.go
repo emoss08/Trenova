@@ -348,6 +348,13 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 	shipmentservicetest.AssertErrorField(t, multiErr, "status")
 }
 
+func expectAutoMarkReadFails(repo *shipmentportsmock.MockShipmentRepository) {
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
+		Return(nil, errortypes.NewNotFoundError("Shipment not found")).
+		Once()
+}
+
 func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 	t.Parallel()
 
@@ -389,6 +396,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 			return shipmentservicetest.CloneShipment(original), nil
 		}).
 		Once()
+	expectAutoMarkReadFails(repo)
 	repo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(
@@ -504,6 +512,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(shipmentservicetest.CloneShipment(original), nil).
 		Once()
+	expectAutoMarkReadFails(repo)
 	repo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {

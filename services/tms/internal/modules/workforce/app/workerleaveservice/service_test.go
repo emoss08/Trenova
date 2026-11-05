@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func at(year int, month time.Month, day int) int64 {
@@ -222,9 +224,12 @@ func newHarness(t *testing.T) *harness {
 	repo := newFakeRepo()
 
 	return &harness{
-		svc: workerleaveservice.NewWithDeps(workerleaveservice.Deps{
-			Repo:       repo,
-			WorkerRepo: workerRepo,
+		svc: workerleaveservice.New(workerleaveservice.Params{
+			Logger:       zap.NewNop(),
+			Repo:         repo,
+			WorkerRepo:   workerRepo,
+			AuditService: &mocks.NoopAuditService{},
+			Realtime:     &mocks.NoopRealtimeService{},
 		}),
 		repo:     repo,
 		tenant:   pagination.TenantInfo{OrgID: orgID, BuID: buID},

@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -80,13 +80,9 @@ func setupIssueLifecycleTest(t *testing.T, offer *tender.TenderOffer) *issueLife
 		notifRepo: notificationportsmock.NewMockNotificationRepository(t),
 	}
 	deps.svc = &rig{
-		l:    zap.NewNop(),
-		repo: &offerReadingTenderRepo{offer: offer},
-		notifications: notificationservice.New(notificationservice.Params{
-			Logger:   zap.NewNop(),
-			Repo:     deps.notifRepo,
-			Realtime: &mocks.NoopRealtimeService{},
-		}),
+		l:             zap.NewNop(),
+		repo:          &offerReadingTenderRepo{offer: offer},
+		notifications: notificationtest.New(deps.notifRepo, &mocks.NoopRealtimeService{}),
 		rateConIssuer: deps.issuer,
 	}
 	deps.svc.assemble()
@@ -190,20 +186,4 @@ func TestIssueRateConfirmationInfraFailurePropagates(t *testing.T) {
 	)
 
 	require.Error(t, err, "transient failures must propagate so the activity retries")
-}
-
-func TestIssueRateConfirmationNoIssuerWiredNoOps(t *testing.T) {
-	offer := acceptedOfferFixture()
-	deps := setupIssueLifecycleTest(t, offer)
-	deps.svc.rateConIssuer = nil
-	deps.svc.assemble()
-
-	err := deps.svc.offerLifecycle.IssueRateConfirmation(
-		t.Context(),
-		issueLifecycleTenant(),
-		offer.ID,
-	)
-
-	require.NoError(t, err)
-	assert.Nil(t, deps.issuer.req)
 }

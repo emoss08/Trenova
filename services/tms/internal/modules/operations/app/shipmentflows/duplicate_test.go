@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"errors"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
@@ -50,8 +51,6 @@ func (f *fakeShipmentTemporalClient) StartWorkflow(
 ) (client.WorkflowRun, error) {
 	return f.startWorkflowFunc(ctx, options, workflow, args...)
 }
-
-func (*fakeShipmentTemporalClient) Enabled() bool { return true }
 
 func (*fakeShipmentTemporalClient) CancelWorkflow(context.Context, string, string) error {
 	return nil
@@ -231,17 +230,23 @@ func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 	shipmentservicetest.AssertErrorField(t, multiErr, "shipmentId")
 }
 
-func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
+func TestServiceDuplicate_ReportsAWorkflowThatWillNotStart(t *testing.T) {
 	t.Parallel()
+
+	repo := shipmentportsmock.NewMockShipmentRepository(t)
+	repo.EXPECT().
+		PlanDuplicate(mock.Anything, mock.Anything).
+		Return(&shipmentports.ShipmentDuplicatePlan{}, nil).
+		Once()
 
 	svc := assembled(&rig{
 		l:               zap.NewNop(),
-		repo:            shipmentportsmock.NewMockShipmentRepository(t),
+		repo:            repo,
 		validator:       newServiceValidator(t),
 		auditService:    auditportsmock.NewMockAuditService(t),
 		eventService:    noopShipmentEventService{},
 		coordinator:     newStateCoordinator(),
-		workflowStarter: disabledWorkflowStarter{},
+		workflowStarter: failingWorkflowStarter{},
 	})
 
 	resp, err := svc.lifecycle.Duplicate(t.Context(), &shipmentports.BulkDuplicateShipmentRequest{
@@ -259,27 +264,27 @@ func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 	assert.True(t, errortypes.IsBusinessError(err))
 }
 
-type disabledWorkflowStarter struct{}
+var errWorkflowWillNotStart = errors.New("workflow will not start")
 
-func (disabledWorkflowStarter) StartWorkflow(
+type failingWorkflowStarter struct{}
+
+func (failingWorkflowStarter) StartWorkflow(
 	context.Context,
 	client.StartWorkflowOptions,
 	any,
 	...any,
 ) (client.WorkflowRun, error) {
-	return nil, kernelports.ErrWorkflowStarterDisabled
+	return nil, errWorkflowWillNotStart
 }
 
-func (disabledWorkflowStarter) Enabled() bool { return false }
-
-func (disabledWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
-	return kernelports.ErrWorkflowStarterDisabled
+func (failingWorkflowStarter) CancelWorkflow(context.Context, string, string) error {
+	return errWorkflowWillNotStart
 }
 
-func (disabledWorkflowStarter) SignalWorkflow(
+func (failingWorkflowStarter) SignalWorkflow(
 	context.Context,
 	string, string, string,
 	any,
 ) error {
-	return kernelports.ErrWorkflowStarterDisabled
+	return errWorkflowWillNotStart
 }

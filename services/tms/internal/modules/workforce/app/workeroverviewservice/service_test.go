@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type fakeCredentials struct {
@@ -172,7 +173,8 @@ func newOverviewHarness(t *testing.T) *overviewHarness {
 	}
 	h.reviewCounts = &fakeReviewCounter{}
 
-	h.svc = workeroverviewservice.NewWithDeps(workeroverviewservice.Deps{
+	h.svc = workeroverviewservice.New(workeroverviewservice.Params{
+		Logger:       zap.NewNop(),
 		WorkerRepo:   workerRepo,
 		ReviewCounts: h.reviewCounts,
 		Credentials:  h.credentials,
@@ -406,7 +408,8 @@ func TestRosterAttention_CountsLeaveAcrossTheReadersTeam(t *testing.T) {
 		Return(&workerports.RosterAttention{}, nil).
 		Once()
 	leave := &fakeLeaveCounter{count: 2}
-	svc := workeroverviewservice.NewWithDeps(workeroverviewservice.Deps{
+	svc := workeroverviewservice.New(workeroverviewservice.Params{
+		Logger:       zap.NewNop(),
 		WorkerRepo:   workerRepo,
 		ReviewCounts: &fakeReviewCounter{},
 		PTO:          &fakeBalances{},

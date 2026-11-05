@@ -31,6 +31,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 var fixedNow = time.Date(2026, 10, 6, 16, 30, 0, 0, time.UTC)
@@ -243,12 +244,11 @@ func newHarness(operation tenant.OperationType) *harness {
 		reads:     &assignmentReads{},
 		briefs:    &briefStore{},
 	}
-	h.service = NewWithDependencies(&Dependencies{
+	h.service = New(Params{
 		Console:         h.console,
 		Capabilities:    h.caps,
 		Watchlist:       h.watchlist,
 		Comments:        h.comments,
-		Detention:       h.desk,
 		Decisions:       h.decisions,
 		Tenders:         h.tenders,
 		TenderGuard:     h.guard,
@@ -256,8 +256,10 @@ func newHarness(operation tenant.OperationType) *harness {
 		AssignmentReads: h.reads,
 		Briefs:          h.briefs,
 		Organizations:   orgs{timezone: "America/Chicago"},
-		Now:             func() time.Time { return fixedNow },
+		Logger:          zap.NewNop(),
 	})
+	h.service.detention = h.desk
+	h.service.now = func() time.Time { return fixedNow }
 
 	return h
 }

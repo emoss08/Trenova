@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservicetest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -141,11 +140,11 @@ func unpricedCreateService(
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
 		validator:   coverageValidator(t, shipmentservicetest.BillingControlWith(t, disposition)),
-		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
-		}),
+		commercial: newCalculator(
+			t,
+			ratingtest.NewEngine(t),
+			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		),
 		coordinator: newStateCoordinator(),
 	})
 }
