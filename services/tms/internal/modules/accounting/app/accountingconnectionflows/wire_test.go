@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"go.uber.org/zap"
 )
 
@@ -63,6 +64,7 @@ func wire(w *wiring) services {
 		Publisher:    w.Publisher,
 		Refresher:    w.Refresher,
 		Certificates: w.Certificates,
+		Realtime:     &mocks.NoopRealtimeService{},
 	})
 	health := accountingconnectionhealth.New(accountingconnectionhealth.Params{
 		Logger:      l,
@@ -105,16 +107,18 @@ func wire(w *wiring) services {
 			Audit:       w.Audit,
 			Kit:         kit,
 			Status:      status,
+			Realtime:    &mocks.NoopRealtimeService{},
 		}),
 		auth: auth,
 		certs: accountingconnectioncert.New(accountingconnectioncert.Params{
-			Logger:       l,
-			DB:           db,
-			Connections:  w.Connections,
-			Certificates: w.Certificates,
-			Encryption:   w.Encryption,
-			Kit:          kit,
-			Auth:         auth,
+			Logger:        l,
+			DB:            db,
+			Connections:   w.Connections,
+			Certificates:  w.Certificates,
+			Encryption:    w.Encryption,
+			Organizations: fakeOrganizations{},
+			Kit:           kit,
+			Auth:          auth,
 		}),
 		webhooks: accountingconnectionwebhook.New(accountingconnectionwebhook.Params{
 			Logger:        l,

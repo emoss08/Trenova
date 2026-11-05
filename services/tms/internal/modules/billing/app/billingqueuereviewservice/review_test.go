@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -357,17 +358,21 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 		Return(&tenant.User{ID: tenantInfo.UserID, Name: "Avery Lane"}, nil).Maybe()
 
 	w.deps = billingqueueservice.Params{
-		Logger:       zap.NewNop(),
-		DB:           reviewTx{},
-		Repo:         repo,
-		ShipmentRepo: shipments,
-		CustomerRepo: customers,
-		InvoiceRepo:  invoices,
-		UserRepo:     users,
-		AuditService: audit,
-		Realtime:     realtime,
-		Validator:    billingqueueservice.NewValidator(billingqueueservice.ValidatorParams{}),
-		ReviewRepo:   w.review,
+		Logger:           zap.NewNop(),
+		DB:               reviewTx{},
+		Repo:             repo,
+		ShipmentRepo:     shipments,
+		CustomerRepo:     customers,
+		InvoiceRepo:      invoices,
+		UserRepo:         users,
+		AuditService:     audit,
+		Realtime:         realtime,
+		Validator:        billingqueueservice.NewValidator(billingqueueservice.ValidatorParams{}),
+		ReviewRepo:       w.review,
+		Watchtower:       &mocks.NoopWatchtowerProjector{},
+		DetentionBilling: &mocks.NoopDetentionBilling{},
+		Rechecks:         &mocks.NoopRecheckRequester{},
+		InvoiceCreation:  &mocks.NoopInvoiceCreation{},
 	}
 
 	return w

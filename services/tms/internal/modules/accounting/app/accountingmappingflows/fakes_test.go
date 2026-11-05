@@ -13,7 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -21,6 +26,39 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type fakeSyncRecords struct {
+	accountingsyncports.AccountingSyncRecordRepository
+}
+
+func (fakeSyncRecords) Requeue(
+	context.Context,
+	*accountingsyncports.RequeueAccountingSyncRecordsRequest,
+) (int64, error) {
+	return 0, nil
+}
+
+type fakeSettlementControls struct {
+	tenantports.CarrierSettlementControlRepository
+}
+
+func (fakeSettlementControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*carriersettlementcontrol.CarrierSettlementControl, error) {
+	return &carriersettlementcontrol.CarrierSettlementControl{}, nil
+}
+
+type fakePayCodes struct {
+	driverpayports.PayCodeRepository
+}
+
+func (fakePayCodes) ListActive(
+	context.Context,
+	driverpayports.ListActivePayCodesRequest,
+) ([]*paycode.PayCode, error) {
+	return nil, nil
+}
 
 type fakeConnections struct {
 	accountingconnectionports.AccountingConnectionRepository

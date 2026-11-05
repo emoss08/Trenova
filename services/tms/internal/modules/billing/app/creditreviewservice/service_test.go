@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -114,7 +115,13 @@ func managedProfile(limit string) *customer.CustomerBillingProfile {
 }
 
 func newService(ledger *fakeLedger, standings *fakeStandings, notifier *fakeNotifier) *Service {
-	return &Service{ledger: ledger, customers: standings, notifier: notifier, l: zap.NewNop()}
+	return &Service{
+		ledger:    ledger,
+		customers: standings,
+		notifier:  notifier,
+		realtime:  &mocks.NoopRealtimeService{},
+		l:         zap.NewNop(),
+	}
 }
 
 var tenant = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}

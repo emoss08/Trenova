@@ -105,6 +105,16 @@ func testValidator() *Validator {
 // wired gives a queue built field by field the activity recorder and the
 // reviewer NewService builds from the same dependencies.
 func wired(s *Service) *Service {
+	s.watchtower = &mocks.NoopWatchtowerProjector{}
+	if s.rechecks == nil {
+		s.rechecks = &mocks.NoopRecheckRequester{}
+	}
+	if s.detentionBilling == nil {
+		s.detentionBilling = &mocks.NoopDetentionBilling{}
+	}
+	if s.invoiceCreation == nil {
+		s.invoiceCreation = &mocks.NoopInvoiceCreation{}
+	}
 	s.activity = billingqueueactivity.New(billingqueueactivity.Params{
 		Logger:     s.l,
 		ReviewRepo: s.reviewRepo,
@@ -134,6 +144,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		Once()
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	skipInlineReview(repo)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingvocab.BillTypeInvoice).
 		Return(false, nil).
@@ -339,6 +350,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	skipInlineReview(repo)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, amd, billingvocab.BillTypeInvoice).
 		Return(false, nil).
@@ -402,6 +414,13 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	assert.Equal(t, amd, result.Primary.BillToCustomerID)
 }
 
+func skipInlineReview(repo *billingqueueportsmock.MockBillingQueueRepository) {
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("item not reloaded")).
+		Maybe()
+}
+
 func transferringService(
 	t *testing.T,
 	shp *shipment.Shipment,
@@ -411,6 +430,7 @@ func transferringService(
 	t.Helper()
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
+	skipInlineReview(repo)
 	repo.EXPECT().
 		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingvocab.BillTypeInvoice).
 		Return(false, nil).
