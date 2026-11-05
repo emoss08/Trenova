@@ -1,6 +1,7 @@
 package tender
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/shopspring/decimal"
 )
@@ -17,10 +18,17 @@ var MaxCounterRate = decimal.NewFromInt(10_000_000)
 // sells for, what the carrier would be paid at its counter, and the
 // organization's floor and appetite for taking counters on its own.
 type CounterTerms struct {
-	Sell       decimal.Decimal
-	Buy        decimal.Decimal
-	Floor      decimal.Decimal
-	AutoAccept bool
+	Sell            decimal.Decimal
+	Buy             decimal.Decimal
+	Floor           decimal.Decimal
+	AutoAccept      bool
+	DistanceUnknown bool
+}
+
+// DistanceUnknown reports whether a rate is paid by the mile on a move whose
+// miles are not known, which leaves what the carrier would be paid unknown.
+func DistanceUnknown(method shipmentvocab.CarrierRateMethod, distance *float64) bool {
+	return method == shipmentvocab.CarrierRateMethodPerMile && (distance == nil || *distance <= 0)
 }
 
 // CounterVerdict is what a counter-offer comes to: the margin it leaves,
@@ -46,6 +54,12 @@ func EvaluateCounter(terms CounterTerms) CounterVerdict {
 		return CounterVerdict{
 			NeedsApproval: true,
 			Explanation:   "the load has no sell price, so the margin cannot be checked",
+		}
+	}
+	if terms.DistanceUnknown {
+		return CounterVerdict{
+			NeedsApproval: true,
+			Explanation:   "the move has no distance, so the margin on a per-mile rate cannot be checked",
 		}
 	}
 
