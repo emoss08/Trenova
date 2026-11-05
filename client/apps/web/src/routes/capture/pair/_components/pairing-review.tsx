@@ -5,7 +5,7 @@ import {
 import { InputField } from "@/components/fields/input-field";
 import { SectionPanel } from "@/components/section-panel";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { CAPTURE_DEVICE_NAME_MAX_BYTES } from "@/lib/capture";
+import { CAPTURE_DEVICE_NAME_MAX_BYTES, normalizePairingCode } from "@/lib/capture";
 import {
   approveCapturePairing,
   denyCapturePairing,
@@ -20,10 +20,11 @@ import {
   DescriptionList,
 } from "@trenova/shared/components/ui/description-list";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixTime } from "@trenova/shared/lib/date";
 import { ShieldAlertIcon } from "@trenova/shared/components/icons";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 
 export type PairingOutcome = { decision: "approved"; name: string } | { decision: "denied" };
@@ -35,16 +36,21 @@ function orEmpty(value: string) {
 /**
  * The computer asking to pair, and the decision on it. The person sees which
  * machine it is before approving, so a code read off somebody else's screen
- * is recognisably not theirs.
+ * is recognisably not theirs. The machine names itself, so what it says proves
+ * nothing: the network the request came from is the check it cannot write, and
+ * a linked code from another network must be typed from the computer's screen.
  */
 export function PairingReview({
   code,
+  codeFromLink,
   preview,
   organization,
   disabled,
   onDecided,
 }: {
   code: string;
+  /** The code arrived in a link rather than being typed here. */
+  codeFromLink: boolean;
   preview: CapturePairingPreview;
   /**
    * The organization the computer joins on approval: the one the person is
@@ -91,6 +97,9 @@ export function PairingReview({
     onSuccess: () => onDecided({ decision: "denied" }),
   });
   const busy = approve.isPending || deny.isPending;
+  const [typedCode, setTypedCode] = useState("");
+  const needsTypedCode = codeFromLink && !preview.sameNetwork;
+  const codeConfirmed = !needsTypedCode || normalizePairingCode(typedCode) === code;
 
   return (
     <SectionPanel title={t("The computer asking")}>
@@ -125,6 +134,32 @@ export function PairingReview({
                 </DescriptionItem>
               )}
             </DescriptionList>
+
+            <p className="text-muted-foreground text-xs">
+              {t("The computer reports these details itself. Trenova cannot verify them.")}
+            </p>
+
+            {!preview.sameNetwork && (
+              <Alert variant="destructive" size="sm">
+                <ShieldAlertIcon />
+                <AlertDescription>
+                  {t(
+                    "This request came from a different network than the one you are on. If you are not sitting at this computer, someone may be trying to get access as you. Deny it.",
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {needsTypedCode && (
+              <Input
+                aria-label={t("Code shown on the computer")}
+                placeholder={t("Type the code shown on the computer")}
+                value={typedCode}
+                onChange={(event) => setTypedCode(event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+              />
+            )}
 
             {organization?.switchable && (
               <Alert size="sm">
@@ -178,7 +213,7 @@ export function PairingReview({
               type="submit"
               isLoading={approve.isPending}
               loadingText={t("Pairing")}
-              disabled={deny.isPending || disabled}
+              disabled={deny.isPending || disabled || !codeConfirmed}
             >
               {t("Approve")}
             </Button>

@@ -283,6 +283,7 @@ query CaptureDevicePairing($userCode: String!) {
     architecture
     osVersion
     clientIp
+    sameNetwork
     expiresAt
   }
 }
