@@ -1,6 +1,6 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { deskLinkClass } from "./desk-button-styles";
 import { DeskIcon, type DeskIconName } from "./desk-icons";
 
@@ -9,6 +9,17 @@ import { DeskIcon, type DeskIconName } from "./desk-icons";
  * news, or a question waiting on the person.
  */
 export type DeskCardTone = "err" | "warn" | "neutral" | "info" | "ask";
+
+/**
+ * Whether a failure card that appears now is news. A conversation sets it false
+ * while it reads its history, so failures from earlier turns are read as part of
+ * the page rather than announced again every time it opens; one that happens
+ * while the person is there is announced at once. Outside a conversation every
+ * failure card is news.
+ */
+const DeskCardsLiveContext = createContext(true);
+
+export const DeskCardsLiveProvider = DeskCardsLiveContext.Provider;
 
 /**
  * A card in the conversation or the dock: an icon in its tone, a title, a
@@ -42,10 +53,15 @@ export function DeskCard({
   actions?: ReactNode;
   children?: ReactNode;
 }) {
+  // Settled when the card first appears: history read later never turns an old
+  // failure into an alert.
+  const live = useContext(DeskCardsLiveContext);
+  const [announces] = useState(live);
+
   return (
     <div
       className={cn("dk-ec-card", `dk-t-${tone}`, compact && "dk-sm", className)}
-      role={tone === "err" ? "alert" : label ? "region" : undefined}
+      role={tone === "err" && announces ? "alert" : label ? "region" : undefined}
       aria-label={label}
     >
       <span className="dk-ec-ic">

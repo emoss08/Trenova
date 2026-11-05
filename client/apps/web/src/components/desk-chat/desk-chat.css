@@ -788,8 +788,9 @@
 .dk-dcx {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px 10px;
   padding: 8px 8px 8px 12px;
   background: var(--dsk-raised);
   border-radius: 12px;
@@ -803,7 +804,7 @@
   place-items: center;
 }
 .dk-dcx-t {
-  flex: 1;
+  flex: 1 1 260px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -820,12 +821,37 @@
   font-weight: 400;
   color: var(--dsk-subtle);
 }
+/* A card says all of what it changes: a long line wraps rather than losing its end. */
 .dk-dcx-d {
   font-size: 11.5px;
   color: var(--dsk-subtle);
+  overflow-wrap: anywhere;
+}
+/* The actions travel together: beside the words while they fit, otherwise on a row of
+   their own on the right. Wrapping them one by one left Approve alone under the rest. */
+.dk-dcx-acts {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px 10px;
+  margin-left: auto;
+}
+/* Permanent stands on its own, before the buttons, so nothing can cut it off; its tooltip
+   says what it means. */
+.dk-dcx-perm {
+  flex-shrink: 0;
+  cursor: help;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in oklch, var(--dsk-warn) 55%, transparent);
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--dsk-card) 60%, transparent);
+  color: var(--dsk-warn-fg);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .dk-dcx-d s {
   text-decoration-color: color-mix(in oklch, var(--dsk-subtle) 60%, transparent);
@@ -1233,6 +1259,21 @@
   text-align: center;
   animation: dk-qin 600ms var(--dk-settle) 160ms both;
 }
+.dk-headline-link {
+  border-radius: 4px;
+  color: var(--dsk-fg);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--dsk-fg) 30%, transparent);
+  text-underline-offset: 3px;
+  outline: none;
+}
+.dk-headline-link:hover {
+  text-decoration-color: currentColor;
+}
+.dk-headline-link:focus-visible {
+  box-shadow: 0 0 0 var(--ring-width)
+    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+}
 .dk-home .dk-cmp {
   width: 100%;
   animation: dk-qin 600ms var(--dk-settle) 240ms both;
@@ -1581,12 +1622,68 @@
   color: var(--dsk-fg);
   background: transparent;
 }
-.dk-sb-i > span:nth-child(2) {
+.dk-sb-i > span:nth-child(2):not(.dk-sb-acts) {
   flex: 1;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* A conversation row is a link to it; pin and delete sit beside the link, not in it. */
+.dk-sb-l {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  align-self: stretch;
+  gap: 10px;
+  min-width: 0;
+  border-radius: inherit;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+.dk-sb-l:focus-visible {
+  box-shadow: 0 0 0 var(--ring-width)
+    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
+}
+.dk-sb-tx {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.dk-sb-tx .dk-sb-t {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* What the conversation waits on, in words: "EDI · Needs your approval". */
+.dk-sb-n {
+  overflow: hidden;
+  color: var(--dsk-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-sb-n.dk-s-wait {
+  color: var(--dsk-warn-fg);
+}
+.dk-sb-n.dk-s-error {
+  color: var(--dsk-error);
+}
+.dk-sb-c.dk-sb-2 {
+  height: auto;
+  min-height: 30px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+.dk-sb-c.dk-sb-2 .dk-sb-l {
+  align-items: flex-start;
+}
+.dk-sb-c.dk-sb-2 .dk-sb-dot {
+  height: 17px;
 }
 .dk-sb-ct {
   font-style: normal;
@@ -3410,7 +3507,6 @@
     transform: translateY(-70px);
   }
 }
-
 
 .dk-scroll:hover {
   scrollbar-color: color-mix(in srgb, var(--dsk-fg) 18%, transparent) transparent;

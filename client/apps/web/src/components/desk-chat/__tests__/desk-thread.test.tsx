@@ -2,10 +2,26 @@ import type { ThreadAsks, ThreadAskRequest } from "@/components/assistant/ask-re
 import { approvalQueue } from "@/components/assistant/approval-queue";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { preview } from "@/components/assistant/__tests__/preview-fixtures";
+import { DESK_SETTINGS_DEFAULTS, useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { DeskThread, type DeskThreadChapters, type DeskThreadProps } from "../desk-thread";
+
+const decideMyProposal = vi.fn<(...args: unknown[]) => Promise<unknown>>();
+
+vi.mock("@/lib/graphql/agent-decisions", () => ({
+  decideMyProposal: (...args: unknown[]) => decideMyProposal(...args),
+  decideMyProposals: vi.fn(),
+  decideMyPlan: vi.fn(),
+  decideAgentProposal: vi.fn(),
+}));
+
+vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
+  fetchProposalPreview: async () => preview({ digest: "sha256:shown" }),
+}));
 
 const conversation = vi.hoisted(() => ({
   reply: "Two loads are stuck at the yard.",
@@ -187,8 +203,7 @@ function chaptersOf(
     heading: (turnId) => (titles[turnId] ? <p>{titles[turnId]}</p> : null),
     liveTurnId: null,
     rail: (nav) => <span>{`rail at ${nav.current ?? "none"}`}</span>,
-    startAt: (entry) =>
-      entry.turnId && titles[entry.turnId] ? undefined : () => start(entry.id),
+    startAt: (entry) => (entry.turnId && titles[entry.turnId] ? undefined : () => start(entry.id)),
   };
 }
 
@@ -545,8 +560,87 @@ describe("DeskThread's schedule cards", () => {
     renderThread({ schedules: schedules() });
 
     expect(screen.getByText("card csch_2 typed")).toBeInTheDocument();
-    expect(
-      screen.getByText("every day at 10:15am, give me today's operations board"),
-    ).toHaveClass("dk-q");
+    expect(screen.getByText("every day at 10:15am, give me today's operations board")).toHaveClass(
+      "dk-q",
+    );
+  });
+});
+
+/*
+With "Send with Cmd Enter" chosen, the message box sends on Cmd/Ctrl+Enter, and the
+stage approved on the same key without asking whether the box had used it: a
+person typing "why this driver?" about a waiting change sent the question and
+approved the change in one keystroke.
+*/
+describe("DeskThread approves only on purpose", () => {
+  function waitingChange() {
+    conversation.queue = approvalQueue(
+      [
+        {
+          id: "ap_1",
+          runId: "ar_1",
+          toolName: "shipment_update",
+          arguments: { shipmentId: "shp_1", status: "Delayed" },
+          rationale: "",
+          autonomyTier: "ActWithApproval",
+          status: "Pending",
+          sourceMessageId: "msg_a",
+          executedAt: null,
+          executionError: "",
+          expiresAt: 0,
+          hold: null,
+          planId: "",
+          planStep: 0,
+          fields: [],
+          createdAt: 100,
+          decidedAt: null,
+          decidedByUserId: "",
+          decisionNote: "",
+          reviewRequired: false,
+        },
+      ],
+      [],
+      null,
+      1_000,
+    );
+  }
+
+  afterEach(() => {
+    decideMyProposal.mockReset();
+    useDeskSettingsStore.setState({ settings: DESK_SETTINGS_DEFAULTS });
+  });
+
+  it("sends a question with Ctrl+Enter without approving the change it asks about", async () => {
+    useDeskSettingsStore.setState({ settings: { ...DESK_SETTINGS_DEFAULTS, send: "mod" } });
+    waitingChange();
+    renderThread();
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Approve/ })).toBeEnabled());
+
+    const box = screen.getByRole("textbox", { name: "Message the Desk" });
+    fireEvent.change(box, { target: { value: "Why this driver?" } });
+    fireEvent.keyDown(box, { key: "Enter", ctrlKey: true });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(decideMyProposal).not.toHaveBeenCalled();
+  });
+
+  it("approves with Ctrl+Enter from an empty message box", async () => {
+    decideMyProposal.mockResolvedValue({
+      proposalId: "ap_1",
+      executed: false,
+      refused: false,
+      error: null,
+      decision: { commitsAt: null },
+    });
+    waitingChange();
+    renderThread();
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Approve/ })).toBeEnabled());
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Message the Desk" }), {
+      key: "Enter",
+      ctrlKey: true,
+    });
+
+    await waitFor(() => expect(decideMyProposal).toHaveBeenCalledTimes(1));
   });
 });

@@ -1,8 +1,15 @@
 import { field, preview, record } from "@/components/assistant/__tests__/preview-fixtures";
 import type { PreviewRef } from "@/lib/graphql/agent-preview";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { approvalFacts, OUTCOME_FIELD, recordName, valueText } from "../approval-facts";
+import {
+  approvalFacts,
+  OUTCOME_FIELD,
+  recordName,
+  scopePhrase,
+  valueText,
+} from "../approval-facts";
 
 const t = ((template: string, ...args: unknown[]) =>
   template.replace(/\{(\d+)\}/g, (_, index: string) => String(args[Number(index)]))) as TranslateFn;
@@ -116,5 +123,65 @@ describe("approvalFacts", () => {
     expect(facts.refused).toHaveLength(1);
     expect(facts.refused[0].label).not.toContain("bqi_");
     expect(facts.refused[0].reason).toBe("it is already posted");
+  });
+});
+
+/*
+The card used to say only "on 1 shipment", so a dispatcher had to open Review to
+learn which load a change was for. One existing record is named by its own label;
+several are counted; a record being created carries only a placeholder label.
+*/
+describe("scopePhrase", () => {
+  // The catalog's own formatter, so counts read as the card prints them.
+  const t = translate as TranslateFn;
+
+  it("names the one existing record a change acts on", () => {
+    const facts = approvalFacts(preview({ changes: [record({ label: "S-240201" })] }), t);
+
+    expect(facts.record).toBe("S-240201");
+    expect(scopePhrase(facts, t)).toBe("on S-240201");
+  });
+
+  it("counts several records instead of naming the first", () => {
+    const facts = approvalFacts(
+      preview({
+        changes: [
+          record({ label: "S-240201", entityId: "shp_1" }),
+          record({ label: "S-240202", entityId: "shp_2" }),
+        ],
+      }),
+      t,
+    );
+
+    expect(facts.record).toBe("");
+    expect(scopePhrase(facts, t)).toBe("on 2 shipments");
+  });
+
+  it("counts a record it may not show rather than naming the one it may", () => {
+    const facts = approvalFacts(
+      preview({ changes: [record({ label: "S-240201" })], withheldCount: 1 }),
+      t,
+    );
+
+    expect(scopePhrase(facts, t)).toBe("on 2 shipments");
+  });
+
+  it("falls back to the count when the record has no label", () => {
+    const facts = approvalFacts(preview({ changes: [record({ label: "" })] }), t);
+
+    expect(scopePhrase(facts, t)).toBe("on 1 shipment");
+  });
+
+  it("does not name a record being created by its placeholder label", () => {
+    const facts = approvalFacts(
+      preview({
+        changes: [
+          record({ record: null, entityId: null, label: "New shipment", operation: "Create" }),
+        ],
+      }),
+      t,
+    );
+
+    expect(scopePhrase(facts, t)).toBeNull();
   });
 });

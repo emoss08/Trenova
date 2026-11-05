@@ -117,7 +117,8 @@ export function DeskQuestion({
   // no longer says so under the question.
   return (
     <>
-      <div
+      {/* A heading, so a screen reader can move from one question to the next. */}
+      <h2
         className={cn(
           "dk-q",
           size === "mid" && "dk-mid",
@@ -131,7 +132,7 @@ export function DeskQuestion({
           text
         )}
         {tag && <span className="dk-ec-qtag">{tag}</span>}
-      </div>
+      </h2>
       {attachments && attachments.length > 0 && (
         <DeskMessageAttachments attachments={attachments} />
       )}
