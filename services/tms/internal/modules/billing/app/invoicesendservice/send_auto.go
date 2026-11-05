@@ -59,7 +59,6 @@ func (s *Service) AutoSendInvoiceAfterPDFGeneration(
 	return s.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
-		BaseURL:    req.BaseURL,
 		StartedAt:  req.StartedAt,
 	}, actor)
 }

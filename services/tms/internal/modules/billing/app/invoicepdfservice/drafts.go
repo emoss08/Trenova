@@ -110,7 +110,6 @@ func (s *Service) GeneratePDF(
 				Timestamp:      timeutils.NowUnix(),
 			},
 			InvoiceID:     req.InvoiceID,
-			BaseURL:       req.BaseURL,
 			PrincipalType: actor.PrincipalType,
 			PrincipalID:   actor.PrincipalID,
 			APIKeyID:      actor.APIKeyID,
