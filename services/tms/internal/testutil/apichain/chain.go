@@ -32,6 +32,7 @@ type Chain struct {
 	Steps       []Step            `yaml:"steps"`
 	Probes      []Probe           `yaml:"probes"`
 	Volatile    []string          `yaml:"volatile"`
+	Generated   map[string]string `yaml:"generated"`
 
 	Path string `yaml:"-"`
 }
@@ -186,6 +187,19 @@ func (c *Chain) validate() error {
 		}
 		seen[step.ID] = true
 	}
+	for name, value := range c.Generated {
+		if !idPattern.MatchString(name) {
+			fail("generated %q must be a camelCase name", name)
+		}
+		refs := References(value)
+		if len(refs) != 1 || value != "${"+refs[0]+"}" {
+			fail("generated %s must be one reference, like ${create.response.data.x.proNumber}", name)
+			continue
+		}
+		if err := c.checkReference(refs[0], seen); err != nil {
+			fail("generated %s: %w", name, err)
+		}
+	}
 
 	return errors.Join(errs...)
 }
@@ -276,8 +290,8 @@ func (c *Chain) checkReference(ref string, earlier map[string]bool) error {
 			return fmt.Errorf("${%s} names a fixture the chain does not declare", ref)
 		}
 	case scopeRun:
-		if !slices.Contains(runValues, rest) {
-			return fmt.Errorf("${%s}: run offers %v", ref, runValues)
+		if _, isOffset := runOffset(rest); !isOffset && !slices.Contains(runValues, rest) {
+			return fmt.Errorf("${%s}: run offers %v, and now±seconds", ref, runValues)
 		}
 	default:
 		if !earlier[scope] {

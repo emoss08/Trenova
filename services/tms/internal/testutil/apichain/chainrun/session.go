@@ -204,8 +204,10 @@ func describe(body any) string {
 	return text
 }
 
+var sortedJSON = sonic.Config{SortMapKeys: true}.Froze()
+
 func describeAll(value any) string {
-	raw, err := sonic.Marshal(value)
+	raw, err := sortedJSON.Marshal(value)
 	if err != nil {
 		return fmt.Sprint(value)
 	}

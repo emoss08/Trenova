@@ -24,7 +24,20 @@ const (
 
 var runValues = []string{RunUnique, RunNow, RunOrganization, RunBusinessUnit, RunUser}
 
-var refPattern = regexp.MustCompile(`\$\{([^}]+)\}`)
+var (
+	refPattern     = regexp.MustCompile(`\$\{([^}]+)\}`)
+	nowOffsetRegex = regexp.MustCompile(`^now([+-]\d+)$`)
+)
+
+func runOffset(name string) (int64, bool) {
+	match := nowOffsetRegex.FindStringSubmatch(name)
+	if match == nil {
+		return 0, false
+	}
+	offset, err := strconv.ParseInt(match[1], 10, 64)
+
+	return offset, err == nil
+}
 
 type StepValues struct {
 	Request  any
@@ -157,6 +170,13 @@ func (s *Scope) Lookup(ref string) (any, error) {
 		}
 		return value, nil
 	case scopeRun:
+		if offset, isOffset := runOffset(rest); isOffset {
+			now, ok := s.Run[RunNow].(int64)
+			if !ok {
+				return nil, fmt.Errorf("${%s}: the run has no clock", ref)
+			}
+			return now + offset, nil
+		}
 		value, ok := s.Run[rest]
 		if !ok {
 			return nil, fmt.Errorf("${%s}: no such run value", ref)

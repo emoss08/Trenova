@@ -49,30 +49,49 @@ name: shipment-to-invoice          # the file name, without .yaml
 description: one sentence a reviewer reads first
 actor: admin@trenova.app           # a fixture user
 fixtures:                          # one value each; $1 is the actor's organization, $2 its business unit
-  customer: SELECT id FROM customers WHERE code = 'ACME' AND organization_id = $1 AND business_unit_id = $2
+  customer: SELECT id FROM customers WHERE code = 'RNGE' AND organization_id = $1 AND business_unit_id = $2
+  driver: SELECT id FROM workers WHERE email = 'carlos.rivera@example.com' AND organization_id = $1 AND business_unit_id = $2
 steps:
   - id: create
     graphql: CreateShipment        # a persisted operation, sent by hash
-    vars: { input: { customerId: "${fixture.customer}", bol: "BOL-${run.unique}" } }
+    vars:
+      input:
+        customerId: ${fixture.customer}
+        bol: CHAIN-${run.unique}
+        freightChargeAmount: "1500.00"
+        moves: [{ stops: [{ scheduledWindowStart: "${run.now-21600}", ... }, ...] }]
     export: { shipment: data.createShipment.id, move: data.createShipment.moves.0.id }
-  - id: assign
-    rest: POST /api/v1/shipment-moves/${create.move}/assignment/
-    body: { primaryWorkerId: "${fixture.driver}" }
-  - id: read
+  - id: shipment
     graphql: ShipmentDetail
     vars: { id: "${create.shipment}" }
-    expect: { data.shipment.status: Assigned }
-  - id: charge
-    graphql: AddCharge
-    vars: { input: { shipmentId: "${create.shipment}", amount: "75.00" } }
+  - id: assign
+    rest: POST /api/v1/shipment-moves/${create.move}/assignment/
+    body: { primaryWorkerId: "${fixture.driver}", tractorId: "${fixture.tractor}" }
     effects:
-      - { read: read, path: data.shipment.totalChargeAmount, increase: "75.00" }
+      - { read: shipment, path: data.shipment.moves.0.assignment.tractorId, equals: "${fixture.tractor}" }
+  - id: post
+    rest: POST /api/v1/billing-queue/${transfer.item}/post/
+    export: { invoice: invoiceId }
+    effects:
+      - { read: shipment, path: data.shipment.status, equals: Invoiced }
+  - id: invoice
+    graphql: DeskInvoiceDetail
+    vars: { id: "${post.invoice}" }
+    expect:
+      data.invoice.status: Posted
+      data.invoice.totalAmount: ${create.request.variables.input.freightChargeAmount}
+generated:
+  proNumber: ${create.response.data.createShipment.proNumber}
 probes: [unauthenticated, no-permission, other-tenant]
 ```
 
+`shipment-to-invoice.yaml` is the whole of it: create, assign, four stop actuals, the bulk
+transfer to billing, approval, posting over REST and the invoice read back.
+
 - **References.** `${step.export}`, `${step.response.<path>}`, `${step.request.<path>}` (the
   request a step sent: `variables.…` or `path`/`body.…`), `${fixture.name}`, and `${run.unique}`,
-  `${run.now}`, `${run.organization}`, `${run.businessUnit}`, `${run.user}`. A reference that is the
+  `${run.now}` (Unix seconds; `${run.now-21600}` offsets it), `${run.organization}`,
+  `${run.businessUnit}`, `${run.user}`. A reference that is the
   whole value keeps its type; one inside text is interpolated. A step may refer only to steps
   before it. Paths are dot-separated, with list indexes as numbers.
 - **`expect`** pins the facts that must hold whatever the golden says, so a careless
@@ -86,6 +105,8 @@ probes: [unauthenticated, no-permission, other-tenant]
 - **`document:`** sends an inline document for an operation no client sends (an API-only caller).
   The runner refuses it for an operation that is in the manifest, and refuses a `graphql:` name
   that is in neither.
+- **`generated:`** names values the server makes up on purpose (a PRO number with random digits),
+  each one reference: once it resolves, the golden shows `<name>` wherever the value appears.
 - **`volatile:`** lists paths (`*` matches one segment) whose values the golden blanks, for a field
   that is honestly different every run. Prefer fixing the nondeterminism.
 
@@ -97,7 +118,7 @@ After the chain, each probe replays the requests the steps sent:
 |---|---|---|
 | `unauthenticated` | no session | every step is refused |
 | `no-permission` | a user the harness adds to the actor's organization with no role | every step is refused |
-| `other-tenant` | the actor, switched to their other organization | every step whose request names one of the chain's records is refused if it writes, and answers with none of those records if it reads |
+| `other-tenant` | the actor, switched to their other organization | every step whose request names one of the chain's records is refused, or answers with none of the chain's records the request did not already name; and the actor's reads come back identical after the replay |
 
 The chain's records are its fixtures, its exports and every `id` a write answered with. A step
 that is open on purpose (the caller's own profile) lists the probe under `openTo:`. Each probe's
@@ -113,16 +134,17 @@ differ every run are rewritten before comparing:
 - every ID becomes its prefix and the order it first appeared (`$shp_1`), or its name when the
   chain knows one (`$fixture.customer`, `$run.user`), so `$shp_1` in step six is the shipment step
   one created;
-- a time under a time-named key (`createdAt`, `due_date`, `deadline`) becomes `<time>`;
-- the run's unique token becomes `<run.unique>`.
+- a time under a time-named key (`createdAt`, `due_date`, `deadline`), and any whole number within
+  about a year of the run's clock, becomes `<time>`; a date under a date-named key becomes `<date>`;
+- the run's unique token becomes `<run.unique>`, and each `generated` value `<name>`.
 
 A failure names the step, the path, the old and new values, and the suspect writes: the earlier
 writes whose request or response shares a record with the drifted value.
 
 ```
 shipment-to-invoice drifted from shipment-to-invoice.golden.json:
-  step invoice (graphql DeskInvoiceDetail): response.data.invoice.totalAmount want="1250.00" got="0.00"
-    suspect writes: post (graphql PostBillingQueueItem), transfer (graphql TransferShipmentToBillingItems)
+  step post (POST /api/v1/billing-queue/:itemID/post/): sideEffects.audit.1 want={"operation":"update","resource":"billing_queue","resourceId":"$bqi_1"} got=<absent>
+    suspect writes: post (POST /api/v1/billing-queue/:itemID/post/)
 ```
 
 The golden is approved by reviewing its diff in the pull request. Rewrite it with

@@ -11,12 +11,14 @@ import (
 
 const (
 	TimePlaceholder     = "<time>"
+	DatePlaceholder     = "<date>"
 	VolatilePlaceholder = "<volatile>"
 
 	unixSecondsFloor = 1_000_000_000
 	unixSecondsCeil  = 10_000_000_000
 	unixMillisFloor  = 1_000_000_000_000
 	unixMillisCeil   = 10_000_000_000_000
+	nearNow          = 400 * 24 * 60 * 60
 )
 
 var (
@@ -25,31 +27,41 @@ var (
 		`[a-z](?:At|Date|Time|Timestamp|Until|Since|Deadline)$|_(?:at|date|time)$|^(?:date|time|timestamp|deadline)$`,
 	)
 	rfc3339Prefixes = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}`)
+	datePattern     = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 )
 
 type Normalizer struct {
 	aliases  map[string]string
 	counts   map[string]int
 	volatile [][]string
-	literals *strings.Replacer
+	literals map[string]string
+	replacer *strings.Replacer
+	now      int64
 }
 
 func IsID(text string) bool {
 	return idPattern.MatchString(text) && idPattern.FindString(text) == text
 }
 
-func NewNormalizer(named map[string]string, volatile []string, literals map[string]string) *Normalizer {
-	pairs := make([]string, 0, 2*len(literals))
-	for _, literal := range slices.Sorted(maps.Keys(literals)) {
-		if literal != "" {
-			pairs = append(pairs, literal, literals[literal])
-		}
-	}
+type Options struct {
+	Named    map[string]string
+	Volatile []string
+	Literals map[string]string
+	Now      int64
+}
+
+func NewNormalizer(opts Options) *Normalizer {
+	named, volatile := opts.Named, opts.Volatile
 	n := &Normalizer{
 		aliases:  make(map[string]string, len(named)),
 		counts:   map[string]int{},
-		literals: strings.NewReplacer(pairs...),
+		literals: map[string]string{},
+		now:      opts.Now,
 	}
+	for literal, placeholder := range opts.Literals {
+		n.literals[literal] = placeholder
+	}
+	n.rebuild()
 	for _, id := range slices.Sorted(maps.Keys(named)) {
 		n.aliases[id] = "$" + named[id]
 	}
@@ -58,6 +70,28 @@ func NewNormalizer(named map[string]string, volatile []string, literals map[stri
 	}
 
 	return n
+}
+
+func (n *Normalizer) AddLiteral(literal, placeholder string) {
+	if literal == "" {
+		return
+	}
+	n.literals[literal] = placeholder
+	n.rebuild()
+}
+
+func (n *Normalizer) rebuild() {
+	ordered := slices.SortedFunc(maps.Keys(n.literals), func(a, b string) int {
+		if len(a) != len(b) {
+			return len(b) - len(a)
+		}
+		return strings.Compare(a, b)
+	})
+	pairs := make([]string, 0, 2*len(ordered))
+	for _, literal := range ordered {
+		pairs = append(pairs, literal, n.literals[literal])
+	}
+	n.replacer = strings.NewReplacer(pairs...)
 }
 
 func (n *Normalizer) Alias(id string) string {
@@ -103,15 +137,35 @@ func (n *Normalizer) Value(path []string, value any) any {
 				return TimePlaceholder
 			}
 		}
-		return idPattern.ReplaceAllStringFunc(n.literals.Replace(typed), n.Alias)
+		if timeKeyPattern.MatchString(key) && datePattern.MatchString(typed) {
+			return DatePlaceholder
+		}
+		return idPattern.ReplaceAllStringFunc(n.replacer.Replace(typed), n.Alias)
 	case float64:
-		if timeKeyPattern.MatchString(key) && isUnixTime(typed) {
+		if (timeKeyPattern.MatchString(key) && isUnixTime(typed)) || n.nearNow(typed) {
+			return TimePlaceholder
+		}
+		return typed
+	case int64:
+		if n.nearNow(float64(typed)) {
 			return TimePlaceholder
 		}
 		return typed
 	default:
 		return value
 	}
+}
+
+func (n *Normalizer) nearNow(value float64) bool {
+	if n.now == 0 || value != float64(int64(value)) {
+		return false
+	}
+	seconds := int64(value)
+	if seconds >= unixMillisFloor {
+		seconds /= 1000
+	}
+
+	return seconds > n.now-nearNow && seconds < n.now+nearNow
 }
 
 func isUnixTime(value float64) bool {

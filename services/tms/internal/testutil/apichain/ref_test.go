@@ -12,6 +12,7 @@ func scope() *apichain.Scope {
 	s := apichain.NewScope()
 	s.Fixtures["customer"] = "cus_01"
 	s.Run[apichain.RunUnique] = "x7k2"
+	s.Run[apichain.RunNow] = int64(1_800_000_000)
 	s.Steps["create"] = apichain.StepValues{
 		Request:  map[string]any{"variables": map[string]any{"rate": "1250.00"}},
 		Response: map[string]any{"data": map[string]any{"moves": []any{map[string]any{"id": "smv_9"}}}},
@@ -88,4 +89,21 @@ func TestGet_WalksMapsAndListIndexes(t *testing.T) {
 
 	_, ok = apichain.Get(root, "data.items.x")
 	assert.False(t, ok)
+}
+
+func TestResolve_OffsetsTheRunClockInSeconds(t *testing.T) {
+	t.Parallel()
+
+	got, err := scope().Resolve(map[string]any{
+		"start": "${run.now-21600}",
+		"end":   "${run.now+300}",
+		"now":   "${run.now}",
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, map[string]any{
+		"start": int64(1_799_978_400),
+		"end":   int64(1_800_000_300),
+		"now":   int64(1_800_000_000),
+	}, got)
 }

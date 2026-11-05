@@ -102,6 +102,10 @@ func TestLoad_RefusesWhatCannotRun(t *testing.T) {
 			body: "name: bad\nactor: a@b.c\nsteps: [{id: a, rest: GET /x, openTo: [no-permission]}]\n",
 			want: `openTo names "no-permission", which the chain does not probe`,
 		},
+		"generated value that is not one reference": {
+			body: "name: bad\nactor: a@b.c\nsteps: [{id: a, graphql: X}]\ngenerated: {pro: 'PRO-${a.response.pro}'}\n",
+			want: "generated pro must be one reference",
+		},
 		"unknown probe": {
 			body: "name: bad\nactor: a@b.c\nsteps: [{id: a, graphql: X}]\nprobes: [sideways]\n",
 			want: `unknown probe "sideways"`,

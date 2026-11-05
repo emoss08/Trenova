@@ -2,6 +2,7 @@ package chainrun
 
 import (
 	"maps"
+	"reflect"
 	"slices"
 	"strings"
 
@@ -48,29 +49,56 @@ func (r *runner) otherTenant() {
 	require.NoError(r.t, err, "log in for the other-tenant probe")
 	require.NoError(r.t, session.SwitchOrganization(r.ctx, other))
 
+	before := r.readState()
 	owned := slices.Sorted(maps.Keys(r.owned))
 	for _, call := range r.plan.Calls {
-		if call.Step.ExpectError != "" || !mentions(r.sent[call.Step.ID], owned) {
+		request := r.sent[call.Step.ID]
+		if call.Step.ExpectError != "" || !mentions(request, owned) {
 			continue
 		}
 		result, replayErr := r.replay(session, call)
 		require.NoError(r.t, replayErr, "other-tenant probe: step %s", call.Step.ID)
 		r.record(apichain.ProbeOtherTenant, call, result)
 
-		if call.Step.IsOpenTo(apichain.ProbeOtherTenant) {
+		if result.Failed() || call.Step.IsOpenTo(apichain.ProbeOtherTenant) {
 			continue
 		}
-		if !call.IsRead() && !result.Failed() {
-			r.t.Errorf("other-tenant probe: step %s (%s) wrote with another tenant's records "+
-				"and must be refused: %d %s", call.Step.ID, call.Label(), result.Status,
-				describe(result.Body))
-			continue
-		}
-		if leaked := leakedIDs(result.Body, owned); len(leaked) > 0 {
+		if leaked := leakedIDs(result.Body, unsent(owned, request)); len(leaked) > 0 {
 			r.t.Errorf("other-tenant probe: step %s (%s) answered another tenant with %s: %s",
 				call.Step.ID, call.Label(), strings.Join(leaked, ", "), describe(result.Body))
 		}
 	}
+
+	after := r.readState()
+	for _, id := range slices.Sorted(maps.Keys(before)) {
+		if !reflect.DeepEqual(before[id], after[id]) {
+			r.t.Errorf("other-tenant probe: the actor's read %s changed while another tenant "+
+				"replayed the chain:\nbefore: %s\nafter:  %s",
+				id, describeAll(before[id]), describeAll(after[id]))
+		}
+	}
+}
+
+func (r *runner) readState() map[string]Result {
+	state := map[string]Result{}
+	for _, call := range r.plan.Calls {
+		if !call.IsRead() {
+			continue
+		}
+		result, err := r.replay(r.session, call)
+		require.NoError(r.t, err, "re-read %s", call.Step.ID)
+		state[call.Step.ID] = result
+	}
+
+	return state
+}
+
+func unsent(owned []string, request any) []string {
+	text := describeAll(request)
+
+	return slices.DeleteFunc(slices.Clone(owned), func(id string) bool {
+		return strings.Contains(text, id)
+	})
 }
 
 func (r *runner) record(probe apichain.Probe, call Call, result Result) {

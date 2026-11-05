@@ -64,6 +64,7 @@ type runner struct {
 	snap    *chainsnap.Snapshot
 	sent    map[string]any
 	owned   map[string]bool
+	learned map[string]bool
 }
 
 func run(t *testing.T, plan *Plan) {
@@ -77,9 +78,10 @@ func run(t *testing.T, plan *Plan) {
 	require.NoError(t, err)
 
 	unique := strings.ToLower(pulid.MustNew("").String()[16:])
+	now := time.Now().Unix()
 	scope := apichain.NewScope()
 	scope.Fixtures = fixtures
-	scope.Run = runValues(actor, unique, time.Now().Unix())
+	scope.Run = runValues(actor, unique, now)
 
 	named := map[string]string{
 		actor.OrganizationID: "run.organization",
@@ -105,9 +107,15 @@ func run(t *testing.T, plan *Plan) {
 		actor:   actor,
 		scope:   scope,
 		session: session,
-		norm:    chainsnap.NewNormalizer(named, chain.Volatile, map[string]string{unique: "<run.unique>"}),
+		norm: chainsnap.NewNormalizer(chainsnap.Options{
+			Named:    named,
+			Volatile: chain.Volatile,
+			Literals: map[string]string{unique: "<run.unique>"},
+			Now:      now,
+		}),
 		snap:    &chainsnap.Snapshot{Chain: chain.Name},
 		sent:    map[string]any{},
+		learned: map[string]bool{},
 		owned:   owned,
 	}
 
@@ -160,6 +168,7 @@ func (r *runner) step(call Call) {
 		Exports:  exports,
 	}
 	r.sent[step.ID] = request
+	r.learnGenerated()
 
 	for _, path := range slices.Sorted(maps.Keys(step.Expect)) {
 		want, resolveErr := r.scope.Resolve(step.Expect[path])
@@ -205,6 +214,22 @@ func (r *runner) step(call Call) {
 	}
 
 	r.snap.Steps = append(r.snap.Steps, record)
+}
+
+func (r *runner) learnGenerated() {
+	for _, name := range slices.Sorted(maps.Keys(r.plan.Chain.Generated)) {
+		if r.learned[name] {
+			continue
+		}
+		value, err := r.scope.Resolve(r.plan.Chain.Generated[name])
+		if err != nil {
+			continue
+		}
+		text, ok := value.(string)
+		require.True(r.t, ok && text != "", "generated %s must resolve to text, got %v", name, value)
+		r.norm.AddLiteral(text, "<"+name+">")
+		r.learned[name] = true
+	}
 }
 
 func (r *runner) requireOutcome(call Call, result Result) {
