@@ -53,10 +53,10 @@ func (s *Service) PlanReview(ctx context.Context, req *ReviewRequest) (*ReviewPl
 		return nil, errortypes.NewAuthorizationError("Only a person can review a document")
 	}
 
-	current, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
+	current, err := s.visibleDocument(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
-	})
+	}, &req.Actor)
 	if err != nil {
 		return nil, err
 	}

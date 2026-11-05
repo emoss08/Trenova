@@ -48,6 +48,15 @@ func New(p Params) documentports.DocumentRepository {
 	}
 }
 
+func visibleTo(viewer pulid.ID) keel.Pred {
+	d := documentdb.Documents
+
+	return keel.Or(
+		d.ResourceType.Ne(document.ConversationResourceType),
+		d.UploadedByID.Eq(viewer),
+	)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *documentports.ListDocumentsRequest,
@@ -65,10 +74,7 @@ func (r *repository) List(
 					keel.When(req.ResourceID != "", d.ResourceID.Eq(req.ResourceID)),
 					keel.When(req.ResourceType != "", d.ResourceType.Eq(req.ResourceType)),
 					keel.When(req.Status != "", d.Status.Eq(document.Status(req.Status))),
-					keel.When(req.HidePrivate, keel.Or(
-						d.ResourceType.Ne(document.ConversationResourceType),
-						d.UploadedByID.Eq(req.PrivateTo),
-					)),
+					visibleTo(req.Viewer),
 				),
 				&listquery.Request[document.Document]{
 					Filter: req.Filter,
@@ -110,6 +116,7 @@ func (r *repository) SelectOptions(
 					keel.When(len(req.IDs) == 0, d.Status.Ne(document.StatusArchived)),
 					keel.When(req.ResourceID != "", d.ResourceID.Eq(req.ResourceID)),
 					keel.When(req.ResourceType != "", d.ResourceType.Eq(req.ResourceType)),
+					visibleTo(req.Viewer),
 				).
 				Load(d.DocumentType()).
 				Order(d.CreatedAt.Desc())
@@ -175,6 +182,7 @@ func (r *repository) GetByResourceID(
 			d.ResourceID.Eq(req.ResourceID),
 			d.ResourceType.Eq(req.ResourceType),
 			d.IsCurrentVersion.IsTrue(),
+			visibleTo(req.Viewer),
 		).Order(d.CreatedAt.Desc())
 		if req.IncludeDocumentType {
 			q = q.Load(d.DocumentType())

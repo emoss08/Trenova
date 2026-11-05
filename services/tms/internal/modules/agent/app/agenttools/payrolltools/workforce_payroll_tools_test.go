@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,6 +19,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type scopedEngine struct {
+	permissionports.PermissionEngine
+
+	allowed bool
+	scope   permission.DataScope
+	checked []*permissionports.PermissionCheckRequest
+}
+
+func organizationWide() *scopedEngine {
+	return &scopedEngine{allowed: true, scope: permission.DataScopeOrganization}
+}
+
+func (e *scopedEngine) Check(
+	_ context.Context,
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	e.checked = append(e.checked, req)
+
+	return &permissionports.PermissionCheckResult{Allowed: e.allowed, DataScope: e.scope}, nil
+}
 
 type fakePayroll struct {
 	guard  *agenttoolstest.WriteGuard
@@ -105,7 +127,7 @@ func TestGeneratePayrollExport_TakesTheLastDayInclusive(t *testing.T) {
 	t.Parallel()
 
 	payroll := newFakePayroll()
-	tool := newGeneratePayrollExportTool(payroll)
+	tool := newGeneratePayrollExportTool(payroll, organizationWide())
 	raw := map[string]any{
 		paramFirstDay:        "2026-09-14",
 		paramLastDay:         "2026-09-27",
@@ -155,7 +177,7 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 	t.Parallel()
 
 	payroll := newFakePayroll()
-	tool := newVoidPayrollExportTool(payroll)
+	tool := newVoidPayrollExportTool(payroll, organizationWide())
 	raw := map[string]any{
 		paramPayrollExportID:   payroll.export.ID.String(),
 		toolparams.ParamReason: "Two weeks were approved in error",
@@ -190,4 +212,43 @@ func TestVoidPayrollExport_KeepsTheReason(t *testing.T) {
 			map[string]any{paramPayrollExportID: payroll.export.ID.String()},
 		),
 	))
+}
+
+func TestPayrollTools_RefuseAGrantNarrowerThanTheOrganization(t *testing.T) {
+	t.Parallel()
+
+	raw := map[string]any{
+		paramFirstDay:          "2026-09-14",
+		paramLastDay:           "2026-09-27",
+		paramPayrollExportID:   pulid.MustNew("pxb_").String(),
+		toolparams.ParamReason: "Wrong period",
+	}
+
+	for _, scope := range []permission.DataScope{permission.DataScopeOwn, permission.DataScopeTeam} {
+		for name, build := range map[string]func(
+			PayrollExporter,
+			permissionports.PermissionEngine,
+		) agenttoolports.AgentTool{
+			"generate": newGeneratePayrollExportTool,
+			"void":     newVoidPayrollExportTool,
+		} {
+			t.Run(name+"/"+string(scope), func(t *testing.T) {
+				t.Parallel()
+
+				payroll := newFakePayroll()
+				engine := &scopedEngine{allowed: true, scope: scope}
+				tool := build(payroll, engine)
+
+				err := tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw))
+
+				require.Error(t, err)
+				assert.True(t, errortypes.IsAuthorizationError(err), err.Error())
+				assert.Nil(t, payroll.generated)
+				assert.Nil(t, payroll.voided)
+				require.NotEmpty(t, engine.checked)
+				assert.Equal(t, permission.ResourceTimesheet.String(), engine.checked[0].Resource)
+				assert.Equal(t, permission.OpExport, engine.checked[0].Operation)
+			})
+		}
+	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,8 +49,12 @@ func (s *Service) PlanDelete(ctx context.Context, req *BulkDeleteRequest) (*Dele
 		return nil, err
 	}
 
+	person := req.Actor.PersonUserID()
 	found := make(map[pulid.ID]bool, len(docs))
 	for _, doc := range docs {
+		if !doc.VisibleToPerson(person) {
+			return nil, errDocumentNotReadable
+		}
 		found[doc.ID] = true
 	}
 	missing := make([]string, 0)
@@ -91,11 +96,12 @@ func (s *Service) PlanRestoreVersion(
 	ctx context.Context,
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
 ) (*RestorePlan, error) {
-	target, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
+	target, err := s.visibleDocument(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
-	})
+	}, actor)
 	if err != nil {
 		return nil, err
 	}

@@ -189,6 +189,9 @@ func (s *Service) CreateSession(
 				"Invalid lineage ID",
 			)
 		}
+		if err := s.requireLineageVisible(ctx, req, lineageID); err != nil {
+			return nil, err
+		}
 
 		session.LineageID = &lineageID
 	}
@@ -1065,4 +1068,23 @@ func (s *Service) ensureThumbnailForSession(
 	}
 
 	s.startThumbnailWorkflow(ctx, doc)
+}
+
+func (s *Service) requireLineageVisible(
+	ctx context.Context,
+	req *documentuploadports.CreateSessionRequest,
+	lineageID pulid.ID,
+) error {
+	versions, err := s.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
+		LineageID:  lineageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if len(document.VisibleDocuments(versions, req.Actor.PersonUserID())) != len(versions) {
+		return errortypes.NewNotFoundError("Document not found")
+	}
+
+	return nil
 }

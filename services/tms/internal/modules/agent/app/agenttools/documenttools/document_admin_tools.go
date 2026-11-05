@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +42,11 @@ type DocumentKeeper interface {
 		ctx context.Context,
 		req *documentservice.BulkDeleteRequest,
 	) (*documentservice.DeletePlan, error)
-	Delete(ctx context.Context, req documentports.DeleteDocumentRequest, userID pulid.ID) error
+	Delete(
+		ctx context.Context,
+		req documentports.DeleteDocumentRequest,
+		actor *permissionports.RequestActor,
+	) error
 	BulkDelete(
 		ctx context.Context,
 		req *documentservice.BulkDeleteRequest,
@@ -50,18 +55,26 @@ type DocumentKeeper interface {
 		ctx context.Context,
 		documentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
+		actor *permissionports.RequestActor,
 	) ([]*document.Document, error)
 	PlanRestoreVersion(
 		ctx context.Context,
 		documentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
+		actor *permissionports.RequestActor,
 	) (*documentservice.RestorePlan, error)
 	RestoreVersion(
 		ctx context.Context,
 		documentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-		userID pulid.ID,
+		actor *permissionports.RequestActor,
 	) (*document.Document, error)
+	RequireAllReadable(
+		ctx context.Context,
+		ids []pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		actor *permissionports.RequestActor,
+	) error
 }
 
 type documentView struct {
@@ -102,7 +115,7 @@ func deleteDocumentsRequest(
 	return &documentservice.BulkDeleteRequest{
 		IDs:        ids,
 		TenantInfo: toolparams.TenantFrom(params),
-		UserID:     params.Actor.UserID,
+		Actor:      params.Actor,
 	}, nil
 }
 
@@ -136,6 +149,15 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 			req *documentservice.BulkDeleteRequest,
 			_ *agenttoolports.ToolExecuteParams,
 		) (*documentservice.DeletePlan, error) {
+			if err := documents.RequireAllReadable(
+				ctx,
+				req.IDs,
+				req.TenantInfo,
+				req.Actor,
+			); err != nil {
+				return nil, err
+			}
+
 			return documents.PlanDelete(ctx, req)
 		},
 		Refused: func(req *documentservice.BulkDeleteRequest) string {
@@ -178,7 +200,7 @@ func NewDeleteDocumentsTool(documents DocumentKeeper) agenttoolports.AgentTool {
 						OrgID: req.TenantInfo.OrgID,
 						BuID:  req.TenantInfo.BuID,
 					},
-				}, params.Actor.UserID); err != nil {
+				}, params.Actor); err != nil {
 					return nil, err
 				}
 
@@ -233,9 +255,19 @@ func restoreTarget(
 	ctx context.Context,
 	documents DocumentKeeper,
 	req *documentRestore,
-	tenant pagination.TenantInfo,
+	params *agenttoolports.ToolExecuteParams,
 ) (pulid.ID, error) {
-	versions, err := documents.ListVersions(ctx, req.documentID, tenant)
+	tenant := toolparams.TenantFrom(params)
+	if err := documents.RequireAllReadable(
+		ctx,
+		[]pulid.ID{req.documentID},
+		tenant,
+		params.Actor,
+	); err != nil {
+		return pulid.Nil, err
+	}
+
+	versions, err := documents.ListVersions(ctx, req.documentID, tenant, params.Actor)
 	if err != nil {
 		return pulid.Nil, err
 	}
@@ -281,12 +313,16 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 			req *documentRestore,
 			params *agenttoolports.ToolExecuteParams,
 		) (*restoreDocumentPlan, error) {
-			tenant := toolparams.TenantFrom(params)
-			targetID, err := restoreTarget(ctx, documents, req, tenant)
+			targetID, err := restoreTarget(ctx, documents, req, params)
 			if err != nil {
 				return nil, err
 			}
-			plan, err := documents.PlanRestoreVersion(ctx, targetID, tenant)
+			plan, err := documents.PlanRestoreVersion(
+				ctx,
+				targetID,
+				toolparams.TenantFrom(params),
+				params.Actor,
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -324,12 +360,12 @@ func NewRestoreDocumentVersionTool(documents DocumentKeeper) agenttoolports.Agen
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			tenant := toolparams.TenantFrom(params)
-			targetID, err := restoreTarget(ctx, documents, req, tenant)
+			targetID, err := restoreTarget(ctx, documents, req, params)
 			if err != nil {
 				return nil, err
 			}
 			restored, err := documents.RestoreVersion(ctx, targetID,
-				pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID}, params.Actor.UserID)
+				pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID}, params.Actor)
 			if err != nil {
 				return nil, err
 			}

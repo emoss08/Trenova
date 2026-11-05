@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -69,6 +70,11 @@ func (f *fakeSSOLinks) RecordLogin(context.Context, *sso.SSOIdentityLink, int64)
 
 const testIssuer = "https://idp.example.com"
 
+func expectMember(deps *testDeps, usr *tenant.User, cfg *sso.SSOConfig) {
+	deps.userRepo.On("ListOrganizationMemberships", mock.Anything, usr.ID, cfg.BusinessUnitID).
+		Return([]*tenant.OrganizationMembership{{OrganizationID: cfg.OrganizationID}}, nil)
+}
+
 func ssoTestConfig(provider sso.SSOProvider) *sso.SSOConfig {
 	return &sso.SSOConfig{
 		ID:             pulid.MustNew("sso_"),
@@ -91,6 +97,7 @@ func TestResolveSSOUser_FirstSignInLinksAVerifiedEmail(t *testing.T) {
 	cfg := ssoTestConfig(sso.SSOProviderOkta)
 
 	deps.userRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(usr, nil)
+	expectMember(deps, usr, cfg)
 
 	got, err := deps.svc.resolveSSOUser(t.Context(), lookup(cfg, ssoIdentity{
 		Issuer: testIssuer, Subject: "okta|1", Email: "test@example.com", EmailTrusted: true,
@@ -154,6 +161,7 @@ func TestResolveSSOUser_RefusesASecondIdentityClaimingAnAlreadyLinkedUser(t *tes
 	deps.svc.links = links
 
 	deps.userRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(usr, nil)
+	expectMember(deps, usr, cfg)
 
 	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(cfg, ssoIdentity{
 		Issuer: testIssuer, Subject: "okta|impostor", Email: "test@example.com", EmailTrusted: true,
@@ -207,6 +215,7 @@ func TestResolveSSOUser_ConcurrentLinkForAnotherUserIsRefused(t *testing.T) {
 	deps.svc.links = links
 
 	deps.userRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(usr, nil)
+	expectMember(deps, usr, cfg)
 
 	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(cfg, ssoIdentity{
 		Issuer: testIssuer, Subject: "okta|1", Email: "test@example.com", EmailTrusted: true,
@@ -297,4 +306,25 @@ func TestOIDCBool_AcceptsBooleanAndStringForms(t *testing.T) {
 		require.NoError(t, b.UnmarshalJSON([]byte(raw)))
 		assert.Equal(t, want, b.IsTrue(), raw)
 	}
+}
+
+func TestResolveSSOUser_RefusesAMatchingEmailOutsideTheOrganization(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	links := &fakeSSOLinks{}
+	deps.svc.links = links
+	usr := newTestUser(t)
+	cfg := ssoTestConfig(sso.SSOProviderOkta)
+
+	deps.userRepo.On("FindByEmail", mock.Anything, "test@example.com").Return(usr, nil)
+	deps.userRepo.On("ListOrganizationMemberships", mock.Anything, usr.ID, cfg.BusinessUnitID).
+		Return([]*tenant.OrganizationMembership{{OrganizationID: pulid.MustNew("org_")}}, nil)
+
+	_, err := deps.svc.resolveSSOUser(t.Context(), lookup(cfg, ssoIdentity{
+		Issuer: testIssuer, Subject: "okta|1", Email: "test@example.com", EmailTrusted: true,
+	}))
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthenticationError(err), err.Error())
+	assert.Empty(t, links.links, "no identity is linked to someone outside the organization")
 }

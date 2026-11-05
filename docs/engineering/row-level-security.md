@@ -176,7 +176,10 @@ the tenant first (a share token, a webhook's account) and continuing under
 that holds a `pkg/readscope` holder sends `SET LOCAL trenova.read_scope` with its
 tenant scope, and restrictive `read_scope` policies on `shipments`, `orders`,
 `invoices` and `workers` read it through `trenova_rls.read_scope(kind)` and
-`trenova_rls.read_scope_ids(kind)`. It is unsigned because it can only narrow a read
+`trenova_rls.read_scope_ids(kind)`. A table whose rows exist only as part of a shipment
+(`shipment_events`, `tracking_events`, `check_calls`, `permits`, ...) carries the same
+policy on its parent's scope; `shipment_moves`, `stops` and `assignments` do not, because
+conflict checks read them and a hidden row reads as nothing in the way. It is unsigned because it can only narrow a read
 below what the signed scope allows; `apply_policy` and `reconcile()` leave the
 `read_scope` policies alone. It carries only `own` and `team` grants: a kind the
 principal cannot read is left out, so its rows stay visible to the relations, loaders

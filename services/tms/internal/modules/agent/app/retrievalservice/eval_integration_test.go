@@ -18,14 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
-	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -64,7 +62,6 @@ type evalHarness struct {
 	repo     retrievalports.AIRetrievalRepository
 	sources  retrievalports.RetrievalSourceRepository
 	memories agentmemoryports.AgentMemoryRepository
-	threads  conversationports.ThreadOwnerRepository
 	registry *permissioncatalog.Registry
 	data     *seedtest.TestData
 	tenant   pagination.TenantInfo
@@ -94,10 +91,6 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 			Logger: zap.NewNop(),
 		}),
 		memories: agentmemoryrepository.New(agentmemoryrepository.Params{
-			DB:     conn,
-			Logger: zap.NewNop(),
-		}),
-		threads: conversationrepository.NewThreadOwners(conversationrepository.Params{
 			DB:     conn,
 			Logger: zap.NewNop(),
 		}),
@@ -530,7 +523,6 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 		Unreadable: map[permission.Resource]bool{permission.ResourceWorker: true},
 		Tenant:     h.tenant,
 		UserID:     h.data.User.ID,
-		Threads:    h.threads,
 	}
 	background := person
 	background.UserID = pulid.Nil

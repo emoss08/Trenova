@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -132,11 +133,12 @@ func (s *Service) ListVersions(
 	ctx context.Context,
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
+	actor *permissionports.RequestActor,
 ) ([]*document.Document, error) {
-	doc, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
+	doc, err := s.visibleDocument(ctx, documentports.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,
-	})
+	}, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -152,9 +154,9 @@ func (s *Service) RestoreVersion(
 	ctx context.Context,
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	userID pulid.ID,
+	actor *permissionports.RequestActor,
 ) (*document.Document, error) {
-	plan, err := s.PlanRestoreVersion(ctx, documentID, tenantInfo)
+	plan, err := s.PlanRestoreVersion(ctx, documentID, tenantInfo, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +191,7 @@ func (s *Service) RestoreVersion(
 		Resource:       permission.ResourceDocument,
 		ResourceID:     target.ID.String(),
 		Operation:      permission.OpUpdate,
-		UserID:         userID,
+		UserID:         actor.UserIDOrNil(),
 		PreviousState:  jsonutils.MustToJSON(current),
 		CurrentState:   jsonutils.MustToJSON(target),
 		OrganizationID: target.OrganizationID,
@@ -358,24 +360,21 @@ func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 
 func (s *Service) AttachLineageToResource(
 	ctx context.Context,
-	documentID pulid.ID,
-	resourceType string,
-	resourceID string,
-	tenantInfo pagination.TenantInfo,
-	userID pulid.ID,
+	req *AttachLineageRequest,
 ) (*document.Document, error) {
-	plan, err := s.planAttach(ctx, &AttachLineageRequest{
-		DocumentID:   documentID,
-		ResourceType: resourceType,
-		ResourceID:   resourceID,
-		TenantInfo:   tenantInfo,
-	})
+	plan, err := s.planAttach(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if plan.Unchanged {
 		return plan.Current, nil
 	}
+
+	documentID := req.DocumentID
+	resourceType := req.ResourceType
+	resourceID := req.ResourceID
+	tenantInfo := req.TenantInfo
+	userID := req.Actor.UserIDOrNil()
 
 	current := plan.Current
 	shipmentID := plan.ShipmentID

@@ -292,7 +292,6 @@ func SharedOptions() fx.Option {
 			agentscorecardrepository.New,
 			agenttooltrustrepository.New,
 			conversationrepository.New,
-			conversationrepository.NewThreadOwners,
 			conversationrepository.NewPageThreads,
 			conversationschedulerepository.New,
 			assistantchapterrepository.New,

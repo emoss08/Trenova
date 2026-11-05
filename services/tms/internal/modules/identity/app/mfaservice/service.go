@@ -12,6 +12,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -75,6 +76,7 @@ type Params struct {
 	Logger         *zap.Logger
 	Throttle       sessionports.LoginThrottleStore
 	AuthEvents     iamports.AuthEventRecorder
+	Accounts       *accountguard.Guard
 }
 
 type Service struct {
@@ -86,6 +88,7 @@ type Service struct {
 	auditor     permissionports.SecurityAuditor
 	throttle    sessionports.LoginThrottleStore
 	authEvents  iamports.AuthEventRecorder
+	accounts    *accountguard.Guard
 	recoveryKey []byte
 	issuer      string
 	l           *zap.Logger
@@ -118,6 +121,7 @@ func newService(p *Params) (*Service, error) {
 		auditor:     p.Auditor,
 		throttle:    p.Throttle,
 		authEvents:  p.AuthEvents,
+		accounts:    p.Accounts,
 		recoveryKey: recoveryKey,
 		issuer:      issuer,
 		l:           p.Logger.Named("service.mfa"),
@@ -368,6 +372,14 @@ func (s *Service) ResetUserMFA(ctx context.Context, req *sessionports.ResetUserM
 	if _, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
 		TenantInfo:   req.TenantInfo,
 		LookupUserID: req.TargetUserID,
+	}); err != nil {
+		return err
+	}
+
+	if err := s.accounts.RequireCovers(ctx, &accountguard.Request{
+		TenantInfo: req.TenantInfo,
+		TargetID:   req.TargetUserID,
+		Action:     "mfaReset",
 	}); err != nil {
 		return err
 	}

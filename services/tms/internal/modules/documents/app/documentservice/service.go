@@ -29,7 +29,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
@@ -178,36 +177,6 @@ func (s *Service) List(
 ) (*pagination.ListResult[*document.Document], error) {
 	return s.repo.List(ctx, req)
 }
-
-func (s *Service) RequireReadable(
-	ctx context.Context,
-	req documentports.GetDocumentByIDRequest,
-	actor *permissionports.RequestActor,
-) error {
-	doc, err := s.Get(ctx, req)
-	if err != nil {
-		return err
-	}
-	if doc.OwnedByConversation() && doc.UploadedByID != actor.PersonUserID() {
-		return errDocumentNotReadable
-	}
-
-	owner := doc.OwnerResource()
-	if !permissioncatalog.Default().HasResource(owner.String()) {
-		return nil
-	}
-	result, err := s.permissions.Check(ctx, actor.PermissionCheck(owner, permission.OpRead))
-	if err != nil {
-		return err
-	}
-	if !result.Allowed {
-		return errDocumentNotReadable
-	}
-
-	return nil
-}
-
-var errDocumentNotReadable = errortypes.NewNotFoundError("Document not found")
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
@@ -554,6 +523,9 @@ func (s *Service) prepareUploadLineage(
 	lineageInfo, err := s.resolveLineageForUpload(ctx, parsedLineageID, req.TenantInfo)
 	if err != nil {
 		return "", nil, err
+	}
+	if !lineageInfo.VisibleToPerson(req.Actor.PersonUserID()) {
+		return "", nil, errDocumentNotReadable
 	}
 	if lineageInfo.ResourceID != req.ResourceID || lineageInfo.ResourceType != req.ResourceType {
 		return "", nil, errortypes.NewConflictError(
@@ -950,17 +922,18 @@ func isActiveContentType(contentType string) bool {
 func (s *Service) Delete(
 	ctx context.Context,
 	req documentports.DeleteDocumentRequest,
-	userID pulid.ID,
+	actor *permissionports.RequestActor,
 ) error {
 	log := s.l.With(
 		zap.String("operation", "Delete"),
 		zap.String("documentId", req.ID.String()),
 	)
 
-	doc, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest(req))
+	doc, err := s.visibleDocument(ctx, documentports.GetDocumentByIDRequest(req), actor)
 	if err != nil {
 		return err
 	}
+	userID := actor.UserIDOrNil()
 
 	if doc.LineageID.IsNil() {
 		if err = s.db.Transact(
@@ -1048,7 +1021,7 @@ func (s *Service) Delete(
 type BulkDeleteRequest struct {
 	IDs        []pulid.ID
 	TenantInfo pagination.TenantInfo
-	UserID     pulid.ID
+	Actor      *permissionports.RequestActor
 }
 
 type BulkDeleteResult struct {
@@ -1119,7 +1092,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 				Resource:       permission.ResourceDocument,
 				ResourceID:     doc.GetID().String(),
 				Operation:      permission.OpDelete,
-				UserID:         req.UserID,
+				UserID:         req.Actor.UserIDOrNil(),
 				PreviousState:  jsonutils.MustToJSON(doc),
 				OrganizationID: doc.OrganizationID,
 				BusinessUnitID: doc.BusinessUnitID,
@@ -1186,7 +1159,7 @@ func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 			Resource:       permission.ResourceDocument,
 			ResourceID:     doc.GetID().String(),
 			Operation:      permission.OpDelete,
-			UserID:         req.UserID,
+			UserID:         req.Actor.UserIDOrNil(),
 			PreviousState:  jsonutils.MustToJSON(doc),
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,

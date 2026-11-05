@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
@@ -22,8 +24,22 @@ import (
 type patchDeps struct {
 	*testDeps
 	security *securityaudittest.Recorder
+	held     *heldPermissions
 	target   *tenant.User
 	actor    pagination.TenantInfo
+}
+
+type heldPermissions struct {
+	permissionports.PermissionEngine
+
+	byUser map[pulid.ID]map[string]permissionports.EffectiveResourcePermission
+}
+
+func (h *heldPermissions) GetEffectivePermissions(
+	_ context.Context,
+	userID, _ pulid.ID,
+) (*permissionports.EffectivePermissions, error) {
+	return &permissionports.EffectivePermissions{Resources: h.byUser[userID]}, nil
 }
 
 func setupPatchTest(t *testing.T) *patchDeps {
@@ -33,6 +49,14 @@ func setupPatchTest(t *testing.T) *patchDeps {
 	security := &securityaudittest.Recorder{}
 	deps.svc.auditor = security
 	deps.svc.validator = NewTestValidatorWithRepository(deps.repo)
+	held := &heldPermissions{}
+	deps.svc.accounts = accountguard.New(accountguard.Params{
+		Users:       deps.repo,
+		Permissions: held,
+		Auditor:     security,
+	})
+	deps.repo.On("ListOrganizationMemberships", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*tenant.OrganizationMembership{}, nil).Maybe()
 
 	target := newTestUser()
 	target.Name = "Target User"
@@ -42,6 +66,7 @@ func setupPatchTest(t *testing.T) *patchDeps {
 	return &patchDeps{
 		testDeps: deps,
 		security: security,
+		held:     held,
 		target:   target,
 		actor: pagination.TenantInfo{
 			OrgID:  target.CurrentOrganizationID,

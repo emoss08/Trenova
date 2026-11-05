@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
@@ -127,6 +128,16 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 
 	if multiErr := guardSelfAccess(req.TenantInfo.UserID, &original, user); multiErr != nil {
 		return nil, multiErr
+	}
+
+	if user.EmailAddress != original.EmailAddress {
+		if err = s.accounts.RequireCovers(ctx, &accountguard.Request{
+			TenantInfo: req.TenantInfo,
+			TargetID:   original.ID,
+			Action:     "emailAddress",
+		}); err != nil {
+			return nil, err
+		}
 	}
 
 	changes := diffPatchedUser(&original, user)

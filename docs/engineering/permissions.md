@@ -632,6 +632,25 @@ and the five-minute client poll are only safety nets. Never delete permission ke
 pattern or by holder: holders through inheritance are invisible to such a delete, which is
 the bug the epoch replaced.
 
+## Reading a document
+
+A document needs `document` access and read on the record it hangs off, and one rule on the
+type says which: `Document.ReadableOwner`. A kind the catalog does not know is refused, and a
+file attached to a conversation is `VisibleToPerson` only for the person who attached it,
+whatever their role. Every `/documents/:documentID/` route registers through `onDocument`, the
+document service loads what it changes through `visibleDocument`, the repository's list reads
+take a `Viewer` (no viewer means no conversation files), agent reads go through
+`fieldgate.Access.ReadableDocuments` and global search never indexes a conversation file. A new
+route, service method or list reaches the rule by using those, not by checking it again.
+
+## Changing what signs someone in
+
+An email address and a second factor belong to the account, not to one organization, so
+changing them for someone else takes the account everywhere it reaches. `accountguard.Guard`
+refuses unless the actor holds everything the target holds in every organization the target
+belongs to, and records the refusal. A person's own account is exempt. Any new path that
+changes what signs someone in, or where a reset link goes, calls `RequireCovers` first.
+
 ## Membership and sessions
 
 A role assignment means nothing without a membership in its organization. Removing a

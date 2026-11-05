@@ -1,14 +1,11 @@
 package documentquerytools
 
 import (
-	"context"
-	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -19,45 +16,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeThreadOwners struct {
-	owners   map[pulid.ID]pulid.ID
-	err      error
-	requests []conversationports.ThreadOwnersRequest
-}
-
-func (f *fakeThreadOwners) ThreadOwners(
-	_ context.Context,
-	req conversationports.ThreadOwnersRequest,
-) (map[pulid.ID]pulid.ID, error) {
-	f.requests = append(f.requests, req)
-	if f.err != nil {
-		return nil, f.err
-	}
-
-	owners := make(map[pulid.ID]pulid.ID, len(req.ThreadIDs))
-	for _, id := range req.ThreadIDs {
-		if owner, ok := f.owners[id]; ok {
-			owners[id] = owner
-		}
-	}
-
-	return owners, nil
-}
-
-func conversationDocument(threadID pulid.ID) *document.Document {
+func conversationDocument(uploadedBy pulid.ID) *document.Document {
 	return &document.Document{
 		ID:           pulid.MustNew("doc_"),
 		OriginalName: "rate-confirmation.pdf",
 		FileType:     "application/pdf",
 		ResourceType: document.ConversationResourceType,
-		ResourceID:   threadID.String(),
+		ResourceID:   pulid.MustNew("athr_").String(),
+		UploadedByID: uploadedBy,
 	}
 }
 
-func conversationSummaryTool(
-	doc *document.Document,
-	threads conversationports.ThreadOwnerRepository,
-) agenttoolports.AgentQueryTool {
+func conversationSummaryTool(doc *document.Document) agenttoolports.AgentQueryTool {
 	return NewGetDocumentTool(
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{content: &documentcontent.Content{
@@ -67,27 +37,19 @@ func conversationSummaryTool(
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		threads,
 	)
 }
 
 func TestGetDocument_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	t.Parallel()
 
-	threadID := pulid.MustNew("athr_")
-	doc := conversationDocument(threadID)
-
 	owner := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
+	doc := conversationDocument(owner.Actor.UserID)
 	owner.Params = map[string]any{"documentId": doc.ID.String()}
-	threads := &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{threadID: owner.Actor.UserID}}
 
-	result, err := conversationSummaryTool(doc, threads).Query(t.Context(), owner)
+	result, err := conversationSummaryTool(doc).Query(t.Context(), owner)
 	require.NoError(t, err)
 	assert.Equal(t, "rate-confirmation.pdf", result.(*documentSummary).FileName)
-	require.Len(t, threads.requests, 1)
-	assert.Equal(t, []pulid.ID{threadID}, threads.requests[0].ThreadIDs)
-	assert.Equal(t, owner.OrganizationID, threads.requests[0].TenantInfo.OrgID)
-	assert.Equal(t, owner.BusinessUnitID, threads.requests[0].TenantInfo.BuID)
 
 	colleague := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
 	colleague.OrganizationID = owner.OrganizationID
@@ -96,7 +58,7 @@ func TestGetDocument_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	colleague.Actor.BusinessUnitID = owner.BusinessUnitID
 	colleague.Params = map[string]any{"documentId": doc.ID.String()}
 
-	_, err = conversationSummaryTool(doc, threads).Query(t.Context(), colleague)
+	_, err = conversationSummaryTool(doc).Query(t.Context(), colleague)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "may not read")
 }
@@ -112,70 +74,31 @@ func TestGetDocument_ConversationFileIsNeverReadWithoutAPerson(t *testing.T) {
 		t.Run(string(principal), func(t *testing.T) {
 			t.Parallel()
 
-			threadID := pulid.MustNew("athr_")
-			doc := conversationDocument(threadID)
 			params := querytooltest.PersonParams(principal)
+			doc := conversationDocument(params.Actor.UserID)
 			params.Params = map[string]any{"documentId": doc.ID.String()}
-			threads := &fakeThreadOwners{
-				owners: map[pulid.ID]pulid.ID{threadID: params.Actor.UserID},
-			}
 
-			_, err := conversationSummaryTool(doc, threads).Query(t.Context(), params)
+			_, err := conversationSummaryTool(doc).Query(t.Context(), params)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), "may not read")
-			assert.Empty(t, threads.requests)
 		})
 	}
 }
 
-func TestGetDocument_ConversationOwnerLookupFailureRefuses(t *testing.T) {
-	t.Parallel()
-
-	doc := conversationDocument(pulid.MustNew("athr_"))
-	params := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
-	params.Params = map[string]any{"documentId": doc.ID.String()}
-
-	_, err := conversationSummaryTool(doc, &fakeThreadOwners{err: errors.New("pool closed")}).
-		Query(t.Context(), params)
-	require.ErrorContains(t, err, "pool closed")
-}
-
-func TestGetDocument_ConversationFileWithoutOwnerLookupRefuses(t *testing.T) {
-	t.Parallel()
-
-	doc := conversationDocument(pulid.MustNew("athr_"))
-	params := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
-	params.Params = map[string]any{"documentId": doc.ID.String()}
-
-	_, err := conversationSummaryTool(doc, nil).Query(t.Context(), params)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "may not read")
-}
-
-func TestRetrievalAccess_ChecksConversationOwnersInOneBatch(t *testing.T) {
+func TestRetrievalAccess_KeepsOnlyTheConversationFilesThePersonAttached(t *testing.T) {
 	t.Parallel()
 
 	params := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
-	mineID := pulid.MustNew("athr_")
-	theirsID := pulid.MustNew("athr_")
-	mine := conversationDocument(mineID)
-	mineAgain := conversationDocument(mineID)
-	theirs := conversationDocument(theirsID)
-	orphanID := pulid.MustNew("athr_")
-	orphan := conversationDocument(orphanID)
-	malformed := conversationDocument(mineID)
-	malformed.ResourceID = "not-a-thread"
+	mine := conversationDocument(params.Actor.UserID)
+	mineAgain := conversationDocument(params.Actor.UserID)
+	theirs := conversationDocument(pulid.MustNew("usr_"))
+	unattributed := conversationDocument(pulid.Nil)
 	shipment := summaryDocument()
-	threads := &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{
-		mineID:   params.Actor.UserID,
-		theirsID: pulid.MustNew("usr_"),
-	}}
 	access := fieldgate.NewAccess(&querytooltest.FakePermissions{Allowed: true}).
-		WithThreads(threads).
 		ForRetrieval(params)
 
 	readable, err := access.ReadableDocuments(t.Context(), []*document.Document{
-		mine, mineAgain, theirs, orphan, malformed, shipment, nil,
+		mine, mineAgain, theirs, unattributed, shipment, nil,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, map[pulid.ID]bool{
@@ -183,21 +106,15 @@ func TestRetrievalAccess_ChecksConversationOwnersInOneBatch(t *testing.T) {
 		mineAgain.ID: true,
 		shipment.ID:  true,
 	}, readable)
-	require.Len(t, threads.requests, 1)
-	assert.ElementsMatch(t, []pulid.ID{mineID, theirsID, orphanID},
-		threads.requests[0].ThreadIDs)
 }
 
 func TestRetrievalAccess_BackgroundRunSeesNoConversationFiles(t *testing.T) {
 	t.Parallel()
 
 	params := querytooltest.PersonParams(permissionports.PrincipalTypeAgent)
-	threadID := pulid.MustNew("athr_")
-	conversation := conversationDocument(threadID)
+	conversation := conversationDocument(params.Actor.UserID)
 	shipment := summaryDocument()
-	threads := &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{threadID: params.Actor.UserID}}
 	access := fieldgate.NewAccess(&querytooltest.FakePermissions{Allowed: true}).
-		WithThreads(threads).
 		ForRetrieval(params)
 
 	readable, err := access.ReadableDocuments(t.Context(), []*document.Document{
@@ -205,31 +122,20 @@ func TestRetrievalAccess_BackgroundRunSeesNoConversationFiles(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.False(t, readable[conversation.ID])
-	assert.Empty(t, threads.requests)
 }
 
-func TestSearchDocuments_HandsTheSearcherConversationOwnership(t *testing.T) {
+func TestSearchDocuments_HandsTheSearcherTheConversationRule(t *testing.T) {
 	t.Parallel()
 
 	params := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
 	params.Params = map[string]any{"query": "rate confirmation"}
-	mineID := pulid.MustNew("athr_")
-	theirsID := pulid.MustNew("athr_")
-	mine := conversationDocument(mineID)
-	theirs := conversationDocument(theirsID)
-	threads := &fakeThreadOwners{owners: map[pulid.ID]pulid.ID{
-		mineID:   params.Actor.UserID,
-		theirsID: pulid.MustNew("usr_"),
-	}}
+	mine := conversationDocument(params.Actor.UserID)
+	theirs := conversationDocument(pulid.MustNew("usr_"))
 	searcher := &querytooltest.FakeRetrievalSearcher{
 		Documents: &retrievalports.DocumentSearchResult{},
 	}
 
-	_, err := NewSearchDocumentsTool(
-		searcher,
-		&querytooltest.FakePermissions{Allowed: true},
-		threads,
-	).
+	_, err := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true}).
 		Query(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, searcher.Requests, 1)

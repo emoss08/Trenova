@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -52,6 +53,7 @@ type Params struct {
 	DB                kernelports.Transactor
 	Roles             RoleAssigner
 	Invites           AccountInviter
+	Accounts          *accountguard.Guard
 	PermissionEngine  permissionports.PermissionEngine
 	AuthEventHistory  iamports.AuthEventHistoryRepository
 	AuthEvents        iamports.AuthEventRecorder
@@ -75,6 +77,7 @@ type Service struct {
 	db             kernelports.Transactor
 	roles          RoleAssigner
 	invites        AccountInviter
+	accounts       *accountguard.Guard
 	permissions    permissionports.PermissionEngine
 	signIns        iamports.AuthEventHistoryRepository
 	authEvents     iamports.AuthEventRecorder
@@ -99,6 +102,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		db:             p.DB,
 		roles:          p.Roles,
 		invites:        p.Invites,
+		accounts:       p.Accounts,
 		permissions:    p.PermissionEngine,
 		signIns:        p.AuthEventHistory,
 		authEvents:     p.AuthEvents,

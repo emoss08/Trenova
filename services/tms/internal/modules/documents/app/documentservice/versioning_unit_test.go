@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -195,14 +196,13 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 		AICorrections:        correctionService(corrections),
 	})
 
-	result, err := service.AttachLineageToResource(
-		t.Context(),
-		documentID,
-		"shipment",
-		shipmentID.String(),
-		tenantInfo,
-		userID,
-	)
+	result, err := service.AttachLineageToResource(t.Context(), &documentservice.AttachLineageRequest{
+		DocumentID:   documentID,
+		ResourceType: "shipment",
+		ResourceID:   shipmentID.String(),
+		TenantInfo:   tenantInfo,
+		Actor:        &permissionports.RequestActor{UserID: userID},
+	})
 	require.NoError(t, err)
 	require.Equal(t, updated, result)
 
@@ -268,14 +268,13 @@ func TestAttachLineageToResourceRefusesAShipmentTheTenantDoesNotHave(t *testing.
 		StorageConfig: &cfg.Storage,
 	})
 
-	_, err := service.AttachLineageToResource(
-		t.Context(),
-		documentID,
-		"shipment",
-		pulid.MustNew("shp_").String(),
-		tenantInfo,
-		tenantInfo.UserID,
-	)
+	_, err := service.AttachLineageToResource(t.Context(), &documentservice.AttachLineageRequest{
+		DocumentID:   documentID,
+		ResourceType: "shipment",
+		ResourceID:   pulid.MustNew("shp_").String(),
+		TenantInfo:   tenantInfo,
+		Actor:        permissionports.UserActor(tenantInfo),
+	})
 
 	require.Error(t, err)
 	assert.False(t, moved, "the document must stay where it was")

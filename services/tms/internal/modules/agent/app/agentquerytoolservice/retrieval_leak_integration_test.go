@@ -13,7 +13,6 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
-	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
@@ -21,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -179,9 +177,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		foreignDocs, foreignMail)
 	personDocs := &retrievaltest.Corpus{Keys: merged(own, ownConversation)}
 
-	tools := searchTools(t, searcher, permissions, conversationrepository.NewThreadOwners(
-		conversationrepository.Params{DB: conn, Logger: zap.NewNop()},
-	))
+	tools := searchTools(t, searcher, permissions)
 	queries := append(documents.Queries(), inbox.Queries()...)
 	for _, query := range queries {
 		assertNoLeak(t, leakCheck{
@@ -237,14 +233,12 @@ func searchTools(
 	t *testing.T,
 	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads conversationports.ThreadOwnerRepository,
 ) map[string]agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	supplied := map[reflect.Type]reflect.Value{
-		reflect.TypeFor[retrievalports.RetrievalSearcher]():        reflect.ValueOf(searcher),
-		reflect.TypeFor[permissionports.PermissionEngine]():        reflect.ValueOf(permissions),
-		reflect.TypeFor[conversationports.ThreadOwnerRepository](): reflect.ValueOf(threads),
+		reflect.TypeFor[retrievalports.RetrievalSearcher](): reflect.ValueOf(searcher),
+		reflect.TypeFor[permissionports.PermissionEngine](): reflect.ValueOf(permissions),
 	}
 	tools := make(map[string]agenttoolports.AgentQueryTool, 2)
 	for _, provider := range agentquerytoolservice.ToolProviders() {

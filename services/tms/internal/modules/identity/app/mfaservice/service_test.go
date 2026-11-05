@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -169,6 +171,21 @@ type harness struct {
 	user     *tenant.User
 	tenant   pagination.TenantInfo
 	clock    time.Time
+	held     *heldPermissions
+	admin    pulid.ID
+}
+
+type heldPermissions struct {
+	permissionports.PermissionEngine
+
+	byUser map[pulid.ID]map[string]permissionports.EffectiveResourcePermission
+}
+
+func (h *heldPermissions) GetEffectivePermissions(
+	_ context.Context,
+	userID, _ pulid.ID,
+) (*permissionports.EffectivePermissions, error) {
+	return &permissionports.EffectivePermissions{Resources: h.byUser[userID]}, nil
 }
 
 func newHarness(t *testing.T) *harness {
@@ -187,6 +204,9 @@ func newHarness(t *testing.T) *harness {
 
 	users := tenantportsmock.NewMockUserRepository(t)
 	users.On("FindByIDForLogin", mock.Anything, usr.ID).Return(usr, nil).Maybe()
+	users.On("ListOrganizationMemberships", mock.Anything, mock.Anything, mock.Anything).
+		Return([]*tenant.OrganizationMembership{}, nil).Maybe()
+	held := &heldPermissions{}
 	sessions := sessionportsmock.NewMockSessionRepository(t)
 	repo := &memoryRepo{}
 	auditor := &recordingAuditor{}
@@ -197,6 +217,8 @@ func newHarness(t *testing.T) *harness {
 		sessions: sessions,
 		auditor:  auditor,
 		user:     usr,
+		held:     held,
+		admin:    pulid.MustNew("usr_"),
 		tenant: pagination.TenantInfo{
 			OrgID:  usr.CurrentOrganizationID,
 			BuID:   usr.BusinessUnitID,
@@ -216,6 +238,11 @@ func newHarness(t *testing.T) *harness {
 		Auditor:   auditor,
 		AppConfig: &appconfig.Config{Name: "Trenova"},
 		Logger:    zap.NewNop(),
+		Accounts: accountguard.New(accountguard.Params{
+			Users:       users,
+			Permissions: held,
+			Auditor:     auditor,
+		}),
 	})
 	require.NoError(t, err)
 	h.svc = svc
@@ -493,7 +520,11 @@ func TestRegenerateRecoveryCodesReplacesTheSet(t *testing.T) {
 
 func (h *harness) expectResetTarget() *sessionports.ResetUserMFARequest {
 	req := &sessionports.ResetUserMFARequest{
-		TenantInfo:   pagination.TenantInfo{OrgID: h.tenant.OrgID, BuID: h.tenant.BuID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  h.tenant.OrgID,
+			BuID:   h.tenant.BuID,
+			UserID: h.admin,
+		},
 		TargetUserID: h.user.ID,
 	}
 	h.users.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
@@ -501,6 +532,30 @@ func (h *harness) expectResetTarget() *sessionports.ResetUserMFARequest {
 		LookupUserID: h.user.ID,
 	}).Return(h.user, nil).Once()
 	return req
+}
+
+func TestResetUserMFARefusesAnActorWhoDoesNotHoldWhatTheTargetHolds(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.enroll(t)
+	h.held.byUser = map[pulid.ID]map[string]permissionports.EffectiveResourcePermission{
+		h.user.ID: {
+			permission.ResourceRole.String(): {
+				Operations: []permission.Operation{permission.OpUpdate},
+				DataScope:  permission.DataScopeAll,
+			},
+		},
+	}
+	req := h.expectResetTarget()
+
+	err := h.svc.ResetUserMFA(t.Context(), req)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err), err.Error())
+	active, err := h.svc.HasActiveFactor(t.Context(), h.user.ID)
+	require.NoError(t, err)
+	assert.True(t, active, "the factor stays")
 }
 
 func TestResetUserMFAEndsEverySessionOfTheUser(t *testing.T) {
