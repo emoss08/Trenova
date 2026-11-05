@@ -165,6 +165,7 @@ func carrierSettlementControlFromInput(
 		PayDelayDays:              input.PayDelayDays,
 		AutoGenerateBatches:       input.AutoGenerateBatches,
 		AutoPostOnApprove:         input.AutoPostOnApprove,
+		RequireSeparateApprover:   input.RequireSeparateApprover,
 		VarianceToleranceMinor:    int64(input.VarianceToleranceMinor),
 		AutoMatchInboundInvoices:  input.AutoMatchInboundInvoices,
 		AutoAcceptWithinTolerance: input.AutoAcceptWithinTolerance,

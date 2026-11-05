@@ -35,6 +35,7 @@ type CarrierSettlementControl struct {
 	HoldUntilInvoiceMatched                 bool                                 `json:"holdUntilInvoiceMatched"                 keel:"hold_until_invoice_matched"`
 	DefaultAPAccountID                      *pulid.ID                            `json:"defaultApAccountId"                      keel:"default_ap_account_id"`
 	DefaultPurchasedTransportationAccountID *pulid.ID                            `json:"defaultPurchasedTransportationAccountId" keel:"default_purchased_transportation_account_id"`
+	RequireSeparateApprover                 bool                                 `json:"requireSeparateApprover" keel:"require_separate_approver"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

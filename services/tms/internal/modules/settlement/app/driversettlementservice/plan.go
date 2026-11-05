@@ -64,14 +64,10 @@ func PlanSeparateApprover(
 	entity *driversettlement.Settlement,
 	userID pulid.ID,
 ) error {
-	if !control.RequireSeparateApprover || entity.SubmittedByID != userID {
-		return nil
-	}
-
-	return errortypes.NewValidationError(
-		"settlementId",
-		errortypes.ErrInvalidOperation,
-		"You submitted this settlement, so someone else must approve it",
+	return settlementshared.RequireSeparateApprover(
+		control.RequireSeparateApprover,
+		entity.SubmittedByID,
+		userID,
 	)
 }
 

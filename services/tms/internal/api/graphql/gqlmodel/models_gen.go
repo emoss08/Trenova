@@ -12404,6 +12404,7 @@ type UpdateCarrierSettlementControlInput struct {
 	PayDelayDays              int                                  `json:"payDelayDays"`
 	AutoGenerateBatches       bool                                 `json:"autoGenerateBatches"`
 	AutoPostOnApprove         bool                                 `json:"autoPostOnApprove"`
+	RequireSeparateApprover   bool                                 `json:"requireSeparateApprover"`
 	VarianceToleranceMinor    int                                  `json:"varianceToleranceMinor"`
 	AutoMatchInboundInvoices  bool                                 `json:"autoMatchInboundInvoices"`
 	AutoAcceptWithinTolerance bool                                 `json:"autoAcceptWithinTolerance"`

@@ -39,20 +39,21 @@ var carrierSettlementControlsTable = schema.Table{
 		{Name: "hold_until_invoice_matched", Quoted: `"hold_until_invoice_matched"`, Field: "HoldUntilInvoiceMatched", Kind: schema.KindBool, Flags: 0, Label: `Hold Until Invoice Matched`, JSON: `holdUntilInvoiceMatched`},
 		{Name: "default_ap_account_id", Quoted: `"default_ap_account_id"`, Field: "DefaultAPAccountID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Default AP Account ID`, JSON: `defaultApAccountId`},
 		{Name: "default_purchased_transportation_account_id", Quoted: `"default_purchased_transportation_account_id"`, Field: "DefaultPurchasedTransportationAccountID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Default Purchased Transportation Account ID`, JSON: `defaultPurchasedTransportationAccountId`},
+		{Name: "require_separate_approver", Quoted: `"require_separate_approver"`, Field: "RequireSeparateApprover", Kind: schema.KindBool, Flags: 0, Label: `Require Separate Approver`, JSON: `requireSeparateApprover`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
 	Returning:    nil,
-	Version:      15,
+	Version:      16,
 	AutoID:       0,
-	AutoCreate:   16,
-	AutoUpdate:   17,
+	AutoCreate:   17,
+	AutoUpdate:   18,
 	IDPrefix:     "carstlc_",
 	New:          newCarrierSettlementControl,
 	NewN:         newNCarrierSettlementControl,
@@ -82,6 +83,7 @@ type CarrierSettlementControlsTable struct {
 	HoldUntilInvoiceMatched                 keel.BoolCol
 	DefaultAPAccountID                      keelkinds.PulidIDCol
 	DefaultPurchasedTransportationAccountID keelkinds.PulidIDCol
+	RequireSeparateApprover                 keel.BoolCol
 	Version                                 keel.Int64Col
 	CreatedAt                               keel.Int64Col
 	UpdatedAt                               keel.Int64Col
@@ -105,9 +107,10 @@ var CarrierSettlementControls = &CarrierSettlementControlsTable{
 	HoldUntilInvoiceMatched:                 keel.BoolCol{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 12}},
 	DefaultAPAccountID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 13}}},
 	DefaultPurchasedTransportationAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 14}}},
-	Version:                                 keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 15}},
-	CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 16}},
-	UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 17}},
+	RequireSeparateApprover:                 keel.BoolCol{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 15}},
+	Version:                                 keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 16}},
+	CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 17}},
+	UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementControlsRef, Index: 18}},
 }
 
 // BuildCarrierSettlementControls builds the table of carrier_settlement_controls for ref. Generated relation and alias methods call it.
@@ -129,9 +132,10 @@ func BuildCarrierSettlementControls(r *keel.Ref) *CarrierSettlementControlsTable
 		HoldUntilInvoiceMatched:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
 		DefaultAPAccountID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		DefaultPurchasedTransportationAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		Version:                                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		RequireSeparateApprover:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
+		Version:                                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 	}
 }
 
@@ -549,10 +553,12 @@ func ptrCarrierSettlementControl(p unsafe.Pointer, c int32) any {
 	case 14:
 		return (**string)(unsafe.Pointer(&r.DefaultPurchasedTransportationAccountID))
 	case 15:
-		return &r.Version
+		return &r.RequireSeparateApprover
 	case 16:
-		return &r.CreatedAt
+		return &r.Version
 	case 17:
+		return &r.CreatedAt
+	case 18:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -598,10 +604,12 @@ func valueCarrierSettlementControl(p unsafe.Pointer, c int32) any {
 		}
 		return string(*r.DefaultPurchasedTransportationAccountID)
 	case 15:
-		return r.Version
+		return r.RequireSeparateApprover
 	case 16:
-		return r.CreatedAt
+		return r.Version
 	case 17:
+		return r.CreatedAt
+	case 18:
 		return r.UpdatedAt
 	}
 	return nil

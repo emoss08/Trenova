@@ -54,6 +54,7 @@ export const carrierSettlementControlFormSchema = z.object({
   payDelayDays: z.number().int().min(0).max(60),
   autoGenerateBatches: z.boolean(),
   autoPostOnApprove: z.boolean(),
+  requireSeparateApprover: z.boolean(),
   varianceTolerance: z
     .number()
     .min(0, { error: () => translate("Variance tolerance cannot be negative") }),

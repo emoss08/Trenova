@@ -3,12 +3,14 @@ package carriersettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -334,6 +336,32 @@ func (s *Service) PlanAction(
 	return plan, nil
 }
 
+func PlanSeparateApprover(
+	control *carriersettlementcontrol.CarrierSettlementControl,
+	entity *carriersettlement.CarrierSettlement,
+	userID pulid.ID,
+) error {
+	return settlementshared.RequireSeparateApprover(
+		control.RequireSeparateApprover,
+		entity.SubmittedByID,
+		userID,
+	)
+}
+
+func (s *Service) requireSeparateApprover(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *carriersettlement.CarrierSettlement,
+	userID pulid.ID,
+) error {
+	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	return PlanSeparateApprover(control, entity, userID)
+}
+
 func (s *Service) planApprove(
 	ctx context.Context,
 	req *settlementshared.ActionRequest,
@@ -354,6 +382,10 @@ func (s *Service) planApprove(
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
 		return err
+	}
+	plan.Refusal = PlanSeparateApprover(control, plan.After, req.TenantInfo.UserID)
+	if plan.Refused() {
+		return nil
 	}
 	plan.AutoPost = control.AutoPostOnApprove
 	return nil

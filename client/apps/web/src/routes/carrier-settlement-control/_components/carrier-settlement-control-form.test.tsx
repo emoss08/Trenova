@@ -34,6 +34,7 @@ function controlData(overrides: Record<string, unknown> = {}) {
     payDelayDays: 5,
     autoGenerateBatches: false,
     autoPostOnApprove: false,
+    requireSeparateApprover: true,
     varianceToleranceMinor: 500,
     autoMatchInboundInvoices: false,
     autoAcceptWithinTolerance: false,
@@ -121,6 +122,7 @@ describe("CarrierSettlementControlForm auto-match toggles", () => {
     expect(mocks.updateCarrierSettlementControl).toHaveBeenCalledWith(
       expect.objectContaining({
         version: 3,
+        requireSeparateApprover: true,
         autoMatchInboundInvoices: true,
         autoAcceptWithinTolerance: true,
       }),

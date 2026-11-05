@@ -228,6 +228,7 @@ query CarrierSettlementControl {
     payDelayDays
     autoGenerateBatches
     autoPostOnApprove
+    requireSeparateApprover
     varianceToleranceMinor
     autoMatchInboundInvoices
     autoAcceptWithinTolerance

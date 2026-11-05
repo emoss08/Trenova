@@ -46,13 +46,14 @@ func (r *repository) GetOrCreate(
 ) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	newDefault := func() *carriersettlementcontrol.CarrierSettlementControl {
 		return &carriersettlementcontrol.CarrierSettlementControl{
-			ID:                 pulid.MustNew("carstlc_"),
-			BusinessUnitID:     tenantInfo.BuID,
-			OrganizationID:     tenantInfo.OrgID,
-			PayTrigger:         settlementcontrol.PayTriggerShipmentDelivered,
-			PayPeriodFrequency: settlementcontrol.PayPeriodFrequencyWeekly,
-			PeriodEndDayOfWeek: 6,
-			PayDelayDays:       5,
+			ID:                      pulid.MustNew("carstlc_"),
+			BusinessUnitID:          tenantInfo.BuID,
+			OrganizationID:          tenantInfo.OrgID,
+			PayTrigger:              settlementcontrol.PayTriggerShipmentDelivered,
+			PayPeriodFrequency:      settlementcontrol.PayPeriodFrequencyWeekly,
+			PeriodEndDayOfWeek:      6,
+			PayDelayDays:            5,
+			RequireSeparateApprover: true,
 		}
 	}
 
@@ -141,6 +142,7 @@ func (r *repository) Update(
 				cc.HoldUntilInvoiceMatched,
 				cc.DefaultAPAccountID,
 				cc.DefaultPurchasedTransportationAccountID,
+				cc.RequireSeparateApprover,
 			); err != nil {
 				return nil, carrierSettlementControlErrors.Map(err, entity.ID.String())
 			}
