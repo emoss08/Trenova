@@ -609,7 +609,9 @@ resource, operation, data scope or sensitivity the person saving does not hold:
 - role assignment, including what the assigned role inherits;
 - role inheritance edges (the junior role's closure is checked, and a system role can
   never be made to inherit);
-- API key create and update.
+- API key create and update;
+- SCIM group role mappings, through `permissionports.RoleGrantGuard`, because a mapping
+  hands its role to whoever the identity provider puts in the group.
 
 What the person holds is `GetEffectivePermissions`, which counts only the roles active in
 their session when the organization requires role activation. Comparing two people

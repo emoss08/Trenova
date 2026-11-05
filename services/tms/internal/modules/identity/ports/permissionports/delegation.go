@@ -1,12 +1,23 @@
 package permissionports
 
 import (
+	"context"
 	"maps"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type RoleGrantGuard interface {
+	RequireCanGrantRole(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		roleID pulid.ID,
+	) error
+}
 
 type DelegationViolationKind int
 

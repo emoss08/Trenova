@@ -115,12 +115,13 @@ func (r *repository) UpdateSCIMGroupRoleMapping(
 
 func (r *repository) DeleteSCIMGroupRoleMapping(
 	ctx context.Context,
-	_ pagination.TenantInfo,
+	tenantInfo pagination.TenantInfo,
 	sgrmID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		m := iamdb.SCIMGroupRoleMappings
-		deleted, err := m.Where(m.ID.Eq(sgrmID)).Delete(ctx, r.db.Keel(ctx))
+		deleted, err := m.Where(m.ID.Eq(sgrmID), m.OrganizationID.Eq(tenantInfo.OrgID)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return scimGroupRoleMappingErrors.Map(err, sgrmID.String())
 		}
