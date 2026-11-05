@@ -1,0 +1,122 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "geist",
+        "createdAt": "2026-11-05T14:07:46.940Z",
+        "reason": "Claude: DESIGN.md declares Geist Variable; the Google Fonts family name is Geist, the same face"
+      },
+      {
+        "rule": "overused-font",
+        "value": "geist",
+        "createdAt": "2026-11-05T14:08:50.009Z",
+        "reason": "Claude: Geist is the committed type in DESIGN.md and tokens.css"
+      },
+      {
+        "rule": "overused-font",
+        "value": "geist mono",
+        "createdAt": "2026-11-05T14:08:50.017Z",
+        "reason": "Claude: Geist Mono is the committed figure face in DESIGN.md and tokens.css"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "design-plans/dispatch-console/mockup/template.html"
+        ],
+        "createdAt": "2026-11-05T14:08:50.025Z",
+        "reason": "Claude: fixed-height bars (toolbar 44px, row heads 28-32px, 2px segmented track, tab underline) centre their children by design, per DESIGN.md row tokens"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "design-plans/dispatch-console/mockup/index.html"
+        ],
+        "createdAt": "2026-11-05T14:08:50.033Z",
+        "reason": "Claude: fixed-height bars (toolbar 44px, row heads 28-32px, 2px segmented track, tab underline) centre their children by design, per DESIGN.md row tokens"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(0, 108, 147)",
+        "createdAt": "2026-11-05T14:08:59.886Z",
+        "reason": "Claude: tokens.css --accent-sky-on-subtle; DESIGN.md lists only the accent solids"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "oklch(0.914 0.05 232)",
+        "createdAt": "2026-11-05T14:08:59.894Z",
+        "reason": "Claude: tokens.css --accent-sky-border; DESIGN.md lists only the accent solids"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "client/apps/web/**"
+        ],
+        "createdAt": "2026-11-05T14:53:31.828Z",
+        "reason": "user confirmed 2026-11-05: 11px is deliberate desktop density (DESIGN.md); not applied to the driver portal, where the Cab Floor Rule holds"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "design-plans/**"
+        ],
+        "createdAt": "2026-11-05T14:53:31.838Z",
+        "reason": "user confirmed 2026-11-05: 11px is deliberate desktop density (DESIGN.md); not applied to the driver portal, where the Cab Floor Rule holds"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "design-plans/**"
+        ],
+        "createdAt": "2026-11-05T15:16:47.507Z",
+        "reason": "Claude: mockup chrome and fixed-height bars (toolbars, row heads, segmented tracks, framed snippets) centre their children by design"
+      },
+      {
+        "rule": "design-system-radius",
+        "value": "36px",
+        "files": [
+          "design-plans/**"
+        ],
+        "createdAt": "2026-11-05T15:16:47.561Z",
+        "reason": "Claude: the 36px corner is the phone frame drawn around a mockup, not product UI"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "newsreader",
+        "createdAt": "2026-11-05T15:16:47.630Z",
+        "reason": "Claude: DESIGN.md declares Newsreader Variable as the Serif Voice; Google Fonts names the same face Newsreader"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgb(229, 250, 246)",
+        "createdAt": "2026-11-05T15:17:02.151Z",
+        "reason": "Claude: tokens.css --accent-teal-subtle; DESIGN.md lists only the accent solids"
+      },
+      {
+        "rule": "pulsing-dot",
+        "value": "*",
+        "files": [
+          "design-plans/desk/**"
+        ],
+        "createdAt": "2026-11-05T15:17:02.224Z",
+        "reason": "Claude: WorkingDot breathes only while a turn runs, which design-system.md allows; the rail copy is drawn still"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "design-plans/desk/mockup/index.html"
+        ],
+        "createdAt": "2026-11-05T15:38:49.870Z",
+        "reason": "Claude: a review page that documents the Desk with screenshots, not product UI"
+      }
+    ]
+  }
+}

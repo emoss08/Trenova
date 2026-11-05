@@ -23,10 +23,11 @@
    1. PRIMITIVES
 
    The hue plan. Everything coloured in the product resolves to one of these.
-   The palette is Vercel's Geist, carried into OKLCH and held to the contrast
-   and hue floors check-design-tokens.mjs enforces.
+   The palette began as Vercel's Geist, carried into OKLCH and held to the
+   contrast and hue floors check-design-tokens.mjs enforces. That is its
+   origin, not a reference: Trenova's own rules decide new work.
 
-   The greys are true neutrals, as Geist's are: chroma 0, so the canvas is
+   The greys are true neutrals: chroma 0, so the canvas is
    paper white, the ink is #171717 and the hairlines are plain grey. Nothing
    in the chrome leans warm or cool; colour on screen is left to the things
    that mean something. --hue-neutral stays as a name so a grey written
@@ -43,10 +44,10 @@
    severity, an accent is a category, and Geist blue marks what you can follow
    and what you have hold of — links and focus.
 
-   Every colour is a step on a Geist ramp, spent the way Geist spends it: the
+   Every colour is a step on a Geist ramp, and each rung has one job: the
    200 step is a tint, the 400 step its hairline, the 700 step a solid and the
    900 step text (dark mode takes the dark ramp's 200, 400 and 900). Info is
-   Geist blue itself, as it is on Vercel, so the info tone is written against
+   Geist blue itself, so the info tone is written against
    --hue-brand. The categories Geist has no ramp for (sky, indigo, and an
    amber kept clear of warning) take the blue ramp's lightness and chroma at
    their own hue, trimmed to sRGB.
@@ -99,8 +100,8 @@
        control  buttons, inputs, menu rows
        surface  cards, panels, dialogs, popovers, table containers
 
-     Corners are tight, as Vercel's are. A badge or a chip is a small label
-     with a 4px corner, never a pill: `rounded-badge`, not `rounded-full`.
+     Corners are tight, so a corner can say something. A badge or a chip is a
+     small label with a 4px corner, never a pill: `rounded-badge`, not `rounded-full`.
      `rounded-full` is left for what is actually round — avatars, status dots,
      switch tracks and icon-only round buttons. */
   --radius-label: 0.25rem; /* 4px */
@@ -138,7 +139,7 @@
 
   /* The ground a form control sits on. It never shares a value with the
      canvas, so an empty form still reads as a set of slots to type into
-     rather than as lines on a page. It is Vercel's panel in both themes,
+     rather than as lines on a page. It is the panel fill in both themes,
      white in light and #0a0a0a in dark: on the page it reads as a slot by
      its fill, and on a panel the --input hairline carries it. One token so
      an input, a select and a number field cannot each pick their own. */
@@ -189,9 +190,9 @@
   /* Brand ----------------------------------------------------------------
      Geist blue, and spent sparingly: links, focus, the first chart
      series. It marks affordance, never severity, never the primary button and
-     never the active nav row, which is a neutral fill as it is on Vercel.
+     never the active nav row, which is a neutral fill.
 
-     Info is the same Geist blue, as it is on Vercel: a link is told from an
+     Info is the same Geist blue: a link is told from an
      "In transit" badge by its form (bare text against a tinted label), not
      by a second blue. */
   --brand: oklch(0.56 0.207 var(--hue-brand));
@@ -554,8 +555,8 @@
   --agent-slate: var(--accent-slate);
 
   /* Navigation ------------------------------------------------------------
-     The active row is a grey fill with the ink on it, the way Vercel marks
-     where you are; blue is kept for what you can follow. */
+     The active row is a grey fill with the ink on it, which marks where you
+     are; blue is kept for what you can follow. */
   --nav-active: oklch(0.94 0 none);
   --nav-active-foreground: oklch(0.205 0 none);
 
@@ -594,7 +595,7 @@
    legible on a black ground; surfaces step *up* in lightness where light
    mode steps down, because on dark the nearer surface is the brighter one.
 
-   The ground is Vercel's: the page and the sidebar are pure black, a panel
+   The page and the sidebar are pure black, a panel
    is #0a0a0a with a #242424 hairline, and wells inside a panel drop back to
    black. Hover is #1a1a1a and the active row #1f1f1f.
    --------------------------------------------------------------------------- */

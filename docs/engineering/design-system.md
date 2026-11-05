@@ -45,9 +45,10 @@ Three, and each may only reference the one above it.
 Everything coloured in the product resolves to one of eleven hues, declared once
 in layer 1.
 
-The palette is Vercel's Geist, carried into OKLCH and held to the contrast and
-hue floors below. The greys are true neutrals, as Geist's are, and the two
-themes mirror each other step for step:
+The palette began as Vercel's Geist, carried into OKLCH and held to the contrast
+and hue floors below. That is its origin, not a reference: Trenova's own rules
+decide new work, and what Vercel does settles nothing here. The greys are true
+neutrals and the two themes mirror each other step for step:
 
 | Role | Light | Dark |
 |---|---|---|
@@ -70,12 +71,17 @@ colour left on screen mean something: a tone is a severity, an accent is a
 category, and the brand marks place and affordance.
 
 `--hue-brand: 258` is Geist blue, and it is spent sparingly: links, the focus
-ring, selection (a selected row, selected text, a checked box), the first chart
-series. As on Vercel, the active nav row is a neutral fill with the ink on it and
-the active tab is underlined in ink, not blue. It is never the primary button and never a severity.
+ring, selection (a selected row, a checked box), the first chart series. The
+active nav row is a neutral fill with the ink on it and the active tab is
+underlined in ink, not blue, because blue there would stop meaning "you can follow
+this". It is never the primary button and never a severity.
 If you are about to write `bg-brand` on a button, you want `variant="default"`.
 
-Every colour is a step on a Geist ramp, spent the way Geist spends it:
+Selected text is not brand. `::selection` is `--selection`, a solid amber in both
+themes with `--selection-foreground`, dark in both, on it, because near-white text
+on amber reads at under 2:1.
+
+Every colour is a step on a Geist ramp, and each rung has one job:
 
 | Rung | Geist step (light) | Geist step (dark) |
 |---|---|---|
@@ -85,9 +91,9 @@ Every colour is a step on a Geist ramp, spent the way Geist spends it:
 | `--x-foreground`, `--x-subtle-foreground` | 900 | 900 |
 
 Danger is Geist red, warning Geist amber, success Geist green, and **info is Geist
-blue itself**, written against `--hue-brand`, as it is on Vercel. A link and an "In
-transit" badge are told apart by their form (bare text against a tinted label), not
-by a second blue. The categories teal, violet, rose and emerald are Geist's teal,
+blue itself**, written against `--hue-brand`. A link and an "In transit" badge are
+told apart by their form (bare text against a tinted label), not by a second blue.
+The categories teal, violet, rose and emerald are Geist's teal,
 purple, pink and green; sky, indigo and amber have no Geist ramp and take the blue
 ramp's lightness and chroma at their own hue, trimmed to sRGB. The categories in the
 blue arc stay clear of the brand:
@@ -259,7 +265,7 @@ in a cell takes no weight class at all.
 
 ## Radius
 
-Corners are tight, as Vercel's are.
+Corners are tight, so a corner can say something.
 
 | Token | Utility | Value | For |
 |---|---|---|---|
@@ -354,7 +360,7 @@ wrong here even before dark mode is considered.
 
 | State | Treatment |
 |---|---|
-| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. It is Vercel's panel fill in both themes, white in light and #0a0a0a in dark, so on a panel the hairline is what draws the slot |
+| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. It is the panel fill in both themes, white in light and #0a0a0a in dark, so on a panel the hairline is what draws the slot |
 | hover | hairline steps to `--border-strong`; the fill does not change |
 | focus | the one focus ring (`ui-focus-ring`, or `ui-container-focus-ring` when a child takes focus) |
 | open | a trigger whose popup is open holds that same ring (`data-pressed`, `data-popup-open`, `aria-expanded`) |

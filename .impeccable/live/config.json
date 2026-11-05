@@ -1,0 +1,6 @@
+{
+  "files": ["client/apps/web/index.html", "client/apps/dash/index.html"],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}
