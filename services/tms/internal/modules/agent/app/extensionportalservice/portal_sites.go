@@ -2,6 +2,7 @@ package extensionportalservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
@@ -135,6 +136,7 @@ func (s *Service) applySiteRequest(
 	site *extensionportal.PortalSite,
 	req *agentextensionports.SavePortalSiteRequest,
 ) error {
+	savedFor := slices.Clone(site.Domains)
 	site.Name = req.Name
 	site.Purpose = req.Purpose
 	site.Domains = req.Domains
@@ -154,6 +156,14 @@ func (s *Service) applySiteRequest(
 	if !req.ClearSignIn && (username == "") != (password == "") && !site.HasSignIn() {
 		multiErr.Add("password", errortypes.ErrRequired,
 			"A sign-in needs both a username and a password")
+	}
+	moved := site.HasSignIn() && !req.ClearSignIn && addsDomain(savedFor, site.Domains)
+	if moved && (username == "" || password == "") {
+		multiErr.Add(
+			"password",
+			errortypes.ErrRequired,
+			"A stored sign-in stays with the domains it was saved for; enter it again for the new ones",
+		)
 	}
 	authenticator, keyErr := extensionportal.NormalizeAuthenticatorKey(req.AuthenticatorKey)
 	if keyErr != nil {
@@ -196,12 +206,21 @@ func (s *Service) applySiteRequest(
 	if err != nil {
 		return err
 	}
-	if req.ClearAuthenticator && authenticator == "" {
+	if (req.ClearAuthenticator || moved) && authenticator == "" {
 		delete(merged, extensionportal.PortalCredentialAuthenticator)
 	}
 	site.Credentials = merged
 
 	return nil
+}
+
+func addsDomain(saved, domains []string) bool {
+	for _, domain := range domains {
+		if !slices.Contains(saved, domain) {
+			return true
+		}
+	}
+	return false
 }
 
 // checkNotTrenova refuses a site on Trenova's own address. An agent acts in

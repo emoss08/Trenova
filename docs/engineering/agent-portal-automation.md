@@ -33,7 +33,8 @@ until an administrator says so.
 The sign-in's username and password are encrypted with the tenant-bound secret
 codec under `PurposeAgentExtensionSecret`, resource kind `agent_portal_site` and
 the site's id as subject, so a value copied to another site or tenant does not
-decrypt. A sign-in left blank on save keeps the stored one; clearing it removes
+decrypt. A sign-in left blank on save keeps the stored one, unless the save adds a domain:
+a stored sign-in never follows the site to a new domain, so it must be entered again; clearing it removes
 every part. The site is never returned with its sign-in, only `hasSignIn` and
 `hasAuthenticator`.
 

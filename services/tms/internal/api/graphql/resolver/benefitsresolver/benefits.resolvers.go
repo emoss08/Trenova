@@ -245,7 +245,8 @@ func (r *QueryResolver) WorkerTotalCompensation(ctx context.Context, workerID st
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
 
-	return r.TotalCompensationFor(ctx, resolvercore.TenantInfo(authCtx), id, planYear)
+	includePay := r.HasPermission(ctx, authCtx, permission.ResourceDriverSettlement, permission.OpRead)
+	return r.TotalCompensationFor(ctx, resolvercore.TenantInfo(authCtx), id, planYear, includePay)
 }
 
 func (r *QueryResolver) MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error) {
@@ -259,7 +260,7 @@ func (r *QueryResolver) MyTotalCompensation(ctx context.Context, planYear *int) 
 		return nil, err
 	}
 
-	return r.TotalCompensationFor(ctx, resolvercore.TenantInfo(authCtx), wrk.ID, planYear)
+	return r.TotalCompensationFor(ctx, resolvercore.TenantInfo(authCtx), wrk.ID, planYear, true)
 }
 
 func (r *WorkerBenefitEnrollmentResolver) EffectiveTo(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*int, error) {

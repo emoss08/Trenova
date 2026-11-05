@@ -65,10 +65,13 @@ func (t *TransitionToInReviewTool) ParamSchema() map[string]any {
 
 func (t *TransitionToInReviewTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      permission.ResourceBillingQueue,
-		Operation:     permission.OpUpdate,
+		Name:      t.Name(),
+		Kind:      agenttooltrust.ToolKindAction,
+		Resource:  permission.ResourceBillingQueue,
+		Operation: permission.OpUpdate,
+		PersonAlsoNeeds: []agenttoolports.ToolGrant{
+			{Resource: permission.ResourceBillingQueue, Operation: permission.OpAssign},
+		},
 		Scope:         agenttooltrust.ToolScopeRun,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,

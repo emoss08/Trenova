@@ -215,17 +215,38 @@ func (s *Service) Scorecard(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*safetyscorecard.SafetyScorecard, error) {
-	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
-		return nil, err
-	}
-	events, err := s.repo.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
+	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
+	return s.scorecard(ctx, tenantInfo, workerID, actions)
+}
+
+// ScorecardWithoutDiscipline is the card for a reader who may see a worker's
+// safety events but not their disciplinary actions, which a worker read does
+// not reach. It is built without them, so neither its fields nor its score
+// carry them.
+func (s *Service) ScorecardWithoutDiscipline(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+) (*safetyscorecard.SafetyScorecard, error) {
+	return s.scorecard(ctx, tenantInfo, workerID, nil)
+}
+
+func (s *Service) scorecard(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+	actions []*workerdiscipline.WorkerDisciplinaryAction,
+) (*safetyscorecard.SafetyScorecard, error) {
+	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
+		return nil, err
+	}
+	events, err := s.repo.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})

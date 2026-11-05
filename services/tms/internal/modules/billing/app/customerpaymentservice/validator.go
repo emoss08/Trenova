@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -23,13 +25,15 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	InvoiceRepo      invoiceports.InvoiceRepository
-	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	InvoiceRepo        invoiceports.InvoiceRepository
+	FiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	AdjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
 }
 
 type Validator struct {
-	invoiceRepo      invoiceports.InvoiceRepository
-	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	invoiceRepo        invoiceports.InvoiceRepository
+	fiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	adjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
 }
 
 type invoiceKey struct {
@@ -37,7 +41,75 @@ type invoiceKey struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return &Validator{invoiceRepo: p.InvoiceRepo, fiscalPeriodRepo: p.FiscalPeriodRepo}
+	return &Validator{
+		invoiceRepo:        p.InvoiceRepo,
+		fiscalPeriodRepo:   p.FiscalPeriodRepo,
+		adjustmentCtrlRepo: p.AdjustmentCtrlRepo,
+	}
+}
+
+func (v *Validator) checkShortPays(
+	ctx context.Context,
+	orgID pulid.ID,
+	applications []*customerpayment.Application,
+	me *errortypes.MultiError,
+) error {
+	var control *invoiceadjustmentcontrol.InvoiceAdjustmentControl
+	for idx, app := range applications {
+		if app == nil || app.ShortPayAmountMinor <= 0 {
+			continue
+		}
+		if control == nil {
+			var err error
+			if control, err = v.adjustmentCtrlRepo.GetByOrgID(ctx, orgID); err != nil {
+				return err
+			}
+		}
+		switch shortPayPolicy(control, app.ShortPayAmountMinor) {
+		case shortPayRefused:
+			me.WithIndex("applications", idx).Add(
+				"shortPayAmountMinor",
+				errortypes.ErrInvalidOperation,
+				"Write-offs are disallowed by policy, so this invoice cannot take a short pay",
+			)
+		case shortPayNeedsApproval:
+			me.WithIndex("applications", idx).Add(
+				"shortPayAmountMinor",
+				errortypes.ErrInvalidOperation,
+				"This short pay needs approval: apply what the customer paid and write off the rest with an invoice adjustment",
+			)
+		case shortPayAllowed:
+		}
+	}
+	return nil
+}
+
+type shortPayOutcome int
+
+const (
+	shortPayAllowed shortPayOutcome = iota
+	shortPayNeedsApproval
+	shortPayRefused
+)
+
+func shortPayPolicy(
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+	amountMinor int64,
+) shortPayOutcome {
+	switch control.WriteOffApprovalPolicy {
+	case invoiceadjustmentcontrol.WriteOffApprovalPolicyDisallow:
+		return shortPayRefused
+	case invoiceadjustmentcontrol.WriteOffApprovalPolicyAlwaysRequireApproval:
+		return shortPayNeedsApproval
+	case invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold:
+		if money.DecimalFromMinor(amountMinor).
+			GreaterThanOrEqual(control.WriteOffApprovalThreshold) {
+			return shortPayNeedsApproval
+		}
+		return shortPayAllowed
+	default:
+		return shortPayRefused
+	}
 }
 
 //nolint:nestif // existing validation flow mirrors business rule nesting
@@ -172,6 +244,14 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		}
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)
+	}
+	if err := v.checkShortPays(
+		ctx,
+		tenantInfo.TenantInfo.OrgID,
+		entity.Applications,
+		me,
+	); err != nil {
+		return nil, nil, err
 	}
 	if totalApplied > entity.AmountMinor {
 		me.Add(
@@ -347,6 +427,9 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		}
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)
+	}
+	if err := v.checkShortPays(ctx, tenantInfo.TenantInfo.OrgID, applications, me); err != nil {
+		return nil, nil, err
 	}
 	if totalApplied > payment.UnappliedAmountMinor {
 		me.Add(

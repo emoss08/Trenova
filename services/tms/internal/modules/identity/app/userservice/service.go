@@ -299,12 +299,19 @@ func (s *Service) requireTargetSignIn(
 	if err != nil {
 		return err
 	}
+	trustsIssuer := sess.ExternalSubject == ""
 	for _, cfg := range configs {
 		if cfg.EnforceSSO {
 			return errortypes.NewAuthorizationError(
 				"This organization requires single sign-on. Sign in through it to continue.",
 			)
 		}
+		trustsIssuer = trustsIssuer || cfg.OIDCIssuerURL == sess.ExternalIssuer
+	}
+	if !trustsIssuer {
+		return errortypes.NewAuthorizationError(
+			"This organization does not use the sign-in that opened this session. Sign in to it directly to continue.",
+		)
 	}
 
 	return nil

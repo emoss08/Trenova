@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -72,16 +73,24 @@ func (r *repository) UpdateCreditMemoApplication(
 		r.db,
 		func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
 			cma := customerpaymentdb.CreditMemoApplications
-			if err := cma.Save(
+			changed, err := cma.Where(
+				cma.ID.Eq(application.ID),
+				cma.Status.Eq(customerpayment.CreditApplicationStatusApplied),
+			).Update(
 				ctx,
 				r.db.Keel(ctx),
-				application,
-				cma.Status,
-				cma.UnappliedAt,
-				cma.UnappliedByID,
-				cma.UnappliedReason,
-			); err != nil {
+				cma.Status.To(application.Status),
+				cma.UnappliedAt.To(*application.UnappliedAt),
+				cma.UnappliedByID.To(application.UnappliedByID),
+				cma.UnappliedReason.To(application.UnappliedReason),
+			)
+			if err != nil {
 				return nil, creditMemoApplicationErrors.Map(err, application.ID.String())
+			}
+			if changed == 0 {
+				return nil, errortypes.NewConflictError(
+					"This credit memo application has already been unapplied",
+				)
 			}
 
 			return application, nil

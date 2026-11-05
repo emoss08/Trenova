@@ -71,22 +71,22 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	api.GET(
 		"/:id/microsoft-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
+		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpRead),
 		h.getMicrosoftSSOConfig,
 	)
 	api.PUT(
 		"/:id/microsoft-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpUpdate),
 		h.upsertMicrosoftSSOConfig,
 	)
 	api.GET(
 		"/:id/okta-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
+		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpRead),
 		h.getOktaSSOConfig,
 	)
 	api.PUT(
 		"/:id/okta-sso",
-		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		h.pm.RequirePermission(permission.ResourceIdentityProvider.String(), permission.OpUpdate),
 		h.upsertOktaSSOConfig,
 	)
 }

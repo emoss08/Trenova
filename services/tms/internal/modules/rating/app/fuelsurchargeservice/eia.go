@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -251,7 +252,7 @@ func (s *Service) fetchEIAPrices(
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to call EIA API: %w", err)
+		return nil, fmt.Errorf("failed to call EIA API: %w", restx.SanitizeTransportError(err))
 	}
 	defer resp.Body.Close()
 

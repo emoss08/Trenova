@@ -166,6 +166,7 @@ func (s *Service) VerifyMFAChallenge(
 	if federation := challenge.Federation; federation != nil {
 		authn.AuthProvider = federation.AuthProvider
 		authn.ExternalSubject = federation.ExternalSubject
+		authn.ExternalIssuer = federation.ExternalIssuer
 		authn.FederationFAL = federation.FederationFAL
 		attempt.fal = federation.FederationFAL
 	}

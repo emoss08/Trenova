@@ -1129,6 +1129,7 @@ func (s *Service) RecordCorrection(
 		Kind:           agentmemory.MemoryKindCorrection,
 		Source:         agentmemory.MemorySourceDecision,
 		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeOrganization,
 		ToolName:       proposal.ToolName,
 		Content:        content,
 	}
@@ -1140,9 +1141,22 @@ func (s *Service) RecordCorrection(
 		userID := decision.DecidedByUserID
 		entity.CreatedByUserID = &userID
 	}
+	if proposal.Tainted {
+		entity.Tainted = true
+		entity.TaintRunID = &runID
+	}
 
+	// A correction reaches everyone's conversations, so it follows the rule
+	// every shared memory does: only a person who manages shared memory keeps
+	// one at once, and anyone else offers it for an administrator to approve.
 	tenant := pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID}
-	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(tenant, entity))
+	if !s.MayManageShared(ctx, tenant, decision.DecidedByUserID) {
+		entity.Status = agentmemory.MemoryStatusSuggested
+	}
+
+	same := sameMemoryRequest(tenant, entity)
+	same.IncludeSuggested = entity.Status == agentmemory.MemoryStatusSuggested
+	existing, err := s.repo.FindActive(ctx, same)
 	if err != nil {
 		return nil, err
 	}

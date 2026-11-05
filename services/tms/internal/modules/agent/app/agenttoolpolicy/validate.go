@@ -87,6 +87,15 @@ func specProblems(spec *Spec) []string {
 			policy.Resource,
 		)
 	}
+	for _, grant := range policy.PersonAlsoNeeds {
+		if !permissionRegistry().Declares(grant.Resource.String(), grant.Operation) {
+			add(
+				"person grant %q on %q is not declared, so no role can give it",
+				grant.Operation,
+				grant.Resource,
+			)
+		}
+	}
 	if strings.TrimSpace(policy.Rationale) == "" {
 		add("has no rationale")
 	}

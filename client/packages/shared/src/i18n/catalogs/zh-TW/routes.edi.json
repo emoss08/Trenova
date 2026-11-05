@@ -53,6 +53,7 @@
   "Allow documents received from this partner to enter EDI processing.": "允許自此合作夥伴接收的文件進入 EDI 處理流程。",
   "Allow this partner record to receive load tenders from the connected organization.": "允許此合作夥伴記錄接收來自已連線組織的派車要約。",
   "Allow this partner record to send load tenders to the connected organization.": "允許此合作夥伴記錄向已連線組織傳送派車要約。",
+  "Anyone who reaches this endpoint could send a document under this partner's name. Keep this off only for a partner who cannot sign.": "任何能連線到此端點的人都可以用此合作夥伴的名義傳送文件。僅對無法簽署的合作夥伴保持關閉。",
   "Archive directory": "封存目錄",
   "Archive this version": "封存此版本",
   "As the partner's guide is titled, such as ACME Load Tender Guide rev 3.2": "依合作夥伴指南的標題，例如 ACME Load Tender Guide rev 3.2",

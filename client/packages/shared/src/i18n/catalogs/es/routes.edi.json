@@ -53,6 +53,7 @@
   "Allow documents received from this partner to enter EDI processing.": "Permitir que los documentos recibidos de este socio entren en el procesamiento EDI.",
   "Allow this partner record to receive load tenders from the connected organization.": "Permitir que este registro de socio reciba ofertas de carga de la organización conectada.",
   "Allow this partner record to send load tenders to the connected organization.": "Permitir que este registro de socio envíe ofertas de carga a la organización conectada.",
+  "Anyone who reaches this endpoint could send a document under this partner's name. Keep this off only for a partner who cannot sign.": "Cualquiera que llegue a este punto de conexión podría enviar un documento en nombre de este socio. Déjelo desactivado solo para un socio que no pueda firmar.",
   "Archive directory": "Directorio de archivo",
   "Archive this version": "Archivar esta versión",
   "As the partner's guide is titled, such as ACME Load Tender Guide rev 3.2": "Como se titula la guía del socio, por ejemplo ACME Load Tender Guide rev 3.2",

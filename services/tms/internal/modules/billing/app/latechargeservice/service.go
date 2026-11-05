@@ -142,10 +142,16 @@ func (s *Service) Assess(
 	if asOf <= 0 {
 		asOf = timeutils.NowUnix()
 	}
-
 	control, err := s.billingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
 	if err != nil {
 		return nil, err
+	}
+	if !req.Preview && asOf > timeutils.NowUnix()+timeutils.SecondsPerDay {
+		return nil, errortypes.NewValidationError(
+			"asOfDate",
+			errortypes.ErrInvalid,
+			"Late charges cannot be assessed for a date in the future",
+		)
 	}
 	mode := control.LateChargeAssessmentMode
 	if !mode.IsValid() {

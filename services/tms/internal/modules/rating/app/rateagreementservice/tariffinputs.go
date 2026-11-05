@@ -47,12 +47,13 @@ func (t *tariffInputs) checkRules(
 	templates := make(map[templateKey]*tariffports.Template, 4)
 	agreementErrors := make(map[string]struct{}, 4)
 
+	now := t.now()
 	for index, rule := range ruleSet {
 		if rule == nil || rule.FormulaTemplateID.IsNil() {
 			continue
 		}
 		indexed := multiErr.WithIndex("rules", index)
-		key := templateKey{id: rule.FormulaTemplateID, asOf: max(rule.EffectiveFrom, t.now())}
+		key := templateKey{id: rule.FormulaTemplateID, asOf: max(rule.EffectiveFrom, now)}
 		template, ok := templates[key]
 		if !ok {
 			resolved, err := t.resolver.ResolveBilling(ctx, &tariffports.ResolveRequest{

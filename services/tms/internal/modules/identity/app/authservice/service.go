@@ -152,6 +152,7 @@ type loginSessionContext struct {
 	AuthProvider          string
 	ExternalIdentityID    string
 	ExternalSubject       string
+	ExternalIssuer        string
 	AuthenticatorAAL      int
 	FederationFAL         int
 	MFAAuthenticatedAt    int64
@@ -572,6 +573,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 			&iamports.MFAChallengeFederation{
 				AuthProvider:    string(loginState.Provider),
 				ExternalSubject: claims.Subject,
+				ExternalIssuer:  ssoConfig.OIDCIssuerURL,
 				FederationFAL:   2,
 			},
 		)
@@ -589,6 +591,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	loginResp, err := s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
 		AuthProvider:          string(loginState.Provider),
 		ExternalSubject:       claims.Subject,
+		ExternalIssuer:        ssoConfig.OIDCIssuerURL,
 		AuthenticatorAAL:      aal,
 		FederationFAL:         2,
 		MFAAuthenticatedAt:    mfaAt,
@@ -1041,6 +1044,7 @@ func (s *Service) createSession(
 		AuthProvider:          authn.AuthProvider,
 		ExternalIdentityID:    authn.ExternalIdentityID,
 		ExternalSubject:       authn.ExternalSubject,
+		ExternalIssuer:        authn.ExternalIssuer,
 		AuthenticatorAAL:      authn.AuthenticatorAAL,
 		FederationFAL:         authn.FederationFAL,
 		MFAAuthenticatedAt:    authn.MFAAuthenticatedAt,

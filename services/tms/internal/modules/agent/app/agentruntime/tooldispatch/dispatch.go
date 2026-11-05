@@ -248,6 +248,15 @@ func (s *Dispatcher) prepareActionCall(
 		); denied {
 			return outcome, true
 		}
+		if req.Actor.PrincipalType == permissionports.PrincipalTypeUser {
+			for _, grant := range policy.PersonAlsoNeeds {
+				if outcome, denied := s.authorize(
+					ctx, req.Actor, call.Name, grant.Resource, grant.Operation,
+				); denied {
+					return outcome, true
+				}
+			}
+		}
 	}
 
 	contract, err := argcheck.ContractCall(

@@ -3,6 +3,8 @@ package driversettlementreviewservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -252,17 +254,21 @@ func (s *Service) ResolveDispute(
 	}
 	previous, dispute := plan.Dispute.Before, plan.Dispute.After
 
-	if req.Adjustment != nil {
-		lineID, adjErr := s.applyDisputeAdjustment(ctx, req, dispute, actor)
-		if adjErr != nil {
-			return nil, adjErr
+	var updated *driversettlement.Dispute
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if req.Adjustment != nil {
+			lineID, adjErr := s.applyDisputeAdjustment(txCtx, req, dispute, actor)
+			if adjErr != nil {
+				return adjErr
+			}
+			if !lineID.IsNil() {
+				dispute.ResolutionLineID = &lineID
+			}
 		}
-		if !lineID.IsNil() {
-			dispute.ResolutionLineID = &lineID
-		}
-	}
-
-	updated, err := s.disputeRepo.Update(ctx, dispute)
+		var updateErr error
+		updated, updateErr = s.disputeRepo.Update(txCtx, dispute)
+		return updateErr
+	})
 	if err != nil {
 		return nil, err
 	}

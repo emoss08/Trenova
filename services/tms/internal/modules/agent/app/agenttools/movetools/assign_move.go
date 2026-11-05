@@ -92,7 +92,7 @@ func (t *AssignMoveTool) Policy() agenttoolports.ToolPolicy {
 		Name:          t.Name(),
 		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
-		Operation:     permission.OpUpdate,
+		Operation:     permission.OpAssign,
 		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,

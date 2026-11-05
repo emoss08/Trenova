@@ -125,7 +125,7 @@ func (t *ScheduleReportTool) Policy() agenttoolports.ToolPolicy {
 		Name:          t.Name(),
 		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceReport,
-		Operation:     permission.OpCreate,
+		Operation:     permission.OpExport,
 		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,

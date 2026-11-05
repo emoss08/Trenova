@@ -230,7 +230,7 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 			transportErr := &TransportError{
 				Method: method,
 				Path:   req.Path,
-				Err:    sanitizeTransportError(sendErr),
+				Err:    SanitizeTransportError(sendErr),
 				redact: c.redactor.apply,
 			}
 			info.Err = transportErr
@@ -473,7 +473,7 @@ func isPublicHeader(name string) bool {
 	}
 }
 
-func sanitizeTransportError(err error) error {
+func SanitizeTransportError(err error) error {
 	var urlErr *url.Error
 	if errors.As(err, &urlErr) && urlErr.Err != nil {
 		return urlErr.Err

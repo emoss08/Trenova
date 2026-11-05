@@ -303,10 +303,12 @@ func (s *Service) captureMessage(
 		},
 		CapturedFingerprint: agentquality.FingerprintOf(definition, promptVersion),
 	}
-	feedbackID := req.feedback.ID
-	evalCase.SourceFeedbackID = &feedbackID
-	evalCase.SourceTurnID = req.feedback.TurnID
-	evalCase.SourceRunID = req.feedback.RunID
+	if req.feedback != nil {
+		feedbackID := req.feedback.ID
+		evalCase.SourceFeedbackID = &feedbackID
+		evalCase.SourceTurnID = req.feedback.TurnID
+		evalCase.SourceRunID = req.feedback.RunID
+	}
 	applyFrozen(evalCase, frozen, redacted, s.now())
 	if evalCase.Title == "" {
 		evalCase.Title = titleFromInput(evalCase.Input)

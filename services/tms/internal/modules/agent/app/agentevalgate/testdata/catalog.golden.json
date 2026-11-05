@@ -9950,7 +9950,7 @@
       "policy": {
         "kind": "action",
         "resource": "shipment_move",
-        "operation": "update",
+        "operation": "assign",
         "scope": "tenant",
         "defaultTier": "ActWithApproval",
         "maxTier": "AutoExecute",
@@ -11144,7 +11144,7 @@
     },
     {
       "name": "document_get",
-      "description": "Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, the structured fields document intelligence found, and where it came from: who uploaded it and when, how it came in (uploaded by hand, a monitored mailbox, a scan) and the record it is attached to, named as people know it. Use it for a document a record names, or for a page document_list pointed at; a file the person attached to this conversation is read with agent_read_attachment. For a rate confirmation or tender, follow with intake_get_draft for the shipment it describes. A document whose reading is still pending has no text yet; say so and ask again shortly.",
+      "description": "Read a document by id: its kind, pages, extracted text and structured fields, and where it came from. That is who uploaded it and when, how it came in (uploaded by hand, a monitored mailbox, a scan) and the record it is attached to, named as people know it. Use it for a document a record names, or for a page document_list pointed at; a file the person attached to this conversation is read with agent_read_attachment. For a rate confirmation or tender, follow with intake_get_draft for the shipment it describes. A document whose reading is still pending has no text yet; say so and ask again shortly.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -41677,7 +41677,7 @@
       "policy": {
         "kind": "action",
         "resource": "report",
-        "operation": "create",
+        "operation": "export",
         "scope": "tenant",
         "defaultTier": "Propose",
         "maxTier": "ActWithApproval",
