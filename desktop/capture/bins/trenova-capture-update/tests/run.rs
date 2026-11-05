@@ -233,6 +233,7 @@ async fn the_service_stops_answering_to_stop_just_before_it_installs() {
 async fn a_stop_ends_a_manifest_fetch_that_never_answers() {
     let (_, public) = keys(5);
     let installer = fake("1.4.2");
+    let manifest = url();
     let (asked, stop) = watch::channel(false);
     let unblock = async {
         tokio::task::yield_now().await;
@@ -241,7 +242,7 @@ async fn a_stop_ends_a_manifest_fetch_that_never_answers() {
 
     let (result, ()) = tokio::join!(
         run_until(
-            &url(),
+            &manifest,
             Some(&public),
             &NeverAnswers,
             &installer,
