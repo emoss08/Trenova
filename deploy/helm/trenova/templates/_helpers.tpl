@@ -201,6 +201,9 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{- if .Values.docling.enabled }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DOCUMENTCONVERSION_APIKEY" "secret" $app "key" "doclingApiKey") }}
 {{- end }}
+{{- if .Values.managed.enabled }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_MANAGED_TOKEN" "secret" $app "key" "managedToken") }}
+{{- end }}
 {{- with .Values.tms.extraEnv }}
 {{ toYaml . }}
 {{- end }}

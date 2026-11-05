@@ -1,0 +1,10 @@
+# Trenova Cloud's managed mode, as the operator renders it
+# (services/operator/internal/values): the usage API on port 8090, reachable
+# from the operator's namespace alone. Rendered and validated by
+# .github/workflows/helm.yml.
+managed:
+  enabled: true
+  from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: trenova-system

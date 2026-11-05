@@ -89,5 +89,8 @@ empty one fails validation instead of running with a default. */ -}}
       "certFile" "/certs/imaging/tls.crt"
       "keyFile" "/certs/imaging/tls.key"))
 -}}
+{{- if .Values.managed.enabled }}
+{{- $_ := set $release "managed" (dict "enabled" true "host" "0.0.0.0" "port" 8090 "token" "") -}}
+{{- end }}
 {{- mustMergeOverwrite $release (deepCopy .Values.tms.config) | toYaml -}}
 {{- end -}}

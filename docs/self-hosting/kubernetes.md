@@ -198,6 +198,10 @@ and ClamAV keep outbound access for AI providers, email, integrations and signat
 `networkPolicy.apiFrom` narrows who may reach the API (by default, any pod in the cluster),
 and `networkPolicy.metricsFrom` admits a Prometheus to port 9090 on the API and worker.
 
+`managed.enabled` is for Trenova Cloud's operator, which turns it on: the API then serves a
+usage API on port 8090 behind a generated token, reachable only from the peers in
+`managed.from`. Leave it off on a self-hosted install.
+
 ## Upgrades
 
 Read the release notes, then:

@@ -1541,6 +1541,24 @@
     "stopped": {
       "type": "boolean",
       "description": "Stops every workload but PostgreSQL."
+    },
+    "managed": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Trenova Cloud's managed mode: the operator's usage API on port 8090.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "from": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "NetworkPolicy peers admitted to port 8090."
+        }
+      },
+      "required": []
     }
   },
   "allOf": [
