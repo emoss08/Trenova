@@ -71,7 +71,7 @@ func TestIsTimeout_ReadsTheShapesATransportActuallyReturns(t *testing.T) {
 func TestUnreachable_SeparatesABusyEndpointFromAMissingOne(t *testing.T) {
 	prober := &Prober{
 		logger: zap.NewNop(),
-		cfg:    &aiconfig.Config{},
+		cfg:    &aiconfig.Config{PrivateNetworkProviders: true},
 	}
 
 	timedOut := prober.unreachable(

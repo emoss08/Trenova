@@ -83,7 +83,7 @@ func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 
 	return compose(&completionengine.Engine{
 		Logger:     zap.NewNop(),
-		AI:         &aiconfig.Config{MaxRetries: 1},
+		AI:         &aiconfig.Config{MaxRetries: 1, PrivateNetworkProviders: true},
 		Repo:       &fakeRepo{providers: providers},
 		Encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
 		Adapters:   adapterregistry.NewRegistry(),

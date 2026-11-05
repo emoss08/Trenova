@@ -26,7 +26,7 @@ func novaService(t *testing.T, repo *fakeRepo) *Service {
 
 	return compose(&completionengine.Engine{
 		Logger:     zap.NewNop(),
-		AI:         &aiconfig.Config{MaxRetries: 1},
+		AI:         &aiconfig.Config{MaxRetries: 1, PrivateNetworkProviders: true},
 		Repo:       repo,
 		Encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
 		Adapters:   adapterregistry.NewRegistry(),
