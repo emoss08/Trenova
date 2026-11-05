@@ -60,6 +60,7 @@ function stop(overrides: Partial<Stop> & Pick<Stop, "id">): Stop {
     status: "New",
     type: "Pickup",
     scheduleType: "Appointment",
+    handling: "Live",
     sequence: 0,
     pieces: null,
     weight: null,

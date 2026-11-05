@@ -1,5 +1,6 @@
 import { documentContentEndpoint, documentPageImageEndpoint } from "@/services/document";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
+import type { QueryFunctionContext, QueryKey } from "@tanstack/react-query";
 import { api } from "@trenova/shared/lib/api";
 
 const PAGE_IMAGE = "image/webp";
@@ -41,9 +42,14 @@ export const documentPage = createQueryKeys("documentPage", {
   }),
 });
 
+/**
+ * One drawn page as a viewer reads it, whichever factory it came from. `queryFn` is a method so
+ * a factory's query fits: each types its context by its own key, and TanStack only ever hands a
+ * query the key it was made with.
+ */
 type PageImageQuery = {
-  queryKey: readonly unknown[];
-  queryFn: (context: { signal: AbortSignal }) => Promise<Blob>;
+  queryKey: QueryKey;
+  queryFn(context: QueryFunctionContext): Blob | Promise<Blob>;
 };
 
 /**

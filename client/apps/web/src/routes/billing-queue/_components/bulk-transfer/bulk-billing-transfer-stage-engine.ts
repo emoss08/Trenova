@@ -184,11 +184,10 @@ export class TransferStageEngine {
   private pumping = false;
   private settled = false;
   private disposed = false;
+  private readonly options: EngineOptions;
 
-  constructor(
-    private readonly options: EngineOptions,
-    initial: StageCounts,
-  ) {
+  constructor(options: EngineOptions, initial: StageCounts) {
+    this.options = options;
     this.target = initial;
     this.landed = initial;
     this.dispatched = initial;
