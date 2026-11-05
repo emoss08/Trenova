@@ -286,7 +286,6 @@ before converting: other work may have changed them.
   GET /weather-alerts/
   GET /weather-alerts/:alertID/
 ## versionhandler
-  POST /system/check-updates
   GET /system/update-status
   GET /system/version
 ## googlemapshandler
