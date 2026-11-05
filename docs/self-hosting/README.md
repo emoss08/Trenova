@@ -42,7 +42,8 @@ itself are yours.
 | `trenova-db` | `ghcr.io/emoss08/trenova/tms-db` | One-shot: database migrations, then the reference seeds that changed (reference data, each organization's defaults and administrator permissions, the row-level security key), on every start (`trenova-db up -env production`); the API and worker wait for it |
 | `rls-roles` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the roles the API and worker sign in as and sets their passwords from `.env` (`trenova db rls provision-roles`), on every start |
 | `tms-bootstrap` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the first organization and administrator once (`trenova db bootstrap`); a no-op afterwards |
-| `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication |
+| `db-prepare` | `ghcr.io/emoss08/trenova/postgres` | One-shot: the roles Temporal and GTC sign in as, and Temporal's two databases |
+| `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication and GTC's read access |
 | `postgres` | `ghcr.io/emoss08/trenova/postgres` | PostgreSQL 18 with PostGIS, pg_cron and pgvector |
 | `postgres-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues PostgreSQL's private CA and server certificate, once |
 | `redis` | `redis:8` | Sessions, rate limits, caches, the live-update streams |
@@ -374,6 +375,23 @@ Maintenance commands connect as the owner, whose password the API no longer hold
 `encryption rewrap` and `db rls status` now run through `tms-bootstrap` (`--entrypoint trenova`),
 as shown here and under [Rotating the encryption key](#rotating-the-encryption-key).
 
+### Upgrading to a release with Temporal and GTC roles
+
+Temporal and GTC no longer sign in as the database owner, a superuser. `.env` needs their
+passwords, and `docker compose` refuses to run until it has them. After step 3 above, from this
+directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+`db-prepare` creates the roles and hands Temporal's databases and GTC's backfill state to them, so
+workflows in flight and GTC's replication position carry over. If it stops, `docker compose logs
+db-prepare` says why. To go back, return to the previous release's deployment files: the owner is
+a superuser, so it can still read everything the new roles own.
+
 ### Upgrading to a release with a Gotenberg password
 
 Gotenberg now refuses a render without the password in `.env`, and `docker compose` refuses to
@@ -683,7 +701,9 @@ anything else to their networks. Beyond that:
   [row-level security](../engineering/row-level-security.md) binds to one organization at a
   time, and as `trenova_system` for the work that sees every organization. Neither is a
   superuser, and neither holds the owner's password: only `trenova-db`, `rls-roles` and
-  `tms-bootstrap` do among the TMS services. Temporal and GTC still sign in as the owner.
+  `tms-bootstrap` do among the TMS services. Temporal and GTC sign in as roles of their own,
+  which `db-prepare` makes: `temporal` owns only its two databases, and `trenova_gtc` replicates
+  and reads the tables GTC routes.
   Run `trenova-db` as a PostgreSQL superuser if you can: each run marks enum comparisons
   `LEAKPROOF`, which lets status filters use their indexes under row-level security. Managed
   PostgreSQL (RDS, Cloud SQL) gives no superuser; Trenova works there, but those filters read
@@ -702,7 +722,7 @@ database error usually means PostgreSQL was not ready or the database password i
 changed after the volume was created; PostgreSQL keeps the password it was initialized with.
 
 **`required variable TRENOVA_DATABASE_APP_PASSWORD is missing`, or the same for another
-`TRENOVA_DATABASE_*` secret.** `.env` predates row-level security: run
+`TRENOVA_DATABASE_*` secret.** `.env` predates a role this release signs in with: run
 `./scripts/init-env.sh --upgrade`.
 
 **`required variable TRENOVA_RENDERER_GOTENBERGPASSWORD is missing`.** `.env` predates the

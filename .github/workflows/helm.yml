@@ -9,6 +9,7 @@ on:
       # Files the chart reads through symlinks, and the images it runs.
       - "deploy/gtc/sinks.yaml"
       - "deploy/selfhost/scripts/db-bootstrap.sh"
+      - "deploy/selfhost/scripts/db-prepare.sh"
       - "deploy/selfhost/temporal/dynamicconfig.yaml"
       - "deploy/Caddyfile"
       - "deploy/Dockerfile.*"
@@ -24,6 +25,7 @@ on:
       # Files the chart reads through symlinks, and the images it runs.
       - "deploy/gtc/sinks.yaml"
       - "deploy/selfhost/scripts/db-bootstrap.sh"
+      - "deploy/selfhost/scripts/db-prepare.sh"
       - "deploy/selfhost/temporal/dynamicconfig.yaml"
       - "deploy/Caddyfile"
       - "deploy/Dockerfile.*"

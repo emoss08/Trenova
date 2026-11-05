@@ -229,6 +229,68 @@ func TestPostgresKeyIsIssuedPerInstallAndStaysWithTheServer(t *testing.T) {
 	assert.NotContains(t, string(dockerfile), "openssl req")
 }
 
+func TestSelfHostTemporalAndGTCSignInAsTheirOwnRoles(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	temporal := compose.Services["temporal"]
+	assert.Contains(t, temporal.Env["POSTGRES_USER"], "TRENOVA_DATABASE_TEMPORAL_USER")
+	assert.Contains(t, temporal.Env["POSTGRES_PWD"], "TRENOVA_DATABASE_TEMPORAL_PASSWORD")
+	assert.Equal(t, "true", temporal.Env["SKIP_DB_CREATE"])
+	assert.Contains(t, temporal.DependsOn, "db-prepare")
+
+	gtc := compose.Services["gtc"].Env["DATABASE_URL"]
+	assert.Contains(t, gtc, "TRENOVA_DATABASE_GTC_USER")
+	assert.Contains(t, gtc, "TRENOVA_DATABASE_GTC_PASSWORD")
+	assert.NotContains(t, gtc, "${TRENOVA_DATABASE_PASSWORD")
+
+	bootstrap := compose.Services["db-bootstrap"]
+	assert.Contains(t, bootstrap.Env["GTC_ROLE"], "TRENOVA_DATABASE_GTC_USER")
+	assert.Contains(t, bootstrap.DependsOn, "db-prepare")
+}
+
+func TestSelfHostOwnerPasswordStaysWithTheOneShots(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+	mayHoldIt := []string{
+		"postgres", "db-prepare", "db-bootstrap", "trenova-db", "rls-roles", "tms-bootstrap",
+	}
+
+	for name, service := range compose.Services {
+		if slices.Contains(mayHoldIt, name) {
+			continue
+		}
+		for key, value := range service.Env {
+			text, isText := value.(string)
+			if !isText {
+				continue
+			}
+			assert.NotContains(t, text, "${TRENOVA_DATABASE_PASSWORD", "%s %s", name, key)
+		}
+	}
+}
+
+func TestSelfHostInitEnvGeneratesTheTemporalAndGTCPasswords(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost")
+	script, err := os.ReadFile(filepath.Join(root, "scripts", "init-env.sh"))
+	require.NoError(t, err)
+	example, err := os.ReadFile(filepath.Join(root, ".env.example"))
+	require.NoError(t, err)
+
+	for _, key := range []string{
+		"TRENOVA_DATABASE_TEMPORAL_PASSWORD",
+		"TRENOVA_DATABASE_GTC_PASSWORD",
+	} {
+		assert.Contains(t, string(script), "add_missing "+key, "--upgrade adds it")
+		assert.Contains(t, string(script), "  "+key+" \\\n", "a new install generates it")
+		assert.Contains(t, string(example), key+"=change-me", ".env.example lists it")
+	}
+}
+
 func TestSelfHostAPIAndWorkerSignInAsTheirOwnRole(t *testing.T) {
 	t.Parallel()
 
