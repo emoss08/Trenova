@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,6 +35,7 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 		DatabaseConfig:  RLSDatabaseConfig(t, admin, dsn),
 		ReportingConfig: &reportingconfig.Config{},
 		Logger:          zaptest.NewLogger(t),
+		Metrics:         &metrics.Registry{},
 		Observers:       shapetest.Observers(t),
 	})
 	require.NoError(t, err)
