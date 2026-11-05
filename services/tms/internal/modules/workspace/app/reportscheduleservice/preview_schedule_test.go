@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -61,6 +62,7 @@ func scheduleCore(
 		OrganizationRepo: reportingtest.Organizations{},
 		Engine:           reportingtest.NewEngine(reportingtest.ReportCatalog(t), nil),
 		ReportingConfig:  &reportingconfig.Config{},
+		Registry:         permissioncatalog.NewRegistry(),
 		Metrics:          metricstest.Disabled(),
 	})
 	require.NoError(t, err)

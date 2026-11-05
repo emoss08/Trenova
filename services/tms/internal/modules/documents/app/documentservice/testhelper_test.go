@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -14,8 +15,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
+
+type noopPaperwork struct{}
+
+func (noopPaperwork) RequestRead(context.Context, *document.Document, pulid.ID) {}
 
 type noopTransactor struct{}
 
@@ -65,6 +71,7 @@ func NewTestService(
 			ImagingConfig: &imagingconfig.Config{},
 			Logger:        logger,
 		}),
+		paperwork:       noopPaperwork{},
 		workflowStarter: &mocks.NoopWorkflowStarter{},
 		realtime:        &mocks.NoopRealtimeService{},
 	}

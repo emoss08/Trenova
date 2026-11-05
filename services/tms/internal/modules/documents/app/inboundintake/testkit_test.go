@@ -159,6 +159,7 @@ func (t *testService) intake() *Service {
 		RuleEvaluator: t.ruleEvaluator,
 		Shipments:     t.shipments,
 		Watchtower:    t.watchtower,
+		Briefing:      inboundqueuetest.NoopBriefing{},
 	})
 	return &Service{
 		activityRepo: t.activityRepo,

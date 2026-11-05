@@ -76,6 +76,15 @@ func (t *testService) supplyDefaults() {
 	if t.hints == nil {
 		t.hints = inboundqueuetest.NoSenderHints{}
 	}
+	if t.parties == nil {
+		t.parties = &inboundqueuetest.StubParties{}
+	}
+	if t.shipments == nil {
+		t.shipments = &inboundqueuetest.StubShipments{}
+	}
+	if t.notifier == nil {
+		t.notifier = &recordingNotifier{}
+	}
 }
 
 func (t *testService) processing() *Service {

@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -191,19 +192,26 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 			orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
 				Return(&tenant.Organization{Name: "Trenova", Timezone: "America/Chicago"}, nil).
 				Maybe()
+			customFields := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+			customFields.EXPECT().
+				GetActiveByResourceType(mock.Anything, mock.Anything).
+				Return(nil, nil).
+				Maybe()
 			svc := &Service{
 				partnerRepo: partnerRepo,
 				lading: edilading.NewRuntime(edilading.RuntimeParams{
-					Logger:   zap.NewNop(),
-					Projects: projects,
-					Orgs:     orgs,
+					Logger:       zap.NewNop(),
+					Projects:     projects,
+					Orgs:         orgs,
+					CustomFields: customFields,
 				}),
 				outbound: edioutbound.New(edioutbound.Params{
 					Logger: zap.NewNop(),
 					Lading: edilading.NewRuntime(edilading.RuntimeParams{
-						Logger:   zap.NewNop(),
-						Projects: projects,
-						Orgs:     orgs,
+						Logger:       zap.NewNop(),
+						Projects:     projects,
+						Orgs:         orgs,
+						CustomFields: customFields,
 					}),
 					PartnerRepo: partnerRepo,
 					Alert:       &edialert.Service{},

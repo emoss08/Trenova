@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -154,6 +155,7 @@ func TestService_SubmitLoadTenderResolvesPartnerFromShipmentCustomer(t *testing.
 		}, nil)
 
 	service := &Service{
+		db:             dbtest.NopConnection{},
 		l:              zap.NewNop(),
 		partnerRepo:    partnerRepo,
 		connectionRepo: connectionRepo,
@@ -245,6 +247,7 @@ func TestService_SubmitLoadTenderFailsWhenCustomerHasNoPartner(t *testing.T) {
 		}, nil)
 
 	service := &Service{
+		db:          dbtest.NopConnection{},
 		l:           zap.NewNop(),
 		partnerRepo: partnerRepo,
 		shipmentSvc: shipmentSvc,

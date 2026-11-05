@@ -18,6 +18,13 @@ type discardedNotifications struct {
 	notificationports.NotificationRepository
 }
 
+func (discardedNotifications) ExistsRecent(
+	context.Context,
+	notificationports.ExistsRecentNotificationRequest,
+) (bool, error) {
+	return false, nil
+}
+
 func (discardedNotifications) Create(
 	_ context.Context,
 	entity *notification.Notification,

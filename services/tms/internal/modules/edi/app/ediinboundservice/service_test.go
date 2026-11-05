@@ -99,10 +99,13 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		Orgs:         fixture.orgs,
 		CustomFields: customFields,
 	})
+	timers := ladingportsmock.NewMockFlowTimerScheduler(t)
+	timers.EXPECT().Schedule(mock.Anything, mock.Anything).Return(nil).Maybe()
 	flows := edilading.NewFlows(edilading.FlowsParams{
 		Logger:  zap.NewNop(),
 		Runtime: runtime,
 		Flows:   fixture.flowRepo,
+		Timers:  timers,
 	})
 	edis := ediservicetest.New(ediservicetest.Deps{
 		Logger:              zap.NewNop(),

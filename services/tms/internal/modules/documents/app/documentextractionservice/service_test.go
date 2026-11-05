@@ -110,7 +110,6 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	searchProjection.EXPECT().Upsert(mock.Anything, doc, "").Return(nil)
 
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
-	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(
 			mock.Anything,
@@ -171,7 +170,6 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 		}, nil)
 
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
-	workflowStarter.EXPECT().Enabled().Return(true)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
 		Logger:                   zap.NewNop(),

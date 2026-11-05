@@ -129,7 +129,6 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 		}).
 		Once()
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
-	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
@@ -306,7 +305,6 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 		}).
 		Once()
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
-	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
