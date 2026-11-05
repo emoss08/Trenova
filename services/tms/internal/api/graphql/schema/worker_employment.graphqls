@@ -131,6 +131,6 @@ extend type Query {
 extend type Mutation {
   recordWorkerEmploymentEvent(
     input: RecordWorkerEmploymentEventInput!
-  ): RecordWorkerEmploymentEventPayload!
+  ): RecordWorkerEmploymentEventPayload! @authorizes(resource: "worker_employment_event")
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
 }

@@ -353,7 +353,7 @@ extend type Mutation {
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
   restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
   assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
-  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
+  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment! @authorizes(resource: "pto_policy")
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
 }

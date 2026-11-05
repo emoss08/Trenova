@@ -252,9 +252,10 @@ queries, and CI holds every path to it:
 
 - GraphQL: every root field that returns a shipment, order, invoice or worker, directly
   or through a connection, checks read (or an operation implying it) on the kind in its
-  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). One that such a mutation's
-  payload carries rather than returns (a training record's worker) is the root record only
-  for a caller who reads its kind or when the mutation declares `@authorizes`; otherwise
+  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). A record of any kind that a
+  mutation's payload carries rather than returns (a training record's worker, an
+  assignment's customer) is the root record only for a caller who reads its kind or when
+  the mutation declares `@authorizes`, which its resolver must then check; otherwise
   the field guard shows it as linked, and `TestEveryLinkedFieldIsDeclared` holds client
   operations to that (`applyCreditMemo` and `unapplyCreditMemoApplication` check invoice
   read for it).

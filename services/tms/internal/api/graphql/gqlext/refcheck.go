@@ -67,11 +67,10 @@ type OperationAccess struct {
 	Selections []Selection
 }
 
-// Operations walks operations as the field guard walks a response. A
-// shipment, order, invoice or worker a mutation's payload carries is the
-// operation's root record only when the mutation's resolver checks that kind
-// (checks says which it does; nil means none), as the guard sees it for a
-// caller who cannot read the kind. A field
+// Operations walks operations as the field guard walks a response. A record
+// a mutation's payload carries is the operation's root record only when the
+// mutation's resolver checks that kind (checks says which it does; nil means
+// none), as the guard sees it for a caller who cannot read the kind. A field
 // inside a reference view field (a state under a customer's address) is never
 // decided on its own once the field holding it is shown, so only a record's
 // own fields are selections.
@@ -87,12 +86,11 @@ func Operations(
 		return nil, err
 	}
 	w := &linkWalker{
-		schema:      schema,
-		kinds:       kinds,
-		views:       refview.New(registry),
-		checks:      checks,
-		scopedKinds: registry.DatabaseScopedResources(),
-		fragments:   make(map[string]*ast.FragmentDefinition, len(fragments)),
+		schema:    schema,
+		kinds:     kinds,
+		views:     refview.New(registry),
+		checks:    checks,
+		fragments: make(map[string]*ast.FragmentDefinition, len(fragments)),
 	}
 	for _, fragment := range fragments {
 		w.fragments[fragment.Name] = fragment
@@ -126,9 +124,9 @@ func Operations(
 
 // LinkedFields is every field the guard would withhold from a caller who
 // cannot read its kind: a field outside the reference view of a record
-// carried by another, any field of a part of one, or a shipment, order,
-// invoice or worker carried by a mutation's payload when the mutation's
-// resolver does not check that kind. Declared says whether the operation
+// carried by another, any field of a part of one, or a record carried by a
+// mutation's payload when the mutation's resolver does not check that kind.
+// Declared says whether the operation
 // names the kind in @requiresRead.
 func LinkedFields(
 	schema *ast.Schema,
@@ -185,14 +183,13 @@ func RequiredReads(op *ast.OperationDefinition) []permission.Resource {
 }
 
 type linkWalker struct {
-	schema      *ast.Schema
-	kinds       map[string]permission.Resource
-	views       *refview.Views
-	checks      RootChecks
-	scopedKinds []string
-	fragments   map[string]*ast.FragmentDefinition
-	op          *ast.OperationDefinition
-	access      *OperationAccess
+	schema    *ast.Schema
+	kinds     map[string]permission.Resource
+	views     *refview.Views
+	checks    RootChecks
+	fragments map[string]*ast.FragmentDefinition
+	op        *ast.OperationDefinition
+	access    *OperationAccess
 }
 
 // linkFrame is where a walk is: the record it is in and how that record was
@@ -308,7 +305,7 @@ func (w *linkWalker) reach(kind permission.Resource, frame linkFrame) *recordCon
 	if (frame.record == nil || frame.rootRecord) && Authorizes(frame.rootField, kind) {
 		return &recordContext{kind: kind, reach: refview.Root}
 	}
-	if !frame.nested && (!frame.carried || !w.scoped(kind) || w.checked(frame, kind)) {
+	if !frame.nested && (!frame.carried || w.checked(frame, kind)) {
 		return &recordContext{kind: kind, reach: refview.Root}
 	}
 	if frame.record != nil && w.views.PartOf(kind, frame.record.kind) {
@@ -336,10 +333,6 @@ func appendKind(kinds []permission.Resource, kind permission.Resource) []permiss
 		return kinds
 	}
 	return append(kinds, kind)
-}
-
-func (w *linkWalker) scoped(kind permission.Resource) bool {
-	return slices.Contains(w.scopedKinds, kind.String())
 }
 
 func (w *linkWalker) checked(frame linkFrame, kind permission.Resource) bool {

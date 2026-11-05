@@ -194,6 +194,40 @@ func TestPersonRead_ARecordAMutationsPayloadCarriesIsLinked(t *testing.T) {
 	assert.True(t, resolved)
 }
 
+func TestPersonRead_AnyRecordAMutationsPayloadCarriesIsLinked(t *testing.T) {
+	t.Parallel()
+
+	assigned := []fieldStep{
+		{object: "Mutation", field: "assignDocumentTemplate"},
+		{object: "DocumentTemplateAssignment", field: "customer"},
+	}
+
+	guard, ctx := personGuard(t, permission.ResourceCustomer)
+	result, resolved := resolveNested(t, guard, ctx,
+		steps(assigned, fieldStep{object: "Customer", field: "name", nonNull: true})...)
+	assert.Equal(t, "stored value", result, "a customer's name is in its reference view")
+	assert.True(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		steps(assigned, fieldStep{object: "Customer", field: "internalNotes"})...)
+	assert.Nil(t, result, "a customer's other fields need customer read")
+	assert.False(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Mutation", field: "assignDocumentTemplate", authorizes: "customer"},
+		fieldStep{object: "DocumentTemplateAssignment", field: "customer"},
+		fieldStep{object: "Customer", field: "internalNotes"},
+	)
+	assert.Equal(t, "stored value", result, "a mutation that declares @authorizes returns its own")
+	assert.True(t, resolved)
+
+	reader, readerCtx := personGuard(t)
+	result, resolved = resolveNested(t, reader, readerCtx,
+		steps(assigned, fieldStep{object: "Customer", field: "internalNotes"})...)
+	assert.Equal(t, "stored value", result, "a customer reader sees the whole customer")
+	assert.True(t, resolved)
+}
+
 func TestPersonRead_ARecordOnATypeNamedLikeAWrapperIsLinked(t *testing.T) {
 	t.Parallel()
 

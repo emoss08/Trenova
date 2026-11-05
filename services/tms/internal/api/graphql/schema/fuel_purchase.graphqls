@@ -713,6 +713,6 @@ extend type Mutation {
   statement being fetched a second time. Rows that already became purchases are
   left alone.
   """
-  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult! @authorizes(resource: "fuel_purchase_import")
   discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
 }

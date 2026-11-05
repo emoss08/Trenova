@@ -137,7 +137,6 @@ mutation HandOffWatchtowerItem($id: ID!, $input: HandOffWatchtowerItemInput!) @r
     }
     run {
       id
-      status
     }
     subscribers {
       id

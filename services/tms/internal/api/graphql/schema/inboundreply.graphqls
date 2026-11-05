@@ -341,7 +341,7 @@ extend type Mutation {
   "Files an attachment on a shipment, whole or split into page ranges."
   fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
   "Files every readable attachment of each message on its matched shipment."
-  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult! @authorizes(resource: "inbound_message")
   unfileInboundAttachment(attachmentId: ID!): InboundMessage!
   "Adds a shortage, overage or damage exception to the matched shipment."
   logInboundException(messageId: ID!, input: LogInboundExceptionInput!): InboundMessage!
