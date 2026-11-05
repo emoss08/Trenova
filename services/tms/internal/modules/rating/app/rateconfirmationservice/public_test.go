@@ -2,6 +2,7 @@ package rateconfirmationservice
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -162,6 +164,52 @@ func TestConfirmByTokenRequiresSignerName(t *testing.T) {
 	assert.ErrorContains(t, err, "signer's name is required")
 	assert.Empty(t, deps.repo.updated)
 	assert.Empty(t, deps.repo.markedUsed)
+}
+
+func TestConfirmByTokenRefusesABlankSignerName(t *testing.T) {
+	deps := setupPublicTest(t)
+	entity := signableRateCon(deps)
+	raw, _ := mintTestToken(deps, entity)
+
+	err := deps.svc.ConfirmByToken(t.Context(), raw, " \t\n ", "Dispatcher")
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "signer's name is required")
+	assert.Empty(t, deps.repo.updated)
+	assert.Empty(t, deps.repo.markedUsed)
+}
+
+func TestConfirmByTokenBoundsTheSignerToItsColumns(t *testing.T) {
+	deps := setupPublicTest(t)
+	entity := signableRateCon(deps)
+	raw, _ := mintTestToken(deps, entity)
+	tooLong := strings.Repeat("x", maxSignerFieldLength+1)
+
+	require.Error(t, deps.svc.ConfirmByToken(t.Context(), raw, tooLong, "Dispatcher"))
+	require.Error(t, deps.svc.ConfirmByToken(t.Context(), raw, "J. Doe", tooLong))
+	assert.Empty(t, deps.repo.updated)
+}
+
+func TestValidateSignerAcceptsTheLongestNameTheColumnHolds(t *testing.T) {
+	longest := strings.Repeat("é", maxSignerFieldLength)
+
+	require.NoError(t, validateSigner(longest, longest))
+	require.NoError(t, validateSigner("J. Doe", ""))
+}
+
+func TestPlanConfirmRefusesABlankName(t *testing.T) {
+	deps := setupPublicTest(t)
+	entity := signableRateCon(deps)
+
+	_, err := deps.svc.planConfirm(
+		t.Context(),
+		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		entity.ID,
+		"   ",
+	)
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "confirming party's name is required")
 }
 
 func TestConfirmByTokenConfirmsThenBurns(t *testing.T) {

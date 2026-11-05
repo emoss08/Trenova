@@ -4,6 +4,8 @@ import (
 	"context"
 	"html/template"
 	"net/url"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -21,6 +23,8 @@ import (
 // long enough for a carrier's back office, short enough that a stale link in
 // a forwarded inbox dies on its own.
 const signTokenTTLSeconds = int64(14 * 24 * 3600)
+
+const maxSignerFieldLength = 255
 
 // invalidTokenError uses one piece of copy for every failure mode — missing,
 // expired, used, revoked, voided — so the public endpoint leaks nothing about
@@ -151,6 +155,29 @@ func (s *Service) PreviewByToken(
 	return view, nil
 }
 
+func validateSigner(name, title string) error {
+	if name == "" {
+		return errortypes.NewValidationError(
+			"signerName", errortypes.ErrRequired,
+			"The signer's name is required",
+		)
+	}
+	if utf8.RuneCountInString(name) > maxSignerFieldLength {
+		return errortypes.NewValidationError(
+			"signerName", errortypes.ErrInvalid,
+			"The signer's name must be at most {0} characters", maxSignerFieldLength,
+		)
+	}
+	if utf8.RuneCountInString(title) > maxSignerFieldLength {
+		return errortypes.NewValidationError(
+			"signerTitle", errortypes.ErrInvalid,
+			"The signer's title must be at most {0} characters", maxSignerFieldLength,
+		)
+	}
+
+	return nil
+}
+
 // ConfirmByToken records the carrier's signature from the public page. The
 // confirmation is written first and the token burned after — a transient
 // failure between the two leaves the link usable rather than eating the
@@ -159,11 +186,10 @@ func (s *Service) ConfirmByToken(
 	ctx context.Context,
 	rawToken, signerName, signerTitle string,
 ) error {
-	if signerName == "" {
-		return errortypes.NewValidationError(
-			"signerName", errortypes.ErrRequired,
-			"The signer's name is required",
-		)
+	signerName = strings.TrimSpace(signerName)
+	signerTitle = strings.TrimSpace(signerTitle)
+	if err := validateSigner(signerName, signerTitle); err != nil {
+		return err
 	}
 
 	ctx, token, entity, err := s.resolveToken(ctx, rawToken)
