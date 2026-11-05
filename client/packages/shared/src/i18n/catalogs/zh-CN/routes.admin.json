@@ -1122,6 +1122,7 @@
   "Run console": "运行控制台",
   "Runs its own fleet": "自营车队",
   "SCIM activity will appear after your directory starts syncing.": "目录开始同步后，SCIM 活动就会显示于此。",
+  "SCIM base URL": "SCIM 基础 URL",
   "SCIM directories": "SCIM 目录",
   "SCIM directories could not be loaded.": "无法加载 SCIM 目录。",
   "SCIM directory": "SCIM 目录",

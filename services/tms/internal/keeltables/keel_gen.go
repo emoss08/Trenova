@@ -136,6 +136,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset/passwordresetdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/scim/scimdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
@@ -656,8 +657,12 @@ func All() []*schema.Table {
 		tenderdb.RoutingGuidesSchema(),
 		workersyncdriftdb.WorkerSyncDriftsSchema(),
 		iamdb.SCIMDirectoriesSchema(),
+		scimdb.GroupMembersSchema(),
 		iamdb.SCIMGroupRoleMappingsSchema(),
+		scimdb.GroupsSchema(),
+		scimdb.RoleGrantsSchema(),
 		iamdb.SCIMTokensSchema(),
+		scimdb.UsersSchema(),
 		sequenceconfigdb.SequenceConfigsSchema(),
 		sequenceconfigdb.SequencesSchema(),
 		servicefailuredb.ReasonCodesSchema(),

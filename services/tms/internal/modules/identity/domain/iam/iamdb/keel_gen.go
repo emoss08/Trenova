@@ -5540,6 +5540,7 @@ var sCIMGroupRoleMappingsTable = schema.Table{
 		{Name: "external_group_id", Quoted: `"external_group_id"`, Field: "ExternalGroupID", Kind: schema.KindString, Flags: 0, Label: `External Group ID`, JSON: `externalGroupId`},
 		{Name: "display_name", Quoted: `"display_name"`, Field: "DisplayName", Kind: schema.KindString, Flags: 0, Label: `Display Name`, JSON: `displayName`},
 		{Name: "role_id", Quoted: `"role_id"`, Field: "RoleID", Kind: schema.KindString, Flags: 0, Label: `Role ID`, JSON: `roleId`},
+		{Name: "saved_by_id", Quoted: `"saved_by_id"`, Field: "SavedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Saved By ID`, JSON: `savedById`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
@@ -5551,14 +5552,14 @@ var sCIMGroupRoleMappingsTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 11},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12},
+	Update:     []int32{3, 4, 5, 6, 7, 12},
 	Returning:  nil,
-	Version:    9,
+	Version:    10,
 	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
+	AutoCreate: 11,
+	AutoUpdate: 12,
 	IDPrefix:   "sgr_",
 	New:        newSCIMGroupRoleMapping,
 	NewN:       newNSCIMGroupRoleMapping,
@@ -5580,6 +5581,7 @@ type SCIMGroupRoleMappingsTable struct {
 	ExternalGroupID keel.StringCol
 	DisplayName     keel.StringCol
 	RoleID          keelkinds.PulidIDCol
+	SavedByID       keelkinds.PulidIDCol
 	SearchVector    keel.TSVectorCol
 	Rank            keel.StringCol
 	Version         keel.Int64Col
@@ -5597,11 +5599,12 @@ var SCIMGroupRoleMappings = &SCIMGroupRoleMappingsTable{
 	ExternalGroupID: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 4}},
 	DisplayName:     keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 5}},
 	RoleID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 6}}},
-	SearchVector:    keel.TSVectorCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 7}},
-	Rank:            keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 8}},
-	Version:         keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 9}},
-	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 10}},
-	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 11}},
+	SavedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 7}}},
+	SearchVector:    keel.TSVectorCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 8}},
+	Rank:            keel.StringCol{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 9}},
+	Version:         keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 10}},
+	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 11}},
+	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sCIMGroupRoleMappingsRef, Index: 12}},
 }
 
 // BuildSCIMGroupRoleMappings builds the table of scim_group_role_mappings for ref. Generated relation and alias methods call it.
@@ -5615,11 +5618,12 @@ func BuildSCIMGroupRoleMappings(r *keel.Ref) *SCIMGroupRoleMappingsTable {
 		ExternalGroupID: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		DisplayName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		RoleID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SearchVector:    keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 7}},
-		Rank:            keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		SavedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SearchVector:    keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 8}},
+		Rank:            keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 	}
 }
 
@@ -6024,14 +6028,16 @@ func ptrSCIMGroupRoleMapping(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (*string)(unsafe.Pointer(&r.RoleID))
 	case 7:
-		return &r.SearchVector
+		return (*string)(unsafe.Pointer(&r.SavedByID))
 	case 8:
-		return &r.Rank
+		return &r.SearchVector
 	case 9:
-		return &r.Version
+		return &r.Rank
 	case 10:
-		return &r.CreatedAt
+		return &r.Version
 	case 11:
+		return &r.CreatedAt
+	case 12:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -6055,14 +6061,19 @@ func valueSCIMGroupRoleMapping(p unsafe.Pointer, c int32) any {
 	case 6:
 		return string(r.RoleID)
 	case 7:
-		return r.SearchVector
+		if r.SavedByID == "" {
+			return nil
+		}
+		return string(r.SavedByID)
 	case 8:
-		return r.Rank
+		return r.SearchVector
 	case 9:
-		return r.Version
+		return r.Rank
 	case 10:
-		return r.CreatedAt
+		return r.Version
 	case 11:
+		return r.CreatedAt
+	case 12:
 		return r.UpdatedAt
 	}
 	return nil
