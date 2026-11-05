@@ -18,6 +18,7 @@ const (
 	MetadataEncodingEncrypted = "binary/encrypted"
 	MetadataEncryptionKeyID   = "encryption-key-id"
 	CompressionThreshold      = 1024 // 1KB
+	encryptionKeyBytes        = 32
 )
 
 type EncryptionCodec struct {
@@ -93,9 +94,9 @@ func (e *EncryptionCodec) Encode(payloads []*commonpb.Payload) ([]*commonpb.Payl
 			return payloads, fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
-		key := e.getKey(e.KeyID)
-		if key == nil {
-			return payloads, fmt.Errorf("encryption key not found for ID: %s", e.KeyID)
+		key, err := getKey(e.KeyID)
+		if err != nil {
+			return payloads, err
 		}
 
 		encrypted, err := e.encrypt(origBytes, key)
@@ -129,9 +130,9 @@ func (e *EncryptionCodec) Decode(payloads []*commonpb.Payload) ([]*commonpb.Payl
 			return payloads, ErrNoEncryptionKeyID
 		}
 
-		key := e.getKey(string(keyID))
-		if key == nil {
-			return payloads, fmt.Errorf("decryption key not found for ID: %s", string(keyID))
+		key, err := getKey(string(keyID))
+		if err != nil {
+			return payloads, err
 		}
 
 		decrypted, err := e.decrypt(p.GetData(), key)
@@ -148,26 +149,28 @@ func (e *EncryptionCodec) Decode(payloads []*commonpb.Payload) ([]*commonpb.Payl
 	return result, nil
 }
 
-func (e *EncryptionCodec) getKey(keyID string) []byte {
-	envKey := fmt.Sprintf("TEMPORAL_ENCRYPTION_KEY_%s", keyID)
-	key := os.Getenv(envKey)
+// CheckEncryptionKey reports whether the key for keyID can encrypt payloads, so
+// a process stops at startup rather than on its first workflow.
+func CheckEncryptionKey(keyID string) error {
+	_, err := getKey(keyID)
+	return err
+}
 
+func getKey(keyID string) ([]byte, error) {
+	key := os.Getenv(fmt.Sprintf("TEMPORAL_ENCRYPTION_KEY_%s", keyID))
 	if key == "" {
 		key = os.Getenv("TEMPORAL_ENCRYPTION_KEY")
 	}
 
 	if key == "" {
-		return nil
+		return nil, fmt.Errorf("%w: %s", ErrEncryptionKeyNotFound, keyID)
 	}
 
-	keyBytes := []byte(key)
-	if len(keyBytes) < 32 {
-		padded := make([]byte, 32)
-		copy(padded, keyBytes)
-		return padded
+	if len(key) < encryptionKeyBytes {
+		return nil, fmt.Errorf("%w: %s", ErrEncryptionKeyTooShort, keyID)
 	}
 
-	return keyBytes[:32]
+	return []byte(key)[:encryptionKeyBytes], nil
 }
 
 func (e *EncryptionCodec) encrypt(plainData, key []byte) ([]byte, error) {
