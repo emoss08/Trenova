@@ -41,18 +41,19 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/exchange-rates")
-	api.GET("/convert", h.convert)
-	api.GET("/latest", h.latest)
-	api.POST(
-		"/refresh",
-		h.pm.RequirePermission(permission.ResourceIntegration.String(), permission.OpUpdate),
-		h.refresh,
+	fetchRates := h.pm.RequirePermission(
+		permission.ResourceIntegration.String(),
+		permission.OpUpdate,
 	)
-	api.POST(
-		"/settlement-quotes",
-		h.pm.RequirePermission(permission.ResourceCustomerPayment.String(), permission.OpCreate),
-		h.createSettlementQuote,
+	quoteRate := h.pm.RequirePermission(
+		permission.ResourceCustomerPayment.String(),
+		permission.OpCreate,
 	)
+
+	api.GET("/convert", quoteRate, h.convert)
+	api.GET("/latest", fetchRates, h.latest)
+	api.POST("/refresh", fetchRates, h.refresh)
+	api.POST("/settlement-quotes", quoteRate, h.createSettlementQuote)
 }
 
 func (h *Handler) convert(c *gin.Context) {
