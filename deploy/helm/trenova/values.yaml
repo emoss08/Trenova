@@ -1,0 +1,546 @@
+# Trenova on Kubernetes. docs/self-hosting/kubernetes.md walks through an
+# install; values.schema.json checks every value here.
+#
+# Prerequisite, once per cluster: the CloudNativePG operator (Chart.yaml names
+# the version this chart is tested against). Everything else is in the chart.
+
+# The hostname people open Trenova at, e.g. trenova.example.com. Required.
+domain: ""
+
+# The hostname the bundled MinIO is reached at for presigned uploads and
+# downloads, e.g. storage.example.com. Required while minio.enabled is true;
+# with external storage, storage.external.publicEndpoint is used instead.
+storageDomain: ""
+
+# Applied to every pod the chart makes.
+imagePullSecrets: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
+podLabels: {}
+podAnnotations: {}
+
+secrets:
+  # The name of a Secret you manage that holds the application's secrets.
+  # Leave empty and the chart generates them once into
+  # <release>-trenova-secrets, keeps them across upgrades (it reads them back
+  # with lookup), and leaves that Secret behind on uninstall. Set it when the
+  # secrets are escrowed elsewhere (Trenova Cloud) or when the chart is
+  # rendered without a cluster (helm template, Argo CD), where lookup finds
+  # nothing and every render would generate new ones. Keys:
+  #
+  #   sessionSecret            32+ characters
+  #   encryptionKey            32+ characters; encrypted data cannot be read
+  #                            without it, so back it up apart from the cluster
+  #   encryptionRetiredKeys    optional; keys rotated out, still able to decrypt
+  #   mfaRecoveryCodePepper    32+ characters
+  #   systemUserPassword
+  #   redisPassword            letters and digits only (it is put in URLs)
+  #   meiliMasterKey
+  #   rlsScopeKeyId            1-32 of [A-Za-z0-9_-]
+  #   rlsScopeKey              base64 of 32+ random bytes
+  #   storageAccessKey, storageSecretKey   while minio.enabled is true
+  #   doclingApiKey            while docling.enabled is true
+  #   bootstrapAdminPassword   while bootstrap.adminEmail is set
+  existingSecret: ""
+
+tms:
+  image:
+    repository: ghcr.io/emoss08/trenova/tms
+    # Defaults to the chart's appVersion.
+    tag: ""
+    pullPolicy: IfNotPresent
+  # trenova-db: applies the migrations and reference seeds in the release Job.
+  dbImage:
+    repository: ghcr.io/emoss08/trenova/tms-db
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  # self_hosted (every organization belongs to the operator), community,
+  # development or enterprise.
+  platformMode: self_hosted
+  # Identifies this installation (platform.instanceId).
+  instanceId: ""
+
+  # Merged over the configuration the chart renders (templates/_config.tpl),
+  # key by key; services/tms/config/config.example.yaml documents every key.
+  # Decoding is strict, so an unknown key stops the API, the worker and the
+  # release Job. Secrets never go here: they come from the Secrets above as
+  # TRENOVA_<SECTION>_<KEY> environment variables.
+  config:
+    app:
+      name: trenova
+      debug: false
+    server:
+      host: 0.0.0.0
+      port: 8080
+      mode: release
+      readTimeout: 30s
+      readHeaderTimeout: 5s
+      writeTimeout: 75s
+      idleTimeout: 120s
+      shutdownTimeout: 10s
+      requestTimeout: 55s
+      trustedPlatform: ""
+      cors:
+        enabled: true
+        allowedMethods: [GET, POST, PUT, DELETE, PATCH, OPTIONS]
+        allowedHeaders:
+          - Authorization
+          - Content-Type
+          - Accept
+          - X-CSRF-Token
+          - Last-Event-ID
+          - Idempotency-Key
+          - X-Trenova-User-Id
+          - X-Trenova-Organization-Id
+          - X-Trenova-Business-Unit-Id
+        exposeHeaders: [X-Request-Id, Idempotent-Replayed, Withheld-By-Access]
+        credentials: true
+        maxAge: 86400
+    database:
+      maxOpenConns: 60
+      statementTimeout: 10s
+      lockTimeout: 5s
+      idleInTransactionSessionTimeout: 30s
+      queryLog: "off"
+      tenantConcurrency: 0
+      slowWaitWarning: 5s
+      maxWait: 60s
+      cache:
+        enabled: true
+        localBytes: 268435456
+        shared:
+          enabled: false
+      budget:
+        maxRepeats: 10
+    cache:
+      db: 0
+      poolSize: 50
+      minIdleConns: 10
+    search:
+      enabled: true
+      defaultLimit: 8
+      meilisearch:
+        timeout: 3s
+        indexes:
+          shipments: shipments
+          customers: customers
+          workers: workers
+          documents: documents
+          invoices: invoices
+    storage:
+      maxFileSize: 52428800
+      maxFilesPerUpload: 10
+    ai:
+      enabled: true
+      privateNetworkProviders: true
+      serverCloudCredentials: false
+      cacheDiagnostics: false
+      documentExtraction: false
+      maxConcurrentActivities: 2
+    security:
+      session:
+        name: __Host-trenova_session
+        maxAge: 12h
+        idleTimeout: 30m
+        idleWarning: 2m
+        httpOnly: true
+        secure: true
+        sameSite: strict
+        path: /
+        domain: ""
+        refreshWindow: 1h
+      rateLimit:
+        enabled: true
+        store: redis
+        failureMode: local
+        storeTimeout: 250ms
+        anonymous: { requestsPerMinute: 60, burstSize: 20 }
+        apiKey: { requestsPerMinute: 300, burstSize: 30 }
+        tenant: { requestsPerMinute: 6000, burstSize: 600 }
+        publicToken: { requestsPerMinute: 10, burstSize: 5 }
+      passwordReset:
+        tokenTtl: 30m
+        inviteTokenTtl: 168h
+        maxRequestsPerHour: 5
+      graphql:
+        maxRequestBodyBytes: 1048576
+        costBudget:
+          enabled: true
+          pointsPerMinute: 6000000
+          burst: 3000000
+      csrf:
+        browserGuard:
+          mode: enforce
+      encryption:
+        mode: envelope
+        keyManager: local
+        allowLocalKeyManagerInProduction: true
+    monitoring:
+      metrics:
+        path: /internal/metricsz
+      health:
+        path: /health
+        readinessPath: /ready
+        livenessPath: /live
+      tracing:
+        enabled: false
+        provider: otlp
+        endpoint: localhost:4318
+        serviceName: trenova
+        samplingRate: 1.0
+      graphql:
+        resolverMetrics: false
+        slowOperationAfter: 1s
+        maxTrackedOperations: 2000
+    logging:
+      level: info
+      format: json
+      output: stdout
+    temporal:
+      namespace: default
+      identity: trenova-tms
+      security:
+        enableEncryption: false
+        encryptionKeyID: unused
+        enableCompression: false
+        compressionThreshold: 0
+    audit:
+      bufferFlushInterval: 1m
+      batchSize: 500
+      maxEntriesPerFlush: 5000
+      dlqRetryInterval: 5m
+      dlqMaxRetries: 5
+    aiAudit:
+      chain:
+        activeKeyId: ""
+    documentConversion:
+      ocrLanguages: [en]
+    reporting:
+      resultCache:
+        enabled: true
+        localBytes: 134217728
+        shared:
+          enabled: false
+    twilio:
+      enabled: false
+    update:
+      enabled: true
+      checkInterval: 6h
+      githubOwner: emoss08
+      githubRepo: trenova
+      allowPrerelease: false
+
+  # More environment for the API, the worker and the release Job: integration
+  # credentials (TRENOVA_QUICKBOOKS_CLIENT_ID, ...), the AI audit chain keys,
+  # Web Push keys. Entries are container env entries, so valueFrom works.
+  extraEnv: []
+  extraEnvFrom: []
+
+  api:
+    replicas: 1
+    resources:
+      requests: { cpu: 500m, memory: 768Mi }
+      limits: { memory: 2Gi }
+    podAnnotations: {}
+  worker:
+    replicas: 1
+    resources:
+      requests: { cpu: 500m, memory: 768Mi }
+      limits: { memory: 3Gi }
+    podAnnotations: {}
+  release:
+    resources:
+      requests: { cpu: 250m, memory: 256Mi }
+      limits: { memory: 1Gi }
+    # How long the release Job may run, waiting for PostgreSQL included.
+    activeDeadlineSeconds: 3600
+
+# Creates the first organization and its administrator on the first install
+# (trenova db bootstrap); skipped while adminEmail is empty. Later runs are
+# no-ops; different values, or a database that already has users, are
+# refused and fail the release Job. The password is generated into the
+# chart's Secret (bootstrapAdminPassword) unless secrets.existingSecret holds
+# one.
+bootstrap:
+  orgName: ""
+  adminName: ""
+  adminEmail: ""
+  timezone: ""
+  state: ""
+  city: ""
+  postalCode: ""
+  addressLine1: ""
+  scac: ""
+  dotNumber: ""
+
+postgres:
+  # The Trenova PostgreSQL image (PostGIS, pg_cron, pgvector). Its tag is
+  # published only when the image changes, so it lags the app version.
+  image:
+    repository: ghcr.io/emoss08/trenova/postgres
+    tag: "0.9.0"
+  majorVersion: 18
+  # The postgres user's uid and gid in the image (Alpine's).
+  uid: 70
+  gid: 70
+  instances: 1
+  database: trenova
+  # Owns the tables; migrations and seeds run as it.
+  owner: trenova
+  # The roles the application signs in as. With rlsMode enforce, appRole is
+  # bound by row-level security and systemRole serves only the code paths
+  # that declare dbscope.WithSystem; both are made by the release Job.
+  appRole: trenova_app
+  systemRole: trenova_system
+  temporalRole: temporal
+  gtcRole: trenova_gtc
+  # enforce (production), observe or off; see
+  # docs/engineering/row-level-security.md. Off connects as the owner.
+  rlsMode: enforce
+  # A basic-auth Secret you manage: username and password (the owner), and
+  # appPassword, systemPassword, temporalPassword and gtcPassword, letters
+  # and digits only. Empty, the chart generates and keeps one. The release
+  # Job sets every role's password from it on each run.
+  existingSecret: ""
+  storage:
+    size: 50Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: "1", memory: 2Gi }
+    limits: { memory: 4Gi }
+  # Sized for a 2 to 4 GiB instance; raise shared_buffers to a quarter of the
+  # memory limit and effective_cache_size to half. CloudNativePG manages
+  # listen_addresses, ports, TLS, logging and archiving itself.
+  parameters:
+    max_connections: "200"
+    max_locks_per_transaction: "256"
+    shared_buffers: 1GB
+    work_mem: 16MB
+    maintenance_work_mem: 256MB
+    effective_cache_size: 3GB
+    wal_buffers: 16MB
+    random_page_cost: "1.1"
+    effective_io_concurrency: "200"
+    max_worker_processes: "16"
+    max_parallel_workers: "4"
+    max_parallel_workers_per_gather: "2"
+    max_parallel_maintenance_workers: "2"
+    wal_level: logical
+    wal_compression: "on"
+    wal_keep_size: 512MB
+    max_replication_slots: "10"
+    max_wal_senders: "15"
+    max_logical_replication_workers: "10"
+    logical_decoding_work_mem: 128MB
+    max_slot_wal_keep_size: 4GB
+    checkpoint_timeout: 10min
+    checkpoint_completion_target: "0.9"
+    min_wal_size: 512MB
+    max_wal_size: 2GB
+    autovacuum_max_workers: "4"
+    autovacuum_naptime: 30s
+    autovacuum_vacuum_scale_factor: "0.05"
+    autovacuum_analyze_scale_factor: "0.02"
+    autovacuum_vacuum_cost_delay: 2ms
+    autovacuum_vacuum_insert_scale_factor: "0.05"
+    pg_stat_statements.track: all
+    pg_stat_statements.max: "10000"
+    pg_prewarm.autoprewarm: "on"
+    pg_prewarm.autoprewarm_interval: "300"
+    idle_in_transaction_session_timeout: 30s
+    lock_timeout: 10s
+    deadlock_timeout: 1s
+    log_min_duration_statement: "1000"
+    log_temp_files: "0"
+    log_lock_waits: "on"
+    log_checkpoints: "on"
+    log_autovacuum_min_duration: 1s
+    track_io_timing: "on"
+
+redis:
+  image:
+    repository: redis
+    tag: "8"
+  # Sessions, rate limits and short caches carry a TTL and may be evicted;
+  # GTC's stream, its dead letters and the synced caches carry none, so
+  # volatile-lru never drops them.
+  maxMemory: 1gb
+  storage:
+    size: 8Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1536Mi }
+
+# The bundled object store (SILO, the maintained MinIO fork). Turn it off to
+# use an S3-compatible service: set storage.external.
+minio:
+  enabled: true
+  image:
+    repository: docker.io/pgsty/silo
+    tag: RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
+  storage:
+    size: 50Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+
+storage:
+  bucket: trenova
+  region: us-east-1
+  # The API creates the bucket on first start.
+  autoCreateBucket: true
+  # Used while minio.enabled is false.
+  external:
+    # host:port, without a scheme.
+    endpoint: ""
+    useSSL: true
+    # The origin browsers fetch stored files from, e.g. https://s3.example.com.
+    publicEndpoint: ""
+    # A Secret with accessKey and secretKey.
+    existingSecret: ""
+
+meilisearch:
+  image:
+    repository: getmeili/meilisearch
+    tag: v1.16
+  storage:
+    size: 10Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 2Gi }
+
+# Every AI feature runs on Temporal. auto-setup creates and migrates its
+# schema in the temporal and temporal_visibility databases, which the release
+# Job creates in the same PostgreSQL cluster.
+temporal:
+  image:
+    repository: temporalio/auto-setup
+    tag: 1.29.7
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { memory: 1536Mi }
+
+# Renders organization-authored HTML to PDF, locked down: JavaScript off, no
+# network, read-only root.
+gotenberg:
+  image:
+    repository: gotenberg/gotenberg
+    tag: "8"
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+
+# Reads uploaded files for document extraction (docling-serve). Without an AI
+# provider no organization needs it. Pinned by digest: the worker depends on
+# its request schema.
+docling:
+  enabled: false
+  image:
+    repository: ghcr.io/docling-project/docling-serve-cpu
+    tag: v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
+  workers: 2
+  maxFileBytes: 52428800
+  maxPages: 50
+  resources:
+    requests: { cpu: 500m, memory: 2Gi }
+    limits: { memory: 4Gi }
+
+# Malware scanning: clamd checks every uploaded file, inbound email
+# attachment, capture page and inbound EDI file before anything opens it.
+# Once on, a file is refused while clamd is unreachable, and the first
+# signature download takes several minutes.
+clamav:
+  enabled: false
+  image:
+    repository: clamav/clamav
+    tag: "1.4"
+  storage:
+    size: 2Gi
+    storageClass: ""
+  resources:
+    requests: { cpu: 250m, memory: 1536Mi }
+    limits: { memory: 4Gi }
+
+# The document and imaging worker, reached by the TMS over mutual TLS. One
+# sandboxed child per CPU in its limit, and about 1 GiB of memory per child
+# under load.
+imaging:
+  image:
+    repository: ghcr.io/emoss08/trenova/imaging
+    tag: ""
+    pullPolicy: IfNotPresent
+  resources:
+    requests: { cpu: 500m, memory: 512Mi }
+    limits: { cpu: "2", memory: 3Gi }
+  tls:
+    # Empty, the chart issues a private CA and both certificates once, for
+    # validityDays, and keeps them across upgrades; delete the two Secrets and
+    # upgrade to reissue. Otherwise two Secrets you manage (cert-manager, for one): the server's
+    # with tls.crt, tls.key and ca.crt for the service name
+    # <release>-trenova-imaging, and the client's with tls.crt, tls.key and
+    # ca.crt.
+    existingServerSecret: ""
+    existingClientSecret: ""
+    validityDays: 3650
+
+# Change data capture (github.com/emoss08/gtc): feeds the Meilisearch
+# indexes, the Redis caches and the event stream from logical replication.
+# Routing is deploy/gtc/sinks.yaml. Its dashboard has no authentication, so
+# nothing outside the release reaches it.
+gtc:
+  image:
+    repository: ghcr.io/emoss08/gtc
+    tag: 0.9.1
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 512Mi }
+
+# Serves the web app at /, Dash at /dash/, and passes the API and storage
+# hostnames on (deploy/Caddyfile), as plain HTTP behind the Ingress. Turn it
+# off when something else serves the client (Trenova Cloud's edge).
+client:
+  enabled: true
+  image:
+    repository: ghcr.io/emoss08/trenova/client
+    tag: ""
+    pullPolicy: IfNotPresent
+  # The origin browsers fetch stored files from, for the
+  # Content-Security-Policy. Defaults to https://<storageDomain>, or the
+  # external storage's publicEndpoint.
+  storageOrigin: ""
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }
+
+ingress:
+  enabled: false
+  className: ""
+  # e.g. cert-manager.io/cluster-issuer: letsencrypt
+  annotations: {}
+  # TLS for domain and storageDomain. Leave secretName empty to let the
+  # ingress controller or cert-manager choose.
+  tls:
+    enabled: true
+    secretName: ""
+
+networkPolicy:
+  # Each component accepts connections only from the components that use it,
+  # and the ones that parse untrusted input, or need nothing outside the
+  # release, cannot open connections at all. Needs a CNI that enforces
+  # NetworkPolicy (k3s's does).
+  enabled: true
+  # The namespace the CloudNativePG operator runs in; it reaches each
+  # PostgreSQL instance's status port.
+  cnpgNamespace: cnpg-system
+  # Who may reach the API (port 8080) besides the client: an ingress
+  # controller, a tunnel. Empty admits any pod in the cluster.
+  apiFrom: []
+  # Who may scrape the API's and worker's metrics on port 9090, as
+  # NetworkPolicy peers. Empty admits nobody.
+  metricsFrom: []

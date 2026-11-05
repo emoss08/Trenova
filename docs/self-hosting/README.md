@@ -5,6 +5,9 @@ Trenova runs on one Linux host with Docker Compose. The stack in
 Registry and runs everything they need; Caddy terminates TLS with a Let's Encrypt certificate
 and is the only thing listening on the network.
 
+To run Trenova on Kubernetes instead, use the Helm chart: see
+[Trenova on Kubernetes](kubernetes.md).
+
 Trenova Cloud, the hosted service, runs the same images. Self-hosting is for operators who
 want the data on their own hardware and will look after it: backups, upgrades and the host
 itself are yours.

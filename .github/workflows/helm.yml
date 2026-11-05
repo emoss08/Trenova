@@ -1,0 +1,243 @@
+name: Helm chart
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "deploy/helm/**"
+      # Files the chart reads through symlinks, and the images it runs.
+      - "deploy/gtc/sinks.yaml"
+      - "deploy/selfhost/scripts/db-bootstrap.sh"
+      - "deploy/selfhost/temporal/dynamicconfig.yaml"
+      - "deploy/Caddyfile"
+      - "deploy/Dockerfile.*"
+      # The configuration the chart renders is decoded by this code.
+      - "services/tms/internal/infrastructure/config/**"
+      - "tools/helm/**"
+      - ".github/workflows/helm.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "deploy/helm/**"
+      # Files the chart reads through symlinks, and the images it runs.
+      - "deploy/gtc/sinks.yaml"
+      - "deploy/selfhost/scripts/db-bootstrap.sh"
+      - "deploy/selfhost/temporal/dynamicconfig.yaml"
+      - "deploy/Caddyfile"
+      - "deploy/Dockerfile.*"
+      # The configuration the chart renders is decoded by this code.
+      - "services/tms/internal/infrastructure/config/**"
+      - "tools/helm/**"
+      - ".github/workflows/helm.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  HELM_VERSION: v3.19.0
+  KUBECONFORM_VERSION: v0.7.0
+  # The operator the chart is tested against (Chart.yaml,
+  # annotations.trenova.app/cloudnative-pg); keep the two in step.
+  CNPG_VERSION: 1.30.1
+  CHART: deploy/helm/trenova
+  GOFLAGS: -tags=nomsgpack,devlog
+
+jobs:
+  lint:
+    name: Lint and validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm and kubeconform
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz -C /tmp kubeconform
+          sudo mv /tmp/kubeconform /usr/local/bin/kubeconform
+
+      - name: The CloudNativePG resources' schemas
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-${CNPG_VERSION%.*}/releases/cnpg-${CNPG_VERSION}.yaml" -o "$RUNNER_TEMP/cnpg.yaml"
+          python3 -I tools/helm/crd-schemas.py "$RUNNER_TEMP/cnpg.yaml" "$RUNNER_TEMP/schemas"
+
+      - name: Chart version and CloudNativePG version agree
+        run: |
+          grep -q "trenova.app/cloudnative-pg: \"${CNPG_VERSION}\"" "$CHART/Chart.yaml" || {
+            echo "::error::Chart.yaml names a different CloudNativePG version than CNPG_VERSION (${CNPG_VERSION})"
+            exit 1
+          }
+
+      - name: Lint, render and validate every shape
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/configs"
+          base=(--set domain=trenova.example.com --set storageDomain=storage.trenova.example.com)
+          declare -A shapes=(
+            [default]=""
+            [everything]="--set docling.enabled=true --set clamav.enabled=true --set ingress.enabled=true --set ingress.className=traefik --set bootstrap.adminEmail=admin@example.com --set networkPolicy.metricsFrom[0].namespaceSelector.matchLabels.monitoring=enabled"
+            [rls-off]="--set postgres.rlsMode=off"
+            [external-storage]="--set minio.enabled=false --set storage.external.endpoint=s3.example.com --set storage.external.publicEndpoint=https://s3.example.com --set storage.external.existingSecret=s3 --set secrets.existingSecret=app --set postgres.existingSecret=db"
+            [cloud-edge]="--set client.enabled=false --set networkPolicy.enabled=false --set imaging.tls.existingServerSecret=a --set imaging.tls.existingClientSecret=b"
+            [ci]="-f $CHART/ci/install-values.yaml"
+          )
+          for shape in "${!shapes[@]}"; do
+            echo "::group::$shape"
+            # shellcheck disable=SC2086
+            helm lint --strict "$CHART" "${base[@]}" ${shapes[$shape]}
+            # shellcheck disable=SC2086
+            helm template trenova "$CHART" -n trenova "${base[@]}" ${shapes[$shape]} > "$RUNNER_TEMP/$shape.yaml"
+            kubeconform -strict -summary -kubernetes-version 1.31.0 \
+              -schema-location default \
+              -schema-location "$RUNNER_TEMP/schemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+              "$RUNNER_TEMP/$shape.yaml"
+            mkdir -p "$RUNNER_TEMP/configs/$shape"
+            # shellcheck disable=SC2086
+            helm template trenova "$CHART" -n trenova "${base[@]}" ${shapes[$shape]} --show-only templates/configmap.yaml \
+              | python3 -c 'import sys, yaml; d = next(yaml.safe_load_all(sys.stdin)); sys.stdout.write(d["data"]["config.yaml"])' \
+              > "$RUNNER_TEMP/configs/$shape/config.yaml"
+            echo "::endgroup::"
+          done
+          ls "$RUNNER_TEMP"/configs/*/config.yaml | paste -sd: > "$RUNNER_TEMP/deploy-configs"
+
+      - name: The symlinked files resolve
+        run: |
+          for f in "$CHART"/files/*; do
+            test -f "$f" || { echo "::error::$f does not resolve"; exit 1; }
+          done
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: helm-config
+
+      - name: Every rendered configuration decodes against this build
+        working-directory: services/tms
+        run: |
+          TRENOVA_DEPLOY_CONFIGS="$(cat "$RUNNER_TEMP/deploy-configs")" \
+            go test -count=1 -run TestDeploymentConfigsDecodeStrictly -v ./internal/infrastructure/config/
+
+  install:
+    name: Install on k3d
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Built from this commit: the chart and the images change together.
+      - name: Build the TMS image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.tms
+          target: tms
+          load: true
+          tags: trenova-tms:ci
+          cache-from: type=gha
+      - name: Build the trenova-db image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.tms
+          target: trenova-db
+          load: true
+          tags: trenova-tms-db:ci
+          cache-from: type=gha
+      - name: Build the imaging worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./deploy/Dockerfile.imaging
+          target: runtime
+          load: true
+          tags: trenova-imaging:ci
+          cache-from: type=gha,scope=imaging-runtime
+      - name: Build the PostgreSQL image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./deploy
+          file: ./deploy/Dockerfile.postgres
+          load: true
+          tags: trenova-postgres:18-ci
+          cache-from: type=gha,scope=trenova-postgres
+      - name: Build the client image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.client
+          load: true
+          tags: trenova-client:ci
+          cache-from: type=gha
+          build-args: |
+            VITE_API_URL=/api/v1
+
+      - name: Install Helm, kubectl and k3d
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          curl -fsSL -o /tmp/k3d https://github.com/k3d-io/k3d/releases/download/v5.8.3/k3d-linux-amd64
+          sudo install /tmp/k3d /usr/local/bin/k3d
+
+      - name: Create the cluster
+        run: |
+          set -euo pipefail
+          # k3s enforces NetworkPolicy, so the chart's policies are exercised.
+          k3d cluster create trenova --image rancher/k3s:v1.31.5-k3s1 --no-lb \
+            --k3s-arg "--disable=traefik@server:0" --wait
+          k3d image import -c trenova trenova-tms:ci trenova-tms-db:ci trenova-imaging:ci \
+            trenova-postgres:18-ci trenova-client:ci
+          kubectl get nodes
+
+      - name: Install CloudNativePG
+        run: |
+          set -euo pipefail
+          kubectl apply --server-side -f "https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-${CNPG_VERSION%.*}/releases/cnpg-${CNPG_VERSION}.yaml"
+          kubectl -n cnpg-system rollout status deployment/cnpg-controller-manager --timeout=5m
+
+      - name: Install the chart
+        run: |
+          helm install trenova "$CHART" -n trenova --create-namespace \
+            -f "$CHART/ci/install-values.yaml" \
+            --wait --wait-for-jobs --timeout 30m
+
+      - name: Test the release
+        run: helm test trenova -n trenova --logs --timeout 5m
+
+      - name: Upgrade in place
+        # A second revision: its release Job runs every step again over the
+        # data the first left, and the generated secrets must survive.
+        run: |
+          set -euo pipefail
+          before="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
+          helm upgrade trenova "$CHART" -n trenova -f "$CHART/ci/install-values.yaml" \
+            --wait --wait-for-jobs --timeout 15m
+          after="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
+          test "$before" = "$after" || { echo "::error::the upgrade replaced the encryption key"; exit 1; }
+          helm test trenova -n trenova --logs --timeout 5m
+
+      - name: What the cluster looked like
+        if: failure()
+        run: |
+          kubectl get pods,jobs,clusters.postgresql.cnpg.io -A -o wide || true
+          kubectl -n trenova get events --sort-by=.lastTimestamp | tail -80 || true
+          for pod in $(kubectl -n trenova get pods -o name); do
+            echo "::group::$pod"
+            kubectl -n trenova describe "$pod" | tail -40 || true
+            kubectl -n trenova logs "$pod" --all-containers --tail=150 || true
+            echo "::endgroup::"
+          done
+          kubectl -n cnpg-system logs deployment/cnpg-controller-manager --tail=100 || true

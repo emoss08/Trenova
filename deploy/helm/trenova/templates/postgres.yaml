@@ -1,0 +1,81 @@
+{{- $cluster := include "trenova.postgresCluster" . -}}
+{{- /*
+The Trenova image's tag is its own version, not PostgreSQL's, so the operator
+learns the major version from a catalog instead of the tag.
+*/ -}}
+apiVersion: postgresql.cnpg.io/v1
+kind: ImageCatalog
+metadata:
+  name: {{ $cluster }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "postgres") | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  images:
+    - major: {{ .Values.postgres.majorVersion }}
+      image: {{ include "trenova.image" (dict "root" . "image" .Values.postgres.image) }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ $cluster }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "postgres") | nindent 4 }}
+  annotations:
+    # The operator deletes a cluster's volumes with it, so uninstalling the
+    # release leaves the cluster, and the data, in place.
+    helm.sh/resource-policy: keep
+spec:
+  instances: {{ .Values.postgres.instances }}
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ImageCatalog
+    name: {{ $cluster }}
+    major: {{ .Values.postgres.majorVersion }}
+  postgresUID: {{ .Values.postgres.uid }}
+  postgresGID: {{ .Values.postgres.gid }}
+  # Only the release Job's first and last steps sign in as the superuser
+  # (files/db-prepare.sh, files/db-publication.sh).
+  enableSuperuserAccess: true
+  primaryUpdateStrategy: unsupervised
+  {{- with .Values.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.postgres.database }}
+      owner: {{ .Values.postgres.owner }}
+      secret:
+        name: {{ include "trenova.dbSecret" . }}
+      dataChecksums: true
+      encoding: UTF8
+      localeProvider: builtin
+      builtinLocale: C.UTF-8
+  postgresql:
+    shared_preload_libraries:
+      - pg_cron
+      - pg_prewarm
+    parameters:
+      {{- range $k, $v := .Values.postgres.parameters }}
+      {{ $k }}: {{ $v | toString | quote }}
+      {{- end }}
+      cron.database_name: {{ .Values.postgres.database | quote }}
+    # TLS only: every client connects with sslmode=require. The operator's own
+    # replication and status connections use certificates, above these lines.
+    pg_hba:
+      - hostssl all all all scram-sha-256
+      - host all all all reject
+  storage:
+    size: {{ .Values.postgres.storage.size }}
+    {{- include "trenova.storageClass" .Values.postgres.storage | nindent 4 }}
+  resources:
+    {{- toYaml .Values.postgres.resources | nindent 4 }}
+  inheritedMetadata:
+    labels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "postgres") | nindent 6 }}
+  {{- with .Values.affinity }}
+  affinity:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}

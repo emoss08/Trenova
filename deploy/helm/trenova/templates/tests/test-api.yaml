@@ -1,0 +1,38 @@
+{{- $c := dict "root" . "component" "test" }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  {{- include "trenova.podCommon" . | nindent 2 }}
+  {{- include "trenova.podSecurity" (dict "uid" 65532) | nindent 2 }}
+  containers:
+    - name: version
+      image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.image) }}
+      imagePullPolicy: {{ include "trenova.pullPolicy" .Values.tms.image }}
+      command: [/bin/sh, -c]
+      args:
+        - |
+          set -eu
+          body="$(wget -q -O - -T 10 "http://$API/api/v1/system/version")"
+          echo "$body"
+          echo "$body" | grep -q '"version"'
+          {{- if .Values.client.enabled }}
+          wget -q -O /dev/null -T 10 --header "Host: {{ .Values.domain }}" "http://$CLIENT/"
+          wget -q -O /dev/null -T 10 --header "Host: {{ .Values.domain }}" "http://$CLIENT/api/v1/system/version"
+          {{- end }}
+      env:
+        - name: API
+          value: {{ printf "%s:8080" (include "trenova.name" (dict "root" . "component" "api")) }}
+        - name: CLIENT
+          value: {{ printf "%s:80" (include "trenova.name" (dict "root" . "component" "client")) }}
+      {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 6 }}
+      resources:
+        requests: { cpu: 10m, memory: 16Mi }
+        limits: { memory: 64Mi }
