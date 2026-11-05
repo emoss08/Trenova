@@ -167,15 +167,52 @@ func (s *Service) renderDocumentHTML(
 		return nil, nil, err
 	}
 
-	for field, part := range map[string]string{"headerHtml": header, "footerHtml": footer} {
-		found := templatesanitize.HTML(field, part, templatesanitize.RenderedDocumentOptions())
-		if multiErr := diagnosticsToMultiError(found); multiErr != nil && !opts.Draft {
-			return nil, nil, multiErr
-		}
-		diags = append(diags, found...)
+	header, headerDiags, err := s.finishRunningPart(ctx, "headerHtml", header, opts)
+	if err != nil {
+		return nil, nil, err
 	}
+	diags = append(diags, headerDiags...)
+
+	footer, footerDiags, err := s.finishRunningPart(ctx, "footerHtml", footer, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	diags = append(diags, footerDiags...)
 
 	return &renderedDocument{body: document, header: header, footer: footer}, diags, nil
+}
+
+// finishRunningPart holds a rendered header or footer to what the body is held
+// to: nothing remote reaches the renderer, and the result passes the sanitizer.
+func (s *Service) finishRunningPart(
+	ctx context.Context,
+	field, part string,
+	opts compileOptions,
+) (string, templatediag.Diagnostics, error) {
+	if part == "" {
+		return "", nil, nil
+	}
+
+	inlined, err := s.inliner.InlineAssets(ctx, &documenttemplateports.AssetInlineRequest{
+		HTML:           part,
+		Field:          field,
+		OrganizationID: opts.OrganizationID,
+	})
+	if err != nil {
+		return "", nil, fmt.Errorf("inline %s assets: %w", field, err)
+	}
+
+	diags := inlined.Diags
+	found := templatesanitize.HTML(
+		field,
+		inlined.HTML,
+		templatesanitize.RenderedDocumentOptions(),
+	)
+	if multiErr := diagnosticsToMultiError(found); multiErr != nil && !opts.Draft {
+		return "", nil, multiErr
+	}
+
+	return inlined.HTML, append(diags, found...), nil
 }
 
 // renderRunningPart renders a header or footer.
