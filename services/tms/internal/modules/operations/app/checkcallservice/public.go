@@ -54,14 +54,15 @@ func (s *Service) resolveToken(ctx context.Context, token string) (*resolvedLink
 		}
 		return nil, err
 	}
-	if !moveIsClosed(move) {
-		assignment, aErr := s.carrierAssignments.GetActiveByMoveID(ctx, tenant, move.ID)
-		if aErr != nil && !errortypes.IsNotFoundError(aErr) {
-			return nil, aErr
-		}
-		if assignment == nil || assignment.CarrierID != link.CarrierID {
-			return nil, invalidLinkError()
-		}
+	assignment, err := s.carrierAssignments.GetActiveByMoveID(ctx, tenant, move.ID)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+	if assignment == nil && !moveIsClosed(move) {
+		return nil, invalidLinkError()
+	}
+	if assignment != nil && assignment.CarrierID != link.CarrierID {
+		return nil, invalidLinkError()
 	}
 	return &resolvedLink{ctx: ctx, link: link, tenant: tenant, move: move}, nil
 }
