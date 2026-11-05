@@ -3,6 +3,7 @@ package userservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 func newTestValidator() *Validator {
@@ -469,6 +471,30 @@ func TestSwitchOrganization_InvalidSession(t *testing.T) {
 	assert.Contains(t, err.Error(), "Invalid session")
 	deps.sessionRepo.AssertExpectations(t)
 	deps.repo.AssertNotCalled(t, "GetOrganizations")
+}
+
+func TestSwitchOrganization_LogsNoSessionSecret(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	core, logs := observer.New(zap.DebugLevel)
+	deps.svc.l = zap.New(core)
+
+	sessionID := pulid.MustNew("ses_")
+	secretHash := "session-secret-hash"
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(nil, errors.New("session not found"))
+
+	_, err := deps.svc.SwitchOrganization(t.Context(), tenantports.SwitchOrganizationRequest{
+		SessionID:      sessionID,
+		SecretHash:     secretHash,
+		OrganizationID: pulid.MustNew("org_"),
+	})
+
+	require.Error(t, err)
+	require.Equal(t, 1, logs.Len())
+	entry := logs.All()[0]
+	assert.Equal(t, sessionID.String(), entry.ContextMap()["sessionId"])
+	assert.NotContains(t, fmt.Sprint(entry.ContextMap()), secretHash)
 }
 
 func TestSwitchOrganization_UnauthorizedOrg(t *testing.T) {

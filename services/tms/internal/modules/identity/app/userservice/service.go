@@ -139,7 +139,8 @@ func (s *Service) BulkUpdateStatus(
 ) ([]*tenant.User, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
-		zap.Any("request", req),
+		zap.Int("userCount", len(req.UserIDs)),
+		zap.String("status", req.Status.String()),
 	)
 
 	if req.Status != domaintypes.StatusActive &&
@@ -323,7 +324,8 @@ func (s *Service) SwitchOrganization(
 ) (*SessionChangeResult, error) {
 	log := s.l.With(
 		zap.String("operation", "SwitchOrganization"),
-		zap.Any("request", req),
+		zap.String("sessionId", req.SessionID.String()),
+		zap.String("organizationId", req.OrganizationID.String()),
 	)
 
 	sess, err := s.sr.Get(ctx, req.SessionID)
