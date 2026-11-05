@@ -23,11 +23,13 @@ function Install-Msi([string[]]$arguments, [string]$log) {
 }
 
 # A standard user gets to ProgramData before the installer does.
-& net user capturesquatter 'Sq!uatter-Passw0rd#42' /add | Out-Null
+$password = ConvertTo-SecureString ([guid]::NewGuid().ToString() + 'aA1!') -AsPlainText -Force
+$squatter = New-LocalUser -Name capturesquatter -Password $password -AccountNeverExpires
 New-Item -ItemType Directory -Force -Path (Join-Path $shared 'updates'), (Join-Path $shared 'logs'), (Join-Path $shared 'spool') | Out-Null
-& icacls $root /setowner capturesquatter /T /C | Out-Null
-& icacls $root /grant 'capturesquatter:(OI)(CI)F' /T /C | Out-Null
-Check ((Get-Acl $shared).Owner -like '*capturesquatter') 'the squatter owns the tree before install'
+& icacls $root /grant "*$($squatter.SID.Value):(OI)(CI)F" /T /C
+& icacls $root /setowner "*$($squatter.SID.Value)" /T /C
+if ($LASTEXITCODE -ne 0) { throw 'could not hand the tree to the squatter' }
+Check ((Get-Acl $shared).Owner -like '*capturesquatter') "the squatter owns the tree before install (is $((Get-Acl $shared).Owner))"
 
 Install-Msi @('/i', $msiPath, 'TRENOVAURL=https://good.example', 'AUTOUPDATE=0') "$env:TEMP\capture-install.log"
 
@@ -44,17 +46,19 @@ Check ($account -like '*LocalService') "it runs as LocalService (is $account)"
 Check ($null -ne (Get-Printer -Name Trenova -ErrorAction SilentlyContinue)) 'the printer is installed'
 
 # The real path: a person prints, the spooler sends it, the service attributes it.
+# The agent takes a print from its inbox within seconds, so the service's own log says it arrived.
 $inboxRoot = Join-Path $shared 'spool'
+$logs = Join-Path $shared 'logs'
 'printed through the spooler' | Out-Printer -Name Trenova
 $deadline = (Get-Date).AddSeconds(90)
 do {
   Start-Sleep 2
-  $delivered = Get-ChildItem $inboxRoot -Recurse -Filter *.pdf -ErrorAction SilentlyContinue
+  $delivered = Select-String -Path (Join-Path $logs 'service.*') -Pattern 'handed a print to its owner' -ErrorAction SilentlyContinue
 } until ($delivered -or (Get-Date) -gt $deadline)
-Check ([bool]$delivered) 'a print through the spooler reaches an inbox under LocalService'
+Check ([bool]$delivered) 'a print through the spooler reaches its owner under LocalService'
 if (-not $delivered) {
   Get-PrintJob -PrinterName Trenova -ErrorAction SilentlyContinue | Format-Table Id,UserName,DocumentName,JobStatus -AutoSize
-  Get-ChildItem (Join-Path $shared 'logs') -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 30 }
+  Get-ChildItem $logs -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 30 }
 }
 
 # Inbox rights: the owner may list, read and delete, and may not write to the directory itself.
