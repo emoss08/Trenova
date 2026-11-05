@@ -641,6 +641,14 @@ take a `Viewer` (no viewer means no conversation files), agent reads go through
 `fieldgate.Access.ReadableDocuments` and global search never indexes a conversation file. A new
 route, service method or list reaches the rule by using those, not by checking it again.
 
+## Changing what signs someone in
+
+An email address and a second factor belong to the account, not to one organization, so
+changing them for someone else takes the account everywhere it reaches. `accountguard.Guard`
+refuses unless the actor holds everything the target holds in every organization the target
+belongs to, and records the refusal. A person's own account is exempt. Any new path that
+changes what signs someone in, or where a reset link goes, calls `RequireCovers` first.
+
 ## Membership and sessions
 
 A role assignment means nothing without a membership in its organization. Removing a

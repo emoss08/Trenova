@@ -74,6 +74,7 @@ modules:
       - workerperms
       - workforcebundles
     service:
+      - accountguard
       - accountingcontrolpolicyservice
       - accountingcontrolservice
       - apikeyservice

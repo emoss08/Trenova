@@ -2,11 +2,14 @@ package identitytest
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"go.uber.org/zap"
 )
@@ -16,9 +19,15 @@ type UserServiceDeps struct {
 	Audit   auditports.AuditService
 	Roles   userservice.RoleAssigner
 	Invites userservice.AccountInviter
+	Held    permissionports.PermissionEngine
 }
 
 func NewUserServiceForTest(deps UserServiceDeps) *userservice.Service {
+	held := deps.Held
+	if held == nil {
+		held = &permtest.Engine{}
+	}
+
 	return userservice.New(userservice.Params{
 		Logger:        zap.NewNop(),
 		Repo:          deps.Users,
@@ -30,5 +39,10 @@ func NewUserServiceForTest(deps UserServiceDeps) *userservice.Service {
 		DB:            dbtest.NopConnection{},
 		Roles:         deps.Roles,
 		Invites:       deps.Invites,
+		Accounts: accountguard.New(accountguard.Params{
+			Users:       deps.Users,
+			Permissions: held,
+			Auditor:     &securityaudittest.Recorder{},
+		}),
 	})
 }

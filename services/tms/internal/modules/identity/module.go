@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accesssettingsservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
@@ -126,6 +127,7 @@ func SharedOptions() fx.Option {
 			iamservice.New,
 			newSessionTokenIssuer,
 			sessionrotation.New,
+			accountguard.New,
 			userservice.New,
 			authservice.New,
 			mfaservice.New,
