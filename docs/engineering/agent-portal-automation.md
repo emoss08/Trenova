@@ -201,6 +201,11 @@ written to steer an agent. The rules:
   approves it; `web_list_portal_sites` says so up front as `readNeedsApproval`. A site with no
   sign-in has no account to protect and reads as before. Page text reaching the vendor's model
   inside a run remains outside Trenova's control.
+- **A failed read says nothing the browser wrote.** A read that fails is a tool error, and a
+  tool error carries no taint mark, so the browser's account of the failure never goes in it: the
+  model gets a fixed message, and `PortalRun.Failure` keeps the account for a person under AI
+  control. A portal that asked for a code it cannot be given is Trenova's own message, so it says
+  what to change.
 - **Acting on a portal is always a proposal.** `web_use_portal` is an
   `external_recipient` write with a `Propose` ceiling. Its preview is a `Send`
   on the `Portal` message channel: the site's addresses as the recipients, the

@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -35,6 +34,7 @@ const (
 	portalTimedOutMessage = "The portal did not answer within four minutes, so the task was stopped. Ask for one thing at a time, or name the page or reference to look at."
 
 	portalOnTrenovaMessage = "Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for."
+	portalFailureWithheld  = "what the browser reported is kept for a person under AI Control, Extensions."
 	portalReadNeedsAPerson = " signs in with an account that may be able to change things, so it is not read automatically. Propose the read with web_use_portal and lookUpOnly so a person sees the exact task, or tell the person what to look up there."
 )
 
@@ -406,6 +406,9 @@ func (s *Service) ReadPortal(
 
 	finished := s.finish(ctx, req.TenantInfo, start.run, outcome)
 	s.release(ctx, call, finished)
+	if asked {
+		return nil, portalTaskFailed(finished.Failure)
+	}
 	if finished.Status != extensionportal.PortalRunStatusSucceeded {
 		return nil, s.portalOutcomeError(finished, nil, call)
 	}
@@ -610,8 +613,11 @@ func (s *Service) portalOutcomeError(
 		return s.core.ProviderError(call.Failing(cause, "follow the portal task"))
 	}
 
-	return &agentextensionservice.ToolError{Message: "The portal task did not succeed: " +
-		stringutils.Ellipsize(run.Failure, extensionportal.MaxPortalFailureRunes) +
+	return portalTaskFailed(portalFailureWithheld)
+}
+
+func portalTaskFailed(detail string) error {
+	return &agentextensionservice.ToolError{Message: "The portal task did not succeed: " + detail +
 		" Tell the person, and do not try the same task again unchanged."}
 }
 
