@@ -39,11 +39,13 @@ spec:
       containers:
         - name: redis
           image: {{ include "trenova.image" (dict "root" . "image" .Values.redis.image) }}
+          # Through the image's entrypoint, which loads the bundled modules
+          # (RedisJSON for GTC's caches) only when handed redis-server.
           command:
             - sh
             - -c
             - >-
-              exec redis-server
+              exec docker-entrypoint.sh redis-server
               --requirepass "$REDIS_PASSWORD"
               --maxmemory {{ .Values.redis.maxMemory }}
               --maxmemory-policy volatile-lru

@@ -11,7 +11,10 @@
 #                                the application and system roles. Only the
 #                                release Job holds its password.
 #   TEMPORAL_ROLE, ..._PASSWORD  owns the temporal and temporal_visibility databases
-#   GTC_ROLE, GTC_PASSWORD       GTC's logical replication login
+#   GTC_ROLE, GTC_PASSWORD       GTC's logical replication login. It keeps its
+#                                own state (gtc_backfill_state) in a schema it
+#                                owns, first on its search path, so it needs no
+#                                CREATE on public.
 #   PG* (libpq)                  the superuser's connection to the app database
 set -eu
 
@@ -55,6 +58,10 @@ FROM unnest(ARRAY['temporal', 'temporal_visibility']) AS d
 \gexec
 
 SELECT format('GRANT CONNECT ON DATABASE %I TO %I', :'app_db', :'gtc')
+\gexec
+SELECT format('CREATE SCHEMA IF NOT EXISTS gtc AUTHORIZATION %I', :'gtc')
+\gexec
+SELECT format('ALTER ROLE %I IN DATABASE %I SET search_path = gtc, public', :'gtc', :'app_db')
 \gexec
 SQL
 
