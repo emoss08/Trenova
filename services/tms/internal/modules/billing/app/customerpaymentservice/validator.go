@@ -5,7 +5,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -45,7 +46,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 	entity *customerpayment.Payment,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
 	control *accountingcontrol.AccountingControl,
-) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
+) ([]*invoice.Invoice, *journalposting.ResolvedPeriod, error) {
 	me := errortypes.NewMultiError()
 	entity.Validate(me)
 	if strings.TrimSpace(entity.CurrencyCode) != "" {
@@ -114,21 +115,13 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		return nil, nil, me
 	}
 
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-			Date:  entity.AccountingDate,
-		},
-	)
+	period, err := resolvePaymentPeriod(ctx, v.fiscalPeriodRepo, &paymentPeriodRequest{
+		tenant:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		date:    entity.AccountingDate,
+		control: control,
+	})
 	if err != nil {
-		me.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, nil, me
+		return nil, nil, err
 	}
 
 	resolvedInvoices := make([]*invoice.Invoice, 0, len(entity.Applications))
@@ -207,7 +200,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 	applications []*customerpayment.Application,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
 	control *accountingcontrol.AccountingControl,
-) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
+) ([]*invoice.Invoice, *journalposting.ResolvedPeriod, error) {
 	me := errortypes.NewMultiError()
 	if payment == nil {
 		me.Add("paymentId", errortypes.ErrRequired, "Customer payment is required")
@@ -294,21 +287,13 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		return nil, nil, me
 	}
 
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: payment.OrganizationID,
-			BuID:  payment.BusinessUnitID,
-			Date:  accountingDate,
-		},
-	)
+	period, err := resolvePaymentPeriod(ctx, v.fiscalPeriodRepo, &paymentPeriodRequest{
+		tenant:  pagination.TenantInfo{OrgID: payment.OrganizationID, BuID: payment.BusinessUnitID},
+		date:    accountingDate,
+		control: control,
+	})
 	if err != nil {
-		me.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, nil, me
+		return nil, nil, err
 	}
 
 	seenInvoices := make(map[invoiceKey]struct{}, len(applications))
@@ -383,7 +368,7 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	accountingDate int64,
 	control *accountingcontrol.AccountingControl,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
-) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
+) ([]*invoice.Invoice, *journalposting.ResolvedPeriod, error) {
 	me := errortypes.NewMultiError()
 	if payment == nil {
 		me.Add("paymentId", errortypes.ErrRequired, "Customer payment is required")
@@ -436,21 +421,13 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	if me.HasErrors() {
 		return nil, nil, me
 	}
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: payment.OrganizationID,
-			BuID:  payment.BusinessUnitID,
-			Date:  accountingDate,
-		},
-	)
+	period, err := resolvePaymentPeriod(ctx, v.fiscalPeriodRepo, &paymentPeriodRequest{
+		tenant:  pagination.TenantInfo{OrgID: payment.OrganizationID, BuID: payment.BusinessUnitID},
+		date:    accountingDate,
+		control: control,
+	})
 	if err != nil {
-		me.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, nil, me
+		return nil, nil, err
 	}
 	invoices := make([]*invoice.Invoice, 0, len(payment.Applications))
 	for idx, app := range payment.Applications {
@@ -479,6 +456,26 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 		return nil, nil, me
 	}
 	return invoices, period, nil
+}
+
+type paymentPeriodRequest struct {
+	tenant  pagination.TenantInfo
+	date    int64
+	control *accountingcontrol.AccountingControl
+}
+
+func resolvePaymentPeriod(
+	ctx context.Context,
+	periods journalposting.PeriodReader,
+	req *paymentPeriodRequest,
+) (*journalposting.ResolvedPeriod, error) {
+	return journalposting.ResolvePeriod(ctx, periods, &journalposting.ResolvePeriodRequest{
+		OrganizationID: req.tenant.OrgID,
+		BusinessUnitID: req.tenant.BuID,
+		Date:           req.date,
+		Policy:         journalposting.ClosedPeriodPolicy(req.control),
+		Subject:        "customer payment",
+	})
 }
 
 func requireAccountField(me *errortypes.MultiError, id pulid.ID, field, message string) {

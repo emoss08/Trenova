@@ -72,6 +72,7 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		Return(&fiscalperiod.FiscalPeriod{
 			ID:           pulid.MustNew("fp_"),
 			FiscalYearID: pulid.MustNew("fy_"),
+			Status:       fiscalperiod.StatusOpen,
 		}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 

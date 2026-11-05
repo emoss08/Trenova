@@ -25,14 +25,15 @@ func (s *Service) ApplyCreditMemo(
 	req *customerpaymentports.ApplyCreditMemoRequest,
 	actor *permissionports.RequestActor,
 ) ([]*customerpayment.CreditMemoApplication, error) {
-	if err := s.checkCreditRequest(ctx, req, actor); err != nil {
+	dated, err := s.checkCreditRequest(ctx, req, actor)
+	if err != nil {
 		return nil, err
 	}
 
 	var applied []*customerpayment.CreditMemoApplication
 	var settled []*invoice.Invoice
-	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		plan, txErr := s.planCreditApplication(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		plan, txErr := s.planCreditApplication(txCtx, dated, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
 		}
