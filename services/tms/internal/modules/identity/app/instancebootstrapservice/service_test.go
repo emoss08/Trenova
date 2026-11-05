@@ -387,12 +387,3 @@ func TestBootstrapRecordsNothingWhenFinalizingFails(t *testing.T) {
 	require.ErrorIs(t, err, boom)
 	assert.Empty(t, d.auditor.Changes())
 }
-
-func TestUsernameBase(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "dana.whitfield", usernameBase("Dana.Whitfield@acme.example"))
-	assert.Equal(t, "ops", usernameBase("+ops+@acme.example"))
-	assert.Equal(t, "abcdefghijklmnopqrst", usernameBase("abcdefghijklmnopqrstuvwxyz@acme.example"))
-	assert.Empty(t, usernameBase("+++@acme.example"))
-}

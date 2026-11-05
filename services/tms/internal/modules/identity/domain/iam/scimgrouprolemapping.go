@@ -22,6 +22,7 @@ type SCIMGroupRoleMapping struct {
 	ExternalGroupID string   `keel:"external_group_id"          json:"externalGroupId"`
 	DisplayName     string   `keel:"display_name"               json:"displayName"`
 	RoleID          pulid.ID `keel:"role_id"                    json:"roleId"`
+	SavedByID       pulid.ID `keel:"saved_by_id,nullzero"       json:"savedById"`
 
 	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
 	Rank         string `json:"-"         keel:"rank,computed"`
