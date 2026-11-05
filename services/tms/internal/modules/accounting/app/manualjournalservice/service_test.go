@@ -519,7 +519,7 @@ func TestApproveMarksApproved(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	request := approvedRequest(orgID, buID, userID)
+	request := approvedRequest(orgID, buID, pulid.MustNew("usr_"))
 	request.Status = manualjournal.StatusPendingApproval
 	request.ApprovedAt = nil
 	request.ApprovedByID = pulid.Nil
@@ -544,6 +544,56 @@ func TestApproveMarksApproved(t *testing.T) {
 	assert.Equal(t, manualjournal.StatusApproved, result.Status)
 	assert.Equal(t, userID, result.ApprovedByID)
 	assert.NotNil(t, result.ApprovedAt)
+}
+
+func TestApproveNeedsSomeoneOtherThanWhoWroteOrSubmittedIt(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	someoneElse := pulid.MustNew("usr_")
+
+	tests := []struct {
+		name      string
+		createdBy pulid.ID
+		updatedBy pulid.ID
+	}{
+		{name: "wrote it", createdBy: userID, updatedBy: someoneElse},
+		{name: "submitted it", createdBy: someoneElse, updatedBy: userID},
+		{name: "wrote and submitted it", createdBy: userID, updatedBy: userID},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			request := approvedRequest(orgID, buID, tt.createdBy)
+			request.UpdatedByID = tt.updatedBy
+			request.Status = manualjournal.StatusPendingApproval
+			request.ApprovedAt = nil
+			request.ApprovedByID = pulid.Nil
+
+			svc := &Service{
+				db:           dbtest.NopConnection{},
+				repo:         newManualJournalRepositoryFake(request),
+				validator:    &Validator{},
+				auditService: &mocks.NoopAuditService{},
+			}
+			result, err := svc.Approve(
+				t.Context(),
+				&manualjournalports.GetManualJournalRequest{
+					RequestID:  request.ID,
+					TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+				},
+				testutil.NewSessionActor(userID, orgID, buID),
+			)
+
+			require.Nil(t, result)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "someone else must approve it")
+		})
+	}
 }
 
 func TestApproveBlocksInvalidStatus(t *testing.T) {

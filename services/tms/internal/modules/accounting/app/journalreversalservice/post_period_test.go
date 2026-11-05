@@ -207,6 +207,28 @@ func TestPostRefusesAPeriodThatClosesBeforeItsTransactionHoldsThePeriod(t *testi
 	assert.Empty(t, w.saved)
 }
 
+func TestApproveNeedsSomeoneOtherThanWhoRequestedTheReversal(t *testing.T) {
+	t.Parallel()
+
+	w := newReversalWorld(t)
+	w.reversal.Status = journalreversal.StatusPendingApproval
+
+	result, err := w.svc.Approve(t.Context(), w.request(), w.actor)
+
+	require.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "someone else must approve it")
+	assert.Empty(t, w.saved)
+
+	w.reversal.RequestedByID = pulid.MustNew("usr_")
+
+	result, err = w.svc.Approve(t.Context(), w.request(), w.actor)
+
+	require.NoError(t, err)
+	assert.Equal(t, journalreversal.StatusApproved, result.Status)
+	assert.Equal(t, w.actor.UserID, result.ApprovedByID)
+}
+
 func TestPostHoldsThePeriodItPostsTo(t *testing.T) {
 	t.Parallel()
 
