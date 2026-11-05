@@ -255,7 +255,7 @@ func readGroundedWith(
 		})
 	}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
-	rewire(rt, func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) })
+	rewire(rt, func(p *runtimeParts) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) })
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{

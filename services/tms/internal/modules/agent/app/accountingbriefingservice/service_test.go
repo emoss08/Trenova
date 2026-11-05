@@ -887,16 +887,18 @@ func newFixture(completion stubCompletion) *fixture {
 	collections := newCollections(startedAt.Unix())
 	briefs := &memoryBriefs{}
 
+	service := New(Params{
+		Receivables:   receivables,
+		Collections:   collections,
+		Briefs:        briefs,
+		Organizations: stubOrgs{},
+		Nova:          agenttest.NovaRunner(completion),
+		Logger:        zap.NewNop(),
+	})
+	service.now = c.now
+
 	return &fixture{
-		service: NewWithDependencies(&Dependencies{
-			Receivables:   receivables,
-			Collections:   collections,
-			Briefs:        briefs,
-			Organizations: stubOrgs{},
-			Nova:          agenttest.NovaRunner(completion),
-			Logger:        zap.NewNop(),
-			Now:           c.now,
-		}),
+		service:     service,
 		receivables: receivables,
 		collections: collections,
 		briefs:      briefs,

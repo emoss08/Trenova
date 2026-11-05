@@ -83,12 +83,18 @@ func (c *rendezvousContexts) Build(
 	return agentturn.RuntimeContext{Timezone: "America/Chicago"}, nil
 }
 
+func patientGuard(completion llmports.CompletionService) *agentguard.Service {
+	guard := agentguard.New(agentguard.Params{Logger: zap.NewNop(), Completion: completion})
+	guard.ClassifierTimeout = 10 * time.Second
+
+	return guard
+}
+
 func admitService(
 	meet *rendezvous,
 	category agentguard.Category,
 ) (*Service, *rendezvousContexts) {
-	guard := &agentguard.Service{ClassifierTimeout: 10 * time.Second}
-	agentguard.SetCompletionForTest(guard, &rendezvousClassifier{meet: meet, category: category})
+	guard := patientGuard(&rendezvousClassifier{meet: meet, category: category})
 	contexts := &rendezvousContexts{meet: meet}
 
 	return &Service{
@@ -191,9 +197,11 @@ func TestAdmit_ANoteTrenovaWroteIsNotClassified(t *testing.T) {
 	t.Parallel()
 
 	classifier := &countingClassifier{}
-	guard := &agentguard.Service{ClassifierTimeout: 10 * time.Second}
-	agentguard.SetCompletionForTest(guard, classifier)
-	svc := &Service{logger: zap.NewNop(), guard: guard}
+	svc := &Service{
+		logger:   zap.NewNop(),
+		guard:    patientGuard(classifier),
+		contexts: assistanttest.BareContexts{},
+	}
 
 	req := admitRequest()
 	req.Input = "Approved the plan, and it ran. Continue the work: propose the shipment now."

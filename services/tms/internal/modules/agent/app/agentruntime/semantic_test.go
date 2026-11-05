@@ -34,8 +34,8 @@ func semanticRuntime(
 	service, names := wideRuntime(t)
 	vectorizer := &runtimetest.FixedVectorizer{Vector: query}
 	similarities := &runtimetest.FixedSimilarities{ByKey: similarity}
-	rewire(service, func(p *Params) { p.Vectorizer = vectorizer })
-	rewire(service, func(p *Params) { p.CatalogVectors = similarities })
+	rewire(service, func(p *runtimeParts) { p.Vectorizer = vectorizer })
+	rewire(service, func(p *runtimeParts) { p.CatalogVectors = similarities })
 
 	return service, names, vectorizer, similarities
 }

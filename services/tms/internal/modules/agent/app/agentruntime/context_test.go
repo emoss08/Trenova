@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -27,7 +28,7 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 	orgs := &runtimetest.StubOrganizations{
 		Org: &tenant.Organization{Name: "Acme", Timezone: "America/Denver"},
 	}
-	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+	builder := accesstest.ContextBuilder(runtimecontext.BuilderParams{
 		Logger:        zap.NewNop(),
 		Organizations: orgs,
 		Users:         &runtimetest.StubUsers{User: &tenant.User{}},
@@ -68,7 +69,7 @@ func (s *stubPageGuide) PageForPath(path string) (*productguide.Page, bool) {
 }
 
 func guideBuilder(guide productguideports.ProductGuide) agentruntimeports.RuntimeContextBuilder {
-	return runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+	return accesstest.ContextBuilder(runtimecontext.BuilderParams{
 		Logger:        zap.NewNop(),
 		Organizations: &runtimetest.StubOrganizations{Org: &tenant.Organization{Name: "Acme"}},
 		Users:         &runtimetest.StubUsers{User: &tenant.User{Name: "Dana Dispatcher"}},

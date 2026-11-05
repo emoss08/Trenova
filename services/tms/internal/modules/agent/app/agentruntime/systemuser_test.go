@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -108,7 +109,7 @@ func TestRun_AnUnattendedRunIsCheckedAsTheAgentNotItsSystemUser(t *testing.T) {
 func TestContextBuilder_NeverDescribesTheSystemUserAsThePerson(t *testing.T) {
 	t.Parallel()
 
-	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+	builder := accesstest.ContextBuilder(runtimecontext.BuilderParams{
 		Logger: zap.NewNop(),
 		Organizations: &runtimetest.StubOrganizations{
 			Org: &tenant.Organization{Timezone: "America/Denver"},

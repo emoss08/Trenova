@@ -286,7 +286,7 @@ func TestRestoreTurn_BatchesOnlyTheReadsTheTurnOpenedWith(t *testing.T) {
 	require.Equal(t, state.Reads, carried.Reads)
 
 	drive := func(state TurnState) []string {
-		rewire(rt, func(p *Params) {
+		rewire(rt, func(p *runtimeParts) {
 			p.Completion = &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 				callsTurn(
 					readCall("c1", "worker_list", map[string]any{"status": "Active"}),

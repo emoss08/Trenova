@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type gatedPermissions struct {
@@ -75,7 +76,8 @@ func TestAnchor_ReadsEachRecordAgainInTheOrderGiven(t *testing.T) {
 	customerID := pulid.MustNew("cus_")
 	driverID := pulid.MustNew("wrk_")
 
-	service := recordanchorservice.NewWithDependencies(&recordanchorservice.Dependencies{
+	service := recordanchorservice.New(recordanchorservice.Params{
+		Logger: zap.NewNop(),
 		Permissions: &gatedPermissions{denied: map[string]bool{
 			permission.ResourceInvoice.String(): true,
 		}},
@@ -145,7 +147,7 @@ func TestAnchor_ReadsEachRecordAgainInTheOrderGiven(t *testing.T) {
 func TestAnchor_NothingToReadIsNothing(t *testing.T) {
 	t.Parallel()
 
-	service := recordanchorservice.NewWithDependencies(&recordanchorservice.Dependencies{})
+	service := recordanchorservice.New(recordanchorservice.Params{Logger: zap.NewNop()})
 	assert.Nil(t, service.Anchor(t.Context(), &recordanchorports.RecordAnchorRequest{}))
 	assert.Nil(t, service.Anchor(t.Context(), nil))
 }

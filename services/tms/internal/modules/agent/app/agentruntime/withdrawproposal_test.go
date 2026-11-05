@@ -74,7 +74,7 @@ func proposingRuntime(completion *scriptedCompletion) *Service {
 
 func withdrawingRuntime(completion *withdrawingCompletion) *Service {
 	rt := proposingRuntime(completion.scriptedCompletion)
-	rewire(rt, func(p *Params) { p.Completion = completion })
+	rewire(rt, func(p *runtimeParts) { p.Completion = completion })
 
 	return rt
 }

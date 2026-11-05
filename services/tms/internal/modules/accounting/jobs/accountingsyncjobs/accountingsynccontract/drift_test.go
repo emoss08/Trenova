@@ -2,10 +2,10 @@ package accountingsynccontract
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +56,6 @@ func TestCheckNowStartsOneRunPerConnection(t *testing.T) {
 	assert.Equal(t, connectionID, payload.ConnectionID)
 	assert.Equal(t, tenant.OrgID, payload.OrganizationID)
 
-	starter.err = kernelports.ErrWorkflowStarterDisabled
-	err := checker.CheckNow(t.Context(), tenant, connectionID)
-	assert.True(t, errortypes.IsBusinessError(err))
+	starter.err = errors.New("temporal unavailable")
+	require.ErrorIs(t, checker.CheckNow(t.Context(), tenant, connectionID), starter.err)
 }

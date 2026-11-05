@@ -371,7 +371,7 @@ func TestSubmitBackgroundExtraction_AttributesTheCallToThePersonAndDocument(t *t
 	)
 }
 
-func TestSubmitBackgroundExtraction_RunsOnNovaWhateverProviderTheRolloutPrefers(t *testing.T) {
+func TestSubmitBackgroundExtraction_RunsOnNova(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
@@ -381,10 +381,8 @@ func TestSubmitBackgroundExtraction_RunsOnNovaWhateverProviderTheRolloutPrefers(
 		},
 	}
 	service := newTestService(t, completion)
-	request := extractRequest()
-	request.PreferredProviderID = pulid.MustNew("aipr_")
 
-	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), request)
+	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), extractRequest())
 	require.NoError(t, err)
 
 	require.NotNil(t, completion.sawRequest)

@@ -3,6 +3,7 @@ package captureflow
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/captureqr"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
@@ -37,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
@@ -98,7 +101,7 @@ func newWorld() *world {
 }
 
 func (w *world) service() *testService {
-	return &testService{
+	s := &testService{
 		l:             zap.NewNop(),
 		cfg:           &appconfig.Config{WebBaseURL: "https://app.trenova.test"},
 		db:            dbtest.NopConnection{},
@@ -127,7 +130,68 @@ func (w *world) service() *testService {
 		realtime:      &fakeRealtime{w},
 		audit:         &fakeAudit{w: w},
 		shipments:     &fakeShipments{w: w},
+		analyzer:      noAnalyzer{},
 	}
+	s.workflows = fileInlineWorker{s: s}
+
+	return s
+}
+
+type fileInlineWorker struct {
+	noWorker
+
+	s *testService
+}
+
+func (f fileInlineWorker) StartWorkflow(
+	ctx context.Context,
+	options client.StartWorkflowOptions,
+	workflow any,
+	args ...any,
+) (client.WorkflowRun, error) {
+	payload, ok := args[0].(*capturefiling.FileItemPayload)
+	if !ok {
+		return f.noWorker.StartWorkflow(ctx, options, workflow, args...)
+	}
+
+	tenant := pagination.TenantInfo{
+		OrgID:  payload.OrganizationID,
+		BuID:   payload.BusinessUnitID,
+		UserID: payload.UserID,
+	}
+	session, err := f.s.uploads.Complete(ctx, &documentuploadports.CompletionRequest{
+		TenantInfo: tenant,
+		Actor:      *permissionports.UserActor(tenant),
+		SessionID:  payload.SessionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	_, err = f.s.filing().RecordFiled(ctx, tenant, payload.ItemID, *session.DocumentID)
+
+	return nil, err
+}
+
+type noAnalyzer struct{}
+
+func (noAnalyzer) Analyze(
+	context.Context,
+	*captureports.CaptureAnalysisRequest,
+) (*captureports.CaptureAnalysis, error) {
+	return nil, errors.New("this test reads no content")
+}
+
+type noWorker struct {
+	kernelports.WorkflowStarter
+}
+
+func (noWorker) StartWorkflow(
+	context.Context,
+	client.StartWorkflowOptions,
+	any,
+	...any,
+) (client.WorkflowRun, error) {
+	return nil, errors.New("no worker is running")
 }
 
 func (w *world) addRecord(resourceType string) pulid.ID {

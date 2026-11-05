@@ -62,7 +62,7 @@ func runPrivateWithTrust(
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
-	rewire(rt, func(p *Params) { p.Trust = trust })
+	rewire(rt, func(p *runtimeParts) { p.Trust = trust })
 	req := &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition("report_create"),
 		Actor:      runtimetest.Actor(),

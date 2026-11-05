@@ -32,7 +32,7 @@ func writtenRecorder(
 	svc := &Service{
 		logger:    zap.NewNop(),
 		artifacts: repo,
-		runtime: agentruntime.New(agentruntime.Params{
+		runtime: assistanttest.Runtime(agentruntime.Params{
 			Logger:      zap.NewNop(),
 			QueryTools:  &assistanttest.StubQueryRegistry{Tools: reads},
 			ActionTools: &assistanttest.StubActionRegistry{},
@@ -134,7 +134,7 @@ func TestShowWritten_PointsTheFollowUpAtWhatTheApprovalMade(t *testing.T) {
 	svc := &Service{
 		logger:    zap.NewNop(),
 		artifacts: repo,
-		runtime: agentruntime.New(agentruntime.Params{
+		runtime: assistanttest.Runtime(agentruntime.Params{
 			Logger: zap.NewNop(),
 			QueryTools: &assistanttest.StubQueryRegistry{
 				Tools: []agenttoolports.AgentQueryTool{&assistanttest.ShipmentReader{}},

@@ -154,7 +154,7 @@ func newCommandRuntime(
 	completion := &scriptedCompletion{Turns: turns}
 
 	return commandRuntime{
-		service: buildRuntime(Params{
+		service: buildRuntime(runtimeParts{
 			Logger:      zap.NewNop(),
 			Completion:  completion,
 			QueryTools:  query,

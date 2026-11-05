@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 // teamLeaveGrant is a driver manager's grant: leave cases, held to the team.
@@ -141,11 +142,11 @@ func TestLeaveCases_ATeamGrantReadsOnlyTheTeamThroughGraphQL(t *testing.T) {
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: engine,
 		Resolvers: agentread.ResolverParams{
-			WorkerLeaveService: workerleaveservice.NewWithDeps(
-				workerleaveservice.Deps{Repo: repo},
+			WorkerLeaveService: workerleaveservice.New(
+				workerleaveservice.Params{Logger: zap.NewNop(), Repo: repo},
 			),
-			OrgStructureService: orgstructureservice.NewWithDeps(
-				orgstructureservice.Deps{Repo: team},
+			OrgStructureService: orgstructureservice.New(
+				orgstructureservice.Params{Logger: zap.NewNop(), Repo: team},
 			),
 		},
 	})

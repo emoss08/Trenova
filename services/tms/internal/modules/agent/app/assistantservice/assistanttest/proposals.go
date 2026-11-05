@@ -113,6 +113,8 @@ func (r *StubRunRepo) Create(
 }
 
 type StubProposalRepo struct {
+	agentproposalports.AgentProposalRepository
+
 	Created  []*agent.AgentProposal
 	ByThread []*agent.AgentProposal
 	err      error

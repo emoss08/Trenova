@@ -60,8 +60,8 @@ func TestRun_TheFilingBaselineReadsTheRunsTimezone(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rewire(rt, func(p *Params) { p.Versions = stubVersions{version: 7} })
-	rewire(rt, func(p *Params) { p.Previews = previews })
+	rewire(rt, func(p *runtimeParts) { p.Versions = stubVersions{version: 7} })
+	rewire(rt, func(p *runtimeParts) { p.Previews = previews })
 
 	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition("shipment_place_hold"),

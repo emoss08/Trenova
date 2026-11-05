@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
@@ -34,7 +33,7 @@ func newProposalServiceBehind(
 ) *Service {
 	return &Service{
 		logger:        zap.NewNop(),
-		recorder:      proposalrecorder.NewWithStores(zap.NewNop(), runs, proposals),
+		recorder:      assistanttest.Recorder(runs, proposals),
 		proposals:     proposals,
 		conversations: conversations,
 		shadow: agentshadow.New(agentshadow.Params{

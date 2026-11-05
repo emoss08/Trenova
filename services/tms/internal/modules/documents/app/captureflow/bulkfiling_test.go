@@ -27,7 +27,7 @@ func TestFileItemsFilesWhatItCanAndSaysWhyNotForTheRest(t *testing.T) {
 		[][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)},
 		map[int]string{2: "T"},
 	)
-	_, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	items := w.itemsOf(batch.ID)

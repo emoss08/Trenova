@@ -271,7 +271,7 @@ func TestRun_ACleanRunStillMovesMoneyOnItsOwnWithinBounds(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: runtimetest.AutoDefinition("apply_payment"),
@@ -436,7 +436,7 @@ func TestDecideCall_UsesTheTaintTheCallWasMadeWith(t *testing.T) {
 	pay := runtimetest.MoneyTool()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
 	req := &agentruntimeports.RunRequest{
 		Definition: runtimetest.AutoDefinition("apply_payment"),
 		Actor:      runtimetest.Actor(),

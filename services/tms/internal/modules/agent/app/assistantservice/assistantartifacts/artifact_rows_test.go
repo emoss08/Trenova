@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
@@ -132,6 +133,7 @@ func newRowsFixture(t *testing.T, engine permissionports.PermissionEngine) *rows
 			conversations: &assistanttest.StubConversationRepo{Thread: thread},
 			permissions:   engine,
 			queries:       pagingTools{tool: tool},
+			users:         &runtimetest.StubUsers{},
 		},
 		tool:     tool,
 		thread:   thread,

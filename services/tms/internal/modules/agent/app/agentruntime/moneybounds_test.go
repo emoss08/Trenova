@@ -32,7 +32,7 @@ func TestRun_AMoneyWritePastTheCeilingIsFiledNamingTheBound(t *testing.T) {
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.CallCeilingMinor = 9_999
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: limits} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: limits} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: runtimetest.AutoDefinition("apply_payment"),
@@ -63,7 +63,7 @@ func TestRun_WritesEarlierInTheTurnCountAgainstTheRunCap(t *testing.T) {
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	budgets := &moneyBudgets{Limits: limits}
-	rewire(rt, func(p *Params) { p.Budgets = budgets })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = budgets })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: runtimetest.AutoDefinition("apply_payment"),
@@ -101,7 +101,7 @@ func TestRun_MoneyLimitsThatCannotBeReadHoldTheWrite(t *testing.T) {
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
 				&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-			rewire(rt, func(p *Params) { p.Budgets = budgets })
+			rewire(rt, func(p *runtimeParts) { p.Budgets = budgets })
 
 			run := runTainted(t, rt, &agentruntimeports.RunRequest{
 				Definition: runtimetest.AutoDefinition("apply_payment"),
@@ -131,7 +131,7 @@ func TestRun_AMoneyToolThatProvesNothingAsksFirst(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
-	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = &moneyBudgets{Limits: roomyMoneyLimits()} })
 
 	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: runtimetest.AutoDefinition("apply_payment"),

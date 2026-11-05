@@ -32,7 +32,7 @@ func TestTheWorkerReadsAScannedBatch(t *testing.T) {
 		nil,
 	)
 
-	_, err := s.processing().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
+	_, err := s.batchProcessor().ProcessBatch(t.Context(), w.tenant, batch.ID, nil)
 	require.NoError(t, err)
 
 	read := w.pagesOf(batch.ID)

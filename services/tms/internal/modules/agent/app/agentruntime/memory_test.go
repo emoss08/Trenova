@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnmemory"
@@ -64,7 +65,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		}},
 		Relevance: agentmemory.MemoryRelevance{Judged: true},
 	}}
-	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+	builder := accesstest.ContextBuilder(runtimecontext.BuilderParams{
 		Logger:        zap.NewNop(),
 		Organizations: &runtimetest.StubOrganizations{Org: &tenant.Organization{Timezone: "UTC"}},
 		Users:         &runtimetest.StubUsers{User: &tenant.User{}},
