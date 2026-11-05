@@ -1,6 +1,8 @@
 package inboundprocessing
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -8,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueuetest"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -66,6 +69,15 @@ func withQueue(
 	return svc, fakes
 }
 
+type noRules struct{}
+
+func (noRules) ApplyRules(
+	context.Context,
+	*inboundmessage.InboundMessage,
+) (*inboundmessageports.RuleApplication, error) {
+	return nil, nil
+}
+
 func (t *testService) supplyDefaults() {
 	if t.realtime == nil {
 		t.realtime = &inboundqueuetest.RecordingRealtime{}
@@ -84,6 +96,12 @@ func (t *testService) supplyDefaults() {
 	}
 	if t.notifier == nil {
 		t.notifier = &recordingNotifier{}
+	}
+	if t.indexer == nil {
+		t.indexer = &fakeIndexer{}
+	}
+	if t.ruleEvaluator == nil {
+		t.ruleEvaluator = noRules{}
 	}
 }
 

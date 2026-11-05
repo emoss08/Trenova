@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -20,7 +21,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -58,6 +61,19 @@ type testService struct {
 	email         emailports.EmailService
 	notify        *inboundqueue.Notifier
 	now           func() int64
+}
+
+type quietIndexer struct {
+	retrievalports.RetrievalIndexer
+}
+
+func (quietIndexer) MarkStale(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+	...pulid.ID,
+) error {
+	return nil
 }
 
 type noReplies struct {
@@ -110,6 +126,9 @@ func (t *testService) supplyDefaults() {
 	if t.replies == nil {
 		t.replies = noReplies{}
 	}
+	if t.indexer == nil {
+		t.indexer = quietIndexer{}
+	}
 }
 
 func (t *testService) intake() *Service {
@@ -160,6 +179,7 @@ func (t *testService) intake() *Service {
 		Shipments:     t.shipments,
 		Watchtower:    t.watchtower,
 		Briefing:      inboundqueuetest.NoopBriefing{},
+		Notifications: notificationtest.Discarding(),
 	})
 	return &Service{
 		activityRepo: t.activityRepo,

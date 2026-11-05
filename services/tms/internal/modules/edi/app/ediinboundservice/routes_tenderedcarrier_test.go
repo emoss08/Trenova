@@ -322,7 +322,10 @@ func TestRouteShipmentStatus_RecipientMissMatchesAcceptedOffer(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, warnings)
+	require.Equal(t, []string{
+		"shipment status AF could not update stop actuals: " +
+			"the accepted tender offer has no shipment move",
+	}, warnings)
 	require.Equal(t, 1, fixture.tenderRepo.acceptedCalls)
 	request := fixture.tenderRepo.lastAcceptedReq
 	require.Equal(t, offer.ID, request.OfferID)

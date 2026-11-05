@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -23,13 +25,72 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type openTenders struct{}
+
+func (openTenders) LockShipment(
+	context.Context,
+	editenderports.LockEDITenderShipmentRequest,
+) (*shipment.Shipment, error) {
+	return &shipment.Shipment{Status: shipmentvocab.StatusNew}, nil
+}
+
+func (openTenders) SetShipmentTenderStatus(
+	context.Context,
+	editenderports.SetEDIShipmentTenderStatusRequest,
+) error {
+	return nil
+}
+
+func tenderableShipments(t *testing.T) *editendershipment.Service {
+	t.Helper()
+	users := tenantportsmock.NewMockUserRepository(t)
+	users.EXPECT().
+		GetSystemUser(mock.Anything, mock.Anything).
+		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		Maybe()
+	comments := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
+	comments.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Maybe()
+
+	return editendershipment.New(editendershipment.Params{
+		ShipmentCommentRepo: comments,
+		ShipmentTenderRepo:  openTenders{},
+		UserRepo:            users,
+	})
+}
+
+func acceptingRecipients(
+	t *testing.T,
+	profiles edipartnerports.EDICommunicationProfileRepository,
+) *editenderrecipient.Service {
+	t.Helper()
+	recipients := editenderportsmock.NewMockEDITenderRecipientRepository(t)
+	recipients.EXPECT().
+		UpsertTenderRecipient(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+
+	return editenderrecipient.New(editenderrecipient.Params{
+		ProfileRepo:         profiles,
+		TenderRecipientRepo: recipients,
+	})
+}
 
 func TestService_SubmitLoadTenderResolvesPartnerFromShipmentCustomer(t *testing.T) {
 	ctx := t.Context()
@@ -193,10 +254,8 @@ func TestService_SubmitLoadTenderResolvesPartnerFromShipmentCustomer(t *testing.
 				ProfileRepo: profileRepo,
 			}),
 		}),
-		recipient: editenderrecipient.New(editenderrecipient.Params{
-			ProfileRepo: profileRepo,
-		}),
-		shipments: editendershipment.New(editendershipment.Params{}),
+		recipient: acceptingRecipients(t, profileRepo),
+		shipments: tenderableShipments(t),
 	}
 
 	transfer, err := service.SubmitLoadTender(ctx, &SubmitLoadTenderRequest{

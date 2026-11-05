@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/pushconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -32,6 +33,17 @@ func (discardedNotifications) Create(
 	return entity, nil
 }
 
+type nobodyPermitted struct {
+	permissionports.RoleRepository
+}
+
+func (nobodyPermitted) ListUsersWithPermission(
+	context.Context,
+	permissionports.ListUsersWithPermissionRequest,
+) ([]permissionports.PermittedUser, error) {
+	return nil, nil
+}
+
 func New(
 	repo notificationports.NotificationRepository,
 	realtime realtimeports.RealtimeService,
@@ -40,6 +52,7 @@ func New(
 		Logger:   zap.NewNop(),
 		Repo:     repo,
 		Realtime: realtime,
+		Roles:    nobodyPermitted{},
 		WebPush: webpushservice.New(webpushservice.Params{
 			Logger:     zap.NewNop(),
 			PushConfig: &pushconfig.Config{},

@@ -351,7 +351,6 @@ func TestService_RetryMessageDelivery_RequeuesFailedMessageAndStartsWorkflow(t *
 	fixture.expectLoadMessage()
 	fixture.expectResolveProfileByPartner()
 	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusQueued)
-	fixture.workflowStarter.EXPECT().Enabled().Return(true).Once()
 	fixture.workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.MatchedBy(func(options client.StartWorkflowOptions) bool {
 			return options.ID == buildDeliverMessageWorkflowID(fixture.message.ID)

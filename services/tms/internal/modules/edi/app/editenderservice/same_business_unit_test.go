@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrecipient"
-	"github.com/emoss08/trenova/internal/modules/edi/app/editendershipment"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -189,10 +188,8 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 				ProfileRepo: profileRepo,
 			}),
 		}),
-		recipient: editenderrecipient.New(editenderrecipient.Params{
-			ProfileRepo: profileRepo,
-		}),
-		shipments: editendershipment.New(editendershipment.Params{}),
+		recipient: acceptingRecipients(t, profileRepo),
+		shipments: tenderableShipments(t),
 	}
 
 	transfer, err := service.SubmitLoadTender(ctx, &SubmitLoadTenderRequest{
