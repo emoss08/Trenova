@@ -100,7 +100,11 @@ func TestTenantPoliciesNeverAdmitEveryRow(t *testing.T) {
 			AND (
 				btrim(coalesce(qual, '')) IN ('true', '(true)')
 				OR btrim(coalesce(with_check, '')) IN ('true', '(true)')
-				OR (qual IS NOT NULL AND qual NOT LIKE '%trenova_rls.%')
+				OR (
+					qual IS NOT NULL
+					AND btrim(qual) NOT IN ('false', '(false)')
+					AND qual NOT LIKE '%trenova_rls.%'
+				)
 				OR (with_check IS NOT NULL AND with_check NOT LIKE '%trenova_rls.%')
 			)
 		ORDER BY 1`)
