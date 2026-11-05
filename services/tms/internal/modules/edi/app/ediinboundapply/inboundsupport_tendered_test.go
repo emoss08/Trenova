@@ -197,7 +197,33 @@ func TestRecordTenderedShipmentStatus_EventInsertFailureIsNonFatal(t *testing.T)
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, warnings)
+	require.Equal(t, []string{
+		"shipment status AF could not update stop actuals: " +
+			"the accepted tender offer has no shipment move",
+	}, warnings)
+}
+
+func quietShipments(t *testing.T) *editendershipment.Service {
+	t.Helper()
+	users := tenantportsmock.NewMockUserRepository(t)
+	users.EXPECT().
+		GetSystemUser(mock.Anything, mock.Anything).
+		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		Maybe()
+	comments := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
+	comments.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(
+			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+				return comment, nil
+			},
+		).
+		Maybe()
+
+	return editendershipment.New(editendershipment.Params{
+		ShipmentCommentRepo: comments,
+		UserRepo:            users,
+	})
 }
 
 func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *testing.T) {
@@ -222,7 +248,7 @@ func TestRecordInboundFreightInvoice_AcceptedOfferStampsCarrierAndShipment(t *te
 			service := &Service{
 				l:                  zap.NewNop(),
 				carrierInvoiceRepo: invoiceRepo,
-				shipments:          &editendershipment.Service{},
+				shipments:          quietShipments(t),
 				tenderMapping:      &editendermapping.Service{},
 			}
 			offer := acceptedTenderOfferForTest()

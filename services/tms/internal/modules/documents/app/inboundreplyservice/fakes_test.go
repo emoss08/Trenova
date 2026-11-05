@@ -532,6 +532,16 @@ func (f *fakeAttachments) last() *documentports.ResolveMailAttachmentsRequest {
 	return f.requests[len(f.requests)-1]
 }
 
+type fakeStops struct{}
+
+func (fakeStops) StopTimes(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+) (*inboundmessageports.StopTimes, error) {
+	return nil, nil
+}
+
 type fakeEvidence struct {
 	evidence *triageworkports.TriageDetentionEvidence
 	err      error
@@ -640,6 +650,7 @@ func newFixture() *fixture {
 		peeks:         f.peeks,
 		documents:     f.documents,
 		evidence:      f.evidence,
+		stops:         fakeStops{},
 	}
 
 	return f

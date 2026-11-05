@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -292,6 +293,11 @@ func newHarness(t *testing.T) *harness {
 		}, nil).
 		Maybe()
 	setup := &fakeSetup{}
+	fields := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	fields.EXPECT().
+		GetActiveByResourceType(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	h := &harness{
 		repo:     &fakeRepo{targets: map[edi.MappingEntityType]map[pulid.ID]string{}},
 		setup:    setup,
@@ -303,8 +309,9 @@ func newHarness(t *testing.T) *harness {
 		setup:         h.setup,
 		validator:     edivalidation.NewValidator(),
 		lading: edilading.NewRuntime(edilading.RuntimeParams{
-			Logger: zap.NewNop(),
-			Orgs:   orgs,
+			Logger:       zap.NewNop(),
+			Orgs:         orgs,
+			CustomFields: fields,
 		}),
 		projects: h.projects,
 		db:       dbtest.NopConnection{},

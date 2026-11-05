@@ -1,7 +1,10 @@
 package inboundintake
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -17,6 +20,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -56,6 +63,31 @@ type testService struct {
 	now           func() int64
 }
 
+type quietIndexer struct {
+	retrievalports.RetrievalIndexer
+}
+
+func (quietIndexer) MarkStale(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+	...pulid.ID,
+) error {
+	return nil
+}
+
+type noReplies struct {
+	inboundmessageports.InboundReplyReader
+}
+
+func (noReplies) ThreadKeyForMessageKeys(
+	context.Context,
+	pagination.TenantInfo,
+	[]string,
+) (string, bool, error) {
+	return "", false, nil
+}
+
 func withQueue(
 	svc *testService,
 	states ...*inboundmessageports.QueueState,
@@ -70,13 +102,37 @@ func withQueue(
 	svc.mailboxState = fakes.Mailboxes
 	svc.targetRepo = fakes.Targets
 	svc.wakes = fakes.Wakes
-	svc.notify = inboundqueue.NewNotifier(inboundqueue.NotifierParams{Logger: svc.l})
+	svc.notify = inboundqueue.NewNotifier(inboundqueue.NotifierParams{
+		Logger:     svc.l,
+		Realtime:   &inboundqueuetest.RecordingRealtime{},
+		Watchtower: &mocks.NoopWatchtowerProjector{},
+		Briefing:   inboundqueuetest.NoopBriefing{},
+	})
 	svc.now = func() int64 { return inboundqueuetest.TestNow }
 
 	return svc, fakes
 }
 
+func (t *testService) supplyDefaults() {
+	if t.realtime == nil {
+		t.realtime = &inboundqueuetest.RecordingRealtime{}
+	}
+	if t.watchtower == nil {
+		t.watchtower = &mocks.NoopWatchtowerProjector{}
+	}
+	if t.hints == nil {
+		t.hints = inboundqueuetest.NoSenderHints{}
+	}
+	if t.replies == nil {
+		t.replies = noReplies{}
+	}
+	if t.indexer == nil {
+		t.indexer = quietIndexer{}
+	}
+}
+
 func (t *testService) intake() *Service {
+	t.supplyDefaults()
 	logger := t.l
 	if logger == nil {
 		logger = zap.NewNop()
@@ -97,6 +153,7 @@ func (t *testService) intake() *Service {
 		TargetRepo:    t.targetRepo,
 		Wakes:         t.wakes,
 		Watchtower:    t.watchtower,
+		Briefing:      inboundqueuetest.NoopBriefing{},
 	})
 	mailbox := inboundmailbox.New(inboundmailbox.Params{
 		Audit:        t.audit,
@@ -121,6 +178,8 @@ func (t *testService) intake() *Service {
 		RuleEvaluator: t.ruleEvaluator,
 		Shipments:     t.shipments,
 		Watchtower:    t.watchtower,
+		Briefing:      inboundqueuetest.NoopBriefing{},
+		Notifications: notificationtest.Discarding(),
 	})
 	return &Service{
 		activityRepo: t.activityRepo,

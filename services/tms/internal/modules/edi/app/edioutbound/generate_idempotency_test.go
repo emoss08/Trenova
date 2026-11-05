@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -62,6 +63,7 @@ func TestGenerateDocument_ReturnsTheDocumentAlreadyGeneratedForItsKey(t *testing
 			Logger: zap.NewNop(),
 		}),
 		delivery: edidelivery.New(edidelivery.Params{
+			Metrics:     metricstest.Disabled(),
 			Logger:      zap.NewNop(),
 			MessageRepo: messages,
 			PartnerRepo: partners,
@@ -106,6 +108,7 @@ func TestGenerateDocument_RefusesAKeyThatNamesAnotherTransactionSet(t *testing.T
 			Logger: zap.NewNop(),
 		}),
 		delivery: edidelivery.New(edidelivery.Params{
+			Metrics:     metricstest.Disabled(),
 			Logger:      zap.NewNop(),
 			MessageRepo: messages,
 			Alert: edialert.New(edialert.Params{

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,9 +37,12 @@ func noticed(
 	svc := settler(repo, reply)
 	svc.notifier = notifier
 	svc.realtime = realtime
-	svc.notify = inboundqueue.NewNotifier(
-		inboundqueue.NotifierParams{Logger: zap.NewNop(), Realtime: realtime},
-	)
+	svc.notify = inboundqueue.NewNotifier(inboundqueue.NotifierParams{
+		Logger:     zap.NewNop(),
+		Realtime:   realtime,
+		Watchtower: &mocks.NoopWatchtowerProjector{},
+		Briefing:   inboundqueuetest.NoopBriefing{},
+	})
 
 	return svc, notifier, realtime
 }

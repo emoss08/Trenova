@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -286,10 +287,11 @@ func TestProcessAuditBatchActivity_Success(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		abr:  mockBufferRepo,
-		adlq: mockDLQRepo,
-		dr:   mockDataRetentionRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		abr:     mockBufferRepo,
+		adlq:    mockDLQRepo,
+		dr:      mockDataRetentionRepo,
 	}
 
 	batchID := pulid.MustNew("aeb_")
@@ -338,10 +340,11 @@ func TestProcessAuditBatchActivity_EmptyEntries(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		abr:  mockBufferRepo,
-		adlq: mockDLQRepo,
-		dr:   mockDataRetentionRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		abr:     mockBufferRepo,
+		adlq:    mockDLQRepo,
+		dr:      mockDataRetentionRepo,
 	}
 
 	batchID := pulid.MustNew("aeb_")
@@ -370,7 +373,8 @@ func TestFlushFromRedisActivity_WithEntries(t *testing.T) {
 	mockBufferRepo := new(mockAuditBufferRepository)
 
 	activities := &Activities{
-		abr: mockBufferRepo,
+		metrics: metricstest.Disabled(),
+		abr:     mockBufferRepo,
 	}
 
 	entries := []*audit.Entry{
@@ -406,7 +410,8 @@ func TestFlushFromRedisActivity_Empty(t *testing.T) {
 	mockBufferRepo := new(mockAuditBufferRepository)
 
 	activities := &Activities{
-		abr: mockBufferRepo,
+		metrics: metricstest.Disabled(),
+		abr:     mockBufferRepo,
 	}
 
 	mockBufferRepo.On(
@@ -446,11 +451,12 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 	})).Return(int64(4), nil)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		abr:  mockBufferRepo,
-		adlq: mockDLQRepo,
-		dr:   mockDataRetentionRepo,
-		aer:  authEventRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		abr:     mockBufferRepo,
+		adlq:    mockDLQRepo,
+		dr:      mockDataRetentionRepo,
+		aer:     authEventRepo,
 	}
 
 	mockDataRetentionRepo.On("List", mock.Anything).Return(
@@ -492,11 +498,12 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	})).Return(int64(4), nil)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		abr:  mockBufferRepo,
-		adlq: mockDLQRepo,
-		dr:   mockDataRetentionRepo,
-		aer:  authEventRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		abr:     mockBufferRepo,
+		adlq:    mockDLQRepo,
+		dr:      mockDataRetentionRepo,
+		aer:     authEventRepo,
 	}
 
 	orgID := pulid.MustNew("org_")
@@ -546,7 +553,8 @@ func TestRetryDLQEntriesActivity_NoPendingEntries(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		adlq:    mockDLQRepo,
 	}
 
 	mockDLQRepo.On("GetPendingEntries", mock.Anything, 10).Return([]*audit.DLQEntry{}, nil)
@@ -574,7 +582,8 @@ func TestRetryDLQEntriesActivity_GetPendingEntriesError(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		adlq:    mockDLQRepo,
 	}
 
 	mockDLQRepo.On("GetPendingEntries", mock.Anything, 10).
@@ -596,8 +605,9 @@ func TestRetryDLQEntriesActivity_SuccessfulRetry(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		adlq:    mockDLQRepo,
 	}
 
 	entryID := pulid.MustNew("dlq_")
@@ -650,7 +660,8 @@ func TestRetryDLQEntriesActivity_ExhaustedMaxRetries(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		adlq:    mockDLQRepo,
 	}
 
 	entryID := pulid.MustNew("dlq_")
@@ -690,7 +701,8 @@ func TestRetryDLQEntriesActivity_InvalidEntryData(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		adlq:    mockDLQRepo,
 	}
 
 	entryID := pulid.MustNew("dlq_")
@@ -733,8 +745,9 @@ func TestRetryDLQEntriesActivity_InsertFails(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		adlq:    mockDLQRepo,
 	}
 
 	entryID := pulid.MustNew("dlq_")
@@ -790,8 +803,9 @@ func TestRetryDLQEntriesActivity_MixedResults(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		adlq:    mockDLQRepo,
 	}
 
 	successID := pulid.MustNew("dlq_")
@@ -865,8 +879,9 @@ func TestRetryDLQEntriesActivity_MarkAsRecoveredError(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		ar:   mockAuditRepo,
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		ar:      mockAuditRepo,
+		adlq:    mockDLQRepo,
 	}
 
 	entryID := pulid.MustNew("dlq_")
@@ -1016,7 +1031,8 @@ func TestMoveToDLQActivity(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	activities := &Activities{
-		adlq: mockDLQRepo,
+		metrics: metricstest.Disabled(),
+		adlq:    mockDLQRepo,
 	}
 
 	entries := []*audit.Entry{

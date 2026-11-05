@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -147,7 +148,8 @@ func newTenderChangeReviewFixture(t *testing.T) *tenderChangeReviewFixture {
 		tenderChangeRepo:    fixture.tenderChangeRepo,
 		tenderRecipientRepo: fixture.tenderRecipientRepo,
 		delivery: edidelivery.New(edidelivery.Params{
-			Logger: zap.NewNop(),
+			Metrics: metricstest.Disabled(),
+			Logger:  zap.NewNop(),
 			Alert: edialert.New(edialert.Params{
 				Logger: zap.NewNop(),
 			}),
@@ -163,7 +165,8 @@ func newTenderChangeReviewFixture(t *testing.T) *tenderChangeReviewFixture {
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
-				Logger: zap.NewNop(),
+				Metrics: metricstest.Disabled(),
+				Logger:  zap.NewNop(),
 				Alert: edialert.New(edialert.Params{
 					Logger: zap.NewNop(),
 				}),

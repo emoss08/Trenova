@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editransportportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -93,7 +94,8 @@ func newDeliveryFixture(t *testing.T) *deliveryFixture {
 			TenderRecipientRepo: fixture.recipientRepo,
 		}),
 		alert: edialert.New(edialert.Params{
-			Logger: zap.NewNop(),
+			Logger:        zap.NewNop(),
+			Notifications: notificationtest.Discarding(),
 		}),
 		secret: ediprofilesecret.New(ediprofilesecret.Params{}),
 	}
@@ -349,7 +351,6 @@ func TestService_RetryMessageDelivery_RequeuesFailedMessageAndStartsWorkflow(t *
 	fixture.expectLoadMessage()
 	fixture.expectResolveProfileByPartner()
 	fixture.expectDeliveryUpdate(edimessage.MessageDeliveryStatusQueued)
-	fixture.workflowStarter.EXPECT().Enabled().Return(true).Once()
 	fixture.workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.MatchedBy(func(options client.StartWorkflowOptions) bool {
 			return options.ID == buildDeliverMessageWorkflowID(fixture.message.ID)

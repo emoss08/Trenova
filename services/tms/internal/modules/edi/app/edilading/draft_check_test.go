@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ladingportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -33,6 +34,17 @@ func carrierStarter(t *testing.T) *lading.Starter {
 	return built
 }
 
+func noCustomFields(t *testing.T) *customfieldportsmock.MockCustomFieldDefinitionRepository {
+	t.Helper()
+	fields := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	fields.EXPECT().
+		GetActiveByResourceType(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+
+	return fields
+}
+
 func projectsWith(t *testing.T, repo ladingports.LadingProjectRepository) *Projects {
 	t.Helper()
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
@@ -43,8 +55,12 @@ func projectsWith(t *testing.T, repo ladingports.LadingProjectRepository) *Proje
 			Timezone: "America/Chicago",
 		}, nil)
 	return &Projects{
-		l:        zap.NewNop(),
-		runtime:  NewRuntime(RuntimeParams{Logger: zap.NewNop(), Orgs: orgs}),
+		l: zap.NewNop(),
+		runtime: NewRuntime(RuntimeParams{
+			Logger:       zap.NewNop(),
+			Orgs:         orgs,
+			CustomFields: noCustomFields(t),
+		}),
 		projects: repo,
 	}
 }

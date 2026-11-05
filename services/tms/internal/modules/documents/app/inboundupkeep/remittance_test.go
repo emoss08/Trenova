@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueuetest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -59,7 +58,7 @@ func TestIngestRemittances_HandsTheFilesToBillingAndNotesTheOutcome(t *testing.T
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		remittances: intake,
-		notify:      &inboundqueue.Notifier{},
+		notify:      discardingNotifier(),
 	}
 
 	result, err := svc.upkeep().
@@ -92,7 +91,7 @@ func TestIngestRemittances_WarnsWhenNoFactorUsesTheAddress(t *testing.T) {
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		remittances: intake,
-		notify:      &inboundqueue.Notifier{},
+		notify:      discardingNotifier(),
 	}
 
 	_, err := svc.upkeep().IngestRemittances(t.Context(), repo.Message.ID, pagination.TenantInfo{})
@@ -115,7 +114,7 @@ func TestIngestRemittances_LeavesOtherMailAlone(t *testing.T) {
 		l:           zap.NewNop(),
 		messageRepo: repo,
 		remittances: intake,
-		notify:      &inboundqueue.Notifier{},
+		notify:      discardingNotifier(),
 	}
 
 	result, err := svc.upkeep().

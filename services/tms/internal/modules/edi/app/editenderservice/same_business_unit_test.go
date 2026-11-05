@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrecipient"
-	"github.com/emoss08/trenova/internal/modules/edi/app/editendershipment"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
@@ -19,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
@@ -149,6 +150,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		}, nil)
 
 	service := &Service{
+		db:             dbtest.NopConnection{},
 		l:              zap.NewNop(),
 		partnerRepo:    partnerRepo,
 		connectionRepo: connectionRepo,
@@ -167,6 +169,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 				Logger: zap.NewNop(),
 			}),
 			Delivery: edidelivery.New(edidelivery.Params{
+				Metrics:     metricstest.Disabled(),
 				Logger:      zap.NewNop(),
 				PartnerRepo: partnerRepo,
 				ProfileRepo: profileRepo,
@@ -185,10 +188,8 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 				ProfileRepo: profileRepo,
 			}),
 		}),
-		recipient: editenderrecipient.New(editenderrecipient.Params{
-			ProfileRepo: profileRepo,
-		}),
-		shipments: editendershipment.New(editendershipment.Params{}),
+		recipient: acceptingRecipients(t, profileRepo),
+		shipments: tenderableShipments(t),
 	}
 
 	transfer, err := service.SubmitLoadTender(ctx, &SubmitLoadTenderRequest{

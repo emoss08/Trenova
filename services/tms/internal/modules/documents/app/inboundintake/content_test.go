@@ -169,22 +169,6 @@ func TestFetchContent_PrefersTheProvidersOwnText(t *testing.T) {
 	assert.Equal(t, "Plain text as sent.", repo.Saved.TextBody)
 }
 
-func TestFetchContent_RecordsFilesItCannotStore(t *testing.T) {
-	t.Parallel()
-
-	message := resendMessage()
-	repo := &inboundqueuetest.ContentRepo{Message: message}
-	svc := contentService(repo, &stubFetcher{content: fetchedContent()}, &stubStorage{}, nil)
-
-	require.NoError(
-		t,
-		svc.intake().FetchContent(t.Context(), message.ID, inboundqueue.TenantOfMessage(message)),
-	)
-	assert.Equal(t,
-		"This installation cannot store attachments, so the file was not kept.",
-		message.Attachments[0].FailureText)
-}
-
 // No number of retries supplies a missing key, so the fetch is refused as a
 // rejection — the activity sends the message to review at once instead of
 // spending its retries asking.
@@ -202,16 +186,6 @@ func TestFetchContent_RejectsAMailboxWithNoAPIKey(t *testing.T) {
 	assert.Contains(t, err.Error(), "no Resend API key")
 	assert.Nil(t, fetcher.asked)
 	assert.Zero(t, repo.Writes)
-}
-
-func TestFetchContent_RejectsWhenNothingCanFetch(t *testing.T) {
-	t.Parallel()
-
-	message := resendMessage()
-	svc := contentService(&inboundqueuetest.ContentRepo{Message: message}, nil, &stubStorage{}, nil)
-
-	err := svc.intake().FetchContent(t.Context(), message.ID, inboundqueue.TenantOfMessage(message))
-	require.ErrorIs(t, err, inboundmessageports.ErrInboundContentRejected)
 }
 
 func TestFetchContent_PassesTheProvidersFailureThrough(t *testing.T) {

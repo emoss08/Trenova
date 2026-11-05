@@ -1,6 +1,7 @@
 package triageruleservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/triageportsmock"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,6 +35,21 @@ type evaluatorRig struct {
 	parties     *fakeParties
 	replies     *fakeReplies
 	conflicts   *fakeConflicts
+}
+
+type coldCache struct {
+	triageports.TriageCache
+}
+
+func (coldCache) EnabledRules(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*triage.Rule, bool, error) {
+	return nil, false, nil
+}
+
+func (coldCache) SetEnabledRules(context.Context, pagination.TenantInfo, []*triage.Rule) error {
+	return nil
 }
 
 func newEvaluatorRig(t *testing.T, message *inboundmessage.InboundMessage) *evaluatorRig {
@@ -61,6 +78,7 @@ func newEvaluatorRig(t *testing.T, message *inboundmessage.InboundMessage) *eval
 		drafter:     rig.drafter,
 		replies:     rig.replies,
 		conflicts:   rig.conflicts,
+		cache:       coldCache{},
 		now:         func() int64 { return 1_760_000_000 },
 	}
 

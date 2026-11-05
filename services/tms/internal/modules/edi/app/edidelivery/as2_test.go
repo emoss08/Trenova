@@ -20,9 +20,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
@@ -146,7 +148,11 @@ func newMDNTestHarness(
 			Logger:      zap.NewNop(),
 			MessageRepo: messageRepo,
 			ProfileRepo: profileRepo,
-			Alert:       edialert.New(edialert.Params{Logger: zap.NewNop()}),
+			Metrics:     metricstest.Disabled(),
+			Alert: edialert.New(edialert.Params{
+				Logger:        zap.NewNop(),
+				Notifications: notificationtest.Discarding(),
+			}),
 			Recipient: editenderrecipient.New(editenderrecipient.Params{
 				ProfileRepo:      profileRepo,
 				TenderChangeRepo: tenderChangeRepo,
