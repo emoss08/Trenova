@@ -676,8 +676,10 @@ taint, so both record it. The flag outlives the turn: the text stays in the thre
 a new turn opens capped when the thread's taint names a capping read
 (`toolaccess.CarriesExternalContent`).
 
-A shipment entered over EDI is outside text wherever it is read, not only as a run's subject:
-`shipment_get` and `shipment_list` mark it. Report rows are marked when a column of the result
+A shipment entered over EDI is outside text as a run's subject and where `shipment_get` and
+`shipment_list` read it, which mark it. Other reads that show a shipment's fields, such as
+`order_list` and the billing queue tools, do not: their rows do not say how the shipment was
+entered. Report rows are marked when a column of the result
 is free text (`report_preview`, `report_get_run`, `report_run`, and a report a script reads as a
 dataset), because no catalog field says who wrote it, and a comparison of runs always is. A report
 of figures and enums taints nothing. What a script's own call read counts with what its reads
