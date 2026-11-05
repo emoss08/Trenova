@@ -15,6 +15,7 @@ use capture_platform::acl::{SYSTEM_ONLY_SDDL, create_trusted};
 use capture_platform::{logging, machine, paths, settings};
 use capture_protocol::release::pinned_public_key;
 use tokio::sync::watch;
+use trenova_capture_update::signature::Revocation;
 use trenova_capture_update::{Http, Installer, Stop, UpdaterError, manifest_url, run};
 use windows::Win32::System::SystemInformation::GetSystemDirectoryW;
 
@@ -37,7 +38,7 @@ pub(crate) fn say(message: &str) {
     let _ = writeln!(std::io::stderr(), "{message}");
 }
 
-const USAGE: &str = "usage: trenova-capture-update <service | run <manifest url> | relaunch | configure | install | uninstall>";
+const USAGE: &str = "usage: trenova-capture-update <service | run <manifest url> | verify-publisher <file> | relaunch | configure | install | uninstall>";
 
 /// The system directory, for tools that must not come from `PATH`.
 pub(crate) fn system_dir() -> std::io::Result<PathBuf> {
@@ -94,7 +95,12 @@ impl Installer for WindowsInstaller {
     }
 
     fn verify_installer(&self, path: &Path) -> Result<(), UpdaterError> {
-        trust::verify_same_publisher(path, &self.exe)
+        if trust::verify_same_publisher(path, &self.exe)? == Revocation::Unreachable {
+            tracing::warn!(
+                "the revocation servers could not be reached; the installer's signature was accepted without them"
+            );
+        }
+        Ok(())
     }
 
     fn install(&self, path: &Path) -> Result<(), UpdaterError> {
@@ -167,6 +173,19 @@ pub(crate) fn update(
     Ok(())
 }
 
+/// Checks `file` as an update's installer would be checked, and says how far
+/// revocation was checked.
+fn verify_publisher(file: &Path) -> Result<(), UpdaterError> {
+    let installer = WindowsInstaller::new()?;
+    match trust::verify_same_publisher(file, &installer.exe)? {
+        Revocation::Checked => say("No certificate in its chain is revoked."),
+        Revocation::Unreachable => say(
+            "The revocation servers could not be reached; its signature was accepted without them.",
+        ),
+    }
+    Ok(())
+}
+
 fn step(what: &str, result: Result<(), UpdaterError>) -> ExitCode {
     match result {
         Ok(()) => {
@@ -200,6 +219,17 @@ pub fn main() -> ExitCode {
             if let Some(manifest) = args.next() {
                 let (_never, stop) = watch::channel(false);
                 step("Updating Trenova Capture", update(&manifest, &stop, || {}))
+            } else {
+                say(USAGE);
+                ExitCode::from(2)
+            }
+        }
+        "verify-publisher" => {
+            if let Some(file) = args.next() {
+                step(
+                    "Checking the installer's signature",
+                    verify_publisher(Path::new(&file)),
+                )
             } else {
                 say(USAGE);
                 ExitCode::from(2)

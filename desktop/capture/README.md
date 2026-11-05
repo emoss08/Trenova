@@ -327,6 +327,17 @@ signature, the download's size and SHA-256, the MSI's Authenticode signature and
 signer is the same publisher as the running updater) before running the installer. Otherwise
 the tray says a version is available for IT to install.
 
+The same publisher means the same certificate subject (name, organization and country) and, when
+the running updater's certificate carries one, the same Trusted Signing durable identity (the
+extended key usage under `1.3.6.1.4.1.311.97.` tied to the signing profile's verified identity).
+Trusted Signing's certificates last days and its intermediates change, so neither a thumbprint
+nor an issuer is pinned. Revocation is checked for the whole chain: a revoked certificate is
+refused, and when the revocation servers cannot be reached the signature is accepted on its own
+and the updater's log says so. A new identity validation, or a move to another signing service,
+breaks automatic updates for computers on older releases: they need that release installed by
+hand. `verify-install.ps1` runs the installed updater against the release's own MSI, so a
+release whose own updater cannot verify it is never published.
+
 To make a key pair once:
 
 ```powershell

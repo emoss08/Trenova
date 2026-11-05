@@ -9,14 +9,17 @@
 //! route and nothing else. It reads the manifest itself, verifies the signature
 //! against the key built into it, decides against its own version, downloads
 //! the installer and checks its size and SHA-256, and then, on Windows, has
-//! the system verify the installer's Authenticode signature and checks that
-//! the signer is the same publisher as the running updater. Only then does it
+//! the system verify the installer's Authenticode signature, revocation
+//! included, and checks that the signer is the same publisher as the running
+//! updater ([`signature`]). Only then does it
 //! run the installer. An unprivileged process can therefore make this
 //! computer install a genuine, newer Trenova Capture release, and nothing
 //! else.
 //!
 //! The flow is here so it runs, and is tested, anywhere; what needs Windows
 //! ([`Installer`]) is in the binary.
+
+pub mod signature;
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;

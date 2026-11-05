@@ -4,7 +4,8 @@
 //! starts it, with the manifest address as the start argument; the installer
 //! runs `install` and `uninstall` elevated; `relaunch` starts the agent again
 //! for everyone signed in, which the installer asks for at the end of an
-//! upgrade; `run <url>` updates from a console, for development.
+//! upgrade; `run <url>` updates from a console, for development; and
+//! `verify-publisher <file>` checks a file as an update's installer is checked.
 
 #[cfg(windows)]
 mod win;

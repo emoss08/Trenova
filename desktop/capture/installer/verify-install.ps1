@@ -100,6 +100,32 @@ Check ((Ipp 0x0B) -eq 0) 'a local process may read the printer attributes'
 Check ((Ipp 0x02) -eq 0x0403) 'a local process cannot send a job'
 Check ((Ipp 0x0A) -eq 0x0403) 'a local process cannot list jobs'
 
+# The updater takes an installer only when it is validly signed, nothing in its chain is revoked,
+# and its signer is the publisher the installed updater was signed by. A signed release must pass
+# with its own installer (so computers can update to it), with revocation checked from here; an
+# unsigned build, and a file another publisher signed, must be refused.
+$updater = Join-Path $env:ProgramFiles 'Trenova\Capture\trenova-capture-update.exe'
+function Test-Publisher([string]$file) {
+  $ErrorActionPreference = 'Continue'
+  $output = (& $updater verify-publisher $file 2>&1 | Out-String).Trim()
+  [pscustomobject]@{ Passed = ($LASTEXITCODE -eq 0); Output = $output }
+}
+$own = Test-Publisher $msiPath
+if ((Get-AuthenticodeSignature $msiPath).Status -eq 'Valid') {
+  Check $own.Passed "the installed updater accepts this release's own installer ($($own.Output))"
+  Check ($own.Output -match 'No certificate in its chain is revoked') "the updater checked revocation for this release's installer ($($own.Output))"
+} else {
+  Check (-not $own.Passed) "the installed updater refuses an unsigned installer ($($own.Output))"
+}
+$foreign = Join-Path $PSHOME 'pwsh.exe'
+$foreignSignature = Get-AuthenticodeSignature $foreign
+if ($foreignSignature.Status -eq 'Valid' -and "$($foreignSignature.SignatureType)" -eq 'Authenticode') {
+  $other = Test-Publisher $foreign
+  Check (-not $other.Passed) "the installed updater refuses a file another publisher signed ($($other.Output))"
+} else {
+  Write-Host "skip no embedded-signed file from another publisher at $foreign"
+}
+
 $recorded = Get-ItemProperty $key
 Install-Msi @('/fa', $msiPath, 'TRENOVAURL=https://evil.example', 'AUTOUPDATE=1', 'PRINTPORT=9999') "$env:TEMP\capture-repair.log"
 $after = Get-ItemProperty $key

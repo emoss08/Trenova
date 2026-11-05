@@ -21,8 +21,10 @@
     TRENOVA_SIGNING_PFX_PASSWORD  its password
 
   The updater accepts a release only when its signer is the same publisher as
-  the running updater, so every release must be signed with a certificate
-  issued to the same name.
+  the running updater: the same subject name, organization and country, and,
+  once a release is signed through Trusted Signing, the same durable identity
+  (the identity validation behind the certificate profile). Changing either
+  stops computers on earlier releases from updating themselves.
 
 .PARAMETER Path
   The files to sign.
