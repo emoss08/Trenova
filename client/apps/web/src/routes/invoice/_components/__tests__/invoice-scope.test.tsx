@@ -236,6 +236,7 @@ describe("invoice list card scope", () => {
     expect(open).toHaveBeenCalledWith(
       "/shipment-management/shipments?expanded=shp_1&panelType=edit&panelEntityId=shp_1",
       "_blank",
+      "noopener,noreferrer",
     );
     open.mockRestore();
   });
