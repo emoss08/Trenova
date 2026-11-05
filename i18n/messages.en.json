@@ -471,6 +471,15 @@
       "routes/admin"
     ]
   },
+  "+{0} to the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   ", no text": {
     "sites": 1,
     "scope": [
@@ -7642,6 +7651,15 @@
       "routes/desk"
     ]
   },
+  "A learned weight must be between 0.25 and 4 times the default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A leg that is {0} cannot be invoiced.": {
     "sites": 1,
     "scope": [
@@ -8578,6 +8596,15 @@
       "apps/web/components"
     ]
   },
+  "A move goes uncovered only when every driver would cost more than this. When drivers are short, the moves that cost most to leave are covered first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "A move must have at least two stops": {
     "sites": 1,
     "scope": [
@@ -9479,6 +9506,33 @@
     ]
   },
   "A plan needs at least two steps": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A plan price belongs to another organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A plan price belongs to another plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A plan price names a move outside the plan": {
     "sites": 1,
     "scope": [
       "go"
@@ -16160,12 +16214,14 @@
     ]
   },
   "Acceptance": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-console",
+      "routes/dispatch-control"
     ]
   },
   "Accepted": {
@@ -21505,6 +21561,24 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Added for a move whose pickup window has closed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Added for a move whose window is open or opens within 4 hours.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Added only to the first settlement of each month.": {
@@ -33826,6 +33900,15 @@
       "routes/shipment"
     ]
   },
+  "Arriving this early is free; waiting longer is a driver hour.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Arrow keys move a month and T returns to today {0}": {
     "sites": 1,
     "scope": [
@@ -34043,6 +34126,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "As your cost": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "As {0}": {
@@ -36072,15 +36164,6 @@
       "routes/worker"
     ]
   },
-  "Assignment optimization strategy": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-control"
-    ]
-  },
   "Assignment was changed by someone else. Reload and try again": {
     "sites": 1,
     "scope": [
@@ -36250,12 +36333,13 @@
     ]
   },
   "At least": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-control"
     ]
   },
   "At least 10 characters. Say what makes this movement acceptable.": {
@@ -38056,15 +38140,6 @@
       "go/other"
     ]
   },
-  "Auto assignment strategy is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Auto cancel shipments": {
     "sites": 1,
     "scope": [
@@ -38975,12 +39050,11 @@
     ]
   },
   "Availability": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "routes/admin",
       "routes/settings"
     ]
@@ -48183,15 +48257,6 @@
       "routes/formula-template"
     ]
   },
-  "Candidate scoring weights": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-control"
-    ]
-  },
   "Candidate: {0}": {
     "sites": 1,
     "scope": [
@@ -48208,6 +48273,24 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Candidates per move cannot exceed 200": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Candidates per move must be at least 5": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Canned Fork": {
@@ -52727,6 +52810,15 @@
       "go/other"
     ]
   },
+  "Changing a planned driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.": {
     "sites": 1,
     "scope": [
@@ -56619,6 +56711,15 @@
       "routes/agent-control"
     ]
   },
+  "Choosing {0} instead adds {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Chose {0}": {
     "sites": 1,
     "scope": [
@@ -58838,6 +58939,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Close to time off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Close vehicle info": {
@@ -66740,6 +66850,15 @@
       "routes/agent-control"
     ]
   },
+  "Cost to cover": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Cost to the carrier": {
     "sites": 1,
     "scope": [
@@ -66765,6 +66884,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Costs and prices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Costs on the loads {0} hauls land here once they are delivered and rated.": {
@@ -68898,6 +69026,24 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Coverage margin cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Coverage margin cannot exceed 100%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Coverage risk window (hours)": {
@@ -71118,6 +71264,15 @@
       "routes/journal-entry"
     ]
   },
+  "Credits a move that leaves its driver where drivers have been worth more to the plan at that time of the week, learned from the planner's own history.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Credits are short by": {
     "sites": 1,
     "scope": [
@@ -72603,12 +72758,13 @@
     ]
   },
   "Customer experience": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-control"
     ]
   },
   "Customer goodwill": {
@@ -74790,6 +74946,15 @@
       "go/other"
     ]
   },
+  "Day past home time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Day the leave was taken": {
     "sites": 1,
     "scope": [
@@ -75044,6 +75209,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Days out before home time starts to cost.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Days past due": {
@@ -75968,6 +76142,15 @@
     ]
   },
   "Decisions must be attributed to a human user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Decisions must be the sum of approvals, overrides and declines": {
     "sites": 1,
     "scope": [
       "go"
@@ -83299,6 +83482,15 @@
       "go/other"
     ]
   },
+  "Dispatch style learning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Dispatch supervisor": {
     "sites": 1,
     "scope": [
@@ -87284,15 +87476,6 @@
       "go/other"
     ]
   },
-  "Driver and power unit belong to the same fleet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Driver and tractor belong to different fleets": {
     "sites": 1,
     "scope": [
@@ -87495,6 +87678,15 @@
       "go/other"
     ]
   },
+  "Driver hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Driver is already committed to work that overlaps this move": {
     "sites": 1,
     "scope": [
@@ -87547,15 +87739,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Driver keeps the trailer from their previous leg instead of swapping.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "Driver licenses & medical cards": {
@@ -88191,13 +88374,13 @@
       "routes/random-testing"
     ]
   },
-  "Drivers recently home score higher than those out for weeks.": {
+  "Drivers priced per move": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "routes/dispatch-control"
     ]
   },
   "Drivers record their own arrivals and departures at stops, driving move status and detention math.": {
@@ -88261,6 +88444,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Drivers worth more elsewhere": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Drives the expiry warnings and the worker's compliance grade.": {
@@ -88866,6 +89058,15 @@
       "apps/web/lib",
       "routes/desk",
       "routes/dispatch-console"
+    ]
+  },
+  "Due now premium": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Due offset cannot be negative": {
@@ -91549,6 +91750,33 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Early grace (minutes)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Early grace cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Early grace cannot exceed 1440 minutes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "Early {0}": {
@@ -94321,11 +94549,12 @@
     ]
   },
   "Empty mile": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-control",
       "routes/home"
     ]
   },
@@ -94335,7 +94564,6 @@
       "ts"
     ],
     "areas": [
-      "apps/web/types",
       "routes/dispatch-console"
     ]
   },
@@ -99454,6 +99682,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Every driver costs more than the {0} it is worth to cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Every driver holding accrued pay this period. Settle a driver individually to pay them early, or generate for everyone at once — either way, drivers who already have a settlement are skipped and their new accruals attach automatically.": {
@@ -109359,15 +109596,6 @@
       "routes/agent-control"
     ]
   },
-  "Fewer empty miles from the driver's projected location to the pickup.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Fewer retries on {0}": {
     "sites": 1,
     "scope": [
@@ -111452,15 +111680,6 @@
       "go/other"
     ]
   },
-  "Fine-tune how heavily each factor counts when ranking drivers for a shipment. Weights run from 0 to 10 and are relative to each other; a factor set to 0 is ignored entirely. Leave a field empty to inherit the {0} strategy's preset, shown as the placeholder.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-control"
-    ]
-  },
   "Fingerprint": {
     "sites": 1,
     "scope": [
@@ -112893,15 +113112,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Fleet match": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "Fleet miles per gallon": {
@@ -120431,12 +120641,14 @@
     ]
   },
   "Haul fit": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-console",
+      "routes/dispatch-control"
     ]
   },
   "Have Nova build it": {
@@ -122684,7 +122896,25 @@
       "apps/web/components"
     ]
   },
-  "Home time": {
+  "Home time target (days)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Home time target cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "Home time target cannot exceed 60 days": {
     "sites": 1,
     "scope": [
       "ts"
@@ -122711,7 +122941,7 @@
       "go/other"
     ]
   },
-  "Horizon search iterations cannot be negative": {
+  "Horizon search rounds cannot be negative": {
     "sites": 1,
     "scope": [
       "go"
@@ -122720,7 +122950,7 @@
       "go/other"
     ]
   },
-  "Horizon search iterations must be 500 or fewer": {
+  "Horizon search rounds must be 500 or fewer": {
     "sites": 1,
     "scope": [
       "go"
@@ -123080,15 +123310,6 @@
       "routes/worker"
     ]
   },
-  "Hours remaining": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Hours worked by staff paid by the clock, and the sign-off on them": {
     "sites": 1,
     "scope": [
@@ -123153,15 +123374,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Hours-of-service violations recorded in the last 90 days.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "Hover a record to look at it": {
@@ -123940,6 +124152,15 @@
       "go/other"
     ]
   },
+  "How many of the nearest eligible drivers the planner prices for each move.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "How many people have a shift today, read against the busiest day on the board. The ring is relative because a small yard and a large terminal share no number.": {
     "sites": 1,
     "scope": [
@@ -124236,15 +124457,6 @@
       "routes/agent-control"
     ]
   },
-  "How often the driver has run freight for this customer in the last year.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "How often the period closes and invoices are produced.": {
     "sites": 1,
     "scope": [
@@ -124288,15 +124500,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "How reliably and quickly the driver accepts offered assignments.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "How requests are shaped for this endpoint.": {
@@ -124775,6 +124978,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "How your dispatchers weigh each preference against the costs above, learned from the driver they assign each time they take, change or pass over the plan's choice. The planner uses these weights while learning is on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "How {0} counts": {
@@ -134293,6 +134505,24 @@
       "rules/tariff"
     ]
   },
+  "Its drivers are worth more on other moves than the {0} it is worth to cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Its drivers are worth more on other moves. The cheapest, {0}, would cost {1} against the {2} it is worth to cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Its history and the shipment link are on the transfers page": {
     "sites": 1,
     "scope": [
@@ -135814,7 +136044,7 @@
     ]
   },
   "Keep it": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -135822,6 +136052,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/billing-queue",
+      "routes/dispatch-control",
       "routes/intake",
       "routes/time-attendance"
     ]
@@ -139098,6 +139329,15 @@
       "routes/service-failure-reason-code"
     ]
   },
+  "Late minute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Late minutes": {
     "sites": 1,
     "scope": [
@@ -139161,6 +139401,15 @@
       "apps/web/lib"
     ]
   },
+  "Late premium": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Late with nobody on it": {
     "sites": 1,
     "scope": [
@@ -139205,6 +139454,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Lateness": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Lateness is recorded but the carrier keeps full entitlement.": {
@@ -139595,6 +139853,15 @@
       "apps/web/components"
     ]
   },
+  "Learn our dispatch style": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Learned by an agent looking back over its work · {0}": {
     "sites": 1,
     "scope": [
@@ -139602,6 +139869,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Learned dispatch style": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Learned from this conversation": {
@@ -139622,6 +139898,15 @@
       "routes/agent-control"
     ]
   },
+  "Learned from {0, plural, one {# decision} other {# decisions}}: {1} took the plan's driver, {2} chose a driver it priced and {3} chose one it did not.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Learned steps": {
     "sites": 1,
     "scope": [
@@ -139629,6 +139914,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Learned weights": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Learning": {
@@ -139649,6 +139943,24 @@
       "routes/agent-control"
     ]
   },
+  "Learning is off, so the planner uses your own costs. What it learned is kept and comes back if you turn learning on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "Learning is off. Turn on Learn our dispatch style to start learning.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Learns": {
     "sites": 2,
     "scope": [
@@ -139667,6 +139979,15 @@
     "areas": [
       "go/other",
       "routes/agent-control"
+    ]
+  },
+  "Learns how much your dispatchers weigh each preference from the drivers they assign against the plan: the plan's driver, another it priced, or one it passed over. Shown and reset under Learned dispatch style.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Lease": {
@@ -140428,6 +140749,15 @@
       "routes/agent-control"
     ]
   },
+  "Leaving a move uncovered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Leaving records empty": {
     "sites": 1,
     "scope": [
@@ -140576,6 +140906,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Left uncovered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Left {0}": {
@@ -143474,24 +143813,6 @@
       "go/other"
     ]
   },
-  "Load balance": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
-  "Load balancing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Load costs": {
     "sites": 1,
     "scope": [
@@ -145446,6 +145767,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Loading the learned dispatch style": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Loading the library": {
@@ -150920,15 +151250,6 @@
       "routes/admin"
     ]
   },
-  "Match score": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Match suggestions": {
     "sites": 1,
     "scope": [
@@ -153509,6 +153830,15 @@
       "go/other"
     ]
   },
+  "Mile above the median": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Mileage Goal": {
     "sites": 1,
     "scope": [
@@ -153585,6 +153915,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Miles above the fleet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Miles above the fleet median": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Miles by state or province recorded outside routed shipment moves": {
@@ -158941,6 +159289,15 @@
       "routes/shipment"
     ]
   },
+  "Nearest drivers disqualified": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Nearing the most memories agents can use well": {
     "sites": 1,
     "scope": [
@@ -161114,6 +161471,15 @@
     ],
     "areas": [
       "routes/formula-library"
+    ]
+  },
+  "New to the customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "New token": {
@@ -164669,6 +165035,15 @@
       "apps/web/hooks"
     ]
   },
+  "No driver could take it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "No driver expenses yet": {
     "sites": 1,
     "scope": [
@@ -164706,6 +165081,24 @@
     ]
   },
   "No driver is available for dispatch in this window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "No driver location known": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "No driver near the pickup has a known location.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -164888,7 +165281,7 @@
     ]
   },
   "No eligible driver": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -171928,15 +172321,6 @@
       "routes/desk"
     ]
   },
-  "Not enough data to score this pairing.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Not enrolled": {
     "sites": 1,
     "scope": [
@@ -173184,6 +173568,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Not worth covering": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Not written": {
@@ -174770,6 +175163,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Nothing learned yet. Each driver a dispatcher assigns against the plan teaches the planner a little, and the weights appear here after the first decisions.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Nothing left for you": {
@@ -179953,21 +180355,14 @@
     ]
   },
   "On-time history": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
-    ]
-  },
-  "On-time margin": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-console",
+      "routes/dispatch-control"
     ]
   },
   "On-time performance and service the customer feels": {
@@ -181524,6 +181919,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Only a preference can carry a learned weight": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Only a print batch takes a print job": {
@@ -188546,6 +188950,15 @@
       "routes/worker"
     ]
   },
+  "Other drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Other failures on this load": {
     "sites": 1,
     "scope": [
@@ -193394,6 +193807,15 @@
       "routes/worker"
     ]
   },
+  "Past the empty-mile limit": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Past the notice deadline — no longer defensible": {
     "sites": 1,
     "scope": [
@@ -196463,12 +196885,11 @@
     ]
   },
   "Performance": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
       "packages/shared/types"
     ]
   },
@@ -199304,7 +199725,7 @@
     ]
   },
   "Plan": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -199315,6 +199736,7 @@
       "routes/agent-control",
       "routes/benefits",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/worker"
     ]
   },
@@ -199354,6 +199776,15 @@
       "apps/web/components"
     ]
   },
+  "Plan for where drivers end up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Plan is invalid": {
     "sites": 4,
     "scope": [
@@ -199379,6 +199810,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Plan price": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Plan type is required": {
@@ -199436,6 +199876,15 @@
       "routes/benefits"
     ]
   },
+  "Plan's pick": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Planned": {
     "sites": 2,
     "scope": [
@@ -199443,6 +199892,15 @@
     ],
     "areas": [
       "apps/web/lib",
+      "routes/dispatch-console"
+    ]
+  },
+  "Planned driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/dispatch-console"
     ]
   },
@@ -199462,6 +199920,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Planned on {0} for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Planned support for Amazon Simple Email Service transactional delivery.": {
@@ -201967,11 +202434,13 @@
     ]
   },
   "Preferences": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/dispatch-console",
+      "routes/dispatch-control",
       "routes/settings"
     ]
   },
@@ -203384,6 +203853,15 @@
       "packages/shared/lib"
     ]
   },
+  "Priced {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Prices `actual` at the rate of the heaviest break at or below it (a weight below every break prices at the lightest), and also the next break's minimum weight at the next break's rate; bills whichever costs less, each priced at no less than its break's minimum.": {
     "sites": 2,
     "scope": [
@@ -204674,15 +205152,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Projected hours-of-service margin left after completing the trip.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "Projected late": {
@@ -206200,15 +206669,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Proximity": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "Prune aged telematics events and HOS violation history": {
@@ -224209,12 +224669,13 @@
     ]
   },
   "Reset": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/dispatch-control",
       "routes/edi",
       "routes/home",
       "routes/worker"
@@ -224236,6 +224697,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Reset learned style": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Reset password": {
@@ -224274,6 +224744,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reset the learned dispatch style?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "Reset to default": {
@@ -225324,6 +225803,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Rest before driving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Rest minutes cannot be negative": {
@@ -232108,12 +232596,14 @@
     ]
   },
   "Safety history": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-console",
+      "routes/dispatch-control"
     ]
   },
   "Safety milestone": {
@@ -232490,6 +232980,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "Samples cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Samples {0} reads": {
@@ -240570,15 +241069,6 @@
       "routes/accounting-control"
     ]
   },
-  "Select the primary strategy used when matching resources to shipments.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-control"
-    ]
-  },
   "Select the service type for the shipment.": {
     "sites": 1,
     "scope": [
@@ -245975,6 +246465,15 @@
       "routes/desk"
     ]
   },
+  "Share of revenue (%)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Share of shipment revenue, allocated to the move by distance.": {
     "sites": 1,
     "scope": [
@@ -251235,15 +251734,6 @@
       "rules/tariff"
     ]
   },
-  "Slack between the projected arrival and the pickup appointment.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Slack under this many minutes counts as at risk, from 0 to 1440. A customer can set its own threshold.": {
     "sites": 1,
     "scope": [
@@ -253930,15 +254420,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Spreads work by weekly miles, move count, and open assignments.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "Spreadsheet": {
@@ -267990,6 +268471,15 @@
       "go/other"
     ]
   },
+  "The cheapest driver, {0}, costs {1}, more than the {2} it is worth to cover.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The check could not be started.": {
     "sites": 1,
     "scope": [
@@ -270602,15 +271092,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "The driver's delivered-on-time percentage versus the organization's goal.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "The driver's first name.": {
@@ -274309,6 +274790,15 @@
       "routes/desk"
     ]
   },
+  "The last plan left it uncovered.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The last read of {0} failed: {1}": {
     "sites": 1,
     "scope": [
@@ -274383,6 +274873,15 @@
       "routes/factoring-remittance"
     ]
   },
+  "The learned dispatch style could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "The least a shipment priced at the break pays, if anything.": {
     "sites": 2,
     "scope": [
@@ -274392,6 +274891,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The least leaving any move uncovered costs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "The least the factor charges on one invoice.": {
@@ -276331,6 +276839,42 @@
       "routes/worker"
     ]
   },
+  "The nearest driver, {0}, can't take it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The nearest driver, {0}, is past the empty-mile limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The nearest drivers are past the empty-mile limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "The nearest drivers can't take it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "The negotiated linehaul rate, in words, such as 1,850.00 flat or 2.35/mi.": {
     "sites": 1,
     "scope": [
@@ -277427,6 +277971,15 @@
       "rules/tariff"
     ]
   },
+  "The part of a move's revenue lost when it is not covered.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "The part of a weight one tier prices.": {
     "sites": 2,
     "scope": [
@@ -277852,7 +278405,7 @@
       "apps/web/components"
     ]
   },
-  "The pickup window has already closed, so no driver can make it and on-time is not judged. Assign whoever ran or will run the load, and reschedule the pickup if it has not happened yet": {
+  "The pickup window has already closed, so whoever gets there soonest is cheapest. Reschedule the pickup if it has not happened yet": {
     "sites": 1,
     "scope": [
       "go"
@@ -278058,6 +278611,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The planner forgets every weight it learned and goes back to your own costs. Learning starts again from the next driver a dispatcher assigns; decisions already made are not learned again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
+  "The planner prices every driver for every move and picks the plan that costs least overall. Set what each thing costs your operation; a cost of $0 is ignored.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "The policy and every stop are on the detention desk": {
@@ -291776,6 +292347,15 @@
       "routes/dispatch-console"
     ]
   },
+  "This pairing costs nothing extra.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "This pairing trips a rule your organization enforces.": {
     "sites": 1,
     "scope": [
@@ -295345,6 +295925,16 @@
       "go/other"
     ]
   },
+  "Time away from home": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console",
+      "routes/dispatch-control"
+    ]
+  },
   "Time card": {
     "sites": 1,
     "scope": [
@@ -295606,12 +296196,13 @@
     ]
   },
   "Time-off buffer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-control"
     ]
   },
   "Time-off request not found": {
@@ -299016,12 +299607,13 @@
     ]
   },
   "Trailer continuity": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "routes/dispatch-control"
     ]
   },
   "Trailer continuity is missing the previous shipment association required for locate": {
@@ -299130,6 +299722,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Trailer swap": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Trailer temperature (°F)": {
@@ -300828,15 +301429,6 @@
       "apps/web/lib"
     ]
   },
-  "Trip length suits the driver's type (local, regional, or over-the-road).": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Triple DES (legacy)": {
     "sites": 1,
     "scope": [
@@ -301287,7 +301879,7 @@
     ]
   },
   "Try again": {
-    "sites": 76,
+    "sites": 77,
     "scope": [
       "ts"
     ],
@@ -301306,6 +301898,7 @@
       "routes/detention-desk",
       "routes/detention-intelligence",
       "routes/dispatch-console",
+      "routes/dispatch-control",
       "routes/formula-template",
       "routes/inbox",
       "routes/intake",
@@ -311859,7 +312452,7 @@
     ]
   },
   "Waiting": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -311867,6 +312460,7 @@
       "apps/web/components",
       "routes/agent-control",
       "routes/desk",
+      "routes/dispatch-console",
       "routes/inbox",
       "routes/scheduling",
       "routes/shipment"
@@ -314768,24 +315362,6 @@
       "routes/worker"
     ]
   },
-  "Weights cannot exceed 10": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
-  "Weights must be at least 0": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
-    ]
-  },
   "Welcome": {
     "sites": 1,
     "scope": [
@@ -315033,6 +315609,33 @@
       "go/other"
     ]
   },
+  "What a driver far below your on-time goal costs against one who meets it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "What a driver who has never run this customer costs against one who runs it often.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "What a driver who rarely accepts assignments costs against one who always does.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "What a good answer does": {
     "sites": 1,
     "scope": [
@@ -315058,6 +315661,15 @@
     ],
     "areas": [
       "routes/factoring"
+    ]
+  },
+  "What a mile driven empty to the pickup costs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.": {
@@ -315087,6 +315699,15 @@
       "routes/formula-template"
     ]
   },
+  "What a run that does not suit the driver's type costs, such as a local driver on a long haul.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "What a signature records; a new version asks everybody to sign again, the same label keeps existing signatures.": {
     "sites": 1,
     "scope": [
@@ -315105,6 +315726,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "What a trailer swap costs against keeping the trailer from the previous leg.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "What a unit is on this charge": {
@@ -315168,6 +315798,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What an hour of a driver waiting, or resting before they may drive, costs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "What approving sends: the invoice, then each document in its packet.": {
@@ -315361,6 +316000,15 @@
       "routes/dash-control"
     ]
   },
+  "What each day past the target costs, less for a move that heads home.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "What each hundredweight inside the tier is billed at.": {
     "sites": 2,
     "scope": [
@@ -315372,6 +316020,15 @@
       "rules/tariff"
     ]
   },
+  "What each mile a driver has run this week above the fleet's median costs, so work spreads.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "What each mile inside the tier is billed at.": {
     "sites": 2,
     "scope": [
@@ -315381,6 +316038,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "What each minute past a pickup or delivery window costs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "What each person can do comes from their role. Sharing never grants access.": {
@@ -315462,6 +316128,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "What finishing right before approved time off costs against finishing two days ahead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "What five or more hours-of-service violations in 90 days cost against none.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
     ]
   },
   "What happened": {
@@ -316211,6 +316895,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "What moving a move to another driver than the last plan chose costs, so proposals don't change for a few dollars.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "What must be true of a map's document, and what happens when it is not": {
@@ -316993,6 +317686,15 @@
       "routes/benefits"
     ]
   },
+  "What the worst case of each costs against the best. A driver with no history counts as halfway.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "What the zone actually covers, for the next person deciding whether to reuse it": {
     "sites": 1,
     "scope": [
@@ -317126,6 +317828,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "What this driver taking the move costs the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "What this home screen is for.": {
@@ -319639,6 +320350,24 @@
       "routes/osha"
     ]
   },
+  "Where they end up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Where this driver is is unknown, so empty miles and arrival can't be judged; they are never assigned automatically": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Where this index comes from and how it's maintained": {
     "sites": 1,
     "scope": [
@@ -320171,15 +320900,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Whether the run finishes comfortably before the driver's approved time off.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/types"
     ]
   },
   "Whether the schedule books freight on its own or waits for a dispatcher": {
@@ -322307,6 +323027,15 @@
       "routes/shipment"
     ]
   },
+  "Why this cost": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "Why this customer is on hold or suspended. Dispatch sees it when a shipment for them is refused.": {
     "sites": 1,
     "scope": [
@@ -322368,15 +323097,6 @@
     ],
     "areas": [
       "routes/factoring-submission"
-    ]
-  },
-  "Why this score": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Why this wording": {
@@ -324469,6 +325189,42 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Worth {0} to cover": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Worth {0} to cover · {1} instead adds {2} · {3}% confidence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Worth {0} to cover · {1}% confidence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "Worth {0} to the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "Would be forfeited": {
@@ -327842,6 +328598,15 @@
       "routes/admin"
     ]
   },
+  "Your dispatchers' choices so far match your costs; no weight has moved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "Your disputes on this statement": {
     "sites": 1,
     "scope": [
@@ -330482,6 +331247,15 @@
       "go/other"
     ]
   },
+  "acceptance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "accounting date": {
     "sites": 3,
     "scope": [
@@ -331617,6 +332391,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "close to time off": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "coaching conversation": {
@@ -334536,6 +335319,15 @@
       "go/other"
     ]
   },
+  "empty miles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "enabled for inbound": {
     "sites": 1,
     "scope": [
@@ -335459,6 +336251,15 @@
       "routes/inbox"
     ]
   },
+  "haul fit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "hazardous material": {
     "sites": 1,
     "scope": [
@@ -336113,6 +336914,24 @@
       "routes/detention-desk"
     ]
   },
+  "lateness": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "learned from {0, plural, one {# decision} other {# decisions}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
+    ]
+  },
   "left in the books": {
     "sites": 1,
     "scope": [
@@ -336521,6 +337340,15 @@
       "rules/tariff"
     ]
   },
+  "miles above the fleet median": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "min of {0}": {
     "sites": 1,
     "scope": [
@@ -336759,6 +337587,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "new to the customer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "next and previous": {
@@ -337293,6 +338130,15 @@
       "routes/billing-queue"
     ]
   },
+  "of {0} the move is worth": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "of {0} widgets": {
     "sites": 1,
     "scope": [
@@ -337465,6 +338311,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "on-time history": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "on-time waiting": {
@@ -338714,6 +339569,15 @@
       "edi/lading"
     ]
   },
+  "rest before driving": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "returns outside text": {
     "sites": 1,
     "scope": [
@@ -338847,6 +339711,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "safety history": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "scheduled {0}": {
@@ -340069,6 +340942,15 @@
       "rules/tariff"
     ]
   },
+  "time away from home": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "timezone": {
     "sites": 1,
     "scope": [
@@ -340367,6 +341249,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "trailer swap": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "trailers": {
@@ -340918,6 +341809,15 @@
       "apps/dash/_components"
     ]
   },
+  "waiting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "waiting for a slot": {
     "sites": 1,
     "scope": [
@@ -341100,6 +342000,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "where the driver ends up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "whoever the office finds": {
@@ -342881,15 +343790,6 @@
     ],
     "areas": [
       "routes/detention-intelligence"
-    ]
-  },
-  "{0, plural, one {# factor} other {# factors}} contributed nothing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0, plural, one {# failed run} other {# failed runs}}": {
@@ -347878,6 +348778,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {The board lists only the first driver} other {The board lists only the first # drivers}}, available drivers first. Filter by fleet to see the rest.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0, plural, one {The connection dropped after # word.} other {The connection dropped after # words.}}": {
     "sites": 1,
     "scope": [
@@ -350811,11 +351720,13 @@
     ]
   },
   "{0} cannot be negative": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
+      "apps/web/types",
       "go/other"
     ]
   },
@@ -355640,6 +356551,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0} is too large": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "{0} is too large to email ({1} bytes); send this factor's schedules by SFTP or without packets": {
     "sites": 1,
     "scope": [
@@ -355763,6 +356683,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is worth {1} to the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "{0} is writing a reply": {
@@ -356513,6 +357442,24 @@
       "routes/desk"
     ]
   },
+  "{0} late to delivery": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
+  "{0} late to pickup": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
+    ]
+  },
   "{0} late · ETA {1}": {
     "sites": 1,
     "scope": [
@@ -356913,7 +357860,7 @@
     ]
   },
   "{0} mi": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -362862,15 +363809,6 @@
       "routes/dispatch-console"
     ]
   },
-  "{0} · {1} empty · {2}% confidence": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "{0} · {1} h": {
     "sites": 1,
     "scope": [
@@ -363050,15 +363988,6 @@
     ],
     "areas": [
       "routes/benefits"
-    ]
-  },
-  "{0} · {1}% confidence": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0} · {1}% drug · {2}% alcohol · {3}": {
@@ -364617,6 +365546,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "{0}× your cost": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-control"
     ]
   },
   "{0}–{1} lb": {

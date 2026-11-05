@@ -1201,7 +1201,6 @@
   "Sent as bills since {0}. Company driver pay is never sent.": "自 {0} 起以應付帳單傳送。公司司機的薪資一律不傳送。",
   "Sent on {0}": "已於 {0} 傳送",
   "Separator character": "分隔字元",
-  "Sequence": "序號",
   "Sequence configuration sections": "序號設定區段",
   "Sequence digits": "序號位數",
   "Server Token": "伺服器權杖",
