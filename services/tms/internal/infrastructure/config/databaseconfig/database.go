@@ -54,6 +54,7 @@ type Config struct {
 	User             string        `mapstructure:"user"                            validate:"required,min=1,max=63"`
 	Password         string        `mapstructure:"password"                        validate:"required"`
 	SSLMode          string        `mapstructure:"sslMode"                         validate:"required,oneof=disable require verify-ca verify-full"`
+	SSLRootCert      string        `mapstructure:"sslRootCert"`
 	MaxOpenConns     int           `mapstructure:"maxOpenConns"                    validate:"min=1,max=1000"`
 	QueryLog         string        `mapstructure:"queryLog"                        validate:"omitempty,oneof=off errors all"`
 	ConnMaxLifetime  time.Duration `mapstructure:"connMaxLifetime"`
