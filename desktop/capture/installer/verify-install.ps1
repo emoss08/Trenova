@@ -108,7 +108,10 @@ $updater = Join-Path $env:ProgramFiles 'Trenova\Capture\trenova-capture-update.e
 function Test-Publisher([string]$file) {
   $ErrorActionPreference = 'Continue'
   $output = (& $updater verify-publisher $file 2>&1 | Out-String).Trim()
-  [pscustomobject]@{ Passed = ($LASTEXITCODE -eq 0); Output = $output }
+  $passed = $LASTEXITCODE -eq 0
+  # A refusal is an expected answer here, not the script's own exit code.
+  $global:LASTEXITCODE = 0
+  [pscustomobject]@{ Passed = $passed; Output = $output }
 }
 $own = Test-Publisher $msiPath
 if ((Get-AuthenticodeSignature $msiPath).Status -eq 'Valid') {
