@@ -311,6 +311,19 @@ Servers read the `capture-stable` manifest (`update.captureManifestUrl`, verifie
 where the web app's Download button and the agent's update check look. A server with no key
 configured mirrors nothing; the web app then points at the GitHub releases instead.
 
+A manifest expires 14 days after it is signed (`expiresAt`, signed with the rest), and the
+agent and the updater refuse one past its expiry or without one. The `capture-manifest.yml`
+workflow signs the current release's manifest again every day at 04:23 UTC with a fresh
+expiry (`trenova-capture-release resign`, the same key and tool as the release) and puts it on
+`capture-stable`; nothing else in it changes. So a mirror that keeps serving an old manifest
+cannot hold computers on an old release without notice: once it expires, the agent and the
+updater log that the server's manifest is out of date, and the installed release goes on
+scanning and printing as before; only updating stops. Thirteen missed runs in a row still leave
+a valid manifest, and running the workflow by hand (Actions → Trenova Capture manifest) renews
+a lapsed one. The current release is the highest `capture-vX.Y.Z` release carrying a
+manifest; the workflow renews any manifest the release key signed, including one from before
+manifests carried an expiry.
+
 Signing is used when its secrets exist, and a release is published either way:
 
 | Secret | What it signs | Without it |
