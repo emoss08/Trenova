@@ -20,6 +20,32 @@
 {{- printf "%s-rw" (include "trenova.postgresCluster" .) -}}
 {{- end -}}
 
+{{/* The CA CloudNativePG issues the cluster's server certificate from, which
+every client verifies PostgreSQL against. The Secret also holds the CA's key,
+so a pod mounts the certificate alone. */}}
+{{- define "trenova.postgresCaVolume" -}}
+- name: postgres-ca
+  secret:
+    secretName: {{ printf "%s-ca" (include "trenova.postgresCluster" .) }}
+    items:
+      - key: ca.crt
+        path: ca.crt
+{{- end -}}
+
+{{- define "trenova.postgresCaMount" -}}
+- name: postgres-ca
+  mountPath: /certs/postgres
+  readOnly: true
+{{- end -}}
+
+{{/* libpq's settings for a verified connection. */}}
+{{- define "trenova.postgresTlsEnv" -}}
+- name: PGSSLMODE
+  value: verify-full
+- name: PGSSLROOTCERT
+  value: /certs/postgres/ca.crt
+{{- end -}}
+
 {{- define "trenova.appSecret" -}}
 {{- .Values.secrets.existingSecret | default (printf "%s-secrets" (include "trenova.fullname" .)) -}}
 {{- end -}}
@@ -213,6 +239,7 @@ certificate. */}}
 - name: imaging-client-tls
   mountPath: /certs/imaging
   readOnly: true
+{{ include "trenova.postgresCaMount" . }}
 - name: tmp
   mountPath: /tmp
 {{- end -}}
@@ -225,6 +252,7 @@ certificate. */}}
   secret:
     secretName: {{ include "trenova.imagingClientSecret" . }}
     defaultMode: 0440
+{{ include "trenova.postgresCaVolume" . }}
 - name: tmp
   emptyDir:
     sizeLimit: 1Gi
@@ -256,8 +284,7 @@ query returns a row. Call with (dict "root" $ "user" u "secret" s "key" k
     - name: PGUSER
       value: {{ .user }}
     {{- include "trenova.secretEnv" (dict "name" "PGPASSWORD" "secret" .secret "key" .key) | nindent 4 }}
-    - name: PGSSLMODE
-      value: require
+    {{- include "trenova.postgresTlsEnv" . | nindent 4 }}
     - name: PGCONNECT_TIMEOUT
       value: "5"
     - name: WAIT_QUERY
@@ -268,6 +295,8 @@ query returns a row. Call with (dict "root" $ "user" u "secret" s "key" k
   resources:
     requests: { cpu: 10m, memory: 16Mi }
     limits: { memory: 64Mi }
+  volumeMounts:
+    {{- include "trenova.postgresCaMount" . | nindent 4 }}
 {{- end -}}
 
 {{/* The TMS's own role, signed in: the release Job has made it. The processes

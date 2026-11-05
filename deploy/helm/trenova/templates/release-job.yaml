@@ -48,8 +48,7 @@ spec:
               value: {{ .Values.postgres.database }}
             {{- include "trenova.secretEnv" (dict "name" "PGUSER" "secret" $superuser "key" "username") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "PGPASSWORD" "secret" $superuser "key" "password") | nindent 12 }}
-            - name: PGSSLMODE
-              value: require
+            {{- include "trenova.postgresTlsEnv" . | nindent 12 }}
             - name: PGCONNECT_TIMEOUT
               value: "5"
             - name: OWNER
@@ -68,6 +67,7 @@ spec:
             - name: files
               mountPath: /files
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
         - name: migrate
           image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.dbImage) }}
           imagePullPolicy: {{ include "trenova.pullPolicy" .Values.tms.dbImage }}
@@ -110,8 +110,7 @@ spec:
               value: {{ .Values.postgres.database }}
             {{- include "trenova.secretEnv" (dict "name" "PGUSER" "secret" $superuser "key" "username") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "PGPASSWORD" "secret" $superuser "key" "password") | nindent 12 }}
-            - name: PGSSLMODE
-              value: require
+            {{- include "trenova.postgresTlsEnv" . | nindent 12 }}
             - name: SINKS_FILE
               value: /files/gtc-sinks.yaml
             - name: GTC_ROLE
@@ -123,6 +122,7 @@ spec:
             - name: files
               mountPath: /files
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
       containers:
         - name: bootstrap
           image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.image) }}

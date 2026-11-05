@@ -181,6 +181,9 @@ CloudNativePG runs the cluster `trenova-postgres` from the Trenova image through
 | `temporal` | yes | Temporal, owner of its two databases |
 | `trenova_gtc` | yes, replication | GTC: logical replication and its backfill reads |
 
+Every client verifies the server (`verify-full`) against the CA CloudNativePG issued for the
+cluster: pods mount `ca.crt` alone from the `<cluster>-ca` Secret, never its key.
+
 `postgres.rlsMode` defaults to `enforce`: PostgreSQL itself refuses another organization's
 rows ([row-level security](../engineering/row-level-security.md)). `observe` logs what would be
 refused. There is no mode that signs the API and worker in as the owner, which is a superuser.

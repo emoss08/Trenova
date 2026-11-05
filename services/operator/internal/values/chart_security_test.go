@@ -1,6 +1,7 @@
 package values_test
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -12,6 +13,10 @@ import (
 
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/values"
+)
+
+var certificateOnly = regexp.MustCompile(
+	`secretName: trenova-postgres-ca\s+items:\s+- key: ca\.crt\s+path: ca\.crt\n`,
 )
 
 func renderChart(t *testing.T, b map[string]any) (*chart.Chart, map[string]any, map[string]string) {
@@ -75,4 +80,54 @@ func TestClamAVRunsUnprivileged(t *testing.T) {
 	require.Contains(t, clamav, "command: [/init-unprivileged]")
 	require.Contains(t, clamav, "allowPrivilegeEscalation: false")
 	require.Contains(t, clamav, "drop: [ALL]")
+}
+
+func TestEveryPostgresClientVerifiesTheServer(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+
+	for name, body := range out {
+		require.NotContains(t, body, "sslmode=require", name)
+		require.NotRegexp(t, `name: PGSSLMODE\s+value: require`, body, name)
+	}
+
+	require.Contains(t, template(t, out, "templates/configmap.yaml"), "sslMode: verify-full")
+	require.Contains(t, template(t, out, "templates/configmap.yaml"), "sslRootCert: /certs/postgres/ca.crt")
+
+	services := template(t, out, "templates/services.yaml")
+	require.Contains(t, services, "sslmode=verify-full&sslrootcert=/certs/postgres/ca.crt")
+	require.Regexp(t, `name: SQL_HOST_VERIFICATION\s+value: "true"`, services)
+	require.Regexp(t, `name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION\s+value: "false"`, services)
+	require.Regexp(t, `name: SQL_HOST_NAME\s+value: trenova-postgres-rw`, services)
+}
+
+func TestEveryPodThatMountsThePostgresCAHasItsVolume(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+
+	for _, suffix := range []string{
+		"templates/tms.yaml", "templates/services.yaml", "templates/release-job.yaml",
+	} {
+		for _, doc := range strings.Split(template(t, out, suffix), "\n---") {
+			if !strings.Contains(doc, "mountPath: /certs/postgres") {
+				continue
+			}
+			require.Contains(t, doc, "secretName: trenova-postgres-ca", suffix)
+		}
+	}
+}
+
+func TestPodsMountThePostgresCertificateNotTheCAKey(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+
+	for name, body := range out {
+		require.NotContains(t, body, "key: ca.key", name)
+		require.Len(
+			t,
+			certificateOnly.FindAllString(body, -1),
+			strings.Count(body, "secretName: trenova-postgres-ca"),
+			name,
+		)
+	}
 }

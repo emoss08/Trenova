@@ -61,11 +61,19 @@ spec:
             - name: POSTGRES_TLS_ENABLED
               value: "true"
             - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
-              value: "true"
+              value: "false"
+            - name: POSTGRES_TLS_CA_FILE
+              value: /certs/postgres/ca.crt
+            - name: POSTGRES_TLS_SERVER_NAME
+              value: {{ include "trenova.postgresHost" . }}
             - name: SQL_TLS_ENABLED
               value: "true"
             - name: SQL_HOST_VERIFICATION
-              value: "false"
+              value: "true"
+            - name: SQL_CA
+              value: /certs/postgres/ca.crt
+            - name: SQL_HOST_NAME
+              value: {{ include "trenova.postgresHost" . }}
             - name: DYNAMIC_CONFIG_FILE_PATH
               value: /etc/temporal/dynamicconfig/dynamic_config.yaml
             - name: BIND_ON_IP
@@ -99,7 +107,9 @@ spec:
             - name: dynamicconfig
               mountPath: /etc/temporal/dynamicconfig
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
       volumes:
+        {{- include "trenova.postgresCaVolume" . | nindent 8 }}
         - name: dynamicconfig
           configMap:
             name: {{ $files }}
@@ -502,7 +512,7 @@ spec:
             {{- include "trenova.secretEnv" (dict "name" "GTC_DB_PASSWORD" "secret" $db "key" "gtcPassword") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "REDIS_PASSWORD" "secret" $app "key" "redisPassword") | nindent 12 }}
             - name: DATABASE_URL
-              value: {{ printf "postgres://%s:$(GTC_DB_PASSWORD)@%s:5432/%s?replication=database&sslmode=require" .Values.postgres.gtcRole (include "trenova.postgresHost" .) .Values.postgres.database | quote }}
+              value: {{ printf "postgres://%s:$(GTC_DB_PASSWORD)@%s:5432/%s?replication=database&sslmode=verify-full&sslrootcert=/certs/postgres/ca.crt" .Values.postgres.gtcRole (include "trenova.postgresHost" .) .Values.postgres.database | quote }}
             - name: CDC_SLOT_NAME
               value: gtc_slot
             - name: CDC_PUBLICATION_NAME
@@ -548,7 +558,9 @@ spec:
             - name: sinks
               mountPath: /app/sinks
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
       volumes:
+        {{- include "trenova.postgresCaVolume" . | nindent 8 }}
         - name: sinks
           configMap:
             name: {{ $files }}

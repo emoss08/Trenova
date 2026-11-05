@@ -15,7 +15,8 @@ empty one fails validation instead of running with a default. */ -}}
   "name" .Values.postgres.database
   "user" .Values.postgres.appRole
   "password" ""
-  "sslMode" "require"
+  "sslMode" "verify-full"
+  "sslRootCert" "/certs/postgres/ca.crt"
   "system" (dict "user" .Values.postgres.systemRole "password" "" "maxOpenConns" 8)
   "migrator" (dict "user" .Values.postgres.owner "password" "")
   "rls" (dict "mode" .Values.postgres.rlsMode "scopeKeyId" "" "scopeKey" "")
