@@ -365,7 +365,7 @@ func (t *Tool) Query(
 		return nil, err
 	}
 
-	window, err := t.readWindow(params.Params)
+	window, err := t.readWindow(params)
 	if err != nil {
 		return nil, err
 	}
@@ -427,12 +427,18 @@ type listWindow struct {
 	byCursor bool
 }
 
-func (t *Tool) readWindow(params map[string]any) (listWindow, error) {
+func (t *Tool) readWindow(params *agenttoolports.QueryToolParams) (listWindow, error) {
 	if !t.Spec.PagesByCursor {
-		return listWindow{offset: querytool.ReadPage(params, DefaultLimit, MaxLimit)}, nil
+		return listWindow{
+			offset: querytool.ReadPage(params.Params, DefaultLimit, MaxLimit),
+		}, nil
 	}
 
-	cursor, err := querytool.ReadCursorWindow(t.Name(), params, DefaultLimit, MaxLimit)
+	cursor, err := querytool.ReadCursorWindow(
+		querytool.CallOf(t.Name(), params),
+		DefaultLimit,
+		MaxLimit,
+	)
 	if err != nil {
 		return listWindow{}, err
 	}
@@ -476,7 +482,7 @@ func (w *listWindow) outcome(
 	outcome := querytool.SearchResult(criteria, rows, len(rows))
 	if w.byCursor {
 		outcome.CursorPaged(&w.cursor, more, fetched.nextCursor)
-		outcome.Resume = &querytool.PageResume{Scope: w.cursor.Scope, Cursors: fetched.cursors}
+		outcome.Resume = &querytool.PageResume{Binding: w.cursor.Binding, Cursors: fetched.cursors}
 
 		return outcome, more
 	}

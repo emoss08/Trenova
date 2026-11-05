@@ -131,7 +131,8 @@ func (r *repository) ListThreads(
 		switch {
 		case len(entities) > window.limit:
 			page.Items = entities[:window.limit]
-			page.NextCursor = threadCursorAt(page.Items[window.limit-1]).encode()
+			page.NextCursor = threadCursorAt(page.Items[window.limit-1]).
+				encode(threadCursorBinding(req))
 		case window.until != nil:
 			page.NextCursor = req.Until
 		}
@@ -154,14 +155,14 @@ func threadWindowOf(req *conversationports.ListThreadsRequest) (threadWindow, er
 	window.limit = min(window.limit, maxThreadLimit)
 
 	if req.Cursor != "" {
-		after, err := decodeThreadCursor(req.Cursor)
+		after, err := decodeThreadCursor(threadCursorBinding(req), req.Cursor)
 		if err != nil {
 			return threadWindow{}, err
 		}
 		window.after = after
 	}
 	if req.Until != "" {
-		until, err := decodeThreadCursor(req.Until)
+		until, err := decodeThreadCursor(threadCursorBinding(req), req.Until)
 		if err != nil {
 			return threadWindow{}, err
 		}

@@ -3,7 +3,6 @@ package iamservice
 import (
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"slices"
 	"strings"
@@ -15,11 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/scim"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/slugutil"
@@ -29,10 +31,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	identityProviderSlugMaxLength = 80
-	scimTokenPrefix               = "scim_"
-)
+const identityProviderSlugMaxLength = 80
 
 type Params struct {
 	fx.In
@@ -45,6 +44,8 @@ type Params struct {
 	SecurityConfig *securityconfig.Config
 	Plans          platformplanports.PlanService
 	RoleGrants     permissionports.RoleGrantGuard
+	DB             kernelports.Transactor
+	Provisioning   scimports.DirectoryGrants
 }
 
 type service struct {
@@ -56,6 +57,8 @@ type service struct {
 	plans     platformplanports.PlanService
 	issuers   httpsafe.Policy
 	grants    permissionports.RoleGrantGuard
+	db        kernelports.Transactor
+	directory scimports.DirectoryGrants
 }
 
 func New(p Params) iamports.IAMService {
@@ -68,6 +71,8 @@ func New(p Params) iamports.IAMService {
 		plans:     p.Plans,
 		issuers:   p.SecurityConfig.SSOIssuerPolicy(),
 		grants:    p.RoleGrants,
+		db:        p.DB,
+		directory: p.Provisioning,
 	}
 }
 
@@ -396,7 +401,12 @@ func (s *service) DeleteSCIMDirectory(
 		return err
 	}
 
-	if err = s.repo.DeleteSCIMDirectory(ctx, tenantInfo, id); err != nil {
+	if err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if revokeErr := s.directory.RevokeDirectoryGrants(txCtx, tenantInfo, id); revokeErr != nil {
+			return revokeErr
+		}
+		return s.repo.DeleteSCIMDirectory(txCtx, tenantInfo, id)
+	}); err != nil {
 		return err
 	}
 
@@ -544,14 +554,12 @@ func generateSCIMToken() (*generatedSCIMToken, error) {
 		return nil, err
 	}
 
-	prefix := scimTokenPrefix + base64.RawURLEncoding.EncodeToString(prefixBytes)
-	secret := base64.RawURLEncoding.EncodeToString(secretBytes)
-	token := prefix + "." + secret
-	sum := sha256.Sum256([]byte(token))
+	prefix := scim.TokenPrefix + base64.RawURLEncoding.EncodeToString(prefixBytes)
+	token := scim.JoinToken(prefix, base64.RawURLEncoding.EncodeToString(secretBytes))
 	return &generatedSCIMToken{
 		prefix: prefix,
 		token:  token,
-		hash:   base64.RawURLEncoding.EncodeToString(sum[:]),
+		hash:   scim.HashToken(token),
 	}, nil
 }
 
@@ -616,13 +624,21 @@ func (s *service) CreateSCIMGroupRoleMapping(
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.DirectoryID = directoryID
+	entity.SavedByID = tenantInfo.UserID
 
 	if err := s.requireMappingAllowed(ctx, tenantInfo, entity); err != nil {
 		return nil, err
 	}
 
-	created, err := s.repo.CreateSCIMGroupRoleMapping(ctx, entity)
-	if err != nil {
+	var created *iam.SCIMGroupRoleMapping
+	if err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		var createErr error
+		created, createErr = s.repo.CreateSCIMGroupRoleMapping(txCtx, entity)
+		if createErr != nil {
+			return createErr
+		}
+		return s.directory.MappingsChanged(txCtx, tenantInfo)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -647,13 +663,21 @@ func (s *service) UpdateSCIMGroupRoleMapping(
 	entity.ID = id
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
+	entity.SavedByID = tenantInfo.UserID
 
 	if err := s.requireMappingAllowed(ctx, tenantInfo, entity); err != nil {
 		return nil, err
 	}
 
-	updated, err := s.repo.UpdateSCIMGroupRoleMapping(ctx, entity)
-	if err != nil {
+	var updated *iam.SCIMGroupRoleMapping
+	if err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		var updateErr error
+		updated, updateErr = s.repo.UpdateSCIMGroupRoleMapping(txCtx, entity)
+		if updateErr != nil {
+			return updateErr
+		}
+		return s.directory.MappingsChanged(txCtx, tenantInfo)
+	}); err != nil {
 		return nil, err
 	}
 
@@ -686,7 +710,12 @@ func (s *service) DeleteSCIMGroupRoleMapping(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	if err := s.repo.DeleteSCIMGroupRoleMapping(ctx, tenantInfo, id); err != nil {
+	if err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if deleteErr := s.repo.DeleteSCIMGroupRoleMapping(txCtx, tenantInfo, id); deleteErr != nil {
+			return deleteErr
+		}
+		return s.directory.MappingsChanged(txCtx, tenantInfo)
+	}); err != nil {
 		return err
 	}
 

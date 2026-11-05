@@ -4,12 +4,27 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
+var Binding = pagination.BindCursor(pagination.TenantInfo{}, "pagetest", nil)
+
+func Keyset(cursor pagination.CursorInfo) string {
+	if cursor.After == "" {
+		return ""
+	}
+
+	key, err := pagination.DecodeKeyCursor(Binding, cursor.After)
+	if err != nil {
+		return cursor.After
+	}
+
+	return key
+}
+
 func Page[T pagination.CursorEntity](
 	rows []T,
 	cursor pagination.CursorInfo,
 ) *pagination.CursorListResult[T] {
 	start := 0
-	if after := cursor.Cursor.Keyset; after != "" {
+	if after := Keyset(cursor); after != "" {
 		for i, row := range rows {
 			if row.GetID().String() == after {
 				start = i + 1
@@ -42,21 +57,11 @@ func Page[T pagination.CursorEntity](
 }
 
 func Cursor(item pagination.CursorEntity) string {
-	cursor, err := pagination.EncodeKeysetCursor(nil, item.GetID().String())
-	if err != nil {
-		panic(err)
-	}
-
-	return cursor
+	return KeysetCursor(item.GetID().String())
 }
 
 func KeysetCursor(keyset string) string {
-	cursor, err := pagination.EncodeKeysetCursor(nil, keyset)
-	if err != nil {
-		panic(err)
-	}
-
-	return cursor
+	return pagination.EncodeKeyCursor(Binding, keyset)
 }
 
 func Of[T pagination.CursorEntity](items []T, limit int) *pagination.CursorListResult[T] {

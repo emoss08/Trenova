@@ -18,9 +18,9 @@ func PageAfter[T pagination.CursorEntity](
 	cursor pagination.CursorInfo,
 ) *pagination.CursorListResult[T] {
 	start := 0
-	if cursor.Cursor.Keyset != "" {
+	if after := pagetest.Keyset(cursor); after != "" {
 		for idx, item := range items {
-			if item.GetID().String() == cursor.Cursor.Keyset {
+			if item.GetID().String() == after {
 				start = idx + 1
 				break
 			}
@@ -83,7 +83,7 @@ func AssertCursorPaging(t *testing.T, c CursorPagingCase) {
 	result, err := c.call(nil, c.Args)
 	require.NoError(t, err)
 	first := readCursorPage(t, result)
-	assert.Empty(t, c.Received().Cursor.Keyset, "the first page starts from the top")
+	assert.Empty(t, pagetest.Keyset(c.Received()), "the first page starts from the top")
 	assert.Equal(t, c.Limit, first.Count)
 	assert.True(t, first.HasMore)
 	require.NotEmpty(t, first.NextCursor, "a full page names where the next one starts")
@@ -97,7 +97,7 @@ func AssertCursorPaging(t *testing.T, c CursorPagingCase) {
 		result, err = c.call(map[string]any{querytool.ParamAfter: after}, c.Args)
 		require.NoError(t, err)
 		page := readCursorPage(t, result)
-		assert.Equal(t, c.IDs[seen-1].String(), c.Received().Cursor.Keyset,
+		assert.Equal(t, c.IDs[seen-1].String(), pagetest.Keyset(c.Received()),
 			"after reaches the repository as the last row of the previous page")
 		assert.Equal(t, page.HasMore, page.NextCursor != "")
 		seen += page.Count
@@ -118,7 +118,7 @@ func AssertCursorPaging(t *testing.T, c CursorPagingCase) {
 
 	for _, malformed := range []string{
 		"not a cursor",
-		pagination.EncodeKeyCursor("0000000000000000", "x"),
+		pagination.EncodeKeyCursor(pagetest.Binding, "x"),
 		first.NextCursor + "x",
 	} {
 		_, err = c.call(map[string]any{querytool.ParamAfter: malformed}, c.Args)

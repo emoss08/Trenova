@@ -178,11 +178,7 @@ func (r *Sources) LocationCategory(
 }
 
 func locationSelectOptionItem(entity *location.Location) selectoption.Item {
-	return selectoption.ItemFor(
-		locationSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(locationSelectOption(entity))
 }
 
 func (r *Sources) attachStates(ctx context.Context, entities []*location.Location) error {
@@ -236,11 +232,7 @@ func locationSelectOption(entity *location.Location) *gqlmodel.SelectOption {
 }
 
 func rateZoneSelectOptionItem(entity *ratezone.RateZone) selectoption.Item {
-	return selectoption.ItemFor(
-		rateZoneSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(rateZoneSelectOption(entity))
 }
 
 func rateZoneSelectOption(entity *ratezone.RateZone) *gqlmodel.SelectOption {
@@ -258,11 +250,7 @@ func rateZoneSelectOption(entity *ratezone.RateZone) *gqlmodel.SelectOption {
 func locationCategorySelectOptionItem(
 	entity *locationcategory.LocationCategory,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		locationCategorySelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(locationCategorySelectOption(entity))
 }
 
 func locationCategorySelectOption(
@@ -327,11 +315,7 @@ func (r *Sources) DistanceProfile(
 func distanceProfileSelectOptionItem(
 	entity *distanceprofile.DistanceProfile,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		distanceProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(distanceProfileSelectOption(entity))
 }
 
 func distanceProfileSelectOption(entity *distanceprofile.DistanceProfile) *gqlmodel.SelectOption {
@@ -348,11 +332,7 @@ func distanceProfileSelectOption(entity *distanceprofile.DistanceProfile) *gqlmo
 }
 
 func usStateSelectOptionItem(entity *usstate.UsState) selectoption.Item {
-	return selectoption.ItemFor(
-		usStateSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(usStateSelectOption(entity))
 }
 
 func usStateSelectOption(entity *usstate.UsState) *gqlmodel.SelectOption {

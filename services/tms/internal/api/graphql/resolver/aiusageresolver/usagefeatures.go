@@ -5,11 +5,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/memoryconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 // featureTable is what the usage-by-feature table may search, filter and
 // sort on.
 var featureTable = &memoryconnection.MemoryTable[aiusageports.AIUsageFeatureSlice]{
+	Scope: "ai_usage_features",
 	Fields: map[string]memoryconnection.MemoryField[aiusageports.AIUsageFeatureSlice]{
 		"feature":      func(s aiusageports.AIUsageFeatureSlice) any { return featureName(s) },
 		"calls":        func(s aiusageports.AIUsageFeatureSlice) any { return s.Calls },
@@ -31,8 +33,9 @@ func featureName(s aiusageports.AIUsageFeatureSlice) string {
 func featureConnection(
 	input *gqlmodel.DataTableConnectionInput,
 	slices []aiusageports.AIUsageFeatureSlice,
+	tenantInfo pagination.TenantInfo,
 ) (*gqlmodel.AIUsageFeatureConnection, error) {
-	page, err := featureTable.Page(input, slices)
+	page, err := featureTable.Page(input, slices, tenantInfo)
 	if err != nil {
 		return nil, err
 	}

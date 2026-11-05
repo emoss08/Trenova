@@ -93,24 +93,20 @@ func (r *Sources) WorkerCredentialType(
 func workerCredentialTypeSelectOptionItem(
 	entity *workercredential.WorkerCredentialType,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Description),
-			Meta: map[string]any{
-				selectoption.MetaKeyCode: entity.Code,
-				"category":               string(entity.Category),
-				"isRequired":             entity.IsRequired,
-				"requiresNumber":         entity.RequiresNumber,
-				"requiresDocument":       entity.RequiresDocument,
-				"profileField":           string(entity.ProfileField),
-				"validityMonths":         int32Value(entity.ValidityMonths),
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Description),
+		Meta: map[string]any{
+			selectoption.MetaKeyCode: entity.Code,
+			"category":               string(entity.Category),
+			"isRequired":             entity.IsRequired,
+			"requiresNumber":         entity.RequiresNumber,
+			"requiresDocument":       entity.RequiresDocument,
+			"profileField":           string(entity.ProfileField),
+			"validityMonths":         int32Value(entity.ValidityMonths),
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func (r *Sources) TrainingCourse(
@@ -171,16 +167,12 @@ func trainingCourseSelectOptionItem(
 		meta["passingScore"] = entity.PassingScore.Decimal.String()
 	}
 
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Description),
-			Meta:        meta,
-		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Description),
+		Meta:        meta,
+	})
 }
 
 func (r *Sources) PerformanceReviewTemplate(
@@ -226,21 +218,17 @@ func (r *Sources) PerformanceReviewTemplate(
 func performanceReviewTemplateSelectOptionItem(
 	entity *workerreview.PerformanceReviewTemplate,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Description),
-			Meta: map[string]any{
-				selectoption.MetaKeyCode: entity.Code,
-				"isDefault":              entity.IsDefault,
-				"itemCount":              len(entity.Items),
-				"cadenceMonths":          int32Value(entity.CadenceMonths),
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Description),
+		Meta: map[string]any{
+			selectoption.MetaKeyCode: entity.Code,
+			"isDefault":              entity.IsDefault,
+			"itemCount":              len(entity.Items),
+			"cadenceMonths":          int32Value(entity.CadenceMonths),
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func (r *Sources) PTOPolicy(
@@ -285,22 +273,18 @@ func (r *Sources) PTOPolicy(
 }
 
 func ptoPolicySelectOptionItem(entity *pto.PTOPolicy) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Description),
-			Meta: map[string]any{
-				selectoption.MetaKeyCode: entity.Code,
-				"isDefault":              entity.IsDefault,
-				"yearBasis":              string(entity.YearBasis),
-				"requiresApproval":       entity.RequiresApproval,
-				"ptoTypes":               ptoPolicyTrackedTypes(entity),
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Description),
+		Meta: map[string]any{
+			selectoption.MetaKeyCode: entity.Code,
+			"isDefault":              entity.IsDefault,
+			"yearBasis":              string(entity.YearBasis),
+			"requiresApproval":       entity.RequiresApproval,
+			"ptoTypes":               ptoPolicyTrackedTypes(entity),
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func (r *Sources) BenefitPlan(
@@ -341,25 +325,21 @@ func (r *Sources) BenefitPlan(
 }
 
 func benefitPlanSelectOptionItem(entity *paybenefit.BenefitPlan) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Description),
-			Meta: map[string]any{
-				selectoption.MetaKeyCode: entity.Code,
-				"planType":               string(entity.PlanType),
-				"planYear":               entity.PlanYear,
-				"carrier":                entity.Carrier,
-				"employeeCostMinor":      entity.EmployeeCostMinor,
-				"employerCostMinor":      entity.EmployerCostMinor,
-				"currencyCode":           entity.CurrencyCode,
-				"waitingPeriodDays":      entity.WaitingPeriodDays,
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Description),
+		Meta: map[string]any{
+			selectoption.MetaKeyCode: entity.Code,
+			"planType":               string(entity.PlanType),
+			"planYear":               entity.PlanYear,
+			"carrier":                entity.Carrier,
+			"employeeCostMinor":      entity.EmployeeCostMinor,
+			"employerCostMinor":      entity.EmployerCostMinor,
+			"currencyCode":           entity.CurrencyCode,
+			"waitingPeriodDays":      entity.WaitingPeriodDays,
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func int32Value(value *int32) any {
@@ -425,11 +405,7 @@ func (r *Sources) Worker(
 }
 
 func workerSelectOptionItem(entity *worker.Worker) selectoption.Item {
-	return selectoption.ItemFor(
-		workerSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(workerSelectOption(entity))
 }
 
 func workerSelectOption(entity *worker.Worker) *gqlmodel.SelectOption {

@@ -1,16 +1,20 @@
 package conversationrepository
 
 import (
-	"encoding/base64"
 	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const threadCursorSeparator = "."
+const (
+	threadCursorSeparator = "."
+	threadCursorResource  = "agent_threads:"
+)
 
 type threadCursor struct {
 	pinned    bool
@@ -26,21 +30,25 @@ func threadCursorAt(thread *conversation.Thread) threadCursor {
 	}
 }
 
-func (c threadCursor) encode() string {
+func threadCursorBinding(req *conversationports.ListThreadsRequest) pagination.CursorBinding {
+	return pagination.BindCursor(req.TenantInfo, threadCursorResource+req.UserID.String(), nil)
+}
+
+func (c threadCursor) encode(binding pagination.CursorBinding) string {
 	pinned := "0"
 	if c.pinned {
 		pinned = "1"
 	}
 
-	return base64.RawURLEncoding.EncodeToString([]byte(strings.Join([]string{
+	return pagination.SealCursor(binding, []byte(strings.Join([]string{
 		pinned,
 		strconv.FormatInt(c.touchedAt, 10),
 		c.id.String(),
 	}, threadCursorSeparator)))
 }
 
-func decodeThreadCursor(raw string) (*threadCursor, error) {
-	decoded, err := base64.RawURLEncoding.DecodeString(raw)
+func decodeThreadCursor(binding pagination.CursorBinding, raw string) (*threadCursor, error) {
+	decoded, err := pagination.OpenCursor(binding, raw)
 	if err != nil {
 		return nil, errBadThreadCursor()
 	}

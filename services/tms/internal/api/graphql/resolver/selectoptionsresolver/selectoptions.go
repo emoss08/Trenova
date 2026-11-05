@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
+const selectOptionCursorResource = "select_options:"
+
 func (r *QueryResolver) resolveSelectOptions(
 	ctx context.Context,
 	input gqlmodel.SelectOptionsInput,
@@ -36,7 +38,22 @@ func (r *QueryResolver) resolveSelectOptions(
 		return nil, err
 	}
 
-	return entry.Resolve(ctx, req)
+	conn, err := entry.Resolve(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	selectoption.SealCursors(
+		conn,
+		pagination.BindCursor(
+			req.TenantInfo,
+			selectOptionCursorResource+string(input.Resource),
+			nil,
+		),
+		req.SelectQuery.Pagination.SafeOffset(),
+	)
+
+	return conn, nil
 }
 
 func selectOptionsRequestFromInput(

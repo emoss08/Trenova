@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	defaultPageSize = 25
-	maxPageSize     = 100
+	defaultPageSize        = 25
+	maxPageSize            = 100
+	decisionCursorResource = "agent_decision_queue"
 	// MaxBatch bounds one batch decision. Each proposal is decided and, when
 	// approved, executed in turn, so the bound is what keeps one request
 	// from running for minutes.
@@ -100,7 +101,7 @@ func (s *Service) ListPending(
 		Now:               timeutils.NowUnix(),
 	}
 	if req.After != "" {
-		after, decodeErr := decodeCursor(req.After)
+		after, decodeErr := decodeCursor(req.TenantInfo, req.After)
 		if decodeErr != nil {
 			return nil, errortypes.NewValidationError(
 				"after",
@@ -189,7 +190,7 @@ func (s *Service) loadEntries(
 
 	items := make([]agentdecisionqueueports.PendingDecision, 0, len(entries))
 	for _, entry := range entries {
-		cursor, err := encodeCursor(entry)
+		cursor, err := encodeCursor(tenant, entry)
 		if err != nil {
 			return nil, err
 		}
@@ -492,14 +493,25 @@ func decisionErrorMessage(err error) string {
 	return "This proposal could not be decided. Try it on its own."
 }
 
-func encodeCursor(entry agentdecisionqueueports.PendingDecisionEntry) (string, error) {
+func decisionCursorBinding(tenant pagination.TenantInfo) pagination.CursorBinding {
+	return pagination.BindCursor(tenant, decisionCursorResource, nil)
+}
+
+func encodeCursor(
+	tenant pagination.TenantInfo,
+	entry agentdecisionqueueports.PendingDecisionEntry,
+) (string, error) {
 	return pagination.EncodePositionCursor(
+		decisionCursorBinding(tenant),
 		pagination.PositionCursor{At: entry.CreatedAt, ID: entry.ID},
 	)
 }
 
-func decodeCursor(encoded string) (agentdecisionqueueports.PendingDecisionCursor, error) {
-	cursor, err := pagination.DecodePositionCursor(encoded)
+func decodeCursor(
+	tenant pagination.TenantInfo,
+	encoded string,
+) (agentdecisionqueueports.PendingDecisionCursor, error) {
+	cursor, err := pagination.DecodePositionCursor(decisionCursorBinding(tenant), encoded)
 	if err != nil {
 		return agentdecisionqueueports.PendingDecisionCursor{}, err
 	}

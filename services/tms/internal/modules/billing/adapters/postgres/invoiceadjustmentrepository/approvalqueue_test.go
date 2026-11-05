@@ -1,6 +1,7 @@
 package invoiceadjustmentrepository
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -90,7 +91,17 @@ func TestApprovalQueue_RefusesCursorsFromAnotherList(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			after, err := pagination.EncodeKeysetCursor(sort, "opaque")
+			after, err := pagination.EncodeKeysetCursor(
+				pagination.BindCursor(
+					pagination.TenantInfo{
+						OrgID: keeltest.TestOrganizationID,
+						BuID:  keeltest.TestBusinessUnitID,
+					},
+					"invoice_adjustments",
+					sort,
+				),
+				base64.RawURLEncoding.EncodeToString([]byte("opaque")),
+			)
 			require.NoError(t, err)
 			cursor, err := pagination.NewCursorInfo(2, after)
 			require.NoError(t, err)

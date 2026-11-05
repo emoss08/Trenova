@@ -470,16 +470,24 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	assert.True(t, page.TotalCountExact)
 	assert.Equal(t, "dispatch_assign_move", queue.last.ToolName)
 
-	decoded, err := decodeCursor(page.Items[1].Cursor)
+	decoded, err := decodeCursor(pagination.TenantInfo{}, page.Items[1].Cursor)
 	require.NoError(t, err)
 	assert.Equal(t, first.ID, decoded.ID)
 	assert.EqualValues(t, 10, decoded.CreatedAt)
 
-	_, err = svc.ListPending(
-		t.Context(),
-		&agentdecisionqueueports.ListPendingDecisionsRequest{After: "not-a-cursor"},
+	_, err = decodeCursor(
+		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		page.Items[1].Cursor,
 	)
-	require.Error(t, err)
+	require.Error(t, err, "another tenant cannot read the cursor")
+
+	for _, after := range []string{"not-a-cursor", page.Items[1].Cursor + "A"} {
+		_, err = svc.ListPending(
+			t.Context(),
+			&agentdecisionqueueports.ListPendingDecisionsRequest{After: after},
+		)
+		require.Error(t, err, after)
+	}
 }
 
 // Every organization starts with its agents paused. What they proposed
@@ -514,7 +522,10 @@ func TestListPending_ListsWhatThePauseHoldsAndTheBadgeLeavesItOut(t *testing.T) 
 		shadow:    stubShadow{shadow: true},
 	}
 
-	page, err := svc.ListPending(t.Context(), &agentdecisionqueueports.ListPendingDecisionsRequest{})
+	page, err := svc.ListPending(
+		t.Context(),
+		&agentdecisionqueueports.ListPendingDecisionsRequest{},
+	)
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
 	assert.Equal(t, waiting, page.Items[0].Proposal)

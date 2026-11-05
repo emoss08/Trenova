@@ -1122,6 +1122,7 @@
   "Run console": "Consola de ejecución",
   "Runs its own fleet": "Opera su propia flota",
   "SCIM activity will appear after your directory starts syncing.": "La actividad SCIM aparecerá cuando su directorio empiece a sincronizarse.",
+  "SCIM base URL": "URL base de SCIM",
   "SCIM directories": "Directorios SCIM",
   "SCIM directories could not be loaded.": "No se pudieron cargar los directorios SCIM.",
   "SCIM directory": "Directorio SCIM",

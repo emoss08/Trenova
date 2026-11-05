@@ -87,6 +87,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/scimhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -117,6 +118,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dataretentionhandler.New,
 	organizationhandler.New,
 	iamhandler.New,
+	scimhandler.New,
 	userhandler.New,
 	authhandler.New,
 	publicconfighandler.New,

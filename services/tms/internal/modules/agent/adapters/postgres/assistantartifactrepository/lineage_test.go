@@ -32,15 +32,27 @@ func TestCursorRoundTripsThroughItsEncoding(t *testing.T) {
 		{pinned: true, last: 1_790_000_000, root: "art_01J0000000000000000000000"},
 		{pinned: false, last: 0, root: "art_x.y"},
 	} {
-		decoded, err := decodeCursor(cursor.encode())
+		binding := lineageCursorBinding(pageRequest())
+		decoded, err := decodeCursor(binding, cursor.encode(binding))
 		require.NoError(t, err)
 		assert.Equal(t, cursor, decoded)
 	}
 
+	binding := lineageCursorBinding(pageRequest())
 	for _, bad := range []string{"", "not base64!", "MQ", "Mi4xLmFydA"} {
-		_, err := decodeCursor(bad)
+		_, err := decodeCursor(binding, bad)
 		assert.ErrorIs(t, err, ErrBadCursor, bad)
 	}
+}
+
+func TestCursorReadsOnlyInTheThreadAndTenantItWasIssuedFor(t *testing.T) {
+	t.Parallel()
+
+	cursor := lineageCursor{pinned: true, last: 42, root: "art_01J0000000000000000000000"}
+	issued := cursor.encode(lineageCursorBinding(pageRequest()))
+
+	_, err := decodeCursor(lineageCursorBinding(pageRequest()), issued)
+	assert.ErrorIs(t, err, ErrBadCursor)
 }
 
 func TestPageQueryStartsAfterTheCursorInPaneOrder(t *testing.T) {
@@ -85,11 +97,18 @@ func TestFamilyExprMatchesTheDomainsFamilies(t *testing.T) {
 	a := assistantartifactdb.Artifacts
 	sql, args := keeltest.Render(t, a.Pick(familyExpr()))
 
-	assert.Regexp(t,
-		`WHEN \(\(aa\."kind" = 'table_view' AND NOT \(aa\."payload" \? \$3\)\)\) THEN \$4::text `, sql)
+	assert.Regexp(
+		t,
+		`WHEN \(\(aa\."kind" = 'table_view' AND NOT \(aa\."payload" \? \$3\)\)\) THEN \$4::text `,
+		sql,
+	)
 	assert.Regexp(t,
 		`\(aa\."kind" = 'table_view' AND aa\."payload" \? \$3\)\) THEN \$12::text `, sql)
-	assert.Contains(t, sql, `WHEN (aa."kind" IN ('extraction', 'edi_connection_draft')) THEN $14::text `)
+	assert.Contains(
+		t,
+		sql,
+		`WHEN (aa."kind" IN ('extraction', 'edi_connection_draft')) THEN $14::text `,
+	)
 	assert.Contains(t, sql,
 		`WHEN (aa."kind" IN ('report_preview', 'report_run', 'analysis', 'portal_task', 'board')) `+
 			`THEN $9::text `)

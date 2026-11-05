@@ -35,5 +35,5 @@ func TestJournalEntrySelectOptionItem_NamesTheEntryByNumberAndCarriesOnlyItsRefe
 		"status":         "Posted",
 		"accountingDate": int64(1792065600),
 	}, item.Option.Meta)
-	assert.Equal(t, int64(1792000000), item.Cursor.At)
+	assert.Equal(t, entity.ID.String(), item.Option.ID)
 }

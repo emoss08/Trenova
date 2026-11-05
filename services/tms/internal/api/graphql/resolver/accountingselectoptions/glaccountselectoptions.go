@@ -68,11 +68,7 @@ func (r *Sources) GLAccount(
 }
 
 func glAccountSelectOptionItem(entity *glaccount.GLAccount) selectoption.Item {
-	return selectoption.ItemFor(
-		glAccountSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(glAccountSelectOption(entity))
 }
 
 func glAccountSelectOption(entity *glaccount.GLAccount) *gqlmodel.SelectOption {
@@ -127,11 +123,7 @@ func (r *Sources) AccountType(
 }
 
 func accountTypeSelectOptionItem(entity *accounttype.AccountType) selectoption.Item {
-	return selectoption.ItemFor(
-		accountTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(accountTypeSelectOption(entity))
 }
 
 func accountTypeSelectOption(entity *accounttype.AccountType) *gqlmodel.SelectOption {

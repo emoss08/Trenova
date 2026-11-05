@@ -90,6 +90,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/reporthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/routingguidehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/scimhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
@@ -151,6 +152,7 @@ type RouterParams struct {
 	OrganizationHandler             *organizationhandler.Handler
 	DataRetentionHandler            *dataretentionhandler.Handler
 	IAMHandler                      *iamhandler.Handler
+	SCIMHandler                     *scimhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
 	PublicConfigHandler             *publicconfighandler.Handler
@@ -278,6 +280,7 @@ type Router struct {
 	organizationHandler             *organizationhandler.Handler
 	dataRetentionHandler            *dataretentionhandler.Handler
 	iamHandler                      *iamhandler.Handler
+	scimHandler                     *scimhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
 	publicConfigHandler             *publicconfighandler.Handler
@@ -407,6 +410,7 @@ func NewRouter(p RouterParams) *Router {
 		organizationHandler:             p.OrganizationHandler,
 		dataRetentionHandler:            p.DataRetentionHandler,
 		iamHandler:                      p.IAMHandler,
+		scimHandler:                     p.SCIMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
 		publicConfigHandler:             p.PublicConfigHandler,
@@ -573,6 +577,7 @@ func (r *Router) setupRoutes() {
 	v1.Use(r.queryBudgetMiddleware.Install())
 	r.setupProtectedRoutes(v1)
 	r.setupPublicRoutes(v1)
+	r.scimHandler.RegisterRoutes(v1)
 }
 
 func (r *Router) setupGraphQLRoutes(rg *gin.RouterGroup) {

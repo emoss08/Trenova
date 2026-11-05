@@ -42,8 +42,8 @@ func TestEDISelectOptionMappers(t *testing.T) {
 	)
 	assert.Equal(
 		t,
-		transferEntity.CreatedAt,
-		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).Cursor.At,
+		transferEntity.ID.String(),
+		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).Option.ID,
 	)
 
 	fallbackTransfer := &editransfer.EDITransfer{
@@ -75,8 +75,8 @@ func TestEDISelectOptionMappers(t *testing.T) {
 	assert.Equal(t, "Beta LLC", connectionOption.Meta["targetOrganizationName"])
 	assert.Equal(
 		t,
-		connectionEntity.CreatedAt,
-		ediConnectionSelectOptionItem(connectionEntity).Cursor.At,
+		connectionEntity.ID.String(),
+		ediConnectionSelectOptionItem(connectionEntity).Option.ID,
 	)
 
 	fallbackConnection := &edi.EDIConnection{

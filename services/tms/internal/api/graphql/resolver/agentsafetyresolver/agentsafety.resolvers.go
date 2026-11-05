@@ -65,7 +65,7 @@ func (r *QueryResolver) AgentToolRuleConnection(ctx context.Context, input gqlmo
 
 	page, err := r.AgentSafetyService.ListToolPolicies(ctx, &agenttoolports.ListAgentToolPoliciesRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
-		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
+		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx)),
 		WithAttendance: graphql.FieldRequested(
 			ctx,
 			"edges.node."+agentsafetyservice.FieldRunsWithoutPerson,
@@ -92,7 +92,7 @@ func (r *QueryResolver) AgentToolSafetyConnection(ctx context.Context, agentIds 
 	page, err := r.AgentSafetyService.ListAgentTools(ctx, &agenttoolports.ListAgentToolSafetyRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentIDs:   ids,
-		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
+		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx)),
 	})
 	if err != nil {
 		return nil, err

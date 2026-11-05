@@ -8,11 +8,7 @@ import (
 )
 
 func customerSelectOptionItem(entity *customer.Customer) selectoption.Item {
-	return selectoption.ItemFor(
-		customerSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(customerSelectOption(entity))
 }
 
 func customerSelectOption(entity *customer.Customer) *gqlmodel.SelectOption {

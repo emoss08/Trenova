@@ -105,6 +105,9 @@ security:
     publicToken:
       requestsPerMinute: 60
       burstSize: 20
+    scim:
+      requestsPerMinute: 600
+      burstSize: 100
   passwordReset:
     baseUrl: https://tms.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.

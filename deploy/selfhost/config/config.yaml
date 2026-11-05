@@ -191,6 +191,7 @@ security:
     apiKey: { requestsPerMinute: 300, burstSize: 30 }
     tenant: { requestsPerMinute: 6000, burstSize: 600 }
     publicToken: { requestsPerMinute: 10, burstSize: 5 }
+    scim: { requestsPerMinute: 600, burstSize: 100 }
   passwordReset:
     baseUrl: https://localhost # from .env (https://DOMAIN)
     tokenTtl: 30m

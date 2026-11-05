@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +15,13 @@ type usageRow struct {
 	failed int
 }
 
+var usageTenant = pagination.TenantInfo{
+	OrgID: "org_0000000000000000000000000",
+	BuID:  "bu_00000000000000000000000000",
+}
+
 var usageTable = &MemoryTable[usageRow]{
+	Scope: "usage",
 	Fields: map[string]MemoryField[usageRow]{
 		"name":   func(r usageRow) any { return r.name },
 		"calls":  func(r usageRow) any { return r.calls },
@@ -41,7 +48,7 @@ func TestMemoryTableFiltersSortsAndPages(t *testing.T) {
 			{Field: "failed", Operator: "gt", Value: float64(0)},
 		},
 		Sort: []*gqlmodel.SortFieldInput{{Field: "calls", Direction: "asc"}},
-	}, usageRows)
+	}, usageRows, usageTenant)
 	require.NoError(t, err)
 	assert.Equal(t, 2, first.Total)
 	require.Len(t, first.Rows, 1)
@@ -55,7 +62,7 @@ func TestMemoryTableFiltersSortsAndPages(t *testing.T) {
 			{Field: "failed", Operator: "gt", Value: float64(0)},
 		},
 		Sort: []*gqlmodel.SortFieldInput{{Field: "calls", Direction: "asc"}},
-	}, usageRows)
+	}, usageRows, usageTenant)
 	require.NoError(t, err)
 	assert.Equal(t, "Agent turns", second.Rows[0].name)
 	assert.False(t, second.HasNext)
@@ -66,7 +73,7 @@ func TestMemoryTableSearchesAndOrsAGroup(t *testing.T) {
 
 	page, err := usageTable.Page(&gqlmodel.DataTableConnectionInput{
 		Query: ptr("TABLE"),
-	}, usageRows)
+	}, usageRows, usageTenant)
 	require.NoError(t, err)
 	assert.Equal(t, 1, page.Total)
 
@@ -75,7 +82,7 @@ func TestMemoryTableSearchesAndOrsAGroup(t *testing.T) {
 			{Field: "calls", Operator: "lt", Value: 20},
 			{Field: "calls", Operator: "gte", Value: 900},
 		}}},
-	}, usageRows)
+	}, usageRows, usageTenant)
 	require.NoError(t, err)
 	assert.Equal(t, 2, page.Total)
 }
@@ -85,9 +92,13 @@ func TestMemoryTableRefusesWhatItDoesNotDescribe(t *testing.T) {
 
 	_, err := usageTable.Page(&gqlmodel.DataTableConnectionInput{
 		Sort: []*gqlmodel.SortFieldInput{{Field: "secret", Direction: "asc"}},
-	}, usageRows)
+	}, usageRows, usageTenant)
 	require.Error(t, err)
 
-	_, err = usageTable.Page(&gqlmodel.DataTableConnectionInput{After: ptr("garbage")}, usageRows)
+	_, err = usageTable.Page(
+		&gqlmodel.DataTableConnectionInput{After: ptr("garbage")},
+		usageRows,
+		usageTenant,
+	)
 	require.Error(t, err)
 }

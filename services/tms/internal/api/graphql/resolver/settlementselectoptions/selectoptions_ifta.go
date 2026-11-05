@@ -56,22 +56,18 @@ func iftaJurisdictionSelectOptionItem(entity *ifta.Jurisdiction) selectoption.It
 		description += " · Not an IFTA member"
 	}
 
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Code + " — " + entity.Name,
-			Description: &description,
-			Meta: map[string]any{
-				selectoption.MetaKeyCode: entity.Code,
-				"name":                   entity.Name,
-				"countryCode":            entity.CountryCode,
-				"isIftaMember":           entity.IsIftaMember,
-				"hasSurcharge":           entity.HasSurcharge,
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code + " — " + entity.Name,
+		Description: &description,
+		Meta: map[string]any{
+			selectoption.MetaKeyCode: entity.Code,
+			"name":                   entity.Name,
+			"countryCode":            entity.CountryCode,
+			"isIftaMember":           entity.IsIftaMember,
+			"hasSurcharge":           entity.HasSurcharge,
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func matchingIFTAFuelTypes(query string, iftaOnly bool) []domaintypes.IFTAFuelType {
@@ -104,11 +100,7 @@ func iftaFuelTypeID(fuelType domaintypes.IFTAFuelType) pulid.ID {
 func iftaFuelTypeSelectOptionItem(
 	fuelType domaintypes.IFTAFuelType,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		iftaFuelTypeSelectOption(fuelType),
-		0,
-		iftaFuelTypeID(fuelType),
-	)
+	return selectoption.ItemFor(iftaFuelTypeSelectOption(fuelType))
 }
 
 func iftaFuelTypeSelectOption(fuelType domaintypes.IFTAFuelType) *gqlmodel.SelectOption {

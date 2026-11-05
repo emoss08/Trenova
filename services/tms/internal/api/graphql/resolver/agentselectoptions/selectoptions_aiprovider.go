@@ -70,18 +70,14 @@ func (r *Sources) AIProvider(
 }
 
 func aiProviderSelectOptionItem(entity *aiprovider.Provider) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Model),
-			Meta: map[string]any{
-				"model":   entity.Model,
-				"kind":    string(entity.Kind),
-				"enabled": entity.Enabled,
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Model),
+		Meta: map[string]any{
+			"model":   entity.Model,
+			"kind":    string(entity.Kind),
+			"enabled": entity.Enabled,
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }

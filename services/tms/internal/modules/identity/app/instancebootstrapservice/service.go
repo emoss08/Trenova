@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/emailutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -30,7 +29,6 @@ const (
 	lockTimeout          = 10 * time.Second
 	defaultLocale        = "en"
 	loginSlugBaseLength  = 60
-	maxUsernameLength    = 20
 	auditSource          = "instance_bootstrap"
 	fieldPassword        = "password"
 	keyUserID            = "userId"
@@ -216,7 +214,7 @@ func (s *Service) create(
 		LoginSlugBase:     stringutils.SlugifyASCII(inputs.OrganizationName, loginSlugBaseLength),
 		StateAbbreviation: inputs.State,
 		Owner:             owner,
-		UsernameBase:      usernameBase(inputs.AdminEmail),
+		UsernameBase:      tenant.UsernameBase(inputs.AdminEmail),
 		Now:               now,
 	})
 	if err != nil {
@@ -407,22 +405,4 @@ func validateRequest(
 	}
 
 	return normalized, nil
-}
-
-func usernameBase(email string) string {
-	local := emailutils.LocalPart(email)
-
-	var builder strings.Builder
-	builder.Grow(min(len(local), maxUsernameLength))
-	for _, r := range local {
-		if builder.Len() >= maxUsernameLength {
-			break
-		}
-		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9', r == '.', r == '_', r == '-':
-			builder.WriteRune(r)
-		}
-	}
-
-	return strings.Trim(builder.String(), "._-")
 }

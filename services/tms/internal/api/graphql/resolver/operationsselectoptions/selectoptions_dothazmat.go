@@ -48,11 +48,7 @@ func dotHazmatReferenceID(entity *dothazmatreference.DotHazmatReference) pulid.I
 func dotHazmatReferenceSelectOptionItem(
 	entity *dothazmatreference.DotHazmatReference,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		dotHazmatReferenceSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(dotHazmatReferenceSelectOption(entity))
 }
 
 func dotHazmatReferenceSelectOption(

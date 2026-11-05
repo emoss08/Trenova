@@ -55,8 +55,6 @@ func NewSelectQueryRequest(c *gin.Context, authCtx *authctx.AuthContext) *Select
 	return req
 }
 
-const listCursorScope = "list"
-
 func List[T any](
 	c *gin.Context,
 	opts *QueryOptions,
@@ -67,7 +65,8 @@ func List[T any](
 		return
 	}
 
-	offset, err := DecodeOffsetCursor(listCursorScope, c.Query("after"))
+	binding := BindCursor(opts.TenantInfo, c.FullPath(), SortShape(opts.Sort))
+	offset, err := DecodeOffsetCursor(binding, c.Query("after"))
 	if err != nil {
 		eh.HandleError(c, invalidCursor())
 		return
@@ -91,7 +90,7 @@ func List[T any](
 
 	endCursor := ""
 	if hasNextPage {
-		endCursor = EncodeOffsetCursor(listCursorScope, offset+limit)
+		endCursor = EncodeOffsetCursor(binding, offset+limit)
 	}
 
 	total := result.Total

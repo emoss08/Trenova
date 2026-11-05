@@ -833,7 +833,7 @@ func (t *Tool) Query(
 		return nil, err
 	}
 	fewest, most := t.pageBounds()
-	window, err := querytool.ReadCursorWindow(t.Name(), params.Params, fewest, most)
+	window, err := querytool.ReadCursorWindow(querytool.CallOf(t.Name(), params), fewest, most)
 	if err != nil {
 		return nil, err
 	}

@@ -42,6 +42,9 @@ const (
 	EventCritical = "watchtower.critical"
 
 	bulkSweptAction = "bulk_swept"
+
+	watchtowerOccurredCursor = "watchtower_items_by_occurred"
+	watchtowerDueCursor      = "watchtower_items_by_due"
 )
 
 type Params struct {
@@ -110,12 +113,28 @@ func New(p Params) *Service {
 	return svc
 }
 
-func ItemCursor(item *watchtower.Item, orderByDue bool) (string, error) {
+func itemCursorBinding(tenant pagination.TenantInfo, orderByDue bool) pagination.CursorBinding {
+	resource := watchtowerOccurredCursor
+	if orderByDue {
+		resource = watchtowerDueCursor
+	}
+
+	return pagination.BindCursor(tenant, resource, nil)
+}
+
+func ItemCursor(
+	tenant pagination.TenantInfo,
+	item *watchtower.Item,
+	orderByDue bool,
+) (string, error) {
 	key := item.OccurredAt
 	if orderByDue {
 		key = item.DueSortKey()
 	}
-	encoded, err := pagination.EncodePositionCursor(pagination.PositionCursor{At: key, ID: item.ID})
+	encoded, err := pagination.EncodePositionCursor(
+		itemCursorBinding(tenant, orderByDue),
+		pagination.PositionCursor{At: key, ID: item.ID},
+	)
 	if err != nil {
 		return "", fmt.Errorf("encode watchtower cursor: %w", err)
 	}
@@ -197,7 +216,10 @@ func (s *Service) List(
 		listReq.OverdueAt = s.now()
 	}
 	if req.After != "" {
-		decoded, dErr := pagination.DecodePositionCursor(req.After)
+		decoded, dErr := pagination.DecodePositionCursor(
+			itemCursorBinding(req.TenantInfo, req.OrderByDue),
+			req.After,
+		)
 		if dErr != nil {
 			return nil, errortypes.NewValidationError(
 				"after",
@@ -229,7 +251,7 @@ func (s *Service) List(
 	for _, item := range items {
 		_, opened := read[item.ID]
 		item.Seen = opened || item.OccurredAt <= cursor.SeenAt
-		encoded, eErr := ItemCursor(item, req.OrderByDue)
+		encoded, eErr := ItemCursor(req.TenantInfo, item, req.OrderByDue)
 		if eErr != nil {
 			return nil, eErr
 		}

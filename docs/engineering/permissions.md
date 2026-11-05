@@ -612,7 +612,10 @@ resource, operation, data scope or sensitivity the person saving does not hold:
   never be made to inherit);
 - API key create and update;
 - SCIM group role mappings, through `permissionports.RoleGrantGuard`, because a mapping
-  hands its role to whoever the identity provider puts in the group.
+  hands its role to whoever the identity provider puts in the group. The mapping records who
+  saved it, and provisioning checks again before every grant that this person is still an
+  active member who may grant the role; a grant whose saver lost that authority is taken back
+  ([scim.md](scim.md#groups-and-roles)).
 
 What the person holds is `GetEffectivePermissions`, which counts only the roles active in
 their session when the organization requires role activation. Comparing two people

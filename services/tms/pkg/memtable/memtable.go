@@ -58,6 +58,7 @@ type Table[T any] struct {
 }
 
 type Request struct {
+	Tenant            pagination.TenantInfo
 	Query             string
 	FieldFilters      []domaintypes.FieldFilter
 	FilterGroups      []domaintypes.FilterGroup
@@ -130,7 +131,8 @@ func (t *Table[T]) List(items []T, req *Request) (*Page[T], error) {
 		return nil, err
 	}
 
-	offset, err := pagination.DecodeOffsetCursor(t.scope, req.After)
+	binding := pagination.BindCursor(req.Tenant, t.scope, pagination.SortShape(req.Sort))
+	offset, err := pagination.DecodeOffsetCursor(binding, req.After)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"after",
@@ -170,7 +172,7 @@ func (t *Table[T]) List(items []T, req *Request) (*Page[T], error) {
 	for idx := range page.Items {
 		page.Cursors = append(
 			page.Cursors,
-			pagination.EncodeOffsetCursor(t.scope, offset+idx+1),
+			pagination.EncodeOffsetCursor(binding, offset+idx+1),
 		)
 	}
 

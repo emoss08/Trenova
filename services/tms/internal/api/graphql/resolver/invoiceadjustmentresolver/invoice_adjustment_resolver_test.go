@@ -2,6 +2,7 @@ package invoiceadjustmentresolver
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
@@ -79,8 +80,12 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndPassesKeyse
 		{Field: "sortAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
+	binding := pagination.BindCursor(pagination.TenantInfo{}, "invoice_adjustments", sort)
 	edge := func(keyset string) string {
-		cursor, err := pagination.EncodeKeysetCursor(sort, keyset)
+		cursor, err := pagination.EncodeKeysetCursor(
+			binding,
+			base64.RawURLEncoding.EncodeToString([]byte(keyset)),
+		)
 		require.NoError(t, err)
 		return cursor
 	}
@@ -139,10 +144,9 @@ func TestQueryResolver_InvoiceAdjustmentApprovals_MapsTypedFiltersAndPassesKeyse
 	require.NotNil(t, conn.TotalCount)
 	assert.Equal(t, 12, *conn.TotalCount)
 
-	decoded, err := pagination.DecodeCursor(*conn.PageInfo.EndCursor)
+	keyset, err := pagination.DecodeKeysetCursor(binding, *conn.PageInfo.EndCursor)
 	require.NoError(t, err)
-	assert.Equal(t, sort, decoded.Sort)
-	assert.Equal(t, "k2", decoded.Keyset)
+	assert.Equal(t, base64.RawURLEncoding.EncodeToString([]byte("k2")), keyset)
 }
 
 func TestQueryResolver_InvoiceAdjustmentApprovals_SendsNoFiltersWhenUnfiltered(t *testing.T) {

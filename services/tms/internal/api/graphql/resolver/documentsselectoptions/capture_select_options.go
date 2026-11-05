@@ -30,40 +30,32 @@ func captureDeviceSelectOptionItem(
 		})
 	}
 
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          device.ID.String(),
-			Label:       device.Name,
-			Description: stringutils.Ptr(device.MachineName),
-			Meta: map[string]any{
-				"isOnline":   device.IsOnline(now),
-				"lastSeenAt": device.LastSeenAt,
-				"sources":    sources,
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          device.ID.String(),
+		Label:       device.Name,
+		Description: stringutils.Ptr(device.MachineName),
+		Meta: map[string]any{
+			"isOnline":   device.IsOnline(now),
+			"lastSeenAt": device.LastSeenAt,
+			"sources":    sources,
 		},
-		device.CreatedAt,
-		device.ID,
-	)
+	})
 }
 
 func captureProfileSelectOptionItem(
 	profile *captureprofile.CaptureProfile,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          profile.ID.String(),
-			Label:       profile.Name,
-			Description: stringutils.Ptr(profile.Description),
-			Meta: map[string]any{
-				captureMetaIsDefault: profile.IsDefault,
-				"dpi":                profile.DPI,
-				"pixelType":          profile.PixelType,
-				"duplex":             profile.Duplex,
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          profile.ID.String(),
+		Label:       profile.Name,
+		Description: stringutils.Ptr(profile.Description),
+		Meta: map[string]any{
+			captureMetaIsDefault: profile.IsDefault,
+			"dpi":                profile.DPI,
+			"pixelType":          profile.PixelType,
+			"duplex":             profile.Duplex,
 		},
-		profile.CreatedAt,
-		profile.ID,
-	)
+	})
 }
 
 func pageSelectOptionItems(

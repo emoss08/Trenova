@@ -71,6 +71,7 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 		securityconfig.RateLimitScopeAPIKey,
 		securityconfig.RateLimitScopeTenant,
 		securityconfig.RateLimitScopePublicToken,
+		securityconfig.RateLimitScopeSCIM,
 	}
 	policies := make(map[securityconfig.RateLimitScope]kernelports.RateLimitPolicy, len(scopes))
 	for _, scope := range scopes {
@@ -140,6 +141,37 @@ func (m *RateLimiter) ByPublicToken(param string) gin.HandlerFunc {
 			c.Next()
 		}
 	}
+}
+
+func (m *RateLimiter) Allow(
+	c *gin.Context,
+	scope securityconfig.RateLimitScope,
+	key string,
+) bool {
+	if m.skip(c) {
+		return true
+	}
+	policy, ok := m.policies[scope]
+	if !ok {
+		return true
+	}
+
+	return m.enforce(c, []scopedRequest{{
+		scope: scope,
+		request: kernelports.RateLimitRequest{
+			Key:    string(scope) + ":" + key,
+			Policy: policy,
+			Cost:   1,
+		},
+	}})
+}
+
+func (m *RateLimiter) AllowClientIP(c *gin.Context) bool {
+	if m.skip(c) {
+		return true
+	}
+
+	return m.enforce(c, m.anonymousRequests(c))
 }
 
 func (m *RateLimiter) skip(c *gin.Context) bool {

@@ -3484,7 +3484,34 @@
       "apps/web/types"
     ]
   },
+  "A SCIM group change needs the directory's tenant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A SCIM group role mapping with this display name already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A SCIM lookup needs the directory's tenant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A SCIM token issued for one directory, sent as an HTTP bearer token": {
     "sites": 1,
     "scope": [
       "go"
@@ -6222,6 +6249,15 @@
       "packages/shared/types"
     ]
   },
+  "A directory group; a group role mapping turns membership into a role": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A discarded remittance is set aside for good; nothing on it can be booked afterwards.": {
     "sites": 1,
     "scope": [
@@ -7308,6 +7344,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "A group member must be a user this directory provisioned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A group with this displayName already exists in this directory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A group with this externalId already exists in this directory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A group worth less than this defers to the next period instead of billing.": {
@@ -9215,6 +9278,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "A person in the directory's organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "A person must approve the connection before it is written": {
@@ -13767,6 +13839,24 @@
   },
   "A user with this email address already exists": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A user with this externalId already exists in this directory": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A user with this userName already exists in this directory": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -44931,6 +45021,15 @@
       "routes/formula-template"
     ]
   },
+  "Bring the roles a SCIM directory's groups grant up to date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bring what you can to the office, or upload it in Dash.": {
     "sites": 1,
     "scope": [
@@ -65164,7 +65263,7 @@
     ]
   },
   "Copied": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -65264,7 +65363,7 @@
     ]
   },
   "Copy": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -71528,7 +71627,7 @@
     ]
   },
   "Cursor is invalid": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -71538,16 +71637,7 @@
     ]
   },
   "Cursor is not one a previous page returned": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Cursor sort does not match request sort": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -118647,11 +118737,13 @@
     ]
   },
   "Group": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/agent-control",
       "routes/reports",
       "routes/shipment"
@@ -129535,15 +129627,6 @@
   },
   "Invalid credit memo application": {
     "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/graphql"
-    ]
-  },
-  "Invalid cursor": {
-    "sites": 2,
     "scope": [
       "go"
     ],
@@ -230310,6 +230393,15 @@
       "routes/admin"
     ]
   },
+  "SCIM base URL": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "SCIM directories": {
     "sites": 1,
     "scope": [
@@ -253106,6 +253198,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Start a reconcile for every SCIM directory whose group roles still wait to be brought up to date": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Start a recurring shipment: a series that copies one saved shipment on a schedule, for a customer's standing lane. Give the source shipment, a name, the cron schedule and its timezone, all from what the person or the customer asked for. It starts Active.": {
@@ -278903,6 +279004,15 @@
       "api/middleware"
     ]
   },
+  "The request could not be completed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "The request didn't go through": {
     "sites": 1,
     "scope": [
@@ -287339,6 +287449,15 @@
       "edi/lading"
     ]
   },
+  "This directory already grants this role to this person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This dispute could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -290366,6 +290485,15 @@
     ]
   },
   "This permit belongs to another shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This person is already linked to this directory": {
     "sites": 1,
     "scope": [
       "go"
@@ -306173,6 +306301,15 @@
     "areas": [
       "go/other",
       "routes/admin"
+    ]
+  },
+  "User Account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "User Details": {

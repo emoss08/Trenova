@@ -175,8 +175,14 @@ struct.
   one. The order is the request's sorts (relation paths included, through a queryable to-one or
   pick relation), `createdAt desc` when there are none, then `id`; keel appends the rest of the
   primary key, and nullable or joined sort keys put NULLs last. The cursor
-  (`pagination.EncodeKeysetCursor`) carries keel's page cursor and the sort shape; a cursor read
-  under another sort is a validation error on `after`. Every edge gets its own cursor
+  (`pagination.EncodeKeysetCursor`) carries keel's page cursor sealed with a truncated HMAC over
+  the tenant, the table and the sort shape (`pagination.BindCursor`); a cursor that does not verify
+  under the request's own binding, edited or read under another sort, is a validation error on
+  `after`. Every cursor the server issues is sealed this way, whatever it carries: an offset
+  (`EncodeOffsetCursor`), an agent tool's key (`EncodeKeyCursor`), a position
+  (`EncodePositionCursor`) or a repository's own payload (`SealCursor`). The key derives from
+  `security.session.secret` (`InstallCursorKey`, called at startup), so rotating that secret
+  invalidates open cursors. Never hand out a cursor through `base64` alone. Every edge gets its own cursor
   (`Page.CursorAt`, surfaced as `CursorListResult.EdgeCursors`). The page and its count share one
   round trip, and the count runs only when `IncludeTotalCount` is set. The count is exact up to
   `pagination.ExactTotalUpTo` (10,000) rows and the planner's estimate above

@@ -1122,6 +1122,7 @@
   "Run console": "執行主控台",
   "Runs its own fleet": "自營車隊",
   "SCIM activity will appear after your directory starts syncing.": "目錄開始同步後，SCIM 活動就會顯示於此。",
+  "SCIM base URL": "SCIM 基礎 URL",
   "SCIM directories": "SCIM 目錄",
   "SCIM directories could not be loaded.": "無法載入 SCIM 目錄。",
   "SCIM directory": "SCIM 目錄",

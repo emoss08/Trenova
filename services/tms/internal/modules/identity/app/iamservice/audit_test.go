@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -23,12 +24,43 @@ import (
 	"go.uber.org/zap"
 )
 
-func auditedService(t *testing.T) (*service, *iamportsmock.MockIAMRepository, *securityaudittest.Recorder) {
+func auditedService(
+	t *testing.T,
+) (*service, *iamportsmock.MockIAMRepository, *securityaudittest.Recorder) {
 	t.Helper()
 
 	repo := iamportsmock.NewMockIAMRepository(t)
 	recorder := &securityaudittest.Recorder{}
-	return &service{repo: repo, auditor: recorder, l: zap.NewNop()}, repo, recorder
+	return &service{
+		repo:      repo,
+		auditor:   recorder,
+		l:         zap.NewNop(),
+		db:        dbtest.NopConnection{},
+		directory: &recordingDirectoryGrants{},
+	}, repo, recorder
+}
+
+type recordingDirectoryGrants struct {
+	changed []pagination.TenantInfo
+	revoked []pulid.ID
+	err     error
+}
+
+func (r *recordingDirectoryGrants) MappingsChanged(
+	_ context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	r.changed = append(r.changed, tenantInfo)
+	return r.err
+}
+
+func (r *recordingDirectoryGrants) RevokeDirectoryGrants(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	directoryID pulid.ID,
+) error {
+	r.revoked = append(r.revoked, directoryID)
+	return r.err
 }
 
 func auditTenant() pagination.TenantInfo {
@@ -50,7 +82,10 @@ func TestAccessPolicyChangesAreRecorded(t *testing.T) {
 	saved := validAccessPolicy()
 	saved.ID = pulid.MustNew("iap_")
 
-	deps.repo.EXPECT().CreateAccessPolicy(ctx, mock.AnythingOfType("*iam.AccessPolicy")).Return(saved, nil).Once()
+	deps.repo.EXPECT().
+		CreateAccessPolicy(ctx, mock.AnythingOfType("*iam.AccessPolicy")).
+		Return(saved, nil).
+		Once()
 	deps.repo.EXPECT().DeleteAccessPolicy(ctx, deps.tenant, saved.ID).Return(nil).Once()
 
 	_, err := deps.svc.CreateAccessPolicy(ctx, deps.tenant, entity)
@@ -73,7 +108,10 @@ func TestIdentityProviderDeletionRecordsWhatWasRemoved(t *testing.T) {
 	tenant := auditTenant()
 	existing := &iam.IdentityProvider{ID: pulid.MustNew("idp_"), Name: "Okta"}
 
-	repo.EXPECT().GetIdentityProvider(mock.Anything, tenant, existing.ID).Return(existing, nil).Once()
+	repo.EXPECT().
+		GetIdentityProvider(mock.Anything, tenant, existing.ID).
+		Return(existing, nil).
+		Once()
 	repo.EXPECT().DeleteIdentityProvider(mock.Anything, tenant, existing.ID).Return(nil).Once()
 
 	require.NoError(t, svc.DeleteIdentityProvider(t.Context(), tenant, existing.ID))
@@ -93,8 +131,14 @@ func TestFailedIdentityProviderDeletionIsNotRecorded(t *testing.T) {
 	tenant := auditTenant()
 	id := pulid.MustNew("idp_")
 
-	repo.EXPECT().GetIdentityProvider(mock.Anything, tenant, id).Return(&iam.IdentityProvider{ID: id}, nil).Once()
-	repo.EXPECT().DeleteIdentityProvider(mock.Anything, tenant, id).Return(errors.New("in use")).Once()
+	repo.EXPECT().
+		GetIdentityProvider(mock.Anything, tenant, id).
+		Return(&iam.IdentityProvider{ID: id}, nil).
+		Once()
+	repo.EXPECT().
+		DeleteIdentityProvider(mock.Anything, tenant, id).
+		Return(errors.New("in use")).
+		Once()
 
 	require.Error(t, svc.DeleteIdentityProvider(t.Context(), tenant, id))
 	assert.Empty(t, recorder.Changes())
@@ -109,10 +153,18 @@ func TestSCIMTokenLifecycleIsRecordedWithoutTheSecret(t *testing.T) {
 
 	repo.EXPECT().GetSCIMDirectory(mock.Anything, mock.Anything).
 		Return(&iam.SCIMDirectory{ID: directoryID, OrganizationID: orgID}, nil).Once()
-	repo.EXPECT().CreateSCIMToken(mock.Anything, mock.AnythingOfType("*iam.SCIMToken")).Return(saved, nil).Once()
+	repo.EXPECT().
+		CreateSCIMToken(mock.Anything, mock.AnythingOfType("*iam.SCIMToken")).
+		Return(saved, nil).
+		Once()
 	repo.EXPECT().RevokeSCIMToken(mock.Anything, orgID, saved.ID).Return(saved, nil).Once()
 
-	created, err := svc.CreateSCIMToken(t.Context(), orgID, directoryID, &iamports.SCIMTokenCreateRequest{Name: "Okta sync"})
+	created, err := svc.CreateSCIMToken(
+		t.Context(),
+		orgID,
+		directoryID,
+		&iamports.SCIMTokenCreateRequest{Name: "Okta sync"},
+	)
 	require.NoError(t, err)
 	_, err = svc.RevokeSCIMToken(t.Context(), orgID, saved.ID)
 	require.NoError(t, err)
@@ -256,10 +308,112 @@ func TestSCIMDirectoryUpdateRequiresTheDirectoryInTheTenant(t *testing.T) {
 	tenant := auditTenant()
 	id := pulid.MustNew("scd_")
 
-	repo.EXPECT().GetSCIMDirectory(mock.Anything, iamports.GetSCIMDirectoryRequest{ID: id, TenantInfo: tenant}).
-		Return(nil, errors.New("not found")).Once()
+	repo.EXPECT().
+		GetSCIMDirectory(mock.Anything, iamports.GetSCIMDirectoryRequest{ID: id, TenantInfo: tenant}).
+		Return(nil, errors.New("not found")).
+		Once()
 
-	_, err := svc.UpdateSCIMDirectory(t.Context(), tenant, id, &iam.SCIMDirectory{TenantSlug: "acme"})
+	_, err := svc.UpdateSCIMDirectory(
+		t.Context(),
+		tenant,
+		id,
+		&iam.SCIMDirectory{TenantSlug: "acme"},
+	)
 	require.Error(t, err)
+	assert.Empty(t, recorder.Changes())
+}
+
+func TestSCIMMappingRecordsWhoSavedItAndReconcilesTheDirectory(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, _ := auditedService(t)
+	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.grants = &fixedRoleGrants{}
+	directory := &recordingDirectoryGrants{}
+	svc.directory = directory
+	tenant := auditTenant()
+	directoryID := pulid.MustNew("scd_")
+	expectDirectory(repo, directoryID, tenant.OrgID)
+
+	var saved *iam.SCIMGroupRoleMapping
+	repo.EXPECT().
+		CreateSCIMGroupRoleMapping(mock.Anything, mock.AnythingOfType("*iam.SCIMGroupRoleMapping")).
+		RunAndReturn(func(_ context.Context, entity *iam.SCIMGroupRoleMapping) (*iam.SCIMGroupRoleMapping, error) {
+			saved = entity
+			entity.ID = pulid.MustNew("sgr_")
+			return entity, nil
+		}).
+		Once()
+
+	_, err := svc.CreateSCIMGroupRoleMapping(
+		t.Context(),
+		tenant,
+		directoryID,
+		&iam.SCIMGroupRoleMapping{RoleID: pulid.MustNew("rol_"), SavedByID: pulid.MustNew("usr_")},
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, saved)
+	assert.Equal(
+		t,
+		tenant.UserID,
+		saved.SavedByID,
+		"the saver is the person saving, never the body",
+	)
+	assert.Equal(t, []pagination.TenantInfo{tenant}, directory.changed)
+}
+
+func TestSCIMMappingIsNotSavedWhenItsGrantsCannotBeReconciled(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.grants = &fixedRoleGrants{}
+	svc.directory = &recordingDirectoryGrants{err: errors.New("database unavailable")}
+	tenant := auditTenant()
+	directoryID := pulid.MustNew("scd_")
+	expectDirectory(repo, directoryID, tenant.OrgID)
+	repo.EXPECT().
+		CreateSCIMGroupRoleMapping(mock.Anything, mock.AnythingOfType("*iam.SCIMGroupRoleMapping")).
+		Return(&iam.SCIMGroupRoleMapping{ID: pulid.MustNew("sgr_")}, nil).
+		Once()
+
+	_, err := svc.CreateSCIMGroupRoleMapping(
+		t.Context(),
+		tenant,
+		directoryID,
+		&iam.SCIMGroupRoleMapping{RoleID: pulid.MustNew("rol_")},
+	)
+
+	require.Error(t, err)
+	assert.Empty(t, recorder.Changes())
+}
+
+func TestSCIMDirectoryDeletionRevokesWhatItGrantedFirst(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	directory := &recordingDirectoryGrants{}
+	svc.directory = directory
+	tenant := auditTenant()
+	directoryID := pulid.MustNew("scd_")
+	expectDirectory(repo, directoryID, tenant.OrgID)
+	repo.EXPECT().DeleteSCIMDirectory(mock.Anything, tenant, directoryID).Return(nil).Once()
+
+	require.NoError(t, svc.DeleteSCIMDirectory(t.Context(), tenant, directoryID))
+	assert.Equal(t, []pulid.ID{directoryID}, directory.revoked)
+	assert.Len(t, recorder.Changes(), 1)
+}
+
+func TestSCIMDirectoryIsKeptWhenItsGrantsCannotBeRevoked(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	svc.directory = &recordingDirectoryGrants{err: errors.New("database unavailable")}
+	tenant := auditTenant()
+	directoryID := pulid.MustNew("scd_")
+	expectDirectory(repo, directoryID, tenant.OrgID)
+
+	require.Error(t, svc.DeleteSCIMDirectory(t.Context(), tenant, directoryID))
 	assert.Empty(t, recorder.Changes())
 }

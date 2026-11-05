@@ -182,21 +182,13 @@ func (r *Sources) Tractor(
 }
 
 func equipmentTypeSelectOptionItem(entity *equipmenttype.EquipmentType) selectoption.Item {
-	return selectoption.ItemFor(
-		equipmentTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(equipmentTypeSelectOption(entity))
 }
 
 func equipmentManufacturerSelectOptionItem(
 	entity *equipmentmanufacturer.EquipmentManufacturer,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		equipmentManufacturerSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(equipmentManufacturerSelectOption(entity))
 }
 
 func equipmentTypeSelectOption(entity *equipmenttype.EquipmentType) *gqlmodel.SelectOption {
@@ -222,11 +214,7 @@ func equipmentManufacturerSelectOption(
 }
 
 func trailerSelectOptionItem(entity *trailer.Trailer) selectoption.Item {
-	return selectoption.ItemFor(
-		trailerSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(trailerSelectOption(entity))
 }
 
 func trailerSelectOption(entity *trailer.Trailer) *gqlmodel.SelectOption {
@@ -237,11 +225,7 @@ func trailerSelectOption(entity *trailer.Trailer) *gqlmodel.SelectOption {
 }
 
 func tractorSelectOptionItem(entity *tractor.Tractor) selectoption.Item {
-	return selectoption.ItemFor(
-		tractorSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(tractorSelectOption(entity))
 }
 
 func tractorSelectOption(entity *tractor.Tractor) *gqlmodel.SelectOption {
@@ -305,11 +289,7 @@ func (r *Sources) FleetCode(
 }
 
 func fleetCodeSelectOptionItem(entity *fleetcode.FleetCode) selectoption.Item {
-	return selectoption.ItemFor(
-		fleetCodeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(fleetCodeSelectOption(entity))
 }
 
 func fleetCodeSelectOption(entity *fleetcode.FleetCode) *gqlmodel.SelectOption {

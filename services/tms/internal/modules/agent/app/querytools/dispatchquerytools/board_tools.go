@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
@@ -13,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -109,8 +107,7 @@ func (v *boardView) CutPage(rows int) (any, bool) {
 	cut := *v
 	cut.Moves = v.Moves[:rows]
 	cut.HasMore = true
-	cut.NextCursor = pagination.EncodeKeyCursor(
-		v.window.Scope, strconv.Itoa(v.window.Offset+rows))
+	cut.NextCursor = v.window.At(v.window.Offset + rows)
 	cut.tally()
 
 	return &cut, true
@@ -250,8 +247,7 @@ func (t *getDispatchBoardTool) Query(
 		hours = defaultBoardHours
 	}
 	window, err := querytool.ReadOffsetWindow(
-		t.Name(),
-		params.Params,
+		querytool.CallOf(t.Name(), params),
 		defaultBoardLimit,
 		maxBoardLimit,
 	)

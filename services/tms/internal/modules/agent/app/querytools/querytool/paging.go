@@ -3,17 +3,13 @@ package querytool
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
-
-const cursorScopeLength = 16
 
 var ErrOffsetOnCursorList = errors.New(
 	"this list pages with after, the nextCursor of the previous page, not offset. Call " +
@@ -111,33 +107,43 @@ func WithPaging(properties map[string]any, fallback, most int) map[string]any {
 }
 
 type CursorWindow struct {
-	Limit int
-	after string
-	Scope string
-	Info  pagination.CursorInfo
+	Limit   int
+	after   string
+	Binding pagination.CursorBinding
+	Info    pagination.CursorInfo
 }
 
-func ReadCursorWindow(
-	tool string,
-	params map[string]any,
-	fallback, most int,
-) (CursorWindow, error) {
-	if OptionalInt(params, ParamOffset, 0) != 0 {
+type CursorCall struct {
+	Tool   string
+	Tenant pagination.TenantInfo
+	Params map[string]any
+}
+
+func CallOf(tool string, params *agenttoolports.QueryToolParams) CursorCall {
+	return CursorCall{Tool: tool, Tenant: CallTenant(params), Params: params.Params}
+}
+
+func CallTenant(params *agenttoolports.QueryToolParams) pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: params.OrganizationID, BuID: params.BusinessUnitID}
+}
+
+func ReadCursorWindow(call CursorCall, fallback, most int) (CursorWindow, error) {
+	if OptionalInt(call.Params, ParamOffset, 0) != 0 {
 		return CursorWindow{}, ErrOffsetOnCursorList
 	}
-	scope, err := CursorScope(tool, params)
+	binding, err := BindCall(call)
 	if err != nil {
 		return CursorWindow{}, err
 	}
 
 	window := CursorWindow{
-		Limit: ReadLimit(params, fallback, most),
-		after: OptionalString(params, ParamAfter),
-		Scope: scope,
+		Limit:   ReadLimit(call.Params, fallback, most),
+		after:   OptionalString(call.Params, ParamAfter),
+		Binding: binding,
 	}
 	key := ""
 	if window.after != "" {
-		if key, err = pagination.DecodeKeyCursor(scope, window.after); err != nil {
+		if key, err = pagination.DecodeKeyCursor(binding, window.after); err != nil {
 			return CursorWindow{}, ErrStaleCursor
 		}
 	}
@@ -153,32 +159,24 @@ func ReadCursorWindow(
 // contract: the offset never reaches the model, only a nextCursor bound to
 // the call's other arguments, so it learns one convention for every list.
 type OffsetWindow struct {
-	Limit  int
-	Offset int
-	Scope  string
+	Limit   int
+	Offset  int
+	Binding pagination.CursorBinding
 }
 
-func ReadOffsetWindow(
-	tool string,
-	params map[string]any,
-	fallback, most int,
-) (OffsetWindow, error) {
-	if OptionalInt(params, ParamOffset, 0) != 0 {
+func ReadOffsetWindow(call CursorCall, fallback, most int) (OffsetWindow, error) {
+	if OptionalInt(call.Params, ParamOffset, 0) != 0 {
 		return OffsetWindow{}, ErrOffsetOnCursorList
 	}
-	scope, err := CursorScope(tool, params)
+	binding, err := BindCall(call)
 	if err != nil {
 		return OffsetWindow{}, err
 	}
 
-	window := OffsetWindow{Limit: ReadLimit(params, fallback, most), Scope: scope}
-	if after := OptionalString(params, ParamAfter); after != "" {
-		key, decodeErr := pagination.DecodeKeyCursor(scope, after)
+	window := OffsetWindow{Limit: ReadLimit(call.Params, fallback, most), Binding: binding}
+	if after := OptionalString(call.Params, ParamAfter); after != "" {
+		offset, decodeErr := pagination.DecodeOffsetCursor(binding, after)
 		if decodeErr != nil {
-			return OffsetWindow{}, ErrStaleCursor
-		}
-		offset, parseErr := strconv.Atoi(key)
-		if parseErr != nil || offset < 0 {
 			return OffsetWindow{}, ErrStaleCursor
 		}
 		window.Offset = offset
@@ -201,16 +199,20 @@ func (w OffsetWindow) More(fetched, most int) bool {
 }
 
 func (w OffsetWindow) Next() string {
-	return pagination.EncodeKeyCursor(w.Scope, strconv.Itoa(w.Offset+w.Limit))
+	return w.At(w.Offset + w.Limit)
+}
+
+func (w OffsetWindow) At(offset int) string {
+	return pagination.EncodeOffsetCursor(w.Binding, offset)
 }
 
 func FirstCursorWindow(limit int) CursorWindow {
 	return CursorWindow{Limit: limit, Info: pagination.CursorInfo{Limit: limit}}
 }
 
-func CursorScope(tool string, params map[string]any) (string, error) {
-	shape := make(map[string]any, len(params))
-	for key, value := range params {
+func BindCall(call CursorCall) (pagination.CursorBinding, error) {
+	shape := make(map[string]any, len(call.Params))
+	for key, value := range call.Params {
 		if key == ParamLimit || key == ParamAfter || key == ParamOffset ||
 			key == agenttoolports.ListFieldsParam {
 			continue
@@ -220,10 +222,13 @@ func CursorScope(tool string, params map[string]any) (string, error) {
 
 	encoded, err := jsonutils.CanonicalMarshal(shape)
 	if err != nil {
-		return "", fmt.Errorf("read the arguments a page cursor is bound to: %w", err)
+		return pagination.CursorBinding{}, fmt.Errorf(
+			"read the arguments a page cursor is bound to: %w",
+			err,
+		)
 	}
 
-	return hashutils.SHA256Hex(tool + ":" + string(encoded))[:cursorScopeLength], nil
+	return pagination.BindCursor(call.Tenant, call.Tool+":"+string(encoded), nil), nil
 }
 
 func (w *CursorWindow) First() bool {
@@ -235,7 +240,7 @@ func (w *CursorWindow) Next(cursor string) string {
 		return ""
 	}
 
-	return pagination.EncodeKeyCursor(w.Scope, cursor)
+	return pagination.EncodeKeyCursor(w.Binding, cursor)
 }
 
 func RefuseStaleCursor(err error) error {

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,10 +31,25 @@ func TestThreadCursorRoundTripsThroughItsEncoding(t *testing.T) {
 		{pinned: true, touchedAt: 1_790_000_000, id: pulid.MustNew("athr_")},
 		{pinned: false, touchedAt: 1, id: pulid.MustNew("athr_")},
 	} {
-		decoded, err := decodeThreadCursor(cursor.encode())
+		binding := threadCursorBinding(threadPageRequest())
+		decoded, err := decodeThreadCursor(binding, cursor.encode(binding))
 		require.NoError(t, err)
 		assert.Equal(t, cursor, *decoded)
 	}
+}
+
+func TestThreadCursorReadsOnlyForThePersonItWasIssuedTo(t *testing.T) {
+	t.Parallel()
+
+	cursor := threadCursor{pinned: true, touchedAt: 42, id: pulid.MustNew("athr_")}
+	issued := cursor.encode(threadCursorBinding(threadPageRequest()))
+
+	_, err := decodeThreadCursor(threadCursorBinding(threadPageRequest()), issued)
+	require.Error(t, err)
+
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "cursor", validation.Field)
 }
 
 func TestThreadCursorRejectsWhatNoPageHandedOut(t *testing.T) {
@@ -46,8 +62,11 @@ func TestThreadCursorRejectsWhatNoPageHandedOut(t *testing.T) {
 		"MS54LmF0aHJfMDFKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA",
 		"MS4xLnNob3J0",
 		"MC40Mi43LmF0aHJfMDFKMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA",
+		threadCursor{touchedAt: 42, id: pulid.MustNew("athr_")}.encode(
+			pagination.BindCursor(pagination.TenantInfo{}, "agent_threads:other", nil),
+		),
 	} {
-		_, err := decodeThreadCursor(bad)
+		_, err := decodeThreadCursor(threadCursorBinding(threadPageRequest()), bad)
 		require.Error(t, err, bad)
 
 		var validation *errortypes.Error
@@ -168,7 +187,7 @@ func TestThreadWindowOfReadsARangeWithoutAPageLimit(t *testing.T) {
 	}
 	req := threadPageRequest()
 	req.Limit = 50
-	req.Until = until.encode()
+	req.Until = until.encode(threadCursorBinding(req))
 
 	window, err := threadWindowOf(req)
 	require.NoError(t, err)

@@ -27,8 +27,8 @@ func TestShipmentSelectOptionMapper(t *testing.T) {
 	assert.Equal(t, "BOL-2002", shipmentOption.Meta["bol"])
 	assert.Equal(
 		t,
-		shipmentEntity.CreatedAt,
-		shipmentSelectOptionItem(shipmentEntity).Cursor.At,
+		shipmentEntity.ID.String(),
+		shipmentSelectOptionItem(shipmentEntity).Option.ID,
 	)
 }
 

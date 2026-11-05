@@ -175,6 +175,11 @@ Losing access ends it everywhere it is held, and each step is recorded:
   device's refresh also checks its person's standing, so a revocation that failed stops
   at the next refresh, within the fifteen-minute life of its access token.
 - Revoking a driver's portal access ends the portal user's sessions.
+- A SCIM directory that deactivates or deletes a person ends their access in the directory's
+  organization through the same exit path as removing a membership, or deactivates the account
+  when that organization is the only one they belong to; it never touches access elsewhere
+  ([scim.md](scim.md#users)). Each change is a `provisioning_audit_records` row and a security
+  entry attributed to the system actor with the directory and token in its metadata.
 - An API key never grants more than its creator holds. Creating or editing a key with a
   resource, operation or scope the person saving it does not hold is refused, and at
   request time the key's grants are intersected with what its creator holds now: a

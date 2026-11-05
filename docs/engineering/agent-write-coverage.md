@@ -85,7 +85,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 93 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
@@ -97,13 +97,13 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1114 writes: 662 GraphQL mutations and 452 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1122 writes: 662 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 443 |
-| Exempt | 669 |
-| — Security | 85 |
+| Exempt | 677 |
+| — Security | 93 |
 | — Configuration | 246 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
-| Total | 1114 |
+| Total | 1122 |
 
 Of the 445 writes an agent should be able to make, 443 have a tool (99%).
 
@@ -266,6 +266,7 @@ The writes no tool performs yet, and what the tool would do.
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
+| scim | 8 | 0 | 8 | 0 |
 | selfservice | 3 | 0 | 3 | 0 |
 | sequenceconfig | 1 | 0 | 1 | 0 |
 | servicefailure | 8 | 7 | 1 | 0 |
@@ -1891,6 +1892,19 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setWorkerAvailabilityPreference` | Tool: `worker_set_availability_preference` |
 | `mutation transitionShiftSwap` | Tool: `worker_approve_shift_swap`, `worker_reject_shift_swap`, `worker_withdraw_shift_swap` |
 | `mutation updateShiftTemplate` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
+
+### scim
+
+| Write | Decision |
+| --- | --- |
+| `DELETE /api/v1/scim/:tenantSlug/v2/Groups/:id`<br>scimhandler.deleteGroup | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `DELETE /api/v1/scim/:tenantSlug/v2/Users/:id`<br>scimhandler.deleteUser | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `PATCH /api/v1/scim/:tenantSlug/v2/Groups/:id`<br>scimhandler.patchGroup | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `PATCH /api/v1/scim/:tenantSlug/v2/Users/:id`<br>scimhandler.patchUser | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `POST /api/v1/scim/:tenantSlug/v2/Groups`<br>scimhandler.createGroup | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `POST /api/v1/scim/:tenantSlug/v2/Users`<br>scimhandler.createUser | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `PUT /api/v1/scim/:tenantSlug/v2/Groups/:id`<br>scimhandler.replaceGroup | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
+| `PUT /api/v1/scim/:tenantSlug/v2/Users/:id`<br>scimhandler.replaceUser | Exempt, security: An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in. |
 
 ### selfservice
 

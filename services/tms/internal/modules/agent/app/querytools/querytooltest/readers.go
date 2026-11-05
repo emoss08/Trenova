@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -101,13 +102,18 @@ func ListSpecNamed(t *testing.T, specs []readspec.List, name string) *readspec.L
 	return nil
 }
 
+var (
+	TestOrganizationID = pulid.MustNew("org_")
+	TestBusinessUnitID = pulid.MustNew("bu_")
+)
+
 func KeyedCall(params map[string]any) *agenttoolports.QueryToolParams {
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
 		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
+		OrganizationID: TestOrganizationID,
+		BusinessUnitID: TestBusinessUnitID,
 	}
 
 	return &agenttoolports.QueryToolParams{
@@ -140,4 +146,4 @@ func SentInput(t *testing.T, reader *KeyedReader) map[string]any {
 }
 
 // NextPage is a real connection cursor, as the root hands one back.
-var NextPage, _ = pagination.EncodeKeysetCursor(nil, pulid.MustNew("acct_").String())
+var NextPage = pagetest.KeysetCursor(pulid.MustNew("acct_").String())

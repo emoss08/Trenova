@@ -10,49 +10,47 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
+func TestSealCursors_GivesEachEdgeASealedOffsetCursor(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("wrk_")
-	createdAt := int64(1780415883)
-
 	result, err := Connection(
 		[]Item{
-			{
-				Option: &gqlmodel.SelectOption{
-					ID:    id.String(),
-					Label: "John Smith",
-				},
-				Cursor: pagination.PositionCursor{
-					At: createdAt,
-					ID: id,
-				},
-			},
+			ItemFor(&gqlmodel.SelectOption{ID: id.String(), Label: "John Smith"}),
+			ItemFor(&gqlmodel.SelectOption{ID: pulid.MustNew("wrk_").String(), Label: "Jane Doe"}),
 		},
-		1,
-		0,
+		12,
+		10,
 	)
 	require.NoError(t, err)
 
-	require.Len(t, result.Edges, 1)
-	assert.NotEqual(t, "1", result.Edges[0].Cursor)
-	require.NotNil(t, result.PageInfo.EndCursor)
-	assert.Equal(t, result.Edges[0].Cursor, *result.PageInfo.EndCursor)
+	tenant := pagination.TenantInfo{
+		OrgID: "org_0000000000000000000000000",
+		BuID:  "bu_00000000000000000000000000",
+	}
+	binding := pagination.BindCursor(tenant, "select_options:WORKER", nil)
+	SealCursors(result, binding, 10)
 
-	decoded, err := pagination.DecodePositionCursor(result.Edges[0].Cursor)
+	require.Len(t, result.Edges, 2)
+	require.NotNil(t, result.PageInfo.EndCursor)
+	assert.Equal(t, result.Edges[1].Cursor, *result.PageInfo.EndCursor)
+
+	offset, err := pagination.DecodeOffsetCursor(binding, result.Edges[0].Cursor)
 	require.NoError(t, err)
-	assert.Equal(t, createdAt, decoded.At)
-	assert.Equal(t, id, decoded.ID)
+	assert.Equal(t, 11, offset)
+
+	_, err = pagination.DecodeOffsetCursor(
+		pagination.BindCursor(tenant, "select_options:TRACTOR", nil),
+		result.Edges[0].Cursor,
+	)
+	require.ErrorIs(t, err, pagination.ErrCursorInvalid)
 }
 
 func TestSelectOptionListConnection_CarriesAnEstimatedTotal(t *testing.T) {
 	t.Parallel()
 
 	option := func(label string) Item {
-		return Item{
-			Option: &gqlmodel.SelectOption{ID: label, Label: label},
-			Cursor: pagination.PositionCursor{At: 1780415883, ID: pulid.MustNew("wrk_")},
-		}
+		return ItemFor(&gqlmodel.SelectOption{ID: label, Label: label})
 	}
 
 	cases := []struct {
@@ -132,11 +130,7 @@ func orderedItemsEntityID(entity *orderedItemsEntity) pulid.ID {
 }
 
 func orderedItemsEntityItem(entity *orderedItemsEntity) Item {
-	return ItemFor(
-		&gqlmodel.SelectOption{ID: entity.id.String(), Label: entity.label},
-		0,
-		entity.id,
-	)
+	return ItemFor(&gqlmodel.SelectOption{ID: entity.id.String(), Label: entity.label})
 }
 
 func orderedItemLabels(items []Item) []string {

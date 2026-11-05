@@ -611,8 +611,8 @@ cursor-paged list (`paging.go`):
 
 - `limit` maps to `first`;
 - the result carries `hasMore` from `pageInfo.hasNextPage`, and, when there is a next page,
-  `nextCursor`: the connection's `endCursor` wrapped by `pagination.EncodeKeyCursor` in a scope
-  hashed from the tool's name and every argument but `limit` and `after`;
+  `nextCursor`: the connection's `endCursor` wrapped by `pagination.EncodeKeyCursor`, sealed to
+  the tenant, the tool's name and every argument but `limit` and `after` (`querytool.BindCall`);
 - `after` is read by `readCursorWindow`, which unwraps it in the call's own scope and passes the
   connection cursor inside to the operation's `after`.
 

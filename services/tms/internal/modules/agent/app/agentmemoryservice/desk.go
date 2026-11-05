@@ -2,9 +2,7 @@ package agentmemoryservice
 
 import (
 	"context"
-	"encoding/base64"
 	"slices"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -38,7 +36,10 @@ import (
 //
 // Agent-scoped memories are administered in AI Control and never listed here.
 
-const deskPageDefault = 50
+const (
+	deskPageDefault    = 50
+	deskCursorResource = "desk_memories:"
+)
 
 type roleReader interface {
 	GetUserRoleAssignments(
@@ -324,7 +325,7 @@ func (s *Service) ListDesk(
 			"Filter by a scope the Desk lists",
 		)
 	}
-	after, err := decodeDeskCursor(req.After)
+	after, err := decodeDeskCursor(person.cursorBinding(), req.After)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +357,13 @@ func (s *Service) ListDesk(
 	if len(rows) > limit {
 		rows = rows[:limit]
 		last := rows[len(rows)-1].Memory
-		page.Next = encodeDeskCursor(last.CreatedAt, last.ID)
+		page.Next, err = pagination.EncodePositionCursor(
+			person.cursorBinding(),
+			pagination.PositionCursor{At: last.CreatedAt, ID: last.ID},
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, row := range rows {
 		page.Items = append(page.Items, person.desk(row))
@@ -925,38 +932,26 @@ func (s *Service) DismissDesk(
 	return s.deskOne(ctx, person, dismissed.ID)
 }
 
-func encodeDeskCursor(createdAt int64, id pulid.ID) string {
-	return base64.RawURLEncoding.EncodeToString(
-		[]byte(strconv.FormatInt(createdAt, 10) + ":" + id.String()),
-	)
+func (p *deskPerson) cursorBinding() pagination.CursorBinding {
+	return pagination.BindCursor(p.tenant, deskCursorResource+p.userID.String(), nil)
 }
 
-func decodeDeskCursor(raw string) (*agentmemoryports.DeskMemoryCursor, error) {
+func decodeDeskCursor(
+	binding pagination.CursorBinding,
+	raw string,
+) (*agentmemoryports.DeskMemoryCursor, error) {
 	if raw == "" {
 		return nil, nil
 	}
 
-	invalid := errortypes.NewValidationError(
-		"after",
-		errortypes.ErrInvalid,
-		"The page cursor is not valid",
-	)
-	decoded, err := base64.RawURLEncoding.DecodeString(raw)
+	cursor, err := pagination.DecodePositionCursor(binding, raw)
 	if err != nil {
-		return nil, invalid
-	}
-	at, rawID, ok := strings.Cut(string(decoded), ":")
-	if !ok {
-		return nil, invalid
-	}
-	createdAt, err := strconv.ParseInt(at, 10, 64)
-	if err != nil {
-		return nil, invalid
-	}
-	id, err := pulid.Parse(rawID)
-	if err != nil {
-		return nil, invalid
+		return nil, errortypes.NewValidationError(
+			"after",
+			errortypes.ErrInvalid,
+			"The page cursor is not valid",
+		)
 	}
 
-	return &agentmemoryports.DeskMemoryCursor{CreatedAt: createdAt, ID: id}, nil
+	return &agentmemoryports.DeskMemoryCursor{CreatedAt: cursor.At, ID: cursor.ID}, nil
 }

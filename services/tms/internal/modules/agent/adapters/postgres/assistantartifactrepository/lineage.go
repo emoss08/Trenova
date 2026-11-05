@@ -2,7 +2,6 @@ package assistantartifactrepository
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -15,12 +14,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
 var lineageColumns = []string{"root", "pinned", "last", "family"}
+
+const lineageCursorResource = "assistant_artifacts:"
 
 // rootExpr is the lineage an artifact belongs to: the first version's id,
 // which is its own id for the first version.
@@ -43,19 +45,26 @@ type lineageCursor struct {
 	root   string
 }
 
-func (c lineageCursor) encode() string {
+func lineageCursorBinding(
+	req *assistantartifactports.ListArtifactsRequest,
+) pagination.CursorBinding {
+	return pagination.BindCursor(req.TenantInfo, lineageCursorResource+req.ThreadID.String(), nil)
+}
+
+func (c lineageCursor) encode(binding pagination.CursorBinding) string {
 	pinned := "0"
 	if c.pinned {
 		pinned = "1"
 	}
 
-	return base64.RawURLEncoding.EncodeToString(
-		[]byte(pinned + "." + strconv.FormatInt(c.last, 10) + "." + c.root),
+	return pagination.SealCursor(
+		binding,
+		[]byte(pinned+"."+strconv.FormatInt(c.last, 10)+"."+c.root),
 	)
 }
 
-func decodeCursor(raw string) (lineageCursor, error) {
-	decoded, err := base64.RawURLEncoding.DecodeString(raw)
+func decodeCursor(binding pagination.CursorBinding, raw string) (lineageCursor, error) {
+	decoded, err := pagination.OpenCursor(binding, raw)
 	if err != nil {
 		return lineageCursor{}, ErrBadCursor
 	}
@@ -161,9 +170,13 @@ func (r *repository) ListPage(
 
 	var cursor *lineageCursor
 	if req.Cursor != "" {
-		decoded, err := decodeCursor(req.Cursor)
+		decoded, err := decodeCursor(lineageCursorBinding(&req), req.Cursor)
 		if err != nil {
-			return nil, err
+			return nil, errortypes.NewValidationError(
+				"cursor",
+				errortypes.ErrInvalidFormat,
+				"Cursor is not one a previous page returned",
+			)
 		}
 		cursor = &decoded
 	}
@@ -213,7 +226,7 @@ func (r *repository) ListPage(
 				last := rows[limit-1]
 				page.NextCursor = lineageCursor{
 					pinned: last.Pinned, last: last.Last, root: last.Root,
-				}.encode()
+				}.encode(lineageCursorBinding(&req))
 				rows = rows[:limit]
 			}
 			if len(rows) == 0 {

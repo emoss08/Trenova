@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -802,7 +804,7 @@ func TestList_FollowsItsOffsetCursorToTheNextPage(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	after := EncodeOffsetCursor(listCursorScope, 2)
+	after := EncodeOffsetCursor(BindCursor(TenantInfo{}, "", nil), 2)
 	c.Request = httptest.NewRequest(
 		http.MethodGet,
 		"http://example.com/api/items?limit=2&after="+after,
@@ -851,6 +853,33 @@ func TestList_RefusesACursorItDidNotIssue(t *testing.T) {
 
 	assert.False(t, called)
 	assert.NotEqual(t, http.StatusOK, w.Code)
+}
+
+func TestList_RefusesACursorIssuedToAnotherTenantOrSort(t *testing.T) {
+	t.Parallel()
+
+	sorted := SortShape([]domaintypes.SortField{
+		{Field: "name", Direction: dbtype.SortDirectionAsc},
+	})
+	for name, after := range map[string]string{
+		"tenant": EncodeOffsetCursor(BindCursor(testTenant(), "", nil), 2),
+		"sort":   EncodeOffsetCursor(BindCursor(TenantInfo{}, "", sorted), 2),
+	} {
+		gin.SetMode(gin.TestMode)
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10&after="+after, nil)
+
+		called := false
+		List[cursorTestItem](c, &QueryOptions{Pagination: Info{Limit: 10}}, newTestErrorHandler(),
+			func() (*ListResult[cursorTestItem], error) {
+				called = true
+				return &ListResult[cursorTestItem]{}, nil
+			})
+
+		assert.False(t, called, name)
+		assert.Equal(t, http.StatusBadRequest, w.Code, name)
+	}
 }
 
 func TestList_CarriesAnEstimatedTotal(t *testing.T) {

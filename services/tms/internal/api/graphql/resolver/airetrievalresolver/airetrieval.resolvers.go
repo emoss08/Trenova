@@ -71,7 +71,7 @@ func (r *QueryResolver) AiRetrievalFailedEntryConnection(ctx context.Context, so
 
 	req := &retrievalports.ListAIRetrievalFailedEntriesRequest{
 		TenantInfo: resolvercore.TenantInfo(authCtx),
-		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
+		Table:      gqlconnection.MemtableRequestFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx)),
 	}
 	if sourceType != nil {
 		req.SourceType = *sourceType
