@@ -30,7 +30,7 @@ is the only thing that narrows the query.
 |---|---|
 | Carrier tracking, tender, rate confirmation, invoice share, portal invitation, password reset, Capture pairing | a token looked up by its hash |
 | Telematics, email, mailbox and accounting webhooks | the provider's signature, then a realm or account the tenant verified |
-| AS2 | the partner's identifier and its signature. A profile may accept unsigned documents, which the partner page warns about (`acceptsUnsignedInbound`) |
+| AS2 | the profile's own inbound URL, an unguessable token that names one profile and so its tenant, then the identifier pair that profile holds and the partner's signature. A receipt is read inside that tenant and must belong to the profile's partner. A profile may accept unsigned documents, which the partner page warns about (`acceptsUnsignedInbound`) |
 | Web watch deliveries | an HMAC over timestamp and body, per watch (`shared/exa`) |
 
 Tenants configure no outbound webhook. An integration's base URL goes through the

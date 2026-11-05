@@ -1,6 +1,6 @@
 ---
 path: /edi/communication-profiles
-aliases: [transport profile, AS2 setup, SFTP setup, VAN mailbox, EDI connection settings, ISA IDs, EDI credentials, EDI endpoint]
+aliases: [transport profile, AS2 setup, SFTP setup, VAN mailbox, EDI connection settings, ISA IDs, EDI credentials, EDI endpoint, AS2 inbound URL, AS2 receiving URL]
 related:
   - /edi/partners
   - /edi/messages
@@ -24,6 +24,13 @@ Keywords: new transport profile, add AS2 endpoint, add SFTP connection
 6. On the **Secrets** tab, enter the password or private key the method needs. For AS2 you can keep decryption apart from signing: add an encryption certificate on the **Transport** tab, give it to your partner to encrypt to, and enter its decryption key here. **Test connection** warns when one key does both.
 7. Select **Save** (or **Save & close**).
 
+### Give a partner your AS2 inbound URL
+Keywords: AS2 receiving URL, where partner sends AS2, our AS2 endpoint, rotate AS2 URL
+1. Open [Communication profiles](/edi/communication-profiles) and select the AS2 profile's row.
+2. On the **Transport** tab, find **Inbound URL** and select **Copy**. Each AS2 profile has its own URL, and Trenova accepts the partner's messages only at the URL of their profile, so send this one to the partner with your AS2 ID and certificate.
+3. If the partner returns receipts asynchronously, enter the same URL as the **Async MDN return URL**.
+4. To retire a URL that has been shared too widely, select **Rotate URL** and confirm. The old URL stops working at once; give the partner the new one.
+
 ### Update credentials or endpoint details
 Keywords: rotate password, new certificate, change SFTP host
 1. Open [Communication profiles](/edi/communication-profiles) and select the profile's row.
@@ -38,4 +45,4 @@ Keywords: verify AS2, check SFTP login, connectivity test
 3. Select **Test connection** at the top of the panel. A message reports whether certificates, credentials and endpoint reachability passed, passed with warnings, or failed.
 
 ## Notes
-Viewing profiles needs read access to EDI; creating needs create access and editing needs update access to EDI. **Test connection** is not offered for Internal profiles. Internal profiles route through an accepted organization connection, chosen under **Connection** and **Connected organization**, and do not use X12 envelope IDs or stored credentials. Deliveries that use up all retry attempts are dead-lettered and show on [Messages](/edi/messages).
+Viewing profiles needs read access to EDI; creating needs create access and editing needs update access to EDI. **Test connection** is not offered for Internal profiles. Rotating an AS2 inbound URL needs update access to EDI. An AS2 ID pair can be used by only one active profile in your organization. Internal profiles route through an accepted organization connection, chosen under **Connection** and **Connected organization**, and do not use X12 envelope IDs or stored credentials. Deliveries that use up all retry attempts are dead-lettered and show on [Messages](/edi/messages).
