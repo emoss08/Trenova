@@ -225,6 +225,13 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Placeholder: "outbound",
 			},
 			{
+				Key:       WebhookSigningSecretField,
+				Label:     "Webhook Credentials",
+				Type:      ConfigFieldTypePassword,
+				Sensitive: true,
+				HelpText:  "The user:password Postmark sends with each webhook. Trenova refuses delivery events without them.",
+			},
+			{
 				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
