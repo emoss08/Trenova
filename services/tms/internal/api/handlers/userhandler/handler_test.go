@@ -122,6 +122,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Validator:         userservice.NewValidator(userservice.ValidatorParams{Repo: opts.userRepo}),
 		PermissionEngine:  opts.permEngine,
 		SSOConfigs:        ssoConfigs,
+		PasswordStepUp:    sessiontest.OpenStepUp{},
 	})
 
 	roleSvc := roleservice.New(roleservice.Params{

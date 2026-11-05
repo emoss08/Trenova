@@ -59,6 +59,7 @@ type Params struct {
 	AuthEvents        iamports.AuthEventRecorder
 	ContentGate       contentscanports.Gate
 	SSOConfigs        tenantports.SSOConfigRepository
+	PasswordStepUp    sessionports.PasswordStepUp
 	AccessRevokers    []tenantports.UserAccessRevoker `group:"userAccessRevokers"`
 }
 
@@ -84,6 +85,7 @@ type Service struct {
 	contentGate    contentscanports.Gate
 	accessRevokers []tenantports.UserAccessRevoker
 	ssoConfigs     tenantports.SSOConfigRepository
+	passwordStepUp sessionports.PasswordStepUp
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -108,6 +110,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		authEvents:     p.AuthEvents,
 		contentGate:    p.ContentGate,
 		accessRevokers: p.AccessRevokers,
+		passwordStepUp: p.PasswordStepUp,
 		ssoConfigs:     p.SSOConfigs,
 	}
 }
@@ -741,7 +744,9 @@ func (s *Service) ChangeMyPassword(
 		return nil, err
 	}
 
-	if err = user.VerifyCredentials(req.CurrentPassword); err != nil {
+	if err = s.passwordStepUp.GuardPassword(ctx, tenantInfo, func() error {
+		return user.VerifyCredentials(req.CurrentPassword)
+	}); err != nil {
 		return nil, err
 	}
 

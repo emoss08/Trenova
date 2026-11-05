@@ -81,6 +81,14 @@ type ReauthenticateRequest struct {
 	RecoveryCode string
 }
 
+type PasswordStepUp interface {
+	GuardPassword(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		verify func() error,
+	) error
+}
+
 type MFAService interface {
 	Status(
 		ctx context.Context,

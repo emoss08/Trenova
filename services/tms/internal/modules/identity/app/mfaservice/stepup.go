@@ -70,6 +70,23 @@ func (s *Service) beginStepUp(
 	return attempt, nil
 }
 
+func (s *Service) GuardPassword(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	verify func() error,
+) error {
+	attempt, err := s.beginStepUp(ctx, tenantInfo.UserID, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	if err = verify(); err != nil {
+		s.recordStepUpFailure(ctx, attempt)
+	}
+
+	return err
+}
+
 func (s *Service) finishStepUp(ctx context.Context, attempt *stepUpAttempt, err error) {
 	if err == nil {
 		if resetErr := s.throttle.Succeed(ctx, attempt.key); resetErr != nil {
@@ -80,6 +97,10 @@ func (s *Service) finishStepUp(ctx context.Context, attempt *stepUpAttempt, err 
 		return
 	}
 
+	s.recordStepUpFailure(ctx, attempt)
+}
+
+func (s *Service) recordStepUpFailure(ctx context.Context, attempt *stepUpAttempt) {
 	s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeFailed, stepUpErrorRejected)
 	if attempt.decision.Tripped {
 		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorThrottled)
