@@ -166,17 +166,6 @@ func TestHandoff_AChapterThatCannotBeReadStopsTheHandoff(t *testing.T) {
 	assert.Nil(t, f.completer.req)
 }
 
-func TestHandoff_AChapterNeedsChaptersToBeAvailable(t *testing.T) {
-	t.Parallel()
-
-	f := newHandoffFixture()
-
-	_, err := f.handoffChapter(t, pulid.MustNew("achp_"), f.target.ID)
-
-	assert.True(t, errortypes.IsBusinessError(err))
-	assert.Nil(t, f.assistant.started)
-}
-
 func TestHandoff_TheWholeConversationStillCannotGoToItsOwnAgent(t *testing.T) {
 	t.Parallel()
 

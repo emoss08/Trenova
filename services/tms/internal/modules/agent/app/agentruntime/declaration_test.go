@@ -33,7 +33,7 @@ func deferredCoreRuntime(t *testing.T) (*Service, []string) {
 	}
 	query := paramsOf(service).QueryTools.(*stubQueryRegistry)
 	query.Tools = append(query.Tools, core...)
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) {
 		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 			QueryTools:  query,
 			ActionTools: service.actionTools,
@@ -161,7 +161,7 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 		&agenttest.StubQueryTool{ToolName: "shipment_get", Resource: permission.ResourceShipment},
 		&agenttest.StubQueryTool{ToolName: "invoice_list", Resource: permission.ResourceInvoice},
 	}}
-	service := buildRuntime(Params{
+	service := buildRuntime(runtimeParts{
 		Logger:      zap.NewNop(),
 		QueryTools:  query,
 		ActionTools: &stubActionRegistry{},

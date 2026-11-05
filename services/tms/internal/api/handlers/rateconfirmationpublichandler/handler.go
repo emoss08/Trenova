@@ -52,6 +52,8 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
+	c.Header("Cache-Control", "no-store")
+	c.Header("Referrer-Policy", "no-referrer")
 	helpers.JSON(c, http.StatusOK, view)
 }
 

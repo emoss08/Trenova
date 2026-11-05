@@ -135,7 +135,7 @@ func TestRun_UsesTheRouterWhenNoDispatcherIsWired(t *testing.T) {
 	t.Parallel()
 
 	router := &agenttest.ScriptedCompletion{StructuredText: `{"ok":true}`}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 
 	var answer struct {
 		OK bool `json:"ok"`
@@ -186,14 +186,6 @@ func TestSubmitTasks_SendsEveryTaskWithNovasIdentity(t *testing.T) {
 		t,
 		strings.HasSuffix(service.submitted.Items[1].Request.System, "Your task: read the seal."),
 	)
-}
-
-func TestSubmitTasks_IsUnsupportedWithoutABatchService(t *testing.T) {
-	t.Parallel()
-
-	_, err := novaharness.New(novaharness.Params{}).SubmitTasks(t.Context(), &llmports.NovaBatch{})
-
-	require.ErrorIs(t, err, llmports.ErrBatchUnsupported)
 }
 
 type lookup struct {
@@ -262,7 +254,7 @@ func TestConverse_ReadsThenAnswersStreamingEachStep(t *testing.T) {
 		},
 		{Text: "Dana is driving S-104.", ModelIdentifier: "haiku"},
 	}}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 	events := &heard{}
 
 	answer, err := harness.Converse(t.Context(), paletteTalk(tool), events)
@@ -304,7 +296,7 @@ func TestConverse_TellsTheLastCallToAnswerWithWhatItHas(t *testing.T) {
 		{Text: "", ToolCalls: []llmports.ToolCall{{ID: "toolu_2", Name: "get_record"}}},
 		{Text: "Here is what I found."},
 	}}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 
 	answer, err := harness.Converse(t.Context(), paletteTalk(&lookup{}), &heard{})
 	require.NoError(t, err)
@@ -322,7 +314,7 @@ func TestConverse_RefusesAToolTheTaskWasNotGiven(t *testing.T) {
 		{ToolCalls: []llmports.ToolCall{{ID: "toolu_1", Name: "shipment_cancel"}}},
 		{Text: "I can't do that from here."},
 	}}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 	events := &heard{}
 
 	answer, err := harness.Converse(t.Context(), paletteTalk(&lookup{}), events)
@@ -334,16 +326,13 @@ func TestConverse_RefusesAToolTheTaskWasNotGiven(t *testing.T) {
 	assert.Equal(t, "I can't do that from here.", answer.Text)
 }
 
-func TestConverse_NeedsTheRouterAndAProvider(t *testing.T) {
+func TestConverse_NeedsAProvider(t *testing.T) {
 	t.Parallel()
 
-	_, err := novaharness.New(novaharness.Params{Dispatcher: &structured{}, Providers: serves(true)}).
-		Converse(t.Context(), paletteTalk(), &heard{})
-	require.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
-
-	_, err = novaharness.New(novaharness.Params{
-		Router:    &agenttest.ScriptedCompletion{},
-		Providers: serves(false),
+	_, err := novaharness.New(novaharness.Params{
+		Dispatcher: &agenttest.ScriptedCompletion{},
+		Router:     &agenttest.ScriptedCompletion{},
+		Providers:  serves(false),
 	}).Converse(t.Context(), paletteTalk(), &heard{})
 	require.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }

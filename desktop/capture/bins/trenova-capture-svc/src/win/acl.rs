@@ -4,7 +4,9 @@
 use std::io;
 
 use capture_platform::accounts::account_sid;
-pub use capture_platform::acl::{apply_dacl, create_secured, refuse_reparse};
+pub use capture_platform::acl::{
+    SHARED_DIR_SDDL, SYSTEM_ONLY_SDDL, apply_dacl, create_secured, refuse_reparse, secure_directory,
+};
 use capture_protocol::handoff::Inbox;
 use trenova_capture_svc::SERVICE_NAME;
 use trenova_capture_svc::attribution::{Owner, valid_sid};

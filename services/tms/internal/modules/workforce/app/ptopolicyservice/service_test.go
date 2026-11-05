@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -96,6 +97,15 @@ func (f *fakeAudit) LogAction(
 	return nil
 }
 
+func newTestService(repo *fakePolicyRepo, audit *fakeAudit) *Service {
+	return &Service{
+		l:            zap.NewNop(),
+		repo:         repo,
+		auditService: audit,
+		realtime:     &mocks.NoopRealtimeService{},
+	}
+}
+
 func activePolicy() *pto.PTOPolicy {
 	return &pto.PTOPolicy{
 		ID:             pulid.MustNew("ptop_"),
@@ -120,7 +130,7 @@ func TestCreateRejectsDuplicateCodeAndDraftDefault(t *testing.T) {
 
 	repo := newFakePolicyRepo()
 	repo.codes["STD"] = pulid.MustNew("ptop_")
-	svc := &Service{l: zap.NewNop(), repo: repo, auditService: &fakeAudit{}}
+	svc := newTestService(repo, &fakeAudit{})
 
 	policy := activePolicy()
 	policy.ID = pulid.Nil
@@ -149,7 +159,7 @@ func TestArchiveIsBlockedWhileWorkersAreAssigned(t *testing.T) {
 	repo.policies[policy.ID] = policy
 	repo.openCounts[policy.ID] = 3
 	audit := &fakeAudit{}
-	svc := &Service{l: zap.NewNop(), repo: repo, auditService: audit}
+	svc := newTestService(repo, audit)
 
 	_, err := svc.Archive(t.Context(), &StatusChangeRequest{
 		ID: policy.ID,
@@ -178,7 +188,7 @@ func TestArchiveClearsDefaultAndAuditsThenRestore(t *testing.T) {
 	policy.IsDefault = true
 	repo.policies[policy.ID] = policy
 	audit := &fakeAudit{}
-	svc := &Service{l: zap.NewNop(), repo: repo, auditService: audit}
+	svc := newTestService(repo, audit)
 	tenant := pagination.TenantInfo{OrgID: policy.OrganizationID, BuID: policy.BusinessUnitID}
 
 	archived, err := svc.Archive(t.Context(), &StatusChangeRequest{
@@ -209,7 +219,7 @@ func TestStatusChangeRejectsStaleVersion(t *testing.T) {
 	repo := newFakePolicyRepo()
 	policy := activePolicy()
 	repo.policies[policy.ID] = policy
-	svc := &Service{l: zap.NewNop(), repo: repo, auditService: &fakeAudit{}}
+	svc := newTestService(repo, &fakeAudit{})
 
 	_, err := svc.Archive(t.Context(), &StatusChangeRequest{
 		ID: policy.ID,

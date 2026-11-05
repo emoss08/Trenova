@@ -129,6 +129,7 @@ type PortalSiteView struct {
 	StartURL         string   `json:"startUrl"`
 	BrowserProfileID string   `json:"browserProfileId"`
 	AllowActions     bool     `json:"allowActions"`
+	ViewOnlyAccount  bool     `json:"viewOnlyAccount"`
 	Enabled          bool     `json:"enabled"`
 	HasSignIn        bool     `json:"hasSignIn"`
 	HasAuthenticator bool     `json:"hasAuthenticator"`
@@ -151,6 +152,7 @@ type SavePortalSiteRequest struct {
 	ClearAuthenticator bool                  `json:"clearAuthenticator"`
 	BrowserProfileID   string                `json:"browserProfileId"`
 	AllowActions       bool                  `json:"allowActions"`
+	ViewOnlyAccount    bool                  `json:"viewOnlyAccount"`
 	Enabled            bool                  `json:"enabled"`
 	Version            int64                 `json:"version"`
 }
@@ -215,6 +217,9 @@ type PortalSiteSummary struct {
 	StartURL     string
 	AllowActions bool
 	HasSignIn    bool
+
+	ViewOnlyAccount  bool
+	ReadNeedsAPerson bool
 }
 
 type PortalTaskOwner struct {
@@ -231,7 +236,6 @@ type PortalReadRequest struct {
 	Question   string
 	Details    map[string]string
 	Owner      PortalTaskOwner
-	AfterOutsideText bool
 }
 
 type PortalReadOutcome struct {
@@ -255,6 +259,15 @@ type PortalActionRequest struct {
 	Details        map[string]string
 	IdempotencyKey string
 	Owner          PortalTaskOwner
+	LookUpOnly     bool
+}
+
+func (r *PortalActionRequest) Mode() extensionportal.PortalRunMode {
+	if r.LookUpOnly {
+		return extensionportal.PortalRunModeRead
+	}
+
+	return extensionportal.PortalRunModeAct
 }
 
 type PortalActionPlan struct {

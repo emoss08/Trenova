@@ -51,6 +51,7 @@ export default function CarrierSettlementControlForm() {
       payDelayDays: data.payDelayDays,
       autoGenerateBatches: data.autoGenerateBatches,
       autoPostOnApprove: data.autoPostOnApprove,
+      requireSeparateApprover: data.requireSeparateApprover,
       varianceTolerance: data.varianceToleranceMinor / 100,
       autoMatchInboundInvoices: data.autoMatchInboundInvoices,
       autoAcceptWithinTolerance: data.autoAcceptWithinTolerance,
@@ -71,6 +72,7 @@ export default function CarrierSettlementControlForm() {
         payDelayDays: values.payDelayDays,
         autoGenerateBatches: values.autoGenerateBatches,
         autoPostOnApprove: values.autoPostOnApprove,
+        requireSeparateApprover: values.requireSeparateApprover,
         varianceToleranceMinor: Math.round(values.varianceTolerance * 100),
         autoMatchInboundInvoices: values.autoMatchInboundInvoices,
         autoAcceptWithinTolerance: values.autoAcceptWithinTolerance,
@@ -203,6 +205,16 @@ function WorkflowCard() {
               label={t("Auto-post on approval")}
               description={t(
                 "Approving a settlement immediately posts it to the general ledger, collapsing two steps into one.",
+              )}
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="requireSeparateApprover"
+              label={t("Require a separate approver")}
+              description={t(
+                "Whoever submits a carrier settlement cannot also approve it. Turn this off if one person runs carrier pay.",
               )}
             />
           </FormControl>

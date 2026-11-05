@@ -10,20 +10,24 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs/triageworkcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
@@ -187,12 +191,9 @@ type fakeDocuments struct {
 
 func (f *fakeDocuments) AttachLineageToResource(
 	_ context.Context,
-	documentID pulid.ID,
-	resourceType string,
-	resourceID string,
-	_ pagination.TenantInfo,
-	_ pulid.ID,
+	req *documentservice.AttachLineageRequest,
 ) (*document.Document, error) {
+	documentID, resourceType, resourceID := req.DocumentID, req.ResourceType, req.ResourceID
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.lineage = append(f.lineage, lineageCall{
@@ -222,7 +223,7 @@ func (f *fakeDocuments) GetDownloadContent(
 func (f *fakeDocuments) Delete(
 	_ context.Context,
 	req documentports.DeleteDocumentRequest,
-	_ pulid.ID,
+	_ *permissionports.RequestActor,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -383,6 +384,23 @@ func (f *fakeUploads) Complete(
 	return &documentupload.DocumentUploadSession{ID: req.SessionID, DocumentID: &documentID}, nil
 }
 
+type fakeSplitWorkflows struct {
+	kernelports.WorkflowStarter
+
+	started []*triageworkcontract.SplitFilingPayload
+}
+
+func (f *fakeSplitWorkflows) StartWorkflow(
+	_ context.Context,
+	_ client.StartWorkflowOptions,
+	_ any,
+	args ...any,
+) (client.WorkflowRun, error) {
+	f.started = append(f.started, args[0].(*triageworkcontract.SplitFilingPayload))
+
+	return nil, nil
+}
+
 type fakeRecorder struct {
 	mu         sync.Mutex
 	activities []*triage.Activity
@@ -520,6 +538,7 @@ type fixture struct {
 	work       *fakeWork
 	pdf        *fakePDF
 	uploads    *fakeUploads
+	workflows  *fakeSplitWorkflows
 	recorder   *fakeRecorder
 	notifier   *fakeNotifier
 	events     *fakeEvents
@@ -590,6 +609,7 @@ func newFixture() *fixture {
 			sessions: map[pulid.ID]*documentuploadports.CreateSessionRequest{},
 			parts:    map[pulid.ID][]byte{},
 		},
+		workflows:  &fakeSplitWorkflows{},
 		recorder:   &fakeRecorder{},
 		notifier:   &fakeNotifier{},
 		events:     &fakeEvents{},
@@ -617,6 +637,7 @@ func newFixture() *fixture {
 			types: map[pulid.ID]*documenttype.DocumentType{pod.ID: pod, bol.ID: bol},
 		},
 		uploads:    f.uploads,
+		workflows:  f.workflows,
 		imaging:    f.pdf,
 		replies:    f.drafter,
 		events:     f.events,

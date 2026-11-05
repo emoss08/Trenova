@@ -78,11 +78,11 @@ func tariffCalculator(t *testing.T, template *tariffports.Template) *shipmentcom
 	t.Helper()
 
 	stack := ratingtest.NewStack(t, ratingtest.StackOptions{Any: template})
-	return shipmentcommercial.New(shipmentcommercial.Params{
-		Logger:          zap.NewNop(),
-		RateEngine:      stack.Engine,
-		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
-	})
+	return newCalculator(
+		t,
+		stack.Engine,
+		accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+	)
 }
 
 func perMileRate(t *testing.T, rate string) tarifftypes.Inputs {

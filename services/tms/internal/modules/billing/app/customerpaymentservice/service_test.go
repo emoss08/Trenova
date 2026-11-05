@@ -56,7 +56,7 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_"), Status: fiscalperiod.StatusOpen}, nil)
 	v := NewValidator(ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo})
 
 	_, _, me := v.ValidatePostAndApply(
@@ -153,7 +153,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -163,7 +163,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -174,7 +174,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
@@ -244,7 +244,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -254,7 +254,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -265,7 +265,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	posted, err := svc.PostAndApply(
 		t.Context(),
@@ -372,7 +372,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 200}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -382,7 +382,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -393,7 +393,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	updated, err := svc.ApplyUnapplied(
 		t.Context(),
@@ -494,7 +494,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 300}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -504,7 +504,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -515,7 +515,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	reversed, err := svc.Reverse(
 		t.Context(),
@@ -607,7 +607,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -617,7 +617,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 			lastPosting.Lines = append([]journalentryports.JournalPostingLine(nil), params.Lines...)
 			return nil
 		})
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -625,10 +625,14 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 		journalRepo:    journalRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		validator: NewValidator(
-			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
+			ValidatorParams{
+				InvoiceRepo:        invoiceRepo,
+				FiscalPeriodRepo:   fiscalRepo,
+				AdjustmentCtrlRepo: shortPaysUnderThreshold(t, orgID),
+			},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	posted, err := svc.PostAndApply(
 		t.Context(),

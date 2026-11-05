@@ -72,7 +72,7 @@ func runWithExtensions(
 		}},
 		nil,
 	)
-	rewire(rt, func(p *Params) { p.Extensions = run.gate })
+	rewire(rt, func(p *runtimeParts) { p.Extensions = run.gate })
 
 	definition := runtimetest.Definition(run.definition...)
 	definition.AutonomyCeiling = agent.TierAutoExecute
@@ -167,7 +167,7 @@ func TestRun_AnEscalationAfterReadingTheWebStillRuns(t *testing.T) {
 	)
 	rewire(
 		rt,
-		func(p *Params) { p.Extensions = webGate(agentextension.AvailabilitySelectedAgents) },
+		func(p *runtimeParts) { p.Extensions = webGate(agentextension.AvailabilitySelectedAgents) },
 	)
 
 	definition := runtimetest.Definition(
@@ -348,7 +348,7 @@ func TestRun_AWriteAfterInspectingPastedX12WaitsForAPerson(t *testing.T) {
 	)
 	rewire(
 		rt,
-		func(p *Params) { p.Extensions = webGate(agentextension.AvailabilitySelectedAgents) },
+		func(p *runtimeParts) { p.Extensions = webGate(agentextension.AvailabilitySelectedAgents) },
 	)
 	definition := runtimetest.Definition("edi_inspect_x12", "report_create")
 	definition.AutonomyCeiling = agent.TierAutoExecute

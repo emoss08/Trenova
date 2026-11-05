@@ -3,6 +3,7 @@
 
 mod acl;
 mod install;
+mod peer;
 mod service;
 mod spooler;
 
@@ -84,7 +85,14 @@ pub(crate) async fn serve(
     printer: Arc<Printer<Handler>>,
     stop: CancellationToken,
 ) -> std::io::Result<()> {
-    listener::serve(listener, printer, Limits::default(), stop).await
+    listener::serve(
+        listener,
+        printer,
+        Limits::default(),
+        Arc::new(peer::SpoolerPeers),
+        stop,
+    )
+    .await
 }
 
 fn run_console() -> ExitCode {

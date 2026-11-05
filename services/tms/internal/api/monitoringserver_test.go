@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -72,7 +71,8 @@ func TestMonitoringServer_MetricsDisabledAndReadinessFails(t *testing.T) {
 	readyBody := mustGET(t, fmt.Sprintf("http://127.0.0.1:%d/internal/readyz", port))
 	assert.Equal(t, http.StatusServiceUnavailable, readyBody.statusCode)
 	assert.Contains(t, readyBody.body, `"status":"not_ready"`)
-	assert.Contains(t, readyBody.body, "db unavailable")
+	assert.Contains(t, readyBody.body, "database is unavailable")
+	assert.NotContains(t, readyBody.body, "db unavailable")
 
 	healthBody := mustGET(t, fmt.Sprintf("http://127.0.0.1:%d/internal/healthz", port))
 	assert.Equal(t, http.StatusServiceUnavailable, healthBody.statusCode)
@@ -80,6 +80,43 @@ func TestMonitoringServer_MetricsDisabledAndReadinessFails(t *testing.T) {
 
 	liveBody := mustGET(t, fmt.Sprintf("http://127.0.0.1:%d/internal/livez", port))
 	assert.Equal(t, http.StatusOK, liveBody.statusCode)
+}
+
+func TestMonitoringServer_HealthKeepsErrorDetailOutOfTheResponse(t *testing.T) {
+	t.Parallel()
+
+	const detail = "dial tcp 10.1.2.3:5432: password authentication failed for user trenova_app"
+
+	server, port := newTestMonitoringServer(t, false, errors.New(detail))
+
+	ediMessageRepo := edimessageportsmock.NewMockEDIMessageRepository(t)
+	ediMessageRepo.On("CountDeadLetteredSince", mock.Anything, mock.Anything).
+		Return(int64(0), errors.New(detail)).
+		Once()
+
+	ediInboundRepo := edimessageportsmock.NewMockEDIInboundFileRepository(t)
+	ediInboundRepo.On("CountQuarantinedSince", mock.Anything, mock.Anything).
+		Return(int64(0), errors.New(detail)).
+		Once()
+
+	ediProfileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+	ediProfileRepo.On("CountStaleInboundPollingProfiles", mock.Anything, mock.Anything).
+		Return(int64(0), errors.New(detail)).
+		Once()
+
+	server.ediMessageRepo = ediMessageRepo
+	server.ediInboundRepo = ediInboundRepo
+	server.ediProfileRepo = ediProfileRepo
+	startTestMonitoringServer(t, server)
+
+	healthBody := mustGET(t, fmt.Sprintf("http://127.0.0.1:%d/internal/healthz", port))
+	assert.Equal(t, http.StatusServiceUnavailable, healthBody.statusCode)
+	assert.Contains(t, healthBody.body, "database is unavailable")
+	assert.Contains(t, healthBody.body, "dead-letter backlog could not be read")
+	assert.Contains(t, healthBody.body, "quarantine backlog could not be read")
+	assert.Contains(t, healthBody.body, "mailbox poll status could not be read")
+	assert.NotContains(t, healthBody.body, "10.1.2.3")
+	assert.NotContains(t, healthBody.body, "trenova_app")
 }
 
 type httpResponse struct {
@@ -215,28 +252,3 @@ func getFreePort(t *testing.T) int {
 
 	return tcpAddr.Port
 }
-
-func TestMonitoringServer_DatabaseCheckWithoutConnection(t *testing.T) {
-	t.Parallel()
-
-	server, _ := newTestMonitoringServer(t, true, nil)
-	server.database = nil
-
-	check := server.databaseCheck(context.Background())
-
-	assert.Equal(t, "down", check.Status)
-	assert.True(t, strings.Contains(check.Message, "database connection is not configured"))
-}
-
-func TestMonitoringServer_EDICheckWithoutRepositories(t *testing.T) {
-	t.Parallel()
-
-	server, _ := newTestMonitoringServer(t, true, nil)
-
-	check := server.ediCheck(t.Context())
-
-	assert.Equal(t, "unknown", check.Status)
-	assert.Contains(t, check.Message, "EDI monitoring is not configured")
-}
-
-var _ databaseHealth = (*fakeDBConnection)(nil)

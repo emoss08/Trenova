@@ -26,6 +26,8 @@ metadata:
     # The operator deletes a cluster's volumes with it, so uninstalling the
     # release leaves the cluster, and the data, in place.
     helm.sh/resource-policy: keep
+    # Hibernation stops every instance and keeps the volumes.
+    cnpg.io/hibernation: {{ ternary "on" "off" .Values.postgres.hibernate | quote }}
 spec:
   instances: {{ .Values.postgres.instances }}
   imageCatalogRef:
@@ -62,8 +64,9 @@ spec:
       {{ $k }}: {{ $v | toString | quote }}
       {{- end }}
       cron.database_name: {{ .Values.postgres.database | quote }}
-    # TLS only: every client connects with sslmode=require. The operator's own
-    # replication and status connections use certificates, above these lines.
+    # TLS only: every client verifies the server against the cluster's CA. The
+    # operator's own replication and status connections use certificates, above
+    # these lines.
     pg_hba:
       - hostssl all all all scram-sha-256
       - host all all all reject

@@ -114,17 +114,3 @@ func TestLink_RefusesARecordTheTenantDoesNotHave(t *testing.T) {
 		})
 	}
 }
-
-func TestLink_RefusesRatherThanTrustsWhenItCannotCheck(t *testing.T) {
-	t.Parallel()
-
-	repo := &linkStubMessageRepo{message: &inboundmessage.InboundMessage{}}
-	svc, _ := withQueue(&testService{l: zap.NewNop(), messageRepo: repo})
-	req := linkRequest()
-	req.ShipmentID = pulid.MustNew("shp_")
-
-	_, err := svc.queue().Link(t.Context(), &req)
-
-	require.Error(t, err)
-	assert.Nil(t, repo.updated)
-}

@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"go.uber.org/zap"
 )
 
@@ -19,8 +20,13 @@ type testService struct {
 }
 
 func (t *testService) mailbox() *Service {
+	audit := t.audit
+	if audit == nil {
+		audit = &mocks.NoopAuditService{}
+	}
+
 	return &Service{
-		audit:        t.audit,
+		audit:        audit,
 		email:        t.email,
 		encryption:   t.encryption,
 		l:            t.l,

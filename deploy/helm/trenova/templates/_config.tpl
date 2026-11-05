@@ -9,21 +9,18 @@ TRENOVA_<SECTION>_<KEY> variables, which override these keys.
 key a Secret supplies is written here empty: the variable fills it, and an
 empty one fails validation instead of running with a default. */ -}}
 {{- $origin := include "trenova.origin" . -}}
-{{- $enforced := include "trenova.rlsEnforced" . -}}
 {{- $database := dict
   "host" (include "trenova.postgresHost" .)
   "port" 5432
   "name" .Values.postgres.database
-  "user" (ternary .Values.postgres.appRole .Values.postgres.owner (eq $enforced "true"))
+  "user" .Values.postgres.appRole
   "password" ""
-  "sslMode" "require"
-  "rls" (dict "mode" .Values.postgres.rlsMode)
+  "sslMode" "verify-full"
+  "sslRootCert" "/certs/postgres/ca.crt"
+  "system" (dict "user" .Values.postgres.systemRole "password" "" "maxOpenConns" 8)
+  "migrator" (dict "user" .Values.postgres.owner "password" "")
+  "rls" (dict "mode" .Values.postgres.rlsMode "scopeKeyId" "" "scopeKey" "")
 -}}
-{{- if $enforced }}
-{{- $_ := set $database "system" (dict "user" .Values.postgres.systemRole "password" "" "maxOpenConns" 8) -}}
-{{- $_ := set $database "migrator" (dict "user" .Values.postgres.owner "password" "") -}}
-{{- $_ := set $database "rls" (dict "mode" .Values.postgres.rlsMode "scopeKeyId" "" "scopeKey" "") -}}
-{{- end }}
 {{- $storage := dict
   "provider" "minio"
   "bucket" .Values.storage.bucket
@@ -55,6 +52,7 @@ empty one fails validation instead of running with a default. */ -}}
 {{- $contentScan = dict "clamav" (dict "address" (printf "%s:3310" (include "trenova.name" (dict "root" . "component" "clamav")))) -}}
 {{- end }}
 {{- $imaging := include "trenova.name" (dict "root" . "component" "imaging") -}}
+{{- $temporal := include "trenova.name" (dict "root" . "component" "temporal") -}}
 {{- $release := dict
   "app" (dict
     "version" (.Values.tms.image.tag | default .Chart.AppVersion)
@@ -73,8 +71,18 @@ empty one fails validation instead of running with a default. */ -}}
     "passwordReset" (dict "baseUrl" $origin)
     "csrf" (dict "trustedOrigins" (list $origin)))
   "monitoring" (dict "metrics" (dict "enabled" true "host" "0.0.0.0" "port" 9090))
-  "temporal" (dict "hostPort" (printf "%s:7233" (include "trenova.name" (dict "root" . "component" "temporal"))))
-  "renderer" (dict "gotenbergUrl" (printf "http://%s:3000" (include "trenova.name" (dict "root" . "component" "gotenberg"))))
+  "temporal" (dict
+    "hostPort" (printf "%s:7233" $temporal)
+    "tls" (dict
+      "enabled" true
+      "serverName" $temporal
+      "serverCACertPath" "/certs/temporal/ca.crt"
+      "clientCertPath" "/certs/temporal/tls.crt"
+      "clientKeyPath" "/certs/temporal/tls.key"))
+  "renderer" (dict
+    "gotenbergUrl" (printf "http://%s:3000" (include "trenova.name" (dict "root" . "component" "gotenberg")))
+    "gotenbergUsername" (include "trenova.gotenbergUsername" .)
+    "gotenbergPassword" "")
   "documentConversion" $documentConversion
   "contentScan" $contentScan
   "portal" (dict "baseUrl" (printf "%s/dash" $origin))

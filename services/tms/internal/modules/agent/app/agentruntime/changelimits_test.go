@@ -125,7 +125,7 @@ func TestRun_HoldsAnAutomaticChangeOutsideBusinessHours(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
-	rewire(rt, func(p *Params) { p.Budgets = hoursBudgets{within: false} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = hoursBudgets{within: false} })
 	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
 
@@ -149,7 +149,7 @@ func TestRun_RunsAnAutomaticChangeInsideBusinessHours(t *testing.T) {
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
 		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
-	rewire(rt, func(p *Params) { p.Budgets = hoursBudgets{within: true} })
+	rewire(rt, func(p *runtimeParts) { p.Budgets = hoursBudgets{within: true} })
 	definition := autoChangeDefinition("dispatch_assign_move")
 	definition.BusinessHoursOnly = true
 

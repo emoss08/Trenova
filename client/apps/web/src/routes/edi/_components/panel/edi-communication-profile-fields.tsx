@@ -4,10 +4,12 @@ import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { AlertTriangleIcon } from "@trenova/shared/components/icons";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { EDICommunicationProfileRow } from "@/lib/graphql/edi-table";
-import type { Control } from "react-hook-form";
+import { type Control, useWatch } from "react-hook-form";
 import {
   as2CompressionOptions,
   as2EncryptionAlgorithmOptions,
@@ -19,6 +21,7 @@ import {
   type CommunicationProfileFormValues,
   type CommunicationProfileMethod,
 } from "../edi-schemas";
+import { AS2InboundURLSection } from "./edi-as2-inbound-url";
 import { EDICertificateField } from "./edi-certificate-field";
 import { EDIEmptyState } from "./edi-panel-primitives";
 
@@ -26,13 +29,35 @@ type ProfileFieldsProps = {
   control: Control<CommunicationProfileFormValues>;
 };
 
+function UnsignedInboundWarning({ control }: ProfileFieldsProps) {
+  const t = useT();
+  const required = useWatch({ control, name: "config.requireSignedInbound" });
+
+  if (required !== "false") {
+    return null;
+  }
+
+  return (
+    <Alert variant="warning" size="sm" className="mt-2">
+      <AlertTriangleIcon />
+      <AlertDescription>
+        {t(
+          "Anyone who reaches this endpoint could send a document under this partner's name. Keep this off only for a partner who cannot sign.",
+        )}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 export function TransportProfileFields({
   control,
   method,
   authMode,
+  profile,
 }: ProfileFieldsProps & {
   method: CommunicationProfileMethod;
   authMode: string;
+  profile: EDICommunicationProfileRow | null;
 }) {
   const t = useT();
 
@@ -85,6 +110,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
+        <AS2InboundURLSection key={profile?.id ?? "new"} profile={profile} />
         <FormSection title={t("Security and MDN")}>
           <FormGroup cols={2}>
             <FormControl>
@@ -104,8 +130,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.mdnUrl"
                 label={t("Async MDN return URL")}
-                placeholder="https://edi.example.com/as2/mdn"
-                description={t("Required when MDN mode is asynchronous.")}
+                description={t(
+                  "Required when MDN mode is asynchronous. Enter this profile's inbound URL so the partner's receipt reaches it.",
+                )}
               />
             </FormControl>
             <FormControl>
@@ -156,6 +183,7 @@ export function TransportProfileFields({
                   "Reject inbound documents that are not signed by the partner. Automatic requires a signature, so inbound documents are refused until a partner signing certificate is configured. Off accepts documents with no proof of who sent them.",
                 )}
               />
+              <UnsignedInboundWarning control={control} />
             </FormControl>
             <FormControl>
               <SelectField

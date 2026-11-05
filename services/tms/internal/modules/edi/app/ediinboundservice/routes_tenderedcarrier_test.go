@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -136,6 +137,7 @@ func buildTenderedCarrierFixture(t *testing.T, withStopActuals bool) *tenderedCa
 		inboundApply:        edis.InboundApply,
 		outbound:            edis.Outbound,
 		alerts:              edis.Alerts,
+		watchtower:          &mocks.NoopWatchtowerProjector{},
 	}
 	return fixture
 }
@@ -320,7 +322,10 @@ func TestRouteShipmentStatus_RecipientMissMatchesAcceptedOffer(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.Empty(t, warnings)
+	require.Equal(t, []string{
+		"shipment status AF could not update stop actuals: " +
+			"the accepted tender offer has no shipment move",
+	}, warnings)
 	require.Equal(t, 1, fixture.tenderRepo.acceptedCalls)
 	request := fixture.tenderRepo.lastAcceptedReq
 	require.Equal(t, offer.ID, request.OfferID)
@@ -654,6 +659,10 @@ func TestRouteFreightInvoice_RecipientMissMatchesAcceptedOfferByBOL(t *testing.T
 	t.Parallel()
 
 	fixture := newTenderedCarrierFixture(t)
+	fixture.withInvoiceMatcher(t).EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Return(&carrierports.AutoMatchInboundInvoiceResult{}, nil).
+		Once()
 	offer := fixture.acceptedOffer()
 	fixture.tenderRepo.acceptedOffer = offer
 	fixture.expectRecipientMiss()
@@ -718,6 +727,10 @@ func TestRouteFreightInvoice_PerMileOfferLeavesExpectedAmountNull(t *testing.T) 
 	t.Parallel()
 
 	fixture := newTenderedCarrierFixture(t)
+	fixture.withInvoiceMatcher(t).EXPECT().
+		AutoMatchInboundInvoice(mock.Anything, mock.Anything).
+		Return(&carrierports.AutoMatchInboundInvoiceResult{}, nil).
+		Once()
 	offer := fixture.acceptedOffer()
 	offer.RateMethod = shipmentvocab.CarrierRateMethodPerMile
 	fixture.tenderRepo.acceptedOffer = offer

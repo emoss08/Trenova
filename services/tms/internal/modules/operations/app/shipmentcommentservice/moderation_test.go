@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -14,10 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +40,19 @@ type commentServiceMocks struct {
 	realtime     *realtimeportsmock.MockRealtimeService
 }
 
+func commentTemplates(t *testing.T) *documenttemplateportsmock.MockDocumentTemplateResolver {
+	t.Helper()
+
+	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
+	templates.EXPECT().RenderMessage(mock.Anything, mock.Anything).
+		Return(&documenttemplateports.RenderedMessage{
+			Subject: "New comment",
+			Text:    "A shipment has a new comment.",
+		}, nil).Maybe()
+
+	return templates
+}
+
 func newCommentService(
 	t *testing.T,
 ) (shipmentcommentports.ShipmentCommentService, commentServiceMocks) {
@@ -50,20 +66,26 @@ func newCommentService(
 		audit:        auditportsmock.NewMockAuditService(t),
 		realtime:     realtimeportsmock.NewMockRealtimeService(t),
 	}
+	m.userRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.User{Name: "Author"}, nil).
+		Maybe()
 	m.docRepo.EXPECT().
 		GetByResourceIDs(mock.Anything, mock.Anything).
 		Return([]*document.Document{}, nil).
 		Maybe()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         m.repo,
-		ShipmentRepo: m.shipmentRepo,
-		UserRepo:     m.userRepo,
-		DocumentRepo: m.docRepo,
-		AuditService: m.audit,
-		EventService: noopShipmentEventService{},
-		Realtime:     m.realtime,
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                m.repo,
+		ShipmentRepo:        m.shipmentRepo,
+		UserRepo:            m.userRepo,
+		DocumentRepo:        m.docRepo,
+		AuditService:        m.audit,
+		EventService:        noopShipmentEventService{},
+		Realtime:            m.realtime,
 	})
 
 	return svc, m

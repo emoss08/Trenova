@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
@@ -182,6 +184,127 @@ func TestCloseBlockedByApprovedManualJournalRequest(t *testing.T) {
 	require.Nil(t, closed)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "manual journal requests")
+}
+
+func TestCloseBlockedByUnpostedJournalReversal(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		status  journalreversal.Status
+		blocked bool
+	}{
+		{name: "pending approval", status: journalreversal.StatusPendingApproval, blocked: true},
+		{name: "approved", status: journalreversal.StatusApproved, blocked: true},
+		{name: "rejected", status: journalreversal.StatusRejected},
+		{name: "cancelled", status: journalreversal.StatusCancelled},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, db, cleanup := seedtest.SetupTestDB(t)
+			t.Cleanup(cleanup)
+
+			conn := postgres.WrapDB(db)
+			fyRepo := fiscalyearrepository.New(
+				fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()},
+			)
+			fpRepo := fiscalperiodrepository.New(
+				fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()},
+			)
+			validator := &Validator{db: conn}
+
+			data := seedtest.SeedFullTestData(t, ctx, db)
+			ctx = data.Ctx(ctx)
+			fy := mustCreateIntegrationFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{
+				OrganizationID: data.Organization.ID,
+				BusinessUnitID: data.BusinessUnit.ID,
+				Status:         fiscalyear.StatusOpen,
+				Year:           2026,
+				Name:           "FY 2026",
+				StartDate:      time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
+				EndDate:        time.Date(2026, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(),
+				IsCurrent:      true,
+			})
+			period := mustCreateFiscalPeriod(t, ctx, fpRepo, &fiscalperiod.FiscalPeriod{
+				OrganizationID: data.Organization.ID,
+				BusinessUnitID: data.BusinessUnit.ID,
+				FiscalYearID:   fy.ID,
+				PeriodNumber:   1,
+				PeriodType:     fiscalperiod.PeriodTypeMonth,
+				Status:         fiscalperiod.StatusOpen,
+				Name:           "Period 1 - January 2026",
+				StartDate:      time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(),
+				EndDate:        time.Date(2026, time.January, 31, 23, 59, 59, 0, time.UTC).Unix(),
+			})
+			insertJournalReversal(t, ctx, db, data, period, tc.status)
+
+			multiErr := errortypes.NewMultiError()
+			validator.validateAccountingCloseBlockers(ctx, period, multiErr)
+
+			if !tc.blocked {
+				assert.False(t, multiErr.HasErrors())
+				return
+			}
+			require.True(t, multiErr.HasErrors())
+			assert.Contains(t, multiErr.Error(), "journal reversals")
+		})
+	}
+}
+
+func insertJournalReversal(
+	t *testing.T,
+	ctx context.Context,
+	db *keel.DB,
+	data *seedtest.TestData,
+	period *fiscalperiod.FiscalPeriod,
+	status journalreversal.Status,
+) {
+	t.Helper()
+
+	batch := &journalentry.JournalBatch{
+		OrganizationID: data.Organization.ID,
+		BusinessUnitID: data.BusinessUnit.ID,
+		BatchNumber:    "JB-REV-1",
+		BatchType:      "System",
+		Status:         "Posted",
+		Description:    "Reversal original",
+		AccountingDate: period.StartDate,
+		FiscalYearID:   period.FiscalYearID,
+		FiscalPeriodID: period.ID,
+		CreatedByID:    data.User.ID,
+	}
+	require.NoError(t, journalentrydb.JournalBatches.Create(ctx, db, batch))
+
+	entry := &journalentry.JournalEntry{
+		OrganizationID: data.Organization.ID,
+		BusinessUnitID: data.BusinessUnit.ID,
+		BatchID:        batch.ID,
+		FiscalYearID:   period.FiscalYearID,
+		FiscalPeriodID: period.ID,
+		EntryNumber:    "JE-REV-1",
+		EntryDate:      period.StartDate,
+		EntryType:      journalentry.EntryTypeStandard,
+		AccountingDate: period.StartDate,
+		Status:         journalentry.StatusPosted,
+		ReferenceType:  "InvoicePosted",
+		ReferenceID:    pulid.MustNew("inv_").String(),
+		Description:    "Reversal original",
+		TotalDebit:     100,
+		TotalCredit:    100,
+		CreatedByID:    data.User.ID,
+	}
+	require.NoError(t, journalentrydb.JournalEntries.Create(ctx, db, entry))
+
+	reversal := &journalreversal.Reversal{
+		OrganizationID:          data.Organization.ID,
+		BusinessUnitID:          data.BusinessUnit.ID,
+		OriginalJournalEntryID:  entry.ID,
+		Status:                  status,
+		RequestedAccountingDate: period.StartDate,
+		ResolvedFiscalYearID:    period.FiscalYearID,
+		ResolvedFiscalPeriodID:  period.ID,
+		ReasonCode:              "ERR",
+		ReasonText:              "Close blocker",
+		RequestedByID:           data.User.ID,
+	}
+	require.NoError(t, journalreversaldb.Reversals.Create(ctx, db, reversal))
 }
 
 func TestCloseBlockedByPendingJournalSource(t *testing.T) {

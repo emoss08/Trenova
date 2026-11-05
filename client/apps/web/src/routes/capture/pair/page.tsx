@@ -87,6 +87,9 @@ function LookupFailure({
  * recognisably not theirs. Approving binds the computer to the person signed
  * in here and the organization they are in; nothing the machine sent decides
  * either.
+ *
+ * A link can be sent by anybody, so a linked code asking from another network
+ * also has to be typed from the computer's screen before it can be approved.
  */
 export function CapturePairPage() {
   const t = useT();
@@ -97,6 +100,7 @@ export function CapturePairPage() {
     const code = normalizePairingCode(linkedCode);
     return code.length === CAPTURE_PAIRING_CODE_LENGTH ? code : null;
   });
+  const [codeFromLink, setCodeFromLink] = useState(submitted !== null);
   const [outcome, setOutcome] = useState<PairingOutcome | null>(null);
 
   const accessQuery = useQuery(capture.access());
@@ -124,6 +128,7 @@ export function CapturePairPage() {
       void previewQuery.refetch();
       return;
     }
+    setCodeFromLink(false);
     setSubmitted(code);
   };
 
@@ -195,6 +200,7 @@ export function CapturePairPage() {
             {submitted !== null && preview !== undefined && !previewQuery.isError && (
               <PairingReview
                 code={submitted}
+                codeFromLink={codeFromLink}
                 preview={preview}
                 organization={organization}
                 disabled={disabled}

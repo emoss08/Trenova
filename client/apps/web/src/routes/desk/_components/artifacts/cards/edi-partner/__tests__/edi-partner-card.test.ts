@@ -514,3 +514,27 @@ describe("credentialLabel", () => {
     expect(credentialLabel("privateKey", "SFTP", t)).toBe("Private key");
   });
 });
+
+describe("an AS2 partner that may send unsigned documents", () => {
+  const unsigned = withCard(tyson, (copy) => {
+    const [transport] = copy.transports;
+    transport.profile.config = {
+      ...(transport.profile.config as object),
+      requireSignedInbound: false,
+    };
+  });
+
+  it("asks for a look while the profile is active", () => {
+    const item = attentionItems(unsigned, NOW, t).find((entry) =>
+      entry.key.startsWith("unsigned-inbound:"),
+    );
+    expect(item?.state).toBe("warn");
+    expect(item?.title).toBe("Unsigned documents are accepted");
+  });
+
+  it("says nothing for a partner whose documents are verified", () => {
+    expect(
+      attentionItems(tyson, NOW, t).some((entry) => entry.key.startsWith("unsigned-inbound:")),
+    ).toBe(false);
+  });
+});

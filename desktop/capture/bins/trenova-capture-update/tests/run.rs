@@ -1,20 +1,29 @@
 //! The updater's flow with a scripted network and installer: what it checks,
 //! in what order, and what it refuses.
 
+use std::future::pending;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use capture_protocol::release::{
-    Installer as ManifestInstaller, PRODUCT, Release, SignedRelease, encode_key_pair, public_key,
-    sign, signing_key,
+    Installer as ManifestInstaller, PRODUCT, Release, ReleaseError, SignedRelease, encode_key_pair,
+    public_key, sign, signing_key,
 };
 use capture_update::UpdateError;
 use capture_update::ed25519_dalek::{SigningKey, VerifyingKey};
 use sha2::{Digest, Sha256};
-use trenova_capture_update::{Installer, Source, UpdaterError, manifest_url, run};
+use tokio::sync::watch;
+use trenova_capture_update::{
+    Installed, Installer, Source, UpdaterError, manifest_url, run as run_until,
+};
 use url::Url;
 
 const MSI: &[u8] = b"a genuine installer";
+const PUBLISHED: i64 = 1_780_000_000;
+const DAY: i64 = 24 * 60 * 60;
+/// When the scripted computer runs: a day after the release, inside its
+/// fourteen days.
+const NOW: i64 = PUBLISHED + DAY;
 
 fn keys(seed: u8) -> (SigningKey, VerifyingKey) {
     let (private, public) = encode_key_pair([seed; 32]);
@@ -28,7 +37,8 @@ fn release(version: &str, minimum_windows_build: u32) -> Release {
     Release {
         product: PRODUCT.into(),
         version: version.into(),
-        published_at: 1_780_000_000,
+        published_at: PUBLISHED,
+        expires_at: Some(PUBLISHED + 14 * DAY),
         minimum_windows_build,
         installer: ManifestInstaller {
             file_name: format!("TrenovaCapture-{version}-x64.msi"),
@@ -65,6 +75,7 @@ impl Source for Scripted {
 struct Fake {
     installed: String,
     build: u32,
+    now: i64,
     policy_off: bool,
     dir: Option<tempfile::TempDir>,
     untrusted: bool,
@@ -84,6 +95,10 @@ impl Installer for Fake {
 
     fn windows_build(&self) -> u32 {
         self.build
+    }
+
+    fn now(&self) -> i64 {
+        self.now
     }
 
     fn policy_allows(&self) -> bool {
@@ -119,6 +134,7 @@ fn fake(installed: &str) -> Fake {
     Fake {
         installed: installed.into(),
         build: 22631,
+        now: NOW,
         dir: Some(tempfile::tempdir().expect("dir")),
         ..Fake::default()
     }
@@ -126,6 +142,54 @@ fn fake(installed: &str) -> Fake {
 
 fn url() -> Url {
     manifest_url("https://app.acme.test/api/v1/capture/releases/latest/").expect("url")
+}
+
+/// One update nobody stops.
+async fn run(
+    manifest: &Url,
+    key: Option<&VerifyingKey>,
+    source: &impl Source,
+    installer: &dyn Installer,
+) -> Result<Installed, UpdaterError> {
+    let (_never, stop) = watch::channel(false);
+    run_until(manifest, key, source, installer, &stop, || {}).await
+}
+
+/// A manifest that never arrives.
+struct NeverAnswers;
+
+impl Source for NeverAnswers {
+    async fn fetch_manifest(&self, _url: &Url) -> Result<Option<SignedRelease>, UpdateError> {
+        pending().await
+    }
+
+    async fn download(&self, _release: &Release, _dir: &Path) -> Result<PathBuf, UpdateError> {
+        pending().await
+    }
+}
+
+/// The service is told to stop partway through the download, which then
+/// hangs, or finishes when `finishes` is set.
+struct StoppedDuringDownload {
+    manifest: SignedRelease,
+    stop: watch::Sender<bool>,
+    finishes: bool,
+}
+
+impl Source for StoppedDuringDownload {
+    async fn fetch_manifest(&self, _url: &Url) -> Result<Option<SignedRelease>, UpdateError> {
+        Ok(Some(self.manifest.clone()))
+    }
+
+    async fn download(&self, release: &Release, dir: &Path) -> Result<PathBuf, UpdateError> {
+        self.stop.send_replace(true);
+        if !self.finishes {
+            return pending().await;
+        }
+        let path = dir.join(&release.installer.file_name);
+        std::fs::write(&path, MSI)?;
+        Ok(path)
+    }
 }
 
 #[tokio::test]
@@ -152,6 +216,104 @@ async fn a_newer_signed_release_is_verified_installed_and_the_agent_restarted() 
             .next()
             .is_none(),
         "the installer is removed afterwards"
+    );
+}
+
+#[tokio::test]
+async fn the_service_stops_answering_to_stop_just_before_it_installs() {
+    let (private, public) = keys(5);
+    let source = Scripted {
+        manifest: Some(sign(&release("1.5.0", 19045), &private).expect("signs")),
+        bytes: MSI.to_vec(),
+    };
+    let installer = fake("1.4.2");
+    let (_never, stop) = watch::channel(false);
+
+    run_until(&url(), Some(&public), &source, &installer, &stop, || {
+        installer.record("committing");
+    })
+    .await
+    .expect("installs");
+
+    assert_eq!(
+        *installer.calls.lock().expect("lock"),
+        ["verify", "committing", "install", "relaunch"]
+    );
+}
+
+#[tokio::test]
+async fn a_stop_ends_a_manifest_fetch_that_never_answers() {
+    let (_, public) = keys(5);
+    let installer = fake("1.4.2");
+    let manifest = url();
+    let (asked, stop) = watch::channel(false);
+    let unblock = async {
+        tokio::task::yield_now().await;
+        asked.send_replace(true);
+    };
+
+    let (result, ()) = tokio::join!(
+        run_until(
+            &manifest,
+            Some(&public),
+            &NeverAnswers,
+            &installer,
+            &stop,
+            || {
+                installer.record("committing");
+            }
+        ),
+        unblock,
+    );
+
+    assert!(matches!(result, Err(UpdaterError::Stopped)), "{result:?}");
+    assert!(installer.calls.lock().expect("lock").is_empty());
+}
+
+#[tokio::test]
+async fn a_stop_ends_a_download_that_hangs() {
+    let (private, public) = keys(5);
+    let (asked, stop) = watch::channel(false);
+    let source = StoppedDuringDownload {
+        manifest: sign(&release("1.5.0", 19045), &private).expect("signs"),
+        stop: asked,
+        finishes: false,
+    };
+    let installer = fake("1.4.2");
+
+    let result = run_until(&url(), Some(&public), &source, &installer, &stop, || {
+        installer.record("committing");
+    })
+    .await;
+
+    assert!(matches!(result, Err(UpdaterError::Stopped)), "{result:?}");
+    assert!(installer.calls.lock().expect("lock").is_empty());
+}
+
+#[tokio::test]
+async fn a_stop_that_arrives_before_the_install_installs_nothing() {
+    let (private, public) = keys(5);
+    let (asked, stop) = watch::channel(false);
+    let source = StoppedDuringDownload {
+        manifest: sign(&release("1.5.0", 19045), &private).expect("signs"),
+        stop: asked,
+        finishes: true,
+    };
+    let installer = fake("1.4.2");
+
+    let result = run_until(&url(), Some(&public), &source, &installer, &stop, || {
+        installer.record("committing");
+    })
+    .await;
+
+    assert!(matches!(result, Err(UpdaterError::Stopped)), "{result:?}");
+    assert_eq!(*installer.calls.lock().expect("lock"), ["verify"]);
+    assert!(
+        std::fs::read_dir(installer.dir.as_ref().expect("dir").path())
+            .expect("lists")
+            .next()
+            .is_none(),
+        "the download is removed"
     );
 }
 
@@ -257,5 +419,72 @@ async fn a_forged_manifest_a_wrong_download_or_a_foreign_signer_stops_before_ins
             .next()
             .is_none(),
         "a refused installer is removed"
+    );
+}
+
+#[tokio::test]
+async fn an_expired_manifest_installs_nothing_and_says_it_is_out_of_date() {
+    let (private, public) = keys(5);
+    let source = Scripted {
+        manifest: Some(sign(&release("1.5.0", 19045), &private).expect("signs")),
+        bytes: MSI.to_vec(),
+    };
+
+    let expired = Fake {
+        now: PUBLISHED + 14 * DAY,
+        ..fake("1.4.2")
+    };
+    let result = run(&url(), Some(&public), &source, &expired).await;
+    assert!(
+        matches!(
+            result,
+            Err(UpdaterError::OutOfDate(ReleaseError::Expired {
+                days_ago: 0,
+                ..
+            }))
+        ),
+        "{result:?}"
+    );
+    assert!(expired.calls.lock().expect("lock").is_empty());
+
+    let long_expired = Fake {
+        now: PUBLISHED + 40 * DAY,
+        ..fake("1.5.0")
+    };
+    let result = run(&url(), Some(&public), &source, &long_expired).await;
+    assert!(
+        matches!(
+            result,
+            Err(UpdaterError::OutOfDate(ReleaseError::Expired {
+                days_ago: 26,
+                ..
+            }))
+        ),
+        "an out-of-date manifest is reported even when nothing newer is in it: {result:?}"
+    );
+
+    let renewed = Scripted {
+        manifest: Some(
+            sign(
+                &Release {
+                    expires_at: Some(PUBLISHED + 54 * DAY),
+                    ..release("1.5.0", 19045)
+                },
+                &private,
+            )
+            .expect("signs"),
+        ),
+        bytes: MSI.to_vec(),
+    };
+    let installer = Fake {
+        now: PUBLISHED + 40 * DAY,
+        ..fake("1.4.2")
+    };
+    run(&url(), Some(&public), &renewed, &installer)
+        .await
+        .expect("a re-signed manifest of the same release installs");
+    assert_eq!(
+        *installer.calls.lock().expect("lock"),
+        ["verify", "install", "relaunch"]
     );
 }

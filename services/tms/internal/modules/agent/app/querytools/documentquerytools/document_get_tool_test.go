@@ -98,7 +98,6 @@ func TestGetDocument_ReadsTextAndFieldsInWindows(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 
 	result, err := tool.Query(
@@ -147,7 +146,6 @@ func TestGetDocument_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 
 	result, err := tool.Query(
@@ -167,7 +165,6 @@ func TestGetDocument_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 	result, err = pending.Query(
 		t.Context(),
@@ -186,7 +183,6 @@ func TestGetDocument_IsGatedOnDocumentsAndRefusesANonID(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 	assert.Equal(t, permission.ResourceDocument, tool.Policy().Resource)
 	assert.Equal(t, "document_get", tool.Name())
@@ -208,7 +204,6 @@ func TestGetDocument_SurfacesADatabaseError(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 
 	_, err := tool.Query(
@@ -242,7 +237,6 @@ func TestGetDocument_RefusesADocumentOnARecordTheCallerCannotRead(t *testing.T) 
 		noLabels(),
 		noUploader(),
 		permissions,
-		nil,
 	)
 
 	_, err := tool.Query(
@@ -275,7 +269,6 @@ func TestGetDocument_ReadsOnePage(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 
 	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{

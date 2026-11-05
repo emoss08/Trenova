@@ -413,15 +413,12 @@ func (r *repository) GetOutboundMessageByAS2MessageID(
 	ctx context.Context,
 	as2MessageID string,
 ) (*edimessage.EDIMessage, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"resolve the outbound message an inbound AS2 receipt names before its tenant is known",
-	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edimessage.EDIMessage, error) {
 		m := edimessagedb.EDIMessages
-		entity, err := m.AllTenants().
-			Where(m.AS2MessageID.Eq(as2MessageID), m.Direction.Eq(edidocument.DocumentDirectionOutbound)).
-			First(ctx, r.db.Keel(ctx))
+		entity, err := m.Where(
+			m.AS2MessageID.Eq(as2MessageID),
+			m.Direction.Eq(edidocument.DocumentDirectionOutbound),
+		).First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, messageErrors.Map(err, as2MessageID)
 		}

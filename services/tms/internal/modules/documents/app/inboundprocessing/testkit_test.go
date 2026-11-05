@@ -1,6 +1,8 @@
 package inboundprocessing
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -8,8 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueuetest"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"go.uber.org/zap"
 )
 
@@ -54,13 +58,55 @@ func withQueue(
 	svc.mailboxState = fakes.Mailboxes
 	svc.targetRepo = fakes.Targets
 	svc.wakes = fakes.Wakes
-	svc.notify = inboundqueue.NewNotifier(inboundqueue.NotifierParams{Logger: svc.l})
+	svc.notify = inboundqueue.NewNotifier(inboundqueue.NotifierParams{
+		Logger:     svc.l,
+		Realtime:   &inboundqueuetest.RecordingRealtime{},
+		Watchtower: &mocks.NoopWatchtowerProjector{},
+		Briefing:   inboundqueuetest.NoopBriefing{},
+	})
 	svc.now = func() int64 { return inboundqueuetest.TestNow }
 
 	return svc, fakes
 }
 
+type noRules struct{}
+
+func (noRules) ApplyRules(
+	context.Context,
+	*inboundmessage.InboundMessage,
+) (*inboundmessageports.RuleApplication, error) {
+	return nil, nil
+}
+
+func (t *testService) supplyDefaults() {
+	if t.realtime == nil {
+		t.realtime = &inboundqueuetest.RecordingRealtime{}
+	}
+	if t.watchtower == nil {
+		t.watchtower = &mocks.NoopWatchtowerProjector{}
+	}
+	if t.hints == nil {
+		t.hints = inboundqueuetest.NoSenderHints{}
+	}
+	if t.parties == nil {
+		t.parties = &inboundqueuetest.StubParties{}
+	}
+	if t.shipments == nil {
+		t.shipments = &inboundqueuetest.StubShipments{}
+	}
+	if t.notifier == nil {
+		t.notifier = &recordingNotifier{}
+	}
+	if t.indexer == nil {
+		t.indexer = &fakeIndexer{}
+	}
+	if t.ruleEvaluator == nil {
+		t.ruleEvaluator = noRules{}
+	}
+}
+
 func (t *testService) processing() *Service {
+	t.supplyDefaults()
 	logger := t.l
 	if logger == nil {
 		logger = zap.NewNop()
@@ -81,6 +127,7 @@ func (t *testService) processing() *Service {
 		TargetRepo:    t.targetRepo,
 		Wakes:         t.wakes,
 		Watchtower:    t.watchtower,
+		Briefing:      inboundqueuetest.NoopBriefing{},
 	})
 	return &Service{
 		activityRepo:  t.activityRepo,
@@ -100,6 +147,7 @@ func (t *testService) processing() *Service {
 }
 
 func (t *testService) queue() *inboundqueue.Service {
+	t.supplyDefaults()
 	logger := t.l
 	if logger == nil {
 		logger = zap.NewNop()
@@ -120,6 +168,7 @@ func (t *testService) queue() *inboundqueue.Service {
 		TargetRepo:    t.targetRepo,
 		Wakes:         t.wakes,
 		Watchtower:    t.watchtower,
+		Briefing:      inboundqueuetest.NoopBriefing{},
 	})
 	return queue
 }

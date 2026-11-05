@@ -17,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
@@ -85,16 +87,25 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		mappingProfileRepo: edipartnerportsmock.NewMockEDIMappingProfileRepository(t),
 		controlNumberRepo:  edipartnerportsmock.NewMockEDIControlNumberRepository(t),
 	}
+	customFields := customfieldportsmock.NewMockCustomFieldDefinitionRepository(t)
+	customFields.EXPECT().
+		GetActiveByResourceType(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	runtime := edilading.NewRuntime(edilading.RuntimeParams{
-		Logger:   zap.NewNop(),
-		Projects: fixture.projects,
-		Mappings: fixture.mappingProfileRepo,
-		Orgs:     fixture.orgs,
+		Logger:       zap.NewNop(),
+		Projects:     fixture.projects,
+		Mappings:     fixture.mappingProfileRepo,
+		Orgs:         fixture.orgs,
+		CustomFields: customFields,
 	})
+	timers := ladingportsmock.NewMockFlowTimerScheduler(t)
+	timers.EXPECT().Schedule(mock.Anything, mock.Anything).Return(nil).Maybe()
 	flows := edilading.NewFlows(edilading.FlowsParams{
 		Logger:  zap.NewNop(),
 		Runtime: runtime,
 		Flows:   fixture.flowRepo,
+		Timers:  timers,
 	})
 	edis := ediservicetest.New(ediservicetest.Deps{
 		Logger:              zap.NewNop(),
@@ -120,6 +131,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 		inboundApply:        edis.InboundApply,
 		outbound:            edis.Outbound,
 		alerts:              edis.Alerts,
+		watchtower:          &mocks.NoopWatchtowerProjector{},
 		lading:              runtime,
 		flows:               flows,
 	}
@@ -378,6 +390,35 @@ func TestProcessInboundFile_QuarantinesUnparseableContent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, ediinboundfile.InboundFileStatusQuarantined, file.Status)
 	require.NotEmpty(t, file.FailureReason)
+}
+
+func TestProcessInboundFile_QuarantinesAFileFromAnotherSender(t *testing.T) {
+	t.Parallel()
+
+	raw := "ISA*00*          *00*          *ZZ*STRANGER       *ZZ*TRENOVA        " +
+		"*260107*1200*^*00401*000000101*0*P*>~" +
+		"GS*FA*STRANGER*TRENOVA*20260107*1200*101*X*004010~" +
+		"ST*997*0001~" +
+		"AK1*SM*42~" +
+		"AK2*204*0042~" +
+		"AK5*A~" +
+		"AK9*A*1*1*1~" +
+		"SE*6*0001~" +
+		"GE*1*101~" +
+		"IEA*1*000000101~"
+	fixture := newInboundFixture(t, raw)
+	fixture.expectFileLoadAndUpdates(t)
+	fixture.expectPartnerLoad()
+	fixture.expectActiveVersion(t)
+
+	file, err := fixture.service.ProcessInboundFile(t.Context(), &ProcessInboundFileRequest{
+		FileID:     fixture.file.ID,
+		TenantInfo: fixture.tenantInfo(),
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, ediinboundfile.InboundFileStatusQuarantined, file.Status)
+	require.Contains(t, file.FailureReason, "STRANGER")
 }
 
 func starterSample(t *testing.T, starter *lading.Starter, path string) string {

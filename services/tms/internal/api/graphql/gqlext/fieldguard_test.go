@@ -436,6 +436,7 @@ func newCeilingGuard(t *testing.T) *FieldGuardExtension {
 	require.NoError(t, err)
 	guard.resources, err = KindTypes(schema, guard.registry)
 	require.NoError(t, err)
+	guard.wrappers = WrapperTypes(schema)
 	return guard
 }
 

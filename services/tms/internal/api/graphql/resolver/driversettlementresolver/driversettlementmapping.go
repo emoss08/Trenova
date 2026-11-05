@@ -790,6 +790,7 @@ func settlementControlFromUpdateInput(
 		AutoGenerateBatches:           input.AutoGenerateBatches,
 		AutoApproveClean:              input.AutoApproveClean,
 		AutoAttachAccruals:            input.AutoAttachAccruals,
+		RequireSeparateApprover:       input.RequireSeparateApprover,
 		AutoPostOnApprove:             input.AutoPostOnApprove,
 		AllowNegativeNet:              input.AllowNegativeNet,
 		VarianceThresholdPct:          varianceThreshold,

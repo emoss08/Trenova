@@ -117,8 +117,9 @@ func (s TaintSource) Rereadable() bool {
 }
 
 const (
-	MaxTaintMarks  = 16
-	HeldByTaintKey = "tainted"
+	MaxTaintMarks   = 16
+	MaxMarksPerCall = 4
+	HeldByTaintKey  = "tainted"
 )
 
 type TaintMark struct {
@@ -177,14 +178,17 @@ func (t *RunTaint) Tainted() bool {
 	return t != nil && (len(t.Marks) > 0 || len(t.Seen) > 0 || t.Overflowed)
 }
 
-func (t *RunTaint) Merge(other *RunTaint) {
+func (t *RunTaint) Merge(other *RunTaint) bool {
 	if t == nil || other == nil {
-		return
+		return false
 	}
+	marks, seen, overflowed := len(t.Marks), len(t.Seen), t.Overflowed
 	t.carry(other)
 	for _, mark := range other.Marks {
 		t.Add(mark)
 	}
+
+	return len(t.Marks) != marks || len(t.Seen) != seen || t.Overflowed != overflowed
 }
 
 func (t *RunTaint) carry(other *RunTaint) {
@@ -246,24 +250,6 @@ func (t *RunTaint) Absorb(marks []TaintMark) []TaintMark {
 	}
 
 	return added
-}
-
-func (t *RunTaint) ReadBeyond(toolName string) bool {
-	if t == nil || t.Overflowed {
-		return true
-	}
-
-	own := make([]TaintSource, 0, 1)
-	for _, mark := range t.Marks {
-		if mark.ToolName != toolName {
-			return true
-		}
-		own = append(own, mark.Source)
-	}
-
-	return slices.ContainsFunc(t.Seen, func(source TaintSource) bool {
-		return !slices.Contains(own, source)
-	})
 }
 
 func (t *RunTaint) Unknown() bool {
@@ -376,6 +362,10 @@ func RunRecordTaint(runID pulid.ID, at int64) *RunTaint {
 	taint.Add(mark)
 
 	return taint
+}
+
+func OutsideInputTaint(at int64) TaintMark {
+	return TaintMark{Source: TaintSourceWeb, At: at}
 }
 
 func AttachmentTaint(documentID string, at int64) TaintMark {

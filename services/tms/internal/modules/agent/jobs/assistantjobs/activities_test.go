@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -15,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -171,11 +174,19 @@ func finishActivities(
 
 	return NewActivities(ActivitiesParams{
 		Logger: zap.NewNop(),
-		Turns: assistantturnservice.New(
-			assistantturnservice.Params{Logger: zap.NewNop(), Turns: records},
-		),
-		TurnRepo: records,
-		Steps:    steps,
+		Turns: assistantturnservice.New(assistantturnservice.Params{
+			Logger:   zap.NewNop(),
+			Turns:    records,
+			Realtime: &mocks.NoopRealtimeService{},
+			Metrics:  &metrics.Registry{},
+		}),
+		TurnRepo:    records,
+		Steps:       steps,
+		Trajectory:  agenttest.QuietTrajectory{},
+		FollowUps:   agenttest.QuietFollowUps{},
+		Reflections: agenttest.QuietReflections{},
+		Queue:       agenttest.QuietQueue{},
+		Chapters:    agenttest.QuietChapters{},
 	}), records
 }
 

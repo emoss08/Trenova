@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
@@ -30,6 +31,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type fakeRepo struct {
@@ -384,6 +386,7 @@ func (f *fakeRepo) AccumulateMiles(
 }
 
 type fakeFuel struct {
+	fuelpurchaseports.FuelPurchaseRepository
 	rows []*fuelpurchaseports.FuelAccumulationRow
 	req  *fuelpurchaseports.AccumulateFuelRequest
 }
@@ -484,15 +487,17 @@ func newHarness(t *testing.T) *harness {
 		Return(nil).
 		Maybe()
 
-	h.svc = iftaservice.NewWithDeps(iftaservice.Deps{
+	h.svc = iftaservice.New(iftaservice.Params{
+		Logger:        zap.NewNop(),
 		Repo:          h.repo,
 		Fuel:          h.fuel,
 		TractorRepo:   tractors,
 		Organizations: orgs,
 		AuditService:  audit,
 		ReferenceData: selfHostedReferenceGuard(t),
-		Now:           func() int64 { return h.now },
+		Realtime:      &mocks.NoopRealtimeService{},
 	})
+	h.svc.SetClock(func() int64 { return h.now })
 
 	return h
 }
@@ -983,17 +988,17 @@ func selfHostedReferenceGuard(t *testing.T) *referencedataguard.Guard {
 	return guard
 }
 
-func TestTaxRateWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
+func TestTaxRateWrites_AreRefusedForATenantThatIsNotASteward(t *testing.T) {
 	t.Parallel()
 
 	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
-		Mode:                  platformconfig.ModeCloud,
 		ReferenceDataStewards: []string{pulid.MustNew("org_").String()},
 	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)
 
 	h := newHarness(t)
-	svc := iftaservice.NewWithDeps(iftaservice.Deps{
+	svc := iftaservice.New(iftaservice.Params{
+		Logger:        zap.NewNop(),
 		Repo:          h.repo,
 		ReferenceData: guard,
 	})

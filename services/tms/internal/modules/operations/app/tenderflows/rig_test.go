@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"go.uber.org/zap"
 )
 
@@ -55,7 +56,6 @@ type rig struct {
 	emailService          emailports.EmailService
 	notifications         *notificationservice.Service
 	assigner              tenderports.CarrierMoveAssigner
-	ediChannel            tenderports.EDITenderChannel
 	rateConIssuer         rateconfirmationports.RateConfirmationIssuer
 	rateEngine            ratequoteports.RateEngine
 	dispatchControls      dispatchcontrolports.DispatchControlRepository
@@ -74,6 +74,9 @@ type rig struct {
 }
 
 func (s *rig) assemble() {
+	if s.notifications == nil {
+		s.notifications = notificationtest.Discarding()
+	}
 	s.effects = tendereffects.New(tendereffects.Params{
 		Logger:           s.l,
 		Repo:             s.repo,
@@ -108,7 +111,6 @@ func (s *rig) assemble() {
 		TenderingConfig: s.tenderingConfig,
 		Templates:       s.templates,
 		EmailService:    s.emailService,
-		EDIChannel:      s.ediChannel,
 		Effects:         s.effects,
 	})
 	s.negotiator = tendernegotiation.New(tendernegotiation.Params{

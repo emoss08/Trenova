@@ -8,11 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 const day = int64(86400)
@@ -137,7 +139,11 @@ func (r *fakeSchedulingRepo) RotaAssignedDays(
 }
 
 func newService(repo *fakeSchedulingRepo) *schedulingservice.Service {
-	return schedulingservice.NewWithDeps(schedulingservice.Deps{Repo: repo})
+	return schedulingservice.New(schedulingservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		AuditService: &mocks.NoopAuditService{},
+	})
 }
 
 func tenant() pagination.TenantInfo {

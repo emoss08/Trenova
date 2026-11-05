@@ -23,6 +23,7 @@ func TestPublishSkipsOrganizationsWithoutAutomatedAgents(t *testing.T) {
 	runs := &fakeRunService{}
 	publisher := agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Waits:       quietWaits{},
 		Definitions: definitions,
 		RunService:  runs,
 		Plans:       plantest.Restricting(t, platformplan.CapabilityAgentAutomation),

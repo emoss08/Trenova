@@ -3,6 +3,7 @@ package userservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,6 +33,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 func newTestValidator() *Validator {
@@ -73,6 +76,8 @@ func setupTest(t *testing.T) *testDeps {
 		sr:           sessionRepo,
 		rotator:      sessiontest.Rotator(sessionRepo),
 		auditService: auditSvc,
+		authEvents:   &recordedEvents{},
+		auditor:      &securityaudittest.Recorder{},
 		realtime:     &mocks.NoopRealtimeService{},
 		storage:      storageClient,
 		storageCfg: &storageconfig.Config{
@@ -80,7 +85,8 @@ func setupTest(t *testing.T) *testDeps {
 			PresignedURLExpiry: 15 * time.Minute,
 			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
 		},
-		validator: newTestValidator(),
+		validator:      newTestValidator(),
+		passwordStepUp: sessiontest.OpenStepUp{},
 	}
 	return &testDeps{
 		repo:        repo,
@@ -468,6 +474,30 @@ func TestSwitchOrganization_InvalidSession(t *testing.T) {
 	deps.repo.AssertNotCalled(t, "GetOrganizations")
 }
 
+func TestSwitchOrganization_LogsNoSessionSecret(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	core, logs := observer.New(zap.DebugLevel)
+	deps.svc.l = zap.New(core)
+
+	sessionID := pulid.MustNew("ses_")
+	secretHash := "session-secret-hash"
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(nil, errors.New("session not found"))
+
+	_, err := deps.svc.SwitchOrganization(t.Context(), tenantports.SwitchOrganizationRequest{
+		SessionID:      sessionID,
+		SecretHash:     secretHash,
+		OrganizationID: pulid.MustNew("org_"),
+	})
+
+	require.Error(t, err)
+	require.Equal(t, 1, logs.Len())
+	entry := logs.All()[0]
+	assert.Equal(t, sessionID.String(), entry.ContextMap()["sessionId"])
+	assert.NotContains(t, fmt.Sprint(entry.ContextMap()), secretHash)
+}
+
 func TestSwitchOrganization_UnauthorizedOrg(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
@@ -831,6 +861,38 @@ func TestChangeMyPassword_WrongCurrentPassword(t *testing.T) {
 	deps.audit.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
 }
 
+type refusingStepUp struct{}
+
+func (refusingStepUp) GuardPassword(
+	context.Context,
+	pagination.TenantInfo,
+	func() error,
+) error {
+	return errortypes.NewRateLimitError("code", "Too many attempts.")
+}
+
+func TestChangeMyPassword_RefusedWhileTheStepUpIsThrottled(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	deps.svc.passwordStepUp = refusingStepUp{}
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(newTestUser(), nil).Once()
+
+	result, err := deps.svc.ChangeMyPassword(
+		t.Context(),
+		&SessionScope{},
+		ChangeMyPasswordRequest{
+			CurrentPassword: "current-password",
+			NewPassword:     "new-password",
+			ConfirmPassword: "new-password",
+		},
+	)
+
+	require.True(t, errortypes.IsRateLimitError(err))
+	assert.Nil(t, result)
+	deps.repo.AssertNotCalled(t, "UpdatePassword")
+}
+
 func TestChangeMyPassword_ValidationFailure(t *testing.T) {
 	t.Parallel()
 
@@ -880,13 +942,6 @@ func TestNew(t *testing.T) {
 	})
 
 	require.NotNil(t, svc)
-}
-
-func TestNewTestValidator(t *testing.T) {
-	t.Parallel()
-
-	v := NewTestValidator()
-	require.NotNil(t, v)
 }
 
 func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {

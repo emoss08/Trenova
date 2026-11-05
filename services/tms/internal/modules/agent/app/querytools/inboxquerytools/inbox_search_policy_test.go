@@ -15,7 +15,7 @@ import (
 func TestSearchToolPoliciesReadOutsideTextAlways(t *testing.T) {
 	t.Parallel()
 
-	documents := documentquerytools.NewSearchDocumentsTool(nil, nil, nil).Policy()
+	documents := documentquerytools.NewSearchDocumentsTool(nil, nil).Policy()
 	assert.Equal(t, permission.ResourceDocument, documents.Resource)
 	assert.Equal(t, agenttooltrust.ExternalReadAlways, documents.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceDocument, documents.Source)

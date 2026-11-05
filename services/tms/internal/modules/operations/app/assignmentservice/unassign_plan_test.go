@@ -75,6 +75,11 @@ func previewUnassignService(
 		Once()
 
 	return &service{
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		driverNotify: quietDriverNotify(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
@@ -82,9 +87,12 @@ func previewUnassignService(
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},
@@ -157,6 +165,11 @@ func TestPreviewUnassign_RefusesAMoveAlreadyUnderway(t *testing.T) {
 		Twice()
 
 	svc := &service{
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		driverNotify: quietDriverNotify(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,

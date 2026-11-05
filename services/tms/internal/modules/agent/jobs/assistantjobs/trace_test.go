@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -53,7 +54,7 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	aitracetest.Install()
 
 	payload, turn := tracedTurn(t)
-	runtime := agentruntime.New(agentruntime.Params{
+	runtime := assistanttest.Runtime(agentruntime.Params{
 		Logger: zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{
 			Turns: []*llmports.ChatCompletionResult{

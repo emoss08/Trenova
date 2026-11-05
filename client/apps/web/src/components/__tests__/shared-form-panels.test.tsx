@@ -196,6 +196,7 @@ describe("create and edit panels sharing one form", () => {
     const sent: number[] = [];
     let form!: UseFormReturn<VersionedForm>;
     function Panel() {
+      // oxlint-disable-next-line react/globals -- the test drives the form from outside it
       form = useForm<VersionedForm>({ defaultValues: { ...PRISTINE, version: 0 } });
       return (
         <FormEditPanel<VersionedForm, typeof row & Record<string, unknown>>

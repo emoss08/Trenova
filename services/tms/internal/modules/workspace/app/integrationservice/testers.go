@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pcmiler"
+	"github.com/emoss08/trenova/shared/restx"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
 )
@@ -251,7 +252,7 @@ func (t *eiaFuelPricesConnectionTester) Test(ctx context.Context, cfg map[string
 
 	resp, err := t.client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to connect to EIA: %w", err)
+		return fmt.Errorf("failed to connect to EIA: %w", restx.SanitizeTransportError(err))
 	}
 	defer resp.Body.Close()
 

@@ -212,6 +212,37 @@ func TestEnforceableScopes_OffersOnlyWhatIsEnforced(t *testing.T) {
 	)
 }
 
+func TestEnforced_OnlyEnforceModePromisesADatabaseScope(t *testing.T) {
+	t.Parallel()
+
+	for _, mode := range []string{databaseconfig.RLSModeOff, databaseconfig.RLSModeObserve} {
+		t.Run(mode, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &config.Config{}
+			cfg.Database.RLS.Mode = mode
+			svc := newService(t, cfg, &fakeTeams{}, map[string]permission.DataScope{
+				"shipment": permission.DataScopeOwn,
+			})
+
+			assert.False(t, svc.DatabaseEnforcing())
+			assert.False(t, svc.Enforced("shipment", permission.DataScopeOwn))
+			assert.False(t, svc.Enforced("worker", permission.DataScopeTeam))
+			assert.True(t, svc.Enforced("report", permission.DataScopeOwn),
+				"a scope the application enforces does not depend on the database")
+			assert.Equal(
+				t,
+				[]permission.DataScope{permission.DataScopeOrganization},
+				svc.EnforceableScopes("shipment"),
+			)
+
+			grants, err := svc.Grants(t.Context(), principal())
+			require.NoError(t, err)
+			assert.Empty(t, grants)
+		})
+	}
+}
+
 func TestGrants_ResolvesInATransactionOfItsOwn(t *testing.T) {
 	t.Parallel()
 

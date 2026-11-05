@@ -45,6 +45,7 @@ type Session struct {
 	AuthProvider          string     `json:"authProvider,omitempty"`
 	ExternalIdentityID    string     `json:"externalIdentityId,omitempty"`
 	ExternalSubject       string     `json:"externalSubject,omitempty"`
+	ExternalIssuer        string     `json:"externalIssuer,omitempty"`
 	AuthenticatorAAL      int        `json:"authenticatorAal"`
 	FederationFAL         int        `json:"federationFal"`
 	MFAAuthenticatedAt    int64      `json:"mfaAuthenticatedAt,omitempty"`
@@ -82,6 +83,7 @@ type NewSessionRequest struct {
 	AuthProvider          string
 	ExternalIdentityID    string
 	ExternalSubject       string
+	ExternalIssuer        string
 	AuthenticatorAAL      int
 	FederationFAL         int
 	MFAAuthenticatedAt    int64
@@ -120,6 +122,7 @@ func NewSession(req *NewSessionRequest) *Session {
 		AuthProvider:          req.AuthProvider,
 		ExternalIdentityID:    req.ExternalIdentityID,
 		ExternalSubject:       req.ExternalSubject,
+		ExternalIssuer:        req.ExternalIssuer,
 		AuthenticatorAAL:      aal,
 		FederationFAL:         fal,
 		MFAAuthenticatedAt:    req.MFAAuthenticatedAt,

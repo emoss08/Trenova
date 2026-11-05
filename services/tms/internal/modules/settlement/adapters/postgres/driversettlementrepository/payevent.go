@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -408,7 +409,7 @@ func (r *payEventRepository) MarkSettled(
 		}
 
 		pe := driversettlementdb.PayEvents
-		_, err := pe.Where(
+		settled, err := pe.Where(
 			pe.ID.In(eventIDs...),
 			pe.Status.Eq(driversettlement.PayEventStatusAccrued),
 		).Update(
@@ -419,6 +420,11 @@ func (r *payEventRepository) MarkSettled(
 		)
 		if err != nil {
 			return fmt.Errorf("mark pay events settled: %w", err)
+		}
+		if settled != int64(len(eventIDs)) {
+			return errortypes.NewConflictError(
+				"Some of this pay was settled by another request; refresh and try again",
+			)
 		}
 
 		return nil

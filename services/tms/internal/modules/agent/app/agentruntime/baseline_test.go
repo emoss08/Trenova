@@ -79,8 +79,8 @@ func heldRun(
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rewire(rt, func(p *Params) { p.Versions = stubVersions{version: 7} })
-	rewire(rt, func(p *Params) { p.Previews = previews })
+	rewire(rt, func(p *runtimeParts) { p.Versions = stubVersions{version: 7} })
+	rewire(rt, func(p *runtimeParts) { p.Previews = previews })
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition:   runtimetest.Definition("shipment_place_hold"),
@@ -167,7 +167,7 @@ func TestRun_ASimulatedWriteReadsTheBaselinePreview(t *testing.T) {
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	previews := &recordingPreviews{}
-	rewire(rt, func(p *Params) { p.Previews = previews })
+	rewire(rt, func(p *runtimeParts) { p.Previews = previews })
 	definition := runtimetest.Definition("shipment_place_hold")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.SimulationMode = true
@@ -249,7 +249,7 @@ func TestRun_ASimulatedWriteNeverPreviewsAgainOutsideTheSnapshot(t *testing.T) {
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rewire(rt, func(p *Params) { p.Previews = failingPreviews{} })
+	rewire(rt, func(p *runtimeParts) { p.Previews = failingPreviews{} })
 	definition := runtimetest.Definition("shipment_place_hold")
 	definition.AutonomyCeiling = agent.TierAutoExecute
 	definition.SimulationMode = true
@@ -334,7 +334,7 @@ func TestRun_DoesNotFileAProposalWhoseBaselineWouldBeRefused(t *testing.T) {
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	previews := &refusingPreviews{refuseTool: "shipment_create"}
-	rewire(rt, func(p *Params) { p.Previews = previews })
+	rewire(rt, func(p *runtimeParts) { p.Previews = previews })
 	definition := runtimetest.Definition("shipment_create")
 	definition.AutonomyCeiling = agent.TierActWithApproval
 
@@ -385,7 +385,7 @@ func TestRun_FilesAWriteAnEarlierStepMayMakeValid(t *testing.T) {
 		Tools: []agenttoolports.AgentTool{hold, cancel},
 	}, nil)
 	previews := &refusingPreviews{refuseTool: "shipment_cancel"}
-	rewire(rt, func(p *Params) { p.Previews = previews })
+	rewire(rt, func(p *runtimeParts) { p.Previews = previews })
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition("shipment_place_hold", "shipment_cancel"),

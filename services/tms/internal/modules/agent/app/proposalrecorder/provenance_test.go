@@ -85,7 +85,7 @@ func TestRecord_AnUnattendedAutomaticWriteIsExecutedByTheSystemUser(t *testing.T
 
 	systemUser := pulid.MustNew("usr_")
 	store := &capturingStore{}
-	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(nil, store).Record(t.Context(), &RecordRequest{
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeAgent,
 			PrincipalID:    pulid.MustNew("agdef_"),
@@ -126,7 +126,7 @@ func TestRecord_AnUnattendedWriteRanAsNoPerson(t *testing.T) {
 	t.Parallel()
 
 	store := &capturingStore{}
-	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(nil, store).Record(t.Context(), &RecordRequest{
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeAgent,
 			PrincipalID:    permissionports.AgentPrincipalID,
@@ -154,7 +154,7 @@ func TestRecord_OpensADelegatesRunUnderItsParentAndTask(t *testing.T) {
 
 	runs := &openedRuns{}
 	turnID := pulid.MustNew("atrn_")
-	_, err := NewWithStores(nil, runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,
 			UserID:         pulid.MustNew("usr_"),

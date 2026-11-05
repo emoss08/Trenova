@@ -837,14 +837,52 @@ func (s *Service) GetByID(
 	ctx context.Context,
 	req agentmemoryports.GetAgentMemoryByIDRequest,
 ) (*agentmemory.Memory, error) {
-	return s.repo.GetByID(ctx, req)
+	entity, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if !entity.Scope.Personal() || s.manages(ctx, req.TenantInfo, req.Actor) {
+		return entity, nil
+	}
+
+	reader, err := s.readerOf(ctx, req.TenantInfo, req.Actor)
+	if err != nil {
+		return nil, err
+	}
+	if !reader.Reads(entity) {
+		return nil, errortypes.NewNotFoundError("Agent memory not found")
+	}
+
+	return entity, nil
+}
+
+func (s *Service) readerOf(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+) (agentmemory.MemoryReader, error) {
+	if !actor.IsUser() {
+		return agentmemory.MemoryReader{}, nil
+	}
+
+	return s.Reader(ctx, tenant, actor.UserID)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
 	req *agentmemoryports.ListAgentMemoryConnectionRequest,
 ) (*pagination.CursorListResult[*agentmemory.Memory], error) {
-	return s.repo.ListConnection(ctx, req)
+	scoped := *req
+	scoped.AllAudiences = s.manages(ctx, req.TenantInfo, req.Actor)
+	if !scoped.AllAudiences {
+		reader, err := s.readerOf(ctx, req.TenantInfo, req.Actor)
+		if err != nil {
+			return nil, err
+		}
+		scoped.Reader = reader
+	}
+
+	return s.repo.ListConnection(ctx, &scoped)
 }
 
 func (s *Service) Recall(
@@ -1129,6 +1167,7 @@ func (s *Service) RecordCorrection(
 		Kind:           agentmemory.MemoryKindCorrection,
 		Source:         agentmemory.MemorySourceDecision,
 		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeOrganization,
 		ToolName:       proposal.ToolName,
 		Content:        content,
 	}
@@ -1140,9 +1179,22 @@ func (s *Service) RecordCorrection(
 		userID := decision.DecidedByUserID
 		entity.CreatedByUserID = &userID
 	}
+	if proposal.Tainted {
+		entity.Tainted = true
+		entity.TaintRunID = &runID
+	}
 
+	// A correction reaches everyone's conversations, so it follows the rule
+	// every shared memory does: only a person who manages shared memory keeps
+	// one at once, and anyone else offers it for an administrator to approve.
 	tenant := pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID}
-	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(tenant, entity))
+	if !s.MayManageShared(ctx, tenant, decision.DecidedByUserID) {
+		entity.Status = agentmemory.MemoryStatusSuggested
+	}
+
+	same := sameMemoryRequest(tenant, entity)
+	same.IncludeSuggested = entity.Status == agentmemory.MemoryStatusSuggested
+	existing, err := s.repo.FindActive(ctx, same)
 	if err != nil {
 		return nil, err
 	}

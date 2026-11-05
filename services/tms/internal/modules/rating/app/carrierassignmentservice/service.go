@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
@@ -49,6 +50,7 @@ type Params struct {
 	HoldRepo          shipmentholdports.ShipmentHoldRepository
 	ControlRepo       tenantports.ShipmentControlRepository
 	RateConRepo       rateconfirmationports.RateConfirmationRepository
+	TrackingLinks     checkcallports.TrackingLinkRepository
 	ShipmentValidator *shipmentvalidator.Validator
 	Coordinator       *shipmentstate.Coordinator
 	EventService      shipmenteventports.ShipmentEventService
@@ -73,6 +75,7 @@ type Service struct {
 	holdRepo          shipmentholdports.ShipmentHoldRepository
 	controlRepo       tenantports.ShipmentControlRepository
 	rateConRepo       rateconfirmationports.RateConfirmationRepository
+	trackingLinks     checkcallports.TrackingLinkRepository
 	shipmentValidator *shipmentvalidator.Validator
 	coordinator       *shipmentstate.Coordinator
 	eventService      shipmenteventports.ShipmentEventService
@@ -100,6 +103,7 @@ func New(p Params) *Service {
 		holdRepo:          p.HoldRepo,
 		controlRepo:       p.ControlRepo,
 		rateConRepo:       p.RateConRepo,
+		trackingLinks:     p.TrackingLinks,
 		shipmentValidator: p.ShipmentValidator,
 		coordinator:       p.Coordinator,
 		eventService:      p.EventService,
@@ -216,6 +220,9 @@ func (s *Service) AssignToMove(
 		if existing := plan.existing; existing != nil {
 			existing.Cancel(timeutils.NowUnix(), replacedAssignmentReason)
 			if _, txErr = s.repo.Update(txCtx, existing); txErr != nil {
+				return txErr
+			}
+			if txErr = s.revokeTrackingLinks(txCtx, req.TenantInfo, existing); txErr != nil {
 				return txErr
 			}
 			if txErr = s.voidActiveRateConfirmation(
@@ -394,6 +401,9 @@ func (s *Service) Cancel(
 		if _, txErr = s.repo.Update(txCtx, existing); txErr != nil {
 			return txErr
 		}
+		if txErr = s.revokeTrackingLinks(txCtx, req.TenantInfo, existing); txErr != nil {
+			return txErr
+		}
 		if txErr = s.voidActiveRateConfirmation(
 			txCtx, req.TenantInfo, existing.ID, canceledRateConReason,
 		); txErr != nil {
@@ -536,6 +546,19 @@ func (s *Service) loadShipment(
 			ExpandShipmentDetails: true,
 		},
 	})
+}
+
+func (s *Service) revokeTrackingLinks(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	canceled *shipment.CarrierAssignment,
+) error {
+	_, err := s.trackingLinks.RevokeForMove(ctx, &checkcallports.RevokeTrackingLinksRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     canceled.ShipmentMoveID,
+		At:         timeutils.NowUnix(),
+	})
+	return err
 }
 
 // voidActiveRateConfirmation retires the assignment's standing agreement inside

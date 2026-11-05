@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 // fakeRepo holds rows so case numbering and the certification guards can be
@@ -166,9 +168,12 @@ func newHarness(t *testing.T) *harness {
 	repo := newFakeRepo()
 
 	return &harness{
-		svc: workerinjuryservice.NewWithDeps(workerinjuryservice.Deps{
-			Repo:       repo,
-			WorkerRepo: workerRepo,
+		svc: workerinjuryservice.New(workerinjuryservice.Params{
+			Logger:       zap.NewNop(),
+			Repo:         repo,
+			WorkerRepo:   workerRepo,
+			AuditService: &mocks.NoopAuditService{},
+			Realtime:     &mocks.NoopRealtimeService{},
 		}),
 		repo:     repo,
 		tenant:   pagination.TenantInfo{OrgID: orgID, BuID: buID},

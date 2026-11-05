@@ -1,7 +1,6 @@
 package emailhandler
 
 import (
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,6 +21,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
+
+const maxWebhookBodyBytes = 1 << 20
 
 type Params struct {
 	fx.In
@@ -363,13 +364,14 @@ type postmarkWebhookPayload struct {
 
 func (h *Handler) handleResendWebhook(c *gin.Context) {
 	token := c.Param("webhookToken")
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+	body, err := helpers.ReadBoundedRequestBody(c, maxWebhookBodyBytes)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 	tenantInfo, signingSecret, err := h.service.ResolveTenantByWebhookToken(
 		c.Request.Context(),
+		email.ProviderResend,
 		token,
 	)
 	if err != nil {
@@ -461,18 +463,22 @@ func resendRecipient(payload *resendWebhookPayload) string {
 
 func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 	token := c.Param("webhookToken")
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+	body, err := helpers.ReadBoundedRequestBody(c, maxWebhookBodyBytes)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	tenantInfo, err := h.service.ResolveTenantByProviderWebhookToken(
+	tenantInfo, credentials, err := h.service.ResolveTenantByWebhookToken(
 		c.Request.Context(),
 		email.ProviderPostmark,
 		token,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+	if err = webhooksig.VerifyBasicAuth(credentials, c.GetHeader("Authorization")); err != nil {
+		c.Status(http.StatusUnauthorized)
 		return
 	}
 

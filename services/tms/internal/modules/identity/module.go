@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accesssettingsservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
@@ -72,6 +73,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
@@ -126,9 +128,12 @@ func SharedOptions() fx.Option {
 			iamservice.New,
 			newSessionTokenIssuer,
 			sessionrotation.New,
+			accountguard.New,
 			userservice.New,
 			authservice.New,
 			mfaservice.New,
+			func(s *mfaservice.Service) sessionports.MFAService { return s },
+			func(s *mfaservice.Service) sessionports.PasswordStepUp { return s },
 			tableinsightservice.New,
 			autheventservice.New,
 			permission.NewEngine,
@@ -155,6 +160,7 @@ func SharedOptions() fx.Option {
 			tenanttimezone.New,
 			passwordresetservice.New,
 			func(s *roleservice.Service) userservice.RoleAssigner { return s },
+			func(s *roleservice.Service) permissionports.RoleGrantGuard { return s },
 			func(s *passwordresetservice.Service) userservice.AccountInviter { return s },
 			sequenceconfigservice.New,
 			shipmentcontrolservice.New,

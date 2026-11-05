@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -134,6 +135,8 @@ func newService(
 		repo:     repo,
 		controls: controls,
 		periods:  periods,
+		audit:    &mocks.NoopAuditService{},
+		realtime: &mocks.NoopRealtimeService{},
 		now:      func() int64 { return 9_000 },
 	}
 }
@@ -352,6 +355,8 @@ func TestPostNamesTheRealCauseWhenSomethingOtherThanTheEntryIsMissing(t *testing
 		repo:     repo,
 		controls: controls,
 		periods:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
+		audit:    &mocks.NoopAuditService{},
+		realtime: &mocks.NoopRealtimeService{},
 		now:      func() int64 { return 9_000 },
 	}
 

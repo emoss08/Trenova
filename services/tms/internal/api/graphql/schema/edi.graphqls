@@ -150,6 +150,11 @@ type EdiCommunicationProfile @kind(resource: "edi") {
   """
   config: JSON!
   secretState: [EdiCommunicationProfileSecretState!]
+  """
+  The path a partner posts AS2 messages to for this profile, on the origin the
+  API is served from. Set only on an AS2 profile.
+  """
+  as2InboundPath: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

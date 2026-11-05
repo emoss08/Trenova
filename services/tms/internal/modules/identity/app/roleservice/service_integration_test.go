@@ -94,7 +94,11 @@ func (p *integrationPermCacheRepo) InvalidateByRole(
 	return nil
 }
 
-func (p *integrationPermCacheRepo) Epoch(context.Context, pulid.ID) (int64, error) {
+func (p *integrationPermCacheRepo) Epoch(
+	context.Context,
+	pulid.ID,
+	pulid.ID,
+) (int64, error) {
 	return 0, nil
 }
 

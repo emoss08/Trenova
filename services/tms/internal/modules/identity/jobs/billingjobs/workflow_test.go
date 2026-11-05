@@ -3,8 +3,8 @@ package billingjobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -40,7 +40,6 @@ func (s *BillingWorkflowTestSuite) TestSendInvoiceEmailWorkflow() {
 			Timestamp:      timeutils.NowUnix(),
 		},
 		InvoiceID: invoiceID,
-		BaseURL:   "https://example.test",
 	}
 	expected := &SendInvoiceEmailResult{
 		InvoiceID:   invoiceID,

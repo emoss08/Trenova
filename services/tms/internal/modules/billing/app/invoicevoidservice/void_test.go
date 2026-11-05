@@ -30,6 +30,17 @@ import (
 	"go.uber.org/zap"
 )
 
+type noLateCharges struct {
+	latechargeports.LateChargeRepository
+}
+
+func (noLateCharges) ListBySourceInvoiceIDs(
+	context.Context,
+	*latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
+) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
+	return nil, nil
+}
+
 func newVoidService(
 	repo *invoiceportsmock.MockInvoiceRepository,
 	queueRepo *billingqueueportsmock.MockBillingQueueRepository,
@@ -43,6 +54,8 @@ func newVoidService(
 			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "INV-2002"},
+		lateChargeRepo:    noLateCharges{},
+		detentionBilling:  &mocks.NoopDetentionBilling{},
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{
 				Logger:       zap.NewNop(),
@@ -294,23 +307,6 @@ func TestVoidInvoicePostedExecutedReversalIsNotPending(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.False(t, result.PendingApproval)
-}
-
-func TestVoidInvoicePostedWithoutAdjustmentEngineIsRefused(t *testing.T) {
-	t.Parallel()
-
-	f := invoiceservicetest.NewFixture()
-	repo := invoiceportsmock.NewMockInvoiceRepository(t)
-	repo.EXPECT().
-		GetByID(mock.Anything, mock.Anything).
-		Return(f.Invoice(invoice.StatusPosted), nil).
-		Once()
-
-	_, err := newVoidService(repo, billingqueueportsmock.NewMockBillingQueueRepository(t)).
-		VoidInvoice(t.Context(), f.Request(invoice.VoidDispositionDoNotRebill), f.Actor)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "adjustments are unavailable")
 }
 
 func TestVoidInvoiceAlreadyVoidedIsRefused(t *testing.T) {

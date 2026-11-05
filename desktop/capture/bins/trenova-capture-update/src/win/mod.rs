@@ -13,8 +13,10 @@ use std::time::Duration;
 
 use capture_platform::acl::{SYSTEM_ONLY_SDDL, create_trusted};
 use capture_platform::{logging, machine, paths, settings};
-use capture_protocol::release::pinned_public_key;
-use trenova_capture_update::{Http, Installer, UpdaterError, manifest_url, run};
+use capture_protocol::release::{pinned_public_key, unix_now};
+use tokio::sync::watch;
+use trenova_capture_update::signature::Revocation;
+use trenova_capture_update::{Http, Installer, Stop, UpdaterError, manifest_url, run};
 use windows::Win32::System::SystemInformation::GetSystemDirectoryW;
 
 /// The tray agent, beside the updater.
@@ -36,7 +38,7 @@ pub(crate) fn say(message: &str) {
     let _ = writeln!(std::io::stderr(), "{message}");
 }
 
-const USAGE: &str = "usage: trenova-capture-update <service | run <manifest url> | relaunch | configure | install | uninstall>";
+const USAGE: &str = "usage: trenova-capture-update <service | run <manifest url> | verify-publisher <file> | relaunch | configure | install | uninstall>";
 
 /// The system directory, for tools that must not come from `PATH`.
 pub(crate) fn system_dir() -> std::io::Result<PathBuf> {
@@ -81,19 +83,28 @@ impl Installer for WindowsInstaller {
         machine::windows_build()
     }
 
+    fn now(&self) -> i64 {
+        unix_now()
+    }
+
     fn policy_allows(&self) -> bool {
         settings::auto_update_allowed()
     }
 
     fn download_dir(&self) -> Result<PathBuf, UpdaterError> {
         let dir = paths::shared_dir()?.join("updates");
-        create_trusted(&dir, SYSTEM_ONLY_SDDL)?;
+        create_trusted(&dir, SYSTEM_ONLY_SDDL, 2)?;
         sweep(&dir);
         Ok(dir)
     }
 
     fn verify_installer(&self, path: &Path) -> Result<(), UpdaterError> {
-        trust::verify_same_publisher(path, &self.exe)
+        if trust::verify_same_publisher(path, &self.exe)? == Revocation::Unreachable {
+            tracing::warn!(
+                "the revocation servers could not be reached; the installer's signature was accepted without them"
+            );
+        }
+        Ok(())
     }
 
     fn install(&self, path: &Path) -> Result<(), UpdaterError> {
@@ -142,16 +153,40 @@ fn sweep(dir: &Path) {
     }
 }
 
-/// One update, reported.
-pub(crate) fn update(manifest: &str) -> Result<(), UpdaterError> {
+/// One update, reported. `stop` and `committing` are [`run`]'s.
+pub(crate) fn update(
+    manifest: &str,
+    stop: &Stop,
+    committing: impl FnOnce(),
+) -> Result<(), UpdaterError> {
     let url = manifest_url(manifest)?;
     let installer = WindowsInstaller::new()?;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
     let source = Http::new()?;
-    let outcome = runtime.block_on(run(&url, pinned_public_key().as_ref(), &source, &installer))?;
+    let outcome = runtime.block_on(run(
+        &url,
+        pinned_public_key().as_ref(),
+        &source,
+        &installer,
+        stop,
+        committing,
+    ))?;
     tracing::info!(from = %outcome.from, to = %outcome.to, "updated");
+    Ok(())
+}
+
+/// Checks `file` as an update's installer would be checked, and says how far
+/// revocation was checked.
+fn verify_publisher(file: &Path) -> Result<(), UpdaterError> {
+    let installer = WindowsInstaller::new()?;
+    match trust::verify_same_publisher(file, &installer.exe)? {
+        Revocation::Checked => say("No certificate in its chain is revoked."),
+        Revocation::Unreachable => say(
+            "The revocation servers could not be reached; its signature was accepted without them.",
+        ),
+    }
     Ok(())
 }
 
@@ -186,7 +221,19 @@ pub fn main() -> ExitCode {
         "service" => service::dispatch(),
         "run" => {
             if let Some(manifest) = args.next() {
-                step("Updating Trenova Capture", update(&manifest))
+                let (_never, stop) = watch::channel(false);
+                step("Updating Trenova Capture", update(&manifest, &stop, || {}))
+            } else {
+                say(USAGE);
+                ExitCode::from(2)
+            }
+        }
+        "verify-publisher" => {
+            if let Some(file) = args.next() {
+                step(
+                    "Checking the installer's signature",
+                    verify_publisher(Path::new(&file)),
+                )
             } else {
                 say(USAGE);
                 ExitCode::from(2)

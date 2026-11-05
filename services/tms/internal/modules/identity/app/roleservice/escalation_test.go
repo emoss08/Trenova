@@ -60,6 +60,47 @@ func requireForbidden(t *testing.T, err error) {
 	require.True(t, errors.As(err, &multiErr), "expected a field error, got %v", err)
 }
 
+func TestRequireCanGrantRole_RefusesARoleBeyondTheActor(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), UserID: pulid.MustNew("usr_")}
+	role := adminRole(tenant.OrgID)
+
+	deps.roleRepo.On("GetByID", ctx, roleLookup(role.ID)).Return(role, nil).Once()
+	deps.permEngine.On("GetEffectivePermissions", ctx, tenant.UserID, tenant.OrgID).
+		Return(limitedEffectivePermissions(), nil).
+		Once()
+
+	requireForbidden(t, deps.svc.RequireCanGrantRole(ctx, tenant, role.ID))
+}
+
+func TestRequireCanGrantRole_AllowsARoleWithinTheActor(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), UserID: pulid.MustNew("usr_")}
+	role := &rbac.Role{
+		ID:             pulid.MustNew("rol_"),
+		OrganizationID: tenant.OrgID,
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions: []*rbac.ResourcePermission{{
+			Resource:   permission.ResourceRole.String(),
+			Operations: []permission.Operation{permission.OpRead},
+			DataScope:  permission.DataScopeOrganization,
+		}},
+	}
+
+	deps.roleRepo.On("GetByID", ctx, roleLookup(role.ID)).Return(role, nil).Once()
+	deps.permEngine.On("GetEffectivePermissions", ctx, tenant.UserID, tenant.OrgID).
+		Return(limitedEffectivePermissions(), nil).
+		Once()
+
+	require.NoError(t, deps.svc.RequireCanGrantRole(ctx, tenant, role.ID))
+}
+
 func TestUpsertRoleHierarchyEdge_RefusesInheritingMoreThanTheActorHolds(t *testing.T) {
 	t.Parallel()
 

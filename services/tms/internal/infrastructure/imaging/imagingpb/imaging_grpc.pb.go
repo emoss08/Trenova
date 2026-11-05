@@ -1,7 +1,7 @@
-// The imaging worker's contract: stateless, tenant-agnostic document and image
-// computation for the TMS. Plaintext bytes go in, derived artifacts come out;
-// the worker holds no database, storage, key or network access. It reads no
-// text and runs no OCR: docling does both.
+// The imaging worker's contract: stateless document and image computation for
+// the TMS. Plaintext bytes go in, derived artifacts come out; the worker holds
+// no database, storage, key or network access. It reads no text and runs no
+// OCR: docling does both.
 //
 // Every call streams its input in. The first message is a header naming the
 // operation's parameters and each document's content type and declared size;
@@ -12,6 +12,9 @@
 //
 // Request metadata:
 //   x-trenova-priority: interactive | batch (anything else is batch)
+//   x-trenova-tenant: the tenant whose documents the call carries, up to 64
+//     bytes. A worker process serves one tenant for its whole life; a call
+//     without a key runs on a process that serves nothing else
 //   grpc-timeout: the caller's deadline, which the worker enforces
 //   traceparent / tracestate: W3C trace context
 //

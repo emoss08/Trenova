@@ -12,15 +12,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -66,6 +71,8 @@ func newAS2ReceiverIdentity(t *testing.T, commonName string) *as2ReceiverIdentit
 	}
 }
 
+const as2ReceiverToken = "PROFILEADDRESS"
+
 const as2ReceiverPayload = "ISA*00*          *00*          *ZZ*PARTNER        *ZZ*TRENOVA        " +
 	"*260107*1200*^*00401*000000002*0*P*>~GS*SM*PARTNER*TRENOVA*20260107*1200*2*X*004010~" +
 	"ST*204*0001~B2**SCAC**SHIP2**PP~SE*3*0001~GE*1*2~IEA*1*000000002~"
@@ -100,9 +107,10 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveAS2ProfileByIdentifiers(
+		GetActiveAS2ProfileForInboundURL(
 			mock.Anything,
-			edipartnerports.GetActiveAS2ProfileByIdentifiersRequest{
+			edipartnerports.GetActiveAS2ProfileForInboundURLRequest{
+				InboundToken: as2ReceiverToken,
 				LocalAS2ID:   "TRENOVA-AS2",
 				PartnerAS2ID: "PARTNER-AS2",
 			},
@@ -125,7 +133,6 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 		}).
 		Once()
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
-	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
@@ -133,9 +140,14 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 
 	edis := ediServices()
 	service := New(Params{
-		Logger: zap.NewNop(),
+		Metrics: metricstest.Disabled(),
+		Logger:  zap.NewNop(),
 		Inbound: ediinboundservice.New(
-			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
+			ediinboundservice.Params{
+				Logger:          zap.NewNop(),
+				Metrics:         metricstest.Disabled(),
+				InboundFileRepo: inboundFileRepo,
+			},
 		),
 		ProfileRepo:     profileRepo,
 		Delivery:        edis.Delivery,
@@ -156,6 +168,7 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 	require.NoError(t, err)
 
 	request := &ReceiveAS2MessageRequest{
+		InboundToken:     as2ReceiverToken,
 		From:             "PARTNER-AS2",
 		To:               "TRENOVA-AS2",
 		MessageID:        built.MessageID,
@@ -173,7 +186,7 @@ func TestReceiveAS2MessageStagesFileAndReturnsMDN(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, result.Duplicate)
 	require.False(t, result.Rejected)
-	require.False(t, result.AsyncMDN)
+	require.Empty(t, result.AsyncMDNURL)
 	require.NotEmpty(t, result.MDNBody)
 
 	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, trenova.certificate)
@@ -216,11 +229,12 @@ func TestReceiveAS2MessageRejectsUnsignedWhenPartnerCertConfigured(t *testing.T)
 	}
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
 		Return(profile, nil).
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -278,7 +292,7 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 	}
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
 		Return(profile, nil).
 		Once()
 	inboundFileRepo := edimessageportsmock.NewMockEDIInboundFileRepository(t)
@@ -296,16 +310,20 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 		}).
 		Once()
 	workflowStarter := kernelportsmock.NewMockWorkflowStarter(t)
-	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
 		Once()
 
 	service := New(Params{
-		Logger: zap.NewNop(),
+		Metrics: metricstest.Disabled(),
+		Logger:  zap.NewNop(),
 		Inbound: ediinboundservice.New(
-			ediinboundservice.Params{Logger: zap.NewNop(), InboundFileRepo: inboundFileRepo},
+			ediinboundservice.Params{
+				Logger:          zap.NewNop(),
+				Metrics:         metricstest.Disabled(),
+				InboundFileRepo: inboundFileRepo,
+			},
 		),
 		ProfileRepo:     profileRepo,
 		Delivery:        ediServices().Delivery,
@@ -334,35 +352,168 @@ func TestReceiveAS2MessageAcceptsUnsignedWhenRequirementsDisabled(t *testing.T) 
 	require.NotEmpty(t, result.MDNBody)
 }
 
-func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
+func TestReceiveAS2MessageAnswersUnknownIdentifiersWithAnUnsignedFailureReceipt(t *testing.T) {
 	t.Parallel()
 
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
 		Secrets:     ediServices().Secrets,
 	})
 
-	_, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
-		From:        "UNKNOWN",
-		To:          "TRENOVA-AS2",
-		ContentType: "application/edi-x12",
-		Body:        []byte(as2ReceiverPayload),
+	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		From:                  "UNKNOWN",
+		To:                    "TRENOVA-AS2",
+		ContentType:           "application/edi-x12",
+		ReceiptDeliveryOption: "https://elsewhere.example/mdn",
+		Body:                  []byte(as2ReceiverPayload),
 	})
-	require.ErrorIs(t, err, ErrAS2ProfileNotFound)
+
+	require.NoError(t, err)
+	require.True(t, result.Rejected)
+	require.Empty(t, result.AsyncMDNURL)
+
+	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
+	require.NoError(t, err)
+	require.False(t, mdn.Signed)
+	require.Equal(t, as2.MDNErrorAuthenticationFailed, mdn.FailureText())
+}
+
+func TestReceiveAS2MessageAnswersKnownAndUnknownPairsAlikeWhenNothingVerifies(t *testing.T) {
+	t.Parallel()
+
+	trenova := newAS2ReceiverIdentity(t, "trenova.example")
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+	stranger := newAS2ReceiverIdentity(t, "stranger.example")
+	profile := &edi.EDICommunicationProfile{
+		ID:             pulid.MustNew("edicp_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		EDIPartnerID:   pulid.MustNew("edip_"),
+		Method:         edi.ConnectionMethodAS2,
+		Config: map[string]any{
+			editransport.ConfigKeyLocalAS2ID:                "TRENOVA-AS2",
+			editransport.ConfigKeyPartnerAS2ID:              "PARTNER-AS2",
+			editransport.ConfigKeyPartnerSigningCertificate: partner.certificatePEM,
+			editransport.ConfigKeyLocalCertificate:          trenova.certificatePEM,
+		},
+		EncryptedSecrets: map[string]string{
+			editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
+		},
+	}
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.MatchedBy(
+			func(req edipartnerports.GetActiveAS2ProfileForInboundURLRequest) bool {
+				return req.PartnerAS2ID == "PARTNER-AS2"
+			},
+		)).
+		Return(profile, nil).
+		Once()
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
+		Once()
+	service := New(Params{
+		Metrics:     metricstest.Disabled(),
+		Logger:      zap.NewNop(),
+		ProfileRepo: profileRepo,
+		Delivery:    ediServices().Delivery,
+		Secrets:     ediServices().Secrets,
+	})
+
+	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
+		From:                  "PARTNER-AS2",
+		To:                    "TRENOVA-AS2",
+		Payload:               []byte(as2ReceiverPayload),
+		SigningCertificate:    stranger.certificate,
+		SigningKey:            stranger.key,
+		EncryptionCertificate: stranger.certificate,
+		EncryptionAlgorithm:   smime.EncryptionAlgorithmAES256GCM,
+	})
+	require.NoError(t, err)
+
+	failures := make([]string, 0, 2)
+	for _, from := range []string{"PARTNER-AS2", "NOBODY-AS2"} {
+		result, receiveErr := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+			From:                           from,
+			To:                             "TRENOVA-AS2",
+			MessageID:                      built.MessageID,
+			ContentType:                    built.ContentType,
+			TransferEncoding:               built.Headers.Get("Content-Transfer-Encoding"),
+			DispositionNotificationOptions: "signed-receipt-protocol=required, pkcs7-signature",
+			Body:                           built.Body,
+		})
+		require.NoError(t, receiveErr)
+		require.True(t, result.Rejected)
+
+		mdn, parseErr := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
+		require.NoError(t, parseErr)
+		require.False(t, mdn.Signed)
+		failures = append(failures, mdn.FailureText())
+	}
+
+	require.Equal(t, as2.MDNErrorDecryptionFailed, failures[0])
+	require.Equal(t, failures[0], failures[1])
+}
+
+func TestAsyncReturnURLStaysWithThePartnersEndpointHost(t *testing.T) {
+	t.Parallel()
+
+	cfg := &editransport.AS2Config{EndpointURL: "https://as2.partner.example:4443/receive"}
+
+	tests := []struct {
+		name      string
+		cfg       *editransport.AS2Config
+		requested string
+		want      string
+	}{
+		{
+			name:      "same host",
+			cfg:       cfg,
+			requested: "https://as2.partner.example/mdn",
+			want:      "https://as2.partner.example/mdn",
+		},
+		{
+			name:      "same host in another case and port",
+			cfg:       cfg,
+			requested: " https://AS2.Partner.Example:9443/mdn ",
+			want:      "https://AS2.Partner.Example:9443/mdn",
+		},
+		{name: "not requested", cfg: cfg},
+		{name: "another host", cfg: cfg, requested: "https://elsewhere.example/mdn"},
+		{name: "a subdomain", cfg: cfg, requested: "https://x.as2.partner.example/mdn"},
+		{name: "no host", cfg: cfg, requested: "mailto:ops@as2.partner.example"},
+		{name: "unparseable", cfg: cfg, requested: "https://%zz/mdn"},
+		{
+			name:      "no endpoint on the profile",
+			cfg:       &editransport.AS2Config{},
+			requested: "https://as2.partner.example/mdn",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, tt.want, asyncReturnURL(tt.cfg, tt.requested))
+		})
+	}
 }
 
 func TestSendAsyncAS2MDNRejectsUncontrolledReturnURL(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
+		Metrics:  metricstest.Disabled(),
 		Logger:   zap.NewNop(),
 		Delivery: ediServices().Delivery,
 		Secrets:  ediServices().Secrets,
@@ -389,6 +540,7 @@ func TestSendAsyncAS2MDNRequiresPayload(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
+		Metrics:  metricstest.Disabled(),
 		Logger:   zap.NewNop(),
 		Delivery: ediServices().Delivery,
 		Secrets:  ediServices().Secrets,
@@ -427,11 +579,12 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 	}
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
 		Return(profile, nil).
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -490,11 +643,12 @@ func TestReceiveAS2MessageAnswersAFailedDecryptionWithOneFixedReceipt(t *testing
 	}
 	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	profileRepo.EXPECT().
-		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
 		Return(profile, nil).
 		Once()
 
 	service := New(Params{
+		Metrics:     metricstest.Disabled(),
 		Logger:      zap.NewNop(),
 		ProfileRepo: profileRepo,
 		Delivery:    ediServices().Delivery,
@@ -572,11 +726,12 @@ func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t
 			}
 			profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 			profileRepo.EXPECT().
-				GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+				GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
 				Return(profile, nil).
 				Once()
 
 			service := New(Params{
+				Metrics:     metricstest.Disabled(),
 				Logger:      zap.NewNop(),
 				ProfileRepo: profileRepo,
 				Delivery:    ediServices().Delivery,
@@ -610,4 +765,120 @@ func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t
 
 func ediServices() *ediservicetest.Services {
 	return ediservicetest.New(ediservicetest.Deps{Logger: zap.NewNop()})
+}
+
+func TestReceiveAS2MessageRoutesASignedMDNToReceiptHandling(t *testing.T) {
+	t.Parallel()
+
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+	mdn, err := as2.BuildMDN(&as2.BuildMDNOptions{
+		From:               "PARTNER-AS2",
+		To:                 "TRENOVA-AS2",
+		OriginalMessageID:  "<unknown@trenova.as2>",
+		ReceivedContentMIC: "q1w2e3r4, sha256",
+		SigningCertificate: partner.certificate,
+		SigningKey:         partner.key,
+	})
+	require.NoError(t, err)
+
+	tenant := dbscope.Tenant{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	profile := &edi.EDICommunicationProfile{
+		ID:             pulid.MustNew("edicp_"),
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		EDIPartnerID:   pulid.MustNew("edip_"),
+		Method:         edi.ConnectionMethodAS2,
+	}
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileForInboundURL(
+			mock.Anything,
+			edipartnerports.GetActiveAS2ProfileForInboundURLRequest{
+				InboundToken: as2ReceiverToken,
+				LocalAS2ID:   "TRENOVA-AS2",
+				PartnerAS2ID: "PARTNER-AS2",
+			},
+		).
+		Return(profile, nil).
+		Once()
+	messages := edimessageportsmock.NewMockEDIMessageRepository(t)
+	messages.EXPECT().
+		GetOutboundMessageByAS2MessageID(
+			mock.MatchedBy(func(ctx context.Context) bool {
+				scoped, ok := dbscope.TenantFrom(ctx)
+				return ok && scoped == tenant
+			}),
+			"<unknown@trenova.as2>",
+		).
+		Return(nil, errortypes.NewNotFoundError("EDI message not found")).
+		Once()
+	service := &Service{
+		l:           zap.NewNop(),
+		profileRepo: profileRepo,
+		delivery: edidelivery.New(edidelivery.Params{
+			Logger:      zap.NewNop(),
+			MessageRepo: messages,
+			Metrics: &metrics.Registry{
+				EDI: documentmetrics.NewEDI(nil, zap.NewNop(), false),
+			},
+		}),
+	}
+
+	_, err = service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		InboundToken: as2ReceiverToken,
+		From:         "PARTNER-AS2",
+		To:           "TRENOVA-AS2",
+		ContentType:  mdn.ContentType,
+		Body:         mdn.Body,
+	})
+
+	require.Error(t, err)
+	require.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestReceiveAS2MessageKeepsAReceiptAwayFromAnAddressThatNamesNoProfile(t *testing.T) {
+	t.Parallel()
+
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+	mdn, err := as2.BuildMDN(&as2.BuildMDNOptions{
+		From:               "PARTNER-AS2",
+		To:                 "TRENOVA-AS2",
+		OriginalMessageID:  "<sent@trenova.as2>",
+		ReceivedContentMIC: "q1w2e3r4, sha256",
+		SigningCertificate: partner.certificate,
+		SigningKey:         partner.key,
+	})
+	require.NoError(t, err)
+
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileForInboundURL(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("EDICommunicationProfile not found")).
+		Once()
+	service := New(Params{
+		Metrics:     metricstest.Disabled(),
+		Logger:      zap.NewNop(),
+		ProfileRepo: profileRepo,
+		Delivery: edidelivery.New(edidelivery.Params{
+			Logger:      zap.NewNop(),
+			MessageRepo: edimessageportsmock.NewMockEDIMessageRepository(t),
+			Metrics:     metricstest.Disabled(),
+		}),
+		Secrets: ediServices().Secrets,
+	})
+
+	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		InboundToken: "NOTANADDRESS",
+		From:         "PARTNER-AS2",
+		To:           "TRENOVA-AS2",
+		ContentType:  mdn.ContentType,
+		Body:         mdn.Body,
+	})
+
+	require.NoError(t, err)
+	require.True(t, result.Rejected)
+	require.False(t, result.IsMDN)
 }

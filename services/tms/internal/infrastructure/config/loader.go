@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
@@ -286,6 +287,7 @@ func (l *Loader) setDefaults() {
 		{key: "app", defaults: appconfig.Defaults(l.env)},
 		{key: "server", defaults: serverconfig.Defaults()},
 		{key: "temporal", defaults: temporalconfig.Defaults(l.env)},
+		{key: "renderer", defaults: rendererconfig.Defaults()},
 		{key: "database", defaults: databaseconfig.Defaults()},
 		{key: "reporting", defaults: reportingconfig.Defaults()},
 		{key: "security", defaults: securityconfig.Defaults(l.env)},
@@ -388,6 +390,8 @@ func validateProductionSecurity(config *Config) error {
 		config.AIAudit.ValidateProduction,
 		config.System.ValidateProduction,
 		config.Search.ValidateProduction,
+		config.Renderer.ValidateProduction,
+		config.Temporal.ValidateProduction,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {

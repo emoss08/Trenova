@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/textproto"
+	"net/url"
 	"strings"
 	"time"
 
@@ -34,11 +35,8 @@ const (
 	as2FileNameSuffix  = ".edi"
 )
 
-var ErrAS2ProfileNotFound = errortypes.NewAuthorizationError(
-	"No active AS2 communication profile matches the AS2 identifiers",
-)
-
 type ReceiveAS2MessageRequest struct {
+	InboundToken                   string
 	From                           string
 	To                             string
 	MessageID                      string
@@ -54,7 +52,7 @@ type ReceiveAS2MessageResult struct {
 	MDNContentType string
 	MDNBody        []byte
 	MDNHeaders     textproto.MIMEHeader
-	AsyncMDN       bool
+	AsyncMDNURL    string
 	Duplicate      bool
 	Rejected       bool
 	RejectReason   string
@@ -85,8 +83,33 @@ func (s *Service) receiveAS2Message(
 			"AS2-From and AS2-To headers are required",
 		)
 	}
-	if as2.IsMDNContentType(req.ContentType) {
-		if err := s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
+
+	profile, err := s.profileRepo.GetActiveAS2ProfileForInboundURL(
+		ctx,
+		edipartnerports.GetActiveAS2ProfileForInboundURLRequest{
+			InboundToken: req.InboundToken,
+			LocalAS2ID:   strings.TrimSpace(req.To),
+			PartnerAS2ID: strings.TrimSpace(req.From),
+		},
+	)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return s.buildAS2MDNResult(
+				req,
+				&editransport.AS2Config{},
+				"",
+				s.unknownPairFailure(req),
+			)
+		}
+		return nil, err
+	}
+	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: profile.OrganizationID,
+		BusinessUnitID: profile.BusinessUnitID,
+	})
+	if as2.IsMDN(req.ContentType, req.Body) {
+		if err = s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
+			PartnerID:   profile.EDIPartnerID,
 			ContentType: req.ContentType,
 			Body:        req.Body,
 		}); err != nil {
@@ -95,23 +118,6 @@ func (s *Service) receiveAS2Message(
 		return &ReceiveAS2MessageResult{IsMDN: true}, nil
 	}
 
-	profile, err := s.profileRepo.GetActiveAS2ProfileByIdentifiers(
-		ctx,
-		edipartnerports.GetActiveAS2ProfileByIdentifiersRequest{
-			LocalAS2ID:   strings.TrimSpace(req.To),
-			PartnerAS2ID: strings.TrimSpace(req.From),
-		},
-	)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, ErrAS2ProfileNotFound
-		}
-		return nil, err
-	}
-	ctx = dbscope.WithTenant(ctx, dbscope.Tenant{
-		OrganizationID: profile.OrganizationID,
-		BusinessUnitID: profile.BusinessUnitID,
-	})
 	secrets, err := s.secrets.TransportSecrets(profile)
 	if err != nil {
 		return nil, err
@@ -142,7 +148,12 @@ func (s *Service) receiveAS2Message(
 			string(profile.Method),
 			"rejected",
 		)
-		return s.buildAS2MDNResult(req, cfg, "", parseErr)
+		return s.buildAS2MDNResult(
+			req,
+			&editransport.AS2Config{EndpointURL: cfg.EndpointURL},
+			"",
+			parseErr,
+		)
 	}
 
 	fileName := stringutils.FirstNonEmpty(
@@ -246,13 +257,44 @@ func (s *Service) buildAS2MDNResult(
 		MDNContentType: mdn.ContentType,
 		MDNBody:        mdn.Body,
 		MDNHeaders:     mdn.Headers,
-		AsyncMDN:       strings.TrimSpace(req.ReceiptDeliveryOption) != "",
+		AsyncMDNURL:    asyncReturnURL(cfg, req.ReceiptDeliveryOption),
 		Rejected:       receiveErr != nil,
 	}
 	if receiveErr != nil {
 		result.RejectReason = receiveErr.Error()
 	}
 	return result, nil
+}
+
+func (s *Service) unknownPairFailure(req *ReceiveAS2MessageRequest) error {
+	_, err := as2.ParseMessage(req.ContentType, req.Body, &as2.ParseMessageOptions{
+		TransferEncoding:     req.TransferEncoding,
+		MaxDecompressedBytes: s.maxFileBytes,
+	})
+	if err != nil {
+		return err
+	}
+	return as2.ErrAuthenticationFailed
+}
+
+func asyncReturnURL(cfg *editransport.AS2Config, requested string) string {
+	requested = strings.TrimSpace(requested)
+	if requested == "" {
+		return ""
+	}
+	target, err := url.Parse(requested)
+	if err != nil {
+		return ""
+	}
+	endpoint, err := url.Parse(cfg.EndpointURL)
+	if err != nil {
+		return ""
+	}
+	host := target.Hostname()
+	if host == "" || !strings.EqualFold(host, endpoint.Hostname()) {
+		return ""
+	}
+	return requested
 }
 
 func (s *Service) SendAsyncAS2MDN(

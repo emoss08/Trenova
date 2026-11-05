@@ -397,7 +397,7 @@ async fn hostile_pdfs_fail_alone_and_the_pool_carries_on() {
     .await
     .expect("the pool still works");
     assert_eq!(described.page_count, 1);
-    assert!(worker.pool.healthy());
+    common::settled(&worker.pool).await;
 }
 
 #[tokio::test]
@@ -446,7 +446,7 @@ async fn a_render_its_caller_abandons_gives_its_slot_back() {
         .await
         .expect("a following job runs");
     assert_eq!(described.page_count, 10);
-    assert!(worker.pool.healthy());
+    common::settled(&worker.pool).await;
 }
 
 /// A JPEG stored landscape with EXIF orientation 6 (shown turned a quarter

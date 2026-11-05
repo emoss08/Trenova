@@ -55,6 +55,11 @@ type SafetyScorer interface {
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
 	) (*safetyscorecard.SafetyScorecard, error)
+	ScorecardWithoutDiscipline(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		workerID pulid.ID,
+	) (*safetyscorecard.SafetyScorecard, error)
 }
 
 // ChecklistLister is the slice of the checklist service this needs.
@@ -117,6 +122,7 @@ type Sections struct {
 	Credentials bool
 	Training    bool
 	Safety      bool
+	Discipline  bool
 	Checklists  bool
 	PTO         bool
 	Reviews     bool
@@ -128,6 +134,7 @@ func All() Sections {
 		Credentials: true,
 		Training:    true,
 		Safety:      true,
+		Discipline:  true,
 		Checklists:  true,
 		PTO:         true,
 		Reviews:     true,
@@ -246,7 +253,11 @@ func (s *Service) Get(
 	if sections.Safety {
 		group.Go(func() error {
 			var sErr error
-			safety, sErr = s.safety.Scorecard(groupCtx, tenantInfo, workerID)
+			read := s.safety.ScorecardWithoutDiscipline
+			if sections.Discipline {
+				read = s.safety.Scorecard
+			}
+			safety, sErr = read(groupCtx, tenantInfo, workerID)
 			return sErr
 		})
 	}

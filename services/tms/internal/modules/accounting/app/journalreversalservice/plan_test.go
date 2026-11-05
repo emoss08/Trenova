@@ -117,11 +117,16 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&accountingcontrol.AccountingControl{FunctionalCurrencyCode: "CAD"}, nil)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, Status: fiscalperiod.StatusOpen}, nil)
 
 	svc := &Service{
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
 		accountingRepo:      accountingRepo,
+		validator:           &Validator{fiscalRepo: fiscalRepo},
 	}
 
 	change, err := svc.PlanPost(t.Context(), &journalreversalports.GetJournalReversalRequest{

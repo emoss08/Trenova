@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -42,6 +43,7 @@ func engineService(t *testing.T, opts engineOptions) (*Service, *reportingtest.E
 		perms:   reader,
 		access:  access,
 		orgRepo: reportingtest.Organizations{},
+		audit:   &mocks.NoopAuditService{},
 		cfg:     &reportingconfig.Config{PreviewRowLimit: 40},
 	}, engine
 }

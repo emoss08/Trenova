@@ -2,6 +2,7 @@ package extensionportalservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
@@ -28,6 +29,7 @@ func portalSiteView(site *extensionportal.PortalSite) agentextensionports.Portal
 		StartURL:         site.StartURL,
 		BrowserProfileID: site.BrowserProfileID,
 		AllowActions:     site.AllowActions,
+		ViewOnlyAccount:  site.ViewOnlyAccount,
 		Enabled:          site.Enabled,
 		HasSignIn:        site.HasSignIn(),
 		HasAuthenticator: site.HasSignIn() && site.HasAuthenticator(),
@@ -134,12 +136,14 @@ func (s *Service) applySiteRequest(
 	site *extensionportal.PortalSite,
 	req *agentextensionports.SavePortalSiteRequest,
 ) error {
+	savedFor := slices.Clone(site.Domains)
 	site.Name = req.Name
 	site.Purpose = req.Purpose
 	site.Domains = req.Domains
 	site.StartURL = req.StartURL
 	site.BrowserProfileID = req.BrowserProfileID
 	site.AllowActions = req.AllowActions
+	site.ViewOnlyAccount = req.ViewOnlyAccount
 	site.Enabled = req.Enabled
 	site.Normalize()
 
@@ -152,6 +156,14 @@ func (s *Service) applySiteRequest(
 	if !req.ClearSignIn && (username == "") != (password == "") && !site.HasSignIn() {
 		multiErr.Add("password", errortypes.ErrRequired,
 			"A sign-in needs both a username and a password")
+	}
+	moved := site.HasSignIn() && !req.ClearSignIn && addsDomain(savedFor, site.Domains)
+	if moved && (username == "" || password == "") {
+		multiErr.Add(
+			"password",
+			errortypes.ErrRequired,
+			"A stored sign-in stays with the domains it was saved for; enter it again for the new ones",
+		)
 	}
 	authenticator, keyErr := extensionportal.NormalizeAuthenticatorKey(req.AuthenticatorKey)
 	if keyErr != nil {
@@ -194,12 +206,21 @@ func (s *Service) applySiteRequest(
 	if err != nil {
 		return err
 	}
-	if req.ClearAuthenticator && authenticator == "" {
+	if (req.ClearAuthenticator || moved) && authenticator == "" {
 		delete(merged, extensionportal.PortalCredentialAuthenticator)
 	}
 	site.Credentials = merged
 
 	return nil
+}
+
+func addsDomain(saved, domains []string) bool {
+	for _, domain := range domains {
+		if !slices.Contains(saved, domain) {
+			return true
+		}
+	}
+	return false
 }
 
 // checkNotTrenova refuses a site on Trenova's own address. An agent acts in
@@ -394,6 +415,7 @@ func siteSnapshot(site *extensionportal.PortalSite) map[string]any {
 		"startUrl":         site.StartURL,
 		"browserProfileId": site.BrowserProfileID,
 		"allowActions":     site.AllowActions,
+		"viewOnlyAccount":  site.ViewOnlyAccount,
 		"enabled":          site.Enabled,
 		"hasSignIn":        site.HasSignIn(),
 		"version":          site.Version,

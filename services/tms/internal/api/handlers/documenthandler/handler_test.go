@@ -20,19 +20,25 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -251,20 +257,48 @@ func setupHandlerWithConfig(
 	)
 	thumbnailGen := thumbnailservice.NewGenerator(imagingfake.New())
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
+	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, customerports.ErrCacheMiss).
+		Maybe()
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 
-	service := documentservice.NewTestService(
-		logger,
-		repo,
-		cacheRepo,
-		sessionRepo,
-		storageClient,
-		validator,
-		&mocks.NoopAuditService{},
-		&cfg.Storage,
-		thumbnailGen,
-		nil,
+	workflows := kernelportsmock.NewMockWorkflowStarter(t)
+	workflows.EXPECT().
+		StartWorkflow(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
+
+	service := documentservice.New(documentservice.Params{
+		Logger:               logger,
+		DB:                   dbtest.NopConnection{},
+		Repo:                 repo,
+		CacheRepo:            cacheRepo,
+		SessionRepo:          sessionRepo,
+		Storage:              storageClient,
+		Validator:            validator,
+		AuditService:         &mocks.NoopAuditService{},
+		ContentGate:          contentscanportsmock.NewCleanGate(),
+		DocumentIntelligence: noopDocumentContent{},
+		Paperwork:            noopPaperwork{},
+		SearchProjection:     noopSearchProjection{},
+		WorkflowStarter:      workflows,
+		UsageProvider:        usageservice.NewNoopUsageProvider(),
+		StorageConfig:        &cfg.Storage,
+		ThumbnailGenerator:   thumbnailGen,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:       storageClient,
+			Encryption:    encryption,
+			Generator:     thumbnailGen,
+			ImagingConfig: &imagingconfig.Config{},
+			Logger:        logger,
+		}),
+		Encryption:  encryption,
+		Realtime:    &mocks.NoopRealtimeService{},
+		Permissions: &mocks.AllowAllPermissionEngine{},
+	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
 		Logger:    logger,
@@ -466,8 +500,6 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 		})
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
-	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -482,6 +514,7 @@ func TestDocumentHandler_Get_Success(t *testing.T) {
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "test.pdf", resp["originalName"])
+	deps.cacheRepo.AssertCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
 
 func TestDocumentHandler_Get_NotFound(t *testing.T) {
@@ -494,8 +527,6 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("Document not found"))
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
-	deps.cacheRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(nil, customerports.ErrCacheMiss)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
@@ -506,6 +537,7 @@ func TestDocumentHandler_Get_NotFound(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusNotFound, ginCtx.ResponseCode())
+	deps.cacheRepo.AssertCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
 
 func TestDocumentHandler_Get_InvalidID(t *testing.T) {
@@ -534,6 +566,7 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:   "trailer",
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
 				BusinessUnitID: testutil.TestBuID,
@@ -622,8 +655,9 @@ func TestDocumentHandler_Download_StorageError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
-				ID:          req.ID,
-				StoragePath: "org/trailer/file.pdf",
+				ResourceType: "trailer",
+				ID:           req.ID,
+				StoragePath:  "org/trailer/file.pdf",
 			}, nil
 		})
 
@@ -655,6 +689,7 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType: "trailer",
 				ID:           req.ID,
 				FileName:     "view.pdf",
 				OriginalName: "view.pdf",
@@ -741,8 +776,9 @@ func TestDocumentHandler_View_StorageError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
-				ID:          req.ID,
-				StoragePath: "org/trailer/file.pdf",
+				ResourceType: "trailer",
+				ID:           req.ID,
+				StoragePath:  "org/trailer/file.pdf",
 			}, nil
 		})
 
@@ -774,6 +810,7 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				FileName:           "preview.pdf",
 				OriginalName:       "preview.pdf",
@@ -814,6 +851,7 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 
 func previewDocument(id pulid.ID) *document.Document {
 	return &document.Document{
+		ResourceType:       "trailer",
 		ID:                 id,
 		FileName:           "preview.pdf",
 		OriginalName:       "preview.pdf",
@@ -892,6 +930,7 @@ func TestDocumentHandler_Preview_NoPreviewAvailable(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				StoragePath:        "org/trailer/file.pdf",
 				PreviewStoragePath: "",
@@ -975,6 +1014,7 @@ func pageImageRepo(
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:   "trailer",
 				ID:             req.ID,
 				FileName:       "ratecon.png",
 				OriginalName:   "ratecon.png",
@@ -1159,11 +1199,9 @@ func TestDocumentHandler_PageImage_InvalidPageNumber(t *testing.T) {
 
 	docID := pulid.MustNew("doc_")
 	for _, page := range []string{"0", "-1", "first"} {
-		deps := setupHandler(
-			t,
-			documentportsmock.NewMockDocumentRepository(t),
-			&mockStorageClient{},
-		)
+		repo := documentportsmock.NewMockDocumentRepository(t)
+		repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(previewDocument(docID), nil)
+		deps := setupHandler(t, repo, &mockStorageClient{})
 
 		ginCtx := servePageImage(
 			t, deps, "/api/v1/documents/"+docID.String()+"/pages/"+page+"/image/", nil,
@@ -1540,6 +1578,7 @@ func TestDocumentHandler_Delete_Success(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:   "trailer",
 				ID:             req.ID,
 				OrganizationID: testutil.TestOrgID,
 				BusinessUnitID: testutil.TestBuID,
@@ -1611,8 +1650,9 @@ func TestDocumentHandler_Delete_RepoError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
-				ID:          req.ID,
-				StoragePath: "org/trailer/test.pdf",
+				ResourceType: "trailer",
+				ID:           req.ID,
+				StoragePath:  "org/trailer/test.pdf",
 			}, nil
 		})
 	repo.On("Delete", mock.Anything, mock.Anything).Return(errService)
@@ -1644,6 +1684,7 @@ func TestDocumentHandler_BulkDelete_Success(t *testing.T) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
+					ResourceType:   "trailer",
 					ID:             id,
 					OrganizationID: testutil.TestOrgID,
 					BusinessUnitID: testutil.TestBuID,
@@ -1895,6 +1936,7 @@ func TestDocumentHandler_Delete_WithPreviewPath(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				OrganizationID:     testutil.TestOrgID,
 				BusinessUnitID:     testutil.TestBuID,
@@ -1937,6 +1979,7 @@ func TestDocumentHandler_Preview_StorageError(t *testing.T) {
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req documentports.GetDocumentByIDRequest) (*document.Document, error) {
 			return &document.Document{
+				ResourceType:       "trailer",
 				ID:                 req.ID,
 				StoragePath:        "org/trailer/file.pdf",
 				PreviewStoragePath: "org/trailer/thumb.webp",
@@ -2001,8 +2044,9 @@ func TestDocumentHandler_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 			docs := make([]*document.Document, 0, len(req.IDs))
 			for _, id := range req.IDs {
 				docs = append(docs, &document.Document{
-					ID:          id,
-					StoragePath: "org/trailer/" + id.String() + ".pdf",
+					ResourceType: "trailer",
+					ID:           id,
+					StoragePath:  "org/trailer/" + id.String() + ".pdf",
 				})
 			}
 			return docs, nil
@@ -2081,7 +2125,7 @@ func TestDocumentHandler_Reject_Success(t *testing.T) {
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(reviewableTestDocument(docID, document.StatusActive), nil).
-		Once()
+		Times(2)
 	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
 		return doc.ID == docID &&
 			doc.Status == document.StatusRejected &&
@@ -2116,7 +2160,7 @@ func TestDocumentHandler_Reject_RequiresReason(t *testing.T) {
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(reviewableTestDocument(docID, document.StatusActive), nil).
-		Once()
+		Times(2)
 
 	ginCtx := serveDocumentReview(
 		t,
@@ -2139,7 +2183,7 @@ func TestDocumentHandler_Approve_ClearsRejection(t *testing.T) {
 	rejected.RejectionReason = "Blurred"
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(rejected, nil).Once()
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(rejected, nil).Times(2)
 	repo.EXPECT().Update(mock.Anything, mock.MatchedBy(func(doc *document.Document) bool {
 		return doc.Status == document.StatusActive &&
 			doc.ApprovedByID == testutil.TestUserID &&
@@ -2168,7 +2212,7 @@ func TestDocumentHandler_Approve_RefusesSupersededVersion(t *testing.T) {
 	superseded.IsCurrentVersion = false
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(superseded, nil).Once()
+	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(superseded, nil).Times(2)
 
 	ginCtx := serveDocumentReview(t, repo, "/api/v1/documents/"+docID.String()+"/approve/", nil)
 

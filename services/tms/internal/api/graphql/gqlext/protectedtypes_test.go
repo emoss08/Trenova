@@ -32,6 +32,11 @@ type protectedType struct {
 	graphQLOnly string
 }
 
+var intelligenceJSONNames = map[string]string{
+	"driverPayAmount": "DriverPayAmount",
+	"netMargin":       "NetMargin",
+}
+
 func amount(value string) decimal.NullDecimal {
 	return decimal.NewNullDecimal(decimal.RequireFromString(value))
 }
@@ -105,6 +110,7 @@ func protectedTypes() map[string]protectedType {
 					NetMargin:       amount("150"),
 				}
 			},
+			jsonNames: intelligenceJSONNames,
 		},
 		"DetentionFacilityIntelligence": {
 			entity: func() protectedfield.Withholder {
@@ -113,6 +119,7 @@ func protectedTypes() map[string]protectedType {
 					NetMargin:       amount("150"),
 				}
 			},
+			jsonNames: intelligenceJSONNames,
 		},
 		"DetentionCustomerIntelligence": {
 			entity: func() protectedfield.Withholder {

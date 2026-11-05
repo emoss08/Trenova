@@ -227,7 +227,6 @@ function RecoveryCard({ data }: { data: DetentionIntelligence }) {
   const driverPay = totals.driverPayAmount === null ? null : amount(totals.driverPayAmount);
   // Kept is what was billed less what drivers were paid, so it never outruns the billed bar.
   const kept = keptAfterDriverPay(data);
-  let remaining = accrued;
 
   return (
     <SectionPanel
@@ -246,9 +245,11 @@ function RecoveryCard({ data }: { data: DetentionIntelligence }) {
             bar={{ kind: "fill", left: 0, width: 1, className: "bg-foreground/20" }}
             value={money(accrued)}
           />
-          {steps.map((step) => {
+          {steps.map((step, index) => {
             const value = amount(step.amount);
-            remaining -= value;
+            const remaining =
+              accrued -
+              steps.slice(0, index + 1).reduce((sum, earlier) => sum + amount(earlier.amount), 0);
             const left = scale(Math.max(remaining, 0));
             const caption = stepCaption(step);
             return (

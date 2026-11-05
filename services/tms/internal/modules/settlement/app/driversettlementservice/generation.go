@@ -274,7 +274,13 @@ func (s *Service) GenerateForWorker(
 		"Settlement generated for period")
 
 	if control.AutoApproveClean && !created.HasExceptions {
-		approved, approveErr := s.approveInternal(ctx, req.TenantInfo, created.ID, actor, true)
+		approved, approveErr := s.approveInternal(
+			ctx,
+			req.TenantInfo,
+			created.ID,
+			actor,
+			approvalRoute{fromDraft: true, byPolicy: true},
+		)
 		if approveErr != nil {
 			s.l.Error("failed to auto-approve clean settlement",
 				zap.Error(approveErr), zap.String("settlementId", created.ID.String()))

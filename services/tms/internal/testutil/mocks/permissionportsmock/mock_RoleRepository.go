@@ -814,6 +814,80 @@ func (_c *MockRoleRepository_GetRolesWithInheritance_Call) RunAndReturn(run func
 	return _c
 }
 
+// GetMembershipExpiry provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) GetMembershipExpiry(ctx context.Context, userID pulid.ID, orgID pulid.ID) (*int64, error) {
+	ret := _mock.Called(ctx, userID, orgID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMembershipExpiry")
+	}
+
+	var r0 *int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (*int64, error)); ok {
+		return returnFunc(ctx, userID, orgID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) *int64); ok {
+		r0 = returnFunc(ctx, userID, orgID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, userID, orgID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRoleRepository_GetMembershipExpiry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMembershipExpiry'
+type MockRoleRepository_GetMembershipExpiry_Call struct {
+	*mock.Call
+}
+
+// GetMembershipExpiry is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID pulid.ID
+//   - orgID pulid.ID
+func (_e *MockRoleRepository_Expecter) GetMembershipExpiry(ctx any, userID any, orgID any) *MockRoleRepository_GetMembershipExpiry_Call {
+	return &MockRoleRepository_GetMembershipExpiry_Call{Call: _e.mock.On("GetMembershipExpiry", ctx, userID, orgID)}
+}
+
+func (_c *MockRoleRepository_GetMembershipExpiry_Call) Run(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID)) *MockRoleRepository_GetMembershipExpiry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_GetMembershipExpiry_Call) Return(n *int64, err error) *MockRoleRepository_GetMembershipExpiry_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockRoleRepository_GetMembershipExpiry_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) (*int64, error)) *MockRoleRepository_GetMembershipExpiry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserRoleAssignments provides a mock function for the type MockRoleRepository
 func (_mock *MockRoleRepository) GetUserRoleAssignments(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.UserRoleAssignment, error) {
 	ret := _mock.Called(ctx, userID, orgID)

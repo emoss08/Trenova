@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/triageworkjobs/triageworkcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -311,15 +313,20 @@ type wholeFiling struct {
 	docType    *documenttype.DocumentType
 }
 
+func actorFor(tenantInfo pagination.TenantInfo, userID pulid.ID) *permissionports.RequestActor {
+	tenantInfo.UserID = userID
+
+	return permissionports.UserActor(tenantInfo)
+}
+
 func (s *Service) fileWhole(ctx context.Context, f *wholeFiling) error {
-	attached, err := s.documents.AttachLineageToResource(
-		ctx,
-		f.attachment.DocumentID,
-		inboundmessageports.DocumentResourceType,
-		f.shipmentID.String(),
-		f.tenantInfo,
-		f.userID,
-	)
+	attached, err := s.documents.AttachLineageToResource(ctx, &documentservice.AttachLineageRequest{
+		DocumentID:   f.attachment.DocumentID,
+		ResourceType: inboundmessageports.DocumentResourceType,
+		ResourceID:   f.shipmentID.String(),
+		TenantInfo:   f.tenantInfo,
+		Actor:        actorFor(f.tenantInfo, f.userID),
+	})
 	if err != nil {
 		return err
 	}
@@ -475,19 +482,18 @@ func (s *Service) Unfile(
 			if err = s.documents.Delete(ctx, documentports.DeleteDocumentRequest{
 				ID:         split.DocumentID,
 				TenantInfo: req.TenantInfo,
-			}, req.UserID); err != nil && !errortypes.IsNotFoundError(err) {
+			}, actorFor(req.TenantInfo, req.UserID)); err != nil && !errortypes.IsNotFoundError(err) {
 				return nil, err
 			}
 		}
 	} else if attachment.DocumentID.IsNotNil() {
-		if _, err = s.documents.AttachLineageToResource(
-			ctx,
-			attachment.DocumentID,
-			inboundResourceType,
-			message.ID.String(),
-			req.TenantInfo,
-			req.UserID,
-		); err != nil {
+		if _, err = s.documents.AttachLineageToResource(ctx, &documentservice.AttachLineageRequest{
+			DocumentID:   attachment.DocumentID,
+			ResourceType: inboundResourceType,
+			ResourceID:   message.ID.String(),
+			TenantInfo:   req.TenantInfo,
+			Actor:        actorFor(req.TenantInfo, req.UserID),
+		}); err != nil {
 			return nil, err
 		}
 		s.restoreReplaced(ctx, req.TenantInfo, message, attachment.ID)

@@ -5,8 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/pushconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -17,6 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+func disabledWebPush() *webpushservice.Service {
+	return webpushservice.New(webpushservice.Params{
+		Logger:     zap.NewNop(),
+		PushConfig: &pushconfig.Config{},
+	})
+}
 
 type memberDirectory struct {
 	tenantports.UserRepository
@@ -94,6 +104,8 @@ func newDispatchFixture(t *testing.T) *dispatchFixture {
 		Users:       f.users,
 		Preferences: f.prefs,
 		Email:       f.mail,
+		AppConfig:   &appconfig.Config{},
+		WebPush:     disabledWebPush(),
 	})
 	f.svc.now = func() time.Time { return f.now }
 	f.svc.webBaseURL = "https://tms.example.com"

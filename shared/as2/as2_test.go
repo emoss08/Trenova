@@ -135,7 +135,7 @@ func TestParseMessageRequiresConfiguredLayers(t *testing.T) {
 	_, err = ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
 		RequireSignature: true,
 	})
-	require.ErrorIs(t, err, ErrSignatureRequired)
+	require.ErrorIs(t, err, ErrNoPartnerCertificate)
 
 	_, err = ParseMessage(built.ContentType, built.Body, &ParseMessageOptions{
 		RequireEncryption: true,
@@ -177,8 +177,7 @@ func TestBuildAndParseSignedMDN(t *testing.T) {
 		SigningKey:         receiver.Key,
 	})
 	require.NoError(t, err)
-	require.True(t, IsMDNContentType(built.ContentType) ||
-		builtMDNIsSigned(built.ContentType))
+	require.True(t, IsMDN(built.ContentType, built.Body))
 
 	parsed, err := ParseMDN(built.ContentType, built.Body, receiver.Certificate)
 	require.NoError(t, err)
@@ -186,6 +185,59 @@ func TestBuildAndParseSignedMDN(t *testing.T) {
 	require.True(t, parsed.Processed())
 	require.Equal(t, "<abc123@trenova.as2>", parsed.OriginalMessageID)
 	require.Equal(t, "q1w2e3r4, sha256", parsed.ReceivedContentMIC)
+}
+
+func TestMessageIDMatchesIgnoresAngleBracketsButNotContent(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, MessageIDMatches("<abc@trenova.as2>", "<abc@trenova.as2>"))
+	require.True(t, MessageIDMatches("<abc@trenova.as2>", " abc@trenova.as2 "))
+	require.False(t, MessageIDMatches("<abc@trenova.as2>", "<other@trenova.as2>"))
+	require.False(t, MessageIDMatches("<abc@trenova.as2>", ""))
+	require.False(t, MessageIDMatches("", ""))
+	require.False(t, MessageIDMatches("<>", "<>"))
+}
+
+func TestIsMDNTellsASignedReceiptFromASignedPayload(t *testing.T) {
+	t.Parallel()
+
+	sender := smimetest.NewIdentity(t, "sender.example")
+	receiver := smimetest.NewIdentity(t, "receiver.example")
+
+	receipt, err := BuildMDN(&BuildMDNOptions{
+		From:               "RECEIVER-AS2",
+		To:                 "SENDER-AS2",
+		OriginalMessageID:  "<abc123@trenova.as2>",
+		ReceivedContentMIC: "q1w2e3r4, sha256",
+		SigningCertificate: receiver.Certificate,
+		SigningKey:         receiver.Key,
+	})
+	require.NoError(t, err)
+	require.Contains(t, receipt.ContentType, contentTypeMultipartSigned)
+	require.True(t, IsMDN(receipt.ContentType, receipt.Body))
+
+	payload, err := BuildMessage(&BuildMessageOptions{
+		From:               "SENDER-AS2",
+		To:                 "RECEIVER-AS2",
+		Subject:            "EDI",
+		FileName:           "tender.edi",
+		Payload:            []byte("ISA*00*"),
+		SigningCertificate: sender.Certificate,
+		SigningKey:         sender.Key,
+	})
+	require.NoError(t, err)
+	require.Contains(t, payload.ContentType, contentTypeMultipartSigned)
+	require.False(t, IsMDN(payload.ContentType, payload.Body))
+}
+
+func TestIsMDNRefusesWhatItCannotRead(t *testing.T) {
+	t.Parallel()
+
+	require.False(t, IsMDN("not a media type;;", nil))
+	require.False(t, IsMDN(contentTypeMultipartSigned, []byte("no boundary")))
+	require.False(t, IsMDN(contentTypeMultipartSigned+`; boundary="x"`, []byte("no parts")))
+	require.False(t, IsMDN("multipart/report; report-type=other; boundary=x", nil))
+	require.False(t, IsMDN("application/edi-x12", []byte("ISA*00*")))
 }
 
 func TestBuildAndParseErrorMDN(t *testing.T) {
@@ -198,17 +250,12 @@ func TestBuildAndParseErrorMDN(t *testing.T) {
 		ErrorText:         "decryption failed",
 	})
 	require.NoError(t, err)
-	require.True(t, IsMDNContentType(built.ContentType))
+	require.True(t, IsMDN(built.ContentType, built.Body))
 
 	parsed, err := ParseMDN(built.ContentType, built.Body, nil)
 	require.NoError(t, err)
 	require.False(t, parsed.Processed())
 	require.Contains(t, parsed.FailureText(), "decryption failed")
-}
-
-func builtMDNIsSigned(contentType string) bool {
-	return len(contentType) >= len(contentTypeMultipartSigned) &&
-		contentType[:len(contentTypeMultipartSigned)] == contentTypeMultipartSigned
 }
 
 func replaceOnce(input, old, replacement string) string {

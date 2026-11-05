@@ -2,6 +2,7 @@ package shipmentflows
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -20,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,6 +51,9 @@ type bulkTransferFixture struct {
 	audit        *auditportsmock.MockAuditService
 	realtime     *realtimeportsmock.MockRealtimeService
 	svc          *rig
+	shipments    map[pulid.ID]*shipment.Shipment
+	payers       map[pulid.ID]*customer.Customer
+	documents    []*document.Document
 
 	// billingControlExpected keeps the org-level read registered once, which is
 	// how many times a run makes it.
@@ -70,6 +74,8 @@ func newBulkTransferFixture(t *testing.T) *bulkTransferFixture {
 		billingQueue: billingqueueportsmock.NewMockBillingQueueService(t),
 		audit:        auditportsmock.NewMockAuditService(t),
 		realtime:     realtimeportsmock.NewMockRealtimeService(t),
+		shipments:    map[pulid.ID]*shipment.Shipment{},
+		payers:       map[pulid.ID]*customer.Customer{},
 	}
 	f.svc = assembled(&rig{
 		l:                   zap.NewNop(),
@@ -116,14 +122,25 @@ func (f *bulkTransferFixture) newShipment(
 }
 
 func (f *bulkTransferFixture) expectShipment(entity *shipment.Shipment) {
-	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
-			return req.ID == entity.ID &&
-				req.TenantInfo == f.tenant() &&
-				req.ExpandShipmentDetails
-		})).
-		Return(entity, nil).
-		Once()
+	if len(f.shipments) == 0 {
+		f.repo.EXPECT().
+			GetByIDs(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentsByIDsRequest) bool {
+				return req.TenantInfo == f.tenant() && req.IncludeCharges
+			})).
+			RunAndReturn(func(
+				_ context.Context,
+				req *shipmentports.GetShipmentsByIDsRequest,
+			) ([]*shipment.Shipment, error) {
+				found := make([]*shipment.Shipment, 0, len(req.ShipmentIDs))
+				for _, id := range req.ShipmentIDs {
+					if known, ok := f.shipments[id]; ok {
+						found = append(found, known)
+					}
+				}
+				return found, nil
+			})
+	}
+	f.shipments[entity.ID] = entity
 }
 
 func (f *bulkTransferFixture) expectReadiness(
@@ -132,19 +149,46 @@ func (f *bulkTransferFixture) expectReadiness(
 	control *billingcontrol.BillingControl,
 	docs []*document.Document,
 ) {
-	f.customerRepo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
-			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
-				req.IncludeBillingProfile
-		})).
-		Return(nil, nil).
-		Once()
-	f.customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
-			return req.ID == entity.CustomerID
-		})).
-		Return(&customer.Customer{ID: entity.CustomerID, BillingProfile: profile}, nil).
-		Once()
+	if len(f.payers) == 0 {
+		f.customerRepo.EXPECT().
+			GetByIDs(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomersByIDsRequest) bool {
+				return req.TenantInfo == f.tenant() && req.IncludeBillingProfile
+			})).
+			RunAndReturn(func(
+				_ context.Context,
+				req customerports.GetCustomersByIDsRequest,
+			) ([]*customer.Customer, error) {
+				found := make([]*customer.Customer, 0, len(req.CustomerIDs))
+				for _, id := range req.CustomerIDs {
+					if known, ok := f.payers[id]; ok {
+						found = append(found, known)
+					}
+				}
+				return found, nil
+			})
+		f.documentRepo.EXPECT().
+			GetByResourceIDs(mock.Anything, mock.MatchedBy(
+				func(req *documentports.GetDocumentsByResourceIDsRequest) bool {
+					return req.ResourceType == "shipment" && req.TenantInfo == f.tenant()
+				},
+			)).
+			RunAndReturn(func(
+				_ context.Context,
+				req *documentports.GetDocumentsByResourceIDsRequest,
+			) ([]*document.Document, error) {
+				found := make([]*document.Document, 0, len(f.documents))
+				for _, doc := range f.documents {
+					if slices.Contains(req.ResourceIDs, doc.ResourceID) {
+						found = append(found, doc)
+					}
+				}
+				return found, nil
+			})
+	}
+	f.payers[entity.CustomerID] = &customer.Customer{
+		ID:             entity.CustomerID,
+		BillingProfile: profile,
+	}
 	// The organization's billing policy is one row that every shipment in a run
 	// asks the same question of, so it is read once for the whole run rather
 	// than once per shipment.
@@ -155,12 +199,10 @@ func (f *bulkTransferFixture) expectReadiness(
 			Return(control, nil).
 			Once()
 	}
-	f.documentRepo.EXPECT().
-		GetByResourceID(mock.Anything, mock.MatchedBy(func(req *documentports.GetDocumentsByResourceRequest) bool {
-			return req.ResourceID == entity.ID.String()
-		})).
-		Return(docs, nil).
-		Once()
+	for _, doc := range docs {
+		doc.ResourceID = entity.ID.String()
+		f.documents = append(f.documents, doc)
+	}
 }
 
 func (f *bulkTransferFixture) expectQueued(
@@ -394,12 +436,6 @@ func TestBulkTransferToBilling_ReportsMissingShipmentsAndKeepsGoing(t *testing.T
 	missingID := pulid.MustNew("shp_")
 	clean := f.newShipment("PRO-40", shipmentvocab.StatusReadyToInvoice)
 
-	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
-			return req.ID == missingID
-		})).
-		Return(nil, errortypes.NewNotFoundError("Shipment not found")).
-		Once()
 	f.expectShipment(clean)
 	f.expectReadiness(clean, &customer.CustomerBillingProfile{}, manualBillingControl(), nil)
 	f.expectQueued(clean)
@@ -623,13 +659,6 @@ func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
 	f.expectReadiness(second, profile, manualBillingControl(), []*document.Document{})
 	f.expectQueued(second)
 
-	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
-			return req.ID == missing.ID && req.ExpandShipmentDetails
-		})).
-		Return(nil, errortypes.NewNotFoundError("Shipment not found")).
-		Once()
-
 	var reported []shipmentbillingports.BulkTransferToBillingResult
 	response, err := f.svc.transfer.BulkTransferToBilling(
 		t.Context(),
@@ -676,11 +705,7 @@ func TestBulkTransferToBilling_SuppressesExceptionNotificationsWhenAsked(t *test
 
 	// No expectations: any notification written fails the test.
 	notificationRepo := notificationportsmock.NewMockNotificationRepository(t)
-	f.svc.notificationService = notificationservice.New(notificationservice.Params{
-		Logger:   zap.NewNop(),
-		Repo:     notificationRepo,
-		Realtime: f.realtime,
-	})
+	f.svc.notificationService = notificationtest.New(notificationRepo, f.realtime)
 	f.svc.assemble()
 
 	podType := &documenttype.DocumentType{

@@ -160,7 +160,9 @@ func testService(defs *fakeDefinitions, control *agentcontrol.AgentControl) *Ser
 		holder:      fakeHolder{},
 		definitions: defs,
 		controls:    &fakeControls{control: control},
+		trust:       &fakeTrust{},
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
+		rules:       &fakeRules{},
 	})
 }
 

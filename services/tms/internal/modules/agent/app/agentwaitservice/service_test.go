@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -361,6 +362,7 @@ func newHarness(items ...*agentwait.Wait) *harness {
 		turns:         h.turns,
 		runService:    h.runs,
 		workflows:     h.workflows,
+		realtime:      &mocks.NoopRealtimeService{},
 		now:           func() int64 { return now },
 	}
 

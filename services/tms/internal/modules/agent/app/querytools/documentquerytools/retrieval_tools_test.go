@@ -40,7 +40,7 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 			Semantics: retrievalports.RetrievalSemantics{Used: true},
 		},
 	}
-	tool := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true}, nil)
+	tool := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true})
 
 	result, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{
 		"query": "lumper fee",
@@ -86,7 +86,7 @@ func TestSearchDocumentsSaysWhenMeaningWasNotSearched(t *testing.T) {
 			},
 		},
 	}
-	tool := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true}, nil)
+	tool := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true})
 
 	result, err := tool.Query(
 		t.Context(),
@@ -105,7 +105,7 @@ func TestSearchDocumentsNeedsAQuery(t *testing.T) {
 	t.Parallel()
 
 	searcher := &querytooltest.FakeRetrievalSearcher{}
-	tool := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true}, nil)
+	tool := NewSearchDocumentsTool(searcher, &querytooltest.FakePermissions{Allowed: true})
 	_, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{"query": "  "}))
 	require.ErrorIs(t, err, errSearchQueryRequired)
 	assert.Empty(t, searcher.Requests)

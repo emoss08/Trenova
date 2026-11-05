@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,17 +29,17 @@ const maxMessageWriteAttempts = 3
 type documentFiler interface {
 	AttachLineageToResource(
 		ctx context.Context,
-		documentID pulid.ID,
-		resourceType string,
-		resourceID string,
-		tenantInfo pagination.TenantInfo,
-		userID pulid.ID,
+		req *documentservice.AttachLineageRequest,
 	) (*document.Document, error)
 	GetDownloadContent(
 		ctx context.Context,
 		req documentports.GetDocumentByIDRequest,
 	) (*documentports.DocumentContent, error)
-	Delete(ctx context.Context, req documentports.DeleteDocumentRequest, userID pulid.ID) error
+	Delete(
+		ctx context.Context,
+		req documentports.DeleteDocumentRequest,
+		actor *permissionports.RequestActor,
+	) error
 }
 
 type replyDrafter interface {

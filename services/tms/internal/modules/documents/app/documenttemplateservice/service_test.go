@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,6 +46,12 @@ func newHarness(t *testing.T) *harness {
 	engine, err := templateengine.New(templateengine.Config{})
 	require.NoError(t, err)
 
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
+	orgs.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{}, nil).
+		Maybe()
+
 	service := documenttemplateservice.New(documenttemplateservice.Params{
 		Logger:         zap.NewNop(),
 		Repo:           repo,
@@ -58,6 +66,7 @@ func newHarness(t *testing.T) *harness {
 			documenttemplateservice.ValidatorParams{Registry: registry},
 		),
 		AuditService: auditportsmock.NewMockAuditService(t),
+		OrgRepo:      orgs,
 	})
 
 	return &harness{

@@ -18,7 +18,10 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 )
+
+const failedCheckCooldown = 5 * time.Minute
 
 var ErrNoReleaseFound = errors.New("no release found")
 
@@ -36,9 +39,11 @@ type Service struct {
 	updateConfig *updateconfig.Config
 	httpClient   *http.Client
 
+	checks singleflight.Group
+
 	mu           sync.RWMutex
 	cachedStatus *kernelports.UpdateStatus
-	lastCheck    time.Time
+	nextCheck    time.Time
 }
 
 func New(p Params) *Service {
@@ -68,67 +73,94 @@ func (s *Service) GetUpdateStatus(ctx context.Context) (*kernelports.UpdateStatu
 		}, nil
 	}
 
-	s.mu.RLock()
-	cached := s.cachedStatus
-	lastCheck := s.lastCheck
-	s.mu.RUnlock()
-
-	if cached != nil && time.Since(lastCheck) < s.updateConfig.GetCheckInterval() {
-		return cached, nil
-	}
-
-	return s.CheckForUpdates(ctx)
-}
-
-func (s *Service) CheckForUpdates(ctx context.Context) (*kernelports.UpdateStatus, error) {
-	if !s.updateConfig.Enabled {
-		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.appConfig.Version,
-			UpdateAvailable: false,
-			LastChecked:     timeutils.NowUnix(),
-		}, nil
-	}
-
 	if s.updateConfig.OfflineMode {
 		s.l.Debug("offline mode enabled, skipping remote update check")
-		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.appConfig.Version,
-			UpdateAvailable: false,
-			LastChecked:     timeutils.NowUnix(),
-		}, nil
+		return s.noUpdateStatus(), nil
 	}
 
-	release, err := s.fetchLatestRelease(ctx)
-	if err != nil {
-		if errors.Is(err, ErrNoReleaseFound) {
-			return &kernelports.UpdateStatus{
-				CurrentVersion:  s.appConfig.Version,
-				UpdateAvailable: false,
-				LastChecked:     timeutils.NowUnix(),
-			}, nil
+	if status := s.currentStatus(); status != nil {
+		return status, nil
+	}
+
+	checked, err, _ := s.checks.Do("latest-release", func() (any, error) {
+		if status := s.currentStatus(); status != nil {
+			return status, nil
 		}
-		s.l.Warn("failed to fetch latest release", zap.Error(err))
-		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.appConfig.Version,
-			UpdateAvailable: false,
-			LastChecked:     timeutils.NowUnix(),
-		}, nil
+
+		return s.refreshStatus(context.WithoutCancel(ctx)), nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	status := &kernelports.UpdateStatus{
+	status, ok := checked.(*kernelports.UpdateStatus)
+	if !ok {
+		return nil, fmt.Errorf("unexpected update status type %T", checked)
+	}
+
+	return status, nil
+}
+
+func (s *Service) currentStatus() *kernelports.UpdateStatus {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.cachedStatus != nil && time.Now().Before(s.nextCheck) {
+		return s.cachedStatus
+	}
+
+	return nil
+}
+
+func (s *Service) refreshStatus(ctx context.Context) *kernelports.UpdateStatus {
+	release, err := s.fetchLatestRelease(ctx)
+	switch {
+	case errors.Is(err, ErrNoReleaseFound):
+		return s.storeStatus(s.noUpdateStatus(), s.updateConfig.GetCheckInterval())
+	case err != nil:
+		s.l.Warn("failed to fetch latest release", zap.Error(err))
+		return s.storeStatus(s.lastKnownStatus(), failedCheckCooldown)
+	}
+
+	return s.storeStatus(&kernelports.UpdateStatus{
 		CurrentVersion:  s.appConfig.Version,
 		LatestVersion:   release.Version,
 		UpdateAvailable: s.isNewerVersion(release.Version, s.appConfig.Version),
 		LatestRelease:   release,
 		LastChecked:     timeutils.NowUnix(),
+	}, s.updateConfig.GetCheckInterval())
+}
+
+func (s *Service) noUpdateStatus() *kernelports.UpdateStatus {
+	return &kernelports.UpdateStatus{
+		CurrentVersion:  s.appConfig.Version,
+		UpdateAvailable: false,
+		LastChecked:     timeutils.NowUnix(),
+	}
+}
+
+func (s *Service) lastKnownStatus() *kernelports.UpdateStatus {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.cachedStatus != nil {
+		return s.cachedStatus
 	}
 
-	s.mu.Lock()
-	s.cachedStatus = status
-	s.lastCheck = time.Now()
-	s.mu.Unlock()
+	return s.noUpdateStatus()
+}
 
-	return status, nil
+func (s *Service) storeStatus(
+	status *kernelports.UpdateStatus,
+	validFor time.Duration,
+) *kernelports.UpdateStatus {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.cachedStatus = status
+	s.nextCheck = time.Now().Add(validFor)
+
+	return status
 }
 
 func (s *Service) fetchLatestRelease(ctx context.Context) (*kernelports.ReleaseInfo, error) {

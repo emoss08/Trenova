@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -83,7 +85,7 @@ func actor() *permissionports.RequestActor {
 	}
 }
 
-// shipmentRepo is left nil so resync short-circuits: this test is about the
+// shipmentRepo refuses the reload so resync logs and stops: this test is about the
 // audit entry, and reloading the shipment is a separate concern already covered
 // by the sync tests.
 func newAuditingService(
@@ -93,8 +95,12 @@ func newAuditingService(
 	t.Helper()
 
 	auditService := auditportsmock.NewMockAuditService(t)
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
+	shipments.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("Shipment not found")).Maybe()
 	return &service{
 		permitRepo:   repo,
+		shipmentRepo: shipments,
 		auditService: auditService,
 		l:            zap.NewNop(),
 	}, auditService
@@ -195,11 +201,15 @@ func TestWaiveRequirement_DoesNotAuditARejectedWaiver(t *testing.T) {
 func TestCreatePermit_SurvivesWithoutAnAuditService(t *testing.T) {
 	entity := activePermit()
 
+	shipments := shipmentportsmock.NewMockShipmentRepository(t)
+	shipments.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("Shipment not found")).Maybe()
 	svc := &service{
 		permitRepo: &permitRepoStub{
 			create: func(e *permit.Permit) (*permit.Permit, error) { return e, nil },
 		},
-		l: zap.NewNop(),
+		shipmentRepo: shipments,
+		l:            zap.NewNop(),
 	}
 
 	created, err := svc.CreatePermit(t.Context(), entity, actor())

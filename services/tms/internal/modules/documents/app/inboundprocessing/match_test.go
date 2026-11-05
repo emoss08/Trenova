@@ -202,18 +202,6 @@ func TestMatch_SurvivesAFailedLookup(t *testing.T) {
 	assert.Empty(t, got.Reason)
 }
 
-// With no finders wired the matcher is a no-op rather than a panic: an
-// installation that has not configured them still receives mail.
-func TestMatch_WithoutFindersIsQuiet(t *testing.T) {
-	t.Parallel()
-
-	got := matcher(nil, nil).processing().Match(
-		t.Context(), message("Load 88213", "", "ops@acme.com"), pagination.TenantInfo{},
-	)
-
-	assert.Empty(t, got.Reason)
-}
-
 // The first candidate that resolves wins, and the ones after it are never
 // asked for — a message naming two shipments is one a person should read.
 func TestMatch_StopsAtTheFirstShipmentThatResolves(t *testing.T) {

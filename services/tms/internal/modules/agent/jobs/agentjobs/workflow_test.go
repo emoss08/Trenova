@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -47,7 +48,7 @@ func (s *AgentRunWorkflowTestSuite) SetupTest() {
 	s.expired = nil
 	s.opened = nil
 	s.finished = nil
-	s.runtime = agentruntime.New(agentruntime.Params{
+	s.runtime = assistanttest.Runtime(agentruntime.Params{
 		Logger:      zap.NewNop(),
 		Completion:  &agenttest.ScriptedCompletion{},
 		QueryTools:  &agenttest.StubQueryRegistry{},

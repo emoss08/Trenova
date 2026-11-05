@@ -54,20 +54,21 @@ var documentUploadSessionsTable = schema.Table{
 		{Name: "threat_name", Quoted: `"threat_name"`, Field: "ThreatName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Threat Name`, JSON: `threatName`},
 		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: 0, Label: `Expires At`, JSON: `expiresAt`},
 		{Name: "last_activity_at", Quoted: `"last_activity_at"`, Field: "LastActivityAt", Kind: schema.KindInt64, Flags: 0, Label: `Last Activity At`, JSON: `lastActivityAt`},
+		{Name: "uploaded_by_id", Quoted: `"uploaded_by_id"`, Field: "UploadedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Uploaded By ID`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 32},
 	Returning:    nil,
-	Version:      29,
+	Version:      30,
 	AutoID:       0,
-	AutoCreate:   30,
-	AutoUpdate:   31,
+	AutoCreate:   31,
+	AutoUpdate:   32,
 	IDPrefix:     "dus_",
 	New:          newDocumentUploadSession,
 	NewN:         newNDocumentUploadSession,
@@ -112,6 +113,7 @@ type DocumentUploadSessionsTable struct {
 	ThreatName              keel.StringCol
 	ExpiresAt               keel.Int64Col
 	LastActivityAt          keel.Int64Col
+	UploadedByID            keelkinds.PulidIDCol
 	Version                 keel.Int64Col
 	CreatedAt               keel.Int64Col
 	UpdatedAt               keel.Int64Col
@@ -149,9 +151,10 @@ var DocumentUploadSessions = &DocumentUploadSessionsTable{
 	ThreatName:              keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 26}},
 	ExpiresAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 27}},
 	LastActivityAt:          keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 28}},
-	Version:                 keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 29}},
-	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 30}},
-	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 31}},
+	UploadedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 29}}},
+	Version:                 keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 30}},
+	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 31}},
+	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &documentUploadSessionsRef, Index: 32}},
 }
 
 // BuildDocumentUploadSessions builds the table of document_upload_sessions for ref. Generated relation and alias methods call it.
@@ -187,9 +190,10 @@ func BuildDocumentUploadSessions(r *keel.Ref) *DocumentUploadSessionsTable {
 		ThreatName:              keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		ExpiresAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		LastActivityAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		UploadedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
+		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
 	}
 }
 
@@ -635,10 +639,12 @@ func ptrDocumentUploadSession(p unsafe.Pointer, c int32) any {
 	case 28:
 		return &r.LastActivityAt
 	case 29:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.UploadedByID))
 	case 30:
-		return &r.CreatedAt
+		return &r.Version
 	case 31:
+		return &r.CreatedAt
+	case 32:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -739,10 +745,15 @@ func valueDocumentUploadSession(p unsafe.Pointer, c int32) any {
 	case 28:
 		return r.LastActivityAt
 	case 29:
-		return r.Version
+		if r.UploadedByID == "" {
+			return nil
+		}
+		return string(r.UploadedByID)
 	case 30:
-		return r.CreatedAt
+		return r.Version
 	case 31:
+		return r.CreatedAt
+	case 32:
 		return r.UpdatedAt
 	}
 	return nil

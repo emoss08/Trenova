@@ -34,6 +34,7 @@ func TestPublish_TellsAttachmentObserversOfEachExtraction(t *testing.T) {
 
 	publisher := agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Waits:       quietWaits{},
 		Definitions: &fakeDefinitions{},
 		RunService:  &fakeRunService{open: map[pulid.ID]bool{}},
 	})
@@ -65,6 +66,7 @@ func TestPublish_WithNoAttachmentObserversStillPublishes(t *testing.T) {
 	runs := &fakeRunService{open: map[pulid.ID]bool{}}
 	publisher := agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Waits:       quietWaits{},
 		Definitions: &fakeDefinitions{},
 		RunService:  runs,
 	})

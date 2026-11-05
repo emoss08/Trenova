@@ -5,13 +5,20 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/smsjobs/smscontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,6 +50,26 @@ func (r *recordingStarter) StartWorkflow(
 	return nil, nil
 }
 
+func quietDriverNotify(
+	t *testing.T,
+	workers workerports.WorkerRepository,
+) *drivernotificationservice.Service {
+	t.Helper()
+
+	templates := documenttemplateportsmock.NewMockDocumentTemplateResolver(t)
+	templates.EXPECT().
+		RenderMessage(mock.Anything, mock.Anything).
+		Return(&documenttemplateports.RenderedMessage{Subject: "PTO", Text: "Your PTO changed."}, nil).
+		Maybe()
+
+	return drivernotificationservice.New(drivernotificationservice.Params{
+		Logger:        zap.NewNop(),
+		WorkerRepo:    workers,
+		Notifications: notificationtest.Discarding(),
+		Templates:     templates,
+	})
+}
+
 // UpdateStatus fails until the preview has run, and nothing is texted while
 // it runs, which is what holds the preview to reading.
 func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
@@ -60,7 +87,10 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 		Return(&worker.Worker{ID: current.WorkerID, PhoneNumber: "+15555550100"}, nil)
 
 	svc := &Service{
-		l: zap.NewNop(),
+		db:       dbtest.NopConnection{},
+		realtime: &mocks.NoopRealtimeService{},
+		ledger:   untrackedLedger(),
+		l:        zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				copied := *current
@@ -81,6 +111,7 @@ func TestPreviewReject_IsWhatRejectSavesAndTexts(t *testing.T) {
 		workerRepo:      workers,
 		workflowStarter: starter,
 		auditService:    &fakeAuditService{},
+		driverNotify:    quietDriverNotify(t, workers),
 	}
 	request := func() *workerptoports.UpdatePTOStatusRequest {
 		return &workerptoports.UpdatePTOStatusRequest{
@@ -120,13 +151,25 @@ func TestPreviewCancel_SaysApprovedDaysGoBack(t *testing.T) {
 	t.Parallel()
 
 	current := storedPTO(worker.PTOStatusApproved)
+	users := tenantportsmock.NewMockUserRepository(t)
+	users.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.User{Name: "Dana Ortiz"}, nil)
+	workers := workerportsmock.NewMockWorkerRepository(t)
+	workers.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&worker.Worker{ID: current.WorkerID}, nil)
 	svc := &Service{
-		l: zap.NewNop(),
+		db:       dbtest.NopConnection{},
+		realtime: &mocks.NoopRealtimeService{},
+		ledger:   untrackedLedger(),
+		l:        zap.NewNop(),
 		repo: &fakePTORepo{
 			getByID: func(context.Context, *workerptoports.GetPTOByIDRequest) (*worker.WorkerPTO, error) {
 				return current, nil
 			},
 		},
+		userRepo:     users,
+		workerRepo:   workers,
+		driverNotify: quietDriverNotify(t, workers),
 	}
 
 	preview, err := svc.PreviewCancel(t.Context(), &workerptoports.UpdatePTOStatusRequest{

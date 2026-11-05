@@ -416,9 +416,13 @@ func writeToolMessage(b *strings.Builder, m *conversation.Message, trimmed bool)
 	writeTrimmed(b, trimmed)
 	if fenced {
 		writeResult(b, payload)
-	} else {
-		writeText(b, m.Content)
+		return
 	}
+	if message, failed := toolresult.UnfenceFailure(m.Content); failed {
+		writeText(b, message)
+		return
+	}
+	writeText(b, toolresult.UnfenceInline(m.Content))
 }
 
 func writeTrimmed(b *strings.Builder, trimmed bool) {

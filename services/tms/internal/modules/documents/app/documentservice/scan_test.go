@@ -45,7 +45,6 @@ func newScannedService(
 		&mocks.NoopAuditService{},
 		storageCfg,
 		thumbnailservice.NewGenerator(nil),
-		nil,
 	)
 	svc.contentGate = gate
 	return svc, store

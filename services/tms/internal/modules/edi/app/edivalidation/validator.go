@@ -437,12 +437,12 @@ func (v *Validator) validateAS2ProfileConfig(
 }
 
 func validateAS2SignedInbound(multiErr *errortypes.MultiError, entity *edi.EDICommunicationProfile) {
-	if entity.Status == domaintypes.StatusInactive {
-		return
-	}
 	config := entity.Config
 	required, ok := maputils.BoolValue(config, editransport.ConfigKeyRequireSignedInbound)
 	if ok && !required {
+		return
+	}
+	if !ok && entity.Status == domaintypes.StatusInactive {
 		return
 	}
 	if maputils.StringValue(config, editransport.ConfigKeyPartnerSigningCertificate) == "" {

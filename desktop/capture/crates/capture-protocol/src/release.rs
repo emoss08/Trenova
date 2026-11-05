@@ -8,10 +8,17 @@
 //! the public key at build time, and the server checks it too before serving
 //! a manifest, so a manifest is trusted for its signature and never for where
 //! it came from.
+//!
+//! A manifest also carries the time it expires, signed with the rest. The
+//! release build signs it for [`DEFAULT_VALIDITY_DAYS`] and a scheduled job
+//! signs the current one again every day, so a manifest served long after
+//! that (a mirror holding back a newer release) is refused, and the computer
+//! keeps the release it has and says why.
 
 use std::cmp::Ordering;
 use std::fmt;
 use std::str::FromStr;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
@@ -20,6 +27,8 @@ use serde::{Deserialize, Serialize};
 
 /// The product every manifest names.
 pub const PRODUCT: &str = "trenova-capture";
+/// Where every server serves the manifest, below any path it is hosted at.
+pub const MANIFEST_ROUTE: &str = "/api/v1/capture/releases/latest/";
 /// The file name a manifest is published under.
 pub const MANIFEST_FILE: &str = "trenova-capture-manifest.json";
 /// The largest installer a manifest may describe.
@@ -27,6 +36,13 @@ pub const MAX_INSTALLER_BYTES: u64 = 512 << 20;
 /// The largest signed manifest anyone should read.
 pub const MAX_SIGNED_BYTES: usize = 64 << 10;
 const MAX_NOTES_CHARS: usize = 4000;
+/// How long a manifest is signed for unless the signer says otherwise. The
+/// scheduled re-sign runs daily, so many missed runs pass before a manifest
+/// expires.
+pub const DEFAULT_VALIDITY_DAYS: i64 = 14;
+/// The longest a manifest may be signed for.
+pub const MAX_VALIDITY_DAYS: i64 = 31;
+const SECONDS_PER_DAY: i64 = 24 * 60 * 60;
 
 #[derive(Clone, Debug, thiserror::Error, PartialEq, Eq)]
 pub enum ReleaseError {
@@ -40,6 +56,10 @@ pub enum ReleaseError {
     Format(String),
     #[error("the manifest is invalid: {0}")]
     Invalid(&'static str),
+    #[error("the manifest carries no expiry")]
+    NoExpiry,
+    #[error("the manifest expired {days_ago} day(s) ago, at Unix time {expired_at}")]
+    Expired { expired_at: i64, days_ago: i64 },
 }
 
 /// `MAJOR.MINOR.PATCH`, as the server's `versionutils` reads it.
@@ -116,6 +136,11 @@ pub struct Release {
     pub version: String,
     /// Unix seconds.
     pub published_at: i64,
+    /// Unix seconds after which the manifest is refused. Set by every
+    /// signature, the release's own and each scheduled re-sign; a manifest
+    /// without one is read only to be signed again.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expires_at: Option<i64>,
     /// The oldest Windows build it runs on (19045 is Windows 10 22H2).
     pub minimum_windows_build: u32,
     pub installer: Installer,
@@ -166,8 +191,52 @@ impl Release {
         if self.notes.chars().count() > MAX_NOTES_CHARS {
             return Err(ReleaseError::Invalid("the release notes are too long"));
         }
+        if self
+            .expires_at
+            .is_some_and(|expires_at| expires_at <= self.published_at)
+        {
+            return Err(ReleaseError::Invalid(
+                "the manifest expires before it was published",
+            ));
+        }
         Ok(version)
     }
+
+    /// Whether the manifest may still be acted on at `now` (Unix seconds):
+    /// it carries an expiry and that expiry is later than `now`.
+    pub fn check_current(&self, now: i64) -> Result<(), ReleaseError> {
+        match self.expires_at {
+            None => Err(ReleaseError::NoExpiry),
+            Some(expired_at) if now >= expired_at => Err(ReleaseError::Expired {
+                expired_at,
+                days_ago: now.saturating_sub(expired_at) / SECONDS_PER_DAY,
+            }),
+            Some(_) => Ok(()),
+        }
+    }
+}
+
+/// The time now in Unix seconds, as a manifest's expiry is compared with. A
+/// clock set before 1970 reads as the end of time, so it expires everything
+/// rather than nothing.
+pub fn unix_now() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(i64::MAX, |elapsed| {
+            i64::try_from(elapsed.as_secs()).unwrap_or(i64::MAX)
+        })
+}
+
+/// When a manifest signed at `now` for `days` expires. `days` is between 1
+/// and [`MAX_VALIDITY_DAYS`].
+pub fn expiry(now: i64, days: i64) -> Result<i64, ReleaseError> {
+    if !(1..=MAX_VALIDITY_DAYS).contains(&days) {
+        return Err(ReleaseError::Invalid(
+            "a manifest is signed for between 1 and 31 days",
+        ));
+    }
+    now.checked_add(days * SECONDS_PER_DAY)
+        .ok_or(ReleaseError::Invalid("the expiry is out of range"))
 }
 
 /// A manifest as published: its exact bytes and their signature.
@@ -217,9 +286,13 @@ pub fn encode_key_pair(seed: [u8; 32]) -> (String, String) {
     )
 }
 
-/// Signs a release, after checking it is one a reader would accept.
+/// Signs a release, after checking it is one a reader would accept. It must
+/// carry an expiry.
 pub fn sign(release: &Release, key: &SigningKey) -> Result<SignedRelease, ReleaseError> {
     release.validate()?;
+    if release.expires_at.is_none() {
+        return Err(ReleaseError::NoExpiry);
+    }
     let bytes = serde_json::to_vec(release).map_err(|e| ReleaseError::Format(e.to_string()))?;
     let signature = key.sign(&bytes);
     Ok(SignedRelease {
@@ -228,7 +301,22 @@ pub fn sign(release: &Release, key: &SigningKey) -> Result<SignedRelease, Releas
     })
 }
 
-/// Checks the signature, then the release it covers.
+/// Signs the release `signed` describes again, to expire at `expires_at`:
+/// the scheduled re-sign. Only a manifest this same key signed is renewed,
+/// whether it has expired or, signed before manifests carried one, has no
+/// expiry at all. Nothing else in the release changes.
+pub fn renew(
+    signed: &SignedRelease,
+    key: &SigningKey,
+    expires_at: i64,
+) -> Result<SignedRelease, ReleaseError> {
+    let mut release = verify(signed, &key.verifying_key())?;
+    release.expires_at = Some(expires_at);
+    sign(&release, key)
+}
+
+/// Checks the signature, then the release it covers. Whether it has expired
+/// is [`Release::check_current`]'s question, asked by whoever acts on it.
 pub fn verify(signed: &SignedRelease, key: &VerifyingKey) -> Result<Release, ReleaseError> {
     let bytes = STANDARD
         .decode(&signed.manifest)
@@ -250,11 +338,15 @@ pub fn verify(signed: &SignedRelease, key: &VerifyingKey) -> Result<Release, Rel
 mod tests {
     use super::*;
 
+    const PUBLISHED: i64 = 1_780_000_000;
+    const EXPIRES: i64 = PUBLISHED + 14 * SECONDS_PER_DAY;
+
     fn release(version: &str) -> Release {
         Release {
             product: PRODUCT.into(),
             version: version.into(),
-            published_at: 1_780_000_000,
+            published_at: PUBLISHED,
+            expires_at: Some(EXPIRES),
             minimum_windows_build: 19045,
             installer: Installer {
                 file_name: format!("TrenovaCapture-{version}-x64.msi"),
@@ -365,6 +457,151 @@ mod tests {
             "1.4.2".parse::<Version>().expect("parses").to_string(),
             "1.4.2"
         );
+    }
+
+    #[test]
+    fn the_manifest_route_is_a_capture_api_route() {
+        assert_eq!(
+            MANIFEST_ROUTE,
+            format!("{}releases/latest/", crate::api::API_PREFIX)
+        );
+    }
+
+    /// A manifest as releases were signed before they carried an expiry.
+    fn signed_without_expiry(release: &Release, key: &SigningKey) -> SignedRelease {
+        let bytes = serde_json::to_vec(release).expect("json");
+        SignedRelease {
+            manifest: STANDARD.encode(&bytes),
+            signature: STANDARD.encode(key.sign(&bytes).to_bytes()),
+        }
+    }
+
+    #[test]
+    fn a_manifest_is_current_only_before_it_expires() {
+        let current = release("1.4.2");
+        assert_eq!(current.check_current(PUBLISHED), Ok(()));
+        assert_eq!(current.check_current(EXPIRES - 1), Ok(()));
+        assert_eq!(
+            current.check_current(EXPIRES),
+            Err(ReleaseError::Expired {
+                expired_at: EXPIRES,
+                days_ago: 0
+            })
+        );
+        assert_eq!(
+            current.check_current(EXPIRES + 3 * SECONDS_PER_DAY + 5),
+            Err(ReleaseError::Expired {
+                expired_at: EXPIRES,
+                days_ago: 3
+            })
+        );
+
+        let unbounded = Release {
+            expires_at: None,
+            ..release("1.4.2")
+        };
+        assert_eq!(
+            unbounded.check_current(PUBLISHED),
+            Err(ReleaseError::NoExpiry)
+        );
+    }
+
+    #[test]
+    fn the_expiry_is_signed_with_the_rest_and_required_to_sign() {
+        let (private, public) = keys();
+        let signed = sign(&release("1.4.2"), &private).expect("signs");
+        let bytes = STANDARD.decode(&signed.manifest).expect("base64");
+        let json: serde_json::Value = serde_json::from_slice(&bytes).expect("json");
+        assert_eq!(json["expiresAt"], EXPIRES);
+        assert_eq!(
+            verify(&signed, &public).expect("verifies").expires_at,
+            Some(EXPIRES)
+        );
+
+        let unbounded = Release {
+            expires_at: None,
+            ..release("1.4.2")
+        };
+        assert_eq!(sign(&unbounded, &private), Err(ReleaseError::NoExpiry));
+
+        let backwards = Release {
+            expires_at: Some(PUBLISHED),
+            ..release("1.4.2")
+        };
+        assert!(matches!(
+            sign(&backwards, &private),
+            Err(ReleaseError::Invalid(_))
+        ));
+    }
+
+    #[test]
+    fn a_manifest_signed_before_expiries_reads_back_and_is_renewed_with_one() {
+        let (private, public) = keys();
+        let old = Release {
+            expires_at: None,
+            ..release("1.4.2")
+        };
+        let published = signed_without_expiry(&old, &private);
+        let bytes = STANDARD.decode(&published.manifest).expect("base64");
+        assert!(
+            !String::from_utf8(bytes)
+                .expect("utf-8")
+                .contains("expiresAt"),
+            "an older manifest has no expiry field"
+        );
+
+        let read = verify(&published, &public).expect("still verifies");
+        assert_eq!(read.check_current(PUBLISHED), Err(ReleaseError::NoExpiry));
+
+        let renewed = renew(&published, &private, EXPIRES).expect("renews");
+        let renewed = verify(&renewed, &public).expect("verifies");
+        assert_eq!(renewed.check_current(EXPIRES - 1), Ok(()));
+        assert_eq!(
+            renewed,
+            Release {
+                expires_at: Some(EXPIRES),
+                ..old
+            }
+        );
+    }
+
+    #[test]
+    fn an_expired_manifest_is_renewed_and_only_by_the_key_that_signed_it() {
+        let (private, public) = keys();
+        let signed = sign(&release("1.4.2"), &private).expect("signs");
+        let later = EXPIRES + 30 * SECONDS_PER_DAY;
+
+        let renewed = renew(&signed, &private, later).expect("renews");
+        let renewed = verify(&renewed, &public).expect("verifies");
+        assert_eq!(renewed.check_current(EXPIRES + SECONDS_PER_DAY), Ok(()));
+        assert_eq!(renewed.published_at, PUBLISHED);
+        assert_eq!(renewed.version, "1.4.2");
+
+        let (stranger, _) = encode_key_pair([9u8; 32]);
+        let stranger = signing_key(&stranger).expect("key");
+        assert_eq!(
+            renew(&signed, &stranger, later),
+            Err(ReleaseError::Signature)
+        );
+    }
+
+    #[test]
+    fn a_manifest_is_signed_for_between_one_and_thirty_one_days() {
+        assert_eq!(
+            expiry(PUBLISHED, DEFAULT_VALIDITY_DAYS),
+            Ok(PUBLISHED + 14 * SECONDS_PER_DAY)
+        );
+        assert_eq!(
+            expiry(PUBLISHED, MAX_VALIDITY_DAYS),
+            Ok(PUBLISHED + 31 * SECONDS_PER_DAY)
+        );
+        for days in [0, -1, MAX_VALIDITY_DAYS + 1] {
+            assert!(
+                matches!(expiry(PUBLISHED, days), Err(ReleaseError::Invalid(_))),
+                "{days}"
+            );
+        }
+        assert!(unix_now() > PUBLISHED);
     }
 
     #[test]

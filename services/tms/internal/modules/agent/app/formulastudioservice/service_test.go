@@ -571,7 +571,7 @@ func TestExplainTest_FallsBackWithoutAProvider(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
-	f.svc.nova = nil
+	f.svc.nova = agenttest.NovaRunner(nil)
 	f.engine.tests = failingTests
 
 	resp, err := f.svc.ExplainTest(t.Context(), &formulastudioports.ExplainFormulaTestRequest{
@@ -608,7 +608,7 @@ func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
 	assert.Contains(t, sections[1].Content, perMileSource)
 
 	f = newFixture(t, nil)
-	f.svc.nova = nil
+	f.svc.nova = agenttest.NovaRunner(nil)
 	_, err = f.svc.DraftReviewNote(t.Context(), &formulastudioports.DraftFormulaReviewNoteRequest{
 		TenantInfo: f.tenant,
 	}, f.actor)

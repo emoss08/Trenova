@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +37,8 @@ func setupAccessPolicyService(t *testing.T) accessPolicyServiceDeps {
 				&accessPolicyValidatorRepo{},
 				&accessPolicyUniquenessChecker{},
 			),
-			l: zap.NewNop(),
+			auditor: &securityaudittest.Recorder{},
+			l:       zap.NewNop(),
 		},
 		repo:   repo,
 		tenant: tenant,

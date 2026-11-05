@@ -223,6 +223,17 @@ export function setSessionContextStatusHandler(handler: SessionContextStatusHand
   }
 }
 
+let sessionFoundEndedHandler: (() => void) | null = null;
+
+/** What the app does when it learns on load that no session exists, however that came about. */
+export function setSessionFoundEndedHandler(handler: (() => void) | null): void {
+  sessionFoundEndedHandler = handler;
+}
+
+export function sessionFoundEnded(): void {
+  sessionFoundEndedHandler?.();
+}
+
 type ProblemLike = { type?: unknown; params?: unknown };
 
 /** The problems a thrown request error carries: a REST problem body or GraphQL errors. */

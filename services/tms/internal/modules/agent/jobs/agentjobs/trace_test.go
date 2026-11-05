@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -160,6 +161,7 @@ func TestExpireProposals_TracesTheExpiryAndLinksItToTheRun(t *testing.T) {
 		logger:       zap.NewNop(),
 		proposalRepo: &expiringProposals{expired: 2},
 		runRepo:      expiringRuns{},
+		activity:     agenttest.QuietActivity{},
 	}
 	runID := pulid.MustNew("ar_")
 	ctx, sweep := otel.Tracer("agentjobs-test").

@@ -314,7 +314,7 @@ func newFixture(completion llmports.CompletionService) *fixture {
 		briefs:     &memoryBriefs{},
 		candidates: &stubCandidates{},
 	}
-	f.service = NewWithDependencies(&Dependencies{
+	f.service = New(Params{
 		Board:         f.board,
 		Briefing:      stubReasons{},
 		Briefs:        f.briefs,
@@ -323,8 +323,8 @@ func newFixture(completion llmports.CompletionService) *fixture {
 		Suggestions:   f.candidates,
 		Nova:          agenttest.NovaRunner(completion),
 		Logger:        zap.NewNop(),
-		Now:           func() time.Time { return time.Unix(1_791_000_000, 0) },
 	})
+	f.service.now = func() time.Time { return time.Unix(1_791_000_000, 0) }
 	return f
 }
 

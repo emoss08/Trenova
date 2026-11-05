@@ -222,8 +222,6 @@ mutation IssueDisciplinaryAction($input: IssueDisciplinaryActionInput!) {
     }
     employmentEvent {
       id
-      kind
-      effectiveAt
     }
   }
 }

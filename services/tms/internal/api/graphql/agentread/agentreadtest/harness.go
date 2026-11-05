@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
@@ -54,6 +55,7 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 
 	return agentread.New(agentread.Params{
 		Params: gqlext.Params{
+			Logger: logger,
 			Observability: gqlext.NewObservabilityExtension(gqlext.ObservabilityParams{
 				MonitoringConfig: monitoring, Logger: logger, Metrics: registry, Tracer: noopTracer{},
 			}),
@@ -64,9 +66,11 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 			FieldGuard: gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{
 				PermissionEngine: opts.Engine,
 			}),
+			QueryBudget: gqlext.NewQueryBudgetExtension(gqlext.QueryBudgetParams{}),
 		},
 		AppConfig:   &appconfig.Config{},
 		Schema:      agentread.NewSchema(resolvers),
+		Loaders:     loadercore.NewRegistry(loadercore.RegistryParams{}),
 		Permissions: opts.Engine,
 	})
 }

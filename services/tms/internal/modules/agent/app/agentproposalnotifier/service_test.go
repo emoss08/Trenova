@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -184,6 +185,7 @@ func newHarness(shadow bool) *harness {
 		notifications: h.notifications,
 		email:         h.mailer,
 		templates:     h.renderer,
+		orgs:          &agenttest.StubOrganizations{},
 	}
 
 	return h

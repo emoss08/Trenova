@@ -1,0 +1,108 @@
+name: Trenova Capture manifest
+
+# The signed Trenova Capture release manifest expires 14 days after it is
+# signed, and the updater refuses one past its expiry: a mirror that keeps
+# serving an old manifest cannot hold computers on an old release without
+# them saying so. This workflow signs the current release's manifest again
+# every day with a fresh 14-day expiry, with the same key and tool the
+# release uses (native-capture.yml), and puts it on the rolling
+# capture-stable release, where servers mirror it from. Nothing in the
+# release changes but its expiry. Thirteen missed runs in a row still leave a
+# valid manifest; a lapsed one only pauses updates, and running this workflow
+# by hand restores them.
+#
+# The current release is the highest capture-vX.Y.Z release that carries a
+# manifest, read from that release rather than from capture-stable, so a run
+# that overlapped a release puts the new one back the next day.
+
+on:
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: capture-manifest-resign
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  resign:
+    name: Sign the current manifest again
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      SIGNING: ${{ secrets.TRENOVA_CAPTURE_SIGNING_KEY != '' }}
+      TRENOVA_CAPTURE_PUBLIC_KEY: ${{ vars.TRENOVA_CAPTURE_PUBLIC_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: desktop/capture
+    steps:
+      - name: No manifest key
+        if: env.SIGNING != 'true'
+        working-directory: .
+        run: echo "::notice::TRENOVA_CAPTURE_SIGNING_KEY is not set, so no release manifest is published and there is none to sign again."
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: env.SIGNING == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        if: env.SIGNING == 'true'
+        with:
+          toolchain: 1.96.1
+
+      - name: Build the release tool
+        if: env.SIGNING == 'true'
+        run: cargo build --locked -p trenova-capture-release
+
+      - name: Find the current release
+        id: current
+        if: env.SIGNING == 'true'
+        run: |
+          set -euo pipefail
+          [ -n "$TRENOVA_CAPTURE_PUBLIC_KEY" ] || { echo "::error::The TRENOVA_CAPTURE_PUBLIC_KEY repository variable is not set."; exit 1; }
+          tag="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+            --jq '.[] | select(.draft == false and .prerelease == false) | select(any(.assets[]; .name == "trenova-capture-manifest.json")) | .tag_name' \
+            | grep -E '^capture-v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          if [ -z "$tag" ]; then
+            echo "::notice::No Trenova Capture release carries a manifest yet."
+            exit 0
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#capture-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Sign it again
+        if: steps.current.outputs.tag != ''
+        env:
+          TAG: ${{ steps.current.outputs.tag }}
+          VERSION: ${{ steps.current.outputs.version }}
+          TRENOVA_CAPTURE_SIGNING_KEY: ${{ secrets.TRENOVA_CAPTURE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/manifest"
+          mkdir -p "$work/in" "$work/out"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern trenova-capture-manifest.json --dir "$work/in"
+          ./target/debug/trenova-capture-release resign \
+            --manifest "$work/in/trenova-capture-manifest.json" \
+            --public-key "$TRENOVA_CAPTURE_PUBLIC_KEY" \
+            --version "$VERSION" \
+            --out "$work/out/trenova-capture-manifest.json"
+          ./target/debug/trenova-capture-release verify \
+            --manifest "$work/out/trenova-capture-manifest.json" \
+            --public-key "$TRENOVA_CAPTURE_PUBLIC_KEY"
+
+      - name: Publish it on capture-stable
+        if: steps.current.outputs.tag != ''
+        env:
+          VERSION: ${{ steps.current.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release upload capture-stable "$RUNNER_TEMP/manifest/out/trenova-capture-manifest.json" \
+            --clobber --repo "$GITHUB_REPOSITORY"
+          echo "Trenova Capture $VERSION's manifest is signed again and published on capture-stable."

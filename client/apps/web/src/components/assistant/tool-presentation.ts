@@ -357,7 +357,7 @@ const FENCE_CLOSE = "</untrusted_data>";
 // what identifies it. The older "…(truncated)" marker is still recognised so a
 // thread saved before the notice changed still reads correctly.
 const TRUNCATION_MARKS = ["[This result was cut off here:", "…(truncated)"];
-const FAILURE_PREFIX = /^Tool "[^"]*" failed: /u;
+const FAILURE_PREFIX = /^Tool "[^"]*" failed:\s/u;
 
 /**
  * Takes the record back out of a saved tool result.
@@ -379,10 +379,21 @@ function truncationStart(body: string): number {
   return -1;
 }
 
+/** A failure's own words: the server fences them, as it does a result. */
+function failureMessage(text: string): string {
+  const body = text.trim();
+  if (!body.startsWith(FENCE_OPEN)) {
+    return body;
+  }
+  const close = body.lastIndexOf(FENCE_CLOSE);
+
+  return body.slice(FENCE_OPEN.length, close === -1 ? undefined : close).trim();
+}
+
 export function parseToolResult(content: string): ParsedToolResult {
   const failure = FAILURE_PREFIX.exec(content);
   if (failure) {
-    return { kind: "error", message: content.slice(failure[0].length).trim() };
+    return { kind: "error", message: failureMessage(content.slice(failure[0].length)) };
   }
 
   const open = content.indexOf(FENCE_OPEN);

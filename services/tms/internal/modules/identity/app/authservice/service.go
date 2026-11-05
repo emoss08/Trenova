@@ -2,7 +2,6 @@
 package authservice
 
 import (
-	"github.com/emoss08/trenova/shared/tokenutils"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -12,6 +11,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/tokenutils"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
@@ -152,6 +153,7 @@ type loginSessionContext struct {
 	AuthProvider          string
 	ExternalIdentityID    string
 	ExternalSubject       string
+	ExternalIssuer        string
 	AuthenticatorAAL      int
 	FederationFAL         int
 	MFAAuthenticatedAt    int64
@@ -572,6 +574,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 			&iamports.MFAChallengeFederation{
 				AuthProvider:    string(loginState.Provider),
 				ExternalSubject: claims.Subject,
+				ExternalIssuer:  ssoConfig.OIDCIssuerURL,
 				FederationFAL:   2,
 			},
 		)
@@ -589,6 +592,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 	loginResp, err := s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
 		AuthProvider:          string(loginState.Provider),
 		ExternalSubject:       claims.Subject,
+		ExternalIssuer:        ssoConfig.OIDCIssuerURL,
 		AuthenticatorAAL:      aal,
 		FederationFAL:         2,
 		MFAAuthenticatedAt:    mfaAt,
@@ -978,17 +982,17 @@ func (s *Service) AuthenticateAPIKey(
 		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
 	}
 
+	computed := apikey.HashSecret(key.SecretSalt, secret)
+	if subtle.ConstantTimeCompare([]byte(computed), []byte(key.SecretHash)) != 1 {
+		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
+	}
+
 	if key.Status != apikey.StatusActive {
 		return nil, errortypes.NewAuthenticationError("API key is inactive")
 	}
 
 	if key.IsExpired(timeutils.NowUnix()) {
 		return nil, errortypes.NewAuthenticationError("API key has expired")
-	}
-
-	computed := apikey.HashSecret(key.SecretSalt, secret)
-	if subtle.ConstantTimeCompare([]byte(computed), []byte(key.SecretHash)) != 1 {
-		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
 	}
 
 	s.usageBuf.RecordUsage(apikeyports.APIKeyUsageEvent{
@@ -1041,6 +1045,7 @@ func (s *Service) createSession(
 		AuthProvider:          authn.AuthProvider,
 		ExternalIdentityID:    authn.ExternalIdentityID,
 		ExternalSubject:       authn.ExternalSubject,
+		ExternalIssuer:        authn.ExternalIssuer,
 		AuthenticatorAAL:      authn.AuthenticatorAAL,
 		FederationFAL:         authn.FederationFAL,
 		MFAAuthenticatedAt:    authn.MFAAuthenticatedAt,

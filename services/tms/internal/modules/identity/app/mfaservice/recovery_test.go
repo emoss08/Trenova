@@ -5,10 +5,12 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -71,6 +73,7 @@ func TestRecoveryCodeDigestsDependOnThePepper(t *testing.T) {
 	t.Parallel()
 
 	first, err := newService(&Params{
+		AppConfig: &appconfig.Config{},
 		SecurityConfig: &securityconfig.Config{
 			MFA: securityconfig.MFAConfig{RecoveryCodePepper: "0123456789abcdef0123456789abcdef01"},
 		},
@@ -78,6 +81,7 @@ func TestRecoveryCodeDigestsDependOnThePepper(t *testing.T) {
 	})
 	require.NoError(t, err)
 	second, err := newService(&Params{
+		AppConfig: &appconfig.Config{},
 		SecurityConfig: &securityconfig.Config{
 			MFA: securityconfig.MFAConfig{RecoveryCodePepper: "fedcba9876543210fedcba9876543210fe"},
 		},
@@ -143,6 +147,108 @@ func TestLegacyRecoveryCodesKeepWorkingUntilReplaced(t *testing.T) {
 		RecoveryCode: legacy[1],
 	})
 	require.ErrorIs(t, err, errInvalidRecoveryCode)
+}
+
+func TestRegenerateRecoveryCodesRefusesWhenTheThrottleCannotAnswer(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	secret, _ := h.enroll(t)
+	before := h.repo.codes
+
+	throttle := sessionportsmock.NewMockLoginThrottleStore(t)
+	events := &recordingAuthEvents{}
+	h.svc.throttle = throttle
+	h.svc.authEvents = events
+	throttle.EXPECT().Begin(mock.Anything, mock.Anything).
+		Return(nil, errors.New("redis down")).Once()
+
+	h.clock = h.clock.Add(time.Minute)
+	_, err := h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, secret, 0),
+		},
+	)
+
+	require.True(t, errortypes.IsRateLimitError(err))
+	assert.Equal(t, before, h.repo.codes)
+	recorded := events.snapshot()
+	require.Len(t, recorded, 1)
+	assert.Equal(t, iam.AuthEventOutcomeDenied, recorded[0].Outcome)
+	assert.Equal(t, stepUpErrorUnavailable, recorded[0].ErrorCode)
+}
+
+func TestEnrollmentRefusesWhileThrottled(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+
+	throttle := sessionportsmock.NewMockLoginThrottleStore(t)
+	h.svc.throttle = throttle
+	h.svc.authEvents = &recordingAuthEvents{}
+	throttle.EXPECT().Begin(mock.Anything, mock.Anything).Return(
+		&sessionports.LoginThrottleDecision{
+			Blocked:    true,
+			Scope:      sessionports.LoginThrottleScopeAccount,
+			RetryAfter: time.Minute,
+		}, nil,
+	).Once()
+
+	_, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
+		TenantInfo: h.tenant,
+		Password:   "correct-horse",
+	})
+
+	require.True(t, errortypes.IsRateLimitError(err))
+	assert.Nil(t, h.repo.authenticator)
+}
+
+func TestEnrollmentCountsAWrongPassword(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+
+	throttle := sessionportsmock.NewMockLoginThrottleStore(t)
+	events := &recordingAuthEvents{}
+	h.svc.throttle = throttle
+	h.svc.authEvents = events
+	throttle.EXPECT().Begin(mock.Anything, mock.Anything).
+		Return(&sessionports.LoginThrottleDecision{AccountFailures: 1}, nil).Once()
+
+	_, err := h.svc.BeginTOTPEnrollment(t.Context(), &sessionports.BeginTOTPEnrollmentRequest{
+		TenantInfo: h.tenant,
+		Password:   "wrong",
+	})
+
+	require.ErrorIs(t, err, errInvalidPassword)
+	recorded := events.snapshot()
+	require.Len(t, recorded, 1)
+	assert.Equal(t, iam.AuthEventOutcomeFailed, recorded[0].Outcome)
+	assert.Equal(t, stepUpErrorRejected, recorded[0].ErrorCode)
+}
+
+func TestACorrectPasswordAloneLeavesTheCounterInPlace(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+
+	throttle := sessionportsmock.NewMockLoginThrottleStore(t)
+	events := &recordingAuthEvents{}
+	h.svc.throttle = throttle
+	h.svc.authEvents = events
+	throttle.EXPECT().Begin(mock.Anything, mock.Anything).
+		Return(&sessionports.LoginThrottleDecision{AccountFailures: 1}, nil).Once()
+
+	enrollment, err := h.svc.BeginTOTPEnrollment(
+		t.Context(),
+		&sessionports.BeginTOTPEnrollmentRequest{
+			TenantInfo: h.tenant,
+			Password:   "correct-horse",
+		},
+	)
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, enrollment.Secret)
+	throttle.AssertNotCalled(t, "Succeed", mock.Anything, mock.Anything)
+	assert.Empty(t, events.snapshot())
 }
 
 func TestRegenerateRecoveryCodesRefusesWhileThrottled(t *testing.T) {

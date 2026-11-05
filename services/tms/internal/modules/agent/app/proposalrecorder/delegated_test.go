@@ -31,7 +31,7 @@ func newTurnFixture() *turnFixture {
 		runs:      runs,
 		proposals: proposals,
 		plans:     plans,
-		svc:       NewWithStores(nil, runs, proposals).WithPlans(plans),
+		svc:       recorderOn(runs, proposals).WithPlans(plans),
 		actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),

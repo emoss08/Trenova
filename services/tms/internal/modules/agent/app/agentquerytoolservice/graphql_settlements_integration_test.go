@@ -225,7 +225,7 @@ func settlementServices(conn *postgres.Connection, services *agentread.ResolverP
 	})
 	services.DriverSettlementReviewService = driversettlementreviewservice.New(
 		driversettlementreviewservice.Params{
-			Logger: logger, Settlements: services.DriverSettlementService,
+			Logger: logger, DB: conn, Settlements: services.DriverSettlementService,
 			SettlementRepo: settlements, DisputeRepo: disputes, ExpenseRepo: expenses,
 			PayCodeRepo: codes,
 		},

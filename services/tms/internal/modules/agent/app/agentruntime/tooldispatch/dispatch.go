@@ -154,7 +154,6 @@ func (s *Dispatcher) dispatchQuery(
 
 	outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
 		fitPage: p.caller != aitrace.CallerScript,
-		taint:   p.taint,
 	})
 	outcome.RanWith = call.Arguments
 	if note := contract.Note(); note != "" && !outcome.Failed {
@@ -248,6 +247,15 @@ func (s *Dispatcher) prepareActionCall(
 			ctx, req.Actor, call.Name, policy.Resource, policy.Operation,
 		); denied {
 			return outcome, true
+		}
+		if req.Actor.PrincipalType == permissionports.PrincipalTypeUser {
+			for _, grant := range policy.PersonAlsoNeeds {
+				if outcome, denied := s.authorize(
+					ctx, req.Actor, call.Name, grant.Resource, grant.Operation,
+				); denied {
+					return outcome, true
+				}
+			}
 		}
 	}
 
@@ -374,7 +382,7 @@ func validateCall(
 		vErr.Error(),
 		"Tool %q was not %s, because it would fail as called: %s\n"+
 			"Fix the call and try again.",
-		p.call.Name, verb, vErr.Error(),
+		p.call.Name, verb, toolresult.FenceInline(vErr.Error()),
 	), true
 }
 
@@ -474,7 +482,7 @@ func unresolvedSelection(toolName, verb string, err error) toolcall.Result {
 		err.Error(),
 		"Tool %q was not %s: its selection could not be resolved to records: %s\n"+
 			"Fix the call and try again.",
-		toolName, verb, err.Error(),
+		toolName, verb, toolresult.FenceInline(err.Error()),
 	)
 }
 
@@ -772,7 +780,6 @@ type queryExtras struct {
 	stepKey   string
 	continues map[string]any
 	fitPage   bool
-	taint     *agent.RunTaint
 }
 
 func (s *Dispatcher) runQueryToolWith(
@@ -782,10 +789,6 @@ func (s *Dispatcher) runQueryToolWith(
 	call *llmports.ToolCall,
 	extras *queryExtras,
 ) toolcall.Result {
-	var taint *agent.RunTaint
-	if tool.Policy().CarriesTaint {
-		taint = extras.taint.Clone()
-	}
 	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
@@ -796,7 +799,6 @@ func (s *Dispatcher) runQueryToolWith(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
-		Taint:             taint,
 		Broker:            extras.broker,
 		StepKey:           extras.stepKey,
 		CallID:            call.ID,
@@ -815,7 +817,7 @@ func (s *Dispatcher) runQueryToolWith(
 	}
 	if err != nil {
 		return toolcall.Refused(aitrace.OutcomeFailed, err.Error(),
-			"Tool %q failed: %s", call.Name, err.Error())
+			"%s", toolresult.FenceFailure(call.Name, err.Error()))
 	}
 
 	now := timeutils.NowUnix()
@@ -904,7 +906,7 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		action.ExecutionError = err.Error()
 
 		return toolcall.Result{
-			Content: fmt.Sprintf("Tool %q failed: %s", call.Name, err.Error()),
+			Content: toolresult.FenceFailure(call.Name, err.Error()),
 			Failed:  true,
 			Action:  action,
 			Verdict: aitrace.OutcomeFailed,

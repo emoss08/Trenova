@@ -53,6 +53,7 @@ You are a senior engineer on this codebase, not a transcriber of instructions.
 |---|---|
 | `services/tms/` | the TMS (Go): API, worker and CLI; hexagonal modules in `internal/modules/<module>/` |
 | `services/imaging/`, `services/crates/`, `services/proto/` | Rust imaging worker, shared crates, gRPC contracts (buf) |
+| `services/operator/` | the Trenova Cloud operator (Go, its own module outside `go.work`): runs one instance's Helm release from the control plane's spec |
 | `shared/` | shared Go packages (`stringutils`, `sliceutils`, …); its own module in `go.work` |
 | `client/` | pnpm + Turborepo: `apps/web` (TMS), `apps/dash` (driver portal), `packages/{shared,graphql,config}` |
 | `desktop/capture/` | Windows scanning and printing companion (Rust) |
@@ -131,8 +132,10 @@ or anything that renders, inspects or assembles a document.
 
 Review your own diff for bugs, security holes (injection, missing authz, unvalidated input,
 leaked secrets, cross-tenant reads), swallowed errors, duplicated logic, architecture drift,
-unbounded work on a request path, and helpers placed outside `shared/` or `lib/`. Fix what you
-find. Then report what changed, any rule you changed and why, what you would do next, and the
+unbounded work on a request path, and helpers placed outside `shared/` or `lib/`. A change to who
+may do what, money, sign-in or a stored secret also goes through
+[security-review.md](docs/engineering/backend/security-review.md), and a new way in through
+[trust-boundaries.md](docs/engineering/trust-boundaries.md). Fix what you find. Then report what changed, any rule you changed and why, what you would do next, and the
 exact checks the change needs (tests, lints, generators), so the person opening the PR can run
 them.
 

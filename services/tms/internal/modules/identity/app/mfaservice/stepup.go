@@ -15,6 +15,7 @@ import (
 
 const (
 	stepUpErrorThrottled   = "step_up_throttled"
+	stepUpErrorUnavailable = "step_up_throttle_unavailable"
 	stepUpErrorRejected    = "step_up_rejected"
 	stepUpMFAStateVerified = "verified"
 	stepUpMFAStateRejected = "rejected"
@@ -50,8 +51,12 @@ func (s *Service) beginStepUp(
 
 	decision, err := s.throttle.Begin(ctx, attempt.key)
 	if err != nil {
-		s.l.Warn("two-factor step-up throttle check failed; allowing the attempt", zap.Error(err))
-		return attempt, nil
+		s.l.Error("two-factor step-up throttle check failed; refusing the attempt", zap.Error(err))
+		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorUnavailable)
+		return nil, errortypes.NewRateLimitError(
+			"code",
+			"Verification is briefly unavailable. Try again in a moment.",
+		).WithRetryAfter(sessionports.LoginThrottleUnavailableRetry).WithInternal(err)
 	}
 	if decision.Blocked {
 		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorThrottled)
@@ -65,6 +70,23 @@ func (s *Service) beginStepUp(
 	return attempt, nil
 }
 
+func (s *Service) GuardPassword(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	verify func() error,
+) error {
+	attempt, err := s.beginStepUp(ctx, tenantInfo.UserID, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	if err = verify(); err != nil {
+		s.recordStepUpFailure(ctx, attempt)
+	}
+
+	return err
+}
+
 func (s *Service) finishStepUp(ctx context.Context, attempt *stepUpAttempt, err error) {
 	if err == nil {
 		if resetErr := s.throttle.Succeed(ctx, attempt.key); resetErr != nil {
@@ -75,8 +97,12 @@ func (s *Service) finishStepUp(ctx context.Context, attempt *stepUpAttempt, err 
 		return
 	}
 
+	s.recordStepUpFailure(ctx, attempt)
+}
+
+func (s *Service) recordStepUpFailure(ctx context.Context, attempt *stepUpAttempt) {
 	s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeFailed, stepUpErrorRejected)
-	if attempt.decision != nil && attempt.decision.Tripped {
+	if attempt.decision.Tripped {
 		s.recordStepUp(ctx, attempt, iam.AuthEventOutcomeDenied, stepUpErrorThrottled)
 	}
 }

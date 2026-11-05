@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
@@ -340,6 +341,7 @@ func newHarnessSeeing(t *testing.T, fields permissionports.FieldAccess) *harness
 		WorkerRepo:   workerRepo,
 		DocumentRepo: docRepo,
 		AuditService: audit,
+		Realtime:     &mocks.NoopRealtimeService{},
 		Fields:       fields,
 	})
 

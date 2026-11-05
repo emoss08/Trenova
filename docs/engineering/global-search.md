@@ -20,7 +20,8 @@ Postgres table  ──(GTC, change data capture)──►  Meilisearch index  �
 - **GTC sends the whole row.** Index a table whose every column may sit in the search index.
   A table holding text that should not (an invoice's email snapshots, remittance text, memo and
   address) is indexed through a **projection table**: only the columns search reads, kept equal
-  to the record. `document_search_projections` is written by the document services;
+  to the record. `document_search_projections` is written by the document services and leaves
+  out files attached to a conversation, because search has no per-person check to protect them;
   `invoice_search_projections` is kept by a trigger on `invoices`
   (`20261231023134_invoice_search_projections.sql`), which covers every writer. The trigger is
   `AFTER INSERT OR UPDATE OF` the projected columns, so a write touching none of them never runs

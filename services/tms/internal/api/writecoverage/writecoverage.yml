@@ -1273,7 +1273,7 @@ writes:
   "DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/as2/inbound/":
+  "POST /api/v1/edi/as2/inbound/:as2InboundToken/":
     exempt: infrastructure
     reason: "Receives AS2 messages a trading partner sends; no person makes this call."
   "POST /api/v1/edi/communication-profiles/":
@@ -1281,6 +1281,9 @@ writes:
   "POST /api/v1/edi/communication-profiles/:profileID/poll/":
     exempt: infrastructure
     reason: "Polls a partner mailbox now; the scheduler polls on its own."
+  "POST /api/v1/edi/communication-profiles/:profileID/rotate-inbound-url/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/communication-profiles/:profileID/test-connection/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
@@ -2973,11 +2976,6 @@ writes:
   "PUT /api/v1/users/:userID/organization-memberships/":
     exempt: security
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
-
-  # version
-  "POST /api/v1/system/check-updates":
-    exempt: read-only
-    reason: "Asks the release server whether a newer version exists and changes nothing."
 
   # watchtower
   "mutation acknowledgeWatchtowerItem":

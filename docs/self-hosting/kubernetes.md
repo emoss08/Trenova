@@ -32,9 +32,9 @@ you already run Kubernetes, or want the database run by an operator.
 | `release` | Job, one per Helm revision | Prepares PostgreSQL, migrates, provisions roles, publishes for GTC, bootstraps |
 | `postgres` | CloudNativePG `Cluster` | The Trenova image (PostGIS, pg_cron, pgvector), TLS only |
 | `imaging` | Deployment | Reached over mutual TLS with certificates the chart issues |
-| `temporal` | Deployment | auto-setup, in the same PostgreSQL cluster |
+| `temporal` | Deployment | auto-setup, in the same PostgreSQL cluster; mutual TLS with certificates the chart issues |
 | `redis`, `meilisearch`, `minio` | StatefulSet | MinIO is optional: point `storage.external` at S3 instead |
-| `gotenberg` | Deployment | No network, read-only root |
+| `gotenberg` | Deployment | No network, read-only root; the TMS signs in with a generated password |
 | `gtc` | Deployment | Change data capture into Meilisearch and Redis |
 | `client` | Deployment | Caddy serving the web app and Dash, behind your Ingress |
 | `docling`, `clamav` | Deployment, StatefulSet | Off by default; see [Values](#values) |
@@ -113,11 +113,12 @@ The ones you are most likely to change:
 | `bootstrap.*` | The first organization and administrator; skipped while `adminEmail` is empty |
 | `minio.enabled`, `storage.external.*` | Bundled MinIO, or an S3-compatible service and a Secret with `accessKey` and `secretKey` |
 | `docling.enabled` | Document extraction (docling-serve, 2 to 4 GiB of memory) |
-| `clamav.enabled` | Malware scanning; files are refused while clamd is down |
+| `clamav.enabled` | Malware scanning (requests 3 GiB of memory, limit 4 GiB: clamd holds two copies of its signatures while it reloads them); files are refused while clamd is down |
 | `tms.config` | Merged over the TMS configuration the chart renders; see `services/tms/config/config.example.yaml` |
 | `tms.extraEnv` | Integration credentials and other `TRENOVA_*` settings, as env entries (`valueFrom` works) |
 | `*.resources`, `postgres.parameters` | Sizing; raise `shared_buffers` with the PostgreSQL memory limit |
 | `secrets.existingSecret`, `postgres.existingSecret` | Secrets you manage; see [Secrets](#secrets) |
+| `stopped`, `postgres.hibernate` | Stop every workload but PostgreSQL, and PostgreSQL too, keeping every volume; set both back to `false` to start again |
 
 The TMS decodes its configuration strictly, so a key in `tms.config` that the release does
 not know stops the API, the worker and the release Job; their logs name the key.
@@ -133,8 +134,7 @@ in order:
    Secret, so a restored cluster takes the release's passwords.
 2. **migrate**: `trenova-db up`, as the owner: the migrations and every reference seed that
    changed.
-3. **rls-roles**: `trenova db rls provision-roles` creates the application and system roles
-   (skipped with `postgres.rlsMode: off`).
+3. **rls-roles**: `trenova db rls provision-roles` creates the application and system roles.
 4. **publication**: scopes GTC's publication to the tables
    [`deploy/gtc/sinks.yaml`](../../deploy/gtc/sinks.yaml) routes, and lets GTC's role read them.
 5. **bootstrap**: `trenova db bootstrap`, when `bootstrap.adminEmail` is set. Later runs are
@@ -150,8 +150,8 @@ kubectl -n trenova logs -f job/trenova-release-1 --all-containers
 ## Secrets
 
 Unless you supply them, the chart generates the application's secrets
-(`trenova-secrets`), the database roles' passwords (`trenova-db`) and the imaging worker's
-certificates once, and keeps them on every upgrade by reading the live Secrets back. The first
+(`trenova-secrets`), the database roles' passwords (`trenova-db`) and the imaging worker's and
+Temporal's certificates once, and keeps them on every upgrade by reading the live Secrets back. The first
 two are kept when the release is uninstalled, so a reinstall over the same volumes can still
 read its data.
 
@@ -159,13 +159,16 @@ read its data.
 read encrypted data, and losing `mfaRecoveryCodePepper` invalidates every recovery code.
 
 Supply your own Secrets (`secrets.existingSecret`, `postgres.existingSecret`,
-`imaging.tls.existingServerSecret` and `existingClientSecret`) when:
+`imaging.tls.existingServerSecret` and `existingClientSecret`, and the same two under
+`temporal.tls`) when:
 
 - the chart is rendered without a cluster (`helm template`, Argo CD, Flux): the chart reads
   nothing back there and would generate new values on every render;
 - the secrets are held elsewhere: a vault, External Secrets, or Trenova Cloud's control plane.
 
-`values.yaml` lists the keys each Secret must hold.
+`values.yaml` lists the keys each Secret must hold. A key a new release adds is generated on the
+upgrade that adds it, but a Secret you manage has to gain it first: until it does, the pods that
+read the key don't start.
 
 ## PostgreSQL
 
@@ -181,9 +184,12 @@ CloudNativePG runs the cluster `trenova-postgres` from the Trenova image through
 | `temporal` | yes | Temporal, owner of its two databases |
 | `trenova_gtc` | yes, replication | GTC: logical replication and its backfill reads |
 
+Every client verifies the server (`verify-full`) against the CA CloudNativePG issued for the
+cluster: pods mount `ca.crt` alone from the `<cluster>-ca` Secret, never its key.
+
 `postgres.rlsMode` defaults to `enforce`: PostgreSQL itself refuses another organization's
-rows ([row-level security](../engineering/row-level-security.md)). `off` connects the API and
-worker as the owner, as the Compose stack does.
+rows ([row-level security](../engineering/row-level-security.md)). `observe` logs what would be
+refused. There is no mode that signs the API and worker in as the owner, which is a superuser.
 
 ## Network policies
 

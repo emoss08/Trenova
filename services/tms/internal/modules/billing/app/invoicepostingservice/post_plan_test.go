@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceaction"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceediservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepdfservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/billingtest/invoiceservicetest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -24,11 +25,13 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -167,19 +170,46 @@ func newPostFixture(t *testing.T) *postFixture {
 		Maybe()
 
 	f.journal = journalentryportsmock.NewMockJournalPostingRepository(t)
+	customers := customerportsmock.NewMockCustomerRepository(t)
+	customers.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(invoiceservicetest.FactoredCustomer(nil), nil).
+		Maybe()
+	customers.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+	adjustmentControls := tenantportsmock.NewMockInvoiceAdjustmentControlRepository(t)
+	adjustmentControls.EXPECT().
+		GetByOrgID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no adjustment control")).
+		Maybe()
+
+	pdfInvoices := invoiceportsmock.NewMockInvoiceRepository(t)
+	pdfInvoices.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("invoice not found")).
+		Maybe()
+
 	f.svc = &Service{
-		l:                 zap.NewNop(),
+		l:                  zap.NewNop(),
+		adjustmentCtrlRepo: adjustmentControls,
+		pdf: invoicepdfservice.New(
+			invoicepdfservice.Params{Logger: zap.NewNop(), Repo: pdfInvoices},
+		),
+		customerRepo:      customers,
 		db:                invoiceservicetest.FakeTx{},
 		repo:              f.repo,
 		shipmentRepo:      f.shipments,
 		billingQueueRepo:  f.queue,
 		accountingRepo:    f.accounting,
+		billingRepo:       noBillingControl{},
+		permissions:       &mocks.AllowAllPermissionEngine{},
 		journalRepo:       f.journal,
 		fiscalPeriodRepo:  periods,
 		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:      &mocks.NoopAuditService{},
 		realtime:          &mocks.NoopRealtimeService{},
-		edi:               invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
+		edi: invoiceediservice.New(
+			invoiceediservice.Params{Logger: zap.NewNop(), CustomerRepo: customers},
+		),
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{
 				Logger:           zap.NewNop(),

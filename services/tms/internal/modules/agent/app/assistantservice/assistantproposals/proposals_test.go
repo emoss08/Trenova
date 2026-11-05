@@ -34,6 +34,7 @@ func newProposalReadsBehind(
 		logger:        zap.NewNop(),
 		proposals:     proposals,
 		conversations: conversations,
+		tools:         &assistanttest.StubActionRegistry{},
 		shadow: agentshadow.New(agentshadow.Params{
 			Control:     assistanttest.StubControlRepo{Paused: switches.OrganizationPaused},
 			Runs:        runs,

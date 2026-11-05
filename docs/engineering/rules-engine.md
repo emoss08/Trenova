@@ -1718,9 +1718,8 @@ fetch, like any content-hashed build file. The cached response keeps `applicatio
 compiles while it streams, and it is dropped when a release no longer ships it. It is not among
 the files the worker caches at install, since the page loads it on idle.
 
-**Hosting.** The page's Content-Security-Policy needs `'wasm-unsafe-eval'` in `script-src`. It
-does not depend on `'unsafe-eval'`, which can then be removed. `connect-src 'self'` covers the
-fetch. The file must be served as `application/wasm`:
+**Hosting.** The page's Content-Security-Policy needs `'wasm-unsafe-eval'` in `script-src`, and
+never the broader `'unsafe-eval'`. `connect-src 'self'` covers the fetch. The file must be served as `application/wasm`:
 
 - Caddy does from Go's MIME table (`deploy/Caddyfile`, which has the CSP);
 - the Vite dev server does;

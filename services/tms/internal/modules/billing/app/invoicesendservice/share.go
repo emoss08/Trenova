@@ -85,19 +85,7 @@ func tokenHash(raw string) string {
 	return base64.RawURLEncoding.EncodeToString(sum[:])
 }
 
-func (s *Service) linkBaseURL(requestBaseURL string) string {
-	if s.webBaseURL != "" {
-		return s.webBaseURL
-	}
-	return requestBaseURL
-}
-
 func signedDocumentURL(baseURL, token string) string {
-	baseURL = strings.TrimRight(baseURL, "/")
-	if baseURL == "" {
-		return "/api/v1/billing/invoices/shared-documents/" + url.PathEscape(token) + "/download/"
-	}
-	return baseURL + "/api/v1/billing/invoices/shared-documents/" + url.PathEscape(
-		token,
-	) + "/download/"
+	return strings.TrimRight(baseURL, "/") +
+		"/api/v1/billing/invoices/shared-documents/" + url.PathEscape(token) + "/download/"
 }

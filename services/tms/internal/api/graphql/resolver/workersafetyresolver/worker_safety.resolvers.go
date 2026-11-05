@@ -228,7 +228,10 @@ func (r *QueryResolver) WorkerSafetyScorecard(ctx context.Context, workerID stri
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerSafetyService.Scorecard(ctx, resolvercore.TenantInfo(authCtx), wid)
+	if r.HasPermission(ctx, authCtx, permission.ResourceWorkerDisciplinaryAction, permission.OpRead) {
+		return r.WorkerSafetyService.Scorecard(ctx, resolvercore.TenantInfo(authCtx), wid)
+	}
+	return r.WorkerSafetyService.ScorecardWithoutDiscipline(ctx, resolvercore.TenantInfo(authCtx), wid)
 }
 
 func (r *QueryResolver) WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerDisciplinaryAction, error) {

@@ -616,13 +616,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "inviteUrl",
-				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*driverportalinvitationservice.InviteWorkerResult)
 					return obj.InviteURL, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:     "emailSent",
@@ -6316,6 +6315,14 @@ func marshalOPortalInvitation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	return res
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
 	return res
 }
 

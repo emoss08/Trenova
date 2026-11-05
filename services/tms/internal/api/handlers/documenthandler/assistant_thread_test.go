@@ -10,9 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +41,17 @@ func (e *grantedEngine) Check(
 	e.asked = append(e.asked, key)
 
 	return &permissionports.PermissionCheckResult{Allowed: e.granted[key]}, nil
+}
+
+type shipmentDocuments struct {
+	documentports.DocumentRepository
+}
+
+func (shipmentDocuments) GetByID(
+	_ context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (*document.Document, error) {
+	return &document.Document{ID: req.ID, ResourceType: "shipment"}, nil
 }
 
 type pageAssistant struct {
@@ -85,8 +100,15 @@ func openImportThread(
 		AppConfig: &appconfig.Config{Debug: true},
 	})
 	handler := New(Params{
+		Service: documentservice.New(documentservice.Params{
+			Logger:      zap.NewNop(),
+			Repo:        shipmentDocuments{},
+			CacheRepo:   shipmentDocuments{},
+			Permissions: engine,
+		}),
 		PageAssistant: assistant,
 		ErrorHandler:  errorHandler,
+		StorageConfig: &storageconfig.Config{},
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{
 				PermissionEngine: engine,
@@ -120,7 +142,7 @@ func TestOpenImportAssistantThread_OpensTheDocumentsConversation(t *testing.T) {
 	t.Parallel()
 
 	engine := &grantedEngine{granted: map[string]bool{
-		"document:read": true, "assistant:create": true,
+		"document:read": true, "shipment:read": true, "assistant:create": true,
 	}}
 	assistant := &pageAssistant{}
 	documentID := pulid.MustNew("doc_")
@@ -152,7 +174,7 @@ func TestOpenImportAssistantThread_NeedsTheDocumentAndTheAssistant(t *testing.T)
 
 	for name, granted := range map[string]map[string]bool{
 		"no document":  {"assistant:create": true},
-		"no assistant": {"document:read": true, "assistant:read": true},
+		"no assistant": {"document:read": true, "shipment:read": true, "assistant:read": true},
 	} {
 		assistant := &pageAssistant{}
 		recorder := openImportThread(t, &grantedEngine{granted: granted}, assistant,
@@ -168,7 +190,7 @@ func TestOpenImportAssistantThread_RefusesAnIDThatIsNotOne(t *testing.T) {
 
 	assistant := &pageAssistant{}
 	recorder := openImportThread(t, &grantedEngine{granted: map[string]bool{
-		"document:read": true, "assistant:create": true,
+		"document:read": true, "shipment:read": true, "assistant:create": true,
 	}}, assistant, "not-an-id")
 
 	assert.Equal(t, http.StatusBadRequest, recorder.Code, recorder.Body.String())

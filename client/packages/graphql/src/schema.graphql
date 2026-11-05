@@ -8574,6 +8574,10 @@ type CapturePairingPreview {
   expiresAt: Timestamp!
   machineName: String!
   osVersion: String!
+  """
+  Whether that request reached Trenova from the network the person reading this is on.
+  """
+  sameNetwork: Boolean!
   userCode: String!
   windowsUser: String!
 }
@@ -10291,6 +10295,8 @@ type CarrierSettlementControl {
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
   periodEndDayOfWeek: Int!
+  """When on, whoever submits a carrier settlement cannot also approve it."""
+  requireSeparateApprover: Boolean!
   updatedAt: Timestamp!
   """
   Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance.
@@ -14977,6 +14983,11 @@ type EdiCarrierInvoiceList {
 }
 
 type EdiCommunicationProfile @kind(resource: "edi") {
+  """
+  The path a partner posts AS2 messages to for this profile, on the origin the
+  API is served from. Set only on an AS2 profile.
+  """
+  as2InboundPath: String
   businessUnitId: ID!
   """
   Transport settings for the connection method (AS2, SFTP, VAN, HTTP...). Secret
@@ -20555,10 +20566,10 @@ type InviteWorkerToPortalResult {
   emailSent: Boolean!
   invitation: PortalInvitation!
   """
-  Shareable invitation link. Also emailed to the driver when an email provider
-  is configured; surface this so dispatch can text it manually if needed.
+  The invitation link, given only when the email could not be sent, so someone
+  can pass it to the driver by hand. Once emailed it is the driver's alone.
   """
-  inviteUrl: String!
+  inviteUrl: String
 }
 
 type Invoice {
@@ -22350,7 +22361,7 @@ type Mutation {
   assignDocumentTemplate(input: AssignDocumentTemplateInput!): DocumentTemplateAssignment!
   assignFuelCard(input: AssignFuelCardInput!): FuelCard!
   """Assigns messages to a person, or unassigns them when ownerId is null."""
-  assignInboundMessages(ownerId: ID, selection: TriageSelectionInput!): TriageBulkResult!
+  assignInboundMessages(ownerId: ID, selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   assignPayProfileToWorker(input: AssignPayProfileInput!): WorkerPayAssignment!
   """
   Opens every required course the worker is missing, has failed or has let
@@ -22543,7 +22554,7 @@ type Mutation {
   """Creates the load from the checked draft, as a new shipment."""
   createInboundLoad(fields: [TriageLoadFieldInput!]!, messageId: ID!): InboundMessage!
   """Creates a mailbox and returns its webhook token, once."""
-  createInboundMailbox(apiKey: String, input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials!
+  createInboundMailbox(apiKey: String, input: InboundMailboxInput!, signingSecret: String): InboundMailboxCredentials! @authorizes(resource: "inbound_mailbox")
   createInvoicesFromOrder(offCycleReason: String, orderId: ID!): CreateInvoicesResult!
   """
   Bills the shipments, producing one invoice per payer of a split shipment.
@@ -22764,7 +22775,7 @@ type Mutation {
   endBenefitEnrollment(input: EndBenefitEnrollmentInput!): WorkerBenefitEnrollment!
   endFactoringAgreement(input: ChangeFactoringAgreementStatusInput!): FactoringAgreement!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
-  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
+  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment! @authorizes(resource: "pto_policy")
   endWorkerShiftAssignment(effectiveTo: Timestamp!, id: ID!): WorkerShiftAssignment!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
   """
@@ -22783,7 +22794,7 @@ type Mutation {
   """
   Files every readable attachment of each message on its matched shipment.
   """
-  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult! @authorizes(resource: "inbound_message")
   finalizeDotRandomDraw(id: ID!): DOTRandomDraw!
   """
   Recomputes, then locks the Draft. Refused while any member line is missing a rate.
@@ -22826,7 +22837,7 @@ type Mutation {
   issueCarrierTrackingLink(input: IssueCarrierTrackingLinkInput!): IssueCarrierTrackingLinkPayload!
   """Share a new tracking link for a shipment, optionally emailing it."""
   issueCustomerTrackingLink(input: IssueCustomerTrackingLinkInput!): IssueCustomerTrackingLinkPayload!
-  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
+  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload! @authorizes(resource: "worker_disciplinary_action")
   issuePayAdvance(input: IssuePayAdvanceInput!): PayAdvance!
   """
   Keeps a prompt with an agent. At most 2000 characters, and 20 prompts an agent.
@@ -22968,7 +22979,7 @@ type Mutation {
   recordMyStopAction(input: RecordMyStopActionInput!): Boolean!
   recordSafetyViolation(input: RecordSafetyViolationInput!): WorkerSafetyViolation!
   recordTimeEntry(input: RecordTimeEntryInput!): TimeClockEntry!
-  recordWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): RecordWorkerEmploymentEventPayload!
+  recordWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): RecordWorkerEmploymentEventPayload! @authorizes(resource: "worker_employment_event")
   recordWorkerInjury(input: RecordWorkerInjuryInput!): WorkerInjury!
   """
   Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period.
@@ -23034,7 +23045,7 @@ type Mutation {
   """Undoes a conflict's resolution."""
   reopenInboundConflict(conflictId: String!, id: ID!): InboundMessage!
   """Puts settled messages back in the queue."""
-  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   """Opens a resolved exception again."""
   reopenWatchtowerItem(id: ID!, input: ReopenWatchtowerItemInput!): WatchtowerItem!
@@ -23082,7 +23093,7 @@ type Mutation {
   statement being fetched a second time. Rows that already became purchases are
   left alone.
   """
-  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult! @authorizes(resource: "fuel_purchase_import")
   resolveInboundConflict(conflictId: String!, id: ID!, resolution: TriageConflictResolution!): InboundMessage!
   resolveInvoiceDispute(input: ResolveInvoiceDisputeInput!): InvoiceDispute!
   """
@@ -23145,7 +23156,7 @@ type Mutation {
   """Records a person's decision about a message and takes it off the feed."""
   reviewInboundMessage(id: ID!, input: ReviewInboundMessageInput!): InboundMessage!
   """Settles several messages, or a whole folder, at once."""
-  reviewInboundMessages(input: BulkReviewInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult!
+  reviewInboundMessages(input: BulkReviewInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   reviseDeskMemory(id: ID!, input: ReviseDeskMemoryInput!): DeskMemory!
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
@@ -23170,7 +23181,7 @@ type Mutation {
   """
   rollbackDocumentTemplate(notes: String, versionId: ID!): DocumentTemplateVersion!
   """Replaces the webhook token. The old URL stops working at once."""
-  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials! @authorizes(resource: "inbound_mailbox")
   """
   Makes a provider the first to take a task: assigns the task to it and takes
   it from the providers ahead of it in the routing order, leaving every other
@@ -23274,7 +23285,7 @@ type Mutation {
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   """Takes messages out of the queue until a time or an event."""
-  snoozeInboundMessages(input: SnoozeInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult!
+  snoozeInboundMessages(input: SnoozeInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   """Puts an exception aside until a time; it wakes on its own."""
   snoozeWatchtowerItem(id: ID!, input: SnoozeWatchtowerItemInput!): WatchtowerItem!
   """
@@ -29553,6 +29564,10 @@ type SettlementControl {
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
   periodEndDayOfWeek: Int!
+  """
+  When on, whoever submits a settlement cannot also approve it. Auto-approving clean settlements is unaffected.
+  """
+  requireSeparateApprover: Boolean!
   updatedAt: Timestamp!
   varianceLookbackWeeks: Int!
   varianceThresholdPct: Decimal!
@@ -34042,6 +34057,7 @@ input UpdateCarrierSettlementControlInput {
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
   periodEndDayOfWeek: Int!
+  requireSeparateApprover: Boolean!
   varianceToleranceMinor: Int!
   version: Int!
 }
@@ -34372,6 +34388,7 @@ input UpdateSettlementControlInput {
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
   periodEndDayOfWeek: Int!
+  requireSeparateApprover: Boolean!
   varianceLookbackWeeks: Int!
   varianceThresholdPct: Decimal!
   version: Int!

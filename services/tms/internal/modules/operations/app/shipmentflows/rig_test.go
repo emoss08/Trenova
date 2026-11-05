@@ -1,6 +1,8 @@
 package shipmentflows
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -21,6 +23,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentread"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
@@ -32,7 +36,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
@@ -40,6 +46,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
@@ -176,10 +186,118 @@ func newRig(p *rigParams) *rig {
 	return s
 }
 
-func (s *rig) assemble() {
+type noServiceFailures struct {
+	servicefailureports.ServiceFailureRepository
+}
+
+func (noServiceFailures) ListUnresolvedByShipmentIDs(
+	context.Context,
+	*servicefailureports.ServiceFailuresByShipmentIDsRequest,
+) ([]*servicefailure.ServiceFailure, error) {
+	return nil, nil
+}
+
+type noDistance struct {
+	shipmentdistanceports.DistanceCalculationService
+}
+
+func (noDistance) ResolveForShipment(
+	context.Context,
+	*shipment.Shipment,
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
+	return nil, nil
+}
+
+type noContinuity struct {
+	equipmentcontinuityports.EquipmentContinuityRepository
+}
+
+func (noContinuity) RollbackCurrentByShipment(
+	context.Context,
+	equipmentcontinuityports.RollbackEquipmentContinuityByShipmentRequest,
+) error {
+	return nil
+}
+
+type noLiveTenders struct {
+	tenderports.TenderGuard
+}
+
+func (noLiveTenders) CancelLiveTendersForShipment(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+	string,
+) error {
+	return nil
+}
+
+type noCustomers struct {
+	customerports.CustomerRepository
+}
+
+func (noCustomers) GetByID(
+	context.Context,
+	customerports.GetCustomerByIDRequest,
+) (*customer.Customer, error) {
+	return nil, errortypes.NewNotFoundError("Customer not found")
+}
+
+type noCommodities struct {
+	commodityports.CommodityRepository
+}
+
+func (noCommodities) GetByIDs(
+	context.Context,
+	commodityports.GetCommoditiesByIDsRequest,
+) ([]*commodity.Commodity, error) {
+	return nil, nil
+}
+
+type noPermits struct {
+	permitports.PermitService
+}
+
+func (noPermits) Sync(
+	context.Context,
+	*shipment.Shipment,
+	*permissionports.RequestActor,
+) (*permitports.PermitAssessment, error) {
+	return nil, nil
+}
+
+func (s *rig) fillUnsetCollaborators() {
 	if s.l == nil {
 		s.l = zap.NewNop()
 	}
+	if s.serviceFailureRepo == nil {
+		s.serviceFailureRepo = noServiceFailures{}
+	}
+	if s.distanceCalculation == nil {
+		s.distanceCalculation = noDistance{}
+	}
+	if s.continuityRepo == nil {
+		s.continuityRepo = noContinuity{}
+	}
+	if s.tenderGuard == nil {
+		s.tenderGuard = noLiveTenders{}
+	}
+	if s.customerRepo == nil {
+		s.customerRepo = noCustomers{}
+	}
+	if s.commodityRepo == nil {
+		s.commodityRepo = noCommodities{}
+	}
+	if s.notificationService == nil {
+		s.notificationService = notificationtest.Discarding()
+	}
+	if s.permitService == nil {
+		s.permitService = noPermits{}
+	}
+}
+
+func (s *rig) assemble() {
+	s.fillUnsetCollaborators()
 	s.effects = shipmenteffects.New(shipmenteffects.Params{
 		Logger:              s.l,
 		Repo:                s.repo,

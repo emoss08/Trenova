@@ -31,10 +31,11 @@ type EDIInboundFetchRequest struct {
 }
 
 type EDIInboundRemoteFile struct {
-	Path     string
-	Name     string
-	Contents string
-	Size     int64
+	Path      string
+	Name      string
+	Contents  string
+	Size      int64
+	ReadError error
 }
 
 type EDIMailboxFetcher interface {

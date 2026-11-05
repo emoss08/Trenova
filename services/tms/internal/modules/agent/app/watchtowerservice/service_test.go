@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -358,7 +360,12 @@ func newService(
 	perms *agenttest.StubPermissions,
 	sources ...watchtowerports.WatchtowerSource,
 ) *Service {
-	projector := NewProjector(ProjectorParams{Logger: zap.NewNop(), Repo: repo})
+	projector := NewProjector(ProjectorParams{
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		Realtime:      &recordingRealtime{},
+		Notifications: notificationtest.Discarding(),
+	})
 	projector.now = func() int64 { return 1_700_000_000 }
 
 	exceptions := newExceptions(repo, perms, projector)
@@ -384,11 +391,13 @@ func newExceptions(
 	projector *Projector,
 ) *Exceptions {
 	exceptions := NewExceptions(ExceptionsParams{
-		Logger:      zap.NewNop(),
-		Repo:        repo,
-		Projector:   projector,
-		Router:      NewRouter(RouterParams{Logger: zap.NewNop()}),
-		Permissions: perms,
+		Logger:        zap.NewNop(),
+		Repo:          repo,
+		Projector:     projector,
+		Router:        NewRouter(RouterParams{Logger: zap.NewNop(), Controls: &scopedControlRepo{}}),
+		Permissions:   perms,
+		Audit:         &mocks.NoopAuditService{},
+		Notifications: notificationtest.Discarding(),
 	})
 	exceptions.now = func() int64 { return 1_700_000_000 }
 

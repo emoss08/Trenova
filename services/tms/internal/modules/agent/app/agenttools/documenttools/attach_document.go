@@ -11,9 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const documentResourceTypeShipment = "shipment"
@@ -28,12 +29,13 @@ type documentAttacher interface {
 	) (*documentservice.AttachLineagePlan, error)
 	AttachLineageToResource(
 		ctx context.Context,
-		documentID pulid.ID,
-		resourceType string,
-		resourceID string,
-		tenantInfo pagination.TenantInfo,
-		userID pulid.ID,
+		req *documentservice.AttachLineageRequest,
 	) (*document.Document, error)
+	RequireReadable(
+		ctx context.Context,
+		req documentports.GetDocumentByIDRequest,
+		actor *permissionports.RequestActor,
+	) error
 }
 
 type AttachDocumentTool struct {
@@ -133,16 +135,23 @@ func (t *AttachDocumentTool) Execute(
 		return err
 	}
 
-	_, err = t.documents.AttachLineageToResource(
-		ctx,
-		request.DocumentID,
-		request.ResourceType,
-		request.ResourceID,
-		request.TenantInfo,
-		params.Actor.UserID,
-	)
+	if err = t.requireReadable(ctx, request); err != nil {
+		return err
+	}
+
+	_, err = t.documents.AttachLineageToResource(ctx, request)
 
 	return err
+}
+
+func (t *AttachDocumentTool) requireReadable(
+	ctx context.Context,
+	request *documentservice.AttachLineageRequest,
+) error {
+	return t.documents.RequireReadable(ctx, documentports.GetDocumentByIDRequest{
+		ID:         request.DocumentID,
+		TenantInfo: request.TenantInfo,
+	}, request.Actor)
 }
 
 func (t *AttachDocumentTool) request(
@@ -167,5 +176,6 @@ func (t *AttachDocumentTool) request(
 			BuID:   params.BusinessUnitID,
 			UserID: params.Actor.UserID,
 		},
+		Actor: params.Actor,
 	}, nil
 }

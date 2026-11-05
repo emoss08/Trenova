@@ -234,16 +234,3 @@ func TestDisputeRecordRendersTheFinalNoticeAndStoresItOnTheShipment(t *testing.T
 	assert.Equal(t, disputeRecordFileName(rig.occurrence), record.FileName)
 	assert.Contains(t, record.FileName, "SEED-DET-008")
 }
-
-func TestDisputeRecordWithoutADocumentStoreFindsNothingToRender(t *testing.T) {
-	t.Parallel()
-
-	rig := newDisputeRig(t)
-	rig.svc.documentStore = nil
-	rig.documents.EXPECT().GetByResourceID(mock.Anything, mock.Anything).
-		Return([]*document.Document{}, nil).Once()
-
-	record := rig.record(t)
-
-	assert.Nil(t, record)
-}

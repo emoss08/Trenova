@@ -30,24 +30,25 @@ const (
 )
 
 type fingerprintPolicy struct {
-	Kind                agenttooltrust.ToolKind     `json:"kind"`
-	Resource            permission.Resource         `json:"resource"`
-	Operation           permission.Operation        `json:"operation"`
-	Scope               agenttooltrust.ToolScope    `json:"scope"`
-	DefaultTier         agent.AutonomyTier          `json:"defaultTier"`
-	MaxTier             agent.AutonomyTier          `json:"maxTier"`
-	Egress              []agent.EgressClass         `json:"egress"`
-	Classified          bool                        `json:"classified"`
-	Condition           string                      `json:"condition,omitempty"`
-	PersonalRunsUnasked bool                        `json:"personalRunsUnasked"`
-	Effect              agenttooltrust.ToolEffect   `json:"effect"`
-	Artifact            string                      `json:"artifact,omitempty"`
-	Reversible          bool                        `json:"reversible"`
-	Idempotent          bool                        `json:"idempotent"`
-	ReadsExternal       agenttooltrust.ExternalRead `json:"readsExternal"`
-	Source              agent.TaintSource           `json:"source,omitempty"`
-	CarriesTaint        bool                        `json:"carriesTaint"`
-	Rationale           string                      `json:"rationale"`
+	Kind                agenttooltrust.ToolKind      `json:"kind"`
+	Resource            permission.Resource          `json:"resource"`
+	Operation           permission.Operation         `json:"operation"`
+	PersonAlsoNeeds     []agenttoolports.ToolGrant `json:"personAlsoNeeds,omitempty"`
+	Scope               agenttooltrust.ToolScope     `json:"scope"`
+	DefaultTier         agent.AutonomyTier           `json:"defaultTier"`
+	MaxTier             agent.AutonomyTier           `json:"maxTier"`
+	Egress              []agent.EgressClass          `json:"egress"`
+	Classified          bool                         `json:"classified"`
+	Condition           string                       `json:"condition,omitempty"`
+	PersonalRunsUnasked bool                         `json:"personalRunsUnasked"`
+	Effect              agenttooltrust.ToolEffect    `json:"effect"`
+	Artifact            string                       `json:"artifact,omitempty"`
+	Reversible          bool                         `json:"reversible"`
+	Idempotent          bool                         `json:"idempotent"`
+	ReadsExternal       agenttooltrust.ExternalRead  `json:"readsExternal"`
+	Source              agent.TaintSource            `json:"source,omitempty"`
+	CarriesTaint        bool                         `json:"carriesTaint"`
+	Rationale           string                       `json:"rationale"`
 }
 
 type fingerprintTool struct {
@@ -70,6 +71,7 @@ func projectPolicy(policy *agenttoolports.ToolPolicy) *fingerprintPolicy {
 		Kind:                policy.Kind,
 		Resource:            policy.Resource,
 		Operation:           policy.Operation,
+		PersonAlsoNeeds:     slices.Clone(policy.PersonAlsoNeeds),
 		Scope:               policy.Scope,
 		DefaultTier:         policy.DefaultTier,
 		MaxTier:             policy.MaxTier,

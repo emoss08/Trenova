@@ -56,6 +56,13 @@ func (t *AttachDocumentTool) Preview(
 		return nil, err
 	}
 
+	if err = t.requireReadable(ctx, request); err != nil {
+		return changepreview.WarnWouldFail(
+			toolpreview.Build("Would attach a document to a shipment."),
+			err,
+		), nil
+	}
+
 	plan, err := t.documents.PreviewAttachLineage(ctx, request)
 	if err != nil {
 		if changepreview.IsRefusal(err) {

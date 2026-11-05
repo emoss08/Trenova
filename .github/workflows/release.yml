@@ -11,9 +11,29 @@ env:
   TMS_DB_IMAGE_NAME: emoss08/trenova/tms-db
   CLIENT_IMAGE_NAME: emoss08/trenova/client
   IMAGING_IMAGE_NAME: emoss08/trenova/imaging
+  OPERATOR_IMAGE_NAME: emoss08/trenova/operator
 
 jobs:
+  verify-source:
+    name: Refuse a release from outside the default branch
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Check the released commit
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$DEFAULT_BRANCH"
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::$GITHUB_SHA is not on $DEFAULT_BRANCH."
+            exit 1
+          fi
+
   detect-postgres-changes:
+    needs: verify-source
     name: Detect Postgres Image Changes
     runs-on: ubuntu-latest
     permissions:
@@ -24,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -56,6 +76,7 @@ jobs:
           echo "previous_tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
 
   build-and-push-tms:
+    needs: verify-source
     name: Build and Push TMS Image
     runs-on: ubuntu-latest
     permissions:
@@ -64,16 +85,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -81,7 +102,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.TMS_IMAGE_NAME }}
           tags: |
@@ -90,7 +111,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push TMS image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./deploy/Dockerfile.tms
@@ -101,12 +122,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
 
       # trenova-db applies the migrations before each rollout; the TMS image
       # carries none of them.
       - name: Extract metadata (trenova-db)
         id: meta-db
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.TMS_DB_IMAGE_NAME }}
           tags: |
@@ -115,7 +138,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push trenova-db image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./deploy/Dockerfile.tms
@@ -126,8 +149,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
 
   build-and-push-client:
+    needs: verify-source
     name: Build and Push Client Image
     runs-on: ubuntu-latest
     permissions:
@@ -136,16 +162,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -153,7 +179,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.CLIENT_IMAGE_NAME }}
           tags: |
@@ -162,7 +188,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Client image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
           file: ./deploy/Dockerfile.client
@@ -172,10 +198,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+          sbom: true
+          provenance: mode=max
           build-args: |
             VITE_API_URL=/api/v1
 
   build-and-push-imaging:
+    needs: verify-source
     name: Build and Push Imaging Image
     runs-on: ubuntu-latest
     permissions:
@@ -184,16 +213,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -201,7 +230,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGING_IMAGE_NAME }}
           tags: |
@@ -212,7 +241,7 @@ jobs:
       # The build context is services/ (the Rust workspace and its contracts). The image
       # carries an SBOM and provenance attestation.
       - name: Build and push imaging image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ./services
           file: ./deploy/Dockerfile.imaging
@@ -239,16 +268,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
       - name: Log in to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -256,7 +285,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/postgres
           tags: |
@@ -265,7 +294,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Postgres image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: ./deploy
           file: ./deploy/Dockerfile.postgres
@@ -275,10 +304,60 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
 
-  # The Helm chart, versioned with the release, as an OCI artifact beside the
-  # images: oci://ghcr.io/emoss08/charts/trenova. Published once every image
-  # it names exists.
+  # The Trenova Cloud operator (services/operator, its own module).
+  build-and-push-operator:
+    needs: verify-source
+    name: Build and Push Operator Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.OPERATOR_IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Build and push operator image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.operator
+          target: operator
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=operator
+          cache-to: type=gha,scope=operator,mode=max
+          platforms: linux/amd64,linux/arm64
+          sbom: true
+          provenance: mode=max
+
+  # The Helm charts, versioned with the release, as OCI artifacts beside the
+  # images: oci://ghcr.io/emoss08/charts/trenova and trenova-operator.
+  # Published once every image they name exists.
   publish-chart:
     name: Publish Helm Chart
     runs-on: ubuntu-latest
@@ -288,24 +367,37 @@ jobs:
       - build-and-push-client
       - build-and-push-imaging
       - build-and-push-postgres
+      - build-and-push-operator
     if: >-
       ${{ !cancelled()
       && needs.build-and-push-tms.result == 'success'
       && needs.build-and-push-client.result == 'success'
       && needs.build-and-push-imaging.result == 'success'
+      && needs.build-and-push-operator.result == 'success'
       && (needs.build-and-push-postgres.result == 'success' || needs.build-and-push-postgres.result == 'skipped') }}
     permissions:
       contents: read
       packages: write
+      # Keyless signing: the chart signature names this workflow at this tag.
+      id-token: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Cosign
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/cosign https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64
+          echo '424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa  /tmp/cosign' | sha256sum -c -
+          sudo install -m 0755 /tmp/cosign /usr/local/bin/cosign
 
       - name: Install Helm
         run: |
           set -euo pipefail
-          curl -fsSL https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz -C /tmp
+          curl -fsSL -o /tmp/helm.tar.gz https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz
+          echo 'a7f81ce08007091b86d8bd696eb4d86b8d0f2e1b9f6c714be62f82f96a594496  /tmp/helm.tar.gz' | sha256sum -c -
+          tar xzf /tmp/helm.tar.gz -C /tmp
           sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
 
       # The PostgreSQL image is published only when it changes; a release
@@ -327,13 +419,75 @@ jobs:
           PY
           grep -n -A4 '^postgres:' deploy/helm/trenova/values.yaml
 
-      - name: Package and push the chart
+      # Every image a chart names, resolved to the digest it has now, inside the
+      # chart and so inside its signature: a tag moved after this release changes
+      # nothing on an instance.
+      - name: Pin the charts' images
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
+          echo "${GHCR_TOKEN}" | docker login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
+          for chart in trenova trenova-operator; do
+            yq -o=json "deploy/helm/${chart}/values.yaml" > "${RUNNER_TEMP}/${chart}-values.json"
+            python3 - "$version" "${RUNNER_TEMP}/${chart}-values.json" "deploy/helm/${chart}/image-digests.yaml" <<'PY'
+          import json, re, subprocess, sys
+
+          version, values, out = sys.argv[1:4]
+
+          def images(node):
+              if isinstance(node, dict):
+                  if "repository" in node and "tag" in node:
+                      yield node
+                  for child in node.values():
+                      yield from images(child)
+              elif isinstance(node, list):
+                  for child in node:
+                      yield from images(child)
+
+          pins = {}
+          for image in images(json.load(open(values))):
+              tag = image["tag"] or version
+              if "@" in tag:
+                  continue
+              ref = f'{image["repository"]}:{tag}'
+              digest = subprocess.check_output(
+                  ["docker", "buildx", "imagetools", "inspect", ref, "--format", "{{.Manifest.Digest}}"],
+                  text=True,
+              ).strip()
+              if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                  sys.exit(f"{ref}: no digest ({digest!r})")
+              pins[ref] = digest
+          if not pins:
+              sys.exit("no image to pin")
+          with open(out, "w") as f:
+              for ref, digest in sorted(pins.items()):
+                  f.write(f'"{ref}": "{digest}"\n')
+          PY
+            cat "deploy/helm/${chart}/image-digests.yaml"
+          done
+
+      # The signature travels in the chart's own provenance layer: helm push takes
+      # <archive>.prov from beside the archive, and the operator refuses a chart
+      # without one (services/operator/internal/release/provenance.go, which holds
+      # the same signer pattern).
+      - name: Package, sign and push the charts
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHART_SIGNER: '^https://github\.com/emoss08/[Tt]renova/\.github/workflows/release\.yml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
           echo "${GHCR_TOKEN}" | helm registry login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
           helm lint deploy/helm/trenova --set domain=trenova.example.com --set storageDomain=storage.trenova.example.com
-          helm package deploy/helm/trenova --version "${version}" --app-version "${version}" -d "${RUNNER_TEMP}"
-          helm push "${RUNNER_TEMP}/trenova-${version}.tgz" "oci://${REGISTRY}/emoss08/charts"
+          helm lint deploy/helm/trenova-operator
+          for chart in trenova trenova-operator; do
+            archive="${RUNNER_TEMP}/${chart}-${version}.tgz"
+            helm package "deploy/helm/${chart}" --version "${version}" --app-version "${version}" -d "${RUNNER_TEMP}"
+            cosign sign-blob --yes --bundle "${archive}.prov" "${archive}"
+            cosign verify-blob --bundle "${archive}.prov" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+              --certificate-identity-regexp "${CHART_SIGNER}" "${archive}"
+            helm push "${archive}" "oci://${REGISTRY}/emoss08/charts"
+          done

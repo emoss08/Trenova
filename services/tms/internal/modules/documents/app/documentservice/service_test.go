@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/documenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
+	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -344,7 +345,12 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	require.EqualValues(t, 1, firstVersion.VersionNumber)
 	require.EqualValues(t, 2, secondVersion.VersionNumber)
 
-	versions, err := h.service.ListVersions(h.ctx, secondVersion.ID, h.tenantInfo)
+	versions, err := h.service.ListVersions(
+		h.ctx,
+		secondVersion.ID,
+		h.tenantInfo,
+		permissionports.UserActor(h.tenantInfo),
+	)
 	require.NoError(t, err)
 	require.Len(t, versions, 2)
 	assert.ElementsMatch(
@@ -376,7 +382,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 		h.ctx,
 		firstVersion.ID,
 		h.tenantInfo,
-		h.tenantInfo.UserID,
+		permissionports.UserActor(h.tenantInfo),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, firstVersion.ID, restored.ID)
@@ -400,7 +406,7 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	err = h.service.Delete(h.ctx, documentports.DeleteDocumentRequest{
 		ID:         restored.ID,
 		TenantInfo: h.tenantInfo,
-	}, h.tenantInfo.UserID)
+	}, testutil.NewSessionActor(h.tenantInfo.UserID, h.tenantInfo.OrgID, h.tenantInfo.BuID))
 	require.NoError(t, err)
 
 	_, err = h.service.Get(h.ctx, documentports.GetDocumentByIDRequest{
@@ -471,7 +477,7 @@ func TestService_BulkDeleteDeletesLineages_Integration(t *testing.T) {
 	result, err := h.service.BulkDelete(h.ctx, &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{firstV2.ID, secondV2.ID},
 		TenantInfo: h.tenantInfo,
-		UserID:     h.tenantInfo.UserID,
+		Actor:      permissionports.UserActor(h.tenantInfo),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 4, result.DeletedCount)

@@ -24,7 +24,7 @@ export const detention = createQueryKeys("detention", {
     queryFn: async ({ signal }) => detentionService.getOccurrence(id, { signal }),
   }),
   intelligence: (input: DetentionIntelligenceInput) => ({
-    queryKey: ["intelligence", input.days, input.through ?? null, input.locationId ?? null],
+    queryKey: ["intelligence", input],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       fetchDetentionIntelligence(input, { signal }),
   }),

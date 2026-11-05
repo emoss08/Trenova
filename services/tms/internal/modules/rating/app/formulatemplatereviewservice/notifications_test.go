@@ -5,16 +5,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/formulatemplatetest"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	notificationdomain "github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 // withNotifications arms the service with a real notification service backed
@@ -24,11 +23,7 @@ func withNotifications(t *testing.T, deps *testDeps) **notificationdomain.Notifi
 	t.Helper()
 
 	notifRepo := notificationportsmock.NewMockNotificationRepository(t)
-	deps.svc.notifications = notificationservice.New(notificationservice.Params{
-		Logger:   zap.NewNop(),
-		Repo:     notifRepo,
-		Realtime: &mocks.NoopRealtimeService{},
-	})
+	deps.svc.notifications = notificationtest.New(notifRepo, &mocks.NoopRealtimeService{})
 
 	captured := new(*notificationdomain.Notification)
 	notifRepo.On("Create", mock.Anything, mock.Anything).

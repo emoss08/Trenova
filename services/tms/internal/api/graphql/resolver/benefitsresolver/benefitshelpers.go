@@ -19,6 +19,7 @@ func (r *Deps) TotalCompensationFor(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	planYear *int,
+	includePay bool,
 ) (*benefitsservice.TotalCompensation, error) {
 	year := gqlscalar.IntValue(planYear)
 	if year <= 0 {
@@ -34,7 +35,7 @@ func (r *Deps) TotalCompensationFor(
 	// Year-to-date pay is the settlement area's answer, not this one's. A
 	// failure to read it is not a reason to refuse the whole statement — the
 	// benefits half is still true — so it is left at zero.
-	if r.DriverSettlementService != nil {
+	if includePay && r.DriverSettlementService != nil {
 		summaries, err := r.DriverSettlementWorkspaceService.GetYTDPaySummaries(
 			ctx,
 			tenantInfo,

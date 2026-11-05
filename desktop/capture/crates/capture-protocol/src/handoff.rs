@@ -173,12 +173,26 @@ fn write_then_rename(dir: &Path, stem: &str, extension: &str, bytes: &[u8]) -> i
 #[derive(Clone, Debug)]
 pub struct Inbox {
     dir: PathBuf,
+    rejected: PathBuf,
 }
 
 impl Inbox {
     /// The inbox in `dir`, which the caller has created with the right ACL.
     pub fn new(dir: impl Into<PathBuf>) -> Self {
-        Self { dir: dir.into() }
+        let dir = dir.into();
+        Self {
+            rejected: dir.clone(),
+            dir,
+        }
+    }
+
+    /// Keeps set-aside jobs in `dir`. The agent cannot create anything in its
+    /// inbox, whose ACL leaves it no write on the directory itself, so it sets
+    /// them aside in a place of its own.
+    #[must_use]
+    pub fn rejecting_into(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.rejected = dir.into();
+        self
     }
 
     pub fn dir(&self) -> &Path {
@@ -327,18 +341,20 @@ impl Inbox {
         Ok(())
     }
 
-    /// Renames a job that cannot be read to `<name>.rejected`, so it stops
-    /// being offered but is not deleted before someone has looked at it.
+    /// Moves a job that cannot be read to `<name>.rejected`, so it stops being
+    /// offered but is not deleted before someone has looked at it.
     pub fn set_aside(&self, id: &str) -> Result<(), HandoffError> {
         if !valid_id(id) {
             return Err(HandoffError::InvalidId(id.to_owned()));
         }
+        fs::create_dir_all(&self.rejected)?;
         for extension in [DESCRIPTION, DOCUMENT, PICTURES] {
             let from = self.path(id, extension);
-            let to = self.dir.join(format!("{id}.{extension}.{REJECTED}"));
-            match fs::rename(&from, &to) {
-                Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
-                _ => {}
+            let to = self.rejected.join(format!("{id}.{extension}.{REJECTED}"));
+            match fs::copy(&from, &to) {
+                Ok(_) => fs::remove_file(&from)?,
+                Err(err) if err.kind() == io::ErrorKind::NotFound => {}
+                Err(err) => return Err(err.into()),
             }
         }
         Ok(())
@@ -443,6 +459,22 @@ mod tests {
             0,
             "kept for a person"
         );
+    }
+
+    #[test]
+    fn a_job_is_set_aside_outside_an_inbox_its_reader_cannot_write_to() {
+        let (dir, inbox) = inbox();
+        let kept = dir.path().join("kept");
+        let inbox = inbox.rejecting_into(&kept);
+        let job = inbox
+            .deliver("Invoice", None, b"%PDF-1.7 a", &[])
+            .expect("delivers");
+
+        inbox.set_aside(&job.id).expect("sets aside");
+
+        assert!(inbox.waiting().expect("lists").is_empty());
+        assert!(kept.join(format!("{}.pdf.rejected", job.id)).exists());
+        assert!(!dir.path().join(format!("{}.pdf", job.id)).exists());
     }
 
     #[test]

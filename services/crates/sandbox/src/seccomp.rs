@@ -11,9 +11,11 @@
 //! 2. An allow list of what the child does need: memory, reading its
 //!    mapped input and the files landlock leaves it, the channel to the
 //!    supervisor (`sendmsg`/`recvmsg` on the socket it already holds; it
-//!    cannot make another), threads, time, signals for its own abort,
-//!    reading (never raising) its resource limits. Anything else fails with
-//!    `EPERM`.
+//!    cannot make another), threads, time, signals to itself only (its own
+//!    abort, never the supervisor or a sibling), reading (never raising) its
+//!    resource limits. Memory is never made executable except by mapping a
+//!    file, which the dynamic loader needs and landlock narrows, and `prctl`
+//!    only names threads. Anything else fails with `EPERM`.
 //! 3. `clone3` answers `ENOSYS`. Its flags live in memory a filter cannot
 //!    read, so it cannot be checked; glibc then falls back to `clone`, whose
 //!    flags filter 2 checks: only threads, never new processes.
@@ -88,10 +90,8 @@ const ALLOW: &[i64] = &[
     libc::SYS_fcntl,
     libc::SYS_dup,
     libc::SYS_dup3,
-    libc::SYS_mmap,
     libc::SYS_munmap,
     libc::SYS_mremap,
-    libc::SYS_mprotect,
     libc::SYS_madvise,
     libc::SYS_brk,
     libc::SYS_futex,
@@ -112,7 +112,6 @@ const ALLOW: &[i64] = &[
     libc::SYS_geteuid,
     libc::SYS_getgid,
     libc::SYS_getegid,
-    libc::SYS_tgkill,
     libc::SYS_clock_gettime,
     libc::SYS_clock_getres,
     libc::SYS_clock_nanosleep,
@@ -131,7 +130,6 @@ const ALLOW: &[i64] = &[
     libc::SYS_getrusage,
     #[cfg(target_arch = "x86_64")]
     libc::SYS_getrlimit,
-    libc::SYS_prctl,
     libc::SYS_membarrier,
     libc::SYS_exit,
     libc::SYS_exit_group,
@@ -169,8 +167,88 @@ fn arch() -> Result<TargetArch, SeccompError> {
     TargetArch::try_from(std::env::consts::ARCH).map_err(|_| SeccompError::Arch)
 }
 
-/// The three filters, compiled, in the order they are installed.
-pub fn programs() -> Result<[BpfProgram; 3], SeccompError> {
+fn condition(
+    arg: u8,
+    length: SeccompCmpArgLen,
+    operator: SeccompCmpOp,
+    value: u64,
+) -> Result<SeccompCondition, SeccompError> {
+    SeccompCondition::new(arg, length, operator, value)
+        .map_err(|err| SeccompError::Build(err.to_string()))
+}
+
+fn rule(conditions: Vec<SeccompCondition>) -> Result<SeccompRule, SeccompError> {
+    SeccompRule::new(conditions).map_err(|err| SeccompError::Build(err.to_string()))
+}
+
+/// Calls allowed only with certain arguments. Several rules for a call are
+/// alternatives. `pid` is the child's own, the one process it may signal.
+fn conditional(pid: u32) -> Result<BTreeMap<i64, Vec<SeccompRule>>, SeccompError> {
+    let not_executable = || -> Result<SeccompRule, SeccompError> {
+        rule(vec![condition(
+            2,
+            SeccompCmpArgLen::Dword,
+            SeccompCmpOp::MaskedEq(flag(libc::PROT_EXEC)),
+            0,
+        )?])
+    };
+    let from_a_file = rule(vec![condition(
+        3,
+        SeccompCmpArgLen::Dword,
+        SeccompCmpOp::MaskedEq(flag(libc::MAP_ANONYMOUS)),
+        0,
+    )?])?;
+    let names_a_thread = |option: libc::c_int| -> Result<SeccompRule, SeccompError> {
+        rule(vec![condition(
+            0,
+            SeccompCmpArgLen::Dword,
+            SeccompCmpOp::Eq,
+            flag(option),
+        )?])
+    };
+    Ok(BTreeMap::from([
+        (
+            libc::SYS_clone,
+            vec![rule(vec![condition(
+                0,
+                SeccompCmpArgLen::Qword,
+                SeccompCmpOp::MaskedEq(flag(libc::CLONE_THREAD)),
+                flag(libc::CLONE_THREAD),
+            )?])?],
+        ),
+        (
+            libc::SYS_prlimit64,
+            vec![rule(vec![condition(
+                2,
+                SeccompCmpArgLen::Qword,
+                SeccompCmpOp::Eq,
+                0,
+            )?])?],
+        ),
+        (libc::SYS_mmap, vec![not_executable()?, from_a_file]),
+        (libc::SYS_mprotect, vec![not_executable()?]),
+        (
+            libc::SYS_prctl,
+            vec![
+                names_a_thread(libc::PR_SET_NAME)?,
+                names_a_thread(libc::PR_GET_NAME)?,
+            ],
+        ),
+        (
+            libc::SYS_tgkill,
+            vec![rule(vec![condition(
+                0,
+                SeccompCmpArgLen::Dword,
+                SeccompCmpOp::Eq,
+                u64::from(pid),
+            )?])?],
+        ),
+    ]))
+}
+
+/// The three filters, compiled, in the order they are installed. `pid` is the
+/// process they will run in.
+pub fn programs(pid: u32) -> Result<[BpfProgram; 3], SeccompError> {
     let arch = arch()?;
     let build = |rules: BTreeMap<i64, Vec<SeccompRule>>, mismatch, matched| {
         SeccompFilter::new(rules, mismatch, matched, arch)
@@ -184,25 +262,9 @@ pub fn programs() -> Result<[BpfProgram; 3], SeccompError> {
         SeccompAction::KillProcess,
     )?;
 
-    let thread_clone = SeccompRule::new(vec![
-        SeccompCondition::new(
-            0,
-            SeccompCmpArgLen::Qword,
-            SeccompCmpOp::MaskedEq(clone_flag(libc::CLONE_THREAD)),
-            clone_flag(libc::CLONE_THREAD),
-        )
-        .map_err(|err| SeccompError::Build(err.to_string()))?,
-    ])
-    .map_err(|err| SeccompError::Build(err.to_string()))?;
     let mut allowed: BTreeMap<i64, Vec<SeccompRule>> =
         ALLOW.iter().map(|&nr| (nr, Vec::new())).collect();
-    allowed.insert(libc::SYS_clone, vec![thread_clone]);
-    let read_limit_only = SeccompRule::new(vec![
-        SeccompCondition::new(2, SeccompCmpArgLen::Qword, SeccompCmpOp::Eq, 0)
-            .map_err(|err| SeccompError::Build(err.to_string()))?,
-    ])
-    .map_err(|err| SeccompError::Build(err.to_string()))?;
-    allowed.insert(libc::SYS_prlimit64, vec![read_limit_only]);
+    allowed.extend(conditional(pid)?);
     let allow = build(
         allowed,
         SeccompAction::Errno(u32::try_from(libc::EPERM).unwrap_or(1)),
@@ -218,15 +280,15 @@ pub fn programs() -> Result<[BpfProgram; 3], SeccompError> {
     Ok([no_clone3, kill, allow])
 }
 
-fn clone_flag(flag: libc::c_int) -> u64 {
-    u64::try_from(flag).unwrap_or(0)
+fn flag(value: libc::c_int) -> u64 {
+    u64::try_from(value).unwrap_or(0)
 }
 
 /// Installs the filters on every thread of the process. The allow list goes
 /// in last: it does not allow `seccomp` itself, so nothing can be added
 /// after it.
 pub fn install() -> Result<(), SeccompError> {
-    for program in programs()? {
+    for program in programs(std::process::id())? {
         seccompiler::apply_filter_all_threads(&program)
             .map_err(|err| SeccompError::Install(err.to_string()))?;
     }
@@ -239,7 +301,7 @@ mod tests {
 
     #[test]
     fn the_filters_compile_for_this_architecture() {
-        let programs = programs().expect("compiles");
+        let programs = programs(std::process::id()).expect("compiles");
         assert!(programs.iter().all(|p| !p.is_empty()));
     }
 
@@ -247,6 +309,25 @@ mod tests {
     fn nothing_is_both_allowed_and_killed() {
         for nr in KILL {
             assert!(!ALLOW.contains(nr), "syscall {nr} is on both lists");
+        }
+    }
+
+    #[test]
+    fn a_call_with_conditions_is_never_also_allowed_outright() {
+        let conditional = conditional(1).expect("builds");
+        for nr in conditional.keys() {
+            assert!(
+                !ALLOW.contains(nr),
+                "syscall {nr} would skip its conditions"
+            );
+        }
+        for nr in [
+            libc::SYS_mmap,
+            libc::SYS_mprotect,
+            libc::SYS_prctl,
+            libc::SYS_tgkill,
+        ] {
+            assert!(conditional.contains_key(&nr), "syscall {nr} has conditions");
         }
     }
 }

@@ -9,7 +9,4 @@ var (
 	ErrUnsupportedIsolation               = errors.New(
 		"postgres: unsupported transaction isolation",
 	)
-	ErrSharedResultCacheNeedsRedis = errors.New(
-		"database.cache.shared.enabled needs the Redis connection (the cache section)",
-	)
 )

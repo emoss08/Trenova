@@ -8,6 +8,7 @@ import { usePendingActions } from "@/hooks/use-pending-actions";
 import { useShipmentBillingActions } from "@/hooks/use-shipment-billing-actions";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { documentType } from "@/lib/queries/document-type";
+import { openInNewTab } from "@/lib/open-in-new-tab";
 import type {
   GraphQLSelectOptionsConfig,
   SelectOption as GraphQLSelectOption,
@@ -420,7 +421,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     async (document: Document) => {
       try {
         const url = await documentService.getViewUrl(document.id);
-        window.open(url, "_blank");
+        openInNewTab(url);
       } catch {
         toast.error(t("Failed to open document"));
       }
@@ -432,7 +433,7 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     async (document: Document) => {
       try {
         const url = await documentService.getDownloadUrl(document.id);
-        window.open(url, "_blank");
+        openInNewTab(url);
       } catch {
         toast.error(t("Failed to get download URL"));
       }

@@ -791,20 +791,22 @@ var captureDevicesTable = schema.Table{
 		{Name: "revoked_at", Quoted: `"revoked_at"`, Field: "RevokedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Revoked At`, JSON: `revokedAt`},
 		{Name: "revoked_by_id", Quoted: `"revoked_by_id"`, Field: "RevokedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Revoked By ID`, JSON: `revokedById`},
 		{Name: "revoked_reason", Quoted: `"revoked_reason"`, Field: "RevokedReason", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Revoked Reason`, JSON: `revokedReason`},
+		{Name: "active_role_ids", Quoted: `"active_role_ids"`, Field: "ActiveRoleIDs", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Active Role IDs`},
+		{Name: "session_epoch", Quoted: `"session_epoch"`, Field: "SessionEpoch", Kind: schema.KindInt64, Flags: 0, Label: `Session Epoch`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
 	Returning:    nil,
-	Version:      21,
+	Version:      23,
 	AutoID:       0,
-	AutoCreate:   22,
-	AutoUpdate:   23,
+	AutoCreate:   24,
+	AutoUpdate:   25,
 	IDPrefix:     "cdev_",
 	New:          newCaptureDevice,
 	NewN:         newNCaptureDevice,
@@ -840,6 +842,8 @@ type CaptureDevicesTable struct {
 	RevokedAt            keel.Int64Col
 	RevokedByID          keelkinds.PulidIDCol
 	RevokedReason        keel.StringCol
+	ActiveRoleIDs        keel.JSONBCol
+	SessionEpoch         keel.Int64Col
 	Version              keel.Int64Col
 	CreatedAt            keel.Int64Col
 	UpdatedAt            keel.Int64Col
@@ -869,9 +873,11 @@ var CaptureDevices = &CaptureDevicesTable{
 	RevokedAt:            keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 18}},
 	RevokedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 19}}},
 	RevokedReason:        keel.StringCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 20}},
-	Version:              keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 21}},
-	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 22}},
-	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 23}},
+	ActiveRoleIDs:        keel.JSONBCol{Col: keel.Col{Ref: &captureDevicesRef, Index: 21}},
+	SessionEpoch:         keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 22}},
+	Version:              keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 23}},
+	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 24}},
+	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &captureDevicesRef, Index: 25}},
 }
 
 // BuildCaptureDevices builds the table of capture_devices for ref. Generated relation and alias methods call it.
@@ -899,9 +905,11 @@ func BuildCaptureDevices(r *keel.Ref) *CaptureDevicesTable {
 		RevokedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		RevokedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		RevokedReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		ActiveRoleIDs:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
+		SessionEpoch:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 	}
 }
 
@@ -1329,10 +1337,14 @@ func ptrCaptureDevice(p unsafe.Pointer, c int32) any {
 	case 20:
 		return &r.RevokedReason
 	case 21:
-		return &r.Version
+		return &r.ActiveRoleIDs
 	case 22:
-		return &r.CreatedAt
+		return &r.SessionEpoch
 	case 23:
+		return &r.Version
+	case 24:
+		return &r.CreatedAt
+	case 25:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1411,10 +1423,17 @@ func valueCaptureDevice(p unsafe.Pointer, c int32) any {
 		}
 		return r.RevokedReason
 	case 21:
-		return r.Version
+		if r.ActiveRoleIDs == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.ActiveRoleIDs
 	case 22:
-		return r.CreatedAt
+		return r.SessionEpoch
 	case 23:
+		return r.Version
+	case 24:
+		return r.CreatedAt
+	case 25:
 		return r.UpdatedAt
 	}
 	return nil

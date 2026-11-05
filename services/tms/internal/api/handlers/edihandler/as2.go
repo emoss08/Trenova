@@ -2,27 +2,32 @@ package edihandler
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"time"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/gin-gonic/gin"
 )
 
-const as2MaxRequestBody = 32 << 20
+const (
+	as2MaxRequestBody = 32 << 20
+	as2InboundRoute   = edi.AS2InboundRoot + ":as2InboundToken/"
+)
 
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST("/edi/as2/inbound/", h.receiveAS2Message)
+	rg.POST(as2InboundRoute, h.receiveAS2Message)
 }
 
 func (h *Handler) receiveAS2Message(c *gin.Context) {
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, as2MaxRequestBody))
+	body, err := helpers.ReadBoundedRequestBody(c, as2MaxRequestBody)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 	request := &ediinboundas2.ReceiveAS2MessageRequest{
+		InboundToken:                   c.Param("as2InboundToken"),
 		From:                           c.GetHeader("AS2-From"),
 		To:                             c.GetHeader("AS2-To"),
 		MessageID:                      c.GetHeader("Message-ID"),
@@ -42,8 +47,8 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 		return
 	}
-	if result.AsyncMDN {
-		h.sendAsyncAS2MDN(c.Request.Context(), request.ReceiptDeliveryOption, result)
+	if result.AsyncMDNURL != "" {
+		h.sendAsyncAS2MDN(c.Request.Context(), result.AsyncMDNURL, result)
 		c.Status(http.StatusOK)
 		return
 	}

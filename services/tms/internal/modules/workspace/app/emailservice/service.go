@@ -1009,9 +1009,10 @@ func (s *Service) DeleteSuppression(
 
 func (s *Service) ResolveTenantByWebhookToken(
 	ctx context.Context,
+	provider email.Provider,
 	token string,
 ) (pagination.TenantInfo, string, error) {
-	sender, ok := s.providerSenders[email.ProviderResend]
+	sender, ok := s.providerSenders[provider]
 	if !ok {
 		return pagination.TenantInfo{}, "", errortypes.NewValidationError(
 			"provider",
@@ -1026,7 +1027,10 @@ func (s *Service) ResolveTenantByWebhookToken(
 	if err != nil {
 		return pagination.TenantInfo{}, "", err
 	}
-	signingSecret, err := s.integrationService.OpenSecret(
+	if cfg.SigningSecret == "" {
+		return cfg.TenantInfo, "", nil
+	}
+	secret, err := s.integrationService.OpenSecret(
 		cfg.TenantInfo,
 		sender.IntegrationType(),
 		integration.WebhookSigningSecretField,
@@ -1035,30 +1039,7 @@ func (s *Service) ResolveTenantByWebhookToken(
 	if err != nil {
 		return pagination.TenantInfo{}, "", err
 	}
-	return cfg.TenantInfo, signingSecret, nil
-}
-
-func (s *Service) ResolveTenantByProviderWebhookToken(
-	ctx context.Context,
-	provider email.Provider,
-	token string,
-) (pagination.TenantInfo, error) {
-	sender, ok := s.providerSenders[provider]
-	if !ok {
-		return pagination.TenantInfo{}, errortypes.NewValidationError(
-			"provider",
-			errortypes.ErrInvalid,
-			"Unsupported email provider",
-		)
-	}
-	cfg, err := s.repo.GetEmailWebhookConfig(ctx, emailports.GetEmailWebhookConfigRequest{
-		IntegrationType: sender.IntegrationType(),
-		Token:           token,
-	})
-	if err != nil {
-		return pagination.TenantInfo{}, err
-	}
-	return cfg.TenantInfo, nil
+	return cfg.TenantInfo, secret, nil
 }
 
 func (s *Service) resolveProfile(

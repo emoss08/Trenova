@@ -14,9 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -34,6 +37,7 @@ type creditMemoFixture struct {
 	invoiceRepo                     *invoiceportsmock.MockInvoiceRepository
 	paymentRepo                     *customerpaymentportsmock.MockCustomerPaymentRepository
 	fiscalRepo                      *fiscalperiodportsmock.MockFiscalPeriodRepository
+	control                         *accountingcontrol.AccountingControl
 	svc                             *Service
 }
 
@@ -78,16 +82,20 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 	f.invoiceRepo = invoiceportsmock.NewMockInvoiceRepository(t)
 	f.paymentRepo = customerpaymentportsmock.NewMockCustomerPaymentRepository(t)
 	f.fiscalRepo = fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
-	f.svc = &Service{
-		l:           zap.NewNop(),
-		db:          fakePaymentDB{},
-		repo:        f.paymentRepo,
-		invoiceRepo: f.invoiceRepo,
+	f.control = &accountingcontrol.AccountingControl{}
+	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
+	accountingRepo.EXPECT().GetByOrgID(mock.Anything, f.orgID).Return(f.control, nil).Maybe()
+	f.svc = wired(t, &Service{
+		l:              zap.NewNop(),
+		db:             fakePaymentDB{},
+		repo:           f.paymentRepo,
+		invoiceRepo:    f.invoiceRepo,
+		accountingRepo: accountingRepo,
 		validator: NewValidator(
 			ValidatorParams{InvoiceRepo: f.invoiceRepo, FiscalPeriodRepo: f.fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	return f
 }
@@ -95,7 +103,7 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 func (f *creditMemoFixture) expectPeriod() {
 	f.fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: f.orgID, BuID: f.buID, Date: 200}).
-		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_")}, nil).
+		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), Status: fiscalperiod.StatusOpen}, nil).
 		Once()
 }
 
@@ -177,7 +185,7 @@ func TestApplyCreditMemoRefusesAnAccountingDateOutsideAFiscalPeriod(t *testing.T
 	f := newCreditMemoFixture(t)
 	f.fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, mock.Anything).
-		Return(nil, assert.AnError).
+		Return(nil, errortypes.NewNotFoundError("Fiscal period not found")).
 		Once()
 
 	_, err := f.svc.ApplyCreditMemo(t.Context(), f.applyRequest(1000), f.actor)

@@ -4,15 +4,19 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -103,8 +107,37 @@ func (f *fakeLabeler) Label(
 	return f.label, f.err
 }
 
+type quietIndexer struct {
+	retrievalports.RetrievalIndexer
+}
+
+func (quietIndexer) MarkStale(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+	...pulid.ID,
+) error {
+	return nil
+}
+
+// wired gives a test's service the dependencies its test does not care about.
+func wired(svc *Service) *Service {
+	svc.ranker = agentmemoryrank.NewRecencyRanker()
+	if svc.indexer == nil {
+		svc.indexer = quietIndexer{}
+	}
+	if svc.audit == nil {
+		svc.audit = &mocks.NoopAuditService{}
+	}
+	if svc.permissions == nil {
+		svc.permissions = &fakePermissions{}
+	}
+
+	return svc
+}
+
 func newService(repo *fakeMemoryRepo, runs *fakeRuns, labeler *fakeLabeler) *Service {
-	return &Service{l: zap.NewNop(), repo: repo, runs: runs, labeler: labeler}
+	return wired(&Service{l: zap.NewNop(), repo: repo, runs: runs, labeler: labeler})
 }
 
 // fakePermissions answers every check the same way: a manager of shared
@@ -592,4 +625,59 @@ func TestHumanReason(t *testing.T) {
 		HumanReason("Driver asked for Fridays off (plan apl_1)"),
 	)
 	assert.Equal(t, "Wrong trailer", HumanReason("Wrong trailer"))
+}
+
+func TestRecordCorrection_IsOfferedUnlessThePersonManagesSharedMemory(t *testing.T) {
+	t.Parallel()
+
+	for name, tc := range map[string]struct {
+		manages bool
+		status  agentmemory.MemoryStatus
+	}{
+		"a manager keeps it":        {manages: true, status: agentmemory.MemoryStatusActive},
+		"anyone else only offers it": {manages: false, status: agentmemory.MemoryStatusSuggested},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
+			svc.permissions = &fakePermissions{manages: tc.manages}
+
+			memory, err := svc.RecordCorrection(
+				t.Context(),
+				proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"}),
+				&agentdecision.AgentDecision{
+					Decision:        agentdecision.DecisionRejected,
+					ReasonCode:      "Always use the night dispatcher",
+					DecidedByUserID: pulid.MustNew("usr_"),
+				},
+			)
+
+			require.NoError(t, err)
+			require.NotNil(t, memory)
+			assert.Equal(t, tc.status, memory.Status)
+			assert.Equal(t, agentmemory.MemoryScopeOrganization, memory.Scope)
+		})
+	}
+}
+
+func TestRecordCorrection_KeepsTheTaintOfTheProposal(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, &fakeLabeler{})
+	svc.permissions = &fakePermissions{manages: true}
+	p := proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a"})
+	p.Tainted = true
+
+	memory, err := svc.RecordCorrection(t.Context(), p, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionModified,
+		Modifications:   map[string]any{"workerId": "wrk_b"},
+		DecidedByUserID: pulid.MustNew("usr_"),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, memory)
+	assert.True(t, memory.Tainted)
+	require.NotNil(t, memory.TaintRunID)
+	assert.Equal(t, p.RunID, *memory.TaintRunID)
 }

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -58,6 +60,9 @@ func newTestRateLimiter(
 			AppConfig: &cfg.App,
 		}),
 		Logger: zap.NewNop(),
+		Metrics: &metrics.Registry{
+			RateLimit: httpmetrics.NewRateLimit(nil, zap.NewNop(), false),
+		},
 	})
 }
 
@@ -203,7 +208,7 @@ func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) 
 			authctx.SetAuthContext(c, userID, buID, orgID)
 		},
 		"capture device": func(c *gin.Context) {
-			authctx.SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID)
+			authctx.SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID, nil)
 		},
 		"no principal": func(*gin.Context) {},
 	}

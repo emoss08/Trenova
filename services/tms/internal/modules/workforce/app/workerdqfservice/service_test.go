@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func ptrInt64(v int64) *int64 { return &v }
@@ -226,7 +228,8 @@ func newHarness(t *testing.T, profile *worker.WorkerProfile) *harness {
 	retention := &fakeRetention{}
 
 	return &harness{
-		svc: workerdqfservice.NewWithDeps(workerdqfservice.Deps{
+		svc: workerdqfservice.New(workerdqfservice.Params{
+			Logger:        zap.NewNop(),
 			Repo:          repo,
 			WorkerRepo:    workerRepo,
 			RetentionRepo: retention,
@@ -241,6 +244,8 @@ func newHarness(t *testing.T, profile *worker.WorkerProfile) *harness {
 					HasPreEmploymentQuery: true,
 				},
 			},
+			AuditService: &mocks.NoopAuditService{},
+			Realtime:     &mocks.NoopRealtimeService{},
 		}),
 		repo:      repo,
 		documents: documents,

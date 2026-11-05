@@ -802,6 +802,27 @@ func (s *Service) assertActorMayRun(
 	}
 
 	policy := tool.Policy()
+	if err := s.assertActorHolds(ctx, actor, policy.Resource, policy.Operation); err != nil {
+		return err
+	}
+	if actor.PrincipalType != permissionports.PrincipalTypeUser {
+		return nil
+	}
+	for _, grant := range policy.PersonAlsoNeeds {
+		if err := s.assertActorHolds(ctx, actor, grant.Resource, grant.Operation); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) assertActorHolds(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	resource permission.Resource,
+	operation permission.Operation,
+) error {
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
@@ -809,8 +830,8 @@ func (s *Service) assertActorMayRun(
 		APIKeyID:       actor.APIKeyID,
 		BusinessUnitID: actor.BusinessUnitID,
 		OrganizationID: actor.OrganizationID,
-		Resource:       policy.Resource.String(),
-		Operation:      policy.Operation,
+		Resource:       resource.String(),
+		Operation:      operation,
 	})
 	if err != nil {
 		return err
@@ -822,8 +843,8 @@ func (s *Service) assertActorMayRun(
 			errortypes.ErrForbidden,
 			fmt.Sprintf(
 				"You do not have permission to %s %s, which this proposal would do",
-				policy.Operation,
-				policy.Resource,
+				operation,
+				resource,
 			),
 		)
 	}

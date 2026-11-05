@@ -71,7 +71,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const invite = useMutation({
     mutationFn: () => inviteWorkerToPortal({ workerId, email: inviteEmail.trim() || undefined }),
     onSuccess: async (result) => {
-      setInviteUrl(result.inviteUrl);
+      setInviteUrl(result.inviteUrl ?? null);
       setInviteEmail("");
       toast.success(
         result.emailSent
@@ -200,7 +200,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
               )}
             </p>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="portal-invite-email">{t("Email (optional override)")}</Label>
+              <Label htmlFor="portal-invite-email">{t("Email (if none is on file)")}</Label>
               <Input
                 id="portal-invite-email"
                 type="email"

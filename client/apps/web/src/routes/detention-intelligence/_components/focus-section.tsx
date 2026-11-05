@@ -73,8 +73,9 @@ function Column({
   const barWidth = Math.min(32, width * 0.6);
   const center = x + width / 2;
   const total = hours(facility.pastFreeMinutes);
-  let stacked = 0;
   const parts = CAUSES.filter((cause) => causeMinutes(facility, cause.key) > 0);
+
+  const barTotal = parts.reduce((sum, part) => sum + causeMinutes(facility, part.key) / 60, 0);
 
   return (
     <g
@@ -100,10 +101,12 @@ function Column({
         className="fill-transparent"
       />
       {parts.map((cause, index) => {
+        const stacked = parts
+          .slice(0, index)
+          .reduce((sum, part) => sum + causeMinutes(facility, part.key) / 60, 0);
         const value = causeMinutes(facility, cause.key) / 60;
         const top = y(stacked + value);
         const bottom = y(stacked);
-        stacked += value;
         return (
           <rect
             key={cause.key}
@@ -118,7 +121,7 @@ function Column({
       })}
       <text
         x={center}
-        y={y(stacked) - 6}
+        y={y(barTotal) - 6}
         textAnchor="middle"
         className="fill-foreground font-mono text-xs tabular-nums"
       >

@@ -91,7 +91,7 @@ export function CommunicationProfilePanel({
         value: "transport",
         label: t("Transport"),
         icon: Signal01Icon,
-        content: <TransportTab />,
+        content: <TransportTab profile={profile} />,
       },
       { value: "envelope", label: t("Envelope"), icon: ShieldTickIcon, content: <EnvelopeTab /> },
       {

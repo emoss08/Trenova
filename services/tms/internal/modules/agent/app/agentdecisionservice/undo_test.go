@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -260,6 +262,7 @@ type windowRuns struct {
 	agentruntimeports.AgentRunRepository
 
 	threadID pulid.ID
+	agentID  pulid.ID
 }
 
 func (r windowRuns) GetByID(
@@ -267,10 +270,29 @@ func (r windowRuns) GetByID(
 	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{
-		ID:          req.ID,
-		SubjectType: agent.SubjectAssistantThread,
-		SubjectID:   r.threadID,
+		ID:                req.ID,
+		SubjectType:       agent.SubjectAssistantThread,
+		SubjectID:         r.threadID,
+		AgentDefinitionID: r.agentID,
 	}, nil
+}
+
+type windowDefinitions struct {
+	agentdefinitionports.AgentDefinitionRepository
+
+	mode agentdefinition.AccessMode
+	err  error
+}
+
+func (d windowDefinitions) GetByID(
+	_ context.Context,
+	req agentdefinitionports.GetAgentDefinitionByIDRequest,
+) (*agentdefinition.Definition, error) {
+	if d.err != nil {
+		return nil, d.err
+	}
+
+	return &agentdefinition.Definition{ID: req.ID, Name: "Dispatch", AccessMode: d.mode}, nil
 }
 
 type windowThreads struct {
@@ -376,7 +398,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 	decisions := &windowDecisionRows{}
 	workflows := &windowWorkflows{}
 	activity := &windowActivity{}
-	runs := windowRuns{threadID: pulid.MustNew("athr_")}
+	runs := windowRuns{threadID: pulid.MustNew("athr_"), agentID: pulid.MustNew("agdef_")}
 	controls := &windowControls{}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
@@ -386,6 +408,8 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 		ProposalRepo: proposals,
 		Permissions:  &agenttest.StubPermissions{},
 		AuditService: traceAudit{},
+		Runs:         runs,
+		Versions:     &traceVersions{versions: []int64{3}},
 	})
 
 	return &windowHarness{
@@ -395,11 +419,22 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 			proposalRepo: proposals,
 			runRepo:      runs,
 			threads:      windowThreads{},
-			shadow:       agentshadow.New(agentshadow.Params{Control: controls, Runs: runs}),
-			workflows:    workflows,
-			executor:     executor,
-			audit:        traceAudit{},
-			activity:     activity,
+			definitions:  windowDefinitions{mode: agentdefinition.AccessEveryone},
+			permissions:  &agenttest.StubPermissions{},
+			shadow: agentshadow.New(agentshadow.Params{
+				Control:     controls,
+				Runs:        runs,
+				Definitions: windowDefinitions{mode: agentdefinition.AccessEveryone},
+			}),
+			workflows:  workflows,
+			executor:   executor,
+			audit:      traceAudit{},
+			activity:   activity,
+			previews:   &stalePreviews{},
+			watchtower: agenttest.QuietWatchtower{},
+			followUps:  agenttest.QuietFollowUps{},
+			trust:      quietTrust{},
+			memories:   quietMemories{},
 		},
 		controls:  controls,
 		proposals: proposals,

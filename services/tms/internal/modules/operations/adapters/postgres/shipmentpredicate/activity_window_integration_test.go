@@ -1,11 +1,12 @@
 //go:build integration
 
-package shipmentpredicate
+package shipmentpredicate_test
 
 import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -108,7 +109,7 @@ func TestActivityWindow_KeepsLoadsWhoseLiveStopsSpanTheWindow(t *testing.T) {
 	})
 	sp := shipmentdb.Shipments
 	matched, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(OptionPredicates(&shipmentports.ShipmentOptions{
+		Where(shipmentpredicate.OptionPredicates(&shipmentports.ShipmentOptions{
 			ActivityWindowStart: awWindowStart,
 			ActivityWindowEnd:   awWindowEnd,
 		})...))

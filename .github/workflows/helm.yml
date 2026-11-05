@@ -9,6 +9,7 @@ on:
       # Files the chart reads through symlinks, and the images it runs.
       - "deploy/gtc/sinks.yaml"
       - "deploy/selfhost/scripts/db-bootstrap.sh"
+      - "deploy/selfhost/scripts/db-prepare.sh"
       - "deploy/selfhost/temporal/dynamicconfig.yaml"
       - "deploy/Caddyfile"
       - "deploy/Dockerfile.*"
@@ -24,6 +25,7 @@ on:
       # Files the chart reads through symlinks, and the images it runs.
       - "deploy/gtc/sinks.yaml"
       - "deploy/selfhost/scripts/db-bootstrap.sh"
+      - "deploy/selfhost/scripts/db-prepare.sh"
       - "deploy/selfhost/temporal/dynamicconfig.yaml"
       - "deploy/Caddyfile"
       - "deploy/Dockerfile.*"
@@ -85,7 +87,6 @@ jobs:
           declare -A shapes=(
             [default]=""
             [everything]="--set docling.enabled=true --set clamav.enabled=true --set ingress.enabled=true --set ingress.className=traefik --set bootstrap.adminEmail=admin@example.com --set networkPolicy.metricsFrom[0].namespaceSelector.matchLabels.monitoring=enabled"
-            [rls-off]="--set postgres.rlsMode=off"
             [external-storage]="--set minio.enabled=false --set storage.external.endpoint=s3.example.com --set storage.external.publicEndpoint=https://s3.example.com --set storage.external.existingSecret=s3 --set secrets.existingSecret=app --set postgres.existingSecret=db"
             [cloud-edge]="--set client.enabled=false --set networkPolicy.enabled=false --set imaging.tls.existingServerSecret=a --set imaging.tls.existingClientSecret=b"
             [ci]="-f $CHART/ci/install-values.yaml"
@@ -223,10 +224,13 @@ jobs:
         run: |
           set -euo pipefail
           before="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
+          ca_before="$(kubectl -n trenova get secret trenova-temporal-server-tls -o jsonpath='{.data.ca\.crt}')"
           helm upgrade trenova "$CHART" -n trenova -f "$CHART/ci/install-values.yaml" \
             --wait --wait-for-jobs --timeout 15m
           after="$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
           test "$before" = "$after" || { echo "::error::the upgrade replaced the encryption key"; exit 1; }
+          ca_after="$(kubectl -n trenova get secret trenova-temporal-server-tls -o jsonpath='{.data.ca\.crt}')"
+          test -n "$ca_before" && test "$ca_before" = "$ca_after" || { echo "::error::the upgrade reissued Temporal's CA"; exit 1; }
           helm test trenova -n trenova --logs --timeout 5m
 
       - name: What the cluster looked like

@@ -1,9 +1,23 @@
 package permissionports
 
 import (
+	"context"
+	"maps"
+	"slices"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type RoleGrantGuard interface {
+	RequireCanGrantRole(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		roleID pulid.ID,
+	) error
+}
 
 type DelegationViolationKind int
 
@@ -47,6 +61,24 @@ func (e *EffectivePermissions) DelegationViolation(
 			Resource: resource,
 			Scope:    scope,
 		}, true
+	}
+
+	return DelegationViolation{}, false
+}
+
+func (e *EffectivePermissions) Uncovered(
+	target *EffectivePermissions,
+) (DelegationViolation, bool) {
+	resources := slices.Sorted(maps.Keys(target.Resources))
+	for _, resource := range resources {
+		held := target.Resources[resource]
+		if violation, violated := e.DelegationViolation(
+			resource,
+			held.Operations,
+			held.DataScope,
+		); violated {
+			return violation, true
+		}
 	}
 
 	return DelegationViolation{}, false

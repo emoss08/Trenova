@@ -82,7 +82,7 @@ func TestReview_ClearsTheTaintAndRecordsWhoCleared(t *testing.T) {
 
 	repo := &reviewRepo{memory: taintedInstruction()}
 	security := &recordedChanges{}
-	svc := &Service{l: zap.NewNop(), repo: repo, security: security}
+	svc := wired(&Service{l: zap.NewNop(), repo: repo, security: security})
 	actor := userActor()
 
 	reviewed, err := svc.Review(t.Context(), agentmemoryports.ReviewAgentMemoryRequest{
@@ -123,7 +123,7 @@ func TestReview_RefusesWhatThereIsNothingToReview(t *testing.T) {
 		change(memory)
 		repo := &reviewRepo{memory: memory}
 
-		_, err := (&Service{l: zap.NewNop(), repo: repo}).Review(
+		_, err := wired(&Service{l: zap.NewNop(), repo: repo}).Review(
 			t.Context(),
 			agentmemoryports.ReviewAgentMemoryRequest{
 				ID:         memory.ID,
@@ -143,7 +143,7 @@ func TestReview_OnlyAPerson(t *testing.T) {
 
 	repo := &reviewRepo{memory: taintedInstruction()}
 
-	_, err := (&Service{l: zap.NewNop(), repo: repo}).Review(
+	_, err := wired(&Service{l: zap.NewNop(), repo: repo}).Review(
 		t.Context(),
 		agentmemoryports.ReviewAgentMemoryRequest{
 			ID:         repo.memory.ID,
@@ -167,7 +167,7 @@ func TestApproveSuggestion_OfATaintedSuggestionIsItsReview(t *testing.T) {
 	memory.Tainted = true
 	repo := &suggestionRepo{memory: memory}
 	security := &recordedChanges{}
-	svc := &Service{l: zap.NewNop(), repo: repo, security: security}
+	svc := wired(&Service{l: zap.NewNop(), repo: repo, security: security})
 
 	_, err := svc.ApproveSuggestion(
 		t.Context(),

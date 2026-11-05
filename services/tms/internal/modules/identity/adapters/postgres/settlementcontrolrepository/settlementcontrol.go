@@ -58,6 +58,7 @@ func (r *repository) GetOrCreate(
 			VarianceThresholdPct:          decimal.NewFromInt(25),
 			VarianceLookbackWeeks:         8,
 			EscrowInterestFrequencyMonths: 3,
+			RequireSeparateApprover:       true,
 		}
 	}
 
@@ -155,11 +156,14 @@ func (r *repository) Update(
 				sc.PayTrigger,
 				sc.AutoGenerateBatches,
 				sc.AutoApproveClean,
+				sc.AutoAttachAccruals,
+				sc.AutoPostOnApprove,
 				sc.AllowNegativeNet,
 				sc.VarianceThresholdPct,
 				sc.VarianceLookbackWeeks,
 				sc.DefaultEscrowInterestRate,
 				sc.EscrowInterestFrequencyMonths,
+				sc.RequireSeparateApprover,
 			); err != nil {
 				return nil, settlementControlErrors.Map(err, entity.ID.String())
 			}

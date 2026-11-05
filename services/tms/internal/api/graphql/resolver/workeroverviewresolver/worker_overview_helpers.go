@@ -37,6 +37,12 @@ func (r *Deps) OverviewSections(
 			permission.ResourceWorkerSafetyEvent,
 			permission.OpRead,
 		),
+		Discipline: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourceWorkerDisciplinaryAction,
+			permission.OpRead,
+		),
 		Checklists: r.HasPermission(
 			ctx,
 			authCtx,

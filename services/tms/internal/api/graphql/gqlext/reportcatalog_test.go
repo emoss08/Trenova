@@ -72,7 +72,10 @@ func TestReportsProtectWhatTheSchemaProtects(t *testing.T) {
 
 	catalog, err := reportengine.NewCatalog()
 	require.NoError(t, err)
-	kinds, err := reportaccess.New(reportaccess.Params{Catalog: catalog})
+	kinds, err := reportaccess.New(reportaccess.Params{
+		Catalog:  catalog,
+		Registry: permissioncatalog.NewRegistry(),
+	})
 	require.NoError(t, err)
 
 	protected := schemaProtected(t)

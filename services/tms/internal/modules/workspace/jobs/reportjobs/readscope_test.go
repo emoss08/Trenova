@@ -51,12 +51,3 @@ func TestWithReadScope_NarrowsARunToItsRequestersScope(t *testing.T) {
 	assert.Equal(t, tenant.OrgID, scopes.principal.OrganizationID)
 	assert.Equal(t, tenant.BuID, scopes.principal.BusinessUnitID)
 }
-
-func TestWithReadScope_RefusesARunItCannotNarrow(t *testing.T) {
-	t.Parallel()
-
-	_, err := (&Activities{}).withReadScope(t.Context(), pagination.TenantInfo{
-		UserID: pulid.MustNew("usr_"),
-	})
-	require.Error(t, err)
-}

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -78,8 +79,18 @@ func newTestService(repo *fakeProviderRepo, prober *fakeProber) *Service {
 		encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 		),
-		prober: prober,
+		prober:    prober,
+		keys:      &recordingKeys{},
+		analytics: quietAnalytics{},
 	}
+}
+
+type quietAnalytics struct {
+	aianalyticsports.AnalyticsCache
+}
+
+func (quietAnalytics) BumpEpoch(context.Context, pagination.TenantInfo) error {
+	return nil
 }
 
 func testProvider(t *testing.T, svc *Service) *aiprovider.Provider {
@@ -321,14 +332,13 @@ func TestKeptKeyForNewEndpoint(t *testing.T) {
 	)
 }
 
-// A deployment that hosts many organizations turns private addresses off, so
-// no organization's administrator can make the server call into its network.
+// Private addresses are off unless the server turns them on, so no
+// organization's administrator can make the server call into its network.
 func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
 	t.Parallel()
 
-	off := false
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
-	svc.ai = &aiconfig.Config{PrivateNetworkProviders: &off}
+	svc.ai = &aiconfig.Config{}
 	provider := testProvider(t, svc)
 	req := saveRequest(provider, "http://10.0.0.5:11434", nil)
 	req.AllowPrivateNetwork = true
@@ -338,11 +348,11 @@ func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
 	require.Error(t, err)
 	assert.False(t, provider.AllowPrivateNetwork)
 
-	svc.ai = nil
+	svc.ai = &aiconfig.Config{PrivateNetworkProviders: true}
 	require.NoError(
 		t,
 		svc.apply(provider, req, nil),
-		"an absent setting keeps self-hosted models working",
+		"a server that turns it on keeps self-hosted models working",
 	)
 	assert.True(t, provider.AllowPrivateNetwork)
 }

@@ -226,11 +226,37 @@ func ParseMDN(
 	return result, nil
 }
 
-func IsMDNContentType(contentType string) bool {
+func MessageIDMatches(expected, actual string) bool {
+	expected = strings.Trim(strings.TrimSpace(expected), "<>")
+	return expected != "" && expected == strings.Trim(strings.TrimSpace(actual), "<>")
+}
+
+func IsMDN(contentType string, body []byte) bool {
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
 		return false
 	}
+	if mediaType != contentTypeMultipartSigned {
+		return isMDNMediaType(mediaType, params)
+	}
+
+	parts, err := splitMultipart(body, params["boundary"])
+	if err != nil || len(parts) == 0 {
+		return false
+	}
+	headers, _, err := splitEntity(parts[0])
+	if err != nil {
+		return false
+	}
+	mediaType, params, err = mime.ParseMediaType(entityContentType(headers))
+	if err != nil {
+		return false
+	}
+
+	return isMDNMediaType(mediaType, params)
+}
+
+func isMDNMediaType(mediaType string, params map[string]string) bool {
 	switch mediaType {
 	case contentTypeMultipartReport:
 		return strings.EqualFold(params["report-type"], "disposition-notification")

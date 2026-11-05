@@ -106,6 +106,7 @@ export const portalSiteSchema = z.object({
   startUrl: z.string(),
   browserProfileId: z.string(),
   allowActions: z.boolean(),
+  viewOnlyAccount: z.boolean(),
   enabled: z.boolean(),
   hasSignIn: z.boolean(),
   hasAuthenticator: z.boolean().default(false),
@@ -264,6 +265,7 @@ export const savePortalSiteRequestSchema = z.object({
   clearAuthenticator: z.boolean(),
   browserProfileId: z.string(),
   allowActions: z.boolean(),
+  viewOnlyAccount: z.boolean(),
   enabled: z.boolean(),
   version: z.number().int(),
 });
@@ -308,6 +310,7 @@ export const portalSiteFormSchema = z.object({
     .trim()
     .max(100, { error: () => translate("Keep the profile to 100 characters") }),
   allowActions: z.boolean(),
+  viewOnlyAccount: z.boolean(),
   enabled: z.boolean(),
 });
 

@@ -51,7 +51,7 @@ func filedContent(
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	if previews != nil {
-		rewire(rt, func(p *Params) { p.Previews = previews })
+		rewire(rt, func(p *runtimeParts) { p.Previews = previews })
 	}
 
 	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{

@@ -4,12 +4,18 @@ import (
 	"context"
 	"testing"
 
+	tenantdomain "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -177,6 +183,10 @@ func newHarness(t *testing.T) *harness {
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	reviewers := tenantportsmock.NewMockUserRepository(t)
+	reviewers.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenantdomain.User{Name: "Dana Ortiz"}, nil).
+		Maybe()
 
 	cadence := int32(6)
 	repo := &fakeRepo{templates: []*workerreview.PerformanceReviewTemplate{{
@@ -192,6 +202,14 @@ func newHarness(t *testing.T) *harness {
 		Repo:         repo,
 		WorkerRepo:   workerRepo,
 		AuditService: audit,
+		Realtime:     &mocks.NoopRealtimeService{},
+		UserRepo:     reviewers,
+		DriverNotify: drivernotificationservice.New(drivernotificationservice.Params{
+			Logger:        zap.NewNop(),
+			WorkerRepo:    workerRepo,
+			Notifications: notificationtest.Discarding(),
+			Templates:     documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
+		}),
 	})
 	return &harness{
 		svc:      svc,

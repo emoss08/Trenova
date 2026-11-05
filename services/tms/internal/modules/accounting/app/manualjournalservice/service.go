@@ -336,6 +336,13 @@ func (s *Service) Approve(
 	if multiErr := s.validator.ValidateApprove(entity); multiErr != nil {
 		return nil, multiErr
 	}
+	if entity.CreatedByID == userID || entity.UpdatedByID == userID {
+		return nil, errortypes.NewValidationError(
+			"requestId",
+			errortypes.ErrInvalidOperation,
+			"You wrote or submitted this manual journal, so someone else must approve it",
+		)
+	}
 
 	after := cloneRequest(entity)
 	now := timeutils.NowUnix()

@@ -46,7 +46,7 @@ func TestRegisterObservers_HandsTheGraphsObserversToTheEmailService(t *testing.T
 	var svc *Service
 	app := fxtest.New(t,
 		fx.Provide(
-			func() *Service { return &Service{} },
+			func() *Service { return &Service{invoiceRepo: noInvoiceAttempts{}} },
 			func(email *Service) emailports.EmailService { return email },
 			fx.Annotate(
 				func(emailports.EmailService) emailports.EmailMessageObserver { return observer },

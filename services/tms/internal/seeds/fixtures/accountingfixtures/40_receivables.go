@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
@@ -490,13 +489,11 @@ func (s *ReceivablesSeed) ensureInvoice(
 		BillToCustomerID: cus.ID,
 		Number:           spec.number,
 		Status:           billingqueue.StatusPosted,
+		Lane:             billingqueue.LaneClosed,
 		BillType:         billingvocab.BillTypeInvoice,
 	}
 	if err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue); err != nil {
 		return false, fmt.Errorf("insert billing queue item: %w", err)
-	}
-	if err = billingqueueprojection.Refresh(ctx, db, queue.ID); err != nil {
-		return false, err
 	}
 
 	entity := &invoice.Invoice{
@@ -820,6 +817,7 @@ func (s *ReceivablesSeed) ensureCreditMemo(
 		BillToCustomerID: target.CustomerID,
 		Number:           spec.number,
 		Status:           billingqueue.StatusPosted,
+		Lane:             billingqueue.LaneClosed,
 		BillType:         billingvocab.BillTypeCreditMemo,
 		AdjustmentContext: billingqueue.AdjustmentContext{
 			Memo: &billingqueue.AdjustmentMemo{Kind: invoice.MemoKindManual},
@@ -827,9 +825,6 @@ func (s *ReceivablesSeed) ensureCreditMemo(
 	}
 	if err = billingqueuedb.BillingQueueItems.Create(ctx, db, queue); err != nil {
 		return fmt.Errorf("insert credit memo queue item: %w", err)
-	}
-	if err = billingqueueprojection.Refresh(ctx, db, queue.ID); err != nil {
-		return err
 	}
 
 	memo := &invoice.Invoice{

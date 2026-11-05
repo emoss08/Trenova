@@ -121,7 +121,7 @@ func TestSubmitBackground_AnInlineRunKeepsItsAttribution(t *testing.T) {
 
 	inline, _ := chatServer(t, http.StatusOK, `{"documentKind":"RateConfirmation"}`)
 	provider := openAIChatProvider("self-hosted", inline.URL, 10)
-	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskEvaluationJudge}
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
 	svc.Usage = usage
@@ -154,7 +154,7 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 	svc.Usage = usage
 
 	req := pollRequest(provider)
-	req.Task = aitask.TaskDocumentExtraction
+	req.Task = aitask.TaskEvaluationJudge
 	req.SubmittedAt = time.Now().Add(-90 * time.Second).Unix()
 	req.Attribution = documentAttribution()
 
@@ -166,7 +166,7 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 	row := rows[0]
 	assert.True(t, row.Succeeded)
 	assert.Equal(t, aiusage.SurfaceBackground, row.Surface)
-	assert.Equal(t, aitask.TaskDocumentExtraction, row.Task)
+	assert.Equal(t, aitask.TaskEvaluationJudge, row.Task)
 	assert.Equal(t, provider.ID, row.ProviderID)
 	assert.Equal(t, "gpt-test", row.Model)
 	assert.Equal(t, 120, row.InputTokens)

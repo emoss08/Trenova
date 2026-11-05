@@ -91,7 +91,7 @@ func responsesProvider(t *testing.T, name, baseURL string, priority int) *aiprov
 		StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 		MaxTokens:            2048,
 		Priority:             priority,
-		Tasks:                []aitask.Task{aitask.TaskDocumentExtraction},
+		Tasks:                []aitask.Task{aitask.TaskEvaluationJudge},
 		Enabled:              true,
 	}
 }
@@ -102,7 +102,7 @@ func extractionRequest() *llmports.StructuredCompletionRequest {
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aitask.TaskDocumentExtraction,
+		Task:   aitask.TaskEvaluationJudge,
 		System: "Extract the rate confirmation.",
 		Context: llmports.DelimitedContext{
 			Sections: []llmports.ContextSection{
@@ -138,7 +138,7 @@ func TestSubmitBackground_RunsInlineWhenNoProtocolCanDefer(t *testing.T) {
 
 	inline, calls := chatServer(t, http.StatusOK, `{"documentKind":"RateConfirmation"}`)
 	provider := openAIChatProvider("self-hosted", inline.URL, 10)
-	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskEvaluationJudge}
 
 	svc := newTestService(t, provider)
 
@@ -164,7 +164,7 @@ func TestSubmitBackground_FallsBackToInlineWhenTheSubmitFails(t *testing.T) {
 
 	inline, inlineCalls := chatServer(t, http.StatusOK, `{"documentKind":"BillOfLading"}`)
 	fallback := openAIChatProvider("self-hosted", inline.URL, 20)
-	fallback.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
+	fallback.Tasks = []aitask.Task{aitask.TaskEvaluationJudge}
 
 	svc := newTestService(t, responsesProvider(t, "hosted", broken.URL, 10), fallback)
 

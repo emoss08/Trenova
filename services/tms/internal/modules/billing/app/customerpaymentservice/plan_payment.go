@@ -20,11 +20,12 @@ import (
 )
 
 type paymentChangePlan struct {
-	control      *accountingcontrol.AccountingControl
-	payment      *customerpayment.Payment
-	applications []*customerpayment.Application
-	invoices     []*invoice.Invoice
-	period       *fiscalperiod.FiscalPeriod
+	control        *accountingcontrol.AccountingControl
+	payment        *customerpayment.Payment
+	applications   []*customerpayment.Application
+	invoices       []*invoice.Invoice
+	period         *fiscalperiod.FiscalPeriod
+	accountingDate int64
 }
 
 type paymentJournal struct {
@@ -92,7 +93,7 @@ func (s *Service) planApplyUnapplied(
 		return nil, err
 	}
 	applications := mapApplications(req.Applications)
-	invoices, period, me := s.validator.ValidateApplyUnapplied(
+	invoices, resolved, err := s.validator.ValidateApplyUnapplied(
 		ctx,
 		payment,
 		req.AccountingDate,
@@ -100,16 +101,17 @@ func (s *Service) planApplyUnapplied(
 		scope,
 		control,
 	)
-	if me != nil {
-		return nil, me
+	if err != nil {
+		return nil, err
 	}
 
 	return &paymentChangePlan{
-		control:      control,
-		payment:      payment,
-		applications: applications,
-		invoices:     invoices,
-		period:       period,
+		control:        control,
+		payment:        payment,
+		applications:   applications,
+		invoices:       invoices,
+		period:         resolved.Period,
+		accountingDate: resolved.AccountingDate,
 	}, nil
 }
 
@@ -130,22 +132,23 @@ func (s *Service) planReverse(
 	if err != nil {
 		return nil, err
 	}
-	invoices, period, me := s.validator.ValidateReverse(
+	invoices, resolved, err := s.validator.ValidateReverse(
 		ctx,
 		payment,
 		req.AccountingDate,
 		control,
 		scope,
 	)
-	if me != nil {
-		return nil, me
+	if err != nil {
+		return nil, err
 	}
 
 	return &paymentChangePlan{
-		control:  control,
-		payment:  payment,
-		invoices: invoices,
-		period:   period,
+		control:        control,
+		payment:        payment,
+		invoices:       invoices,
+		period:         resolved.Period,
+		accountingDate: resolved.AccountingDate,
 	}, nil
 }
 
@@ -390,7 +393,7 @@ func (s *Service) PreviewApplyUnapplied(
 		InvoicesAfter:  invoicesAfter,
 		Journal: journal.preview(
 			plan.control,
-			req.AccountingDate,
+			plan.accountingDate,
 			plan.period,
 			actor.UserID,
 		),
@@ -427,7 +430,7 @@ func (s *Service) PreviewReverse(
 		InvoicesAfter:  invoicesAfter,
 		Journal: journal.preview(
 			plan.control,
-			req.AccountingDate,
+			plan.accountingDate,
 			plan.period,
 			actor.UserID,
 		),

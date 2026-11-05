@@ -12,6 +12,11 @@ domain: ""
 # with external storage, storage.external.publicEndpoint is used instead.
 storageDomain: ""
 
+# Stops every workload but PostgreSQL (replicas 0, no release Job) and keeps
+# every volume and Secret; set it back to false to start them again. Trenova
+# Cloud's operator stops a suspended or decommissioned instance this way.
+stopped: false
+
 # Applied to every pod the chart makes.
 imagePullSecrets: []
 nodeSelector: {}
@@ -41,6 +46,7 @@ secrets:
   #   rlsScopeKey              base64 of 32+ random bytes
   #   storageAccessKey, storageSecretKey   while minio.enabled is true
   #   doclingApiKey            while docling.enabled is true
+  #   gotenbergPassword        what the TMS and Gotenberg authenticate with
   #   bootstrapAdminPassword   while bootstrap.adminEmail is set
   existingSecret: ""
 
@@ -286,18 +292,22 @@ postgres:
   uid: 70
   gid: 70
   instances: 1
+  # Stops PostgreSQL too (CloudNativePG's declarative hibernation), keeping
+  # its volumes. Use it with stopped: true.
+  hibernate: false
   database: trenova
   # Owns the tables; migrations and seeds run as it.
   owner: trenova
-  # The roles the application signs in as. With rlsMode enforce, appRole is
-  # bound by row-level security and systemRole serves only the code paths
-  # that declare dbscope.WithSystem; both are made by the release Job.
+  # The roles the application signs in as. appRole is bound by row-level
+  # security and systemRole serves only the code paths that declare
+  # dbscope.WithSystem; both are made by the release Job. The owner is a
+  # superuser, so nothing but the release Job signs in as it.
   appRole: trenova_app
   systemRole: trenova_system
   temporalRole: temporal
   gtcRole: trenova_gtc
-  # enforce (production), observe or off; see
-  # docs/engineering/row-level-security.md. Off connects as the owner.
+  # enforce (production) or observe; see
+  # docs/engineering/row-level-security.md.
   rlsMode: enforce
   # A basic-auth Secret you manage: username and password (the owner), and
   # appPassword, systemPassword, temporalPassword and gtcPassword, letters
@@ -424,9 +434,20 @@ temporal:
   resources:
     requests: { cpu: 250m, memory: 512Mi }
     limits: { memory: 1536Mi }
+  # Mutual TLS on Temporal's frontend and between its services. Empty, the
+  # chart issues a private CA and both certificates once, for validityDays,
+  # and keeps them across upgrades; delete the two Secrets and upgrade to
+  # reissue. Otherwise two Secrets you manage: the server's with tls.crt,
+  # tls.key and ca.crt for the service name <release>-trenova-temporal, its
+  # certificate usable for client authentication too (Temporal's services call
+  # each other with it), and the client's with tls.crt, tls.key and ca.crt.
+  tls:
+    existingServerSecret: ""
+    existingClientSecret: ""
+    validityDays: 3650
 
 # Renders organization-authored HTML to PDF, locked down: JavaScript off, no
-# network, read-only root.
+# network, read-only root. Rendering needs the generated gotenbergPassword.
 gotenberg:
   image:
     repository: gotenberg/gotenberg
@@ -453,7 +474,9 @@ docling:
 # Malware scanning: clamd checks every uploaded file, inbound email
 # attachment, capture page and inbound EDI file before anything opens it.
 # Once on, a file is refused while clamd is unreachable, and the first
-# signature download takes several minutes.
+# signature download takes several minutes. clamd holds about 1.2 GiB of
+# signatures and twice that while it reloads them each day; ClamAV documents
+# 3 GiB as the minimum and 4 GiB as the preferred size for its container.
 clamav:
   enabled: false
   image:
@@ -463,7 +486,7 @@ clamav:
     size: 2Gi
     storageClass: ""
   resources:
-    requests: { cpu: 250m, memory: 1536Mi }
+    requests: { cpu: 250m, memory: 3Gi }
     limits: { memory: 4Gi }
 
 # The document and imaging worker, reached by the TMS over mutual TLS. One

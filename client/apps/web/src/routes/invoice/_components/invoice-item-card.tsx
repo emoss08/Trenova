@@ -16,6 +16,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import type { InvoiceTableRowFieldsFragment } from "@trenova/graphql/generated/graphql";
 import { invoiceBillingPeriod, invoiceBillsSingleShipment } from "@/lib/invoice-scope";
+import { openInNewTab } from "@/lib/open-in-new-tab";
 import { shipmentPanelPath } from "@/lib/shipment-utils";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { formatCurrency } from "@trenova/shared/lib/utils";
@@ -111,22 +112,20 @@ export function InvoiceItemCard({
       </ContextMenuTrigger>
       <ContextMenuContent>
         {billsSingleShipment && shipmentId ? (
-          <ContextMenuItem onClick={() => window.open(shipmentPanelPath(shipmentId), "_blank")}>
+          <ContextMenuItem onClick={() => openInNewTab(shipmentPanelPath(shipmentId))}>
             <LinkExternal01Icon className="size-3.5" />
             {t("View shipment")}
           </ContextMenuItem>
         ) : null}
         {orderId ? (
-          <ContextMenuItem onClick={() => window.open(recordPath("order", orderId), "_blank")}>
+          <ContextMenuItem onClick={() => openInNewTab(recordPath("order", orderId))}>
             <PackageIcon className="size-3.5" />
             {t("View order")}
           </ContextMenuItem>
         ) : null}
         {billsSingleShipment ? (
           <ContextMenuItem
-            onClick={() =>
-              window.open(`/billing/queue?item=${invoice.billingQueueItemId}`, "_blank")
-            }
+            onClick={() => openInNewTab(`/billing/queue?item=${invoice.billingQueueItemId}`)}
           >
             <File06Icon className="size-3.5" />
             {t("View billing queue item")}

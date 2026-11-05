@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -143,6 +144,7 @@ func newApprovalHarness(t *testing.T) *approvalHarness {
 			Recipient:    recipients,
 			Payload:      edipayloadbuild.New(edipayloadbuild.Params{ShipmentSvc: shipments}),
 			Delivery: edidelivery.New(edidelivery.Params{
+				Metrics:     metricstest.Disabled(),
 				Logger:      logger,
 				PartnerRepo: partners,
 				Alert:       alerts,

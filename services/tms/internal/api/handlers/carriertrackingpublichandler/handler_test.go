@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -94,6 +96,9 @@ func newRouter(service *fakeService) *gin.Engine {
 			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
 			ErrorHandler:   errorHandler,
 			Logger:         zap.NewNop(),
+			Metrics: &metrics.Registry{
+				RateLimit: httpmetrics.NewRateLimit(nil, zap.NewNop(), false),
+			},
 		}),
 	})
 	gin.SetMode(gin.TestMode)

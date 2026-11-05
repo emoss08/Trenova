@@ -33,8 +33,14 @@ func productionLocalKeyConfig(t *testing.T, allow bool, key string) string {
     gcpKms:
       cryptoKey: "projects/test/locations/us/keyRings/autokey/cryptoKeys/trenova"
 `
+	const temporal = "temporal:\n  hostPort: \"localhost:7233\"\n"
 	base := validConfigYAML()
 	require.Contains(t, base, gcpEncryption)
+	require.Contains(t, base, temporal)
+	base = strings.Replace(base, temporal, temporal+`  tls:
+    clientCertPath: /certs/temporal/client.pem
+    clientKeyPath: /certs/temporal/client-key.pem
+`, 1)
 
 	allowed := "false"
 	if allow {

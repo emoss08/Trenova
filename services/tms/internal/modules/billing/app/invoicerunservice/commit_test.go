@@ -1,9 +1,11 @@
 package invoicerunservice
 
 import (
+	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
@@ -45,7 +47,11 @@ func TestResolveGroupLegsSkipsAnItemReallocatedToAnotherPayer(t *testing.T) {
 		}, nil).
 		Once()
 
-	svc := &Service{l: zap.NewNop(), billingQueueRepo: billingQueueRepo}
+	svc := &Service{
+		l:                zap.NewNop(),
+		billingQueueRepo: billingQueueRepo,
+		detentionBilling: &mocks.NoopDetentionBilling{},
+	}
 
 	legs, items, reason, err := svc.resolveGroupLegs(
 		t.Context(),
@@ -88,7 +94,12 @@ func TestResolveGroupLegsLoadsLegsForThePayersItems(t *testing.T) {
 		Return(leg, nil).
 		Once()
 
-	svc := &Service{l: zap.NewNop(), billingQueueRepo: billingQueueRepo, shipmentRepo: shipmentRepo}
+	svc := &Service{
+		l:                zap.NewNop(),
+		billingQueueRepo: billingQueueRepo,
+		shipmentRepo:     shipmentRepo,
+		detentionBilling: &mocks.NoopDetentionBilling{},
+	}
 
 	legs, items, reason, err := svc.resolveGroupLegs(
 		t.Context(),

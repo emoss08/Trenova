@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
@@ -11,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
@@ -23,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 const day = int64(86400)
@@ -182,6 +186,17 @@ func (f *fakeEmployment) Record(
 	}, nil
 }
 
+type noPortalWorkers struct {
+	workerports.WorkerRepository
+}
+
+func (noPortalWorkers) GetByID(
+	context.Context,
+	workerports.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
+	return &worker.Worker{}, nil
+}
+
 type harness struct {
 	svc        *workersafetyservice.Service
 	repo       *fakeRepo
@@ -215,13 +230,19 @@ func newHarness(t *testing.T) *harness {
 
 	repo := &fakeRepo{}
 	employment := &fakeEmployment{}
-	svc := workersafetyservice.NewWithDeps(workersafetyservice.Deps{
+	svc := workersafetyservice.New(workersafetyservice.Params{
+		Logger:       zap.NewNop(),
 		Repo:         repo,
 		WorkerRepo:   workerRepo,
 		DocumentRepo: docs,
-		Employment:   employment,
 		AuditService: audit,
+		Realtime:     &mocks.NoopRealtimeService{},
+		DriverNotify: drivernotificationservice.New(drivernotificationservice.Params{
+			Logger:     zap.NewNop(),
+			WorkerRepo: noPortalWorkers{},
+		}),
 	})
+	svc.SetEmployment(employment)
 	return &harness{
 		svc:        svc,
 		repo:       repo,

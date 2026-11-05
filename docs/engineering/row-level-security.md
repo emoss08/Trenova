@@ -87,6 +87,11 @@ sends no `OnBegin` statements; one with another scope begins its own. See
 | `observe` | signs scopes, logs and meters access that `enforce` would refuse | while rolling out |
 | `enforce` | `OnBegin` refuses a transaction with no tenant or system scope | production |
 
+Only `enforce` promises a database data scope, because `observe` may still connect as a role that
+bypasses the policies. Outside it an `own` or `team` grant on a database-scoped kind can't be saved,
+and one already stored allows nothing until `enforce` is back
+([permissions.md](permissions.md#data-scopes)).
+
 `trenova_db_rls_scope_events_total{pool,event,outcome}` counts every decision.
 In `observe`, the first sighting of each unscoped call site is logged at warn with
 its caller; refusals are always logged at error.
@@ -176,7 +181,10 @@ the tenant first (a share token, a webhook's account) and continuing under
 that holds a `pkg/readscope` holder sends `SET LOCAL trenova.read_scope` with its
 tenant scope, and restrictive `read_scope` policies on `shipments`, `orders`,
 `invoices` and `workers` read it through `trenova_rls.read_scope(kind)` and
-`trenova_rls.read_scope_ids(kind)`. It is unsigned because it can only narrow a read
+`trenova_rls.read_scope_ids(kind)`. A table whose rows exist only as part of a shipment
+(`shipment_events`, `tracking_events`, `check_calls`, `permits`, ...) carries the same
+policy on its parent's scope; `shipment_moves`, `stops` and `assignments` do not, because
+conflict checks read them and a hidden row reads as nothing in the way. It is unsigned because it can only narrow a read
 below what the signed scope allows; `apply_policy` and `reconcile()` leave the
 `read_scope` policies alone. It carries only `own` and `team` grants: a kind the
 principal cannot read is left out, so its rows stay visible to the relations, loaders
@@ -308,6 +316,9 @@ unscoped access is logged once per call site with its two calling frames. Then
 switch to `enforce` and watch for `Refused database access` errors.
 
 ## Rolling out
+
+The Helm chart and the self-host Compose stack run `enforce` from the start and create the roles
+on every deploy (`rls-roles` in both). These steps are for any other deployment.
 
 `observe` is a dry run only while the application still connects as a role that
 bypasses row-level security. The scope guard signs every scope and reports the

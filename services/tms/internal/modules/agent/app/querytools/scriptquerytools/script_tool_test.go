@@ -212,7 +212,27 @@ func TestRunScriptReadsTheRunsTheCallerRanTypedByTheirColumns(t *testing.T) {
 
 	require.Len(t, answer.Datasets, 1)
 	assert.Equal(t, 2, answer.Datasets[0].Rows)
-	assert.Empty(t, answer.TaintedRecords(), "a report run is the organization's own data")
+	assert.Equal(
+		t,
+		[]agentrecord.RecordRef{{EntityType: agent.TaintEntityReport, ID: runID.String()}},
+		answer.TaintedRecords(),
+		"a free-text column may hold what someone outside wrote",
+	)
+}
+
+func TestRunScriptLeavesAReportOfFiguresUnmarked(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness()
+	run := &report.ReportRun{ID: pulid.MustNew("rrun_"), RequestedByID: h.params.Actor.UserID}
+	h.reports.Runs = append(h.reports.Runs, run)
+	h.reports.Rows[run.ID] = querytooltest.TestEnvelope(t, "Margin",
+		[]table.Column{querytooltest.TestColumn("margin", "Margin", value.Decimal)},
+		[]any{"0.180000"})
+
+	answer, err := h.query(t, map[string]any{"name": "lanes", "reportRunId": run.ID.String()})
+	require.NoError(t, err)
+	assert.Empty(t, answer.TaintedRecords(), "figures carry no one's words")
 }
 
 func TestRunScriptRefusesARunSomeoneElseRan(t *testing.T) {

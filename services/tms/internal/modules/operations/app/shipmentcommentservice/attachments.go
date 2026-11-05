@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -141,13 +142,19 @@ func (s *service) reconcileAttachments(
 		if _, err = s.documentService.BulkDelete(ctx, &documentservice.BulkDeleteRequest{
 			IDs:        removedIDs,
 			TenantInfo: tenantInfo,
-			UserID:     comment.UserID,
+			Actor:      commentActor(tenantInfo, comment.UserID),
 		}); err != nil {
 			return err
 		}
 	}
 
 	return s.attachDocuments(ctx, comment, desired)
+}
+
+func commentActor(tenantInfo pagination.TenantInfo, userID pulid.ID) *permissionports.RequestActor {
+	tenantInfo.UserID = userID
+
+	return permissionports.UserActor(tenantInfo)
 }
 
 func (s *service) deleteAllAttachments(
@@ -180,7 +187,7 @@ func (s *service) deleteAllAttachments(
 	_, err = s.documentService.BulkDelete(ctx, &documentservice.BulkDeleteRequest{
 		IDs:        ids,
 		TenantInfo: tenantInfo,
-		UserID:     actorID,
+		Actor:      commentActor(tenantInfo, actorID),
 	})
 
 	return err

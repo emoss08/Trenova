@@ -1,0 +1,15 @@
+{{- if .Values.target.createNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.target.namespace }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    # The operator can create workloads here: the namespace refuses any that
+    # would reach the node.
+    pod-security.kubernetes.io/enforce: baseline
+  annotations:
+    # The instance's data lives in this namespace: uninstalling the operator
+    # must never take it with it.
+    helm.sh/resource-policy: keep
+{{- end }}

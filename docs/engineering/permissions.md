@@ -224,6 +224,11 @@ applies it to every read: lists, lookups, loaders, search, insights and reports 
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
 
+Only `database.rls.mode: enforce` counts as the database enforcing. Under any other mode a stored
+`own` or `team` grant on one of these kinds allows nothing, for people, API keys and agents alike
+(`engine.usableGrant`), because nothing would narrow it and it would reach the whole organization.
+The grant stays stored and works again once `enforce` is back.
+
 The first query that needs the value may be inside a transaction that has not sent its
 `BEGIN` yet (the result cache keys a read by its read scope before the read runs), so the
 grants resolve in a read-only transaction of their own (`RunDetached`, through
@@ -247,9 +252,10 @@ queries, and CI holds every path to it:
 
 - GraphQL: every root field that returns a shipment, order, invoice or worker, directly
   or through a connection, checks read (or an operation implying it) on the kind in its
-  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). One that such a mutation's
-  payload carries rather than returns (a training record's worker) is the root record only
-  for a caller who reads its kind or when the mutation declares `@authorizes`; otherwise
+  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). A record of any kind that a
+  mutation's payload carries rather than returns (a training record's worker, an
+  assignment's customer) is the root record only for a caller who reads its kind or when
+  the mutation declares `@authorizes`, which its resolver must then check; otherwise
   the field guard shows it as linked, and `TestEveryLinkedFieldIsDeclared` holds client
   operations to that (`applyCreditMemo` and `unapplyCreditMemoApplication` check invoice
   read for it).
@@ -574,8 +580,10 @@ counts as `authctx.UnprovenAssurance`: it fails an MFA requirement and passes no
 unproven session (`SetCaptureDeviceContext`), so a policy asking for MFA holds for a device too.
 Where an organization requires role activation, an unproven session holds no roles: nothing
 activated them, so a queued or scheduled turn is refused rather than running with every role
-(`engine.withoutActivatedRoles`). A capture device is exempt from that part, because it has no way
-to activate one and its routes are its own.
+(`engine.withoutActivatedRoles`). A capture device holds the roles active in the session that
+approved its pairing, kept on the device; a device paired with none holds none where activation is
+required. It also keeps the person's session epoch, so a password change, a reset or a second-factor
+reset revokes the device at its next refresh.
 
 A principal that is not a person (an API key, an unattended agent, a job with no person behind it)
 has no session to prove anything with, so a requirement does not refuse it. Scope a plain Deny to
@@ -602,7 +610,14 @@ resource, operation, data scope or sensitivity the person saving does not hold:
 - role assignment, including what the assigned role inherits;
 - role inheritance edges (the junior role's closure is checked, and a system role can
   never be made to inherit);
-- API key create and update.
+- API key create and update;
+- SCIM group role mappings, through `permissionports.RoleGrantGuard`, because a mapping
+  hands its role to whoever the identity provider puts in the group.
+
+What the person holds is `GetEffectivePermissions`, which counts only the roles active in
+their session when the organization requires role activation. Comparing two people
+(`accountguard`) or reading someone else's access clears the activation first with
+`authctx.WithoutSessionRoleActivation`.
 
 A refused grant is recorded in the security audit trail ("Refused a grant beyond the
 actor's own permissions") with what was refused. An API key is also held, at request
@@ -623,12 +638,34 @@ Every change to who can do what calls `permissionports.PermissionChangeNotifier`
 - `OrganizationChanged` advances the organization's permission epoch, so every cached
   permission set computed before the change stops being served at once, and publishes
   `permissions`/`changed` to the tenant;
-- `UserChanged` drops one person's cached set and publishes the event to them alone.
+- `UserChanged` advances that person's own epoch, drops their cached set and publishes the
+  event to them alone. A cached set is served only while the organization and user epochs
+  it was computed under still add up to the current total, so a set computed before the
+  change and written after it is never served, and nobody else's cache is touched.
 
 The browser refetches its permission manifest on the event. The thirty-minute cache TTL
 and the five-minute client poll are only safety nets. Never delete permission keys by
 pattern or by holder: holders through inheritance are invisible to such a delete, which is
 the bug the epoch replaced.
+
+## Reading a document
+
+A document needs `document` access and read on the record it hangs off, and one rule on the
+type says which: `Document.ReadableOwner`. A kind the catalog does not know is refused, and a
+file attached to a conversation is `VisibleToPerson` only for the person who attached it,
+whatever their role. Every `/documents/:documentID/` route registers through `onDocument`, the
+document service loads what it changes through `visibleDocument`, the repository's list reads
+take a `Viewer` (no viewer means no conversation files), agent reads go through
+`fieldgate.Access.ReadableDocuments` and global search never indexes a conversation file. A new
+route, service method or list reaches the rule by using those, not by checking it again.
+
+## Changing what signs someone in
+
+An email address and a second factor belong to the account, not to one organization, so
+changing them for someone else takes the account everywhere it reaches. `accountguard.Guard`
+refuses unless the actor holds everything the target holds in every organization the target
+belongs to, and records the refusal. A person's own account is exempt. Any new path that
+changes what signs someone in, or where a reset link goes, calls `RequireCovers` first.
 
 ## Membership and sessions
 

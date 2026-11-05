@@ -48,7 +48,13 @@ func (s *stubCosts) ResolveCostProfile(
 
 func newTestService(controls *stubControls, costs *stubCosts) *Service {
 	fixed := time.Date(2026, 10, 6, 20, 0, 0, 0, time.UTC)
-	return NewWithDependencies(controls, costs, func() time.Time { return fixed })
+	svc, ok := New(Params{ShipmentControlRepo: controls}).(*Service)
+	if !ok {
+		panic("shipment quick filter resolver is not a *Service")
+	}
+	svc.costs = costs
+	svc.now = func() time.Time { return fixed }
+	return svc
 }
 
 func TestResolveRejectsUnknownZone(t *testing.T) {

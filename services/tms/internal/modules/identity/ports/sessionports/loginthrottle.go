@@ -14,6 +14,8 @@ const LoginThrottleScopeAccount LoginThrottleScope = "account"
 
 const LoginThrottleScopeIP LoginThrottleScope = "ip"
 
+const LoginThrottleUnavailableRetry = 30 * time.Second
+
 type LoginThrottlePolicy struct {
 	AccountThreshold int
 	AccountWindow    time.Duration

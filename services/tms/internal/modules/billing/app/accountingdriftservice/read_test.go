@@ -134,12 +134,3 @@ func TestCheckNowStartsTheRunForASyncingConnection(t *testing.T) {
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Len(t, checker.checked, 1)
 }
-
-func TestCheckNowSaysSoWithoutBackgroundWork(t *testing.T) {
-	t.Parallel()
-	h := newHarness(t)
-
-	_, err := h.svc.CheckNow(t.Context(), h.tenant, integration.TypeQuickBooksOnline)
-
-	assert.True(t, errortypes.IsBusinessError(err))
-}

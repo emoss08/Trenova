@@ -21,6 +21,26 @@ func Fence(toolName, payload string) string {
 	return FenceUntrusted("Result from "+toolName+":", truncateToolResult(payload))
 }
 
+func FenceFailure(toolName, message string) string {
+	return FenceUntrusted(fmt.Sprintf("Tool %q failed:", toolName), truncateToolResult(message))
+}
+
+func FenceInline(text string) string {
+	return UntrustedOpenTag + textfence.FenceText(text, UntrustedCloseTag) + UntrustedCloseTag
+}
+
+func UnfenceInline(line string) string {
+	start := strings.Index(line, UntrustedOpenTag)
+	end := strings.LastIndex(line, UntrustedCloseTag)
+	if start < 0 || end < start {
+		return line
+	}
+	body := line[start+len(UntrustedOpenTag) : end]
+
+	return line[:start] + textfence.RestoreCloseTag(body, UntrustedCloseTag) +
+		line[end+len(UntrustedCloseTag):]
+}
+
 func FenceUntrusted(header, payload string) string {
 	var builder strings.Builder
 	builder.WriteString(header)
@@ -177,13 +197,25 @@ func Unfence(content string) (toolName, payload string, ok bool) {
 	if !strings.HasPrefix(content, prefix) {
 		return "", "", false
 	}
-	rest := content[len(prefix):]
-	nameEnd := strings.Index(rest, ":\n"+UntrustedOpenTag+"\n")
-	if nameEnd < 0 {
+
+	return fencedBody(content[len(prefix):])
+}
+
+func UnfenceFailure(content string) (message string, ok bool) {
+	header, payload, fenced := fencedBody(content)
+	if !fenced || !strings.HasPrefix(header, "Tool ") || !strings.HasSuffix(header, " failed") {
+		return "", false
+	}
+
+	return payload, true
+}
+
+func fencedBody(content string) (header, payload string, ok bool) {
+	headerEnd := strings.Index(content, ":\n"+UntrustedOpenTag+"\n")
+	if headerEnd < 0 {
 		return "", "", false
 	}
-	toolName = rest[:nameEnd]
-	body := rest[nameEnd+len(":\n"+UntrustedOpenTag+"\n"):]
+	body := content[headerEnd+len(":\n"+UntrustedOpenTag+"\n"):]
 	// The payload's own close tags are neutralised, so the first one is the
 	// fence's. Whatever follows it is a note to the model, such as the one
 	// saying the result is already shown to the person, not part of the result.
@@ -191,7 +223,6 @@ func Unfence(content string) (toolName, payload string, ok bool) {
 	if end < 0 {
 		return "", "", false
 	}
-	body = body[:end]
 
-	return toolName, textfence.RestoreCloseTag(body, UntrustedCloseTag), true
+	return content[:headerEnd], textfence.RestoreCloseTag(body[:end], UntrustedCloseTag), true
 }

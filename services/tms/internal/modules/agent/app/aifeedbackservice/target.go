@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -278,7 +279,7 @@ func questionText(message *conversation.Message) string {
 	if message.Kind == conversation.MessageKindDecisionNote {
 		first, _, _ := strings.Cut(message.Content, "\n")
 
-		return strings.TrimSpace(first)
+		return toolresult.UnfenceInline(strings.TrimSpace(first))
 	}
 
 	return strings.TrimSpace(message.Content)

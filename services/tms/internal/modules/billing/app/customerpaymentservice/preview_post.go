@@ -86,6 +86,17 @@ func (s *Service) planPost(
 		UpdatedByID:     actor.UserID,
 		Applications:    mapApplications(req.Applications),
 	}
+	invoices, resolved, err := s.validator.ValidatePostAndApply(
+		ctx,
+		entity,
+		invoiceports.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
+		control,
+	)
+	if err != nil {
+		return nil, err
+	}
+	entity.AccountingDate = resolved.AccountingDate
+
 	if err = s.stamper.StampInto(ctx, &exchangeratestamp.Request{
 		TenantInfo:     req.TenantInfo,
 		CurrencyCode:   entity.CurrencyCode,
@@ -95,17 +106,12 @@ func (s *Service) planPost(
 		return nil, err
 	}
 
-	invoices, period, me := s.validator.ValidatePostAndApply(
-		ctx,
-		entity,
-		invoiceports.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
-		control,
-	)
-	if me != nil {
-		return nil, me
-	}
-
-	return &postPlan{control: control, entity: entity, invoices: invoices, period: period}, nil
+	return &postPlan{
+		control:  control,
+		entity:   entity,
+		invoices: invoices,
+		period:   resolved.Period,
+	}, nil
 }
 
 // applyPostedApplication settles one application on its invoice: the amount

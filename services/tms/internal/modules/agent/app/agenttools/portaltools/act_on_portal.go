@@ -31,6 +31,7 @@ const (
 	paramSiteID      = "siteId"
 	paramInstruction = "instruction"
 	paramDetails     = "details"
+	paramLookUpOnly  = "lookUpOnly"
 	resultKind       = "portal task"
 	resultRunID      = "portalRunId"
 )
@@ -70,13 +71,16 @@ func (t *ActOnPortalTool) Description() string {
 		"instruction and details the browser will get and decides; once approved the portal " +
 		"does it in the background and you pick the work up with what it said. Only sites " +
 		"that allow actions can take one. Give one action per proposal, and the references " +
-		"the portal knows in details, never Trenova record ids."
+		"the portal knows in details, never Trenova record ids. With lookUpOnly it proposes " +
+		"only a lookup, which submits nothing and is allowed on a read-only site: use it for a " +
+		"site web_list_portal_sites marks readNeedsApproval."
 }
 
 func (t *ActOnPortalTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSiteID: agenttoolschema.KindID(
-			"The portal site to act on, from web_list_portal_sites. It must allow actions.",
+			"The portal site to act on, from web_list_portal_sites. It must allow actions "+
+				"unless lookUpOnly is set.",
 			recordkind.PortalSite,
 		),
 		paramInstruction: map[string]any{
@@ -90,6 +94,11 @@ func (t *ActOnPortalTool) ParamSchema() map[string]any {
 				"{\"PO number\": \"4512\", \"Carrier\": \"Ridgeline Freight\"}.",
 			extensionportal.MaxPortalDetailValueRunes,
 		),
+		paramLookUpOnly: map[string]any{
+			toolschema.KeyType: "boolean",
+			toolschema.KeyDescription: "Set true when the instruction only looks something up: " +
+				"the browser is told to submit nothing, and a person still approves it first.",
+		},
 	}, paramSiteID, paramInstruction)
 }
 
@@ -145,6 +154,7 @@ func (t *ActOnPortalTool) request(
 		Instruction:    instruction,
 		Details:        details,
 		IdempotencyKey: params.IdempotencyKey,
+		LookUpOnly:     toolparams.OptionalBool(params.Params, paramLookUpOnly),
 		Owner: agentextensionports.PortalTaskOwner{
 			Actor:        params.Actor,
 			DefinitionID: params.DefinitionID,
@@ -175,10 +185,13 @@ func (t *ActOnPortalTool) Preview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
-	summary := "Would ask a browser to act on a portal."
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
+	}
+	summary := "Would ask a browser to act on a portal."
+	if req.LookUpOnly {
+		summary = "Would ask a browser to look something up on a portal, submitting nothing."
 	}
 
 	plan, err := t.portals.PlanPortalAction(ctx, req)
@@ -204,6 +217,10 @@ func (t *ActOnPortalTool) Preview(
 
 	summary = fmt.Sprintf("Would ask %s's browser to do this on %s: %s.",
 		plan.Vendor, plan.Site.Name, strings.TrimRight(plan.Instruction, ". "))
+	if req.LookUpOnly {
+		summary = fmt.Sprintf("Would ask %s's browser only to look this up on %s, submitting "+
+			"nothing: %s.", plan.Vendor, plan.Site.Name, strings.TrimRight(plan.Instruction, ". "))
+	}
 	switch {
 	case plan.UsesSignIn && plan.UsesAuthenticator:
 		summary += " It signs in with the site's stored sign-in and answers its authenticator code."

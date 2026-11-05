@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -32,36 +31,34 @@ func (s *Service) checkCreditRequest(
 	ctx context.Context,
 	req *customerpaymentports.ApplyCreditMemoRequest,
 	actor *permissionports.RequestActor,
-) error {
+) (*customerpaymentports.ApplyCreditMemoRequest, error) {
 	if err := requireRequest(req == nil); err != nil {
-		return err
+		return nil, err
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return errortypes.NewAuthorizationError(
+		return nil, errortypes.NewAuthorizationError(
 			"Applying a credit memo requires an authenticated user",
 		)
 	}
 	if multiErr := s.validateCreditApplications(req); multiErr != nil {
-		return multiErr
+		return nil, multiErr
 	}
-	if _, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(
+	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := resolvePaymentPeriod(
 		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-			Date:  req.AccountingDate,
-		},
-	); err != nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return multiErr
+		s.validator.fiscalPeriodRepo,
+		&paymentPeriodRequest{tenant: req.TenantInfo, date: req.AccountingDate, control: control},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	dated := *req
+	dated.AccountingDate = resolved.AccountingDate
+	return &dated, nil
 }
 
 func (s *Service) planCreditApplication(
@@ -247,11 +244,12 @@ func (s *Service) PreviewApplyCreditMemo(
 	req *customerpaymentports.ApplyCreditMemoRequest,
 	actor *permissionports.RequestActor,
 ) (*customerpaymentports.CreditMemoApplicationPreview, error) {
-	if err := s.checkCreditRequest(ctx, req, actor); err != nil {
+	dated, err := s.checkCreditRequest(ctx, req, actor)
+	if err != nil {
 		return nil, err
 	}
 
-	plan, err := s.planCreditApplication(ctx, req, actor, s.invoiceRepo.GetByID)
+	plan, err := s.planCreditApplication(ctx, dated, actor, s.invoiceRepo.GetByID)
 	if err != nil {
 		return nil, err
 	}

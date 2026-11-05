@@ -69,7 +69,14 @@ func TestReleasePaymentMatchSendsTheDepositBackToReconciliation(t *testing.T) {
 			return entity, nil
 		}).
 		Once()
-	svc := &Service{l: zap.NewNop(), db: passthroughDB{}, repo: receipts, auditService: &mocks.NoopAuditService{}}
+	svc := &Service{
+		l:              zap.NewNop(),
+		db:             passthroughDB{},
+		repo:           receipts,
+		workItemRepo:   noWorkItems(t),
+		accountingRepo: reconciliationDisabled(t),
+		auditService:   &mocks.NoopAuditService{},
+	}
 
 	released, err := svc.ReleasePaymentMatch(t.Context(), &bankreceiptports.ReleasePaymentMatchRequest{
 		PaymentID: paymentID, PaymentReference: "ACH-1", Reason: "NSF", TenantInfo: tenantInfo,

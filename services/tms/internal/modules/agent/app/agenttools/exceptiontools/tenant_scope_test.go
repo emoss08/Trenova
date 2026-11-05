@@ -148,7 +148,7 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
-	require.Equal(t, permission.OpUpdate, tool.Policy().Operation)
+	require.Equal(t, permission.OpAssign, tool.Policy().Operation)
 	require.True(t, tool.Policy().Reversible)
 }
 

@@ -102,6 +102,11 @@ func (s *Service) materializePartLinks(
 ) (string, []*invoice.EmailAttemptAttachment, error) {
 	body := strings.TrimSpace(partBodyBase(part))
 	linked := make([]*invoice.EmailAttemptAttachment, 0, len(part.Links))
+	if len(part.Links) > 0 && s.webBaseURL == "" {
+		return body, linked, errortypes.NewBusinessError(
+			"Document links need a public base URL; set app.webBaseUrl",
+		)
+	}
 	for _, link := range part.Links {
 		rawToken, hash, err := newShareToken()
 		if err != nil {
@@ -119,7 +124,7 @@ func (s *Service) materializePartLinks(
 		if err != nil {
 			return body, linked, err
 		}
-		link.URL = signedDocumentURL(s.linkBaseURL(req.BaseURL), rawToken)
+		link.URL = signedDocumentURL(s.webBaseURL, rawToken)
 		body += "\n\nSupporting document link: " + link.FileName + "\n" + link.URL
 		linked = append(linked, &invoice.EmailAttemptAttachment{
 			DocumentID:   link.DocumentID,

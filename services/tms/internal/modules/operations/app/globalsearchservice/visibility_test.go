@@ -121,6 +121,7 @@ func scopedSearchService(
 		Maybe()
 
 	return &Service{
+		states:       fakeStates{},
 		views:        searchViews(),
 		logger:       zaptest.NewLogger(t),
 		config:       indexConfig(),
@@ -137,7 +138,10 @@ func searchTenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func groupFor(result *kernelports.GlobalSearchResult, entityType search.EntityType) *kernelports.GlobalSearchGroup {
+func groupFor(
+	result *kernelports.GlobalSearchResult,
+	entityType search.EntityType,
+) *kernelports.GlobalSearchGroup {
 	for _, group := range result.Groups {
 		if group.EntityType == entityType {
 			return group

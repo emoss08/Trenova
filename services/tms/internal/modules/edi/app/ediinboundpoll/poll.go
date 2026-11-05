@@ -3,6 +3,7 @@ package ediinboundpoll
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
@@ -73,14 +74,40 @@ func (s *Service) PollMailbox(
 	s.recordPollOutcome(ctx, profile, true, "")
 
 	result := &PollMailboxResult{ProfileID: profile.ID}
+	s.stageFetched(ctx, profile, fetchReq, remoteFiles, result)
+	if result.FailedFiles > 0 {
+		s.recordPollOutcome(ctx, profile, false, fmt.Sprintf(
+			"%d inbound files could not be read or staged",
+			result.FailedFiles,
+		))
+	}
+	return result, nil
+}
+
+func (s *Service) stageFetched(
+	ctx context.Context,
+	profile *edi.EDICommunicationProfile,
+	fetchReq *editransportports.EDIInboundFetchRequest,
+	remoteFiles []*editransportports.EDIInboundRemoteFile,
+	result *PollMailboxResult,
+) {
 	for _, remoteFile := range remoteFiles {
-		if remoteFile == nil || strings.TrimSpace(remoteFile.Contents) == "" {
+		if remoteFile == nil {
+			result.SkippedFiles++
+			continue
+		}
+		if remoteFile.ReadError != nil {
+			s.noteFailedFile(profile, remoteFile.Path, remoteFile.ReadError, result)
+			continue
+		}
+		if strings.TrimSpace(remoteFile.Contents) == "" {
 			result.SkippedFiles++
 			continue
 		}
 		staged, skipped, stageErr := s.inbound.StageInboundFile(ctx, profile, remoteFile)
 		if stageErr != nil {
-			return result, stageErr
+			s.noteFailedFile(profile, remoteFile.Path, stageErr, result)
+			continue
 		}
 		if skipped {
 			result.SkippedFiles++
@@ -101,7 +128,21 @@ func (s *Service) PollMailbox(
 			)
 		}
 	}
-	return result, nil
+}
+
+func (s *Service) noteFailedFile(
+	profile *edi.EDICommunicationProfile,
+	remotePath string,
+	err error,
+	result *PollMailboxResult,
+) {
+	result.FailedFiles++
+	s.l.Warn(
+		"inbound EDI file was left on the remote mailbox",
+		zap.String("profileId", profile.ID.String()),
+		zap.String("remotePath", remotePath),
+		zap.Error(err),
+	)
 }
 
 func (s *Service) recordPollOutcome(
@@ -166,6 +207,7 @@ type PollMailboxResult struct {
 	ProfileID     pulid.ID   `json:"profileId"`
 	StagedFileIDs []pulid.ID `json:"stagedFileIds"`
 	SkippedFiles  int        `json:"skippedFiles"`
+	FailedFiles   int        `json:"failedFiles"`
 }
 
 type PollableProfile struct {

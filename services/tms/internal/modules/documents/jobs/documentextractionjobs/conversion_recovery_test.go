@@ -174,6 +174,7 @@ func (h *doclingHarness) contentService(
 
 	return documentextractionservice.New(documentextractionservice.Params{
 		Logger:                   zap.NewNop(),
+		Paperwork:                noopPaperwork{},
 		DocumentConversionConfig: &documentconversionconfig.Config{},
 		SearchConfig:             &searchconfig.Config{},
 		Metrics: &metrics.Registry{
@@ -183,6 +184,7 @@ func (h *doclingHarness) contentService(
 		DocumentRepo:        h.docs,
 		ContentRepo:         h.contents,
 		DraftRepo:           h.drafts,
+		SearchProjection:    noopDocumentSearchProjectionService{},
 		WorkflowStarter:     starter,
 	})
 }

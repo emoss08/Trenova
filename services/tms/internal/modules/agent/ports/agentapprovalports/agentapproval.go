@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +28,8 @@ type CommitApprovalRequest struct {
 	Note            string   `json:"note,omitempty"`
 	PreviewDigest   string   `json:"previewDigest,omitempty"`
 	// CommitsAt is when the window closes, in Unix seconds.
-	CommitsAt int64 `json:"commitsAt"`
+	CommitsAt int64                      `json:"commitsAt"`
+	Session   *authctx.SessionAttributes `json:"session,omitempty"`
 }
 
 // TenantInfo is the approver's scope.
@@ -37,6 +39,13 @@ func (r *CommitApprovalRequest) TenantInfo() pagination.TenantInfo {
 		BuID:   r.BusinessUnitID,
 		UserID: r.DecidedByUserID,
 	}
+}
+
+func (r *CommitApprovalRequest) Actor() *permissionports.RequestActor {
+	actor := permissionports.UserActor(r.TenantInfo())
+	actor.Session = r.Session
+
+	return actor
 }
 
 // SettleApprovalRequest is a person acting on their own approval while it is

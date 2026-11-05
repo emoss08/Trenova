@@ -144,6 +144,7 @@ export function useReconciliationState() {
                   scheduleType: stop.appointmentRequired
                     ? ("Appointment" as const)
                     : ("Open" as const),
+                  handling: "Live" as const,
                   locationId: stop.locationId || "",
                   sequence: index,
                   scheduledWindowStart: parseTimestamp(toStr(getEffectiveValue(stop.date))),
@@ -165,6 +166,7 @@ export function useReconciliationState() {
                     status: "New" as const,
                     type: "Pickup" as const,
                     scheduleType: "Open" as const,
+                    handling: "Live" as const,
                     locationId: "",
                     sequence: 0,
                     scheduledWindowStart: 0,
@@ -176,6 +178,7 @@ export function useReconciliationState() {
                     status: "New" as const,
                     type: "Delivery" as const,
                     scheduleType: "Open" as const,
+                    handling: "Live" as const,
                     locationId: "",
                     sequence: 1,
                     scheduledWindowStart: 0,

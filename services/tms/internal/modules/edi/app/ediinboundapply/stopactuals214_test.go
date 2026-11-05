@@ -363,50 +363,6 @@ func TestRecordTenderedShipmentStatus_MoveNotFoundDegradesToWarning(t *testing.T
 	require.Contains(t, warnings[0], "could not resolve the tendered move")
 }
 
-func TestRecordTenderedShipmentStatus_MissingMoveServiceStaysCommentOnly(t *testing.T) {
-	t.Parallel()
-
-	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
-	userRepo := tenantportsmock.NewMockUserRepository(t)
-	service := &Service{
-		l: zap.NewNop(),
-		shipments: editendershipment.New(editendershipment.Params{
-			ShipmentCommentRepo: commentRepo,
-			UserRepo:            userRepo,
-		}),
-		tenderMapping: editendermapping.New(editendermapping.Params{}),
-	}
-	userRepo.EXPECT().
-		GetSystemUser(mock.Anything, mock.Anything).
-		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
-		Once()
-	commentRepo.EXPECT().
-		Create(mock.Anything, mock.Anything).
-		RunAndReturn(
-			func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
-				return comment, nil
-			},
-		).
-		Once()
-
-	offer := acceptedTenderOfferForTest()
-	offer.Tender.ShipmentMoveID = pulid.MustNew("sm_")
-	warnings, err := service.RecordTenderedShipmentStatus(
-		t.Context(),
-		&RecordTenderedShipmentStatusRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
-			Offer:      offer,
-			StatusCode: "X3",
-		},
-	)
-
-	require.NoError(t, err)
-	require.Empty(t, warnings)
-}
-
 func TestStopActualsPlanForStatusCode(t *testing.T) {
 	t.Parallel()
 

@@ -1,8 +1,16 @@
 package rendererconfig
 
 import (
+	"errors"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+)
+
+var ErrProductionCredentialsRequired = errors.New(
+	"production and staging require renderer.gotenbergUsername and a renderer.gotenbergPassword " +
+		"that is not a placeholder while renderer.gotenbergUrl is set",
 )
 
 // RendererConfig governs HTML-to-PDF rendering and the limits applied to
@@ -12,20 +20,44 @@ import (
 // reachable from the host and is never proxied: it renders untrusted markup, so
 // the only thing that should be able to reach it is this process.
 type Config struct {
-	GotenbergURL   string        `mapstructure:"gotenbergUrl"   validate:"omitempty,url"`
-	RequestTimeout time.Duration `mapstructure:"requestTimeout"`
-	HealthTimeout  time.Duration `mapstructure:"healthTimeout"`
-	RenderTimeout  time.Duration `mapstructure:"renderTimeout"`
-	MaxConcurrent  int           `mapstructure:"maxConcurrent"  validate:"min=0,max=32"`
-	MaxRetries     int           `mapstructure:"maxRetries"     validate:"min=0,max=5"`
-	MaxSourceBytes int64         `mapstructure:"maxSourceBytes" validate:"min=0"`
-	MaxHTMLBytes   int64         `mapstructure:"maxHtmlBytes"   validate:"min=0"`
-	MaxTextBytes   int64         `mapstructure:"maxTextBytes"   validate:"min=0"`
-	MaxAssetBytes  int64         `mapstructure:"maxAssetBytes"  validate:"min=0"`
-	MaxAssets      int           `mapstructure:"maxAssets"      validate:"min=0,max=64"`
-	MaxAssetBudget int64         `mapstructure:"maxAssetBudget" validate:"min=0"`
-	MaxPDFBytes    int64         `mapstructure:"maxPdfBytes"    validate:"min=0"`
+	GotenbergURL      string        `mapstructure:"gotenbergUrl"      validate:"omitempty,url"`
+	GotenbergUsername string        `mapstructure:"gotenbergUsername" validate:"required_with=GotenbergPassword"`
+	GotenbergPassword string        `mapstructure:"gotenbergPassword" validate:"required_with=GotenbergUsername"`
+	RequestTimeout    time.Duration `mapstructure:"requestTimeout"`
+	HealthTimeout     time.Duration `mapstructure:"healthTimeout"`
+	RenderTimeout     time.Duration `mapstructure:"renderTimeout"`
+	MaxConcurrent     int           `mapstructure:"maxConcurrent"     validate:"min=0,max=32"`
+	MaxRetries        int           `mapstructure:"maxRetries"        validate:"min=0,max=5"`
+	MaxSourceBytes    int64         `mapstructure:"maxSourceBytes"    validate:"min=0"`
+	MaxHTMLBytes      int64         `mapstructure:"maxHtmlBytes"      validate:"min=0"`
+	MaxTextBytes      int64         `mapstructure:"maxTextBytes"      validate:"min=0"`
+	MaxAssetBytes     int64         `mapstructure:"maxAssetBytes"     validate:"min=0"`
+	MaxAssets         int           `mapstructure:"maxAssets"         validate:"min=0,max=64"`
+	MaxAssetBudget    int64         `mapstructure:"maxAssetBudget"    validate:"min=0"`
+	MaxPDFBytes       int64         `mapstructure:"maxPdfBytes"       validate:"min=0"`
 }
+
+func Defaults() map[string]any {
+	return map[string]any{
+		"gotenbergUsername": "",
+		"gotenbergPassword": "",
+	}
+}
+
+func (c *Config) ValidateProduction() error {
+	if !c.Enabled() {
+		return nil
+	}
+	if strings.TrimSpace(c.GotenbergUsername) == "" ||
+		strings.TrimSpace(c.GotenbergPassword) == "" ||
+		securityconfig.IsPlaceholder(c.GotenbergPassword) {
+		return ErrProductionCredentialsRequired
+	}
+
+	return nil
+}
+
+func (c *Config) UsesBasicAuth() bool { return c.GotenbergPassword != "" }
 
 // Enabled reports whether a rendering backend is configured. When it is not,
 // PDF generation surfaces a business error instead of failing startup — the

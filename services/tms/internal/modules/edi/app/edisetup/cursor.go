@@ -3,6 +3,7 @@ package edisetup
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +20,15 @@ func (s *Service) ListCommunicationProfilesCursor(
 	ctx context.Context,
 	req *edipartnerports.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
-	return s.profileRepo.ListProfilesCursor(ctx, req)
+	result, err := s.profileRepo.ListProfilesCursor(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx := range result.Items {
+		result.Items[idx] = ediprofilesecret.WithSecretState(result.Items[idx])
+	}
+	return result, nil
 }
 
 func (s *Service) ListMappingProfilesCursor(

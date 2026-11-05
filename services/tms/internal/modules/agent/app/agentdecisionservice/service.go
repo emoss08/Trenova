@@ -3,6 +3,7 @@ package agentdecisionservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -50,6 +52,7 @@ type Params struct {
 	// Conversations says whose conversation raised a proposal, for a person
 	// deciding their own.
 	Conversations conversationports.ConversationRepository
+	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Shadow        *agentshadow.Resolver
 	Permissions   permissionports.PermissionEngine
 	Workflows     kernelports.WorkflowStarter
@@ -75,6 +78,7 @@ type Service struct {
 	proposalRepo agentproposalports.AgentProposalRepository
 	runRepo      agentruntimeports.AgentRunRepository
 	threads      conversationports.ConversationRepository
+	definitions  agentdefinitionports.AgentDefinitionRepository
 	shadow       *agentshadow.Resolver
 	permissions  permissionports.PermissionEngine
 	workflows    kernelports.WorkflowStarter
@@ -97,6 +101,7 @@ func New(p Params) agentdecisionports.AgentDecisionService {
 		proposalRepo: p.ProposalRepo,
 		runRepo:      p.RunRepo,
 		threads:      p.Conversations,
+		definitions:  p.Definitions,
 		shadow:       p.Shadow,
 		permissions:  p.Permissions,
 		workflows:    p.Workflows,
@@ -155,8 +160,10 @@ func (s *Service) DecideOwn(
 }
 
 // AssertOwnProposal refuses a proposal not raised in one of the actor's own
-// conversations. Someone else's is not found rather than forbidden, the way
-// someone else's conversation is.
+// conversations, and one from an agent they may no longer use. Someone else's
+// is not found rather than forbidden, the way someone else's conversation is.
+// The agent checked is the one whose run raised the proposal, which for a
+// hand-off is the delegate, not the conversation's own agent.
 func (s *Service) AssertOwnProposal(
 	ctx context.Context,
 	proposalID pulid.ID,
@@ -203,6 +210,49 @@ func (s *Service) AssertOwnProposal(
 		}
 
 		return err
+	}
+
+	return s.assertMayUseAgent(ctx, tenant, run, actor)
+}
+
+func (s *Service) assertMayUseAgent(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	run *agent.AgentRun,
+	actor *permissionports.RequestActor,
+) error {
+	gone := errortypes.NewBusinessError(
+		"The agent that raised this proposal no longer exists, so it cannot be decided",
+	)
+	if run.AgentDefinitionID.IsNil() {
+		return gone
+	}
+
+	definition, err := s.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         run.AgentDefinitionID,
+			TenantInfo: tenant,
+		},
+	)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return gone
+		}
+
+		return err
+	}
+
+	allowed, err := s.permissions.MayUseAgent(ctx, actor, definition)
+	if err != nil {
+		return fmt.Errorf("check access to agent %s: %w", definition.ID, err)
+	}
+	if !allowed {
+		return errortypes.NewAuthorizationError(
+			"You do not have access to {0}, so you cannot decide its proposal. "+
+				"An administrator can give one of your roles access to it.",
+			definition.Name,
+		)
 	}
 
 	return nil

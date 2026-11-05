@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -140,9 +141,12 @@ func newHarness(t *testing.T, allowed ...string) *harness {
 
 	return &harness{
 		service: newService(Params{
-			Logger:        zap.NewNop(),
-			Permissions:   permissions,
-			Organizations: organizations,
+			Logger:         zap.NewNop(),
+			Permissions:    permissions,
+			Organizations:  organizations,
+			Registry:       permissioncatalog.NewRegistry(),
+			Vectorizer:     &stubVectorizer{},
+			CatalogVectors: &stubVectors{},
 		}, catalog),
 		permissions:   permissions,
 		organizations: organizations,

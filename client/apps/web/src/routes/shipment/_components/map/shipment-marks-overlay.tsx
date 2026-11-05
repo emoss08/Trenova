@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DEFAULT_ZOOM } from "@trenova/shared/lib/constants";
 import { useMap } from "@vis.gl/react-google-maps";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { clusterPoints, type MapCluster } from "./map-clusters";
 import { useMapFocusStore } from "./map-focus-store";
 import { placeLabel, type MapShipment } from "./map-shipment-model";
@@ -16,19 +16,13 @@ const CLUSTER_RADIUS_PX = 26;
  */
 function useWholeZoom(): number {
   const map = useMap();
-  const read = () => Math.floor(map?.getZoom() ?? DEFAULT_ZOOM);
-  const [zoom, setZoom] = useState(read);
-
-  useEffect(() => {
-    if (!map) return;
-    setZoom(Math.floor(map.getZoom() ?? DEFAULT_ZOOM));
-    const listener = map.addListener("zoom_changed", () =>
-      setZoom(Math.floor(map.getZoom() ?? DEFAULT_ZOOM)),
-    );
-    return () => listener.remove();
-  }, [map]);
-
-  return zoom;
+  return useSyncExternalStore(
+    (notify) => {
+      const listener = map?.addListener("zoom_changed", notify);
+      return () => listener?.remove();
+    },
+    () => Math.floor(map?.getZoom() ?? DEFAULT_ZOOM),
+  );
 }
 
 /**

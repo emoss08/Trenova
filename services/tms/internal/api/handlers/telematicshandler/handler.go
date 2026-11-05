@@ -1,7 +1,6 @@
 package telematicshandler
 
 import (
-	"io"
 	"net/http"
 	"strings"
 
@@ -62,7 +61,7 @@ func (h *Handler) handleProviderWebhook(providerType integration.Type) gin.Handl
 
 func (h *Handler) processWebhook(c *gin.Context, providerType integration.Type) {
 	token := c.Param("webhookToken")
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, maxWebhookBodyBytes))
+	body, err := helpers.ReadBoundedRequestBody(c, maxWebhookBodyBytes)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

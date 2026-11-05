@@ -31,7 +31,7 @@ func TestOpenTurn_ReadsTheOrganizationsExtensionsOnce(t *testing.T) {
 		&stubActionRegistry{},
 		nil,
 	)
-	rewire(rt, func(p *Params) { p.Extensions = gate })
+	rewire(rt, func(p *runtimeParts) { p.Extensions = gate })
 
 	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
 		Definition: runtimetest.Definition("web_search"),
@@ -98,7 +98,7 @@ func TestPermittedTools_ChecksDistinctPermissionsTogetherAndAnswersTheSame(t *te
 		&stubActionRegistry{},
 		nil,
 	)
-	rewire(rt, func(p *Params) { p.Permissions = permissions })
+	rewire(rt, func(p *runtimeParts) { p.Permissions = permissions })
 
 	permitted := rt.access.PermittedTools(t.Context(), runtimetest.Actor(), []string{
 		"shipment_get", "customer_get", "shipment_list",

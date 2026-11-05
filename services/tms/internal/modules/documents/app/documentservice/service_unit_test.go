@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -445,7 +445,6 @@ func newUnitTestService(t *testing.T, repo *mockDocRepo, sc *mockStorageClient) 
 			&mocks.NoopAuditService{},
 			storageCfg,
 			thumbnailservice.NewGenerator(nil),
-			nil,
 		),
 		cacheRepo:   cacheRepo,
 		sessionRepo: sessionRepo,
@@ -1037,7 +1036,7 @@ func TestUnit_Delete_Success(t *testing.T) {
 	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
-	}, pulid.MustNew("usr_"))
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 
 	require.NoError(t, err)
 	assert.Contains(t, storageDeletions, doc.StoragePath)
@@ -1077,7 +1076,7 @@ func TestUnit_Delete_WithPreview(t *testing.T) {
 	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
-	}, pulid.MustNew("usr_"))
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 
 	require.NoError(t, err)
 	assert.Contains(t, storageDeletions, doc.StoragePath)
@@ -1098,7 +1097,7 @@ func TestUnit_Delete_NotFound(t *testing.T) {
 	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         pulid.MustNew("doc_"),
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-	}, pulid.MustNew("usr_"))
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 
 	require.Error(t, err)
 }
@@ -1134,7 +1133,7 @@ func TestUnit_Delete_RepoDeleteError(t *testing.T) {
 	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
-	}, pulid.MustNew("usr_"))
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 
 	require.Error(t, err)
 	assert.Equal(t, "db delete failed", err.Error())
@@ -1186,7 +1185,7 @@ func TestUnit_BulkDelete_Success(t *testing.T) {
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{id1, id2},
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		UserID:     pulid.MustNew("usr_"),
+		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	})
 
 	require.NoError(t, err)
@@ -1209,7 +1208,7 @@ func TestUnit_BulkDelete_EmptyIDs(t *testing.T) {
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{},
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		UserID:     pulid.MustNew("usr_"),
+		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	})
 
 	require.NoError(t, err)
@@ -1230,7 +1229,7 @@ func TestUnit_BulkDelete_GetByIDsError(t *testing.T) {
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{pulid.MustNew("doc_")},
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		UserID:     pulid.MustNew("usr_"),
+		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	})
 
 	require.Error(t, err)
@@ -1264,7 +1263,7 @@ func TestUnit_BulkDelete_BulkDeleteRepoError(t *testing.T) {
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{docs[0].ID},
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		UserID:     pulid.MustNew("usr_"),
+		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	})
 
 	require.Error(t, err)
@@ -1306,7 +1305,7 @@ func TestUnit_BulkDelete_StorageDeleteErrors(t *testing.T) {
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{docs[0].ID},
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		UserID:     pulid.MustNew("usr_"),
+		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	})
 
 	require.NoError(t, err)
@@ -1455,7 +1454,6 @@ func TestNew(t *testing.T) {
 		&mocks.NoopAuditService{},
 		storageCfg,
 		thumbnailservice.NewGenerator(nil),
-		nil,
 	)
 
 	require.NotNil(t, svc)
@@ -1486,7 +1484,7 @@ func TestNewConstructor(t *testing.T) {
 		AuditService:       &mocks.NoopAuditService{},
 		StorageConfig:      storageCfg,
 		ThumbnailGenerator: thumbnailservice.NewGenerator(nil),
-		WorkflowStarter:    workflowstarter.New(workflowstarter.Params{}),
+		WorkflowStarter:    &mocks.NoopWorkflowStarter{},
 	})
 
 	require.NotNil(t, svc)
@@ -1526,7 +1524,7 @@ func TestUnit_Delete_WithPreviewPath(t *testing.T) {
 	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
-	}, pulid.MustNew("usr_"))
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 
 	require.NoError(t, err)
 	assert.Contains(t, deletedPaths, doc.StoragePath)
@@ -1565,7 +1563,7 @@ func TestUnit_Delete_StorageDeleteError(t *testing.T) {
 	err := svc.Delete(t.Context(), documentports.DeleteDocumentRequest{
 		ID:         doc.ID,
 		TenantInfo: pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
-	}, pulid.MustNew("usr_"))
+	}, &permissionports.RequestActor{UserID: pulid.MustNew("usr_")})
 
 	require.NoError(t, err)
 }
@@ -1608,7 +1606,7 @@ func TestUnit_BulkDelete_WithPreviewPaths(t *testing.T) {
 	result, err := svc.BulkDelete(t.Context(), &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{docs[0].ID},
 		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		UserID:     pulid.MustNew("usr_"),
+		Actor:      &permissionports.RequestActor{UserID: pulid.MustNew("usr_")},
 	})
 
 	require.NoError(t, err)

@@ -268,9 +268,11 @@ func TestCreateFromApprovedBillingQueueItemReusesExpandedQueueShipment(t *testin
 		l:                zap.NewNop(),
 		repo:             repo,
 		billingQueueRepo: billingQueueRepo,
+		readiness:        noPacketRequirements{},
 		shipmentRepo:     shipmentRepo,
 		customerRepo:     customerRepo,
 		billingRepo:      billingRepo,
+		detentionBilling: &mocks.NoopDetentionBilling{},
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),

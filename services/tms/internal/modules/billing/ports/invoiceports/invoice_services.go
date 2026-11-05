@@ -192,7 +192,6 @@ type UpdateInvoiceDraftRequest struct {
 type InvoicePreviewRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
-	BaseURL    string
 }
 
 type InvoicePreviewResult struct {
@@ -217,20 +216,17 @@ type GenerateInvoicePDFResult struct {
 type InvoiceSendPlanRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
-	BaseURL    string
 }
 
 type InvoiceSendRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
-	BaseURL    string
 	StartedAt  int64
 }
 
 type AutoSendInvoiceAfterPDFGenerationRequest struct {
 	InvoiceID  pulid.ID
 	TenantInfo pagination.TenantInfo
-	BaseURL    string
 	StartedAt  int64
 }
 

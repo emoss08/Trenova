@@ -107,15 +107,24 @@ func (t *testService) requests() *capturerequests.Service {
 
 func (t *testService) processing() *captureprocessing.Service {
 	return captureprocessing.New(captureprocessing.Params{
+		CoverSheets: t.coverSheets,
+		Imaging:     t.imaging,
+		Logger:      t.l,
+		Pages:       t.pages,
+		Support:     t.support(),
+	})
+}
+
+func (t *testService) batchProcessor() *captureprocessing.BatchProcessor {
+	return captureprocessing.NewBatchProcessor(captureprocessing.BatchProcessorParams{
 		Analyzer:      t.analyzer,
 		Batches:       t.batches,
-		CoverSheets:   t.coverSheets,
 		DocumentTypes: t.documentTypes,
-		Imaging:       t.imaging,
 		Items:         t.items,
 		Logger:        t.l,
 		Pages:         t.pages,
 		ProfileRepo:   t.profileRepo,
+		Service:       t.processing(),
 		Shipments:     t.shipments,
 		Support:       t.support(),
 	})

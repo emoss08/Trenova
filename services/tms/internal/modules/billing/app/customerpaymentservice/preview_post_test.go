@@ -72,10 +72,11 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		Return(&fiscalperiod.FiscalPeriod{
 			ID:           pulid.MustNew("fp_"),
 			FiscalYearID: pulid.MustNew("fy_"),
+			Status:       fiscalperiod.StatusOpen,
 		}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -83,10 +84,14 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		journalRepo:    journalRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		validator: NewValidator(
-			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
+			ValidatorParams{
+				InvoiceRepo:        invoiceRepo,
+				FiscalPeriodRepo:   fiscalRepo,
+				AdjustmentCtrlRepo: shortPaysUnderThreshold(t, orgID),
+			},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 	request := func() *customerpaymentports.PostCustomerPaymentRequest {
 		return &customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:     customerID,

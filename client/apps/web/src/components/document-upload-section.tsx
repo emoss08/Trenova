@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { openInNewTab } from "@/lib/open-in-new-tab";
 import { documentService } from "@/services/document";
 import type { Document } from "@trenova/shared/types/document";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -167,7 +168,7 @@ export function DocumentUploadSection({
     async (doc: Document) => {
       try {
         const url = await documentService.getDownloadUrl(doc.id);
-        window.open(url, "_blank");
+        openInNewTab(url);
       } catch {
         toast.error(t("Failed to get download URL"));
       }

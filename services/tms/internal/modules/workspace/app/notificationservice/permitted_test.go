@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -67,7 +69,15 @@ func (silentRealtime) PublishResourceInvalidation(
 }
 
 func permittedService(repo *recordingNotificationRepo, roles *permittedRoles) *Service {
-	return New(Params{Logger: zap.NewNop(), Repo: repo, Realtime: silentRealtime{}, Roles: roles})
+	return New(Params{
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Realtime:  silentRealtime{},
+		Roles:     roles,
+		AppConfig: &appconfig.Config{},
+		WebPush:   disabledWebPush(),
+		Users:     &memberDirectory{members: map[pulid.ID]*tenant.User{}},
+	})
 }
 
 func permittedRequest(tenant pagination.TenantInfo) NotifyPermittedRequest {

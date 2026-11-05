@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -32,6 +34,7 @@ type fakeWorker struct {
 	probes    atomic.Int32
 	refuse    int32
 	priority  []string
+	tenant    []string
 	received  [][]byte
 	pageCount uint32
 }
@@ -52,6 +55,7 @@ func (w *fakeWorker) Probe(stream imagingpb.ImagingService_ProbeServer) error {
 	md, _ := metadata.FromIncomingContext(stream.Context())
 	w.mu.Lock()
 	w.priority = append(w.priority, md.Get(priorityKey)...)
+	w.tenant = append(w.tenant, md.Get(tenantKey)...)
 	w.mu.Unlock()
 
 	first, err := stream.Recv()
@@ -164,6 +168,63 @@ func TestAProbeStreamsItsSourceInChunksAndCarriesItsPriority(t *testing.T) {
 	require.Len(t, worker.received, 1)
 	assert.Equal(t, body, worker.received[0])
 	assert.Equal(t, []string{"interactive"}, worker.priority)
+}
+
+func TestACallNamesTheOrganizationItIsScopedTo(t *testing.T) {
+	t.Parallel()
+
+	worker := &fakeWorker{pageCount: 1}
+	client := dial(t, serve(t, worker))
+	ctx := dbscope.WithTenant(t.Context(), dbscope.Tenant{
+		OrganizationID: pulid.ID("org_1"),
+		BusinessUnitID: pulid.ID("bu_1"),
+	})
+
+	_, err := client.Probe(ctx, &kernelports.ImagingProbeRequest{
+		Source: kernelports.ImagingBytes("application/pdf", []byte("%PDF")),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"org_1"}, worker.tenant)
+}
+
+func TestACallWithNoTenantScopeNamesNobody(t *testing.T) {
+	t.Parallel()
+
+	for name, scope := range map[string]func(context.Context) context.Context{
+		"unscoped": func(ctx context.Context) context.Context { return ctx },
+		"system": func(ctx context.Context) context.Context {
+			return dbscope.WithSystem(ctx, "a sweep across organizations")
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			worker := &fakeWorker{pageCount: 1}
+			client := dial(t, serve(t, worker))
+			_, err := client.Probe(scope(t.Context()), &kernelports.ImagingProbeRequest{
+				Source: kernelports.ImagingBytes("application/pdf", []byte("%PDF")),
+			})
+			require.NoError(t, err)
+			assert.Empty(t, worker.tenant)
+		})
+	}
+}
+
+func TestARetriedCallNamesItsTenantOnEveryAttempt(t *testing.T) {
+	t.Parallel()
+
+	worker := &fakeWorker{pageCount: 1, refuse: 1}
+	client := dial(t, serve(t, worker))
+	ctx := dbscope.WithTenant(t.Context(), dbscope.Tenant{
+		OrganizationID: pulid.ID("org_1"),
+		BusinessUnitID: pulid.ID("bu_1"),
+	})
+
+	_, err := client.Probe(ctx, &kernelports.ImagingProbeRequest{
+		Source: kernelports.ImagingBytes("application/pdf", []byte("%PDF")),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"org_1", "org_1"}, worker.tenant)
 }
 
 func TestARefusalForCapacityIsRetriedAfterItsRetryDelay(t *testing.T) {

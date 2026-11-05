@@ -94,7 +94,8 @@ func (w Writer) Plan(ctx context.Context, req *WriteRequest) (*Plan, error) {
 		OrganizationID: req.OrganizationID,
 		BusinessUnitID: req.BusinessUnitID,
 		Date:           req.AccountingDate,
-		Policy:         closedPeriodPolicy(req.Control),
+		Policy:         ClosedPeriodPolicy(req.Control),
+		RefuseLocked:   RefusesLockedSubledger(req.Control),
 		Subject:        req.Subject,
 		Field:          req.DateField,
 	})
@@ -229,7 +230,7 @@ func buildLines(
 	return lines, totalDebit, totalCredit, nil
 }
 
-func closedPeriodPolicy(
+func ClosedPeriodPolicy(
 	control *accountingcontrol.AccountingControl,
 ) accountingcontrol.ClosedPeriodPostingPolicy {
 	if control == nil {

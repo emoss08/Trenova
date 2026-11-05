@@ -73,6 +73,7 @@ func Options() fx.Option {
 func UnscheduledOptions() fx.Option {
 	return fx.Options(
 		apimodule.AgentReadWorkerModule,
+		modulesinfra.DoclingModule,
 		temporaljobs.UnscheduledWorkerModule,
 	)
 }

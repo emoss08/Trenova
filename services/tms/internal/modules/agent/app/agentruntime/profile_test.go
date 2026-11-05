@@ -46,7 +46,7 @@ func profileRuntime(t *testing.T, agents ...*agentdefinition.Definition) *Servic
 		byID[definition.ID] = definition
 	}
 
-	return buildRuntime(Params{
+	return buildRuntime(runtimeParts{
 		Logger:      zap.NewNop(),
 		QueryTools:  query,
 		ActionTools: action,

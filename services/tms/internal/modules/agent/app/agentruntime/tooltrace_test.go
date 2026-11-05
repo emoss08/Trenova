@@ -64,7 +64,7 @@ func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDi
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{
 		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rewire(rt, func(p *Params) { p.Versions = &versionSequence{versions: []int64{7, 8}} })
+	rewire(rt, func(p *runtimeParts) { p.Versions = &versionSequence{versions: []int64{7, 8}} })
 
 	definition := runtimetest.Definition("shipment_place_hold")
 	definition.ID = pulid.MustNew("agdef_")
@@ -198,7 +198,7 @@ func TestDispatchStep_RecordsWhyACallWasRefused(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	rewire(d.rt, func(p *Params) {
+	rewire(d.rt, func(p *runtimeParts) {
 		p.Permissions = &stubPermissions{Denied: map[string]bool{
 			permission.ResourceShipmentMove.String() + ":" + string(permission.OpUpdate): true,
 		}}

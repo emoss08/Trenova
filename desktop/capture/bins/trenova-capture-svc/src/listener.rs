@@ -4,8 +4,9 @@
 //! 127.0.0.1, so nothing off the machine reaches it; a browser page could
 //! still aim a request at it, so a request with an `Origin` header, or a
 //! `Host` other than this loopback address (DNS rebinding), is refused
-//! before its body is read. A body is capped, and at most a few documents
-//! are converted at once.
+//! before its body is read. A body is capped, what all requests hold in
+//! memory together is capped, a connection past the limit is turned away, and
+//! at most a few documents are converted at once.
 
 use std::convert::Infallible;
 use std::io;
@@ -13,18 +14,18 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use bytes::Bytes;
-use capture_ipp::{JobHandler, Printer};
+use bytes::{Bytes, BytesMut};
+use capture_ipp::{ClientAccess, JobHandler, Printer};
 use http::header::{ALLOW, CONTENT_LENGTH, CONTENT_TYPE, HOST, ORIGIN};
 use http::{Method, Request, Response, StatusCode};
 use http_body_util::{BodyExt, Full, Limited};
-use hyper::body::Incoming;
+use hyper::body::{Body, Incoming};
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper_util::rt::{TokioIo, TokioTimer};
 use hyper_util::server::graceful::GracefulShutdown;
 use tokio::net::TcpListener;
-use tokio::sync::Semaphore;
+use tokio::sync::{Semaphore, SemaphorePermit};
 use tokio_util::sync::CancellationToken;
 
 /// The printer's path, which the Trenova printer's IPP URL names.
@@ -42,6 +43,13 @@ pub struct Limits {
     pub max_request_bytes: usize,
     /// How many documents are converted and stored at once; the rest wait.
     pub concurrent_jobs: usize,
+    /// What every request's body together may hold in memory, whether still
+    /// arriving or waiting for its turn. A request past this waits for room.
+    /// Never less than one whole request.
+    pub max_buffered_bytes: usize,
+    /// How many connections may be open at once; another is closed as soon
+    /// as it is accepted.
+    pub max_connections: usize,
 }
 
 impl Default for Limits {
@@ -49,6 +57,8 @@ impl Default for Limits {
         Self {
             max_request_bytes: 512 << 20,
             concurrent_jobs: 2,
+            max_buffered_bytes: 1 << 30,
+            max_connections: 64,
         }
     }
 }
@@ -58,6 +68,43 @@ struct Context<H: JobHandler> {
     limits: Limits,
     port: u16,
     jobs: Semaphore,
+    buffered: Semaphore,
+}
+
+/// A request's whole body, and its share of the memory budget, held until
+/// the request is answered.
+struct Received<'a> {
+    body: Bytes,
+    held: Option<SemaphorePermit<'a>>,
+}
+
+/// Reads a body, taking room in `budget` for each chunk before keeping it.
+/// `None` when the budget has closed.
+async fn read_body<B>(body: B, budget: &Semaphore) -> Result<Option<Received<'_>>, B::Error>
+where
+    B: Body<Data = Bytes>,
+{
+    let mut body = std::pin::pin!(body);
+    let mut collected = BytesMut::new();
+    let mut held: Option<SemaphorePermit<'_>> = None;
+    while let Some(frame) = body.as_mut().frame().await {
+        let Ok(chunk) = frame?.into_data() else {
+            continue;
+        };
+        let size = u32::try_from(chunk.len()).unwrap_or(u32::MAX);
+        let Ok(permit) = budget.acquire_many(size).await else {
+            return Ok(None);
+        };
+        match held.as_mut() {
+            Some(held) => held.merge(permit),
+            None => held = Some(permit),
+        }
+        collected.extend_from_slice(&chunk);
+    }
+    Ok(Some(Received {
+        body: collected.freeze(),
+        held,
+    }))
 }
 
 fn plain(status: StatusCode) -> Response<Full<Bytes>> {
@@ -129,6 +176,7 @@ fn check<H: JobHandler>(
 async fn respond<H: JobHandler + 'static>(
     request: Request<Incoming>,
     context: Arc<Context<H>>,
+    access: ClientAccess,
 ) -> Result<Response<Full<Bytes>>, Infallible> {
     if let Err(status) = check(&request, &context) {
         let mut response = plain(status);
@@ -140,20 +188,22 @@ async fn respond<H: JobHandler + 'static>(
         return Ok(response);
     }
     let body = Limited::new(request.into_body(), context.limits.max_request_bytes);
-    let body = match tokio::time::timeout(BODY_TIMEOUT, body.collect()).await {
+    let read = tokio::time::timeout(BODY_TIMEOUT, read_body(body, &context.buffered)).await;
+    let Received { body, held: _held } = match read {
         Err(_) => return Ok(plain(StatusCode::REQUEST_TIMEOUT)),
         Ok(Err(err)) if err.is::<http_body_util::LengthLimitError>() => {
             return Ok(plain(StatusCode::PAYLOAD_TOO_LARGE));
         }
         Ok(Err(_)) => return Ok(plain(StatusCode::BAD_REQUEST)),
-        Ok(Ok(collected)) => collected.to_bytes(),
+        Ok(Ok(None)) => return Ok(plain(StatusCode::SERVICE_UNAVAILABLE)),
+        Ok(Ok(Some(received))) => received,
     };
 
     let Ok(_permit) = context.jobs.acquire().await else {
         return Ok(plain(StatusCode::SERVICE_UNAVAILABLE));
     };
     let printer = Arc::clone(&context.printer);
-    let answer = match tokio::task::spawn_blocking(move || printer.handle(&body)).await {
+    let answer = match tokio::task::spawn_blocking(move || printer.handle(access, &body)).await {
         Ok(answer) => answer,
         Err(err) => {
             tracing::error!(error = %err, "an IPP request failed");
@@ -167,6 +217,21 @@ async fn respond<H: JobHandler + 'static>(
     Ok(response)
 }
 
+/// Decides what the process behind a loopback connection may do.
+pub trait Peers: Send + Sync + 'static {
+    fn access(&self, peer: SocketAddr, port: u16) -> ClientAccess;
+}
+
+/// Every loopback client may print, for a test.
+#[derive(Clone, Copy, Debug)]
+pub struct AnyPeer;
+
+impl Peers for AnyPeer {
+    fn access(&self, _peer: SocketAddr, _port: u16) -> ClientAccess {
+        ClientAccess::Print
+    }
+}
+
 /// Binds the printer's loopback address.
 pub async fn bind(port: u16) -> io::Result<TcpListener> {
     TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], port))).await
@@ -177,6 +242,7 @@ pub async fn serve<H: JobHandler + 'static>(
     listener: TcpListener,
     printer: Arc<Printer<H>>,
     limits: Limits,
+    peers: Arc<dyn Peers>,
     shutdown: CancellationToken,
 ) -> io::Result<()> {
     let port = listener.local_addr()?.port();
@@ -185,7 +251,9 @@ pub async fn serve<H: JobHandler + 'static>(
         limits,
         port,
         jobs: Semaphore::new(limits.concurrent_jobs.max(1)),
+        buffered: Semaphore::new(limits.max_buffered_bytes.max(limits.max_request_bytes)),
     });
+    let connections = Arc::new(Semaphore::new(limits.max_connections.max(1)));
     let graceful = GracefulShutdown::new();
     tracing::info!(port, "the Trenova printer is listening");
 
@@ -204,14 +272,20 @@ pub async fn serve<H: JobHandler + 'static>(
         if !peer.ip().is_loopback() {
             continue;
         }
+        let Ok(open) = Arc::clone(&connections).try_acquire_owned() else {
+            tracing::debug!("turned away a connection past the limit");
+            continue;
+        };
+        let access = peers.access(peer, port);
         let context = Arc::clone(&context);
-        let service = service_fn(move |request| respond(request, Arc::clone(&context)));
+        let service = service_fn(move |request| respond(request, Arc::clone(&context), access));
         let connection = http1::Builder::new()
             .timer(TokioTimer::new())
             .header_read_timeout(HEADER_TIMEOUT)
             .serve_connection(TokioIo::new(stream), service);
         let connection = graceful.watch(connection);
         tokio::spawn(async move {
+            let _open = open;
             if let Err(err) = connection.await {
                 tracing::debug!(error = %err, "an IPP connection ended with an error");
             }
@@ -229,7 +303,48 @@ pub async fn serve<H: JobHandler + 'static>(
 
 #[cfg(test)]
 mod tests {
-    use super::loopback_host;
+    use std::time::Duration;
+
+    use bytes::Bytes;
+    use http_body_util::Full;
+    use tokio::sync::Semaphore;
+
+    use super::{loopback_host, read_body};
+
+    #[tokio::test]
+    async fn a_body_keeps_its_share_of_the_budget_until_it_is_answered() {
+        let budget = Semaphore::new(8);
+        let body = || Full::new(Bytes::from_static(b"12345678"));
+
+        let first = read_body(body(), &budget)
+            .await
+            .expect("reads")
+            .expect("open");
+        assert_eq!(first.body, Bytes::from_static(b"12345678"));
+        assert_eq!(budget.available_permits(), 0);
+
+        let waiting = tokio::time::timeout(Duration::from_millis(50), read_body(body(), &budget));
+        assert!(waiting.await.is_err(), "the next body waits for room");
+
+        drop(first);
+        assert_eq!(budget.available_permits(), 8);
+        let second = read_body(body(), &budget)
+            .await
+            .expect("reads")
+            .expect("open");
+        assert_eq!(second.body, Bytes::from_static(b"12345678"));
+    }
+
+    #[tokio::test]
+    async fn an_empty_body_takes_nothing() {
+        let budget = Semaphore::new(8);
+        let empty = read_body(Full::new(Bytes::new()), &budget)
+            .await
+            .expect("reads")
+            .expect("open");
+        assert!(empty.body.is_empty());
+        assert_eq!(budget.available_permits(), 8);
+    }
 
     #[test]
     fn only_this_loopback_address_is_a_valid_host() {

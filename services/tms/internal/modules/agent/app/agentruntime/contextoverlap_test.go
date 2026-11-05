@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -86,7 +87,7 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 
 	m := &meeting{orgStarted: make(chan struct{}), vectorStarted: make(chan struct{})}
 	memories := &fakeMemories{answer: &agentmemoryports.MemoryContext{}}
-	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+	builder := accesstest.ContextBuilder(runtimecontext.BuilderParams{
 		Logger: zap.NewNop(),
 		Organizations: &meetingOrganizations{
 			meeting: m,

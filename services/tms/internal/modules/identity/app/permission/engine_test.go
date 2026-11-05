@@ -58,8 +58,13 @@ func setupTestEngine(
 	t.Helper()
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
+	roleRepo.On("GetMembershipExpiry", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	cacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
-	cacheRepo.On("Epoch", mock.Anything, mock.Anything).Return(testEpoch, nil).Maybe()
+	cacheRepo.On("Epoch", mock.Anything, mock.Anything, mock.Anything).
+		Return(testEpoch, nil).
+		Maybe()
 	userRepo := tenantportsmock.NewMockUserRepository(t)
 	logger := zap.NewNop()
 
@@ -73,16 +78,18 @@ func setupTestEngine(
 		Maybe()
 
 	e := &engine{
-		roleRepo:      roleRepo,
-		rbacRepo:      &rbactest.Repository{},
-		cacheRepo:     cacheRepo,
-		userRepo:      userRepo,
-		iamRepo:       noPolicies,
-		settings:      &stubAccessSettings{},
-		registry:      permissioncatalog.NewRegistry(),
-		routeRegistry: routeaccess.NewRouteRegistry(),
-		metrics:       metricsRegistry,
-		l:             logger.Named("test.permission-engine"),
+		roleRepo:          roleRepo,
+		rbacRepo:          &rbactest.Repository{},
+		cacheRepo:         cacheRepo,
+		userRepo:          userRepo,
+		iamRepo:           noPolicies,
+		agentGrants:       &fakeAgentGrants{},
+		settings:          &stubAccessSettings{},
+		registry:          permissioncatalog.NewRegistry(),
+		routeRegistry:     routeaccess.NewRouteRegistry(),
+		databaseEnforcing: true,
+		metrics:           metricsRegistry,
+		l:                 logger.Named("test.permission-engine"),
 	}
 
 	return e, roleRepo, cacheRepo, userRepo
@@ -630,6 +637,111 @@ func TestGetResourcePermissions_UnknownResource(t *testing.T) {
 
 }
 
+func TestCachedPermissionsEndWithTheEarliestAssignment(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	soon := timeutils.NowUnix() + 60
+	later := timeutils.NowUnix() + 300
+	past := timeutils.NowUnix() - 60
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: roleID, UserID: userID, OrganizationID: orgID, ExpiresAt: &later},
+			{RoleID: roleID, UserID: userID, OrganizationID: orgID, ExpiresAt: &soon},
+			{
+				RoleID:         pulid.MustNew("rol_"),
+				UserID:         userID,
+				OrganizationID: orgID,
+				ExpiresAt:      &past,
+			},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
+		{ID: roleID, MaxSensitivity: permission.SensitivityInternal},
+	}, nil)
+
+	perms, err := eng.computePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, soon, perms.ExpiresAt)
+}
+
+func TestPermissionsExpireAt_KeepsTheCacheLifetimeWithoutAnEarlierExpiry(t *testing.T) {
+	t.Parallel()
+
+	far := timeutils.NowUnix() + 2*int64(cacheTTL.Seconds())
+	before := timeutils.NowUnix()
+
+	expiresAt := permissionsExpireAt([]*rbac.UserRoleAssignment{{}, {ExpiresAt: &far}}, nil)
+
+	assert.GreaterOrEqual(t, expiresAt, before+int64(cacheTTL.Seconds()))
+	assert.Less(t, expiresAt, far)
+}
+
+func membershipEnding(
+	t *testing.T,
+	eng *engine,
+	userID, orgID, roleID pulid.ID,
+	ends int64,
+) *permissionportsmock.MockRoleRepository {
+	t.Helper()
+
+	roles := permissionportsmock.NewMockRoleRepository(t)
+	eng.roleRepo = roles
+	roles.On("GetUserRoleAssignments", mock.Anything, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roles.On("GetMembershipExpiry", mock.Anything, userID, orgID).Return(&ends, nil)
+
+	return roles
+}
+
+func TestCachedPermissionsEndWithTheMembership(t *testing.T) {
+	t.Parallel()
+
+	eng, _, _, _ := setupTestEngine(t)
+	userID, orgID, roleID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("rol_")
+	ends := timeutils.NowUnix() + 60
+	roles := membershipEnding(t, eng, userID, orgID, roleID, ends)
+	roles.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID}).Return([]*rbac.Role{
+		{ID: roleID, MaxSensitivity: permission.SensitivityInternal},
+	}, nil)
+
+	perms, err := eng.computePermissions(t.Context(), userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, ends, perms.ExpiresAt)
+	assert.Equal(t, string(permission.SensitivityInternal), perms.MaxSensitivity)
+}
+
+func TestAnEndedMembershipGrantsNothing(t *testing.T) {
+	t.Parallel()
+
+	eng, _, _, _ := setupTestEngine(t)
+	userID, orgID, roleID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("rol_")
+	roles := membershipEnding(t, eng, userID, orgID, roleID, timeutils.NowUnix()-60)
+	roles.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{}).
+		Return([]*rbac.Role{}, nil)
+
+	perms, err := eng.computePermissions(t.Context(), userID, orgID)
+
+	require.NoError(t, err)
+	assert.Empty(t, perms.Resources)
+	assert.Equal(t, string(permission.SensitivityPublic), perms.MaxSensitivity)
+	assert.Greater(t, perms.ExpiresAt, timeutils.NowUnix())
+
+	result, err := eng.GetEffectivePermissions(t.Context(), userID, orgID)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.Resources)
+	roles.AssertNotCalled(t, "GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID})
+}
+
 func TestExpiredAssignmentsIgnored(t *testing.T) {
 	t.Parallel()
 
@@ -978,6 +1090,62 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
+}
+
+func TestGetEffectivePermissions_CountsOnlyActivatedRoles(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	activeID := pulid.MustNew("rol_")
+	idleID := pulid.MustNew("rol_")
+	ctx := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{activeID}, true)
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: activeID, UserID: userID, OrganizationID: orgID},
+			{RoleID: idleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{activeID}).Return([]*rbac.Role{
+		{ID: activeID, MaxSensitivity: permission.SensitivityInternal},
+	}, nil)
+
+	result, err := eng.GetEffectivePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, permission.SensitivityInternal, result.MaxSensitivity)
+	roleRepo.AssertNotCalled(
+		t,
+		"GetRolesWithInheritance",
+		ctx,
+		[]pulid.ID{activeID, idleID},
+	)
+}
+
+func TestGetEffectivePermissions_WithoutActivationCountsEveryRole(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	firstID := pulid.MustNew("rol_")
+	secondID := pulid.MustNew("rol_")
+	bound := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{firstID}, true)
+	ctx := authctx.WithoutSessionRoleActivation(bound)
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: firstID, UserID: userID, OrganizationID: orgID},
+			{RoleID: secondID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{firstID, secondID}).
+		Return([]*rbac.Role{}, nil).
+		Once()
+
+	_, err := eng.GetEffectivePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
 }
 
 func TestGetEffectivePermissions_Error(t *testing.T) {

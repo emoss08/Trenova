@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -56,6 +57,18 @@ func PlanApprove(entity *driversettlement.Settlement, userID pulid.ID, now int64
 	entity.ApprovedByID = userID
 	entity.ApprovedAt = &now
 	return nil
+}
+
+func PlanSeparateApprover(
+	control *settlementcontrol.SettlementControl,
+	entity *driversettlement.Settlement,
+	userID pulid.ID,
+) error {
+	return settlementshared.RequireSeparateApprover(
+		control.RequireSeparateApprover,
+		entity.SubmittedByID,
+		userID,
+	)
 }
 
 func PlanReject(entity *driversettlement.Settlement, reason string) error {
@@ -382,6 +395,10 @@ func (s *Service) planApprove(
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
 		return err
+	}
+	plan.Refusal = PlanSeparateApprover(control, plan.After, req.TenantInfo.UserID)
+	if plan.Refused() {
+		return nil
 	}
 	plan.AutoPost = control.AutoPostOnApprove
 	return nil

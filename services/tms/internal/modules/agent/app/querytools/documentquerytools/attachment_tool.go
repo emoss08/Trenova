@@ -183,6 +183,7 @@ func (t *readAttachmentTool) list(
 		TenantInfo:   tenant,
 		ResourceID:   threadID.String(),
 		ResourceType: document.ConversationResourceType,
+		Viewer:       person,
 	})
 	if err != nil {
 		return nil, err

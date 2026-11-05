@@ -44,6 +44,8 @@ type CapturePairing struct {
 	BusinessUnitID *pulid.ID            `json:"businessUnitId" keel:"business_unit_id"`
 	ApprovedByID   *pulid.ID            `json:"approvedById"   keel:"approved_by_id"`
 	DeviceName     string               `json:"deviceName"     keel:"device_name,nullzero"`
+	ActiveRoleIDs  []pulid.ID           `json:"-"            keel:"active_role_ids,jsonb"`
+	SessionEpoch   int64                `json:"-"            keel:"session_epoch"`
 	DeviceID       *pulid.ID            `json:"deviceId"       keel:"device_id"`
 	LastPolledAt   *int64               `json:"-"              keel:"last_polled_at"`
 	ExpiresAt      int64                `json:"expiresAt"      keel:"expires_at"`

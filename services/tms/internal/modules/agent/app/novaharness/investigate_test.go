@@ -10,7 +10,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/testsuite"
 )
+
+// onWorker runs fn inside a Temporal activity, the only place the harness reads.
+func onWorker(fn func(context.Context) error) error {
+	var suite testsuite.WorkflowTestSuite
+	worker := suite.NewTestActivityEnvironment()
+	worker.RegisterActivityWithOptions(fn, activity.RegisterOptions{Name: "investigate"})
+	_, err := worker.ExecuteActivity("investigate")
+
+	return err
+}
 
 type investigating struct {
 	*agenttest.ScriptedCompletion
@@ -56,11 +68,17 @@ func TestRun_AnswersThroughTheAnswerToolInOneCallWhenNothingNeedsReading(t *test
 	router := &investigating{ScriptedCompletion: &agenttest.ScriptedCompletion{
 		Turns: []*llmports.ChatCompletionResult{answering(map[string]any{"signedBy": "Dana"})},
 	}}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 	read := &lookup{}
 
 	var answer signature
-	result, err := harness.Run(t.Context(), readingTask(read), &answer)
+	var result *llmports.StructuredCompletionResult
+	err := onWorker(func(ctx context.Context) error {
+		ran, runErr := harness.Run(ctx, readingTask(read), &answer)
+		result = ran
+
+		return runErr
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, "Dana", answer.SignedBy)
@@ -93,12 +111,15 @@ func TestRun_ReadsThenAnswersWithTheReadInFrontOfTheModel(t *testing.T) {
 			answering(map[string]any{"signedBy": "Lee"}),
 		},
 	}}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 	read := &lookup{result: llmports.NovaToolResult{Content: "signed by Lee"}}
 
 	var answer signature
-	_, err := harness.Run(t.Context(), readingTask(read), &answer)
-	require.NoError(t, err)
+	require.NoError(t, onWorker(func(ctx context.Context) error {
+		_, err := harness.Run(ctx, readingTask(read), &answer)
+
+		return err
+	}))
 
 	assert.Equal(t, "Lee", answer.SignedBy)
 	assert.Equal(t, []map[string]any{{"id": "doc_1"}}, read.calls)
@@ -122,12 +143,16 @@ func TestRun_AnswersWithWhatWasReadOnceTheCallsRunOut(t *testing.T) {
 		},
 		closingText: `{"signedBy":"Kim"}`,
 	}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 	read := &lookup{result: llmports.NovaToolResult{Content: "signed by Kim"}}
 	task := readingTask(read)
 
 	var answer signature
-	_, err := harness.Run(t.Context(), task, &answer)
+	err := onWorker(func(ctx context.Context) error {
+		_, runErr := harness.Run(ctx, task, &answer)
+
+		return runErr
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, "Kim", answer.SignedBy)
@@ -151,10 +176,14 @@ func TestRun_AnswersInOneStructuredCallWhenTheToolAnswerDoesNotDecode(t *testing
 		},
 		closingText: `{"signedBy":"Dana"}`,
 	}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 
 	var answer signature
-	_, err := harness.Run(t.Context(), readingTask(&lookup{}), &answer)
+	err := onWorker(func(ctx context.Context) error {
+		_, runErr := harness.Run(ctx, readingTask(&lookup{}), &answer)
+
+		return runErr
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, "Dana", answer.SignedBy)

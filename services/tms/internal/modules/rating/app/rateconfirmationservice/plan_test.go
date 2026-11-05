@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
@@ -58,6 +59,7 @@ func setupPlanTest(t *testing.T) *planTestDeps {
 		shipmentRepo:          deps.shipmentRepo,
 		templates:             deps.templates,
 		emailService:          deps.email,
+		auditService:          &mocks.NoopAuditService{},
 	}
 
 	return deps

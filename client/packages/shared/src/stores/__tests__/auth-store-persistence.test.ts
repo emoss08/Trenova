@@ -1,6 +1,6 @@
 import { userSchema, type User } from "@trenova/shared/types/user";
 import { FakeBroadcastChannel } from "@trenova/shared/testing/fake-broadcast-channel";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const STORAGE_KEY = "auth-storage";
 
@@ -38,7 +38,15 @@ async function loadFreshStore() {
   return import("@trenova/shared/stores/auth-store");
 }
 
+const COLD_LOAD_TIMEOUT_MS = 60_000;
+
 describe("auth store persistence", () => {
+  // Each test loads the store afresh. The first load is cold, seconds on a busy machine, so it
+  // is paid here against its own limit rather than the first test's.
+  beforeAll(async () => {
+    await import("@trenova/shared/stores/auth-store");
+  }, COLD_LOAD_TIMEOUT_MS);
+
   beforeEach(() => {
     localStorage.clear();
     FakeBroadcastChannel.open = [];

@@ -1,9 +1,11 @@
 //go:build integration
 
-package shipmentpredicate
+package shipmentpredicate_test
 
 import (
 	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -76,7 +78,7 @@ func TestCarrierIDsFilter_MatchesShipmentsTenderedToTheCarrier(t *testing.T) {
 	})
 	sp := shipmentdb.Shipments
 	matched, err := keel.Into[pulid.ID](tenantCtx, db, sp.Pick(sp.ID).
-		Where(OptionPredicates(&shipmentports.ShipmentOptions{
+		Where(shipmentpredicate.OptionPredicates(&shipmentports.ShipmentOptions{
 			CarrierIDs: []pulid.ID{pulid.ID(carrierID)},
 		})...))
 	require.NoError(t, err)

@@ -192,6 +192,7 @@ pub fn pool_config(config: &Config) -> PoolConfig {
     }
     PoolConfig {
         size: config.pool_size(),
+        spare_children: config.spare_children(),
         max_jobs_per_child: config.pool.max_jobs_per_child,
         rss_high_water_bytes: config.pool.rss_high_water,
         limits: Limits {

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,6 +58,12 @@ func (f *fakeRunService) StartForDefinition(
 	return &agent.AgentRun{ID: pulid.MustNew("ar_")}, nil
 }
 
+type quietWaits struct {
+	agentwaitports.AgentWaitNotifier
+}
+
+func (quietWaits) NotifyEvent(context.Context, *agenteventports.AgentEvent) {}
+
 var tenantInfo = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 type fixture struct {
@@ -72,6 +79,7 @@ func newFixture(defs ...*agentdefinition.Definition) *fixture {
 	}
 	f.publisher = agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
+		Waits:       quietWaits{},
 		Definitions: f.definitions,
 		RunService:  f.runService,
 	})

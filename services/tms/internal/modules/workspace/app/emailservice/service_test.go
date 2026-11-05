@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -23,6 +24,18 @@ import (
 	"go.uber.org/zap"
 )
 
+type noInvoiceAttempts struct {
+	invoiceports.InvoiceRepository
+}
+
+func (noInvoiceAttempts) SyncEmailAttemptsForMessage(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) ([]*invoice.Invoice, error) {
+	return nil, nil
+}
+
 func TestHandleProviderEventUsesExplicitProviderMessageID(t *testing.T) {
 	t.Parallel()
 
@@ -31,7 +44,7 @@ func TestHandleProviderEventUsesExplicitProviderMessageID(t *testing.T) {
 	repo := &handleProviderEventRepo{
 		message: msg,
 	}
-	svc := &Service{repo: repo}
+	svc := &Service{repo: repo, invoiceRepo: noInvoiceAttempts{}}
 
 	event := testEmailEvent(tenantInfo, email.EventTypeDelivered)
 	event.Raw = map[string]any{
@@ -243,7 +256,7 @@ func TestHandleProviderEventCreatesSuppressionOnlyWithReason(t *testing.T) {
 			event := testEmailEvent(tenantInfo, tt.eventType)
 			event.MessageID = msg.ID
 			repo := &handleProviderEventRepo{message: msg}
-			svc := &Service{repo: repo}
+			svc := &Service{repo: repo, invoiceRepo: noInvoiceAttempts{}}
 
 			err := svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
 				TenantInfo:        tenantInfo,
@@ -448,7 +461,7 @@ func TestHandleProviderEventBouncesTheMessageOnlyWhenEveryRecipientBounced(t *te
 		message:           msg,
 		bouncedRecipients: []string{"AP@customer.example.com"},
 	}
-	svc := &Service{repo: repo}
+	svc := &Service{repo: repo, invoiceRepo: noInvoiceAttempts{}}
 
 	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
 		TenantInfo:        tenantInfo,
@@ -479,7 +492,7 @@ func TestHandleProviderEventIgnoresALateEventThatWouldMoveStatusBackwards(t *tes
 	event := testEmailEvent(tenantInfo, email.EventTypeDelivered)
 	event.MessageID = msg.ID
 	repo := &handleProviderEventRepo{message: msg}
-	svc := &Service{repo: repo}
+	svc := &Service{repo: repo, invoiceRepo: noInvoiceAttempts{}}
 
 	require.NoError(t, svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
 		TenantInfo: tenantInfo,

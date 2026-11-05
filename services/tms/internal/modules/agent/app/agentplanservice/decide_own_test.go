@@ -145,11 +145,9 @@ func TestDecideOwn_ApprovesAPlanFromTheCallersOwnConversation(t *testing.T) {
 	plan, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 
 	require.NoError(t, err)
-	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
-	require.Len(t, f.decider.decided, 2, "every step goes through the decision service")
-	for _, decided := range f.decider.decided {
-		assert.True(t, decided.WithinPlan)
-	}
+	assert.Equal(t, agentplan.PlanStatusApproving, plan.Status,
+		"an approval waits out the undo window before any step is decided")
+	assert.Empty(t, f.decider.decided)
 	require.Len(t, f.threads.asked, 1)
 	assert.Equal(t, f.actor.UserID, f.threads.asked[0].UserID,
 		"the conversation is read under the caller's own id")
@@ -218,20 +216,6 @@ func TestDecideOwn_RefusesAPlanWhoseAgentWasRemoved(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no longer exists")
-	assert.Empty(t, f.decider.decided)
-}
-
-// A service without the conversations wired cannot tell whose a plan is,
-// so it treats every plan as someone else's rather than as everyone's.
-func TestDecideOwn_WithoutConversationsNothingIsYours(t *testing.T) {
-	t.Parallel()
-
-	f := newOwnFixture(t)
-	f.svc.threads = nil
-
-	_, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
-
-	assert.True(t, errortypes.IsNotFoundError(err))
 	assert.Empty(t, f.decider.decided)
 }
 

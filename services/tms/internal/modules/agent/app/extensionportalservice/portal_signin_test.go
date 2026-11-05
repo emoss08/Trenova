@@ -55,6 +55,7 @@ func TestAnAuthenticatorKeyIsStoredEncryptedAndSentAsTheCodePlaceholder(t *testi
 	site, err := f.svc.CreateSite(t.Context(), f.siteRequest(
 		func(req *agentextensionports.SavePortalSiteRequest) {
 			req.AuthenticatorKey = "jbsw y3dp ehpk 3pxp"
+			req.ViewOnlyAccount = true
 		},
 	))
 	require.NoError(t, err)
@@ -213,4 +214,67 @@ func TestTrenovaItselfCannotBeAPortalSite(t *testing.T) {
 	)
 	assert.Contains(t, err.Error(), "Trenova itself cannot be a portal site")
 	assert.Empty(t, f.browser.started)
+}
+
+func TestAStoredSignInDoesNotFollowTheSiteToANewDomain(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	created, err := f.svc.CreateSite(t.Context(), f.siteRequest(
+		func(req *agentextensionports.SavePortalSiteRequest) {
+			req.AuthenticatorKey = "JBSWY3DPEHPK3PXP"
+		},
+	))
+	require.NoError(t, err)
+
+	moved := func(mutate func(*agentextensionports.SavePortalSiteRequest)) *agentextensionports.SavePortalSiteRequest {
+		return f.siteRequest(func(req *agentextensionports.SavePortalSiteRequest) {
+			req.ID, req.Version = created.ID, created.Version
+			req.Domains = []string{"portal.acme.com", "evil.example.com"}
+			req.StartURL = "https://evil.example.com/login"
+			req.Username, req.Password = "", ""
+			mutate(req)
+		})
+	}
+
+	_, err = f.svc.UpdateSite(t.Context(), moved(
+		func(*agentextensionports.SavePortalSiteRequest) {},
+	))
+	assert.Contains(t, fieldsOf(t, err), "password")
+
+	_, err = f.svc.UpdateSite(t.Context(), moved(
+		func(req *agentextensionports.SavePortalSiteRequest) { req.Password = "new-pass" },
+	))
+	assert.Contains(t, fieldsOf(t, err), "password", "a username alone is not a new sign-in")
+
+	updated, err := f.svc.UpdateSite(t.Context(), moved(
+		func(req *agentextensionports.SavePortalSiteRequest) {
+			req.Username, req.Password = "someone@example.com", "new-pass"
+		},
+	))
+	require.NoError(t, err)
+	assert.True(t, updated.HasSignIn)
+	assert.False(t, updated.HasAuthenticator, "the stored key does not move with the sign-in")
+}
+
+func TestAStoredSignInStaysWhenTheDomainsDoNotGrow(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	created, err := f.svc.CreateSite(t.Context(), f.siteRequest(
+		func(req *agentextensionports.SavePortalSiteRequest) {
+			req.Domains = []string{"portal.acme.com", "login.acme.com"}
+		},
+	))
+	require.NoError(t, err)
+
+	updated, err := f.svc.UpdateSite(t.Context(), f.siteRequest(
+		func(req *agentextensionports.SavePortalSiteRequest) {
+			req.ID, req.Version = created.ID, created.Version
+			req.Username, req.Password = "", ""
+		},
+	))
+
+	require.NoError(t, err)
+	assert.True(t, updated.HasSignIn)
 }

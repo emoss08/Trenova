@@ -11,4 +11,6 @@ pub mod codec;
 pub mod printer;
 pub mod value;
 
-pub use printer::{DocumentFormat, IncomingJob, JobHandler, Printer, PrinterConfig, Refusal};
+pub use printer::{
+    ClientAccess, DocumentFormat, IncomingJob, JobHandler, Printer, PrinterConfig, Refusal,
+};

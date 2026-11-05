@@ -7,6 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const maxPublicBodyBytes = 64 << 20
+
+func NewPublicBodyLimit() gin.HandlerFunc {
+	return NewBodyLimit(maxPublicBodyBytes)
+}
+
 func NewBodyLimit(limit int64) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.ContentLength > limit {

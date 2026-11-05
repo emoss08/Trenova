@@ -114,6 +114,19 @@ pub async fn start(pairs: &[(&str, &str)]) -> Option<Worker> {
     Some(Worker { client, pool })
 }
 
+/// Waits for the pool to have every child again: children lost or retired
+/// are replaced off the job's path, so not before the next call returns.
+pub async fn settled(pool: &Pool) {
+    let waited = std::time::Instant::now();
+    while !pool.healthy() {
+        assert!(
+            waited.elapsed() < std::time::Duration::from_secs(10),
+            "the pool did not replace its children"
+        );
+        tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+    }
+}
+
 /// Splits a document into the chunk messages `wrap` builds.
 pub fn chunked<M>(bytes: &[u8], wrap: impl Fn(Vec<u8>) -> M) -> Vec<M> {
     bytes

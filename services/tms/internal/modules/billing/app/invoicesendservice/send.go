@@ -206,7 +206,6 @@ func (s *Service) Send(
 	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
-		BaseURL:    req.BaseURL,
 	})
 	if err != nil {
 		return nil, err
@@ -277,7 +276,6 @@ func (s *Service) SendFromWorkflow(
 	plan, err := s.PlanSend(ctx, &invoiceports.InvoiceSendPlanRequest{
 		InvoiceID:  req.InvoiceID,
 		TenantInfo: req.TenantInfo,
-		BaseURL:    req.BaseURL,
 	})
 	if err != nil {
 		return nil, err
@@ -478,7 +476,6 @@ func (s *Service) enqueueInvoiceSendWorkflow(
 				Timestamp:      now,
 			},
 			InvoiceID:     entity.ID,
-			BaseURL:       req.BaseURL,
 			PrincipalType: auditActor.PrincipalType,
 			PrincipalID:   auditActor.PrincipalID,
 			APIKeyID:      auditActor.APIKeyID,

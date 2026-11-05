@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
@@ -12,15 +13,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type quietNotifier struct {
+	agentproposalports.AgentProposalNotifier
+}
+
+func (quietNotifier) NotifyPending(
+	context.Context,
+	agentproposalports.PendingProposalsNotice,
+) error {
+	return nil
+}
 
 type storedPlans struct {
 	fakePlans
@@ -93,9 +107,13 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 	plans := &storedPlans{}
 	proposals := &storedProposals{}
 	recorder := proposalrecorder.New(proposalrecorder.Params{
-		Logger:    zap.NewNop(),
-		Proposals: proposals,
-		Plans:     proposalrecorder.NewPlanStore(plans),
+		Logger:     zap.NewNop(),
+		DB:         dbtest.NopConnection{},
+		Proposals:  proposals,
+		Plans:      proposalrecorder.NewPlanStore(plans),
+		Notifier:   quietNotifier{},
+		Activity:   agenttest.QuietActivity{},
+		Watchtower: agenttest.QuietWatchtower{},
 	})
 
 	actions := make([]agentruntimeports.PendingAction, 0, 5)
@@ -146,11 +164,17 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 	decider := &executingDecider{steps: proposals}
 	decider.failAt = proposals.steps[2].ID
 	svc := &Service{
-		l:         zap.NewNop(),
-		plans:     &plans.fakePlans,
-		proposals: &proposals.fakeSteps,
-		decisions: decider,
-		shadow:    fakeShadow{},
+		l:          zap.NewNop(),
+		plans:      &plans.fakePlans,
+		proposals:  &proposals.fakeSteps,
+		decisions:  decider,
+		shadow:     fakeShadow{},
+		activity:   &announcedPlans{},
+		watchtower: agenttest.QuietWatchtower{},
+		followUps:  agenttest.QuietFollowUps{},
+		previews:   &fakePreviews{},
+		audit:      &recordedAudit{},
+		workflows:  &unreachableWindow{},
 	}
 
 	plan, err := svc.Decide(t.Context(), &agentplanports.DecideAgentPlanRequest{

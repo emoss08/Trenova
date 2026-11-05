@@ -214,6 +214,13 @@ func (s *Service) Approve(
 	if me := s.validator.ValidateApprove(entity); me != nil {
 		return nil, me
 	}
+	if entity.RequestedByID == userID {
+		return nil, errortypes.NewValidationError(
+			"reversalId",
+			errortypes.ErrInvalidOperation,
+			"You requested this reversal, so someone else must approve it",
+		)
+	}
 	original := *entity
 	now := timeutils.NowUnix()
 	entity.Status = journalreversal.StatusApproved
@@ -356,21 +363,30 @@ func (s *Service) PlanPost(
 	if err != nil {
 		return nil, err
 	}
+	period, postingDate, me := s.validator.ResolvePostingPeriod(
+		ctx,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+		entity.RequestedAccountingDate,
+		control,
+	)
+	if me != nil {
+		return nil, me
+	}
 	after := *entity
 	now := timeutils.NowUnix()
 	after.Status = journalreversal.StatusPosted
 	after.PostedByID = userID
 	after.PostedAt = &now
+	after.ResolvedFiscalYearID = period.FiscalYearID
+	after.ResolvedFiscalPeriodID = period.ID
+	after.RequestedAccountingDate = postingDate
 	return &journalreversalports.JournalReversalChange{
 		Before:        entity,
 		After:         &after,
 		OriginalEntry: originalEntry,
-		Journal: reversalJournal(
-			originalEntry,
-			entity.ResolvedFiscalPeriodID,
-			entity.RequestedAccountingDate,
-		),
-		CurrencyCode: control.FunctionalCurrencyCode,
+		Journal:       reversalJournal(originalEntry, period.ID, postingDate),
+		CurrencyCode:  control.FunctionalCurrencyCode,
 	}, nil
 }
 
@@ -386,6 +402,7 @@ func (s *Service) Post(
 	}
 	userID := plan.After.PostedByID
 	entity := plan.Before
+	resolved := plan.After
 	originalEntry := plan.OriginalEntry
 	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(
 		ctx,
@@ -433,6 +450,13 @@ func (s *Service) Post(
 	}
 	original := *entity
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if err := s.validator.HoldPostingPeriod(
+			txCtx,
+			resolved.ResolvedFiscalPeriodID,
+			req.TenantInfo,
+		); err != nil {
+			return err
+		}
 		if err := s.journalPostingRepo.CreatePosting(
 			txCtx,
 			journalentryports.CreateJournalPostingParams{
@@ -443,9 +467,9 @@ func (s *Service) Post(
 				BatchType:            "Reversal",
 				BatchStatus:          "Posted",
 				BatchDescription:     "Journal reversal",
-				FiscalYearID:         entity.ResolvedFiscalYearID,
-				FiscalPeriodID:       entity.ResolvedFiscalPeriodID,
-				AccountingDate:       entity.RequestedAccountingDate,
+				FiscalYearID:         resolved.ResolvedFiscalYearID,
+				FiscalPeriodID:       resolved.ResolvedFiscalPeriodID,
+				AccountingDate:       resolved.RequestedAccountingDate,
 				PostedAt:             &now,
 				PostedByID:           userID,
 				CreatedByID:          userID,
@@ -489,7 +513,7 @@ func (s *Service) Post(
 				ReversalEntryID: reversalEntryID,
 				OrganizationID:  entity.OrganizationID,
 				BusinessUnitID:  entity.BusinessUnitID,
-				ReversalDate:    entity.RequestedAccountingDate,
+				ReversalDate:    resolved.RequestedAccountingDate,
 				ReversalReason:  entity.ReasonText,
 				UpdatedByID:     userID,
 			},
@@ -499,6 +523,9 @@ func (s *Service) Post(
 		entity.Status = journalreversal.StatusPosted
 		entity.PostedByID = userID
 		entity.PostedAt = &now
+		entity.ResolvedFiscalYearID = resolved.ResolvedFiscalYearID
+		entity.ResolvedFiscalPeriodID = resolved.ResolvedFiscalPeriodID
+		entity.RequestedAccountingDate = resolved.RequestedAccountingDate
 		entity.ReversalJournalEntryID = reversalEntryID
 		entity.PostedBatchID = batchID
 		updated, updateErr := s.journalReversalRepo.Update(txCtx, entity)

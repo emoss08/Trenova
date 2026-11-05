@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +60,12 @@ func (r *recordingTurns) MarkWorkflow(
 }
 
 func newDurable(turns *recordingTurns) *Service {
-	return &Service{l: zap.NewNop(), turns: turns}
+	return &Service{
+		l:        zap.NewNop(),
+		turns:    turns,
+		realtime: &mocks.NoopRealtimeService{},
+		chapters: agenttest.QuietChapters{},
+	}
 }
 
 // stopWith stops a turn with cancel standing in for the engine running it.

@@ -65,19 +65,3 @@ func TestRetentionRemindsTheOwnerOnceAWeekAhead(t *testing.T) {
 	assert.Zero(t, reminded, "an owner is told once")
 	assert.Len(t, w.notified, 1)
 }
-
-func TestRetentionRemindersWaitForNotifications(t *testing.T) {
-	t.Parallel()
-
-	w := newWorld()
-	s := w.service()
-	s.notifications = nil
-	stack(w, capture.BatchReady, timeutils.NowUnix()+captureintake.SecondsPerDay)
-
-	reminded, err := s.maintenance().RemindRetention(t.Context())
-	require.NoError(t, err)
-	assert.Zero(t, reminded)
-	for _, batch := range w.batches {
-		assert.Nil(t, batch.RetentionRemindedAt, "nobody was told, so nothing is marked told")
-	}
-}

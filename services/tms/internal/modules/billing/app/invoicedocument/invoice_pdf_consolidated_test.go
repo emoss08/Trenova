@@ -24,10 +24,10 @@ func amt(value string) decimal.Decimal {
 // prints rather than the values it was built from.
 func parseAmt(t *testing.T, formatted string) decimal.Decimal {
 	t.Helper()
-	_, amount, found := strings.Cut(formatted, " ")
-	require.True(t, found, "not a money string: %q", formatted)
+	start := strings.IndexAny(formatted, "0123456789")
+	require.GreaterOrEqual(t, start, 0, "not a money string: %q", formatted)
 
-	return decimal.RequireFromString(amount)
+	return decimal.RequireFromString(strings.ReplaceAll(formatted[start:], ",", ""))
 }
 
 func consolidatedInvoice(mutate func(*invoice.Invoice)) *invoice.Invoice {

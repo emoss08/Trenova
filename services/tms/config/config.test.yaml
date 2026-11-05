@@ -53,7 +53,7 @@ temporal:
 
 security:
   session:
-    secret: test-secret-key-for-testing-only-32chars
+    secret: k9Fq2vXw7LmP0zTbR4nY8sDhJ3cGuE6a
     name: trenova_test_session
     maxAge: 1h
     httpOnly: true

@@ -13,10 +13,14 @@ import (
 )
 
 type ToolPolicy struct {
-	Name                string
-	Kind                agenttooltrust.ToolKind
-	Resource            permission.Resource
-	Operation           permission.Operation
+	Name      string
+	Kind      agenttooltrust.ToolKind
+	Resource  permission.Resource
+	Operation permission.Operation
+	// PersonAlsoNeeds is what the page this tool mirrors asks of a person beyond
+	// the tool's own permission. An agent acting alone is held to its ceiling
+	// instead, so these are checked only for a person.
+	PersonAlsoNeeds     []ToolGrant
 	Scope               agenttooltrust.ToolScope
 	DefaultTier         agent.AutonomyTier
 	MaxTier             agent.AutonomyTier

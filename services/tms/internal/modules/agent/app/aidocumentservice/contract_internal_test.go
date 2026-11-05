@@ -11,6 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func parseReply(text string) (*documentaiextractionports.AIExtractResult, error) {
+	parsed := new(extractResponse)
+	if err := decodeStructured(text, parsed); err != nil {
+		return nil, err
+	}
+
+	return convertExtractResponse(parsed), nil
+}
+
 func TestTheExtractionTaskBoundsEachPage(t *testing.T) {
 	t.Parallel()
 
@@ -24,20 +33,19 @@ func TestTheExtractionTaskBoundsEachPage(t *testing.T) {
 	assert.Equal(t, aitask.TaskDocumentExtraction, task.Name)
 	assert.Equal(t, schemaNameExtract, task.SchemaName)
 	assert.Equal(t, 4000, task.MaxTokens)
-	assert.Equal(t, extractPageLimit, Contract{}.PageLimit())
 	assert.NotContains(t, task.Context.Sections[1].Content, strings.Repeat("x", extractPageLimit+1))
 }
 
-func TestContractFieldKeysMatchTheSchemaEnum(t *testing.T) {
+func TestExtractFieldKeysMatchTheSchemaEnum(t *testing.T) {
 	t.Parallel()
 
 	schema := buildExtractSchema()
 	items := schema["properties"].(map[string]any)["fields"].(map[string]any)["items"].(map[string]any)
 	enum := items["properties"].(map[string]any)["key"].(map[string]any)["enum"].([]string)
-	assert.Equal(t, enum, Contract{}.FieldKeys())
+	assert.Equal(t, enum, extractFieldKeys)
 }
 
-func TestContractParseReplyReadsTheWireFormat(t *testing.T) {
+func TestParseReplyReadsTheWireFormat(t *testing.T) {
 	t.Parallel()
 
 	reply := `{"documentKind":"RateConfirmation","overallConfidence":1.4,"reviewStatus":"ready",` +
@@ -48,7 +56,7 @@ func TestContractParseReplyReadsTheWireFormat(t *testing.T) {
 		`"state":"","postalCode":"","date":"","timeWindow":"","appointmentRequired":false,"pageNumber":1,` +
 		`"evidenceExcerpt":"","confidence":0.9,"reviewRequired":false}]}`
 
-	parsed, err := Contract{}.ParseReply(reply)
+	parsed, err := parseReply(reply)
 	require.NoError(t, err)
 	assert.Equal(t, "RateConfirmation", parsed.DocumentKind)
 	assert.InDelta(t, 1.0, parsed.OverallConfidence, 1e-9)
@@ -58,7 +66,7 @@ func TestContractParseReplyReadsTheWireFormat(t *testing.T) {
 	assert.Equal(t, "A", parsed.Stops[0].Name)
 }
 
-func TestContractParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
+func TestParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
 	t.Parallel()
 
 	reply := `{"documentKind":"RateConfirmation","overallConfidence":0.9,"reviewStatus":"Ready",` +
@@ -72,7 +80,7 @@ func TestContractParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
 		`"stops":[{"role":"pickup","name":"A","pageNumber":1,"evidenceExcerpt":"A"},null,` +
 		`{"role":"delivery","name":"B","pageNumber":2,"evidenceExcerpt":"B"}]}`
 
-	parsed, err := Contract{}.ParseReply(reply)
+	parsed, err := parseReply(reply)
 	require.NoError(t, err)
 
 	window := parsed.Fields["pickupWindow"]
@@ -101,7 +109,7 @@ func TestContractParseReplyDerivesWhatTheModelNoLongerWrites(t *testing.T) {
 	}
 }
 
-func TestContractParseReplyReadsRepliesInTheFormerWireFormat(t *testing.T) {
+func TestParseReplyReadsRepliesInTheFormerWireFormat(t *testing.T) {
 	t.Parallel()
 
 	reply := `{"documentKind":"RateConfirmation","overallConfidence":0.9,"reviewStatus":"Ready",` +
@@ -112,7 +120,7 @@ func TestContractParseReplyReadsRepliesInTheFormerWireFormat(t *testing.T) {
 		`"stops":[{"sequence":7,"role":"pickup","name":"A","pageNumber":1,"evidenceExcerpt":"A",` +
 		`"source":"model"}]}`
 
-	parsed, err := Contract{}.ParseReply(reply)
+	parsed, err := parseReply(reply)
 	require.NoError(t, err)
 	rate := parsed.Fields["rate"]
 	assert.Equal(t, "1500.00", rate.Value)
@@ -147,9 +155,9 @@ func TestExtractSchemaHoldsOnlyWhatTheModelMustDecide(t *testing.T) {
 	}
 }
 
-func TestContractParseReplyRejectsMalformedText(t *testing.T) {
+func TestParseReplyRejectsMalformedText(t *testing.T) {
 	t.Parallel()
 
-	_, err := Contract{}.ParseReply("not json")
+	_, err := parseReply("not json")
 	require.ErrorIs(t, err, llmports.ErrModelSchemaValidation)
 }

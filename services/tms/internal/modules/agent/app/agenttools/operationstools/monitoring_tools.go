@@ -438,10 +438,13 @@ func (t *SendDetentionNoticeTool) ParamSchema() map[string]any {
 
 func (t *SendDetentionNoticeTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      permission.ResourceCustomerCommunication,
-		Operation:     permission.OpCreate,
+		Name:      t.Name(),
+		Kind:      agenttooltrust.ToolKindAction,
+		Resource:  permission.ResourceCustomerCommunication,
+		Operation: permission.OpCreate,
+		PersonAlsoNeeds: []agenttoolports.ToolGrant{
+			{Resource: permission.ResourceDetention, Operation: permission.OpUpdate},
+		},
 		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,

@@ -86,12 +86,12 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 85 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 245 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 246 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 47 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
@@ -104,12 +104,12 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Covered by a tool | 443 |
 | Exempt | 669 |
 | — Security | 85 |
-| — Configuration | 245 |
+| — Configuration | 246 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
 | — Agent administration | 104 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 47 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **2** |
@@ -196,7 +196,7 @@ The writes no tool performs yet, and what the tool would do.
 | driversettlement | 34 | 29 | 5 | 0 |
 | edi | 9 | 6 | 3 | 0 |
 | edilading | 13 | 1 | 11 | 1 |
-| edisetup | 17 | 5 | 12 | 0 |
+| edisetup | 18 | 5 | 13 | 0 |
 | editransfer | 9 | 7 | 2 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
@@ -291,7 +291,6 @@ The writes no tool performs yet, and what the tool would do.
 | trailer | 5 | 5 | 0 | 0 |
 | triage | 8 | 2 | 6 | 0 |
 | user | 20 | 0 | 20 | 0 |
-| version | 1 | 0 | 1 | 0 |
 | watchtower | 13 | 8 | 5 | 0 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
@@ -1082,7 +1081,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
+| `POST /api/v1/edi/as2/inbound/:as2InboundToken/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
 | `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `edi_send_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `edi_reprocess_inbound_file` |
@@ -1118,6 +1117,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edisetuphandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/communication-profiles/`<br>edisetuphandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
 | `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edisetuphandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
+| `POST /api/v1/edi/communication-profiles/:profileID/rotate-inbound-url/`<br>edisetuphandler.rotateCommunicationProfileInboundURL | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edisetuphandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edisetuphandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/connections/`<br>edisetuphandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
@@ -2148,12 +2148,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `PUT /api/v1/users/:userID/organization-memberships/`<br>userhandler.replaceOrganizationMemberships | Exempt, security: User accounts, their status, memberships and passwords decide who can sign in and to what. |
 | `PUT /api/v1/users/me/assistant-visibility/`<br>userhandler.updateMyAssistantVisibility | Exempt, user-preference: Whether a person sees the assistant at all is theirs to choose; an agent never turns itself on or off for someone. |
 | `PUT /api/v1/users/me/availability/`<br>userhandler.updateMyAvailability | Exempt, user-preference: Whether a person is available, focusing or away, and who covers for them, is theirs alone to say. |
-
-### version
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/system/check-updates`<br>versionhandler.checkUpdates | Exempt, read-only: Asks the release server whether a newer version exists and changes nothing. |
 
 ### watchtower
 

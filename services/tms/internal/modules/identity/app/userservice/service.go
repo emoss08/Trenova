@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -52,11 +53,13 @@ type Params struct {
 	DB                kernelports.Transactor
 	Roles             RoleAssigner
 	Invites           AccountInviter
+	Accounts          *accountguard.Guard
 	PermissionEngine  permissionports.PermissionEngine
 	AuthEventHistory  iamports.AuthEventHistoryRepository
 	AuthEvents        iamports.AuthEventRecorder
 	ContentGate       contentscanports.Gate
 	SSOConfigs        tenantports.SSOConfigRepository
+	PasswordStepUp    sessionports.PasswordStepUp
 	AccessRevokers    []tenantports.UserAccessRevoker `group:"userAccessRevokers"`
 }
 
@@ -75,12 +78,14 @@ type Service struct {
 	db             kernelports.Transactor
 	roles          RoleAssigner
 	invites        AccountInviter
+	accounts       *accountguard.Guard
 	permissions    permissionports.PermissionEngine
 	signIns        iamports.AuthEventHistoryRepository
 	authEvents     iamports.AuthEventRecorder
 	contentGate    contentscanports.Gate
 	accessRevokers []tenantports.UserAccessRevoker
 	ssoConfigs     tenantports.SSOConfigRepository
+	passwordStepUp sessionports.PasswordStepUp
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -99,11 +104,13 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		db:             p.DB,
 		roles:          p.Roles,
 		invites:        p.Invites,
+		accounts:       p.Accounts,
 		permissions:    p.PermissionEngine,
 		signIns:        p.AuthEventHistory,
 		authEvents:     p.AuthEvents,
 		contentGate:    p.ContentGate,
 		accessRevokers: p.AccessRevokers,
+		passwordStepUp: p.PasswordStepUp,
 		ssoConfigs:     p.SSOConfigs,
 	}
 }
@@ -135,7 +142,8 @@ func (s *Service) BulkUpdateStatus(
 ) ([]*tenant.User, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
-		zap.Any("request", req),
+		zap.Int("userCount", len(req.UserIDs)),
+		zap.String("status", req.Status.String()),
 	)
 
 	if req.Status != domaintypes.StatusActive &&
@@ -295,12 +303,19 @@ func (s *Service) requireTargetSignIn(
 	if err != nil {
 		return err
 	}
+	trustsIssuer := sess.ExternalSubject == ""
 	for _, cfg := range configs {
 		if cfg.EnforceSSO {
 			return errortypes.NewAuthorizationError(
 				"This organization requires single sign-on. Sign in through it to continue.",
 			)
 		}
+		trustsIssuer = trustsIssuer || cfg.OIDCIssuerURL == sess.ExternalIssuer
+	}
+	if !trustsIssuer {
+		return errortypes.NewAuthorizationError(
+			"This organization does not use the sign-in that opened this session. Sign in to it directly to continue.",
+		)
 	}
 
 	return nil
@@ -312,7 +327,8 @@ func (s *Service) SwitchOrganization(
 ) (*SessionChangeResult, error) {
 	log := s.l.With(
 		zap.String("operation", "SwitchOrganization"),
-		zap.Any("request", req),
+		zap.String("sessionId", req.SessionID.String()),
+		zap.String("organizationId", req.OrganizationID.String()),
 	)
 
 	sess, err := s.sr.Get(ctx, req.SessionID)
@@ -728,7 +744,9 @@ func (s *Service) ChangeMyPassword(
 		return nil, err
 	}
 
-	if err = user.VerifyCredentials(req.CurrentPassword); err != nil {
+	if err = s.passwordStepUp.GuardPassword(ctx, tenantInfo, func() error {
+		return user.VerifyCredentials(req.CurrentPassword)
+	}); err != nil {
 		return nil, err
 	}
 

@@ -27,6 +27,7 @@ type ResolvePeriodRequest struct {
 	BusinessUnitID pulid.ID
 	Date           int64
 	Policy         accountingcontrol.ClosedPeriodPostingPolicy
+	RefuseLocked   bool
 	Subject        string
 	Field          string
 }
@@ -34,6 +35,11 @@ type ResolvePeriodRequest struct {
 type ResolvedPeriod struct {
 	Period         *fiscalperiod.FiscalPeriod
 	AccountingDate int64
+}
+
+func RefusesLockedSubledger(control *accountingcontrol.AccountingControl) bool {
+	return control != nil && control.LockedPeriodPostingPolicy ==
+		accountingcontrol.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe
 }
 
 func AcceptsPostings(status fiscalperiod.Status) bool {
@@ -63,6 +69,11 @@ func ResolvePeriod(
 	}
 
 	switch {
+	case req.RefuseLocked && period.Status == fiscalperiod.StatusLocked:
+		return nil, errortypes.NewBusinessError(
+			"The {0} cannot be posted to a locked fiscal period",
+			req.subject(ctx),
+		).WithParam("fiscalPeriodId", period.ID.String())
 	case AcceptsPostings(period.Status):
 		return &ResolvedPeriod{Period: period, AccountingDate: req.Date}, nil
 	case period.Status == fiscalperiod.StatusClosed ||

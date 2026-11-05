@@ -199,6 +199,14 @@ func newListPayrollExportsTool(
 			params *agenttoolports.QueryToolParams,
 			gate *fieldgate.Gate,
 		) (any, error) {
+			if err := permissionports.RequireOrganizationScope(
+				ctx,
+				permissions,
+				params.Actor.PermissionCheck(permission.ResourceTimesheet, permission.OpExport),
+			); err != nil {
+				return nil, err
+			}
+
 			runs, err := exports.ListExports(ctx, &timesheetports.ListPayrollExportsRequest{
 				TenantInfo: querytool.TenantOf(params),
 				Limit:      maxPayrollRunsShown,

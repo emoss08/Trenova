@@ -195,7 +195,7 @@ func TestClassifierSchema_OffersEveryDeclaredKind(t *testing.T) {
 func TestClassify_WithoutAProviderStillRoutesToAPerson(t *testing.T) {
 	t.Parallel()
 
-	svc := &testService{l: zap.NewNop()}
+	svc, _ := classifierFor("", llmports.ErrNoProviderConfigured)
 
 	got := svc.processing().Classify(t.Context(), tenderMessage(), pagination.TenantInfo{})
 	assert.Equal(t, inboundmessage.ClassificationOther, got.Class)

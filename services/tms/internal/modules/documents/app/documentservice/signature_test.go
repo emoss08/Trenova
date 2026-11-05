@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -48,6 +49,7 @@ func newSignatureHarness(t *testing.T) *signatureHarness {
 			repo:         repo,
 			permissions:  permissions,
 			auditService: audit,
+			realtime:     &mocks.NoopRealtimeService{},
 		},
 		repo:        repo,
 		permissions: permissions,
@@ -180,7 +182,7 @@ func TestSetSignatureRefusesWhenPermissionsCannotBeChecked(t *testing.T) {
 	t.Parallel()
 
 	h := newSignatureHarness(t)
-	h.svc.permissions = nil
+	h.permissions.EXPECT().Check(mock.Anything, mock.Anything).Return(nil, nil)
 
 	_, err := h.svc.SetSignature(t.Context(), h.request(document.SignatureStatusUnsigned, nil))
 

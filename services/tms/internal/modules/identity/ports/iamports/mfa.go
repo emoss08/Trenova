@@ -62,6 +62,7 @@ type MFAChallenge struct {
 type MFAChallengeFederation struct {
 	AuthProvider    string `json:"authProvider"`
 	ExternalSubject string `json:"externalSubject"`
+	ExternalIssuer  string `json:"externalIssuer"`
 	FederationFAL   int    `json:"federationFal"`
 }
 

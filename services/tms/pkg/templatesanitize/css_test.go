@@ -37,7 +37,7 @@ func TestSanitizeCSSRejectsStylesheetCorpus(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			diags := CSS("cssContent", source)
+			diags := CSS("cssContent", source, DocumentOptions())
 			assert.True(
 				t,
 				templatediagtest.HasCode(diags, templatediag.CodeForbiddenCSS),
@@ -61,5 +61,5 @@ func TestSanitizeCSSAcceptsAnOrdinaryStylesheet(t *testing.T) {
 		.mark::before { content: "\2014"; }
 		table td { padding: 4px 8px }
 	`
-	assert.Empty(t, CSS("cssContent", source))
+	assert.Empty(t, CSS("cssContent", source, DocumentOptions()))
 }

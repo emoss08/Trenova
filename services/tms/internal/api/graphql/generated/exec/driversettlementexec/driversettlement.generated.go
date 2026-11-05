@@ -4539,6 +4539,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "requireSeparateApprover",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*settlementcontrol.SettlementControl)
+					return obj.RequireSeparateApprover, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "autoPostOnApprove",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -8174,7 +8184,7 @@ func unmarshalInputUpdateSettlementControlInput(ctx context.Context, ec *gqlexec
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"version", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "payTrigger", "autoGenerateBatches", "autoApproveClean", "autoAttachAccruals", "autoPostOnApprove", "allowNegativeNet", "varianceThresholdPct", "varianceLookbackWeeks", "defaultEscrowInterestRate", "escrowInterestFrequencyMonths"}
+	fieldsInOrder := [...]string{"version", "payPeriodFrequency", "periodEndDayOfWeek", "payDelayDays", "payTrigger", "autoGenerateBatches", "autoApproveClean", "autoAttachAccruals", "requireSeparateApprover", "autoPostOnApprove", "allowNegativeNet", "varianceThresholdPct", "varianceLookbackWeeks", "defaultEscrowInterestRate", "escrowInterestFrequencyMonths"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8237,6 +8247,13 @@ func unmarshalInputUpdateSettlementControlInput(ctx context.Context, ec *gqlexec
 				return it, err
 			}
 			it.AutoAttachAccruals = data
+		case "requireSeparateApprover":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requireSeparateApprover"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.RequireSeparateApprover = data
 		case "autoPostOnApprove":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoPostOnApprove"))
 			data, err := unmarshalNBoolean2bool(ctx, ec, v)

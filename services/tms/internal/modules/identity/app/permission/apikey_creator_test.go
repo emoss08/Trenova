@@ -132,6 +132,36 @@ func TestAPIKey_NarrowsToTheCreatorsScope(t *testing.T) {
 	assert.Equal(t, permission.DataScopeOwn, result.DataScope)
 }
 
+func TestAPIKey_ReachesNoMoreSensitiveFieldsThanItsCreator(t *testing.T) {
+	t.Parallel()
+
+	c := newAPIKeyCase(t)
+	held := creatorHolds(map[string][]string{"customer": {"read"}})
+	held.MaxSensitivity = string(permission.SensitivityInternal)
+	creatorID := expectAPIKeyCreator(c.users, c.cache, held)
+	c.withKey(creatorID, permission.DataScopeOrganization, permission.OpRead)
+
+	perms, _, err := c.eng.computeAPIKeyPermissions(t.Context(), c.keyID, c.buID, c.orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, string(permission.SensitivityInternal), perms.MaxSensitivity)
+}
+
+func TestAPIKey_ReachesOnlyPublicFieldsOnceItsCreatorLeft(t *testing.T) {
+	t.Parallel()
+
+	c := newAPIKeyCase(t)
+	c.users.On("GetTenantMember", mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("not a member"))
+	c.withKey(pulid.MustNew("usr_"), permission.DataScopeOrganization, permission.OpRead)
+
+	perms, _, err := c.eng.computeAPIKeyPermissions(t.Context(), c.keyID, c.buID, c.orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, string(permission.SensitivityPublic), perms.MaxSensitivity)
+	assert.Empty(t, perms.Resources)
+}
+
 func TestAPIKey_GrantsNothingOnceItsCreatorCannotSignIn(t *testing.T) {
 	t.Parallel()
 

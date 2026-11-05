@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -41,6 +42,8 @@ func newWorkspaceFixture(t *testing.T) *workspaceFixture {
 			logger:        zap.NewNop(),
 			artifacts:     repo,
 			conversations: &assistanttest.StubConversationRepo{Thread: thread},
+			activity:      assistanttest.QuietActivity{},
+			users:         &runtimetest.StubUsers{},
 		},
 		repo:   repo,
 		thread: thread,

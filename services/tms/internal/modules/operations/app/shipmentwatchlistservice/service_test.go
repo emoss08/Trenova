@@ -211,7 +211,9 @@ func (stubAccessorials) GetByID(
 	}, nil
 }
 
-type stubMoves struct{}
+type stubMoves struct {
+	dispatchboardports.DispatchConsoleRepository
+}
 
 func (stubMoves) ListBoardMoves(
 	_ context.Context,
@@ -233,13 +235,23 @@ func (s stubDesk) ListDesk(
 	return s.entries, nil
 }
 
+func newService(t *testing.T, desk DetentionDesk, p Params) *Service {
+	t.Helper()
+
+	svc, ok := New(p).(*Service)
+	require.True(t, ok)
+	svc.detention = desk
+
+	return svc
+}
+
 func TestWatchlistComputesEverySection(t *testing.T) {
 	t.Parallel()
 
 	now := time.Date(2026, 10, 6, 15, 0, 0, 0, time.UTC)
 	chargeID := pulid.MustNew("acc_")
 	board := &stubBoard{}
-	svc := NewWithDependencies(&Dependencies{
+	svc := newService(t, stubDesk{}, Params{
 		Board: board,
 		Watchlist: &stubWatchlist{dwelling: []*shipmentboardports.ShipmentDwellRow{{
 			MoveID:        pulid.MustNew("smv_"),
@@ -252,8 +264,7 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 			DetentionChargeID:  &chargeID,
 		}},
 		Accessorials: stubAccessorials{},
-		Moves:        stubMoves{},
-		Detention:    stubDesk{},
+		Console:      stubMoves{},
 		Logger:       zap.NewNop(),
 	})
 
@@ -283,7 +294,18 @@ func TestWatchlistUsesTheDetentionEngine(t *testing.T) {
 
 	now := time.Date(2026, 10, 6, 15, 0, 0, 0, time.UTC)
 	occurrenceID := pulid.MustNew("dto_")
-	svc := NewWithDependencies(&Dependencies{
+	desk := stubDesk{entries: []*detentionreview.DeskEntry{
+		{Occurrence: &detention.DetentionOccurrence{
+			ID:                occurrenceID,
+			FreeTimeExpiresAt: now.Unix() - 3600,
+			PolicySnapshot: &detentionpolicy.PolicySnapshot{
+				FlatRate:     decimal.NewFromInt(80),
+				FlatRateUnit: detentionpolicy.TierRateUnitHour,
+			},
+		}},
+		{Occurrence: &detention.DetentionOccurrence{FreeTimeExpiresAt: now.Unix() + 600}},
+	}}
+	svc := newService(t, desk, Params{
 		Board:        &stubBoard{},
 		Watchlist:    &stubWatchlist{},
 		QuickFilters: stubBasis{now: now},
@@ -291,19 +313,8 @@ func TestWatchlistUsesTheDetentionEngine(t *testing.T) {
 			UseDetentionPolicyEngine: true,
 		}},
 		Accessorials: stubAccessorials{},
-		Moves:        stubMoves{},
-		Detention: stubDesk{entries: []*detentionreview.DeskEntry{
-			{Occurrence: &detention.DetentionOccurrence{
-				ID:                occurrenceID,
-				FreeTimeExpiresAt: now.Unix() - 3600,
-				PolicySnapshot: &detentionpolicy.PolicySnapshot{
-					FlatRate:     decimal.NewFromInt(80),
-					FlatRateUnit: detentionpolicy.TierRateUnitHour,
-				},
-			}},
-			{Occurrence: &detention.DetentionOccurrence{FreeTimeExpiresAt: now.Unix() + 600}},
-		}},
-		Logger: zap.NewNop(),
+		Console:      stubMoves{},
+		Logger:       zap.NewNop(),
 	})
 
 	watch, err := svc.Watchlist(t.Context(), pagination.TenantInfo{}, "UTC")

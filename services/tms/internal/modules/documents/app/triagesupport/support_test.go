@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/triageportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -149,4 +150,20 @@ func TestClockCountsDaysBack(t *testing.T) {
 	loc, err := clock.Location(t.Context(), tenantInfo)
 	require.NoError(t, err)
 	assert.Equal(t, time.UTC, loc)
+}
+
+func TestGetOrComputeNeverTouchesTheCacheForANarrowedReader(t *testing.T) {
+	t.Parallel()
+
+	cache := triageportsmock.NewMockTriageCache(t)
+	ctx := readscope.With(t.Context(), func(context.Context) (readscope.Grants, error) {
+		return readscope.Grants{"shipment": {Scope: readscope.ScopeOwn}}, nil
+	})
+	calls := 0
+
+	value, err := GetOrCompute(ctx, cache, zap.NewNop(), request(), counting(&calls))
+
+	require.NoError(t, err)
+	assert.Equal(t, 42, value.Value)
+	assert.Equal(t, 1, calls)
 }

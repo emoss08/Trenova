@@ -4,10 +4,10 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@trenova/shared/components/ui/hover-card";
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { user } from "@/lib/queries/user";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { LazyImage } from "./image";
 
 export function UserHoverCard({ userId, username }: { userId?: string; username: string }) {
   const t = useT();
@@ -40,10 +40,12 @@ export function UserHoverCard({ userId, username }: { userId?: string; username:
         {userId && hoveredUserId === userId ? (
           <div className="space-y-2">
             <div className="flex gap-2">
-              <LazyImage
-                src={`https://avatar.vercel.sh/${hoveredUserData?.username || username}.svg`}
-                alt={hoveredUserData?.name || username}
-                className="size-8 rounded-full"
+              <ResolvedUserAvatar
+                userId={userId}
+                name={hoveredUserData?.name || username}
+                profilePicUrl={hoveredUserData?.profilePicUrl}
+                thumbnailUrl={hoveredUserData?.thumbnailUrl}
+                className="size-8"
               />
               <div className="flex flex-col text-xs">
                 <h4 className="font-semibold">{hoveredUserData?.name || t("Loading...")}</h4>

@@ -460,3 +460,13 @@ These look like real failures and are not:
 - **`node --test i18n/tools/`** resolves a bare directory as a module on Node 22 and fails
   before running anything. Node 26, the pinned version, runs it fine; on older Node,
   pass a glob.
+
+These are real, and only look like something else:
+
+- **A command stops at a path that doesn't exist.** The default shell is zsh: an unmatched glob
+  aborts the whole line, and an unquoted variable isn't split into words (`${=VAR}` does that).
+  Pass `grep -r --include='*.go'` rather than a glob of files.
+- **`pkill -f <pattern>` kills your own shell**, because the pattern is in its command line. List
+  the process, then stop it by PID.
+- **A skipped re-record.** `TestRecordEmbeddingFixture` reports `ok` and writes nothing without
+  `-record`, which goes after the package.

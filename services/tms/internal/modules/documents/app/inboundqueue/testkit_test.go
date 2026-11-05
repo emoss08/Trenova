@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueuetest"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +43,12 @@ func withQueue(
 	svc.mailboxState = fakes.Mailboxes
 	svc.targetRepo = fakes.Targets
 	svc.wakes = fakes.Wakes
-	svc.notify = NewNotifier(NotifierParams{Logger: svc.l})
+	svc.notify = NewNotifier(NotifierParams{
+		Logger:     svc.l,
+		Realtime:   &inboundqueuetest.RecordingRealtime{},
+		Watchtower: &mocks.NoopWatchtowerProjector{},
+		Briefing:   inboundqueuetest.NoopBriefing{},
+	})
 	svc.now = func() int64 { return inboundqueuetest.TestNow }
 
 	return svc, fakes

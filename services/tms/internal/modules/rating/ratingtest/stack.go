@@ -5,19 +5,26 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateengine"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -47,8 +54,69 @@ type StackOptions struct {
 	Catalog    []*accessorialcharge.AccessorialCharge
 }
 
+type NoHydration struct{}
+
+func (NoHydration) HydrateShipment(
+	context.Context,
+	*ratequoteports.HydrateShipmentRequest,
+) error {
+	return nil
+}
+
+func (NoHydration) HydrateShipments(
+	context.Context,
+	*ratequoteports.HydrateShipmentsRequest,
+) error {
+	return nil
+}
+
+type NoBillingControl struct {
+	tenantports.BillingControlRepository
+}
+
+func (NoBillingControl) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*billingcontrol.BillingControl, error) {
+	return nil, errortypes.NewNotFoundError("Billing control not found")
+}
+
+type NoFuelSurcharge struct {
+	fuelsurchargeports.FuelSurchargeResolver
+}
+
+func (NoFuelSurcharge) ResolveShipmentCharge(
+	context.Context,
+	*fuelsurchargeports.ResolveShipmentChargeRequest,
+) (*fuelsurchargeports.ResolvedFuelSurcharge, error) {
+	return nil, nil //nolint:nilnil // nil is the resolver's answer when no program applies
+}
+
+func (NoFuelSurcharge) FuelChargeIDs(
+	context.Context,
+	pagination.TenantInfo,
+) ([]pulid.ID, error) {
+	return nil, nil
+}
+
+type noModeProfile struct {
+	modeprofileports.ModeProfileService
+}
+
+func (noModeProfile) Resolve(
+	context.Context,
+	*modeprofileports.ResolveModeProfileRequest,
+) (*modeprofile.ResolvedPolicy, error) {
+	return nil, modeprofileports.ErrNoModeProfileConfigured
+}
+
 func NewStack(t *testing.T, opts StackOptions) *Stack {
 	t.Helper()
+
+	hydrator := opts.Hydrator
+	if hydrator == nil {
+		hydrator = NoHydration{}
+	}
 
 	stack := &Stack{
 		Templates: tarifftest.NewTemplates(opts.Templates...),
@@ -100,7 +168,8 @@ func NewStack(t *testing.T, opts StackOptions) *Stack {
 		Fuel:          fuel,
 		Accessorials:  accessorials,
 		Exchange:      exchangerateportsmock.NewMockExchangeRateService(t),
-		Hydrator:      opts.Hydrator,
+		ModeProfile:   noModeProfile{},
+		Hydrator:      hydrator,
 	})
 
 	return stack

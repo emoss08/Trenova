@@ -8,11 +8,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
@@ -46,6 +53,29 @@ type testDeps struct {
 	svc       *Service
 }
 
+type noDefaultPTOPolicy struct {
+	ptopolicyports.PTOPolicyRepository
+}
+
+func (noDefaultPTOPolicy) GetDefault(
+	context.Context,
+	pagination.TenantInfo,
+) (*pto.PTOPolicy, error) {
+	return nil, errortypes.NewNotFoundError("no default PTO policy")
+}
+
+type noCredentialTypes struct {
+	workercredentialports.WorkerCredentialRepository
+}
+
+func (noCredentialTypes) EnsureSystemTypes(
+	context.Context,
+	pagination.TenantInfo,
+	[]*workercredential.WorkerCredentialType,
+) (int, error) {
+	return 0, errortypes.NewBusinessError("credential types are not seeded here")
+}
+
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := workerportsmock.NewMockWorkerRepository(t)
@@ -72,12 +102,21 @@ func setupTest(t *testing.T) *testDeps {
 
 	svc := &Service{
 		l:                         logger,
+		db:                        dbtest.NopConnection{},
 		repo:                      repo,
 		cacheRepo:                 cacheRepo,
 		validator:                 newTestValidator(),
 		auditService:              auditSvc,
 		realtime:                  &mocks.NoopRealtimeService{},
 		customFieldsValuesService: cfService,
+		ptoPolicyService: ptopolicyservice.New(ptopolicyservice.Params{
+			Logger: logger,
+			Repo:   noDefaultPTOPolicy{},
+		}),
+		credentialService: workercredentialservice.New(workercredentialservice.Params{
+			Logger: logger,
+			Repo:   noCredentialTypes{},
+		}),
 	}
 	return &testDeps{
 		repo:      repo,

@@ -16,7 +16,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/orderportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -471,6 +474,12 @@ func newObserverFixture(t *testing.T) *observerFixture {
 	eventRepo := &fakeShipmentEventRepository{}
 	realtime := &fakeRealtimeService{}
 
+	derivation := orderportsmock.NewMockOrderDerivationService(t)
+	derivation.EXPECT().
+		RecomputeForShipment(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+
 	fixture := &observerFixture{
 		link:         link,
 		source:       source,
@@ -489,7 +498,12 @@ func newObserverFixture(t *testing.T) *observerFixture {
 		shipmentLinkRepo:   linkRepo,
 		transferChangeRepo: transferRepo,
 		realtime:           realtime,
-		invalidator:        shipmentinvalidation.NewWithDependencies(realtime, nil, zap.NewNop()),
+		invalidator: shipmentinvalidation.New(shipmentinvalidation.Params{
+			Realtime: realtime,
+			Epochs:   &mocks.NoopShipmentBoardEpochBumper{},
+			Logger:   zap.NewNop(),
+		}),
+		orderDerivation: derivation,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: shipmentRepo,
 			Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 2_000 }),

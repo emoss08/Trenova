@@ -137,7 +137,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List tenders (`dispatch_list_tenders`) | Reads only | Automatic | — | — | Reads a shipment's tenders and their offers; a carrier's own words, such as a decline reason, are left out, so nothing written outside the organization is read. |
 | Plan dispatch (`dispatch_plan`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Rank dispatch candidates (`dispatch_rank_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Get document summary (`document_get_summary`) | Reads only | Automatic | — | Always, from document | Reads text extracted from a document someone outside sent; nothing changes and nothing is sent. |
+| Get document (`document_get`) | Reads only | Automatic | — | Always, from document | Reads text extracted from a document someone outside sent; nothing changes and nothing is sent. |
 | List documents (`document_list`) | Reads only | Automatic | — | Always, from document | Searches text extracted from documents, many of which someone outside wrote; each record returned is checked against what the caller may read, and nothing changes or is sent. |
 | List document types (`document_list_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Draft EDI connection (`edi_draft_connection`) | Reads only | Automatic | — | Always, from attachment | Reads a trading partner's guide the person attached and plans the connection from it; nothing is stored or sent, and every write after it waits for a person. |
@@ -257,19 +257,19 @@ Looks something up. Nothing changes and nothing is sent.
 | List receivable credit memo applications (`receivable_list_credit_memo_applications`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List customer payments (`receivable_list_customer_payments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List receivable open items (`receivable_list_open_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Compare report runs (`report_compare_runs`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Compare report runs (`report_compare_runs`) | Reads only | Automatic | — | Always, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
 | Compose report table view (`report_compose_table_view`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get report (`report_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get report dataset (`report_get_dataset`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Get report run (`report_get_run`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get report run (`report_get_run`) | Reads only | Automatic | — | When the record is marked, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
 | List reports (`report_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List dashboards (`report_list_dashboards`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List report datasets (`report_list_datasets`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List report runs (`report_list_runs`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List report schedules (`report_list_schedules`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List table change alerts (`report_list_table_change_alerts`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Preview report (`report_preview`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Run report (`report_run`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Preview report (`report_preview`) | Reads only | Automatic | — | When the record is marked, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
+| Run report (`report_run`) | Reads only | Automatic | — | When the record is marked, from record note | Shows report rows, whose text columns can hold what a trading partner, a bank or a driver wrote; nothing changes and nothing is sent. |
 | Get carrier settlement (`settlement_get_carrier`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get settlement dispute (`settlement_get_dispute`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a pay dispute whose description a driver wrote in the driver portal; nothing changes and nothing is sent. |
 | Get driver settlement (`settlement_get_driver`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -286,16 +286,16 @@ Looks something up. Nothing changes and nothing is sent.
 | List settlement payroll exports (`settlement_list_payroll_exports`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List settlement recurring deductions (`settlement_list_recurring_deductions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List settlement recurring earnings (`settlement_list_recurring_earnings`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Get shipment (`shipment_get`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a shipment with its newest comments, some of which a driver, a trading partner or another system outside the organization wrote; nothing changes and nothing is sent. |
+| Get shipment (`shipment_get`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a shipment with its newest comments, some of which a driver, a trading partner or another system outside the organization wrote, and a shipment entered over EDI holds a partner's own text; nothing changes and nothing is sent. |
 | Get shipment tracking (`shipment_get_tracking`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| List shipments (`shipment_list`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List shipments (`shipment_list`) | Reads only | Automatic | — | When the record is marked, from EDI | Lists shipments, and one entered over EDI holds a trading partner's own text; nothing changes and nothing is sent. |
 | List shipment permits (`shipment_list_permits`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipment recurring (`shipment_list_recurring`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Match shipment records (`shipment_match_records`) | Reads only | Automatic | — | — | Matches the records a new shipment names against the organization's own; nothing changes and nothing is sent. |
 | List portal sites (`web_list_portal_sites`) | Reads only | Automatic | — | — | Lists the portal sites an administrator set up; it changes nothing, sends nothing, and returns only what administrators wrote. |
 | List web watches (`web_list_watches`) | Reads only | Automatic | — | — | Lists the web watches set for the person; it changes nothing, reaches no one, and returns only what the agents wrote when they set them. |
 | Read web (`web_read`) | Reads only | Automatic | — | Always, from web | Reads a page a web search returned; it changes nothing in Trenova and returns text written outside it. |
-| Read web portal (`web_read_portal`) | Reads only | Automatic | — | Always, from web | Reads a third-party portal through the organization's extension; it changes nothing in Trenova, tells the browser to submit nothing, and returns text written outside it. |
+| Read web portal (`web_read_portal`) | Reads only | Automatic | — | Always, from web | Reads a third-party portal through the organization's extension; it changes nothing in Trenova, runs on a signed-in site only when an administrator marked its account view only, and returns text written outside it. |
 | Search web (`web_search`) | Reads only | Automatic | — | Always, from web | Searches the public web through the organization's extension; it changes nothing in Trenova, sends only the query, and returns text written outside it. |
 | Withdraw proposal (`withdraw_proposal`) | Reads only | Automatic | — | — | Takes back a proposal the agent filed earlier in the same turn, before anyone has seen it; it changes no record and only narrows what the person is asked. |
 | Get worker (`worker_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

@@ -57,11 +57,7 @@ func recordNamedActions(
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	store := &capturingStore{}
-	result, err := NewWithStores(
-		nil,
-		nil,
-		store,
-	).WithPlans(plans).
+	result, err := recorderOn(nil, store).WithPlans(plans).
 		Record(t.Context(), &RecordRequest{
 			Actor: &permissionports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
 			Definition: &agentdefinition.Definition{

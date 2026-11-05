@@ -17,6 +17,7 @@ const (
 type ConfigFieldSpec = configspec.Field
 
 const (
+	WebhookTokenField         = "webhookToken"
 	WebhookSecretField        = "webhookSecret"
 	WebhookSigningSecretField = "webhookSigningSecret"
 )
@@ -51,6 +52,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Key:     "baseUrl",
 				Label:   "Base URL",
 				Type:    ConfigFieldTypeURL,
+				Target:  true,
 				Default: "https://api.samsara.com",
 			},
 			{
@@ -61,7 +63,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				HelpText:  "Base64 signing secret from the Samsara webhook configuration, used to verify X-Samsara-Signature on inbound events.",
 			},
 			{
-				Key:       "webhookToken",
+				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
 				Sensitive: false,
@@ -106,6 +108,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Key:         "baseUrl",
 				Label:       "Base URL",
 				Type:        ConfigFieldTypeURL,
+				Target:      true,
 				Default:     "https://exchange-rates-api.oanda.com",
 				Placeholder: "https://exchange-rates-api.oanda.com",
 			},
@@ -134,6 +137,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Key:         "baseUrl",
 				Label:       "Base URL",
 				Type:        ConfigFieldTypeURL,
+				Target:      true,
 				Default:     "https://api.eia.gov/v2",
 				Placeholder: "https://api.eia.gov/v2",
 			},
@@ -154,6 +158,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Key:         "baseUrl",
 				Label:       "Base URL",
 				Type:        ConfigFieldTypeURL,
+				Target:      true,
 				Default:     "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc",
 				Placeholder: "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc",
 			},
@@ -174,6 +179,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Key:         "baseUrl",
 				Label:       "Base URL",
 				Type:        ConfigFieldTypeURL,
+				Target:      true,
 				Default:     "https://api.resend.com",
 				Placeholder: "https://api.resend.com",
 			},
@@ -185,7 +191,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				HelpText:  "Svix signing secret from the Resend webhook endpoint.",
 			},
 			{
-				Key:       "webhookToken",
+				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
 				Sensitive: false,
@@ -207,6 +213,7 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Key:         "baseUrl",
 				Label:       "Base URL",
 				Type:        ConfigFieldTypeURL,
+				Target:      true,
 				Default:     "https://api.postmarkapp.com",
 				Placeholder: "https://api.postmarkapp.com",
 			},
@@ -218,7 +225,14 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Placeholder: "outbound",
 			},
 			{
-				Key:       "webhookToken",
+				Key:       WebhookSigningSecretField,
+				Label:     "Webhook Credentials",
+				Type:      ConfigFieldTypePassword,
+				Sensitive: true,
+				HelpText:  "The user:password Postmark sends with each webhook. Trenova refuses delivery events without them.",
+			},
+			{
+				Key:       WebhookTokenField,
 				Label:     "Webhook Token",
 				Type:      ConfigFieldTypeString,
 				Sensitive: false,

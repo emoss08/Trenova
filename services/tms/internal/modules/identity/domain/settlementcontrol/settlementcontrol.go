@@ -76,6 +76,7 @@ type SettlementControl struct {
 	VarianceLookbackWeeks         int                `json:"varianceLookbackWeeks"         keel:"variance_lookback_weeks"`
 	DefaultEscrowInterestRate     decimal.Decimal    `json:"defaultEscrowInterestRate"     keel:"default_escrow_interest_rate"`
 	EscrowInterestFrequencyMonths int                `json:"escrowInterestFrequencyMonths" keel:"escrow_interest_frequency_months"`
+	RequireSeparateApprover       bool               `json:"requireSeparateApprover"       keel:"require_separate_approver"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`

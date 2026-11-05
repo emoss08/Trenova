@@ -33,7 +33,7 @@ func setCurrent(
 ) {
 	t.Helper()
 
-	epoch, err := repo.Epoch(t.Context(), key.OrgID)
+	epoch, err := repo.Epoch(t.Context(), key.UserID, key.OrgID)
 	require.NoError(t, err)
 	perms.Epoch = epoch
 	require.NoError(t, repo.Set(t.Context(), key, perms, ttl))
@@ -134,6 +134,49 @@ func TestPermissionCacheRepository_Delete_Integration(t *testing.T) {
 	assert.Nil(t, retrieved)
 }
 
+func TestPermissionCacheRepository_ComputedBeforeAUserChangeIsNotServed_Integration(t *testing.T) {
+	repo, _, cleanup := setupTestCacheRepository(t)
+	defer cleanup()
+
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	otherID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	epochBeforeChange, err := repo.Epoch(ctx, userID, orgID)
+	require.NoError(t, err)
+
+	other := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
+	}
+	setCurrent(t, repo, cacheKey(otherID, orgID), other, 5*time.Minute)
+
+	require.NoError(t, repo.Delete(ctx, userID, orgID))
+
+	stale := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
+		Epoch:     epochBeforeChange,
+	}
+	require.NoError(t, repo.Set(ctx, cacheKey(userID, orgID), stale, 5*time.Minute))
+
+	retrieved, err := repo.Get(ctx, cacheKey(userID, orgID))
+	require.NoError(t, err)
+	assert.Nil(t, retrieved, "a set computed before the change is never served")
+
+	retrieved, err = repo.Get(ctx, cacheKey(otherID, orgID))
+	require.NoError(t, err)
+	assert.NotNil(t, retrieved, "other people keep their cached sets")
+
+	fresh := &permissionports.CachedPermissions{
+		Resources: map[string]*permissionports.CachedResourcePermission{},
+	}
+	setCurrent(t, repo, cacheKey(userID, orgID), fresh, 5*time.Minute)
+
+	retrieved, err = repo.Get(ctx, cacheKey(userID, orgID))
+	require.NoError(t, err)
+	assert.NotNil(t, retrieved, "a set computed after the change is served")
+}
+
 func TestPermissionCacheRepository_InvalidateOrganization_Integration(t *testing.T) {
 	repo, client, cleanup := setupTestCacheRepository(t)
 	defer cleanup()
@@ -201,7 +244,7 @@ func TestPermissionCacheRepository_ServesOnlyTheCurrentEpoch_Integration(t *test
 	require.NoError(t, err)
 	assert.Nil(t, retrieved, "without an epoch nothing cached is trusted")
 
-	epoch, err := repo.Epoch(ctx, orgID)
+	epoch, err := repo.Epoch(ctx, userID, orgID)
 	require.NoError(t, err)
 	assert.NotEqual(t, fresh.Epoch, epoch, "a reseeded epoch never matches an entry from before")
 }

@@ -11,9 +11,9 @@ It has three tools:
 
 | Tool | Kind | What it does |
 |---|---|---|
-| `web_list_portal_sites` | read | Lists the portal sites the organization set up: what each is for, the addresses it lives on, whether it signs in and whether agents may act on it. Written by administrators, so it is not outside content. |
-| `web_read_portal` | read | Looks something up on one of the organization's portal sites and returns what the page says. Never submits anything. |
-| `web_use_portal` | write | Does something on a portal site — books an appointment, uploads a document, accepts a tender — after a person approves it. |
+| `web_list_portal_sites` | read | Lists the portal sites the organization set up: what each is for, the addresses it lives on, whether it signs in, whether agents may act on it and whether a read of it needs a person's approval. Written by administrators, so it is not outside content. |
+| `web_read_portal` | read | Looks something up on one of the organization's portal sites and returns what the page says. Never submits anything. Runs on a site with a sign-in only when its account is view only. |
+| `web_use_portal` | write | Does something on a portal site — books an appointment, uploads a document, accepts a tender — after a person approves it. With `lookUpOnly` it proposes a lookup instead. |
 
 The capability is the plan capability `agent.portal_automation` and the
 permission resource `portal_automation` (`read` to look, `update` to act). Sites
@@ -26,12 +26,15 @@ An agent can only use a portal the organization has set up as a **site**
 (`agent_portal_sites`, ids `apst_`): a name, the hostnames it lives on, the https
 page to start on (which must be on those hostnames), an optional sign-in, an
 optional vendor browser profile that holds a saved sign-in, a note on what it is
-for, and whether agents may act on it or only read it. A new site is read-only.
+for, whether agents may act on it or only read it, and whether its account is view
+only (`viewOnlyAccount`). A new site is read-only, and its account is not view only
+until an administrator says so.
 
 The sign-in's username and password are encrypted with the tenant-bound secret
 codec under `PurposeAgentExtensionSecret`, resource kind `agent_portal_site` and
 the site's id as subject, so a value copied to another site or tenant does not
-decrypt. A sign-in left blank on save keeps the stored one; clearing it removes
+decrypt. A sign-in left blank on save keeps the stored one, unless the save adds a domain:
+a stored sign-in never follows the site to a new domain, so it must be entered again; clearing it removes
 every part. The site is never returned with its sign-in, only `hasSignIn` and
 `hasAuthenticator`.
 
@@ -188,21 +191,32 @@ written to steer an agent. The rules:
   `CapsLaterWrites`, exactly as `web_read` does. Outside content is declared per
   tool (`CapabilitySpec.OutsideContentTools`), so `web_list_portal_sites` and
   `web_use_portal` do not taint the turn by themselves.
-- **A signed-in portal is not driven after outside text.** `web_read_portal` is a query, so it
-  runs at once, and the only thing telling the vendor's browser to submit nothing is the task's
-  own wording: Trenova has no vendor control that makes a signed-in session read-only. So a
-  conversation holding outside text from anywhere but portal reads
-  (`RunTaint.ReadBeyond`) cannot start a read on a site with a sign-in; the tool refuses and
-  points at `web_use_portal`, where a person sees the exact task. Portals without a sign-in, and
-  further reads of a portal in a conversation tainted only by portal reads, still run. Page text
-  reaching the vendor's model inside a run remains outside Trenova's control.
+- **A signed-in portal is read automatically only on a view-only account.** `web_read_portal` is
+  a query, so it runs at once, and the only thing telling the vendor's browser to submit nothing
+  is the task's own wording: no vendor control makes a signed-in browser read-only, and a page
+  can talk the vendor's model out of a task. The only real enforcement is that the portal account
+  itself cannot change anything, which an administrator states with `viewOnlyAccount`. So an
+  automatic read runs on a site that signs in, with a stored sign-in or a browser profile holding
+  a saved session, only when that flag is set (`PortalSite.ReadNeedsAPerson`). Otherwise the tool
+  refuses and points at `web_use_portal` with `lookUpOnly`, where a person sees the exact task and
+  approves it; `web_list_portal_sites` says so up front as `readNeedsApproval`. A site with no
+  sign-in has no account to protect and reads as before. Page text reaching the vendor's model
+  inside a run remains outside Trenova's control.
+- **A failed read says nothing the browser wrote.** A read that fails is a tool error, and a
+  tool error carries no taint mark, so the browser's account of the failure never goes in it: the
+  model gets a fixed message, and `PortalRun.Failure` keeps the account for a person under AI
+  control. A portal that asked for a code it cannot be given is Trenova's own message, so it says
+  what to change.
 - **Acting on a portal is always a proposal.** `web_use_portal` is an
   `external_recipient` write with a `Propose` ceiling. Its preview is a `Send`
   on the `Portal` message channel: the site's addresses as the recipients, the
   instruction as the subject, and the task exactly as the browser will receive
   it as the body, with whether a sign-in is used. It runs only from a person's
   approval (`ApprovedFromProposal`). A site an administrator marked read-only
-  refuses it before anything is filed, and the preview warns instead.
+  refuses it before anything is filed, and the preview warns instead. With
+  `lookUpOnly` the run uses the read task (`PortalRunModeRead`), a read-only site
+  is allowed, and the preview says it will only look something up; it is still a
+  proposal a person approves.
 - **What leaves Trenova** is the instruction, the details and the sign-in, sent
   to the vendor and typed into that site. The instruction (8 to 2,000
   characters) and every detail value are refused when they hold a Trenova record
@@ -233,7 +247,9 @@ began it would start a second browser doing the same thing.
   (`WaitResolved`) or run (trigger `Wait`) that opens with outside content
   already read (`RunRequest.AfterExternalContent`, from
   `Wait.CarriesOutsideText`), so whatever the agent does with the answer is held
-  for a person. A wait that cannot be set does not undo the action: the task is
+  for a person. The turn opens with a `web` mark for it (`agent.OutsideInputTaint`),
+  which the conversation keeps, so the turns after it open capped and tainted too.
+  A wait that cannot be set does not undo the action: the task is
   followed to its end either way and its outcome is recorded.
 
 The wait service does not depend on the extension service (that would close a

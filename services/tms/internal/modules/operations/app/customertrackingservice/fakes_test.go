@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -24,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -344,6 +347,17 @@ func (f *fakeDocuments) GetDownloadContent(
 	}, nil
 }
 
+type fakeOrgs struct {
+	tenantports.OrganizationRepository
+}
+
+func (fakeOrgs) GetByID(
+	context.Context,
+	tenantports.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	return &tenant.Organization{}, nil
+}
+
 type harness struct {
 	service       *Service
 	profiles      *memoryProfiles
@@ -389,6 +403,8 @@ func newHarness() *harness {
 		templates:       h.templates,
 		emailService:    h.email,
 		documents:       h.documents,
+		orgRepo:         fakeOrgs{},
+		auditService:    &mocks.NoopAuditService{},
 		now:             func() int64 { return h.now },
 	}
 	return h

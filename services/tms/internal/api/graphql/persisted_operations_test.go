@@ -84,7 +84,6 @@ func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) 
 		"TransferShipmentToBillingItems",
 		"BulkTransferShipmentsToBilling",
 		"CalculateShipmentTotals",
-		"CalculateShipmentDistance",
 		"RecalculateShipmentDistance",
 		"CheckShipmentDuplicateBol",
 		"CheckShipmentHazmatSegregation",

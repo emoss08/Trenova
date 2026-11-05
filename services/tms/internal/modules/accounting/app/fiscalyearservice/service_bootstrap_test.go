@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -104,6 +105,7 @@ func TestEnsureBootstrapCurrentFiscalYear_BootstrapsWhenNoFiscalYearsExist(t *te
 	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
+		db:               pgstubtest.NewConnection(t),
 		repo:             fyRepo,
 		fiscalPeriodRepo: fpRepo,
 	}
@@ -123,9 +125,23 @@ func TestEnsureBootstrapCurrentFiscalYear_BootstrapsWhenNoFiscalYearsExist(t *te
 		}).
 		Return(0, nil).
 		Once()
+	fyRepo.EXPECT().
+		GetCurrentFiscalYearForUpdate(mock.Anything, fiscalyearports.GetCurrentFiscalYearRequest{
+			OrgID: orgID,
+			BuID:  buID,
+		}).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	fyRepo.EXPECT().
+		CountByTenant(mock.Anything, fiscalyearports.CountFiscalYearsByTenantRequest{
+			OrgID: orgID,
+			BuID:  buID,
+		}).
+		Return(0, nil).
+		Once()
 
 	fyRepo.EXPECT().
-		Create(ctx, mock.MatchedBy(mockFiscalYearForBootstrap(orgID, buID))).
+		Create(mock.Anything, mock.MatchedBy(mockFiscalYearForBootstrap(orgID, buID))).
 		RunAndReturn(func(_ context.Context, entity *fiscalyear.FiscalYear) (*fiscalyear.FiscalYear, error) {
 			entity.ID = pulid.MustNew("fyr_")
 			return entity, nil
@@ -133,7 +149,7 @@ func TestEnsureBootstrapCurrentFiscalYear_BootstrapsWhenNoFiscalYearsExist(t *te
 		Once()
 
 	fpRepo.EXPECT().
-		BulkCreate(ctx, mock.MatchedBy(mockBulkCreateRequest(orgID, buID))).
+		BulkCreate(mock.Anything, mock.MatchedBy(mockBulkCreateRequest(orgID, buID))).
 		Return(nil).
 		Once()
 
@@ -157,6 +173,7 @@ func TestEnsureBootstrapCurrentFiscalYear_HandlesCreateRace(t *testing.T) {
 	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
+		db:               pgstubtest.NewConnection(t),
 		repo:             fyRepo,
 		fiscalPeriodRepo: fpRepo,
 	}
@@ -175,9 +192,23 @@ func TestEnsureBootstrapCurrentFiscalYear_HandlesCreateRace(t *testing.T) {
 		}).
 		Return(0, nil).
 		Once()
+	fyRepo.EXPECT().
+		GetCurrentFiscalYearForUpdate(mock.Anything, fiscalyearports.GetCurrentFiscalYearRequest{
+			OrgID: orgID,
+			BuID:  buID,
+		}).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	fyRepo.EXPECT().
+		CountByTenant(mock.Anything, fiscalyearports.CountFiscalYearsByTenantRequest{
+			OrgID: orgID,
+			BuID:  buID,
+		}).
+		Return(0, nil).
+		Once()
 
 	fyRepo.EXPECT().
-		Create(ctx, mock.MatchedBy(mockFiscalYearForBootstrap(orgID, buID))).
+		Create(mock.Anything, mock.MatchedBy(mockFiscalYearForBootstrap(orgID, buID))).
 		Return(nil, &pgconn.PgError{Code: "23505"}).
 		Once()
 
@@ -261,6 +292,7 @@ func TestList_EmptyBootstrapsAndReloads(t *testing.T) {
 	fpRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	service := &Service{
 		l:                zap.NewNop(),
+		db:               pgstubtest.NewConnection(t),
 		repo:             fyRepo,
 		fiscalPeriodRepo: fpRepo,
 	}
@@ -308,14 +340,28 @@ func TestList_EmptyBootstrapsAndReloads(t *testing.T) {
 		Return(0, nil).
 		Once()
 	fyRepo.EXPECT().
-		Create(ctx, mock.MatchedBy(mockFiscalYearForBootstrap(orgID, buID))).
+		GetCurrentFiscalYearForUpdate(mock.Anything, fiscalyearports.GetCurrentFiscalYearRequest{
+			OrgID: orgID,
+			BuID:  buID,
+		}).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	fyRepo.EXPECT().
+		CountByTenant(mock.Anything, fiscalyearports.CountFiscalYearsByTenantRequest{
+			OrgID: orgID,
+			BuID:  buID,
+		}).
+		Return(0, nil).
+		Once()
+	fyRepo.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(mockFiscalYearForBootstrap(orgID, buID))).
 		RunAndReturn(func(_ context.Context, entity *fiscalyear.FiscalYear) (*fiscalyear.FiscalYear, error) {
 			entity.ID = created.ID
 			return entity, nil
 		}).
 		Once()
 	fpRepo.EXPECT().
-		BulkCreate(ctx, mock.MatchedBy(mockBulkCreateRequest(orgID, buID))).
+		BulkCreate(mock.Anything, mock.MatchedBy(mockBulkCreateRequest(orgID, buID))).
 		Return(nil).
 		Once()
 	fyRepo.EXPECT().List(ctx, req).Return(finalResult, nil).Once()

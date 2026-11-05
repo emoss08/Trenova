@@ -762,6 +762,7 @@ var portalSitesTable = schema.Table{
 		{Name: "credentials", Quoted: `"credentials"`, Field: "Credentials", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Credentials`},
 		{Name: "browser_profile_id", Quoted: `"browser_profile_id"`, Field: "BrowserProfileID", Kind: schema.KindString, Flags: 0, Label: `Browser Profile ID`, JSON: `browserProfileId`},
 		{Name: "allow_actions", Quoted: `"allow_actions"`, Field: "AllowActions", Kind: schema.KindBool, Flags: 0, Label: `Allow Actions`, JSON: `allowActions`},
+		{Name: "view_only_account", Quoted: `"view_only_account"`, Field: "ViewOnlyAccount", Kind: schema.KindBool, Flags: 0, Label: `View Only Account`, JSON: `viewOnlyAccount`},
 		{Name: "enabled", Quoted: `"enabled"`, Field: "Enabled", Kind: schema.KindBool, Flags: 0, Label: `Enabled`, JSON: `enabled`},
 		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Created By ID`, JSON: `createdById`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
@@ -770,14 +771,14 @@ var portalSitesTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15},
 	Returning:  nil,
-	Version:    12,
+	Version:    13,
 	AutoID:     0,
-	AutoCreate: 13,
-	AutoUpdate: 14,
+	AutoCreate: 14,
+	AutoUpdate: 15,
 	IDPrefix:   "apst_",
 	New:        newPortalSite,
 	NewN:       newNPortalSite,
@@ -801,6 +802,7 @@ type PortalSitesTable struct {
 	Credentials      keel.JSONBCol
 	BrowserProfileID keel.StringCol
 	AllowActions     keel.BoolCol
+	ViewOnlyAccount  keel.BoolCol
 	Enabled          keel.BoolCol
 	CreatedByID      keelkinds.PulidIDCol
 	Version          keel.Int64Col
@@ -821,11 +823,12 @@ var PortalSites = &PortalSitesTable{
 	Credentials:      keel.JSONBCol{Col: keel.Col{Ref: &portalSitesRef, Index: 7}},
 	BrowserProfileID: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 8}},
 	AllowActions:     keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 9}},
-	Enabled:          keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 10}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 11}}},
-	Version:          keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 12}},
-	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 13}},
-	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 14}},
+	ViewOnlyAccount:  keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 10}},
+	Enabled:          keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 11}},
+	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 12}}},
+	Version:          keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 13}},
+	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 14}},
+	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 15}},
 }
 
 // BuildPortalSites builds the table of agent_portal_sites for ref. Generated relation and alias methods call it.
@@ -842,11 +845,12 @@ func BuildPortalSites(r *keel.Ref) *PortalSitesTable {
 		Credentials:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		BrowserProfileID: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		AllowActions:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		Enabled:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		ViewOnlyAccount:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
+		Enabled:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
+		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 	}
 }
 
@@ -1252,14 +1256,16 @@ func ptrPortalSite(p unsafe.Pointer, c int32) any {
 	case 9:
 		return &r.AllowActions
 	case 10:
-		return &r.Enabled
+		return &r.ViewOnlyAccount
 	case 11:
-		return (*string)(unsafe.Pointer(&r.CreatedByID))
+		return &r.Enabled
 	case 12:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.CreatedByID))
 	case 13:
-		return &r.CreatedAt
+		return &r.Version
 	case 14:
+		return &r.CreatedAt
+	case 15:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1295,17 +1301,19 @@ func valuePortalSite(p unsafe.Pointer, c int32) any {
 	case 9:
 		return r.AllowActions
 	case 10:
-		return r.Enabled
+		return r.ViewOnlyAccount
 	case 11:
+		return r.Enabled
+	case 12:
 		if r.CreatedByID == "" {
 			return nil
 		}
 		return string(r.CreatedByID)
-	case 12:
-		return r.Version
 	case 13:
-		return r.CreatedAt
+		return r.Version
 	case 14:
+		return r.CreatedAt
+	case 15:
 		return r.UpdatedAt
 	}
 	return nil

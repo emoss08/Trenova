@@ -9,12 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -58,15 +58,12 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 		WorkerRepo:   h.workerRepo,
 		DocumentRepo: h.docRepo,
 		AuditService: audit,
+		Realtime:     realtime,
 		DriverNotify: drivernotificationservice.New(drivernotificationservice.Params{
-			Logger:     zap.NewNop(),
-			WorkerRepo: h.workerRepo,
-			Templates:  resolver,
-			Notifications: notificationservice.New(notificationservice.Params{
-				Logger:   zap.NewNop(),
-				Repo:     notifications,
-				Realtime: realtime,
-			}),
+			Logger:        zap.NewNop(),
+			WorkerRepo:    h.workerRepo,
+			Templates:     resolver,
+			Notifications: notificationtest.New(notifications, realtime),
 		}),
 	})
 	request := workercredentialservice.RenewalRequest{

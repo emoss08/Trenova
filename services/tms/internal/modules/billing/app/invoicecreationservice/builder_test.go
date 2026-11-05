@@ -22,6 +22,7 @@ import (
 func buildEntity(t *testing.T, svc *Service, params *buildInvoiceParams) *invoice.Invoice {
 	t.Helper()
 
+	svc.readiness = noPacketRequirements{}
 	entity, err := svc.buildInvoiceEntity(t.Context(), params)
 	require.NoError(t, err)
 

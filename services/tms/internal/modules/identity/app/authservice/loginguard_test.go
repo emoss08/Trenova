@@ -1,13 +1,14 @@
 package authservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"context"
 	"errors"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -186,13 +187,35 @@ func TestLoginSuccessClearsTheAccountCounter(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestLoginThrottleFailsOpenWhenRedisIsDown(t *testing.T) {
+func TestLoginRefusedWhenTheThrottleCannotAnswer(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	store := withThrottle(t, deps)
 	usr := newTestUser(t)
 
 	store.EXPECT().Begin(mock.Anything, mock.Anything).Return(nil, errors.New("redis down"))
+
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
+		EmailAddress: usr.EmailAddress,
+		Password:     "password123",
+	})
+
+	require.True(t, errortypes.IsRateLimitError(err))
+	retryAfter, ok := errortypes.RetryAfterOf(err)
+	require.True(t, ok)
+	assert.Equal(t, sessionports.LoginThrottleUnavailableRetry, retryAfter)
+	assert.Equal(t, authErrorThrottleUnavailable, deps.authEvents.only(t).ErrorCode)
+	deps.userRepo.AssertNotCalled(t, "FindByEmail", mock.Anything, mock.Anything)
+}
+
+func TestLoginSucceedsWhenOnlyClearingTheCounterFails(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	store := withThrottle(t, deps)
+	usr := newTestUser(t)
+
+	store.EXPECT().Begin(mock.Anything, mock.Anything).
+		Return(&sessionports.LoginThrottleDecision{}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
 	store.EXPECT().Succeed(mock.Anything, mock.Anything).Return(errors.New("redis down"))
 	expectSuccessfulSession(deps, usr)
@@ -306,42 +329,6 @@ func TestLoginSkipsPlanCheckOutsideCloud(t *testing.T) {
 		Password:     "password123",
 	})
 	require.NoError(t, err)
-}
-
-func TestCreateSessionForUser(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	usr := newTestUser(t)
-	expectSuccessfulSession(deps, usr)
-
-	resp, err := deps.svc.CreateSessionForUser(t.Context(), &tenantports.CreateSessionForUserRequest{
-		User: usr,
-	})
-	require.NoError(t, err)
-	assert.Equal(t, usr, resp.User)
-	assert.NotEmpty(t, resp.SessionID)
-	assert.NotEmpty(t, resp.SessionToken)
-	assert.Equal(t, iamports.AuthEventProviderPassword, resp.AuthProvider)
-
-	rec := deps.authEvents.only(t)
-	assert.Equal(t, iam.AuthEventOutcomeSuccess, rec.Outcome)
-	assert.Equal(t, usr.ID, rec.UserID)
-}
-
-func TestCreateSessionForUserRefusesInactiveUsers(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	usr := newTestUser(t)
-	usr.Status = domaintypes.StatusInactive
-
-	_, err := deps.svc.CreateSessionForUser(t.Context(), &tenantports.CreateSessionForUserRequest{
-		User: usr,
-	})
-	require.Error(t, err)
-	assert.Equal(t, authErrorAccountUnavailable, deps.authEvents.only(t).ErrorCode)
-
-	_, err = deps.svc.CreateSessionForUser(t.Context(), nil)
-	require.True(t, errortypes.IsAuthenticationError(err))
 }
 
 func TestLoginUnknownAccountSpendsABcryptComparison(t *testing.T) {

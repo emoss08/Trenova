@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -30,6 +31,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type noPacketRequirements struct{}
+
+func (noPacketRequirements) GetBillingReadiness(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) (*shipmentbillingports.ShipmentBillingReadiness, error) {
+	return &shipmentbillingports.ShipmentBillingReadiness{}, nil
+}
 
 type approvalHarness struct {
 	svc         *Service
@@ -136,9 +147,11 @@ func newApprovalHarness(
 		l:                zap.NewNop(),
 		repo:             repo,
 		billingQueueRepo: billingQueueRepo,
+		readiness:        noPacketRequirements{},
 		shipmentRepo:     shipmentportsmock.NewMockShipmentRepository(t),
 		customerRepo:     customerRepo,
 		billingRepo:      billingRepo,
+		detentionBilling: &mocks.NoopDetentionBilling{},
 		validator: invoicevalidation.NewValidator(
 			invoicevalidation.ValidatorParams{Logger: zap.NewNop()},
 		),

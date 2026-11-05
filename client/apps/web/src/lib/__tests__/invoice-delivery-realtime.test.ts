@@ -81,7 +81,7 @@ describe("invoiceDeliveryOutcomes", () => {
   });
 
   it("stays quiet about a status nobody is waiting on", () => {
-    expect(invoiceDeliveryOutcomes(invoice({ sendStatus: "Queued" }), sending).outcomes).toEqual(
+    expect(invoiceDeliveryOutcomes(invoice({ sendStatus: "NotSent" }), sending).outcomes).toEqual(
       [],
     );
   });

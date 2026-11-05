@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -25,6 +26,8 @@ func TestStartForDefinition_StartsTheWorkflowUnderTheRunsAnchor(t *testing.T) {
 	var startedUnder trace.SpanContext
 	var payload *agentcontract.AgentRunPayload
 	svc := &Service{
+		budgets:     &agenttest.StubMoneyBudgets{},
+		activity:    agenttest.QuietActivity{},
 		l:           zap.NewNop(),
 		validator:   NewValidator(ValidatorParams{}),
 		definitions: definitionRepoFor(def),
@@ -71,6 +74,8 @@ func TestStartInline_RecordsTheTraceItRanIn(t *testing.T) {
 
 	var created *agent.AgentRun
 	svc := &Service{
+		budgets:   &agenttest.StubMoneyBudgets{},
+		activity:  agenttest.QuietActivity{},
 		l:         zap.NewNop(),
 		validator: NewValidator(ValidatorParams{}),
 		repo: &fakeAgentRunRepo{

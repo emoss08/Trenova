@@ -120,6 +120,18 @@ export function spreadsheetSafeText(value: string | null | undefined): string | 
   return SPREADSHEET_FORMULA_PREFIX.test(value) ? `'${value}` : value;
 }
 
+const PLAIN_NUMBER = /^[+-]?[\d.,]+%?$/;
+
+/**
+ * One cell of an export. Text can come from anyone who wrote to the record, so it never reaches
+ * a spreadsheet as a formula; a figure formatted as text keeps its sign.
+ */
+export function csvCellText(value: unknown): string {
+  const text = formatCsvValue(value);
+  if (typeof value !== "string" || PLAIN_NUMBER.test(text)) return text;
+  return spreadsheetSafeText(text) ?? "";
+}
+
 export function escapeCsvValue(value: string): string {
   if (/[",\n\r]/.test(value)) {
     return `"${value.replaceAll('"', '""')}"`;
@@ -136,7 +148,7 @@ export function buildCsv<TData extends RowData>(
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    lines[i + 1] = columns.map((c) => escapeCsvValue(formatCsvValue(c.getValue(row)))).join(",");
+    lines[i + 1] = columns.map((c) => escapeCsvValue(csvCellText(c.getValue(row)))).join(",");
   }
 
   return lines.join("\r\n");

@@ -212,6 +212,14 @@ func newWebhookToken(prefix string) (string, error) {
 	return prefix + hex.EncodeToString(tokenBytes[:]), nil
 }
 
+func serverWebhookToken(existing map[string]any, prefix string) (string, error) {
+	if token := integration.ReadConfigString(existing, integration.WebhookTokenField); token != "" {
+		return token, nil
+	}
+
+	return newWebhookToken(prefix)
+}
+
 func (s *Service) GetConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -281,9 +289,8 @@ func (s *Service) UpdateConfig(
 	if err != nil {
 		return nil, err
 	}
-	if prefix := webhookTokenPrefix(typ); prefix != "" &&
-		integration.ReadConfigString(finalConfig, "webhookToken") == "" {
-		finalConfig["webhookToken"], err = newWebhookToken(prefix)
+	if prefix := webhookTokenPrefix(typ); prefix != "" {
+		finalConfig[integration.WebhookTokenField], err = serverWebhookToken(existingConfig, prefix)
 		if err != nil {
 			return nil, errortypes.NewBusinessError("failed to generate webhook token").
 				WithInternal(err)
@@ -688,15 +695,20 @@ func requireSecretsForNewTarget(
 
 	multiErr := errortypes.NewMultiError()
 	for _, field := range spec.Fields {
-		if field.Sensitive && strings.TrimSpace(incoming[field.Key]) == "" &&
-			integration.ReadConfigString(existing, field.Key) != "" {
-			multiErr.Add(
-				"configuration."+field.Key,
-				errortypes.ErrRequired,
-				"Enter {0} again: a saved secret does not follow a change of address",
-				field.Label,
-			)
+		if !field.Sensitive || strings.TrimSpace(incoming[field.Key]) != "" ||
+			integration.ReadConfigString(existing, field.Key) == "" {
+			continue
 		}
+		if integration.FuelCredentialUnused(final, field.Key) {
+			final[field.Key] = ""
+			continue
+		}
+		multiErr.Add(
+			"configuration."+field.Key,
+			errortypes.ErrRequired,
+			"Enter {0} again: a saved secret does not follow a change of address",
+			field.Label,
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -707,20 +719,25 @@ func requireSecretsForNewTarget(
 
 func targetChanged(spec integration.IntegrationSpec, existing, final map[string]any) bool {
 	for _, field := range spec.Fields {
-		if field.Type != integration.ConfigFieldTypeURL {
+		if !field.Target {
 			continue
 		}
-		before := integration.ReadConfigString(existing, field.Key)
-		if before == "" {
-			before = field.Default
-		}
-		after := integration.ReadConfigString(final, field.Key)
+		before := targetValue(existing, &field)
+		after := targetValue(final, &field)
 		if strings.TrimRight(before, "/") != strings.TrimRight(after, "/") {
 			return true
 		}
 	}
 
 	return false
+}
+
+func targetValue(config map[string]any, field *integration.ConfigFieldSpec) string {
+	if value := integration.ReadConfigString(config, field.Key); value != "" {
+		return value
+	}
+
+	return field.Default
 }
 
 func isAllowedBaseURL(value string, policy httpsafe.Policy) bool {

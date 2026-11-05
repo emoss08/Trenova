@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -227,6 +228,7 @@ func newHarness(t *testing.T) *harness {
 		agentWaits:    h.agentWaits,
 		checklists:    h.checklists,
 		permissions:   h.permissions,
+		realtime:      &mocks.NoopRealtimeService{},
 	}
 	h.req = deskcaseports.CaseThreadRequest{
 		ThreadID:   thread.ID,

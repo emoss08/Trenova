@@ -10,6 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
@@ -888,6 +889,7 @@ func existingAcme(
 				"localAS2Id": "TRENOVA-AS2", "partnerAS2Id": "ACMERETAILAS2",
 				"endpointUrl": "https://as2-test.acmeretail.example/as2/receive", "mdnMode": "sync",
 				"signingAlgorithm": "sha256", "encryptionAlgorithm": "aes256-cbc", "environment": "test",
+				editransport.ConfigKeyRequireSignedInbound: false,
 			},
 			EncryptedSecrets: map[string]string{"privateKey": "trenova-envelope:v1:abc"},
 		}},

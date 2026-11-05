@@ -40,7 +40,6 @@ func TestStartRequestsTheWorkflowByItsRegisteredName(t *testing.T) {
 	t.Parallel()
 
 	workflows := kernelportsmock.NewMockWorkflowStarter(t)
-	workflows.EXPECT().Enabled().Return(true)
 	workflows.EXPECT().
 		StartWorkflow(mock.Anything, mock.Anything, "BillingQueueBulkApprovalWorkflow", mock.Anything).
 		Return(nil, nil).

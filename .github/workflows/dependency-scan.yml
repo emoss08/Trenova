@@ -1,0 +1,68 @@
+name: Dependency scan
+
+# A pull request is refused when it adds a dependency with a known high or
+# critical vulnerability. Every lockfile is also checked against OSV when one
+# changes on master and each week, because an advisory can land on a dependency
+# nobody touched.
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "**/go.mod"
+      - "**/go.sum"
+      - "**/Cargo.lock"
+      - "**/pnpm-lock.yaml"
+      - ".github/workflows/dependency-scan.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "**/go.mod"
+      - "**/go.sum"
+      - "**/Cargo.lock"
+      - "**/pnpm-lock.yaml"
+      - ".github/workflows/dependency-scan.yml"
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review:
+    name: New dependencies
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
+  osv:
+    name: Known vulnerabilities
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install OSV-Scanner
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/osv-scanner https://github.com/google/osv-scanner/releases/download/v2.7.0/osv-scanner_linux_amd64
+          echo '160c6253e2922e9e0a6a9771c5c4c40a4b3c6090b34a3cdd5e80c96cc2e4218b  /tmp/osv-scanner' | sha256sum -c -
+          sudo install -m 0755 /tmp/osv-scanner /usr/local/bin/osv-scanner
+
+      - name: Scan every lockfile
+        run: |
+          osv-scanner scan source \
+            --lockfile services/tms/go.mod \
+            --lockfile services/operator/go.mod \
+            --lockfile shared/go.mod \
+            --lockfile client/pnpm-lock.yaml \
+            --lockfile services/Cargo.lock \
+            --lockfile desktop/capture/Cargo.lock

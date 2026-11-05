@@ -170,6 +170,7 @@ func TestUpdate_DisableBrokerage_AllowedWhenNothingOutstanding(t *testing.T) {
 	}, nil)
 	deps.repo.On("CountBrokerageDependencies", mock.Anything, tenantInfo).
 		Return(&tenantports.BrokerageDependencyCounts{}, nil)
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -186,6 +187,7 @@ func TestUpdate_EnableBrokerage_IsAlwaysAllowed(t *testing.T) {
 	entity := newTestOrganization()
 	entity.BrokerageEnabled = true
 
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -219,6 +221,7 @@ func TestUpdate_BrokerageAlreadyDisabled_SkipsDependencyCount(t *testing.T) {
 		BrokerageEnabled:       stored.BrokerageEnabled,
 		AssetOperationsEnabled: stored.AssetOperationsEnabled,
 	}, nil)
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -403,6 +406,7 @@ func TestUpdate_DisableAssetOperations_AllowedWhenNothingOutstanding(t *testing.
 	}, nil)
 	deps.repo.On("CountAssetDependencies", mock.Anything, tenantInfo).
 		Return(&tenantports.AssetDependencyCounts{}, nil)
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -419,6 +423,7 @@ func TestUpdate_EnableAssetOperations_IsAlwaysAllowed(t *testing.T) {
 	entity := newTestOrganization()
 	entity.AssetOperationsEnabled = true
 
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -452,6 +457,7 @@ func TestUpdate_AssetOperationsAlreadyDisabled_SkipsDependencyCount(t *testing.T
 		BrokerageEnabled:       stored.BrokerageEnabled,
 		AssetOperationsEnabled: stored.AssetOperationsEnabled,
 	}, nil)
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -537,6 +543,7 @@ func TestUpdate_AssetOperationsEnabled_IsUnaffectedByBrokerageGuard(t *testing.T
 
 	entity := newTestOrganization()
 
+	deps.expectStoredOrganization(entity)
 	deps.repo.On("Update", mock.Anything, entity).Return(entity, nil)
 
 	result, err := deps.svc.Update(t.Context(), entity)
@@ -581,6 +588,13 @@ func TestUpdate_ReadsCapabilitiesUnderRowLockInsideTheWriteTransaction(t *testin
 			order = append(order, "countAssetDependencies")
 		}).
 		Return(&tenantports.AssetDependencyCounts{}, nil)
+
+	deps.repo.On("GetByID", mock.Anything, tenantports.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.ID,
+			BuID:  entity.BusinessUnitID,
+		},
+	}).Return(stored, nil)
 
 	deps.repo.On("Update", mock.Anything, entity).
 		Run(func(mock.Arguments) {

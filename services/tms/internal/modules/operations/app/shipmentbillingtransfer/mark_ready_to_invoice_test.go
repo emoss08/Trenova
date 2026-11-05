@@ -51,11 +51,11 @@ func newMarkReadyFixture(t *testing.T) *markReadyFixture {
 	f.svc = &Service{
 		l:    zap.NewNop(),
 		repo: f.repo,
-		invalidator: shipmentinvalidation.NewWithDependencies(
-			&mocks.NoopRealtimeService{},
-			nil,
-			zap.NewNop(),
-		),
+		invalidator: shipmentinvalidation.New(shipmentinvalidation.Params{
+			Realtime: &mocks.NoopRealtimeService{},
+			Epochs:   &mocks.NoopShipmentBoardEpochBumper{},
+			Logger:   zap.NewNop(),
+		}),
 		effects: shipmenteffects.New(shipmenteffects.Params{
 			Logger:          zap.NewNop(),
 			Repo:            f.repo,

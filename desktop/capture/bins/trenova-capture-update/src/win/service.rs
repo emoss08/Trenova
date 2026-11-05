@@ -1,11 +1,14 @@
 //! Running under the Service Control Manager: started on demand with the
 //! manifest address as the one start argument, and stopped when the update
-//! has been tried.
+//! has been tried. Until the install begins it can be stopped, which gives up
+//! whatever fetch is under way; from then on it can't, because the installer
+//! stops this service itself and must find it still running its own child.
 
 use std::ffi::OsString;
 use std::process::ExitCode;
 use std::time::Duration;
 
+use tokio::sync::watch;
 use trenova_capture_update::{SERVICE_NAME, UpdaterError};
 use windows_service::service::{
     ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType,
@@ -31,11 +34,16 @@ pub fn dispatch() -> ExitCode {
     }
 }
 
-fn report(handle: ServiceStatusHandle, state: ServiceState, exit: ServiceExitCode) {
+fn report(
+    handle: ServiceStatusHandle,
+    state: ServiceState,
+    exit: ServiceExitCode,
+    controls: ServiceControlAccept,
+) {
     let status = ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
         current_state: state,
-        controls_accepted: ServiceControlAccept::empty(),
+        controls_accepted: controls,
         exit_code: exit,
         checkpoint: 0,
         wait_hint: if state == ServiceState::Running {
@@ -57,7 +65,13 @@ fn service_main(arguments: Vec<OsString>) {
 }
 
 fn serve(arguments: &[OsString]) {
-    let handle = match service_control_handler::register(SERVICE_NAME, |control| match control {
+    let (asked_to_stop, stop) = watch::channel(false);
+    let handle = match service_control_handler::register(SERVICE_NAME, move |control| match control
+    {
+        ServiceControl::Stop | ServiceControl::Shutdown => {
+            asked_to_stop.send_replace(true);
+            ServiceControlHandlerResult::NoError
+        }
         ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
         _ => ServiceControlHandlerResult::NotImplemented,
     }) {
@@ -67,10 +81,23 @@ fn serve(arguments: &[OsString]) {
             return;
         }
     };
-    report(handle, ServiceState::Running, ServiceExitCode::Win32(0));
+    report(
+        handle,
+        ServiceState::Running,
+        ServiceExitCode::Win32(0),
+        ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
+    );
 
+    let committing = || {
+        report(
+            handle,
+            ServiceState::Running,
+            ServiceExitCode::Win32(0),
+            ServiceControlAccept::empty(),
+        );
+    };
     let outcome = match arguments.first().and_then(|a| a.to_str()) {
-        Some(manifest) => super::update(manifest),
+        Some(manifest) => super::update(manifest, &stop, committing),
         None => Err(UpdaterError::Address),
     };
     let exit = match outcome {
@@ -79,10 +106,23 @@ fn serve(arguments: &[OsString]) {
             tracing::info!("nothing to update");
             ServiceExitCode::Win32(0)
         }
+        Err(UpdaterError::Stopped) => {
+            tracing::info!("stopped before installing anything");
+            ServiceExitCode::Win32(0)
+        }
+        Err(err @ UpdaterError::OutOfDate(_)) => {
+            tracing::warn!(error = %err, "updates are paused: the server serves an out-of-date release manifest");
+            ServiceExitCode::ServiceSpecific(NOT_UPDATED)
+        }
         Err(err) => {
             tracing::error!(error = %err, "the update did not happen");
             ServiceExitCode::ServiceSpecific(NOT_UPDATED)
         }
     };
-    report(handle, ServiceState::Stopped, exit);
+    report(
+        handle,
+        ServiceState::Stopped,
+        exit,
+        ServiceControlAccept::empty(),
+    );
 }

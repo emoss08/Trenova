@@ -2,7 +2,6 @@ package invoicesendservice
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -21,8 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
@@ -35,6 +34,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+type noSuppressedRecipients struct{}
+
+func (noSuppressedRecipients) ResolveSender(
+	context.Context,
+	*emailports.SendEmailRequest,
+) (*emailports.EmailSender, error) {
+	return &emailports.EmailSender{}, nil
+}
 
 type fakeInvoiceDocumentService struct {
 	currentDocument *document.Document
@@ -260,6 +268,7 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		Once()
 
 	customerRepo := customerportsmock.NewMockCustomerRepository(t)
+	customerRepo.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
 			ID:         customerID,
@@ -301,8 +310,11 @@ func TestPlanSendRendersTemplatesAndOrganizationAlias(t *testing.T) {
 		customerRepo:     customerRepo,
 		organizationRepo: organizationRepo,
 		emailRepo:        emailRepo,
+		emailSenders:     noSuppressedRecipients{},
 		billingRepo:      billingRepo,
-		edi:              invoiceediservice.New(invoiceediservice.Params{Logger: zap.NewNop()}),
+		edi: invoiceediservice.New(
+			invoiceediservice.Params{Logger: zap.NewNop(), CustomerRepo: customerRepo},
+		),
 		rec: invoiceaction.NewRecorder(
 			invoiceaction.RecorderParams{Logger: zap.NewNop()},
 		),
@@ -432,7 +444,6 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 				&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 					InvoiceID:  invoiceID,
 					TenantInfo: tenantInfo,
-					BaseURL:    "https://billing.example.test",
 				},
 				testutil.NewSessionActor(userID, orgID, buID),
 			)
@@ -444,90 +455,6 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 			assert.Empty(t, result.Attempts)
 		})
 	}
-}
-
-func TestAutoSendInvoiceAfterPDFGenerationRecordsSendFailure(t *testing.T) {
-	t.Parallel()
-
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-	userID := pulid.MustNew("usr_")
-	invoiceID := pulid.MustNew("inv_")
-	customerID := pulid.MustNew("cus_")
-	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
-	entity := &invoice.Invoice{
-		ID:             invoiceID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		CustomerID:     customerID,
-		Status:         invoice.StatusPosted,
-		SendStatus:     invoice.SendStatusNotSent,
-	}
-
-	repo := invoiceportsmock.NewMockInvoiceRepository(t)
-	repo.EXPECT().
-		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{
-			ID:         invoiceID,
-			TenantInfo: tenantInfo,
-		}).
-		Return(entity, nil).
-		Twice()
-	repo.EXPECT().
-		Update(mock.Anything, mock.MatchedBy(func(updated *invoice.Invoice) bool {
-			return updated.ID == invoiceID &&
-				updated.SendStatus == invoice.SendStatusFailed &&
-				strings.Contains(
-					updated.LastSendError,
-					"Invoice email delivery is not configured",
-				) &&
-				updated.SentByID == userID
-		})).
-		Return(entity, nil).
-		Once()
-
-	customerRepo := customerportsmock.NewMockCustomerRepository(t)
-	customerRepo.EXPECT().
-		GetByID(mock.Anything, customerports.GetCustomerByIDRequest{
-			ID:         customerID,
-			TenantInfo: tenantInfo,
-			CustomerFilterOptions: customerports.CustomerFilterOptions{
-				IncludeBillingProfile: true,
-			},
-		}).
-		Return(&customer.Customer{
-			ID: customerID,
-			BillingProfile: &customer.CustomerBillingProfile{
-				AutoSendInvoiceOnGeneration: true,
-				EmailInvoiceEnabled:         true,
-			},
-		}, nil).
-		Once()
-
-	svc := &Service{
-		l:            zap.NewNop(),
-		repo:         repo,
-		customerRepo: customerRepo,
-		rec: invoiceaction.NewRecorder(
-			invoiceaction.RecorderParams{
-				Logger:       zap.NewNop(),
-				AuditService: &mocks.NoopAuditService{},
-			},
-		),
-	}
-
-	result, err := svc.AutoSendInvoiceAfterPDFGeneration(
-		t.Context(),
-		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
-			InvoiceID:  invoiceID,
-			TenantInfo: tenantInfo,
-			BaseURL:    "https://billing.example.test",
-		},
-		testutil.NewSessionActor(userID, orgID, buID),
-	)
-
-	require.Error(t, err)
-	require.Nil(t, result)
-	assert.Contains(t, err.Error(), "Invoice email delivery is not configured")
 }
 
 func TestAppendShipmentDetailIncludesRouteAndCharges(t *testing.T) {

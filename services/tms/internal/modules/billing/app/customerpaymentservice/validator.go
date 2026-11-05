@@ -5,14 +5,17 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -22,13 +25,15 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	InvoiceRepo      invoiceports.InvoiceRepository
-	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	InvoiceRepo        invoiceports.InvoiceRepository
+	FiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	AdjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
 }
 
 type Validator struct {
-	invoiceRepo      invoiceports.InvoiceRepository
-	fiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
+	invoiceRepo        invoiceports.InvoiceRepository
+	fiscalPeriodRepo   fiscalperiodports.FiscalPeriodRepository
+	adjustmentCtrlRepo tenantports.InvoiceAdjustmentControlRepository
 }
 
 type invoiceKey struct {
@@ -36,7 +41,75 @@ type invoiceKey struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return &Validator{invoiceRepo: p.InvoiceRepo, fiscalPeriodRepo: p.FiscalPeriodRepo}
+	return &Validator{
+		invoiceRepo:        p.InvoiceRepo,
+		fiscalPeriodRepo:   p.FiscalPeriodRepo,
+		adjustmentCtrlRepo: p.AdjustmentCtrlRepo,
+	}
+}
+
+func (v *Validator) checkShortPays(
+	ctx context.Context,
+	orgID pulid.ID,
+	applications []*customerpayment.Application,
+	me *errortypes.MultiError,
+) error {
+	var control *invoiceadjustmentcontrol.InvoiceAdjustmentControl
+	for idx, app := range applications {
+		if app == nil || app.ShortPayAmountMinor <= 0 {
+			continue
+		}
+		if control == nil {
+			var err error
+			if control, err = v.adjustmentCtrlRepo.GetByOrgID(ctx, orgID); err != nil {
+				return err
+			}
+		}
+		switch shortPayPolicy(control, app.ShortPayAmountMinor) {
+		case shortPayRefused:
+			me.WithIndex("applications", idx).Add(
+				"shortPayAmountMinor",
+				errortypes.ErrInvalidOperation,
+				"Write-offs are disallowed by policy, so this invoice cannot take a short pay",
+			)
+		case shortPayNeedsApproval:
+			me.WithIndex("applications", idx).Add(
+				"shortPayAmountMinor",
+				errortypes.ErrInvalidOperation,
+				"This short pay needs approval: apply what the customer paid and write off the rest with an invoice adjustment",
+			)
+		case shortPayAllowed:
+		}
+	}
+	return nil
+}
+
+type shortPayOutcome int
+
+const (
+	shortPayAllowed shortPayOutcome = iota
+	shortPayNeedsApproval
+	shortPayRefused
+)
+
+func shortPayPolicy(
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+	amountMinor int64,
+) shortPayOutcome {
+	switch control.WriteOffApprovalPolicy {
+	case invoiceadjustmentcontrol.WriteOffApprovalPolicyDisallow:
+		return shortPayRefused
+	case invoiceadjustmentcontrol.WriteOffApprovalPolicyAlwaysRequireApproval:
+		return shortPayNeedsApproval
+	case invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold:
+		if money.DecimalFromMinor(amountMinor).
+			GreaterThanOrEqual(control.WriteOffApprovalThreshold) {
+			return shortPayNeedsApproval
+		}
+		return shortPayAllowed
+	default:
+		return shortPayRefused
+	}
 }
 
 //nolint:nestif // existing validation flow mirrors business rule nesting
@@ -45,7 +118,7 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 	entity *customerpayment.Payment,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
 	control *accountingcontrol.AccountingControl,
-) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
+) ([]*invoice.Invoice, *journalposting.ResolvedPeriod, error) {
 	me := errortypes.NewMultiError()
 	entity.Validate(me)
 	if strings.TrimSpace(entity.CurrencyCode) != "" {
@@ -114,21 +187,13 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		return nil, nil, me
 	}
 
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-			Date:  entity.AccountingDate,
-		},
-	)
+	period, err := resolvePaymentPeriod(ctx, v.fiscalPeriodRepo, &paymentPeriodRequest{
+		tenant:  pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		date:    entity.AccountingDate,
+		control: control,
+	})
 	if err != nil {
-		me.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, nil, me
+		return nil, nil, err
 	}
 
 	resolvedInvoices := make([]*invoice.Invoice, 0, len(entity.Applications))
@@ -180,6 +245,14 @@ func (v *Validator) ValidatePostAndApply( //nolint:cyclop,funlen,gocyclo // lega
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)
 	}
+	if err := v.checkShortPays(
+		ctx,
+		tenantInfo.TenantInfo.OrgID,
+		entity.Applications,
+		me,
+	); err != nil {
+		return nil, nil, err
+	}
 	if totalApplied > entity.AmountMinor {
 		me.Add(
 			"amountMinor",
@@ -207,7 +280,7 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 	applications []*customerpayment.Application,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
 	control *accountingcontrol.AccountingControl,
-) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
+) ([]*invoice.Invoice, *journalposting.ResolvedPeriod, error) {
 	me := errortypes.NewMultiError()
 	if payment == nil {
 		me.Add("paymentId", errortypes.ErrRequired, "Customer payment is required")
@@ -294,21 +367,13 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		return nil, nil, me
 	}
 
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: payment.OrganizationID,
-			BuID:  payment.BusinessUnitID,
-			Date:  accountingDate,
-		},
-	)
+	period, err := resolvePaymentPeriod(ctx, v.fiscalPeriodRepo, &paymentPeriodRequest{
+		tenant:  pagination.TenantInfo{OrgID: payment.OrganizationID, BuID: payment.BusinessUnitID},
+		date:    accountingDate,
+		control: control,
+	})
 	if err != nil {
-		me.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, nil, me
+		return nil, nil, err
 	}
 
 	seenInvoices := make(map[invoiceKey]struct{}, len(applications))
@@ -363,6 +428,9 @@ func (v *Validator) ValidateApplyUnapplied( //nolint:cyclop,funlen,gocyclo // le
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)
 	}
+	if err := v.checkShortPays(ctx, tenantInfo.TenantInfo.OrgID, applications, me); err != nil {
+		return nil, nil, err
+	}
 	if totalApplied > payment.UnappliedAmountMinor {
 		me.Add(
 			"applications",
@@ -383,7 +451,7 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	accountingDate int64,
 	control *accountingcontrol.AccountingControl,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
-) ([]*invoice.Invoice, *fiscalperiod.FiscalPeriod, *errortypes.MultiError) {
+) ([]*invoice.Invoice, *journalposting.ResolvedPeriod, error) {
 	me := errortypes.NewMultiError()
 	if payment == nil {
 		me.Add("paymentId", errortypes.ErrRequired, "Customer payment is required")
@@ -436,21 +504,13 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 	if me.HasErrors() {
 		return nil, nil, me
 	}
-	period, err := v.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		fiscalperiodports.GetPeriodByDateRequest{
-			OrgID: payment.OrganizationID,
-			BuID:  payment.BusinessUnitID,
-			Date:  accountingDate,
-		},
-	)
+	period, err := resolvePaymentPeriod(ctx, v.fiscalPeriodRepo, &paymentPeriodRequest{
+		tenant:  pagination.TenantInfo{OrgID: payment.OrganizationID, BuID: payment.BusinessUnitID},
+		date:    accountingDate,
+		control: control,
+	})
 	if err != nil {
-		me.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, nil, me
+		return nil, nil, err
 	}
 	invoices := make([]*invoice.Invoice, 0, len(payment.Applications))
 	for idx, app := range payment.Applications {
@@ -479,6 +539,27 @@ func (v *Validator) ValidateReverse( //nolint:funlen // legacy workflow
 		return nil, nil, me
 	}
 	return invoices, period, nil
+}
+
+type paymentPeriodRequest struct {
+	tenant  pagination.TenantInfo
+	date    int64
+	control *accountingcontrol.AccountingControl
+}
+
+func resolvePaymentPeriod(
+	ctx context.Context,
+	periods journalposting.PeriodReader,
+	req *paymentPeriodRequest,
+) (*journalposting.ResolvedPeriod, error) {
+	return journalposting.ResolvePeriod(ctx, periods, &journalposting.ResolvePeriodRequest{
+		OrganizationID: req.tenant.OrgID,
+		BusinessUnitID: req.tenant.BuID,
+		Date:           req.date,
+		Policy:         journalposting.ClosedPeriodPolicy(req.control),
+		RefuseLocked:   journalposting.RefusesLockedSubledger(req.control),
+		Subject:        "customer payment",
+	})
 }
 
 func requireAccountField(me *errortypes.MultiError, id pulid.ID, field, message string) {

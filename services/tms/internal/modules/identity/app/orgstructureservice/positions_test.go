@@ -118,7 +118,7 @@ func assign(holder, position pulid.ID) *orgstructureservice.AssignRequest {
 // on the wrong roster; both are refused before anything is written.
 func TestAssignWorkerPosition_RefusesAFrontOfficeTitle(t *testing.T) {
 	repo := newPositionRepo()
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	err := svc.AssignWorkerPosition(t.Context(), assign(someWorker, deskPosition))
 
@@ -129,7 +129,7 @@ func TestAssignWorkerPosition_RefusesAFrontOfficeTitle(t *testing.T) {
 
 func TestAssignUserPosition_RefusesADrivingTitle(t *testing.T) {
 	repo := newPositionRepo()
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	err := svc.AssignUserPosition(t.Context(), assign(someUser, drivingPosition))
 
@@ -140,7 +140,7 @@ func TestAssignUserPosition_RefusesADrivingTitle(t *testing.T) {
 
 func TestAssignPosition_PutsEachRosterOnItsOwnTitle(t *testing.T) {
 	repo := newPositionRepo()
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	require.NoError(t, svc.AssignWorkerPosition(t.Context(), assign(someWorker, drivingPosition)))
 	require.NoError(t, svc.AssignUserPosition(t.Context(), assign(someUser, deskPosition)))
@@ -153,7 +153,7 @@ func TestAssignPosition_PutsEachRosterOnItsOwnTitle(t *testing.T) {
 
 func TestAssignPosition_RefusesAnArchivedTitle(t *testing.T) {
 	repo := newPositionRepo()
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	err := svc.AssignUserPosition(t.Context(), assign(someUser, archivedPosition))
 
@@ -167,7 +167,7 @@ func TestAssignPosition_RefusesAnArchivedTitle(t *testing.T) {
 func TestAssignPosition_ClearsWithoutLookingAnythingUp(t *testing.T) {
 	repo := newPositionRepo()
 	repo.positions = nil
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	require.NoError(t, svc.AssignWorkerPosition(t.Context(), assign(someWorker, pulid.Nil)))
 
@@ -177,7 +177,7 @@ func TestAssignPosition_ClearsWithoutLookingAnythingUp(t *testing.T) {
 
 func TestAssignPosition_NeedsSomebodyToAssign(t *testing.T) {
 	repo := newPositionRepo()
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	err := svc.AssignUserPosition(t.Context(), assign(pulid.Nil, deskPosition))
 
@@ -211,7 +211,7 @@ func TestHeadcount_LaysStaffOverTheWorkerGrouping(t *testing.T) {
 			Staff:      1,
 		},
 	}
-	svc := orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+	svc := newService(repo)
 
 	headcount, err := svc.Headcount(t.Context(), scopeTenant())
 	require.NoError(t, err)

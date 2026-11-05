@@ -5,3 +5,5 @@ tms
 postgres
 **/fuzz/corpus
 **/fuzz/artifacts
+**/.env*
+**/*.local

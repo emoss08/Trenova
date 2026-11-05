@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e950ab78c0f9d568cf8486c270fbee7f3621920dede1f62f887f06f855a6ed49",
+  "version": "sha256:2d0192e1e4111131611601ce88322d1c9d454785fddeeaf20ca34c3832d2e4ad",
   "screens": [
     {
       "path": "/",
@@ -527,6 +527,7 @@
       "references": [
         "customer",
         "customer_payment",
+        "report",
         "user"
       ],
       "declared": [
@@ -725,6 +726,7 @@
       ],
       "references": [
         "customer",
+        "report",
         "user"
       ],
       "declared": [
@@ -772,7 +774,9 @@
       "reads": [
         "account_type"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -865,7 +869,9 @@
       "reads": [
         "fiscal_year"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": [
         "fiscal_period"
       ]
@@ -1029,7 +1035,8 @@
         "journal_reversal"
       ],
       "references": [
-        "journal_entry"
+        "journal_entry",
+        "report"
       ],
       "declared": []
     },
@@ -1082,6 +1089,7 @@
         "journal_reversal"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": [
@@ -1211,6 +1219,7 @@
         "manual_journal"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": [
@@ -1714,6 +1723,7 @@
         "accounting_sync"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -1778,6 +1788,7 @@
         "accounting_sync"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -1841,6 +1852,7 @@
         "accounting_sync"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -3157,6 +3169,7 @@
         "ai_provider"
       ],
       "references": [
+        "report",
         "role",
         "user"
       ],
@@ -3323,7 +3336,9 @@
       "reads": [
         "api_key"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -3364,7 +3379,9 @@
         }
       ],
       "reads": [],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": [
         "user"
       ]
@@ -3633,7 +3650,9 @@
       "reads": [
         "custom_field_definition"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -3816,7 +3835,8 @@
       ],
       "references": [
         "customer",
-        "location"
+        "location",
+        "report"
       ],
       "declared": []
     },
@@ -3880,7 +3900,9 @@
       "reads": [
         "distance_profile"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -3969,7 +3991,9 @@
       "reads": [
         "hazmat_segregation_rule"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -4012,7 +4036,9 @@
       "reads": [
         "hold_reason"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -4990,7 +5016,9 @@
       "reads": [
         "jurisdiction_rule_override"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -5053,7 +5081,9 @@
       "reads": [
         "jurisdiction_rule"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -5269,6 +5299,7 @@
         "risk_decision"
       ],
       "references": [
+        "report",
         "role"
       ],
       "declared": [
@@ -5315,7 +5346,9 @@
       "reads": [
         "role"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -5796,7 +5829,9 @@
       "reads": [
         "service_failure_reason_code"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -5905,7 +5940,9 @@
       "reads": [
         "stored_mileage"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -5968,7 +6005,9 @@
       "reads": [
         "table_change_alert"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -6210,7 +6249,9 @@
         "role",
         "user"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -6309,7 +6350,9 @@
       "reads": [
         "accessorial_charge"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -6545,6 +6588,7 @@
       "references": [
         "customer_payment",
         "document_type",
+        "report",
         "user"
       ],
       "declared": [
@@ -6599,7 +6643,9 @@
         }
       ],
       "reads": [],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -6644,7 +6690,9 @@
       "reads": [
         "document_type"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -6802,7 +6850,8 @@
       ],
       "references": [
         "customer",
-        "document_type"
+        "document_type",
+        "report"
       ],
       "declared": []
     },
@@ -6848,6 +6897,7 @@
         "formula_library"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -8404,7 +8454,9 @@
       "reads": [
         "formula_template"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -10084,6 +10136,7 @@
         "rate_zone"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -10132,7 +10185,9 @@
         "rate_matrix",
         "rate_zone"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -10279,7 +10334,8 @@
       ],
       "references": [
         "customer",
-        "document_type"
+        "document_type",
+        "report"
       ],
       "declared": []
     },
@@ -12472,7 +12528,9 @@
         "rate_quote",
         "rate_zone"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -12635,7 +12693,8 @@
         "carrier_settlement"
       ],
       "references": [
-        "carrier"
+        "carrier",
+        "report"
       ],
       "declared": []
     },
@@ -12678,7 +12737,8 @@
       ],
       "reads": [],
       "references": [
-        "carrier"
+        "carrier",
+        "report"
       ],
       "declared": []
     },
@@ -13035,6 +13095,7 @@
         "carrier_settlement"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": [
@@ -18496,7 +18557,9 @@
       "reads": [
         "detention_policy"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -18600,6 +18663,7 @@
         "carrier_intelligence"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -18734,6 +18798,7 @@
         "carrier_intelligence"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -18779,6 +18844,7 @@
         "fleet_code"
       ],
       "references": [
+        "report",
         "user"
       ],
       "declared": []
@@ -18825,7 +18891,9 @@
       "reads": [
         "location_category"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -19389,7 +19457,8 @@
         "location"
       ],
       "references": [
-        "location_category"
+        "location_category",
+        "report"
       ],
       "declared": []
     },
@@ -19464,7 +19533,8 @@
         "routing_guide"
       ],
       "references": [
-        "carrier"
+        "carrier",
+        "report"
       ],
       "declared": []
     },
@@ -19528,6 +19598,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -19942,7 +20022,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -20006,6 +20087,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -20420,7 +20511,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -20484,6 +20576,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -20898,7 +21000,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -20950,7 +21053,8 @@
         "edi"
       ],
       "references": [
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -21326,6 +21430,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -21740,7 +21854,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -21804,6 +21919,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -22218,7 +22343,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -22282,6 +22408,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -22696,7 +22832,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -22760,6 +22897,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -23174,7 +23321,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -23238,6 +23386,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -23652,7 +23810,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -23716,6 +23875,16 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/",
+          "requires": [
+            {
+              "resource": "edi",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/",
           "requires": [
             {
@@ -24130,7 +24299,8 @@
       ],
       "references": [
         "customer",
-        "organization"
+        "organization",
+        "report"
       ],
       "declared": []
     },
@@ -24174,7 +24344,9 @@
       "reads": [
         "equipment_manufacturer"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -24224,6 +24396,7 @@
       "references": [
         "equipment_manufacturer",
         "fleet_code",
+        "report",
         "worker"
       ],
       "declared": []
@@ -25016,6 +25189,7 @@
         "equipment_manufacturer",
         "fleet_code",
         "location",
+        "report",
         "user",
         "worker"
       ],
@@ -25812,6 +25986,7 @@
         "equipment_manufacturer",
         "fleet_code",
         "location",
+        "report",
         "user",
         "worker"
       ],
@@ -25865,6 +26040,7 @@
         "fuel_card"
       ],
       "references": [
+        "report",
         "tractor",
         "worker"
       ],
@@ -25913,7 +26089,9 @@
       "reads": [
         "ifta_tax_rate"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -25994,6 +26172,7 @@
       ],
       "references": [
         "fuel_card",
+        "report",
         "tractor"
       ],
       "declared": []
@@ -26071,6 +26250,7 @@
       ],
       "reads": [],
       "references": [
+        "report",
         "tractor"
       ],
       "declared": []
@@ -26847,6 +27027,7 @@
         "edi",
         "fuel_card",
         "location",
+        "report",
         "tractor",
         "trailer",
         "user",
@@ -26902,6 +27083,7 @@
         "fuel_card"
       ],
       "references": [
+        "report",
         "tractor",
         "worker"
       ],
@@ -26979,6 +27161,7 @@
         "worker_checklist_template"
       ],
       "references": [
+        "report",
         "worker_credential_type"
       ],
       "declared": []
@@ -27027,7 +27210,9 @@
       "reads": [
         "worker_credential_type"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -27260,7 +27445,9 @@
       "reads": [
         "pto_policy"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -27336,7 +27523,9 @@
       "reads": [
         "performance_review_template"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -27445,7 +27634,9 @@
       "reads": [
         "training_course"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -28397,6 +28588,7 @@
         "edi",
         "fleet_code",
         "location",
+        "report",
         "tractor",
         "trailer",
         "worker_policy"
@@ -28707,7 +28899,9 @@
       "reads": [
         "email_profile"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -28753,6 +28947,7 @@
         "pay_advance"
       ],
       "references": [
+        "report",
         "worker"
       ],
       "declared": []
@@ -28801,6 +28996,7 @@
       ],
       "references": [
         "pay_code",
+        "report",
         "worker"
       ],
       "declared": []
@@ -28849,6 +29045,7 @@
         "settlement_dispute"
       ],
       "references": [
+        "report",
         "user",
         "worker"
       ],
@@ -28900,6 +29097,7 @@
       ],
       "references": [
         "pay_code",
+        "report",
         "worker"
       ],
       "declared": []
@@ -28949,6 +29147,7 @@
         "escrow_account"
       ],
       "references": [
+        "report",
         "worker"
       ],
       "declared": []
@@ -28997,6 +29196,7 @@
       ],
       "references": [
         "pay_code",
+        "report",
         "user",
         "worker"
       ],
@@ -29044,7 +29244,9 @@
       "reads": [
         "pay_code"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -29090,6 +29292,7 @@
         "driver_settlement"
       ],
       "references": [
+        "report",
         "worker"
       ],
       "declared": []
@@ -29140,6 +29343,7 @@
         "driver_pay_profile"
       ],
       "references": [
+        "report",
         "worker"
       ],
       "declared": []
@@ -29185,7 +29389,9 @@
         }
       ],
       "reads": [],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -29257,6 +29463,7 @@
         "driver_settlement"
       ],
       "references": [
+        "report",
         "user",
         "worker"
       ],
@@ -29789,7 +29996,9 @@
         }
       ],
       "reads": [],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -29853,7 +30062,9 @@
       "reads": [
         "commodity"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -29896,7 +30107,9 @@
       "reads": [
         "hazardous_material"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -29959,7 +30172,9 @@
       "reads": [
         "service_type"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -30022,7 +30237,9 @@
       "reads": [
         "shipment_type"
       ],
-      "references": [],
+      "references": [
+        "report"
+      ],
       "declared": []
     },
     {
@@ -30079,7 +30296,8 @@
       ],
       "references": [
         "customer",
-        "invoice"
+        "invoice",
+        "report"
       ],
       "declared": [
         "user"
@@ -30167,7 +30385,8 @@
       ],
       "references": [
         "customer",
-        "location"
+        "location",
+        "report"
       ],
       "declared": []
     },
@@ -30233,6 +30452,7 @@
       ],
       "references": [
         "location",
+        "report",
         "service_failure_reason_code",
         "shipment"
       ],
@@ -31182,6 +31402,7 @@
         "customer_payment",
         "document_type",
         "edi",
+        "report",
         "tractor",
         "trailer",
         "worker"
@@ -34503,7 +34724,15 @@
       "name": "AssignBillingQueueBiller",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -34539,7 +34768,40 @@
       "name": "AssignRequiredWorkerTraining",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -34574,7 +34836,40 @@
       "name": "AssignWorkerTraining",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -34991,7 +35286,40 @@
       "name": "CancelWorkerTraining",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -35426,7 +35754,14 @@
       "name": "CheckAccountingConnection",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -35440,14 +35775,28 @@
       "name": "ChooseAccountingCompany",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
       "name": "ChooseAccountingSyncMode",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -35579,7 +35928,14 @@
       "name": "CompleteAccountingSetup",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -35614,7 +35970,40 @@
       "name": "CompleteWorkerTraining",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -35642,7 +36031,14 @@
       "name": "ConnectAccountingWithCertificate",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -35869,7 +36265,14 @@
       "name": "CreateIftaMileageEntry",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "tractor",
+          "fields": [
+            "code"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -37345,7 +37748,14 @@
       "name": "DisconnectAccountingSystem",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -37401,7 +37811,15 @@
       "name": "DispatchAssignMoveToCarrier",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "carrier",
+          "fields": [
+            "name",
+            "scac"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -37866,7 +38284,14 @@
       "name": "EnableAccountingSync",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -38121,7 +38546,12 @@
       "name": "ExportTableView",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "report",
+          "fields": []
+        }
+      ],
       "declared": []
     },
     {
@@ -38518,7 +38948,14 @@
       "name": "FileCaptureItem",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -38560,7 +38997,14 @@
       "name": "FinishAccountingAuthorization",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -39151,6 +39595,10 @@
           "fields": [
             "name"
           ]
+        },
+        {
+          "kind": "worker_employment_event",
+          "fields": []
         },
         {
           "kind": "worker_safety_event",
@@ -39759,7 +40207,14 @@
       "name": "PauseAccountingSync",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -40327,7 +40782,14 @@
       "name": "RefreshAccountingReferenceData",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -40521,7 +40983,14 @@
       "name": "RenewAccountingCertificate",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -40806,7 +41275,14 @@
       "name": "ResumeAccountingSync",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -41160,7 +41636,12 @@
       "name": "ScheduleTableView",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "report",
+          "fields": []
+        }
+      ],
       "declared": []
     },
     {
@@ -42465,7 +42946,14 @@
       "name": "UpdateAccountingSyncSettings",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -42507,7 +42995,15 @@
       "name": "UpdateBillingQueueStatus",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "customer",
+          "fields": [
+            "code",
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -42717,7 +43213,14 @@
       "name": "UpdateIftaMileageEntry",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "tractor",
+          "fields": [
+            "code"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43090,7 +43593,40 @@
       "name": "WaiveWorkerTraining",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "training_course",
+          "fields": [
+            "businessUnitId",
+            "category",
+            "code",
+            "contentUrl",
+            "createdAt",
+            "delivery",
+            "description",
+            "dueDaysAfterAssignment",
+            "durationMinutes",
+            "isRequired",
+            "name",
+            "organizationId",
+            "passingScore",
+            "renewalWindowDays",
+            "requiredForDriverTypes",
+            "requiresAcknowledgement",
+            "sortOrder",
+            "status",
+            "updatedAt",
+            "validityMonths",
+            "version"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {

@@ -539,9 +539,11 @@ func (m *Memory) validateAudience(multiErr *errortypes.MultiError) {
 func (m *Memory) validateLineage(multiErr *errortypes.MultiError) {
 	// A suggestion is drawn from feedback, offered by an agent to the person
 	// who asked to be asked first, or offered by a person for readers they may
-	// not keep a memory for; nothing else waits to be accepted.
+	// not keep a memory for, in their own words or through a decision they
+	// took; nothing else waits to be accepted.
+	offeredByPerson := m.Source == MemorySourceUser || m.Source == MemorySourceDecision
 	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback &&
-		!m.Source.OfferedByAgent() && (m.Source != MemorySourceUser || !m.Scope.Shared()) {
+		!m.Source.OfferedByAgent() && (!offeredByPerson || !m.Scope.Shared()) {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,

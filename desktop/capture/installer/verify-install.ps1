@@ -1,0 +1,144 @@
+# Installs the MSI on a real Windows machine and checks what cannot be checked anywhere else:
+# who owns the directories, that only the spooler can send a job, and that a repair keeps the
+# recorded settings. CI runs this elevated on a throwaway runner.
+param([Parameter(Mandatory)][string]$Msi)
+
+$ErrorActionPreference = 'Stop'
+$failures = [System.Collections.Generic.List[string]]::new()
+function Check([bool]$passed, [string]$what) {
+  if ($passed) { Write-Host "ok   $what" } else { Write-Host "FAIL $what"; $failures.Add($what) }
+}
+
+$root = Join-Path $env:ProgramData 'Trenova'
+$shared = Join-Path $root 'Capture'
+$key = 'HKLM:\SOFTWARE\Trenova\Capture'
+$msiPath = (Resolve-Path $Msi).Path
+
+function Install-Msi([string[]]$arguments, [string]$log) {
+  $process = Start-Process msiexec.exe -ArgumentList ($arguments + @('/qn', '/norestart', '/l*v', $log)) -Wait -PassThru
+  if ($process.ExitCode -notin 0, 3010) {
+    Get-Content $log -Tail 60
+    throw "msiexec exited $($process.ExitCode)"
+  }
+}
+
+# A standard user gets to ProgramData before the installer does.
+$password = ConvertTo-SecureString ([guid]::NewGuid().ToString() + 'aA1!') -AsPlainText -Force
+$squatter = New-LocalUser -Name capturesquatter -Password $password -AccountNeverExpires
+New-Item -ItemType Directory -Force -Path (Join-Path $shared 'updates'), (Join-Path $shared 'logs'), (Join-Path $shared 'spool') | Out-Null
+& icacls $root /grant "*$($squatter.SID.Value):(OI)(CI)F" /T /C
+& icacls $root /setowner "*$($squatter.SID.Value)" /T /C
+if ($LASTEXITCODE -ne 0) { throw 'could not hand the tree to the squatter' }
+Check ((Get-Acl $shared).Owner -like '*capturesquatter') "the squatter owns the tree before install (is $((Get-Acl $shared).Owner))"
+
+Install-Msi @('/i', $msiPath, 'TRENOVAURL=https://good.example', 'AUTOUPDATE=0') "$env:TEMP\capture-install.log"
+
+foreach ($path in $root, $shared, (Join-Path $shared 'updates'), (Join-Path $shared 'logs'), (Join-Path $shared 'spool')) {
+  $acl = Get-Acl $path
+  Check ($acl.Owner -eq 'BUILTIN\Administrators') "$path is owned by Administrators (was $($acl.Owner))"
+  Check (-not ($acl.Access.IdentityReference.Value -like '*capturesquatter')) "$path no longer lets the squatter in"
+}
+
+$service = Get-Service TrenovaCaptureSvc
+Check ($service.Status -eq 'Running') 'the print service runs'
+$account = (Get-CimInstance Win32_Service -Filter "Name='TrenovaCaptureSvc'").StartName
+Check ($account -like '*LocalService') "it runs as LocalService (is $account)"
+Check ($null -ne (Get-Printer -Name Trenova -ErrorAction SilentlyContinue)) 'the printer is installed'
+
+# The real path: a person prints, the spooler sends it, the service attributes it.
+# The agent takes a print from its inbox within seconds, so the service's own log says it arrived.
+$inboxRoot = Join-Path $shared 'spool'
+$logs = Join-Path $shared 'logs'
+'printed through the spooler' | Out-Printer -Name Trenova
+$deadline = (Get-Date).AddSeconds(90)
+do {
+  Start-Sleep 2
+  $delivered = Select-String -Path (Join-Path $logs 'service.*') -Pattern 'handed a print to its owner' -ErrorAction SilentlyContinue
+} until ($delivered -or (Get-Date) -gt $deadline)
+Check ([bool]$delivered) 'a print through the spooler reaches its owner under LocalService'
+if ($delivered) {
+  # The owner is the signed-in session's account, named with its domain, never a bare name.
+  $handed = ($delivered | Select-Object -Last 1).Line
+  $me = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+  Check ($handed -match "\bsid=$([regex]::Escape($me.User.Value))(\s|$)") "the print is in the inbox of the account that printed it, $($me.User.Value) ($handed)"
+  Check ($handed -match "\baccount=$([regex]::Escape($me.Name))(\s|$)") "the print is attributed to the domain-qualified account $($me.Name) ($handed)"
+}
+if (-not $delivered) {
+  Get-PrintJob -PrinterName Trenova -ErrorAction SilentlyContinue | Format-Table Id,UserName,DocumentName,JobStatus -AutoSize
+  Get-ChildItem $logs -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 30 }
+}
+
+# Inbox rights: the owner may list, read and delete, and may not write to the directory itself.
+$inbox = Get-ChildItem $inboxRoot -Directory | Select-Object -First 1
+if ($inbox) {
+  $sid = $inbox.Name
+  $rule = (Get-Acl $inbox.FullName).Access | Where-Object {
+    try { $_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value -eq $sid } catch { $false }
+  } | Where-Object { $_.PropagationFlags -notmatch 'InheritOnly' } | Select-Object -First 1
+  $rights = [int]$rule.FileSystemRights
+  Check (($rights -band 0x2) -eq 0 -and ($rights -band 0x100) -eq 0 -and ($rights -band 0x10000) -eq 0) "an inbox owner cannot set a mount point (rights 0x$('{0:x}' -f $rights))"
+}
+
+function Ipp([byte]$operation) {
+  $text = [System.Text.Encoding]::ASCII
+  $bytes = [System.Collections.Generic.List[byte]]::new()
+  $bytes.AddRange([byte[]](2, 0, 0, $operation, 0, 0, 0, 7, 1))
+  foreach ($attribute in @(@(0x47, 'attributes-charset', 'utf-8'), @(0x48, 'attributes-natural-language', 'en'), @(0x45, 'printer-uri', 'ipp://127.0.0.1:8631/ipp/print'))) {
+    $bytes.Add([byte]$attribute[0])
+    $bytes.AddRange([byte[]](0, $attribute[1].Length)); $bytes.AddRange($text.GetBytes($attribute[1]))
+    $bytes.AddRange([byte[]](0, $attribute[2].Length)); $bytes.AddRange($text.GetBytes($attribute[2]))
+  }
+  $bytes.Add(3)
+  $body = $bytes.ToArray()
+  $reply = Invoke-WebRequest -Uri 'http://127.0.0.1:8631/ipp/print' -Method Post -ContentType 'application/ipp' -Body $body -TimeoutSec 20 -SkipHttpErrorCheck
+  $content = [byte[]]$reply.Content
+  ([int]$content[2] -shl 8) -bor [int]$content[3]
+}
+
+# Anyone else on this computer: what the printer is, and nothing of its jobs.
+Check ((Ipp 0x0B) -eq 0) 'a local process may read the printer attributes'
+Check ((Ipp 0x02) -eq 0x0403) 'a local process cannot send a job'
+Check ((Ipp 0x0A) -eq 0x0403) 'a local process cannot list jobs'
+
+# The updater takes an installer only when it is validly signed, nothing in its chain is revoked,
+# and its signer is the publisher the installed updater was signed by. A signed release must pass
+# with its own installer (so computers can update to it), with revocation checked from here; an
+# unsigned build, and a file another publisher signed, must be refused.
+$updater = Join-Path $env:ProgramFiles 'Trenova\Capture\trenova-capture-update.exe'
+function Test-Publisher([string]$file) {
+  $ErrorActionPreference = 'Continue'
+  $output = (& $updater verify-publisher $file 2>&1 | Out-String).Trim()
+  $passed = $LASTEXITCODE -eq 0
+  # A refusal is an expected answer here, not the script's own exit code.
+  $global:LASTEXITCODE = 0
+  [pscustomobject]@{ Passed = $passed; Output = $output }
+}
+$own = Test-Publisher $msiPath
+if ((Get-AuthenticodeSignature $msiPath).Status -eq 'Valid') {
+  Check $own.Passed "the installed updater accepts this release's own installer ($($own.Output))"
+  Check ($own.Output -match 'No certificate in its chain is revoked') "the updater checked revocation for this release's installer ($($own.Output))"
+} else {
+  Check (-not $own.Passed) "the installed updater refuses an unsigned installer ($($own.Output))"
+}
+$foreign = Join-Path $PSHOME 'pwsh.exe'
+$foreignSignature = Get-AuthenticodeSignature $foreign
+if ($foreignSignature.Status -eq 'Valid' -and "$($foreignSignature.SignatureType)" -eq 'Authenticode') {
+  $other = Test-Publisher $foreign
+  Check (-not $other.Passed) "the installed updater refuses a file another publisher signed ($($other.Output))"
+} else {
+  Write-Host "skip no embedded-signed file from another publisher at $foreign"
+}
+
+$recorded = Get-ItemProperty $key
+Install-Msi @('/fa', $msiPath, 'TRENOVAURL=https://evil.example', 'AUTOUPDATE=1', 'PRINTPORT=9999') "$env:TEMP\capture-repair.log"
+$after = Get-ItemProperty $key
+Check ($after.ServerUrl -eq 'https://good.example') "a repair keeps the server address (is $($after.ServerUrl))"
+Check ($after.AutoUpdate -eq 0) "a repair keeps the update choice (is $($after.AutoUpdate))"
+Check ("$($after.PrintPort)" -eq "$($recorded.PrintPort)") "a repair keeps the print port (is $($after.PrintPort))"
+
+Install-Msi @('/x', $msiPath) "$env:TEMP\capture-remove.log"
+
+if ($failures.Count -gt 0) {
+  throw "$($failures.Count) installed-behaviour checks failed: $($failures -join '; ')"
+}
+Write-Host 'Every installed-behaviour check passed.'

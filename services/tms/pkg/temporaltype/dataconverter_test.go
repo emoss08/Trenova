@@ -63,44 +63,74 @@ func TestNewEncryptionDataConverter_CompressionNoThreshold(t *testing.T) {
 func TestEncryptionCodec_GetKey_NoEnvVar(t *testing.T) {
 	t.Parallel()
 
-	codec := &EncryptionCodec{KeyID: "nonexistent-key"}
-	key := codec.getKey("nonexistent-key")
+	key, err := getKey("nonexistent-key")
+	require.ErrorIs(t, err, ErrEncryptionKeyNotFound)
 	assert.Nil(t, key)
 }
 
 func TestEncryptionCodec_GetKey_WithEnvVar(t *testing.T) {
 	t.Setenv("TEMPORAL_ENCRYPTION_KEY_test", "12345678901234567890123456789012")
 
-	codec := &EncryptionCodec{KeyID: "test"}
-	key := codec.getKey("test")
-	require.NotNil(t, key)
+	key, err := getKey("test")
+	require.NoError(t, err)
 	assert.Len(t, key, 32)
 }
 
-func TestEncryptionCodec_GetKey_ShortKey(t *testing.T) {
-	t.Setenv("TEMPORAL_ENCRYPTION_KEY_short", "shortkey")
+func TestEncryptionCodec_GetKey_RefusesAKeyUnder32Bytes(t *testing.T) {
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_short", "1234567890123456789012345678901")
 
-	codec := &EncryptionCodec{KeyID: "short"}
-	key := codec.getKey("short")
-	require.NotNil(t, key)
-	assert.Len(t, key, 32)
+	key, err := getKey("short")
+	require.ErrorIs(t, err, ErrEncryptionKeyTooShort)
+	assert.Nil(t, key)
+}
+
+func TestEncryptionCodec_GetKey_RefusedKeyIsNotInTheError(t *testing.T) {
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_quiet", "a-short-key-value")
+
+	_, err := getKey("quiet")
+	require.Error(t, err)
+	assert.NotContains(t, err.Error(), "a-short-key-value")
+}
+
+func TestEncryptionCodec_EncodeAndDecodeRefuseAShortKey(t *testing.T) {
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_rotated", "12345678901234567890123456789012")
+
+	codec := &EncryptionCodec{KeyID: "rotated"}
+	encoded, err := codec.Encode([]*commonpb.Payload{{Data: []byte("test data")}})
+	require.NoError(t, err)
+
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_rotated", "shortkey")
+
+	_, err = codec.Encode([]*commonpb.Payload{{Data: []byte("test data")}})
+	require.ErrorIs(t, err, ErrEncryptionKeyTooShort)
+
+	_, err = codec.Decode(encoded)
+	require.ErrorIs(t, err, ErrEncryptionKeyTooShort)
+}
+
+func TestCheckEncryptionKey(t *testing.T) {
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_good", "12345678901234567890123456789012")
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_bad", "shortkey")
+
+	require.NoError(t, CheckEncryptionKey("good"))
+	require.ErrorIs(t, CheckEncryptionKey("bad"), ErrEncryptionKeyTooShort)
+	require.ErrorIs(t, CheckEncryptionKey("absent"), ErrEncryptionKeyNotFound)
 }
 
 func TestEncryptionCodec_GetKey_FallbackKey(t *testing.T) {
 	t.Setenv("TEMPORAL_ENCRYPTION_KEY", "fallback-key-that-is-at-least-32-bytes-long")
 
-	codec := &EncryptionCodec{KeyID: "unknown"}
-	key := codec.getKey("unknown")
-	require.NotNil(t, key)
+	key, err := getKey("unknown")
+	require.NoError(t, err)
 	assert.Len(t, key, 32)
 }
 
 func TestEncryptionCodec_EncryptDecrypt(t *testing.T) {
-	t.Setenv("TEMPORAL_ENCRYPTION_KEY_roundtrip", "this-is-a-32-byte-encryption-ke")
+	t.Setenv("TEMPORAL_ENCRYPTION_KEY_roundtrip", "this-is-a-32-byte-encryption-key")
 
 	codec := &EncryptionCodec{KeyID: "roundtrip"}
-	key := codec.getKey("roundtrip")
-	require.NotNil(t, key)
+	key, err := getKey("roundtrip")
+	require.NoError(t, err)
 
 	plaintext := []byte("hello world - this is secret data")
 	encrypted, err := codec.encrypt(plaintext, key)
@@ -116,10 +146,10 @@ func TestEncryptionCodec_Decrypt_CiphertextTooShort(t *testing.T) {
 	t.Setenv("TEMPORAL_ENCRYPTION_KEY_short2", "12345678901234567890123456789012")
 
 	codec := &EncryptionCodec{KeyID: "short2"}
-	key := codec.getKey("short2")
-	require.NotNil(t, key)
+	key, err := getKey("short2")
+	require.NoError(t, err)
 
-	_, err := codec.decrypt([]byte("short"), key)
+	_, err = codec.decrypt([]byte("short"), key)
 	assert.ErrorIs(t, err, ErrCiphertextTooShort)
 }
 

@@ -144,7 +144,15 @@ func TestEveryHitMetadataKeyIsClassified(t *testing.T) {
 	balance := &kernelports.CustomerOpenBalance{CustomerID: customerID}
 	fill(t, balance)
 
-	svc := &Service{logger: zaptest.NewLogger(t), config: indexConfig(), views: searchViews()}
+	svc := &Service{
+		shipmentRead: &fakeCardReader{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
+		views:        searchViews(),
+		states:       fakeStates{},
+	}
 	attributes := make(map[search.EntityType][]string, 4)
 	for _, definition := range svc.definitions() {
 		attributes[definition.entityType] = definition.attributes
@@ -254,8 +262,11 @@ func shipmentSearchWithViews(
 
 	shipmentID := pulid.MustNew("shp_")
 	svc := &Service{
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
 		searchRepo: pagesRepo(t, map[string]*customerports.SearchPage{
 			"shipments": page(map[string]any{"id": shipmentID.String(), "pro_number": "S-240193"}),
 		}),

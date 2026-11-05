@@ -2,6 +2,7 @@ package tooldispatch
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"go.uber.org/zap"
 )
@@ -21,7 +22,7 @@ func testDispatcher(p DispatcherParams) *Dispatcher {
 	if p.Permissions == nil {
 		p.Permissions = &agenttest.StubPermissions{}
 	}
-	p.Access = toolaccess.NewAccess(&toolaccess.AccessParams{
+	p.Access = accesstest.New(&toolaccess.AccessParams{
 		Logger:      p.Logger,
 		QueryTools:  p.QueryTools,
 		ActionTools: p.ActionTools,

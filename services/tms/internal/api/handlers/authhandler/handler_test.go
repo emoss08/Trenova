@@ -406,7 +406,10 @@ func TestSSOCallbackSendsAnUntrustedFederationToTheSecondFactorWithoutASession(t
 	require.NoError(t, err)
 	assert.Equal(t, "challenge/token+1", fragment.Get("mfa_challenge"))
 	assert.Equal(t, "1800000300", fragment.Get("mfa_expires"))
-	assert.Empty(t, w.Header().Values("Set-Cookie"))
+	for _, cookie := range w.Result().Cookies() {
+		assert.Equal(t, "trenova-sso-binding", cookie.Name, "only the used binding is cleared")
+		assert.Negative(t, cookie.MaxAge)
+	}
 }
 
 func TestActivateSessionRoles_SetsTheRotatedSessionCookie(t *testing.T) {

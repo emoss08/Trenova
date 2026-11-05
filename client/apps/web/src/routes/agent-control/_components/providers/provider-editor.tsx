@@ -270,7 +270,15 @@ export function ProviderEditor({
       form.reset(editorValuesFromPreset(next, providers, platformCatalog, catalog.nova.platforms));
       onPresetChange?.(next.key);
     },
-    [catalog.presets, form, onPresetChange, platformCatalog, preset?.key, providers],
+    [
+      catalog.nova.platforms,
+      catalog.presets,
+      form,
+      onPresetChange,
+      platformCatalog,
+      preset?.key,
+      providers,
+    ],
   );
   const presetNeedsKey = Boolean(preset?.requiresApiKey);
   const signIn = editorSignIn(values, platformCatalog);

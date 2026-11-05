@@ -1,7 +1,9 @@
+import { clearSessionCache } from "@/lib/session-cache";
 import { leaveEndedSession } from "@/lib/session-exit";
 import { useSessionContextStore } from "@/stores/session-context-store";
 import {
   setSessionContextStatusHandler,
+  setSessionFoundEndedHandler,
   type SessionContextStatus,
 } from "@trenova/shared/lib/session-context";
 import { signInPathAfter } from "@trenova/shared/lib/sign-out-notice";
@@ -35,4 +37,5 @@ export function handleSessionContextStatus(status: SessionContextStatus): void {
 
 export function installSessionContextHandler(): void {
   setSessionContextStatusHandler(handleSessionContextStatus);
+  setSessionFoundEndedHandler(() => void clearSessionCache());
 }

@@ -230,6 +230,14 @@ describe("decisionHeadline", () => {
     ).toBe('Approved create report, and it ran. It created the report "Late loads".');
   });
 
+  it("shows why a decision failed without the fence the agent reads it in", () => {
+    expect(
+      decisionHeadline(
+        "Approved report_create, but it failed when it ran: <untrusted_data>name taken</untrusted_data>\nDecision on proposal ap_1 (report_create).",
+      ),
+    ).toBe("Approved create report, but it failed when it ran: name taken");
+  });
+
   it("is empty for a note with nothing on its first line", () => {
     expect(decisionHeadline("\nDecision on plan pl_1 (2 steps).")).toBe("");
   });

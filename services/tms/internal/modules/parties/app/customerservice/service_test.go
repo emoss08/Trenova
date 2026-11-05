@@ -1,12 +1,14 @@
 package customerservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -37,6 +39,12 @@ type testDeps struct {
 	svc         *Service
 }
 
+type noCreditReview struct{}
+
+func (noCreditReview) Review(context.Context, pagination.TenantInfo, []pulid.ID) error {
+	return nil
+}
+
 func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := customerportsmock.NewMockCustomerRepository(t)
@@ -51,6 +59,8 @@ func setupTest(t *testing.T) *testDeps {
 		auditService: auditSvc,
 		realtime:     &mocks.NoopRealtimeService{},
 		transformer:  transformer,
+		db:           dbtest.NopConnection{},
+		credit:       noCreditReview{},
 	}
 	return &testDeps{
 		repo:        repo,

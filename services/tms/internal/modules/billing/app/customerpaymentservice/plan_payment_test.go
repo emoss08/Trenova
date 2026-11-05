@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
@@ -40,6 +41,9 @@ type paymentWorld struct {
 	postings            []journalentryports.CreateJournalPostingParams
 	writes              int
 	svc                 *Service
+	control             *accountingcontrol.AccountingControl
+	period              *fiscalperiod.FiscalPeriod
+	laterPeriods        []*fiscalperiod.FiscalPeriod
 }
 
 func newPaymentWorld(
@@ -96,22 +100,30 @@ func newPaymentWorld(
 			w.invoices[entity.ID] = &stored
 			return &stored, nil
 		}).Maybe()
+	w.control = &accountingcontrol.AccountingControl{
+		AccountingBasis:               accountingcontrol.AccountingBasisAccrual,
+		RevenueRecognitionPolicy:      accountingcontrol.RevenueRecognitionOnInvoicePost,
+		JournalPostingMode:            accountingcontrol.JournalPostingModeAutomatic,
+		DefaultCashAccountID:          pulid.MustNew("gla_"),
+		DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
+		DefaultARAccountID:            pulid.MustNew("gla_"),
+		DefaultWriteOffAccountID:      pulid.MustNew("gla_"),
+	}
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().
-		GetByOrgID(mock.Anything, w.orgID).
-		Return(&accountingcontrol.AccountingControl{
-			AccountingBasis:               accountingcontrol.AccountingBasisAccrual,
-			RevenueRecognitionPolicy:      accountingcontrol.RevenueRecognitionOnInvoicePost,
-			JournalPostingMode:            accountingcontrol.JournalPostingModeAutomatic,
-			DefaultCashAccountID:          pulid.MustNew("gla_"),
-			DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
-			DefaultARAccountID:            pulid.MustNew("gla_"),
-			DefaultWriteOffAccountID:      pulid.MustNew("gla_"),
-		}, nil).Maybe()
+	accountingRepo.EXPECT().GetByOrgID(mock.Anything, w.orgID).Return(w.control, nil).Maybe()
+	w.period = &fiscalperiod.FiscalPeriod{
+		ID:           pulid.MustNew("fp_"),
+		FiscalYearID: pulid.MustNew("fy_"),
+		PeriodNumber: 1,
+		Status:       fiscalperiod.StatusOpen,
+	}
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
+	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(w.period, nil).Maybe()
 	fiscalRepo.EXPECT().
-		GetPeriodByDate(mock.Anything, mock.Anything).
-		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}, nil).
+		ListByFiscalYearID(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, fiscalperiodports.ListByFiscalYearIDRequest) ([]*fiscalperiod.FiscalPeriod, error) {
+			return w.laterPeriods, nil
+		}).
 		Maybe()
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	journalRepo.EXPECT().
@@ -123,7 +135,7 @@ func newPaymentWorld(
 		}).
 		Maybe()
 
-	w.svc = &Service{
+	w.svc = wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -131,10 +143,14 @@ func newPaymentWorld(
 		journalRepo:    journalRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		validator: NewValidator(
-			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
+			ValidatorParams{
+				InvoiceRepo:        invoiceRepo,
+				FiscalPeriodRepo:   fiscalRepo,
+				AdjustmentCtrlRepo: shortPaysUnderThreshold(t, mock.Anything),
+			},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	return w
 }

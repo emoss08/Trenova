@@ -142,13 +142,14 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:      "__schema",
+				NonNull:   true,
 				IsMethod:  true,
 				HasChild:  true,
 				ChildType: "__Schema",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return ec.IntrospectSchema()
 				},
-				Marshal: gqlexec.Marshal(marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema),
+				Marshal: gqlexec.Marshal(marshalN__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema),
 			},
 		}},
 		{Object: "Trailer", Fields: []*gqlexec.Field{
@@ -1423,6 +1424,14 @@ func marshalNTrailerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋ
 	return ec.MarshalType(ctx, sel, "TrailerEdge", v)
 }
 
+func marshalN__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "__Schema", v)
+}
+
 func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -1524,13 +1533,6 @@ func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Worker", v)
-}
-
-func marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *introspection.Schema) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "__Schema", v)
 }
 
 func marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *introspection.Type) graphql.Marshaler {

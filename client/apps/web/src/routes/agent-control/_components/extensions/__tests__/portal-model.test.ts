@@ -11,6 +11,7 @@ function site(overrides: Partial<PortalSite> = {}): PortalSite {
     startUrl: "https://portal.acme.com/login",
     browserProfileId: "",
     allowActions: true,
+    viewOnlyAccount: false,
     enabled: true,
     hasSignIn: true,
     hasAuthenticator: true,
@@ -51,6 +52,7 @@ describe("siteFormDefaults", () => {
       clearAuthenticator: false,
       browserProfileId: "",
       allowActions: true,
+      viewOnlyAccount: false,
       enabled: true,
     });
   });
@@ -88,6 +90,7 @@ describe("siteRequestOf", () => {
       clearAuthenticator: false,
       browserProfileId: "",
       allowActions: true,
+      viewOnlyAccount: false,
       enabled: true,
       version: 3,
     });

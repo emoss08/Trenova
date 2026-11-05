@@ -25,11 +25,14 @@ const PREVIEW = {
   architecture: "X64",
   osVersion: "Windows 10.0.22631",
   clientIp: "203.0.113.7",
+  sameNetwork: true,
   expiresAt: 1_900_000_000,
 };
 
 const access = () => json({ data: { myCaptureAccess: { enabled: true, canCapture: true } } });
 const preview = () => json({ data: { captureDevicePairing: PREVIEW } });
+const elsewhere = () =>
+  json({ data: { captureDevicePairing: { ...PREVIEW, sameNetwork: false } } });
 
 const EXPIRED_TEXT =
   "That code is not valid or has expired. Codes last ten minutes; start again from Trenova Capture's tray icon for a new one.";
@@ -163,6 +166,39 @@ describe("CapturePairPage", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("Name it")).toHaveAttribute("aria-invalid", "true"),
     );
+  });
+
+  it("holds a linked code from another network until it is typed from the computer", async () => {
+    const user = userEvent.setup();
+    stubGraphQL({
+      MyCaptureAccess: access,
+      CaptureDevicePairing: elsewhere,
+      ApproveCaptureDevicePairing: () => json({ data: { approveCaptureDevicePairing: true } }),
+    });
+
+    renderPage();
+
+    const typed = await screen.findByLabelText("Code shown on the computer");
+    expect(screen.getByText(/different network/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
+
+    await user.type(typed, "wxyz-wxyz");
+    expect(screen.getByRole("button", { name: "Approve" })).toBeDisabled();
+
+    await user.clear(typed);
+    await user.type(typed, "abcd-efgh");
+    expect(screen.getByRole("button", { name: "Approve" })).toBeEnabled();
+  });
+
+  it("asks nothing more of a linked code from the same network", async () => {
+    stubGraphQL({ MyCaptureAccess: access, CaptureDevicePairing: preview });
+
+    renderPage();
+
+    await screen.findByLabelText("Name it");
+    expect(screen.queryByLabelText("Code shown on the computer")).not.toBeInTheDocument();
+    expect(screen.queryByText(/different network/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve" })).toBeEnabled();
   });
 
   it("sends the edited name when approving and confirms the pairing", async () => {

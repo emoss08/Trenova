@@ -95,6 +95,11 @@ func previewAssignmentServiceWith(
 	holdRepo.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
 
 	svc := &service{
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		driverNotify: quietDriverNotify(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		orgRepo: capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
 			TenantInfo:             tenantInfo,
 			Lock:                   tenantports.CapabilityLockNone,
@@ -121,9 +126,12 @@ func previewAssignmentServiceWith(
 		Once()
 	svc.controlRepo = controlRepo
 	svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
-		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
-		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+		Hydrator:           ratingtest.NoHydration{},
+		BillingControlRepo: ratingtest.NoBillingControl{},
+		Logger:             zap.NewNop(),
+		RateEngine:         ratingtest.NewFlatEngine(t, decimal.Zero),
+		AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 	svc.shipmentValidator = newTestShipmentValidator(t)
 

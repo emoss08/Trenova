@@ -1,0 +1,63 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # The Dockerfiles and compose file pin images by digest; these keep the pins
+  # moving.
+  - package-ecosystem: docker
+    directory: /deploy
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      base-images:
+        patterns: ["*"]
+
+  - package-ecosystem: docker-compose
+    directory: /deploy/selfhost
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      compose-images:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directories:
+      - /services/tms
+      - /services/operator
+      - /shared
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      go-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /client
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      client-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: cargo
+    directories:
+      - /services
+      - /desktop/capture
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      rust-minor:
+        update-types: [minor, patch]

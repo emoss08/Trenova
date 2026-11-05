@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -198,10 +199,13 @@ func TestSimilarities_BacksOffAfterAFailedEmbed(t *testing.T) {
 	assert.Len(t, embeddings.calls(), 2)
 }
 
-func TestSimilarities_WithoutAnEmbeddingServiceHasNoProvider(t *testing.T) {
+func TestSimilarities_WithoutAnEmbeddingProviderHasNoProvider(t *testing.T) {
 	t.Parallel()
 
-	index := newCatalogIndex(newFakeRepository(nil), nil)
+	index := newCatalogIndex(
+		newFakeRepository(nil),
+		&fakeEmbeddings{err: llmports.ErrNoProviderConfigured},
+	)
 	result, err := index.Similarities(t.Context(), similarityRequest(catalogItems()))
 	require.NoError(t, err)
 	assert.False(t, result.Available)

@@ -15,6 +15,8 @@ import (
 	"github.com/emoss08/trenova/shared/httpsafe"
 )
 
+const maxResponseBytes = 16 << 20
+
 // Ramp issues a bearer token from an app a workspace admin creates. Unlike the
 // fleet networks, this needs no agreement with Trenova: the customer's own
 // credentials are all that is required.
@@ -203,9 +205,12 @@ func (c *Connector) do(req *http.Request, action string) ([]byte, error) {
 	}
 	defer response.Body.Close()
 
-	body, err := io.ReadAll(response.Body)
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxResponseBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", action, err)
+	}
+	if len(body) > maxResponseBytes {
+		return nil, fmt.Errorf("%s: Ramp response exceeds %d bytes", action, maxResponseBytes)
 	}
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {

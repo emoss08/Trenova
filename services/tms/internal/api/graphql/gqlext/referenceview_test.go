@@ -34,6 +34,8 @@ var notAKind = map[string]string{
 		"gated as one",
 	"AgentAudienceSuggestion.roles": "a row about the agent's audience; its role field is a Role, " +
 		"gated as one",
+	"DetentionIntelligence.customers": "a rollup row per customer, not a customer record: its " +
+		"margin figures are withheld with the rollup",
 	"DeskMemorySettings.roles": "the memory settings' own list of which roles may write, by " +
 		"name",
 	"EdiPartnerCard.carriers": "the partner's carrier mapping rows: each carrier's name, code " +

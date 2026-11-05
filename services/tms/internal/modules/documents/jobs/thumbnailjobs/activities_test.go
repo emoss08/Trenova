@@ -145,6 +145,7 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 		Return(nil)
 
 	activities := NewActivities(ActivitiesParams{
+		ImagingConfig:      &imagingconfig.Config{},
 		DocumentRepository: repo,
 		Storage:            storageClient,
 		ThumbnailGenerator: thumbnailservice.NewGenerator(imagingfake.New()),
@@ -203,6 +204,7 @@ func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
 	fake.PageCount = 3
 	generator := thumbnailservice.NewGenerator(fake)
 	activities := NewActivities(ActivitiesParams{
+		ImagingConfig:      &imagingconfig.Config{},
 		DocumentRepository: repo,
 		Storage:            storageClient,
 		ThumbnailGenerator: generator,
@@ -338,6 +340,7 @@ func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
 	}
 	generator := thumbnailservice.NewGenerator(fake)
 	activities := NewActivities(ActivitiesParams{
+		ImagingConfig:      &imagingconfig.Config{},
 		DocumentRepository: repo,
 		Storage:            storageClient,
 		ThumbnailGenerator: generator,
@@ -411,6 +414,7 @@ func TestPrerenderPagesActivityRetryDoesNotResendAFinishedDocument(t *testing.T)
 	}
 	generator := thumbnailservice.NewGenerator(fake)
 	activities := NewActivities(ActivitiesParams{
+		ImagingConfig:      &imagingconfig.Config{},
 		DocumentRepository: repo,
 		Storage:            storageClient,
 		ThumbnailGenerator: generator,

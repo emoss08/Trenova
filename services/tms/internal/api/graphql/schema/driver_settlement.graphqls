@@ -786,6 +786,8 @@ type SettlementControl {
   autoApproveClean: Boolean!
   "When on, newly accrued pay events flow into the driver's open draft settlement automatically."
   autoAttachAccruals: Boolean!
+  "When on, whoever submits a settlement cannot also approve it. Auto-approving clean settlements is unaffected."
+  requireSeparateApprover: Boolean!
   "When on, approving a settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
@@ -1171,6 +1173,7 @@ input UpdateSettlementControlInput {
   autoGenerateBatches: Boolean!
   autoApproveClean: Boolean!
   autoAttachAccruals: Boolean!
+  requireSeparateApprover: Boolean!
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
   varianceThresholdPct: Decimal!

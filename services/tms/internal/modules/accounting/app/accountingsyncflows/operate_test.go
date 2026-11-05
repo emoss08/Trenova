@@ -625,16 +625,6 @@ func TestRequestBackfillKeepsTheCanonicalTypeOrder(t *testing.T) {
 	assert.Equal(t, accountingsync.SyncObjectInvoice, backfill.Cursor.ObjectType)
 }
 
-func TestRequestBackfillNeedsBackgroundWork(t *testing.T) {
-	t.Parallel()
-
-	h := newHarness(t, withoutDispatcher())
-
-	_, err := h.requestBackfill(t, nil)
-
-	assert.True(t, errortypes.IsBusinessError(err))
-}
-
 func (h *harness) changeBackfill(
 	t *testing.T,
 	id pulid.ID,

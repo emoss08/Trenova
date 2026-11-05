@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -249,31 +250,52 @@ func (r *repository) CountStaleInboundPollingProfiles(
 	})
 }
 
-func (r *repository) GetActiveAS2ProfileByIdentifiers(
+func (r *repository) GetActiveAS2ProfileForInboundURL(
 	ctx context.Context,
-	req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest,
+	req edipartnerports.GetActiveAS2ProfileForInboundURLRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
-		"resolve an inbound AS2 message's identifier pair before its tenant is known",
+		"resolve the profile an inbound AS2 address names before its tenant is known",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		cp := edidb.EDICommunicationProfiles
 		entity, err := cp.AllTenants().
 			Where(
+				cp.AS2InboundToken.Eq(req.InboundToken),
 				cp.Status.Eq(domaintypes.StatusActive),
 				cp.Method.Eq(edi.ConnectionMethodAS2),
 				cp.EDIPartnerID.IsNotNull(),
 				cp.Config.Text("localAS2Id").Trim().Eq(req.LocalAS2ID),
 				cp.Config.Text("partnerAS2Id").Trim().Eq(req.PartnerAS2ID),
 			).
-			Order(cp.UpdatedAt.Desc()).
-			First(ctx, r.db.Keel(ctx))
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, profileErrors.Map(err, req.LocalAS2ID)
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) RotateAS2InboundToken(
+	ctx context.Context,
+	req edipartnerports.RotateAS2InboundTokenRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cp := edidb.EDICommunicationProfiles
+		rows, err := cp.Where(
+			cp.ID.Eq(req.ProfileID),
+			cp.Method.Eq(edi.ConnectionMethodAS2),
+		).Update(ctx, r.db.Keel(ctx), cp.AS2InboundToken.To(req.InboundToken))
+		if err != nil {
+			return profileErrors.Map(err, req.ProfileID.String())
+		}
+		if rows == 0 {
+			return errortypes.NewNotFoundError("EDI communication profile not found")
+		}
+
+		return nil
 	})
 }
 

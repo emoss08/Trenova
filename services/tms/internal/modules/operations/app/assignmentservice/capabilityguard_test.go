@@ -54,6 +54,11 @@ func brokerageOnlyService(
 	})
 
 	svc := &service{
+		tenderGuard:  &recordingTenderGuard{},
+		workerRepo:   knownWorkers(t),
+		driverNotify: quietDriverNotify(t),
+		tractorRepo:  knownTractors(t),
+		trailerRepo:  knownTrailers(t),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
@@ -61,9 +66,12 @@ func brokerageOnlyService(
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewEngine(t),
-			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+			FuelSurcharge:      ratingtest.NoFuelSurcharge{},
+			Hydrator:           ratingtest.NoHydration{},
+			BillingControlRepo: ratingtest.NoBillingControl{},
+			Logger:             zap.NewNop(),
+			RateEngine:         ratingtest.NewEngine(t),
+			AccessorialRepo:    accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: newTestShipmentValidator(t),
 		eventService:      noopShipmentEventService{},

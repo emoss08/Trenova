@@ -7,13 +7,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
-	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -62,7 +62,6 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 		name        string
 		corrections *recordingCorrections
 	}{
-		{name: "without correction capture"},
 		{name: "captures the correction", corrections: &recordingCorrections{}},
 		{
 			name:        "a failed capture does not fail the attach",
@@ -191,36 +190,26 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 		SearchProjection:     searchProjection,
 		StorageConfig:        &cfg.Storage,
 		ThumbnailGenerator:   thumbnailservice.NewGenerator(nil),
-		WorkflowStarter:      workflowstarter.New(workflowstarter.Params{}),
-		AICorrections:        correctionService(corrections),
+		WorkflowStarter:      &mocks.NoopWorkflowStarter{},
+		AICorrections:        corrections,
 	})
 
-	result, err := service.AttachLineageToResource(
-		t.Context(),
-		documentID,
-		"shipment",
-		shipmentID.String(),
-		tenantInfo,
-		userID,
-	)
+	result, err := service.AttachLineageToResource(t.Context(), &documentservice.AttachLineageRequest{
+		DocumentID:   documentID,
+		ResourceType: "shipment",
+		ResourceID:   shipmentID.String(),
+		TenantInfo:   tenantInfo,
+		Actor:        &permissionports.RequestActor{UserID: userID},
+	})
 	require.NoError(t, err)
 	require.Equal(t, updated, result)
 
-	if corrections != nil {
-		require.Len(t, corrections.requests, 1)
-		captured := corrections.requests[0]
-		assert.Same(t, draft, captured.Draft)
-		assert.Equal(t, shipmentID, captured.ShipmentID)
-		assert.Equal(t, userID, captured.CapturedByID)
-		assert.Equal(t, tenantInfo, captured.TenantInfo)
-	}
-}
-
-func correctionService(corrections *recordingCorrections) aicorrectionports.AICorrectionService {
-	if corrections == nil {
-		return nil
-	}
-	return corrections
+	require.Len(t, corrections.requests, 1)
+	captured := corrections.requests[0]
+	assert.Same(t, draft, captured.Draft)
+	assert.Equal(t, shipmentID, captured.ShipmentID)
+	assert.Equal(t, userID, captured.CapturedByID)
+	assert.Equal(t, tenantInfo, captured.TenantInfo)
 }
 
 // The lineage columns hold the shipment id as text with no foreign key, so a
@@ -268,14 +257,13 @@ func TestAttachLineageToResourceRefusesAShipmentTheTenantDoesNotHave(t *testing.
 		StorageConfig: &cfg.Storage,
 	})
 
-	_, err := service.AttachLineageToResource(
-		t.Context(),
-		documentID,
-		"shipment",
-		pulid.MustNew("shp_").String(),
-		tenantInfo,
-		tenantInfo.UserID,
-	)
+	_, err := service.AttachLineageToResource(t.Context(), &documentservice.AttachLineageRequest{
+		DocumentID:   documentID,
+		ResourceType: "shipment",
+		ResourceID:   pulid.MustNew("shp_").String(),
+		TenantInfo:   tenantInfo,
+		Actor:        permissionports.UserActor(tenantInfo),
+	})
 
 	require.Error(t, err)
 	assert.False(t, moved, "the document must stay where it was")

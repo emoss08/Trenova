@@ -201,6 +201,7 @@ func (r *repository) Update(
 			jr.ReversalJournalEntryID,
 			jr.PostedBatchID,
 			jr.Status,
+			jr.RequestedAccountingDate,
 			jr.ResolvedFiscalYearID,
 			jr.ResolvedFiscalPeriodID,
 			jr.ApprovedByID,

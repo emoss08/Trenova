@@ -335,7 +335,6 @@ func billingQueueResource() *permissionspec.ResourceDefinition {
 		DisplayName:   "Billing Queue",
 		Description:   "Billing queue review and approval",
 		Category:      "Billing",
-		ReferenceView: []string{"number", "status"},
 		Operations: []permissionspec.OperationDefinition{
 			{
 				Operation:   permission.OpRead,

@@ -55,7 +55,7 @@ func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 			ReadsExternal: agenttooltrust.ExternalReadAlways,
 		},
 	}}
-	s := buildRuntime(Params{
+	s := buildRuntime(runtimeParts{
 		Rules:  rules,
 		Logger: zap.NewNop(),
 	})
@@ -71,7 +71,7 @@ func TestRuled_AppliesTheOrganizationsRule(t *testing.T) {
 func TestRuled_HoldsTheToolToAProposalWhenRulesCannotBeRead(t *testing.T) {
 	t.Parallel()
 
-	s := buildRuntime(Params{
+	s := buildRuntime(runtimeParts{
 		Rules:  &fakeToolRules{err: errors.New("db down")},
 		Logger: zap.NewNop(),
 	})
@@ -85,14 +85,14 @@ func TestRuled_HoldsTheToolToAProposalWhenRulesCannotBeRead(t *testing.T) {
 func TestRuled_KeepsTheDeclaredRuleWithoutRules(t *testing.T) {
 	t.Parallel()
 
-	s := buildRuntime(Params{
+	s := buildRuntime(runtimeParts{
 		Logger: zap.NewNop(),
 	})
 	assert.Equal(t, ruledPolicy(), s.dispatcher.Ruled(t.Context(), ruledRequest(), new(ruledPolicy())))
 
 	rewire(
 		s,
-		func(p *Params) { p.Rules = &fakeToolRules{rules: map[string]*agenttooltrust.ToolRuleOverride{}} },
+		func(p *runtimeParts) { p.Rules = &fakeToolRules{rules: map[string]*agenttooltrust.ToolRuleOverride{}} },
 	)
 	assert.Equal(t, ruledPolicy(), s.dispatcher.Ruled(t.Context(), ruledRequest(), new(ruledPolicy())))
 }

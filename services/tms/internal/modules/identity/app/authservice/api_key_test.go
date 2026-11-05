@@ -119,6 +119,71 @@ func TestAuthenticateAPIKeyRejectsExpiredKey(t *testing.T) {
 	assert.Nil(t, result)
 }
 
+func TestAuthenticateAPIKeyStateIsToldOnlyToTheSecretHolder(t *testing.T) {
+	t.Parallel()
+
+	generated, err := apikey.GenerateAPIKeySecret()
+	require.NoError(t, err)
+	past := timeutils.NowUnix() - 60
+
+	tests := []struct {
+		name     string
+		key      apikey.Key
+		withHeld string
+	}{
+		{
+			name:     "revoked",
+			key:      apikey.Key{Status: apikey.StatusRevoked},
+			withHeld: "API key is inactive",
+		},
+		{
+			name:     "expired",
+			key:      apikey.Key{Status: apikey.StatusActive, ExpiresAt: past},
+			withHeld: "API key has expired",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			key := tt.key
+			key.ID = pulid.MustNew("ak_")
+			key.KeyPrefix = generated.Prefix
+			key.SecretHash = generated.Hash
+			key.SecretSalt = generated.Salt
+
+			repo := apikeyportsmock.NewMockAPIKeyRepository(t)
+			repo.EXPECT().GetByPrefix(mock.Anything, generated.Prefix).Return(&key, nil)
+
+			recorder := &stubUsageRecorder{}
+			svc := &Service{
+				akr:      repo,
+				usageBuf: recorder,
+				securityConfig: &securityconfig.Config{
+					APIToken: securityconfig.APITokenConfig{Enabled: true},
+				},
+				serverConfig: &serverconfig.Config{},
+				l:            zap.NewNop(),
+			}
+
+			_, held := svc.AuthenticateAPIKey(t.Context(), generated.Token(), "192.0.2.1", "test")
+			require.Error(t, held)
+			assert.Contains(t, held.Error(), tt.withHeld)
+
+			_, guessed := svc.AuthenticateAPIKey(
+				t.Context(),
+				generated.Prefix+".wrong-secret",
+				"192.0.2.1",
+				"test",
+			)
+			require.Error(t, guessed)
+			assert.Contains(t, guessed.Error(), "Invalid bearer token")
+			assert.Zero(t, recorder.calls)
+		})
+	}
+}
+
 func TestAuthenticateAPIKeyRejectsInvalidSecret(t *testing.T) {
 	t.Parallel()
 

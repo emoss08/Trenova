@@ -218,6 +218,16 @@ export function PortalSiteDialog({ open, onOpenChange, site }: PortalSiteDialogP
               <FormControl cols="full">
                 <SwitchField<PortalSiteFormValues>
                   control={control}
+                  name="viewOnlyAccount"
+                  label={t("This sign-in can only view")}
+                  description={t(
+                    "Turn this on only if the portal itself stops this account from changing anything. Agents then read the portal on their own. Otherwise a person approves each signed-in read, because the browser could change something.",
+                  )}
+                />
+              </FormControl>
+              <FormControl cols="full">
+                <SwitchField<PortalSiteFormValues>
+                  control={control}
                   name="allowActions"
                   label={t("Let agents act on this portal")}
                   description={t(

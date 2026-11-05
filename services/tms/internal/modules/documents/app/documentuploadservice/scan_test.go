@@ -183,7 +183,6 @@ func TestCreateSession_RecordsWhetherTheUploadWillBeScanned(t *testing.T) {
 	}{
 		{name: "scanner configured", gate: contentscanportsmock.NewCleanGate(), want: true},
 		{name: "scanner off", gate: contentscanportsmock.NewDisabledGate(), want: false},
-		{name: "no gate", gate: nil, want: false},
 	}
 
 	for _, tt := range tests {

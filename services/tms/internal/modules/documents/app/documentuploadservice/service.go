@@ -140,6 +140,7 @@ func (s *Service) CreateSession(
 		BusinessUnitID:    req.TenantInfo.BuID,
 		ResourceID:        req.ResourceID,
 		ResourceType:      req.ResourceType,
+		UploadedByID:      req.TenantInfo.UserID,
 		ProcessingProfile: processingProfile,
 		OriginalName:      req.FileName,
 		ContentType:       req.ContentType,
@@ -189,6 +190,9 @@ func (s *Service) CreateSession(
 				"Invalid lineage ID",
 			)
 		}
+		if err := s.requireLineageVisible(ctx, req, lineageID); err != nil {
+			return nil, err
+		}
 
 		session.LineageID = &lineageID
 	}
@@ -222,6 +226,21 @@ func (s *Service) CreateSession(
 	return s.sessionRepo.Create(ctx, session)
 }
 
+func (s *Service) visibleSession(
+	ctx context.Context,
+	req documentuploadports.GetDocumentUploadSessionByIDRequest,
+) (*documentupload.DocumentUploadSession, error) {
+	session, err := s.sessionRepo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if !session.VisibleToPerson(req.TenantInfo.UserID) {
+		return nil, errortypes.NewNotFoundError("Upload session not found")
+	}
+
+	return session, nil
+}
+
 func (s *Service) ListActive(
 	ctx context.Context,
 	req *documentuploadports.ListActiveDocumentUploadSessionsRequest,
@@ -242,7 +261,7 @@ func (s *Service) GetSessionState(
 	ctx context.Context,
 	req documentuploadports.GetDocumentUploadSessionByIDRequest,
 ) (*documentuploadports.SessionState, error) {
-	session, err := s.sessionRepo.GetByID(ctx, req)
+	session, err := s.visibleSession(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +287,7 @@ func (s *Service) GetPartUploadTargets(
 	ctx context.Context,
 	req *documentuploadports.PartRequest,
 ) ([]documentuploadports.PartUploadTarget, error) {
-	session, err := s.sessionRepo.GetByID(
+	session, err := s.visibleSession(
 		ctx,
 		documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         req.SessionID,
@@ -333,7 +352,7 @@ func (s *Service) UploadPart(
 		)
 	}
 
-	session, err := s.sessionRepo.GetByID(
+	session, err := s.visibleSession(
 		ctx,
 		documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         req.SessionID,
@@ -441,7 +460,7 @@ func (s *Service) Complete(
 	ctx context.Context,
 	req *documentuploadports.CompletionRequest,
 ) (*documentupload.DocumentUploadSession, error) {
-	session, err := s.sessionRepo.GetByID(
+	session, err := s.visibleSession(
 		ctx,
 		documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         req.SessionID,
@@ -556,7 +575,7 @@ func verifyMultipartUpload(
 }
 
 func (s *Service) Cancel(ctx context.Context, req *documentuploadports.CancelRequest) error {
-	session, err := s.sessionRepo.GetByID(
+	session, err := s.visibleSession(
 		ctx,
 		documentuploadports.GetDocumentUploadSessionByIDRequest{
 			ID:         req.SessionID,
@@ -1065,4 +1084,23 @@ func (s *Service) ensureThumbnailForSession(
 	}
 
 	s.startThumbnailWorkflow(ctx, doc)
+}
+
+func (s *Service) requireLineageVisible(
+	ctx context.Context,
+	req *documentuploadports.CreateSessionRequest,
+	lineageID pulid.ID,
+) error {
+	versions, err := s.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
+		LineageID:  lineageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if len(document.VisibleDocuments(versions, req.Actor.PersonUserID())) != len(versions) {
+		return errortypes.NewNotFoundError("Document not found")
+	}
+
+	return nil
 }

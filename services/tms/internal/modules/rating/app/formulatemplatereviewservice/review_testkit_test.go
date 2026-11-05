@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulalibraryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"go.uber.org/zap"
 )
 
@@ -47,15 +48,16 @@ func setupTest(t *testing.T) *testDeps {
 		resolver:        kit.Resolver,
 		templates:       templates,
 		svc: &Service{
-			l:           zap.NewNop(),
-			db:          dbtest.NopConnection{},
-			templates:   templates,
-			repo:        kit.Repo,
-			versionRepo: kit.VersionRepo,
-			reviewRepo:  &stubReviewRepo{},
-			checker:     kit.Checker,
-			resolver:    kit.Resolver,
-			dependents:  dependents,
+			l:             zap.NewNop(),
+			db:            dbtest.NopConnection{},
+			templates:     templates,
+			repo:          kit.Repo,
+			versionRepo:   kit.VersionRepo,
+			reviewRepo:    &stubReviewRepo{},
+			checker:       kit.Checker,
+			resolver:      kit.Resolver,
+			dependents:    dependents,
+			notifications: notificationtest.Discarding(),
 		},
 	}
 }

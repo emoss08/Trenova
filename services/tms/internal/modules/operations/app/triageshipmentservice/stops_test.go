@@ -293,19 +293,6 @@ func TestSettleDetentionStandsByWithoutCrediting(t *testing.T) {
 	assert.Equal(t, "185.00", settled.Amount)
 }
 
-func TestSettleDetentionWaivesAsBeforeWithoutBilling(t *testing.T) {
-	t.Parallel()
-
-	f := newSettleFixture(detention.OccurrenceStatusApproved)
-	f.service.credits = nil
-
-	settled, err := f.settle(t, inboundmessage.StopsDecisionWaive)
-	require.NoError(t, err)
-	require.Len(t, f.decider.waived, 1)
-	assert.Empty(t, f.decider.uninvoiced)
-	assert.Equal(t, "185.00", settled.Amount)
-}
-
 func TestSettleDetentionWaivesAChargeNeverPostedToTheShipment(t *testing.T) {
 	t.Parallel()
 

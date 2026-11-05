@@ -68,7 +68,7 @@ export default function ShipmentTimeline({ queryOptions }: ShipmentTimelineProps
     windowEnd: scale.end,
   });
   const { data, isPlaceholderData, isError, refetch } = useQuery({
-    queryKey: [SHIPMENT_LIST_KEY, "timeline", scale.start, scale.end, qf, timezone, queryOptions],
+    queryKey: [SHIPMENT_LIST_KEY, "timeline", graphql, queryOptions],
     queryFn: ({ signal }) =>
       fetchAllRows<Shipment>({
         graphql,

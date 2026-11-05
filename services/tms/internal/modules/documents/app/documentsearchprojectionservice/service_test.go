@@ -89,12 +89,7 @@ func (f *fakeIndexer) Reindex(
 }
 
 func newTestService(repo *fakeProjectionRepo, indexer *fakeIndexer) *Service {
-	params := Params{Logger: zap.NewNop(), Repo: repo}
-	if indexer != nil {
-		params.Indexer = indexer
-	}
-
-	return New(params).(*Service)
+	return New(Params{Logger: zap.NewNop(), Repo: repo, Indexer: indexer}).(*Service)
 }
 
 func testDocument() *document.Document {
@@ -159,10 +154,20 @@ func TestAFailedProjectionWriteIsNotIndexed(t *testing.T) {
 	assert.Empty(t, indexer.stale)
 }
 
-func TestWithoutAnIndexerTheProjectionStillWorks(t *testing.T) {
+func TestUpsert_LeavesConversationFilesOutOfTheProjection(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeProjectionRepo{}
-	require.NoError(t, newTestService(repo, nil).Upsert(t.Context(), testDocument(), ""))
-	assert.Len(t, repo.upserted, 1)
+	indexer := &fakeIndexer{}
+	service := &Service{logger: zap.NewNop(), repo: repo, indexer: indexer}
+	doc := &document.Document{
+		ID:           pulid.MustNew("doc_"),
+		ResourceType: document.ConversationResourceType,
+		ResourceID:   pulid.MustNew("athr_").String(),
+	}
+
+	require.NoError(t, service.Upsert(t.Context(), doc, "rate confirmation"))
+
+	assert.Empty(t, repo.upserted, "global search has no owner check to protect a private file")
+	assert.Equal(t, []pulid.ID{doc.ID}, indexer.stale, "agent retrieval checks the rule itself")
 }

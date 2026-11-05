@@ -23,6 +23,10 @@ name: Trenova Capture
 # it by hand. Without the manifest key no manifest is published, so servers
 # mirror nothing and computers do not update themselves; the installer is
 # still on the release for people to download.
+#
+# The manifest expires 14 days after it is signed. capture-manifest.yml signs
+# the current one again every day, with the same key and tool, so it never
+# lapses while that workflow runs.
 
 on:
   push:
@@ -246,6 +250,10 @@ jobs:
     name: Windows (build, tests, MSI)
     needs: prepare
     runs-on: windows-latest
+    # azure/login signs in to Trusted Signing with this job's OIDC token.
+    permissions:
+      contents: read
+      id-token: write
     env:
       RELEASE: ${{ needs.prepare.outputs.release }}
       VERSION: ${{ needs.prepare.outputs.version }}
@@ -282,6 +290,28 @@ jobs:
 
       - name: Build (x86 scan helper)
         run: cargo build --release --target i686-pc-windows-msvc -p trenova-capture-scan
+
+      # The tool that signs the release manifest, and that capture-manifest.yml
+      # uses to sign it again every day, with a throwaway key.
+      - name: The release tool signs, signs again and verifies a manifest
+        shell: pwsh
+        run: |
+          $tool = './target/x86_64-pc-windows-msvc/release/trenova-capture-release.exe'
+          $keys = & $tool keygen
+          if ($LASTEXITCODE -ne 0) { throw 'keygen failed' }
+          $private = (($keys | Where-Object { $_ -like 'private*' }) -split ' ')[-1]
+          $public = (($keys | Where-Object { $_ -like 'public*' }) -split ' ')[-1]
+          $dir = Join-Path $env:RUNNER_TEMP 'manifest-check'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          $msi = Join-Path $dir "TrenovaCapture-$env:VERSION-x64.msi"
+          Set-Content -Path $msi -Value 'not an installer' -NoNewline
+          $env:TRENOVA_CAPTURE_SIGNING_KEY = $private
+          & $tool sign --msi $msi --version $env:VERSION --url "https://example.test/TrenovaCapture-$env:VERSION-x64.msi" --valid-days 1 --out (Join-Path $dir 'signed.json')
+          if ($LASTEXITCODE -ne 0) { throw 'sign failed' }
+          & $tool resign --manifest (Join-Path $dir 'signed.json') --public-key $public --version $env:VERSION --out (Join-Path $dir 'resigned.json')
+          if ($LASTEXITCODE -ne 0) { throw 'resign failed' }
+          & $tool verify --manifest (Join-Path $dir 'resigned.json') --public-key $public
+          if ($LASTEXITCODE -ne 0) { throw 'verify failed' }
 
       - name: WiX
         shell: pwsh
@@ -325,6 +355,10 @@ jobs:
           TRENOVA_SIGNING_ACCOUNT: ${{ secrets.TRENOVA_SIGNING_ACCOUNT }}
           TRENOVA_SIGNING_PROFILE: ${{ secrets.TRENOVA_SIGNING_PROFILE }}
         run: ./installer/build.ps1 -Version $env:VERSION -Sign
+
+      - name: Check the installed behaviour
+        shell: pwsh
+        run: ./installer/verify-install.ps1 -Msi "installer/out/TrenovaCapture-$env:VERSION-x64.msi"
 
       - name: Release notes
         if: env.RELEASE == 'true'

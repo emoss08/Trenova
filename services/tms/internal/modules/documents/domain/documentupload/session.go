@@ -45,6 +45,7 @@ type DocumentUploadSession struct {
 	ThreatName              string                     `json:"threatName"              keel:"threat_name,nullzero"`
 	ExpiresAt               int64                      `json:"expiresAt"               keel:"expires_at"`
 	LastActivityAt          int64                      `json:"lastActivityAt"          keel:"last_activity_at"`
+	UploadedByID            pulid.ID                   `json:"-" keel:"uploaded_by_id,nullzero"`
 	Version                 int64                      `json:"version"                 keel:"version,version"`
 	CreatedAt               int64                      `json:"createdAt"               keel:"created_at,autocreate"`
 	UpdatedAt               int64                      `json:"updatedAt"               keel:"updated_at,autoupdate"`
@@ -262,3 +263,11 @@ const (
 	maxSessionCryptoModeLength = 32
 	sessionChecksumLength      = 64
 )
+
+// VisibleToPerson applies the rule the finished document will follow, so an
+// upload to a conversation is as private while it runs as it is afterwards.
+func (s *DocumentUploadSession) VisibleToPerson(userID pulid.ID) bool {
+	owner := document.Document{ResourceType: s.ResourceType, UploadedByID: s.UploadedByID}
+
+	return owner.VisibleToPerson(userID)
+}

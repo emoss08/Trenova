@@ -46,6 +46,7 @@ export default function SettlementControlForm() {
       autoGenerateBatches: data.autoGenerateBatches,
       autoApproveClean: data.autoApproveClean,
       autoAttachAccruals: data.autoAttachAccruals,
+      requireSeparateApprover: data.requireSeparateApprover,
       autoPostOnApprove: data.autoPostOnApprove,
       allowNegativeNet: data.allowNegativeNet,
       varianceThresholdPct: Number(data.varianceThresholdPct),
@@ -67,6 +68,7 @@ export default function SettlementControlForm() {
         autoGenerateBatches: values.autoGenerateBatches,
         autoApproveClean: values.autoApproveClean,
         autoAttachAccruals: values.autoAttachAccruals,
+        requireSeparateApprover: values.requireSeparateApprover,
         autoPostOnApprove: values.autoPostOnApprove,
         allowNegativeNet: values.allowNegativeNet,
         varianceThresholdPct: String(values.varianceThresholdPct),
@@ -206,6 +208,16 @@ function WorkflowCard() {
               label={t("Auto-attach new pay to open drafts")}
               description={t(
                 "As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.",
+              )}
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="requireSeparateApprover"
+              label={t("Require a separate approver")}
+              description={t(
+                "Whoever submits a settlement cannot also approve it. Turn this off if one person runs payroll. Auto-approving clean settlements is not affected.",
               )}
             />
           </FormControl>

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,6 +38,7 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 	repo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
+	userRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.User{Name: "Author"}, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -46,14 +48,16 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 		Maybe()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		ShipmentRepo: shipmentRepo,
-		UserRepo:     userRepo,
-		DocumentRepo: docRepo,
-		AuditService: audit,
-		EventService: noopShipmentEventService{},
-		Realtime:     realtime,
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                repo,
+		ShipmentRepo:        shipmentRepo,
+		UserRepo:            userRepo,
+		DocumentRepo:        docRepo,
+		AuditService:        audit,
+		EventService:        noopShipmentEventService{},
+		Realtime:            realtime,
 	})
 
 	shipmentID := pulid.MustNew("shp_")
@@ -132,6 +136,7 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 	repo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
+	userRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.User{Name: "Author"}, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -141,14 +146,16 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 		Maybe()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		ShipmentRepo: shipmentRepo,
-		UserRepo:     userRepo,
-		DocumentRepo: docRepo,
-		AuditService: audit,
-		EventService: noopShipmentEventService{},
-		Realtime:     realtime,
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                repo,
+		ShipmentRepo:        shipmentRepo,
+		UserRepo:            userRepo,
+		DocumentRepo:        docRepo,
+		AuditService:        audit,
+		EventService:        noopShipmentEventService{},
+		Realtime:            realtime,
 	})
 
 	shipmentID := pulid.MustNew("shp_")
@@ -177,14 +184,16 @@ func TestCreate_RequiresUserActor(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         shipmentcommentportsmock.NewMockShipmentCommentRepository(t),
-		ShipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
-		UserRepo:     tenantportsmock.NewMockUserRepository(t),
-		DocumentRepo: documentportsmock.NewMockDocumentRepository(t),
-		AuditService: auditportsmock.NewMockAuditService(t),
-		EventService: noopShipmentEventService{},
-		Realtime:     realtimeportsmock.NewMockRealtimeService(t),
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                shipmentcommentportsmock.NewMockShipmentCommentRepository(t),
+		ShipmentRepo:        shipmentportsmock.NewMockShipmentRepository(t),
+		UserRepo:            tenantportsmock.NewMockUserRepository(t),
+		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
+		AuditService:        auditportsmock.NewMockAuditService(t),
+		EventService:        noopShipmentEventService{},
+		Realtime:            realtimeportsmock.NewMockRealtimeService(t),
 	})
 
 	created, err := svc.Create(t.Context(), &shipment.ShipmentComment{
@@ -205,6 +214,7 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 	repo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
+	userRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.User{Name: "Author"}, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -214,14 +224,16 @@ func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
 		Maybe()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		ShipmentRepo: shipmentRepo,
-		UserRepo:     userRepo,
-		DocumentRepo: docRepo,
-		AuditService: audit,
-		EventService: noopShipmentEventService{},
-		Realtime:     realtime,
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                repo,
+		ShipmentRepo:        shipmentRepo,
+		UserRepo:            userRepo,
+		DocumentRepo:        docRepo,
+		AuditService:        audit,
+		EventService:        noopShipmentEventService{},
+		Realtime:            realtime,
 	})
 
 	shipmentID := pulid.MustNew("shp_")
@@ -307,6 +319,7 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 	repo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
+	userRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.User{Name: "Author"}, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -316,14 +329,16 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 		Maybe()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		ShipmentRepo: shipmentRepo,
-		UserRepo:     userRepo,
-		DocumentRepo: docRepo,
-		AuditService: audit,
-		EventService: noopShipmentEventService{},
-		Realtime:     realtime,
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                repo,
+		ShipmentRepo:        shipmentRepo,
+		UserRepo:            userRepo,
+		DocumentRepo:        docRepo,
+		AuditService:        audit,
+		EventService:        noopShipmentEventService{},
+		Realtime:            realtime,
 	})
 
 	commentID := pulid.MustNew("shc_")
@@ -408,6 +423,7 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 	repo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	userRepo := tenantportsmock.NewMockUserRepository(t)
+	userRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.User{Name: "Author"}, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
@@ -417,14 +433,16 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 		Maybe()
 
 	svc := New(Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		ShipmentRepo: shipmentRepo,
-		UserRepo:     userRepo,
-		DocumentRepo: docRepo,
-		AuditService: audit,
-		EventService: noopShipmentEventService{},
-		Realtime:     realtime,
+		Templates:           commentTemplates(t),
+		NotificationService: notificationtest.Discarding(),
+		Logger:              zap.NewNop(),
+		Repo:                repo,
+		ShipmentRepo:        shipmentRepo,
+		UserRepo:            userRepo,
+		DocumentRepo:        docRepo,
+		AuditService:        audit,
+		EventService:        noopShipmentEventService{},
+		Realtime:            realtime,
 	})
 
 	repo.EXPECT().

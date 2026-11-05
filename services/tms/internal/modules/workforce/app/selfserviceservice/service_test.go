@@ -5,17 +5,20 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type fakeRepo struct {
@@ -149,6 +152,29 @@ func (f *fakeWorkers) Update(
 	return entity, nil
 }
 
+type workerReader struct {
+	workerports.WorkerRepository
+	workers *fakeWorkers
+}
+
+func (r workerReader) GetByID(
+	ctx context.Context,
+	req workerports.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
+	return r.workers.GetByID(ctx, req)
+}
+
+type noPortalWorkers struct {
+	workerports.WorkerRepository
+}
+
+func (noPortalWorkers) GetByID(
+	context.Context,
+	workerports.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
+	return &worker.Worker{}, nil
+}
+
 type fakeChecksums struct{}
 
 func (fakeChecksums) Checksum(
@@ -160,11 +186,17 @@ func (fakeChecksums) Checksum(
 }
 
 func newService(repo *fakeRepo, workers *fakeWorkers) *selfserviceservice.Service {
-	return selfserviceservice.NewWithDeps(selfserviceservice.Deps{
+	return selfserviceservice.New(selfserviceservice.Params{
+		Logger:        zap.NewNop(),
 		Repo:          repo,
-		WorkerRepo:    workers,
+		WorkerRepo:    workerReader{workers: workers},
 		WorkerUpdater: workers,
 		Checksums:     fakeChecksums{},
+		AuditService:  &mocks.NoopAuditService{},
+		DriverNotify: drivernotificationservice.New(drivernotificationservice.Params{
+			Logger:     zap.NewNop(),
+			WorkerRepo: noPortalWorkers{},
+		}),
 	})
 }
 

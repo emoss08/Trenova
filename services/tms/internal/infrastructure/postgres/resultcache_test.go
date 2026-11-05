@@ -105,10 +105,6 @@ func TestResultCacheFollowsTheConfiguration(t *testing.T) {
 	require.NotNil(t, cache.Listen)
 	assert.Equal(t, "pg-primary.internal", cache.Listen.Host)
 	assert.Equal(t, uint16(5432), cache.Listen.Port)
-
-	cfg.Database.Cache.Shared.Enabled = true
-	_, err = conn.resultCache()
-	require.ErrorIs(t, err, ErrSharedResultCacheNeedsRedis)
 }
 
 func TestCacheErrorLogThrottlesARunOfFailures(t *testing.T) {

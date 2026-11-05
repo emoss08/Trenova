@@ -31,9 +31,10 @@ func documentResolver(
 ) *QueryResolver {
 	return &QueryResolver{&Deps{
 		Core: &resolvercore.Core{PermissionEngine: engine},
-		DocumentService: documentservice.NewTestService(
-			zap.NewNop(), repo, nil, nil, nil, nil, nil, nil, nil, nil,
-		),
+		DocumentService: documentservice.New(documentservice.Params{
+			Logger: zap.NewNop(),
+			Repo:   repo,
+		}),
 	}}
 }
 

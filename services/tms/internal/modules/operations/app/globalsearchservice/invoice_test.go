@@ -49,9 +49,13 @@ func invoiceSearch(t *testing.T, svc *Service) *kernelports.GlobalSearchResult {
 func TestSearchFindsAnInvoiceByItsNumber(t *testing.T) {
 	id := pulid.MustNew("inv_")
 	svc := &Service{
-		views:  searchViews(),
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"invoices": page(invoiceDocument(id)),
 		}),
@@ -79,9 +83,13 @@ func TestSearchFindsAnInvoiceByItsNumber(t *testing.T) {
 // the index is not asked.
 func TestSearchFindsNoInvoiceWithoutInvoiceAccess(t *testing.T) {
 	svc := &Service{
-		views:  searchViews(),
-		logger: zaptest.NewLogger(t),
-		config: indexConfig(),
+		shipmentRead: &fakeCardReader{},
+		states:       fakeStates{},
+		recordLabels: &fakeLabels{},
+		balances:     &fakeBalances{},
+		views:        searchViews(),
+		logger:       zaptest.NewLogger(t),
+		config:       indexConfig(),
 		searchRepo: repoReturning(t, map[string]*customerports.SearchPage{
 			"invoices": page(invoiceDocument(pulid.MustNew("inv_"))),
 		}),

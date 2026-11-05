@@ -50,8 +50,9 @@ type Query {
 type Mutation {
   updateShipment(id: ID!): Shipment!
 }
-type ShipmentConnection { edges: [ShipmentEdge!]! }
-type ShipmentEdge { node: Shipment! }
+type PageInfo { hasNextPage: Boolean! }
+type ShipmentConnection { edges: [ShipmentEdge!]! pageInfo: PageInfo! }
+type ShipmentEdge { node: Shipment! cursor: String! }
 type Shipment {
   id: ID!
   proNumber: String!

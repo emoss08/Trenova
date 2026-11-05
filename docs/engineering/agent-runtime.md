@@ -676,10 +676,14 @@ taint, so both record it. The flag outlives the turn: the text stays in the thre
 a new turn opens capped when the thread's taint names a capping read
 (`toolaccess.CarriesExternalContent`).
 
-A shipment entered over EDI is outside text wherever it is read, not only as a run's subject:
-`shipment_get` and `shipment_list` mark it. Report rows are marked when a column of the result
-is free text (`report_preview`, `report_get_run`, `report_run`), because no catalog field says
-who wrote it, and a comparison of runs always is. A report of figures and enums taints nothing.
+A shipment entered over EDI is outside text as a run's subject and where `shipment_get` and
+`shipment_list` read it, which mark it. Other reads that show a shipment's fields, such as
+`order_list` and the billing queue tools, do not: their rows do not say how the shipment was
+entered. Report rows are marked when a column of the result
+is free text (`report_preview`, `report_get_run`, `report_run`, and a report a script reads as a
+dataset), because no catalog field says who wrote it, and a comparison of runs always is. A report
+of figures and enums taints nothing. What a script's own call read counts with what its reads
+brought in when its prepared changes are settled.
 
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
@@ -691,6 +695,13 @@ present), and its policy lists every further source it may name
 (`ToolPolicy.Sources`, checked at boot and printed in the safety table). A row
 that names a source the policy does not declare is still marked, under the
 policy's own source, so a mark is never dropped and the table never lies.
+
+A call that returns more than `agent.MaxMarksPerCall` marked records adds one mark per source for
+the call instead of one per record (`turntaint.Call`), so one list cannot fill `MaxTaintMarks` and
+overflow the turn. A rereadable source keeps each record while the list fits under the bound,
+because a money bound vouches for a mark by the record it names; past that a mark names none and
+nothing vouches, as for an overflowed turn. A conversation keeps a turn's marks, sources and
+overflow alike (`Thread.AbsorbTaint`).
 
 `shipment_get` returns the shipment's twenty newest top-level comments (when the
 caller may read shipment comments) and marks each one written outside the

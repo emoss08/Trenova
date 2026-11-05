@@ -59,6 +59,10 @@ func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
+	fiscalRepo.EXPECT().
+		GetByIDForUpdate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil).
+		Maybe()
 
 	svc := &Service{
 		journalEntryRepo:    entryRepo,
@@ -453,12 +457,29 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&accountingcontrol.AccountingControl{FunctionalCurrencyCode: "USD"}, nil)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           reversal.ResolvedFiscalPeriodID,
+			FiscalYearID: reversal.ResolvedFiscalYearID,
+			Status:       fiscalperiod.StatusOpen,
+		}, nil)
+	fiscalRepo.EXPECT().
+		GetByIDForUpdate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           reversal.ResolvedFiscalPeriodID,
+			FiscalYearID: reversal.ResolvedFiscalYearID,
+			Status:       fiscalperiod.StatusOpen,
+		}, nil).
+		Maybe()
 	svc := &Service{
 		db:                  dbtest.NopConnection{},
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
 		journalPostingRepo:  postingRepo,
 		accountingRepo:      accountingRepo,
+		validator:           &Validator{fiscalRepo: fiscalRepo},
 		sequenceGenerator:   testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:        &mocks.NoopAuditService{},
 	}

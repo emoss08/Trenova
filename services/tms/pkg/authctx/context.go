@@ -203,7 +203,11 @@ func SetAPIKeyContext(
 // Capture device. The device acts for exactly one person, so the user is set
 // and every permission check runs as them; the principal stays the device so
 // what the device did is attributable to it.
-func SetCaptureDeviceContext(c *gin.Context, deviceID, userID, buID, orgID pulid.ID) {
+func SetCaptureDeviceContext(
+	c *gin.Context,
+	deviceID, userID, buID, orgID pulid.ID,
+	activeRoleIDs []pulid.ID,
+) {
 	c.Set(string(TypeKey), PrincipalTypeCaptureDevice)
 	c.Set(string(ActorKey), deviceID)
 	c.Set(string(CaptureDeviceIDKey), deviceID)
@@ -211,8 +215,10 @@ func SetCaptureDeviceContext(c *gin.Context, deviceID, userID, buID, orgID pulid
 	SetBusinessUnitID(c, buID)
 	SetOrganizationID(c, orgID)
 	bindDBScope(c, userID, buID, orgID)
-	c.Request = c.Request.WithContext(WithSessionAttributes(c.Request.Context(), SessionAttributes{
+	c.Request = c.Request.WithContext(BindSession(c.Request.Context(), SessionAttributes{
 		UserID:           userID,
+		ActiveRoleIDs:    activeRoleIDs,
+		RoleActivation:   len(activeRoleIDs) > 0,
 		AuthenticatorAAL: UnprovenAssurance,
 	}))
 }

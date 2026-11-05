@@ -201,7 +201,10 @@ const TOOL_IDENTIFIER = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/gu;
  * a person never chose the identifier.
  */
 export function decisionHeadline(content: string): string {
-  const first = content.split("\n", 1)[0]?.trim() ?? "";
+  const first = (content.split("\n", 1)[0] ?? "")
+    .replaceAll("<untrusted_data>", "")
+    .replaceAll("</untrusted_data>", "")
+    .trim();
 
   return first.replace(TOOL_IDENTIFIER, (name) =>
     toolNameInReadingOrder(name).replaceAll("_", " "),

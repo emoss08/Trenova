@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,6 +41,7 @@ func setupIssueTest(t *testing.T) *issueTestDeps {
 		repo:                  deps.repo,
 		carrierAssignmentRepo: deps.carrierAssignmentRepo,
 		carrierRepo:           deps.carrierRepo,
+		auditService:          &mocks.NoopAuditService{},
 	}
 	return deps
 }

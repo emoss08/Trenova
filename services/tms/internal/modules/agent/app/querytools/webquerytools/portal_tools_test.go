@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -261,36 +260,30 @@ func TestReadPortalDeclaresWhatItBringsIn(t *testing.T) {
 	assert.NotEqual(t, agenttooltrust.ExternalReadAlways, listed.ReadsExternal)
 }
 
-func TestReadPortalTellsTheServiceWhenOtherOutsideTextIsInTheRun(t *testing.T) {
+func TestListPortalSitesSaysWhichReadsNeedAPerson(t *testing.T) {
 	t.Parallel()
 
-	siteID := pulid.MustNew(extensionportal.PortalSiteIDPrefix)
-	read := func(t *testing.T, taint *agent.RunTaint) bool {
-		t.Helper()
+	portals := &stubPortals{sites: []agentextensionports.PortalSiteSummary{{
+		ID:               pulid.MustNew(extensionportal.PortalSiteIDPrefix),
+		Name:             "Acme DC",
+		HasSignIn:        true,
+		ReadNeedsAPerson: true,
+	}, {
+		ID:              pulid.MustNew(extensionportal.PortalSiteIDPrefix),
+		Name:            "Mesa DC",
+		HasSignIn:       true,
+		ViewOnlyAccount: true,
+	}}}
 
-		portals := &stubPortals{outcome: &agentextensionports.PortalReadOutcome{
-			Status: extensionportal.PortalRunStatusSucceeded,
-		}}
-		params := querytooltest.TestParams(map[string]any{
-			"siteId":   siteID.String(),
-			"question": "Which slots are open?",
-		})
-		params.Taint = taint
+	result, err := NewListPortalSitesTool(portals).Query(t.Context(), querytooltest.TestParams(nil))
+	require.NoError(t, err)
 
-		_, err := NewReadPortalTool(portals, nil).Query(t.Context(), params)
-		require.NoError(t, err)
-
-		return portals.read.AfterOutsideText
-	}
-
-	assert.False(t, read(t, &agent.RunTaint{}))
-	assert.False(t, read(t, &agent.RunTaint{Marks: []agent.TaintMark{{
-		Source:   agent.TaintSourceWeb,
-		ToolName: "web_read_portal",
-	}}}))
-	assert.True(t, read(t, &agent.RunTaint{Marks: []agent.TaintMark{{
-		Source:   agent.TaintSourceEDI,
-		ToolName: "shipment_get",
-	}}}))
-	assert.True(t, read(t, nil))
+	answer, ok := result.(portalSitesAnswer)
+	require.True(t, ok)
+	require.Len(t, answer.Sites, 2)
+	assert.True(t, answer.Sites[0].ReadNeedsApproval)
+	assert.False(t, answer.Sites[0].ViewOnlyAccount)
+	assert.False(t, answer.Sites[1].ReadNeedsApproval)
+	assert.True(t, answer.Sites[1].ViewOnlyAccount)
+	assert.Contains(t, answer.Note, "lookUpOnly")
 }

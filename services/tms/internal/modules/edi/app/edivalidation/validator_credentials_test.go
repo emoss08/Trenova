@@ -100,7 +100,7 @@ func TestValidateCommunicationProfile_AnInactiveAS2ProfileMayWaitForItsPrivateKe
 	assert.Nil(t, NewValidator().ValidateCommunicationProfile(profile))
 
 	profile.Status = domaintypes.StatusActive
-	assert.Equal(t, []string{"secrets"},
+	assert.Equal(t, []string{"config.partnerSigningCertificate", "secrets"},
 		multiErrFields(NewValidator().ValidateCommunicationProfile(profile)))
 }
 

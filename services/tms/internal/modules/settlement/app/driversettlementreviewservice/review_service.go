@@ -2,6 +2,7 @@ package driversettlementreviewservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -16,6 +17,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
+	DB                  kernelports.Transactor
 	Settlements         *driversettlementservice.Service
 	SettlementRepo      driversettlementports.DriverSettlementRepository
 	DisputeRepo         driversettlementports.SettlementDisputeRepository
@@ -30,6 +32,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
+	db                  kernelports.Transactor
 	settlements         *driversettlementservice.Service
 	settlementRepo      driversettlementports.DriverSettlementRepository
 	disputeRepo         driversettlementports.SettlementDisputeRepository
@@ -46,6 +49,7 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.driver-settlement"),
+		db:                  p.DB,
 		settlements:         p.Settlements,
 		settlementRepo:      p.SettlementRepo,
 		disputeRepo:         p.DisputeRepo,

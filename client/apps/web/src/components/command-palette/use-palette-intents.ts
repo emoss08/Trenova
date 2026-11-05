@@ -1,3 +1,4 @@
+import { openInNewTab } from "@/lib/open-in-new-tab";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useSignOut } from "@/hooks/use-sign-out";
@@ -35,10 +36,6 @@ interface IntentRunnerOptions {
 
 function absoluteUrl(href: string): string {
   return new URL(href, window.location.origin).toString();
-}
-
-function openInNewTab(url: string): void {
-  window.open(url, "_blank", "noopener,noreferrer");
 }
 
 /**

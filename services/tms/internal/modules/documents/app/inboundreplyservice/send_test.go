@@ -146,19 +146,6 @@ func TestSendUnqueuedFailureDoesNotSuggest(t *testing.T) {
 	assert.Nil(t, f.work.asked)
 }
 
-func TestSendWithoutOutboundEmailFails(t *testing.T) {
-	t.Parallel()
-
-	f := newFixture()
-	f.service.email = nil
-
-	reply, err := f.service.Send(t.Context(), sendRequest(f, ""))
-	require.NoError(t, err)
-
-	assert.Equal(t, triage.ReplyFailed, reply.Status)
-	assert.Equal(t, failureNoOutbound, reply.FailureText)
-}
-
 func TestSendWithoutAnEmailProfileSaysSoToAPerson(t *testing.T) {
 	t.Parallel()
 

@@ -462,8 +462,7 @@
         "rlsMode": {
           "enum": [
             "enforce",
-            "observe",
-            "off"
+            "observe"
           ]
         },
         "existingSecret": {
@@ -552,6 +551,9 @@
               "boolean"
             ]
           }
+        },
+        "hibernate": {
+          "type": "boolean"
         }
       },
       "required": []
@@ -959,6 +961,23 @@
               }
             }
           }
+        },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingServerSecret": {
+              "type": "string"
+            },
+            "existingClientSecret": {
+              "type": "string"
+            },
+            "validityDays": {
+              "type": "integer",
+              "minimum": 30
+            }
+          },
+          "required": []
         }
       },
       "required": []
@@ -1534,6 +1553,10 @@
         }
       },
       "required": []
+    },
+    "stopped": {
+      "type": "boolean",
+      "description": "Stops every workload but PostgreSQL."
     }
   },
   "allOf": [

@@ -40,9 +40,12 @@ itself are yours.
 | `tms-api` | `ghcr.io/emoss08/trenova/tms` | REST and GraphQL API, live updates (server-sent events) |
 | `tms-worker` | `ghcr.io/emoss08/trenova/tms` | Background jobs and every AI feature, on Temporal |
 | `trenova-db` | `ghcr.io/emoss08/trenova/tms-db` | One-shot: database migrations, then the reference seeds that changed (reference data, each organization's defaults and administrator permissions, the row-level security key), on every start (`trenova-db up -env production`); the API and worker wait for it |
+| `rls-roles` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the roles the API and worker sign in as and sets their passwords from `.env` (`trenova db rls provision-roles`), on every start |
 | `tms-bootstrap` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the first organization and administrator once (`trenova db bootstrap`); a no-op afterwards |
-| `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication |
+| `db-prepare` | `ghcr.io/emoss08/trenova/postgres` | One-shot: the roles Temporal and GTC sign in as, and Temporal's two databases |
+| `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication and GTC's read access |
 | `postgres` | `ghcr.io/emoss08/trenova/postgres` | PostgreSQL 18 with PostGIS, pg_cron and pgvector |
+| `postgres-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues PostgreSQL's private CA and server certificate, once |
 | `redis` | `redis:8` | Sessions, rate limits, caches, the live-update streams |
 | `minio` | `pgsty/silo` (MinIO) | Documents and other uploaded files |
 | `meilisearch` | `getmeili/meilisearch` | Global search |
@@ -51,16 +54,18 @@ itself are yours.
 | `docling` | `ghcr.io/docling-project/docling-serve-cpu` | Reads uploaded files for document extraction (PDFs, scans, photos, Office files, email), locked down and unreachable from outside |
 | `imaging` | `ghcr.io/emoss08/trenova/imaging` | Document thumbnails, page views, capture page inspection, PDF assembly and image normalization; every file is parsed in a hardened child process |
 | `imaging-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues the private CA and the certificates the TMS and the imaging worker authenticate each other with, once |
+| `temporal-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: the same for the TMS and Temporal |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
-| `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
+| `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; off by default, needs 3 to 4 GB of memory; see [Malware scanning](#malware-scanning) |
 
-The `tms-api`, `tms-worker` and `tms-bootstrap` services are one image with different
+The `tms-api`, `tms-worker`, `rls-roles` and `tms-bootstrap` services are one image with different
 commands; `trenova-db` is its own small image, so the server image carries no migrations or
 seed data.
-Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal,
-Gotenberg, docling-serve, the imaging worker and GTC sit on an internal Docker network with no route off the host; the API and
-worker get a separate network for outbound calls (AI providers, email, accounting
-integrations, release checks).
+Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal
+and GTC sit on an internal Docker network with no route off the host, and Gotenberg,
+docling-serve, the imaging worker and ClamAV each sit on an internal network of their own with
+the TMS processes; the API and worker get a separate network for outbound calls (AI providers,
+email, accounting integrations, release checks).
 
 ## Requirements
 
@@ -77,6 +82,10 @@ integrations, release checks).
   per CPU, each needing about 1 GB under load, and idles at a few megabytes. Every document
   preview, page view and capture page goes through it, so the API and worker wait for it to be
   healthy.
+- Malware scanning (the optional `clamav` service, off by default) needs **3 GB of memory
+  reserved and up to 4 GB**, one CPU core at 2 GHz or better and about 1 GB of disk for its
+  signatures. With it on, the host needs **4 vCPU and 12 GB RAM** at the least. See
+  [Malware scanning](#malware-scanning).
 - Docker Engine 24 or newer with the Compose plugin v2.24 or newer (`docker compose version`).
 - `git` and `openssl` on the host.
 - For a public install: a hostname for Trenova and one for its file storage (for example
@@ -243,8 +252,8 @@ Configuration lives in two files next to `compose.yml`:
 | `config/config.yaml` | Everything else: timeouts, rate limits, AI, rendering, logging |
 
 `compose.yml` turns `.env` into `TRENOVA_<SECTION>_<KEY>` environment variables, which
-override `config/config.yaml` (for example `TRENOVA_DATABASE_PASSWORD` overrides
-`database.password`). Values in `config/config.yaml` marked "from .env" are placeholders; a
+override `config/config.yaml` (for example `TRENOVA_SECURITY_SESSION_SECRET` overrides
+`security.session.secret`). Values in `config/config.yaml` marked "from .env" are placeholders; a
 placeholder secret that reached production is refused at startup.
 
 Trenova reads its configuration strictly: an unknown key fails startup and names the key. The
@@ -336,6 +345,80 @@ database schema under you.
 **Rolling back** the images is only safe when the newer release did not migrate the
 database. Otherwise restore the backup you took before upgrading.
 
+### Upgrading to a release with row-level security
+
+The API and worker no longer sign in as the database owner, a superuser. They use two new
+roles, and PostgreSQL itself refuses another organization's rows
+([row-level security](../engineering/row-level-security.md)). `.env` needs their passwords and
+a scope-signing key, and `docker compose` refuses to run until it has them. After step 3 above,
+from this directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+If you edited `config/config.yaml`, carry `database.user`, `database.system`,
+`database.migrator` and `database.rls` over from the new version: `rls.mode` is `enforce`.
+
+Nothing in your data is rewritten. `trenova-db` installs the key, `rls-roles` creates the roles,
+and the API and worker start on them. If either stops, `docker compose logs rls-roles tms-api`
+says why. Confirm it with:
+
+```bash
+docker compose run --rm --entrypoint trenova tms-bootstrap db rls status
+docker compose logs tms-api tms-worker | grep 'Refused database access'
+```
+
+The second command should print nothing. To go back, return to the previous release's
+deployment files and `TRENOVA_VERSION`: its compose file signs in as the owner and ignores the
+new roles and keys. This needs the same care as any other rollback, so keep the backup from
+step 2 until the release has run through a full day of schedules.
+
+Maintenance commands connect as the owner, whose password the API no longer holds, so
+`encryption rewrap` and `db rls status` now run through `tms-bootstrap` (`--entrypoint trenova`),
+as shown here and under [Rotating the encryption key](#rotating-the-encryption-key).
+
+### Upgrading to a release with mutual TLS for Temporal
+
+Nothing to do but the usual pull and `docker compose up -d`: `temporal-certs` issues the
+certificates on the first start, Temporal then refuses any client without one, and the TMS
+presents its own. If you edited `config/config.yaml`, carry `temporal.tls` over from the new
+version: production refuses to start without a client certificate for Temporal.
+
+### Upgrading to a release with Temporal and GTC roles
+
+Temporal and GTC no longer sign in as the database owner, a superuser. `.env` needs their
+passwords, and `docker compose` refuses to run until it has them. After step 3 above, from this
+directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+`db-prepare` creates the roles and hands Temporal's databases and GTC's backfill state to them, so
+workflows in flight and GTC's replication position carry over. If it stops, `docker compose logs
+db-prepare` says why. To go back, return to the previous release's deployment files: the owner is
+a superuser, so it can still read everything the new roles own.
+
+### Upgrading to a release with a Gotenberg password
+
+Gotenberg now refuses a render without the password in `.env`, and `docker compose` refuses to
+run until it has one. After step 3 above, from this directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+If you edited `config/config.yaml`, carry `renderer.gotenbergUsername` and
+`renderer.gotenbergPassword` over from the new version: production refuses to start without
+them while `renderer.gotenbergUrl` is set.
+
 ### Upgrading to a release with document conversion
 
 Releases that bundle the `docling` service read a new key from `.env`,
@@ -384,8 +467,8 @@ nothing has to be changed for the upgrade. To move them onto the new key, run on
 the upgrade:
 
 ```bash
-docker compose run --rm tms-api encryption rewrap --dry-run
-docker compose run --rm tms-api encryption rewrap
+docker compose run --rm --entrypoint trenova tms-bootstrap encryption rewrap --dry-run
+docker compose run --rm --entrypoint trenova tms-bootstrap encryption rewrap
 ```
 
 The same command binds older integration secrets (every integration's API keys and
@@ -438,10 +521,13 @@ credentials.
 
 Keep copies off the host, and test a restore now and then.
 
-**Restore** onto a fresh install (same `.env`, empty volumes):
+**Restore** onto a fresh install (same `.env`, empty volumes). A dump holds no roles, so the two
+groups its grants and row-level security policies name come first:
 
 ```bash
 docker compose up -d postgres
+docker compose exec -T postgres sh -c \
+  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE ROLE trenova_tenant NOLOGIN" -c "CREATE ROLE trenova_rls_bypass NOLOGIN"'
 docker compose exec -T postgres sh -c \
   'pg_restore --clean --if-exists --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
   < trenova-YYYYMMDD-HHMM.dump
@@ -481,9 +567,9 @@ named in `.env`. Rotating replaces the outer key without decrypting anything els
    (`openssl rand -hex 32`). Back up `.env`.
 2. `docker compose up -d`. New values are sealed with the new key; values sealed with a
    retired key are still read.
-3. `docker compose run --rm tms-api encryption rewrap --dry-run` reports how many values
-   and documents each kind of record still holds under a retired key, and
-   `docker compose run --rm tms-api encryption rewrap` moves them. It writes each row only
+3. `docker compose run --rm --entrypoint trenova tms-bootstrap encryption rewrap --dry-run`
+   reports how many values and documents each kind of record still holds under a retired key,
+   and the same command without `--dry-run` moves them. It writes each row only
    if nothing changed it since it was read, so it can run while Trenova is in use; a row
    changed meanwhile is reported as a conflict and moved by the next run. It also moves
    AI provider keys, agent extension secrets and the CarrierOK and FMCSA QCMobile keys
@@ -543,7 +629,7 @@ vision model that reads each page image. Put the `granite-docling-258M` weights 
 `docling_vlm_models` volume first (the internal network cannot download them), then set
 `documentConversion.doclingUrl: http://docling-gpu:5001` and
 `documentConversion.vlmEndpoint: http://docling-vlm:8000`. Only this profile lets
-docling-serve call another service, and both stay on the internal network.
+docling-serve call another service, and both stay on the internal `documents` network.
 
 ## Malware scanning
 
@@ -555,21 +641,38 @@ stored, and before PDFium, pdfcpu, the spreadsheet readers, the zip and XML pars
 EDI parser read it. Scanning uses ClamAV's `clamd` over its `INSTREAM` command, so nothing is
 written to disk on either side.
 
-Scanning is off until an address is set. With it off, the API and worker log a warning at
-startup saying files are not scanned.
+Scanning is off by default, because ClamAV needs more memory than the rest of a small install
+can spare. With it off, the API and worker log a warning at startup saying files are not
+scanned. Turn it on when files arrive from outside your company (email attachments, EDI
+partners, customers' portals).
+
+**What it needs.** `clamd` keeps ClamAV's signature databases in memory: about 1.2 GB to hold
+them, and about 2.4 GB for a short time each day while it loads the new signatures beside the
+old ones, plus what each scan uses. ClamAV documents 3 GB as the minimum and 4 GB as the
+preferred size for its container, so the compose file reserves 3 GB and caps it at 4 GB; a
+smaller cap gets `clamd` killed during the daily reload, and every file is refused until it is
+back. Add 4 GB to the host: **4 vCPU and 12 GB RAM** at the least. It also needs one CPU core
+at 2 GHz or better, about 1 GB of disk in the `clamav_data` volume, and outbound HTTPS to
+`database.clamav.net` for its hourly signature updates.
 
 **Turning it on.**
 
 1. Start the bundled scanner: `docker compose --profile clamav up -d clamav`. On first start
    it downloads the signature databases (a few hundred megabytes) into the `clamav_data`
-   volume, which takes several minutes; `docker compose ps clamav` shows it healthy when it is
-   ready. It needs about 2 GB of memory (4 GB while it reloads signatures) and the outbound
-   network for its hourly signature updates; `clamd` itself is reachable only on the internal
+   volume, which takes several minutes (the health check allows ten); `docker compose ps
+   clamav` shows it healthy when it is ready. `clamd` itself is reachable only on the internal
    network.
 2. Add `TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS=clamav:3310` to `.env`, and add `--profile clamav`
    to every later `docker compose up`, or set `COMPOSE_PROFILES=clamav` in `.env`.
-3. `docker compose up -d` so the API and worker pick up the address. Their startup log says
-   scanning is on, or that the scanner did not answer.
+3. `docker compose up -d` so the API and worker pick up the address. With the profile on they
+   wait for `clamav` to be healthy before they start. Their startup log says scanning is on, or
+   that the scanner did not answer.
+
+From then on, a file is refused while `clamd` is starting, reloading after a crash or down
+(see *Scanner unreachable* below). To turn scanning off again, empty
+`TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS`, drop `clamav` from `COMPOSE_PROFILES`, and run
+`docker compose up -d` and `docker compose stop clamav`. Files are then stored and parsed
+without being checked.
 
 To use a `clamd` you already run, point the address at it instead (`host:3310`, or
 `unix:/path/to/clamd.sock` with the socket mounted into `tms-api` and `tms-worker`). Its
@@ -611,21 +714,26 @@ The stack is secure by default for a single-operator host: TLS everywhere, secre
 per install, no account with a default or published password, every backing service on an
 internal network, Gotenberg and docling-serve sandboxed, the imaging worker parsing every file
 in a child process under seccomp, landlock and resource limits and reached only over mutual
-TLS, and nothing published except Caddy. Beyond that:
+TLS, and nothing published except Caddy. PostgreSQL serves a certificate issued for this
+install on first start (`postgres-certs`), and every client verifies it. Each service that
+parses files sits on a network of its own with the TMS processes, away from the databases,
+Temporal, GTC's dashboard and each other. Gotenberg takes a generated password, and Temporal
+only certificates `temporal-certs` issued for this install. GTC's dashboard takes no
+credentials, so that separation is what guards it: don't attach anything else to its network.
+Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
   way when you add services.
 - **Host.** Keep the OS and Docker patched; enable unattended security updates.
-- **Tenant isolation in PostgreSQL.** This stack runs with `database.rls.mode: "off"`: the
-  application connects as the database owner, and tenant isolation is enforced by the
-  application. Trenova can also have PostgreSQL itself refuse rows of another organization
-  (row-level security), which needs separate application, system and migrator database roles
-  and a scope-signing key. Follow "Rolling out" in
-  [docs/engineering/row-level-security.md](../engineering/row-level-security.md): it is
-  `trenova db rls generate-key`, setting `database.migrator` to the current owner role,
-  `trenova db rls provision-roles`, a period in `observe`, then `enforce` with
-  `database.user` switched to the new application role. GTC keeps connecting as the owner.
+- **Tenant isolation in PostgreSQL.** This stack runs with `database.rls.mode: enforce`: the
+  API and worker sign in as `trenova_app`, which
+  [row-level security](../engineering/row-level-security.md) binds to one organization at a
+  time, and as `trenova_system` for the work that sees every organization. Neither is a
+  superuser, and neither holds the owner's password: only `trenova-db`, `rls-roles` and
+  `tms-bootstrap` do among the TMS services. Temporal and GTC sign in as roles of their own,
+  which `db-prepare` makes: `temporal` owns only its two databases, and `trenova_gtc` replicates
+  and reads the tables GTC routes.
   Run `trenova-db` as a PostgreSQL superuser if you can: each run marks enum comparisons
   `LEAKPROOF`, which lets status filters use their indexes under row-level security. Managed
   PostgreSQL (RDS, Cloud SQL) gives no superuser; Trenova works there, but those filters read
@@ -642,6 +750,21 @@ TLS, and nothing published except Caddy. Beyond that:
 error names the key at fault (an unknown key, a missing secret, a placeholder value). A
 database error usually means PostgreSQL was not ready or the database password in `.env`
 changed after the volume was created; PostgreSQL keeps the password it was initialized with.
+
+**`required variable TRENOVA_DATABASE_APP_PASSWORD is missing`, or the same for another
+`TRENOVA_DATABASE_*` secret.** `.env` predates a role this release signs in with: run
+`./scripts/init-env.sh --upgrade`.
+
+**`required variable TRENOVA_RENDERER_GOTENBERGPASSWORD is missing`.** `.env` predates the
+Gotenberg password: run `./scripts/init-env.sh --upgrade`.
+
+**`rls-roles` exited with an error, and the API never starts.** `docker compose logs rls-roles`.
+A role that does not exist means a restore skipped the first step under
+[Backups](#backups-and-restore): `trenova_tenant` and `trenova_rls_bypass` come before the dump.
+
+**`row-level security is enforced but the application database role can bypass it`.**
+`TRENOVA_DATABASE_APP_USER` names the owner or a superuser, which startup refuses. Leave it at
+`trenova_app`.
 
 **`tms-bootstrap` exited with an error, and the API never starts.** `docker compose logs
 tms-bootstrap`. `bootstrap inputs are not valid` lists each value at fault with the flag and
@@ -674,7 +797,10 @@ hostname in `DOMAIN`, not by IP address or another alias.
 it starts; on a large database that takes a while. `docker compose logs db-bootstrap` shows
 the tables published to it.
 
-**The assistant or agents never answer.** `docker compose logs temporal tms-worker`. The
+**The assistant or agents never answer.** `docker compose logs temporal tms-worker`, and
+`temporal-certs` must have exited 0. A certificate error means the TMS and Temporal hold
+certificates from different runs: reissue with the command in the `temporal-certs` comment in
+`compose.yml`, then `docker compose up -d --force-recreate temporal tms-api tms-worker`. The
 worker runs every AI job; an AI provider must also be configured under **AI control** (`/admin/agent-control`).
 
 **PDFs fail to render.** `docker compose ps gotenberg` must be healthy. Templates cannot load

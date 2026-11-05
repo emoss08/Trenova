@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
@@ -88,6 +89,8 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 		Once()
 
 	fixture.svc = &service{
+		commentService: quietComments(t),
+		watchtower:     mocks.NoopWatchtowerProjector{},
 		l:              zap.NewNop(),
 		repo:           fixture.repo,
 		reasonCodeRepo: reasonRepo,

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -69,14 +68,13 @@ func NewGetDocumentTool(
 	labels recordLabeler,
 	users uploaderReader,
 	permissions permissionports.PermissionEngine,
-	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return &getDocumentTool{
 		documents: documents,
 		contents:  contents,
 		labels:    labels,
 		users:     users,
-		access:    fieldgate.NewAccess(permissions).WithThreads(threads),
+		access:    fieldgate.NewAccess(permissions),
 	}
 }
 
@@ -90,9 +88,8 @@ func (t *getDocumentTool) SearchTerms() []string {
 }
 
 func (t *getDocumentTool) Description() string {
-	return "Read a document by id: what kind of document it looks like, how many pages, " +
-		"the text extracted from it, the structured fields document intelligence " +
-		"found, and where it came from: who uploaded it and when, how it came in " +
+	return "Read a document by id: its kind, pages, extracted text and structured fields, " +
+		"and where it came from. That is who uploaded it and when, how it came in " +
 		"(uploaded by hand, a monitored mailbox, a scan) and the record it is attached " +
 		"to, named as people know it. Use it for a document a record names, or for a page document_list " +
 		"pointed at; a file the person attached to this conversation is read with " +

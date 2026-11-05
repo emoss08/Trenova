@@ -18,6 +18,7 @@ export function siteFormDefaults(site: PortalSite | null): PortalSiteFormValues 
     clearAuthenticator: false,
     browserProfileId: site?.browserProfileId ?? "",
     allowActions: site?.allowActions ?? false,
+    viewOnlyAccount: site?.viewOnlyAccount ?? false,
     enabled: site?.enabled ?? true,
   };
 }
@@ -44,6 +45,7 @@ export function siteRequestOf(
     clearAuthenticator: values.clearAuthenticator && !values.clearSignIn,
     browserProfileId: values.browserProfileId.trim(),
     allowActions: values.allowActions,
+    viewOnlyAccount: values.viewOnlyAccount,
     enabled: values.enabled,
     version: site?.version ?? 0,
   };

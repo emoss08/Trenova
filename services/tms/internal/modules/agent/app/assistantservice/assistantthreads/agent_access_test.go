@@ -106,6 +106,7 @@ func newContinuableFixture() *continuableFixture {
 				},
 			},
 			permissions: permissions,
+			cases:       assistanttest.NoCases{},
 		},
 		thread:      thread,
 		permissions: permissions,

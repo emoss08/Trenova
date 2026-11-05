@@ -154,7 +154,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 			"List the report dashboards under Reports, with their tiles.",
 		),
 	)
-	rewire(service, func(p *Params) {
+	rewire(service, func(p *runtimeParts) {
 		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
 			QueryTools:  query,
 			ActionTools: service.actionTools,

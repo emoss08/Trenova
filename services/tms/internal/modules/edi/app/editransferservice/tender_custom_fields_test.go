@@ -69,9 +69,4 @@ func TestSaveTenderCustomFields_WritesNothingForATenderWithoutCustomFields(t *te
 	svc := &Service{customFields: values}
 
 	require.NoError(t, svc.saveTenderCustomFields(t.Context(), &shipment.Shipment{}, nil))
-	require.NoError(t, (&Service{}).saveTenderCustomFields(
-		t.Context(),
-		&shipment.Shipment{},
-		map[string]any{"po_number": "PO-1"},
-	))
 }
