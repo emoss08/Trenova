@@ -17,11 +17,15 @@ import (
 func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(t *testing.T) {
 	t.Parallel()
 
+	h := newDecideHarness(t)
 	proposal := &agent.AgentProposal{
-		ID:         pulid.MustNew("ap_"),
-		ToolParams: map[string]any{"workerId": "wrk_1", "message": "Call in", "priority": "medium"},
+		ID:             pulid.MustNew("ap_"),
+		OrganizationID: h.actor.OrganizationID,
+		BusinessUnitID: h.actor.BusinessUnitID,
+		ToolName:       "shipment_place_hold",
+		ToolParams:     map[string]any{"workerId": "wrk_1", "message": "Call in", "priority": "medium"},
 	}
-	service := &Service{}
+	service := h.service
 
 	unchanged, err := service.settleModifications(
 		t.Context(),
@@ -51,7 +55,7 @@ func TestSettleModifications_RecordsOnlyRealChangesAndAnUnchangedFormAsApproval(
 				"priority": "medium",
 			},
 		},
-		nil,
+		h.actor,
 	)
 	require.NoError(t, err)
 	assert.Equal(t, agentdecision.DecisionModified, changed.Decision)

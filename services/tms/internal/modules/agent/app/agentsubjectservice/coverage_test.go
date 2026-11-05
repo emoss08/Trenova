@@ -75,35 +75,3 @@ func TestDescribe_AnUnknownSubjectStillReadsAsSomething(t *testing.T) {
 	require.Equal(t, "Teleporter", subject.Label)
 	require.Equal(t, subjectID.String(), subject.ID)
 }
-
-// Every repository behind the new arms is optional, so an arm whose dependency
-// was not wired has to hand back a usable subject rather than fall through to
-// the default or panic.
-func TestDescribe_UnwiredArmsStillNameTheirSubject(t *testing.T) {
-	t.Parallel()
-
-	svc := &Service{logger: zap.NewNop()}
-	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-
-	cases := map[agent.SubjectType]string{
-		agent.SubjectDetentionOccurrence: "Detention occurrence",
-		agent.SubjectWorker:              "Driver",
-		agent.SubjectCarrierIntelEvent:   "Carrier finding",
-		agent.SubjectEDIInboundFile:      "EDI inbound file",
-		agent.SubjectInboundMessage:      "Inbound message",
-	}
-
-	for subjectType, label := range cases {
-		t.Run(string(subjectType), func(t *testing.T) {
-			t.Parallel()
-
-			subjectID := pulid.MustNew("sub_")
-			subject, err := svc.Describe(t.Context(), tenant, subjectType, subjectID)
-			require.NoError(t, err)
-			require.NotNil(t, subject)
-			require.Equal(t, subjectType, subject.Type)
-			require.Equal(t, subjectID.String(), subject.ID)
-			require.Equal(t, label, subject.Label)
-		})
-	}
-}

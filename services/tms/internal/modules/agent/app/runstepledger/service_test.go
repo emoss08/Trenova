@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -18,7 +19,7 @@ import (
 )
 
 type fakeStepRepo struct {
-	claimed []*agentrunstep.AgentRunStep
+	claimed  []*agentrunstep.AgentRunStep
 	settled  []agentruntimeports.SettleAgentRunStepRequest
 	recorded []*agentrunstep.AgentRunStep
 	rows     []*agentrunstep.AgentRunStep
@@ -83,7 +84,7 @@ func TestClaim_WritesWhereAndAsWhomTheStepRan(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 	version := int64(12)
 	definitionID := pulid.MustNew("agdef_")
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
@@ -119,7 +120,7 @@ func TestSettle_KeepsTheVerdictAndWhyACallWasRefused(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 
 	require.NoError(
 		t,
@@ -158,7 +159,7 @@ func TestLoaded_ReadsTheProvenanceBack(t *testing.T) {
 		DelegateCallID:         "call_2",
 		Outcome:                map[string]any{"verdict": "ran"},
 	}}}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 
 	steps, err := ledger.Loaded(
 		t.Context(),
@@ -178,7 +179,7 @@ func TestClaim_StoresNoOutcomeForAStepNotYetRun(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 
 	_, err := ledger.Claim(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
 		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
@@ -200,7 +201,7 @@ func TestRecord_StoresTheOutcomeAndReadsItBack(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 	owner := pulid.MustNew("atrn_")
 	outcome := agentruntimeports.RunStepOutcome{
 		Content: "Shipment S-1001 is billed.",
@@ -239,7 +240,7 @@ func TestRecord_StoresAnEmptyOutcomeAsAnObject(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 
 	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
 		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
@@ -258,7 +259,7 @@ func TestRecord_DropsAnAnswerTooLargeToKeep(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 
 	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
 		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
@@ -281,7 +282,7 @@ func TestRecord_ClassifiesAFailedToolCall(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 
 	require.NoError(t, ledger.Record(t.Context(), pagination.TenantInfo{}, &agentruntimeports.RunStep{
 		OwnerKind: agentruntimeports.RunStepOwnerAgentRun,
@@ -305,7 +306,7 @@ func TestSettle_StoresTheOutcomeAndReadsItBack(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 	owner := pulid.MustNew("ar_")
 	outcome := agentruntimeports.RunStepOutcome{
 		Content: "Move assigned to driver D-12.",
@@ -376,7 +377,7 @@ func TestFind_ReadsAKeptModelReplyBackWhole(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 	owner := pulid.MustNew("atrn_")
 	step := modelReplyStep(owner, "Looking it up.")
 
@@ -400,7 +401,7 @@ func TestFind_ReadsAKeptModelReplyBackWhole(t *testing.T) {
 func TestFind_ReportsAKeyNobodyHolds(t *testing.T) {
 	t.Parallel()
 
-	ledger := New(Params{Logger: zap.NewNop(), Repo: &fakeStepRepo{}})
+	ledger := newLedger(&fakeStepRepo{})
 
 	_, ok, err := ledger.Find(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
 		Kind: agentruntimeports.RunStepOwnerAgentRun,
@@ -413,10 +414,7 @@ func TestFind_ReportsAKeyNobodyHolds(t *testing.T) {
 func TestFind_ReportsAFailedRead(t *testing.T) {
 	t.Parallel()
 
-	ledger := New(Params{
-		Logger: zap.NewNop(),
-		Repo:   &fakeStepRepo{getErr: errors.New("connection reset")},
-	})
+	ledger := newLedger(&fakeStepRepo{getErr: errors.New("connection reset")})
 
 	_, ok, err := ledger.Find(t.Context(), pagination.TenantInfo{}, agentruntimeports.RunStepOwner{
 		Kind: agentruntimeports.RunStepOwnerAgentRun,
@@ -430,7 +428,7 @@ func TestRecord_DropsAModelReplyTooLargeToKeep(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeStepRepo{}
-	ledger := New(Params{Logger: zap.NewNop(), Repo: repo})
+	ledger := newLedger(repo)
 	owner := pulid.MustNew("atrn_")
 	step := modelReplyStep(owner, strings.Repeat("x", maxStoredOutcomeChars+1))
 
@@ -450,4 +448,8 @@ func TestRecord_DropsAModelReplyTooLargeToKeep(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, ok)
 	assert.Nil(t, found.Outcome.Reply, "a replay finds nothing to hand back and asks the model")
+}
+
+func newLedger(repo agentruntimeports.AgentRunStepRepository) agentruntimeports.RunStepLedger {
+	return New(Params{Logger: zap.NewNop(), Repo: repo, Metrics: &metrics.Registry{}})
 }

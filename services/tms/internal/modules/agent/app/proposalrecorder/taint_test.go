@@ -51,7 +51,7 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	_, err := NewWithStores(nil, runs, store).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(runs, store).Record(t.Context(), &RecordRequest{
 		Evidence: messageEvidence,
 		Actor:    actor,
 		Open: &OpenRunRequest{
@@ -109,7 +109,7 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 	t.Parallel()
 
 	runs := &openedRuns{}
-	_, err := NewWithStores(nil, runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
 		Evidence: messageEvidence,
 		Actor: &permissionports.RequestActor{
 			OrganizationID: pulid.MustNew("org_"),
@@ -138,7 +138,7 @@ func TestRecord_KeepsWhatAnAutomaticMoneyWriteMovedWithItsCurrency(t *testing.T)
 
 	store := &capturingStore{}
 	moved, unpriced := int64(12_500), int64(900)
-	_, err := NewWithStores(nil, &openedRuns{}, store).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(&openedRuns{}, store).Record(t.Context(), &RecordRequest{
 		Evidence: messageEvidence,
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,

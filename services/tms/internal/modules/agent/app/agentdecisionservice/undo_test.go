@@ -386,6 +386,8 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 		ProposalRepo: proposals,
 		Permissions:  &agenttest.StubPermissions{},
 		AuditService: traceAudit{},
+		Runs:         runs,
+		Versions:     &traceVersions{versions: []int64{3}},
 	})
 
 	return &windowHarness{
@@ -400,6 +402,11 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 			executor:     executor,
 			audit:        traceAudit{},
 			activity:     activity,
+			previews:     &stalePreviews{},
+			watchtower:   agenttest.QuietWatchtower{},
+			followUps:    agenttest.QuietFollowUps{},
+			trust:        quietTrust{},
+			memories:     quietMemories{},
 		},
 		controls:  controls,
 		proposals: proposals,

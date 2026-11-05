@@ -1,6 +1,7 @@
 package ediservicetest
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -124,6 +125,9 @@ type Services struct {
 }
 
 func New(d Deps) *Services {
+	if d.Metrics == nil {
+		d.Metrics = DisabledMetrics()
+	}
 	s := &Services{}
 	s.Alerts = edialert.New(edialert.Params{
 		Logger:        d.Logger,
@@ -298,4 +302,13 @@ func New(d Deps) *Services {
 		WorkflowStarter:  d.WorkflowStarter,
 	})
 	return s
+}
+
+func DisabledMetrics() *metrics.Registry {
+	registry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
+	if err != nil {
+		panic(err)
+	}
+
+	return registry
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,6 +41,17 @@ func (b *orphanBaselines) PurgeOrphans(
 	return 3, b.err
 }
 
+type noPlansToExpire struct {
+	agentplanports.AgentPlanRepository
+}
+
+func (noPlansToExpire) ExpirePending(
+	context.Context,
+	agentplanports.ExpireAgentPlansRequest,
+) (int, error) {
+	return 0, nil
+}
+
 // A retried dispatch mints a new proposal id and leaves the first attempt's
 // baseline behind. The expiry sweep removes baselines past the age at which
 // their proposal would have been filed.
@@ -51,6 +63,7 @@ func TestExpireStaleProposalsActivity_PurgesBaselinesNoProposalWasFiledFor(t *te
 		logger:       zap.NewNop(),
 		proposalRepo: &sweptProposals{expired: 2},
 		baselines:    baselines,
+		plans:        noPlansToExpire{},
 	}
 
 	now := int64(1_800_000_000)
@@ -70,6 +83,7 @@ func TestExpireStaleProposalsActivity_APurgeThatFailsDoesNotFailTheSweep(t *test
 		logger:       zap.NewNop(),
 		proposalRepo: &sweptProposals{expired: 1},
 		baselines:    &orphanBaselines{err: errors.New("database unavailable")},
+		plans:        noPlansToExpire{},
 	}
 
 	result, err := a.ExpireStaleProposalsActivity(t.Context(), &ExpireStaleProposalsInput{

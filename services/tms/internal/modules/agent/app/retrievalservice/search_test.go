@@ -106,6 +106,12 @@ func (f *fakeAccess) ShowsRecordText(_ context.Context, resource permission.Reso
 	return !f.textHidden[resource]
 }
 
+func noProviderVectors() *fakeVectorizer {
+	return &fakeVectorizer{
+		vector: retrievalports.UnavailableQueryVector(airetrieval.UnavailableReasonNoProvider),
+	}
+}
+
 func newTestSearcher(
 	repo *fakeRetrievalRepo,
 	sources *fakeSources,
@@ -203,7 +209,7 @@ func TestSearchDocumentsDropsWhatTheCallerMayNotRead(t *testing.T) {
 		},
 	}
 	access := &fakeAccess{unreadable: map[permission.Resource]bool{permission.ResourceWorker: true}}
-	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, noProviderVectors())
 
 	result, err := searcher.SearchDocuments(t.Context(), searchRequest("load 4471", access))
 	require.NoError(t, err)
@@ -224,7 +230,7 @@ func TestSearchDocumentsFailsClosedWhenAccessCannotBeChecked(t *testing.T) {
 		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: shipment.Document.ID}},
 	}
 	access := &fakeAccess{readErr: errors.New("thread owners unavailable")}
-	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, noProviderVectors())
 
 	result, err := searcher.SearchDocuments(t.Context(), searchRequest("load 4471", access))
 	require.ErrorContains(t, err, "thread owners unavailable")
@@ -239,7 +245,7 @@ func TestSearchDocumentsBuildsSnippetsOnlyFromVisibleFields(t *testing.T) {
 		documents: []*retrievalports.RetrievalDocumentSource{doc},
 		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
 	}
-	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, noProviderVectors())
 
 	hidden := &fakeAccess{
 		hidden:     map[string]bool{"document.originalName": true},
@@ -266,7 +272,7 @@ func TestSearchDocumentsWithoutDocumentAccessFindsNothing(t *testing.T) {
 		documents: []*retrievalports.RetrievalDocumentSource{doc},
 		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
 	}
-	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, noProviderVectors())
 
 	result, err := searcher.SearchDocuments(t.Context(), searchRequest("anything",
 		&fakeAccess{unreadable: map[permission.Resource]bool{permission.ResourceDocument: true}}))
@@ -360,7 +366,7 @@ func TestSearchInboundMessagesRespectsFieldVisibility(t *testing.T) {
 		messages: []*inboundmessage.InboundMessage{message},
 		keyword:  []retrievalports.RetrievalKeywordHit{{SourceID: message.ID}},
 	}
-	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, noProviderVectors())
 
 	result, err := searcher.SearchInboundMessages(
 		t.Context(),
@@ -422,7 +428,7 @@ func TestSearchInboundMessagesKeepsOnlyMailInsideTheFilter(t *testing.T) {
 			{SourceID: waiting.ID, Rank: 0.5},
 		},
 	}
-	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, noProviderVectors())
 	filter := retrievalports.InboundMessageFilter{
 		Statuses:       []inboundmessage.Status{inboundmessage.StatusInReview},
 		Classification: inboundmessage.ClassificationTender,

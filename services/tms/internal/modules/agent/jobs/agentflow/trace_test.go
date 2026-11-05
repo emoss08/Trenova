@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
@@ -52,7 +53,7 @@ func openDelegateEnv(t *testing.T, opener DelegateOpener) *testsuite.TestActivit
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestActivityEnvironment()
-	rt := agentruntime.New(agentruntime.Params{
+	rt := assistanttest.Runtime(agentruntime.Params{
 		Logger:      zap.NewNop(),
 		Completion:  &agenttest.ScriptedCompletion{},
 		QueryTools:  &agenttest.StubQueryRegistry{},
@@ -95,7 +96,7 @@ func TestOpenDelegateActivity_TracesTheOpeningAndLinksToTheDelegatesTrace(t *tes
 
 	in := delegateInput(t)
 	env := openDelegateEnv(t, &scriptedOpener{
-		runtime: agentruntime.New(agentruntime.Params{
+		runtime: assistanttest.Runtime(agentruntime.Params{
 			Logger:      zap.NewNop(),
 			Completion:  &agenttest.ScriptedCompletion{},
 			QueryTools:  &agenttest.StubQueryRegistry{},
@@ -142,7 +143,7 @@ func TestModelCallActivity_TellsTheCompletionWhichAttemptItIs(t *testing.T) {
 
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestActivityEnvironment()
-	rt := agentruntime.New(agentruntime.Params{
+	rt := assistanttest.Runtime(agentruntime.Params{
 		Logger: zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{
 			Turns: []*llmports.ChatCompletionResult{textReply("Done.")},

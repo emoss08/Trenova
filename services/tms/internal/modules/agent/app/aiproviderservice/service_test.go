@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -78,8 +79,18 @@ func newTestService(repo *fakeProviderRepo, prober *fakeProber) *Service {
 		encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 		),
-		prober: prober,
+		prober:    prober,
+		keys:      &recordingKeys{},
+		analytics: quietAnalytics{},
 	}
+}
+
+type quietAnalytics struct {
+	aianalyticsports.AnalyticsCache
+}
+
+func (quietAnalytics) BumpEpoch(context.Context, pagination.TenantInfo) error {
+	return nil
 }
 
 func testProvider(t *testing.T, svc *Service) *aiprovider.Provider {

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentimportchatports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -126,7 +127,9 @@ func TestGetHistoryIncludesCompletedConversationMetadata(t *testing.T) {
 	}.Encode()
 
 	svc := &Service{
-		logger: zap.NewNop(),
+		logger:        zap.NewNop(),
+		pageThreads:   noPageThreads{},
+		chatCacheRepo: &chatCacheRepoStub{},
 		chatRepo: &chatRepoStub{
 			getConversationByDocumentFn: func(_ context.Context, req shipmentimportchatports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error) {
 				require.Equal(t, shipmentimportchat.ConversationStatus(""), req.Status)
@@ -199,7 +202,8 @@ func TestCompleteHistoryMarksConversationCompletedAndClearsCache(t *testing.T) {
 	)
 
 	svc := &Service{
-		logger: zap.NewNop(),
+		logger:      zap.NewNop(),
+		pageThreads: noPageThreads{},
 		chatRepo: &chatRepoStub{
 			getConversationByDocumentFn: func(context.Context, shipmentimportchatports.GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error) {
 				return nil, errors.New("unexpected GetConversationByDocument call")
@@ -236,3 +240,14 @@ func TestCompleteHistoryMarksConversationCompletedAndClearsCache(t *testing.T) {
 var _ shipmentimportchatports.ShipmentImportChatRepository = (*chatRepoStub)(nil)
 var _ shipmentimportchatports.ShipmentImportChatCacheRepository = (*chatCacheRepoStub)(nil)
 var _ shipmentimportassistantports.ShipmentImportAssistantService = (*Service)(nil)
+
+type noPageThreads struct {
+	conversationports.PageThreadRepository
+}
+
+func (noPageThreads) ArchiveSubjectThreads(
+	context.Context,
+	*conversationports.ArchiveSubjectThreadsRequest,
+) (int, error) {
+	return 0, nil
+}

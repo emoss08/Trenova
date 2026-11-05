@@ -396,6 +396,7 @@ func ediReader(
 			EDIOverviewService: edis.Overview,
 			EDIInboundService: ediinboundservice.New(ediinboundservice.Params{
 				Logger:          logger,
+				Metrics:         ediservicetest.DisabledMetrics(),
 				InboundFileRepo: files,
 				InboundApply:    edis.InboundApply,
 				Outbound:        edis.Outbound,

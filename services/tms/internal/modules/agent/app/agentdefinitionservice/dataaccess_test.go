@@ -102,11 +102,6 @@ func TestCheckDataAccess_RefusesWhenThePersonCannotBeRead(t *testing.T) {
 		permissions: &sensitivityEngine{err: errors.New("cache down")}}
 	require.Error(t, failing.checkDataAccess(t.Context(),
 		withDataAccess(agentdefinition.DataAccessRestricted), nil, personActor()))
-
-	unwired := &Service{l: zap.NewNop()}
-	require.Error(t, unwired.checkDataAccess(t.Context(),
-		withDataAccess(agentdefinition.DataAccessRestricted), nil, personActor()),
-		"with nothing to check against, nobody may raise an agent")
 }
 
 func TestApply_KeepsTheDataAccessWhenARequestLeavesItOut(t *testing.T) {

@@ -91,19 +91,6 @@ func TestDecide_AGatedRejectionNeedsNoDigest(t *testing.T) {
 	require.NotNil(t, h.decisions.created)
 }
 
-func TestDecide_AGatedApprovalWithNothingToPreviewItIsRefused(t *testing.T) {
-	t.Parallel()
-
-	h, _ := previewHarness(t, &fakePreviews{digest: strings.Repeat("d", 64)})
-	h.service.previews = nil
-	h.proposals.proposal.EgressClass = agent.EgressDriverVisible
-
-	_, err := decideWith(t, h, agentdecision.DecisionAccepted, strings.Repeat("d", 64))
-
-	require.Error(t, err)
-	assert.True(t, agent.IsReviewRequired(err))
-}
-
 func planStep(
 	h *decideHarness,
 	step *agentpreview.ProposalPreview,
@@ -196,11 +183,8 @@ func TestNeedsReview_AnEditThatChangesWhatTheCallReachesIsReviewed(t *testing.T)
 
 	internal := &agent.AgentProposal{EgressClass: agent.EgressInternal, ToolName: "unknown_tool"}
 
-	assert.False(t, (&Service{}).needsReview(internal, nil))
-	assert.True(t, (&Service{}).needsReview(internal, map[string]any{"visibility": "Customer"}),
-		"without the tool to classify the edit, it is reviewed")
-
 	h := newDecideHarness(t)
+	assert.False(t, h.service.needsReview(internal, nil))
 	assert.True(t, h.service.needsReview(internal, map[string]any{"note": "x"}),
 		"a tool the executor does not hold cannot be classified")
 

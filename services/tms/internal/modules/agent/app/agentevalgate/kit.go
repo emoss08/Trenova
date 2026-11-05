@@ -3,6 +3,8 @@ package agentevalgate
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/accesstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
@@ -65,13 +67,17 @@ func FromTools(
 }
 
 func (k *Kit) NewRuntime(p RuntimeParams) *agentruntime.Service {
+	if p.Scripts == nil {
+		p.Scripts = runtimetest.NoScripts{}
+	}
+
 	return agentruntime.New(agentruntime.Params{
 		Logger:      zap.NewNop(),
 		Completion:  p.Completion,
 		QueryTools:  k.Queries,
 		ActionTools: k.Actions,
 		Permissions: p.Permissions,
-		Access: toolaccess.NewAccess(&toolaccess.AccessParams{
+		Access: accesstest.New(&toolaccess.AccessParams{
 			Logger:      zap.NewNop(),
 			QueryTools:  k.Queries,
 			ActionTools: k.Actions,
@@ -82,5 +88,7 @@ func (k *Kit) NewRuntime(p RuntimeParams) *agentruntime.Service {
 		}),
 		Versions: p.Versions,
 		Scripts:  p.Scripts,
+		Memories: runtimetest.UnusedMemories{},
+		Changes:  runtimetest.NoChanges{},
 	})
 }

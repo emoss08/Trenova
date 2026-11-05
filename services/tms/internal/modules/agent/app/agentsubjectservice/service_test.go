@@ -5,15 +5,17 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,24 +74,6 @@ func TestService_DescribesADocumentByItsDraft(t *testing.T) {
 	assert.Contains(t, subject.Notes, "BOL-778")
 	assert.Contains(t, subject.Notes, attached.String())
 	assert.Contains(t, subject.Notes, "do not create another")
-}
-
-func TestService_DocumentWithoutContentServiceStillHasAnID(t *testing.T) {
-	t.Parallel()
-
-	subjects := &Service{logger: zap.NewNop()}
-	docID := pulid.MustNew("doc_")
-
-	subject, err := subjects.Describe(
-		t.Context(),
-		pagination.TenantInfo{},
-		agent.SubjectDocument,
-		docID,
-	)
-	require.NoError(t, err)
-	assert.Equal(t, docID.String(), subject.ID)
-	assert.Equal(t, "Document", subject.Label)
-	assert.Empty(t, subject.Notes)
 }
 
 type fakeInsightRepo struct {
@@ -162,23 +146,6 @@ func TestService_WarnsWhenTheInsightIsNoLongerActive(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Contains(t, subject.Notes, "no longer active")
-}
-
-func TestService_InsightWithoutRepositoryStillHasAnID(t *testing.T) {
-	t.Parallel()
-
-	subjects := &Service{logger: zap.NewNop()}
-	id := pulid.MustNew("inst_")
-
-	subject, err := subjects.Describe(
-		t.Context(),
-		pagination.TenantInfo{},
-		agent.SubjectInsight,
-		id,
-	)
-	require.NoError(t, err)
-	assert.Equal(t, id.String(), subject.ID)
-	assert.Equal(t, "Insight", subject.Label)
 }
 
 type fakeReceiptService struct {
@@ -290,15 +257,15 @@ func TestService_WarnsWhenTheReceiptIsAlreadyMatched(t *testing.T) {
 	assert.NotContains(t, subject.Notes, "workItem")
 }
 
-func TestService_BankReceiptWithoutServiceStillHasAnID(t *testing.T) {
-	t.Parallel()
+type noCredentials struct {
+	workercredentialports.WorkerCredentialRepository
+}
 
-	id := pulid.MustNew("brcpt_")
-	subject, err := (&Service{logger: zap.NewNop()}).
-		Describe(t.Context(), pagination.TenantInfo{}, agent.SubjectBankReceipt, id)
-	require.NoError(t, err)
-	assert.Equal(t, id.String(), subject.ID)
-	assert.Equal(t, "Bank receipt", subject.Label)
+func (noCredentials) ListForWorker(
+	context.Context,
+	*workercredentialports.ListWorkerCredentialsRequest,
+) ([]*workercredential.WorkerCredential, error) {
+	return nil, nil
 }
 
 type fakeWorkers struct {
@@ -328,7 +295,8 @@ func TestService_DescribesADriverWithoutTheirLicenceNumber(t *testing.T) {
 				LicenseExpiry: 1893456000,
 			},
 		}},
-		logger: zap.NewNop(),
+		credentials: noCredentials{},
+		logger:      zap.NewNop(),
 	}
 
 	subject, err := subjects.Describe(

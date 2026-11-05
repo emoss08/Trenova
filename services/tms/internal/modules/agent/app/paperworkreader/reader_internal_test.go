@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -116,9 +118,10 @@ func TestRead_WritesOnlyTheFactsAndNeverOverAPersons(t *testing.T) {
 
 	repo := &documents{doc: pendingPaperwork()}
 	reader := &Reader{
-		harness:   nova{text: `{"signedBy":"Dana Cole","documentKind":"ProofOfDelivery"}`},
-		documents: repo,
-		l:         zap.NewNop(),
+		harness:      nova{text: `{"signedBy":"Dana Cole","documentKind":"ProofOfDelivery"}`},
+		documents:    repo,
+		accessorials: noAccessorials{},
+		l:            zap.NewNop(),
 	}
 
 	require.NoError(t, reader.Read(t.Context(), repo.doc.ID, pagination.TenantInfo{}, pulid.Nil))
@@ -140,7 +143,9 @@ func TestRead_LeavesTheDocumentWithoutRetryingWhenNovaCannotRead(t *testing.T) {
 			t.Parallel()
 
 			repo := &documents{doc: pendingPaperwork()}
-			reader := &Reader{harness: harness, documents: repo, l: zap.NewNop()}
+			reader := &Reader{
+				harness: harness, documents: repo, accessorials: noAccessorials{}, l: zap.NewNop(),
+			}
 
 			require.NoError(
 				t,
@@ -150,4 +155,15 @@ func TestRead_LeavesTheDocumentWithoutRetryingWhenNovaCannotRead(t *testing.T) {
 			assert.Empty(t, repo.recorded)
 		})
 	}
+}
+
+type noAccessorials struct {
+	accessorialchargeports.AccessorialChargeRepository
+}
+
+func (noAccessorials) ListCatalog(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*accessorialcharge.AccessorialCharge, error) {
+	return nil, nil
 }

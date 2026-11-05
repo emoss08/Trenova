@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -51,8 +52,9 @@ func budgetService(control *agentqualitycontrol.Control, usage *windowedUsage, n
 	return &Engine{
 		l: zap.NewNop(),
 		settings: agentqualitysettings.New(agentqualitysettings.Params{
-			Logger:   zap.NewNop(),
-			Controls: &budgetControls{control: control},
+			Logger:        zap.NewNop(),
+			Controls:      &budgetControls{control: control},
+			Organizations: &agenttest.StubOrganizations{},
 		}),
 		usage: usage,
 		now:   func() int64 { return now },

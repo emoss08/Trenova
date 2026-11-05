@@ -66,3 +66,25 @@ func (b *StubMoneyBudgets) CheckTool(
 func (b *StubMoneyBudgets) WithinBusinessHours(context.Context, *agentdefinition.Definition) bool {
 	return true
 }
+
+func (b *StubMoneyBudgets) CheckRun(
+	context.Context,
+	*agentdefinition.Definition,
+) (agentbudgetports.BudgetRefusal, error) {
+	return agentbudgetports.BudgetRefusal{}, nil
+}
+
+func (b *StubMoneyBudgets) Status(
+	context.Context,
+	*agentdefinition.Definition,
+) (*agentbudgetports.AgentBudgetStatus, error) {
+	if b.Err != nil {
+		return nil, b.Err
+	}
+
+	return &agentbudgetports.AgentBudgetStatus{SpentUSD: "0.00"}, nil
+}
+
+func (b *StubMoneyBudgets) Timezone(context.Context, *agentdefinition.Definition) string {
+	return ""
+}

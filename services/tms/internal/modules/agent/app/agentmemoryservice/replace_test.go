@@ -44,12 +44,12 @@ func (f *replacingRepo) SetStatus(
 }
 
 func replacingService(repo *replacingRepo) *Service {
-	return &Service{
+	return wired(&Service{
 		l:       zap.NewNop(),
 		repo:    repo,
 		runs:    &fakeRuns{run: &agent.AgentRun{}},
 		labeler: &fakeLabeler{},
-	}
+	})
 }
 
 func newReplacingRepo(memories ...*agentmemory.Memory) *replacingRepo {

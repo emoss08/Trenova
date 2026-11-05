@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
@@ -146,11 +147,16 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 	decider := &executingDecider{steps: proposals}
 	decider.failAt = proposals.steps[2].ID
 	svc := &Service{
-		l:         zap.NewNop(),
-		plans:     &plans.fakePlans,
-		proposals: &proposals.fakeSteps,
-		decisions: decider,
-		shadow:    fakeShadow{},
+		l:          zap.NewNop(),
+		plans:      &plans.fakePlans,
+		proposals:  &proposals.fakeSteps,
+		decisions:  decider,
+		shadow:     fakeShadow{},
+		activity:   &announcedPlans{},
+		watchtower: agenttest.QuietWatchtower{},
+		followUps:  agenttest.QuietFollowUps{},
+		previews:   &fakePreviews{},
+		audit:      &recordedAudit{},
 	}
 
 	plan, err := svc.Decide(t.Context(), &agentplanports.DecideAgentPlanRequest{

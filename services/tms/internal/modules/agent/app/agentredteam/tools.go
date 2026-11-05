@@ -6,15 +6,21 @@ import (
 	"reflect"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/reflectutils"
 	"go.uber.org/zap"
 )
@@ -42,9 +48,13 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 			MessageRepo: &inboundMessageRepository{desk: desk},
 		}),
 		memories: agentmemoryservice.New(agentmemoryservice.Params{
-			Logger: zap.NewNop(),
-			Repo:   &memoryRepository{rec: rec},
-			Runs:   &runRepository{rec: rec},
+			Logger:       zap.NewNop(),
+			Repo:         &memoryRepository{rec: rec},
+			Runs:         &runRepository{rec: rec},
+			Permissions:  noMemoryManagers{},
+			Indexer:      unindexedMemories{},
+			Ranker:       agentmemoryrank.NewRecencyRanker(),
+			AuditService: quietAudit{},
 		}),
 		shipments: &shipmentDesk{rec: rec, response: responses["shipment_get"]},
 		comments:  &commentDesk{rec: rec, response: responses["shipment_get"]},
@@ -306,4 +316,36 @@ type recordingSplitter struct {
 
 func (a *recordingSplitter) SplitRecords(params map[string]any) ([]map[string]any, error) {
 	return a.splitter.SplitRecords(params)
+}
+
+type noMemoryManagers struct {
+	permissionports.PermissionEngine
+}
+
+func (noMemoryManagers) Check(
+	context.Context,
+	*permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{}, nil
+}
+
+type unindexedMemories struct {
+	retrievalports.RetrievalIndexer
+}
+
+func (unindexedMemories) MarkStale(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+	...pulid.ID,
+) error {
+	return nil
+}
+
+type quietAudit struct {
+	auditports.AuditService
+}
+
+func (quietAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+	return nil
 }

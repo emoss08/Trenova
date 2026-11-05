@@ -36,7 +36,7 @@ func recordOne(t *testing.T, action agentruntimeports.PendingAction) *agent.Agen
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
+	_, err := recorderOn(nil, store).Record(t.Context(), &RecordRequest{
 		Actor:    actor,
 		Run:      &agent.AgentRun{ID: pulid.MustNew("arun_")},
 		Actions:  []agentruntimeports.PendingAction{action},

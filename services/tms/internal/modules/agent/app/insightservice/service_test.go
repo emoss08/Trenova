@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
@@ -228,6 +229,7 @@ func newService(repo *stubRepo, perms *stubPermissions, ds ...detector.Detector)
 		detectors:   detector.NewRegistry(ds...),
 		narrator:    silentNarrator(),
 		permissions: perms,
+		watchtower:  agenttest.QuietWatchtower{},
 	}
 }
 

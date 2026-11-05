@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/replaytest"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -23,7 +24,7 @@ const (
 )
 
 func loopReplayRuntime() *agentruntime.Service {
-	return agentruntime.New(agentruntime.Params{
+	return assistanttest.Runtime(agentruntime.Params{
 		Logger:     zap.NewNop(),
 		Completion: &agenttest.ScriptedCompletion{},
 		QueryTools: &agenttest.StubQueryRegistry{

@@ -15,7 +15,6 @@ func TestStartForDefinitionRefusesBackgroundRunsThePlanRestricts(t *testing.T) {
 	t.Parallel()
 
 	workflows := kernelportsmock.NewMockWorkflowStarter(t)
-	workflows.EXPECT().Enabled().Return(true)
 	svc := &Service{
 		workflows: workflows,
 		plans:     plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
