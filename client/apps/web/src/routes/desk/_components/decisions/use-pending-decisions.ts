@@ -1,12 +1,10 @@
 import {
-  DecideAgentProposalsDocument,
   PendingDecisionsDocument,
   PendingDecisionSummaryDocument,
   PendingPlanFieldsFragmentDoc,
   PendingProposalFieldsFragmentDoc,
   PlanStepsDocument,
   RecentDecisionsDocument,
-  type DecideAgentProposalsInput,
   type PendingPlanFieldsFragment,
   type PendingProposalFieldsFragment,
   type PendingDecisionsInput,
@@ -178,14 +176,4 @@ export function usePlanSteps(planId: string | null) {
         getFragmentData(PendingProposalFieldsFragmentDoc, edge.node),
       ),
   });
-}
-
-export async function decideAgentProposals(ids: string[], input: DecideAgentProposalsInput) {
-  const data = await requestGraphQL({
-    document: DecideAgentProposalsDocument,
-    operationName: "DecideAgentProposals",
-    variables: { ids, input },
-  });
-
-  return data.decideAgentProposals;
 }

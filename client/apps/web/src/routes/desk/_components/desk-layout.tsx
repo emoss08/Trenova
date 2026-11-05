@@ -30,6 +30,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
+import { isTypingTarget } from "@/lib/dom";
+import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useStartConversation } from "@/components/assistant/use-start-conversation";
@@ -539,14 +542,31 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || !(event.metaKey || event.ctrlKey) || event.altKey) {
+      if (event.defaultPrevented) {
+        return;
+      }
+      // ? lists the Desk's keys from anywhere outside a text box.
+      if (
+        event.key === "?" &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        !isTypingTarget(event.target)
+      ) {
+        event.preventDefault();
+        useAppDialogsStore.getState().setDialogOpen("shortcuts", true);
+        return;
+      }
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) {
         return;
       }
       const key = event.key.toLowerCase();
       if (key === "k") {
         event.preventDefault();
         setSearching((open) => !open);
-      } else if (key === "n" && !event.shiftKey) {
+      } else if (key === "o" && event.shiftKey) {
+        // Ctrl+N belongs to the browser, which opens a window and never hands
+        // the key to the page.
         event.preventDefault();
         void navigate("/desk");
       } else if (key === "\\" && activeThread !== null) {
@@ -694,7 +714,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
               activeThread && renameMutation.mutate({ thread: activeThread, title })
             }
           />
-          <Outlet />
+          {/* The page's main landmark; `contents` keeps the column's layout as it was. */}
+          <main className="contents">
+            <Outlet />
+          </main>
+          <KeyboardShortcutsDialog />
           {/* Over the main column only, as designed: the sidebar stays in view. */}
           {searching && (
             <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />

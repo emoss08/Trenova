@@ -246,7 +246,7 @@ func (v *Validator) ValidateCreateWithAdvisories(
 	shipmentnormalize.EntryMethod(entity, nil)
 	shipmentnormalize.FreightTerms(entity, nil)
 
-	base := v.validator.ValidateCreate(ctx, entity)
+	base := withMoveChronology(v.validator.ValidateCreate(ctx, entity), nil, entity)
 	timeline := shipmenttimeline.ValidateResourceActualTimeline(
 		ctx,
 		v.assignmentRepo,
@@ -266,7 +266,7 @@ func (v *Validator) ValidateUpdate(
 	shipmentnormalize.FreightTerms(entity, nil)
 
 	return errortypes.MergeMultiErrors(
-		v.validator.ValidateUpdate(ctx, entity),
+		withMoveChronology(v.validator.ValidateUpdate(ctx, entity), nil, entity),
 		shipmenttimeline.ValidateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, false),
 	)
 }
@@ -288,7 +288,7 @@ func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 	shipmentnormalize.EntryMethod(entity, original)
 	shipmentnormalize.FreightTerms(entity, original)
 
-	base := v.validator.ValidateUpdate(ctx, entity)
+	base := withMoveChronology(v.validator.ValidateUpdate(ctx, entity), original, entity)
 	timeline := shipmenttimeline.ValidateResourceActualTimeline(
 		ctx,
 		v.assignmentRepo,

@@ -2,6 +2,7 @@ import {
   CommitMyDecisionNowDocument,
   DecideAgentPlanDocument,
   DecideAgentProposalDocument,
+  DecideAgentProposalsDocument,
   DecideMyPlanDocument,
   DecideMyProposalDocument,
   DecideMyProposalsDocument,
@@ -26,6 +27,21 @@ export async function decideAgentProposal(id: string, input: AgentProposalDecisi
   });
 
   return data.decideAgentProposal;
+}
+
+/**
+ * Decides several proposals of one tool as an approver, each with its own outcome: the
+ * Desk's decisions queue approving a batch, and the shipment board approving the coverage
+ * it just asked Nova to propose.
+ */
+export async function decideAgentProposals(ids: string[], input: DecideAgentProposalsInput) {
+  const data = await requestGraphQL({
+    document: DecideAgentProposalsDocument,
+    operationName: "DecideAgentProposals",
+    variables: { ids, input },
+  });
+
+  return data.decideAgentProposals;
 }
 
 /**

@@ -60,6 +60,7 @@ import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-worksp
 import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
 import { DeskReportPreviewBody } from "./kinds/report/desk-report-preview-body";
 import { DeskTableBody, versionNote } from "./kinds/table/desk-table-body";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 /** The extraction card is its own chunk: its viewer and list load the first time one is opened. */
 const extractionBody = lazyComponent(
@@ -220,7 +221,7 @@ function ArtStack({
           <span>{t("Search everything this conversation made")}</span>
         </span>
         <span className="dk-kbd" aria-hidden>
-          ⌘J
+          {formatShortcut("J")}
         </span>
       </Button>
     </div>

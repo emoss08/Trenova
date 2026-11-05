@@ -23,6 +23,8 @@ import (
 
 const proposalEntity = "AgentProposal"
 
+const failedPerTargetLimit = 3
+
 var proposalErrors = dberror.Mapping{Entity: proposalEntity}
 
 type Params struct {
@@ -483,5 +485,115 @@ func (r *repository) ListByRun(
 		}
 
 		return rows, nil
+	})
+}
+
+func (r *repository) ReplacePendingForTargets(
+	ctx context.Context,
+	req *agentproposalports.ReplaceTargetedProposalsRequest,
+) ([]*agent.AgentProposal, error) {
+	if len(req.Proposals) == 0 {
+		return []*agent.AgentProposal{}, nil
+	}
+
+	runID := req.Proposals[0].RunID
+	targets := make([]pulid.ID, 0, len(req.Proposals))
+	for _, proposal := range req.Proposals {
+		if proposal.RunID != runID || proposal.ToolName != req.ToolName ||
+			proposal.TargetResource != req.TargetResource || proposal.TargetID.IsNil() {
+			return nil, fmt.Errorf(
+				"replace targeted proposals: every proposal must be of run %s, tool %s and name a %s",
+				runID, req.ToolName, req.TargetResource,
+			)
+		}
+		targets = append(targets, proposal.TargetID)
+	}
+
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
+		p := agentdb.AgentProposals
+		if _, err := p.Where(
+			p.Status.Eq(agent.ProposalStatusPending),
+			p.ToolName.Eq(req.ToolName),
+			p.TargetResource.Eq(req.TargetResource),
+			p.TargetID.In(targets...),
+			p.RunID.Ne(runID),
+		).Update(ctx, r.db.Keel(ctx),
+			p.Status.To(agent.ProposalStatusSuperseded),
+			p.PendingModifications.ToNull(),
+			keepVersion(),
+		); err != nil {
+			r.l.Error("failed to supersede earlier pending proposals",
+				zap.String("tool", req.ToolName), zap.Error(err))
+
+			return nil, fmt.Errorf("supersede pending proposals for targets: %w", err)
+		}
+
+		if err := p.CreateMany(ctx, r.db.Keel(ctx), req.Proposals); err != nil {
+			r.l.Error("failed to create targeted proposals",
+				zap.String("tool", req.ToolName), zap.Error(err))
+
+			return nil, proposalErrors.Map(err, runID.String())
+		}
+
+		return req.Proposals, nil
+	})
+}
+
+func (r *repository) ListFailedByTargets(
+	ctx context.Context,
+	req *agentproposalports.ListFailedByTargetsRequest,
+) ([]*agent.AgentProposal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
+		if len(req.TargetIDs) == 0 {
+			return []*agent.AgentProposal{}, nil
+		}
+
+		p := agentdb.AgentProposals
+		proposals, err := p.Where(
+			p.Status.Eq(agent.ProposalStatusExecutionFailed),
+			p.ToolName.Eq(req.ToolName),
+			p.TargetResource.Eq(req.TargetResource),
+			p.TargetID.In(req.TargetIDs...),
+		).
+			Order(p.CreatedAt.Desc(), p.ID.Desc()).
+			Limit(len(req.TargetIDs)*failedPerTargetLimit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list failed proposals by target", zap.Error(err))
+
+			return nil, fmt.Errorf("list failed proposals by target: %w", err)
+		}
+
+		return proposals, nil
+	})
+}
+
+func (r *repository) ListPendingByTargets(
+	ctx context.Context,
+	req *agentproposalports.ListPendingByTargetsRequest,
+) ([]*agent.AgentProposal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
+		if len(req.TargetIDs) == 0 {
+			return []*agent.AgentProposal{}, nil
+		}
+
+		p := agentdb.AgentProposals
+		proposals, err := p.Where(
+			p.Status.Eq(agent.ProposalStatusPending),
+			p.ToolName.Eq(req.ToolName),
+			p.TargetResource.Eq(req.TargetResource),
+			p.TargetID.In(req.TargetIDs...),
+			keel.Or(p.ExpiresAt.IsNull(), p.ExpiresAt.Gt(req.Now)),
+		).
+			Order(p.CreatedAt.Desc(), p.ID.Desc()).
+			Limit(len(req.TargetIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list pending proposals by target", zap.Error(err))
+
+			return nil, fmt.Errorf("list pending proposals by target: %w", err)
+		}
+
+		return proposals, nil
 	})
 }

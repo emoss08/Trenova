@@ -18,6 +18,13 @@ interface DispatchConsoleState {
   carrierCancelTarget: DispatchBoardMove | null;
   /** Move the dispatcher is tendering out through a waterfall or spot offers. */
   tenderTarget: DispatchBoardMove | null;
+  /**
+   * Whether the inspector's ranked drivers are open. It holds from move to move, so a
+   * dispatcher who folds them away to read proposals keeps them folded while walking the queue.
+   */
+  candidatesOpen: boolean;
+  /** Whether the inspector's tender history is open; it holds from move to move the same way. */
+  tendersOpen: boolean;
   setDragPreview: (label: string | null) => void;
   openPreflight: (target: PreflightTarget) => void;
   closePreflight: () => void;
@@ -27,6 +34,8 @@ interface DispatchConsoleState {
   closeCarrierCancel: () => void;
   openTender: (move: DispatchBoardMove) => void;
   closeTender: () => void;
+  setCandidatesOpen: (open: boolean) => void;
+  setTendersOpen: (open: boolean) => void;
   reset: () => void;
 }
 
@@ -44,6 +53,8 @@ export const useDispatchConsoleStore = create<DispatchConsoleState>()(
       carrierAssignTarget: null,
       carrierCancelTarget: null,
       tenderTarget: null,
+      candidatesOpen: true,
+      tendersOpen: true,
 
       setDragPreview: (label: string | null) => set({ dragPreview: label }),
       openPreflight: (target: PreflightTarget) => set({ preflight: target, dragPreview: null }),
@@ -54,6 +65,8 @@ export const useDispatchConsoleStore = create<DispatchConsoleState>()(
       closeCarrierCancel: () => set({ carrierCancelTarget: null }),
       openTender: (move: DispatchBoardMove) => set({ tenderTarget: move }),
       closeTender: () => set({ tenderTarget: null }),
+      setCandidatesOpen: (open: boolean) => set({ candidatesOpen: open }),
+      setTendersOpen: (open: boolean) => set({ tendersOpen: open }),
       reset: () =>
         set({
           dragPreview: null,
@@ -61,6 +74,8 @@ export const useDispatchConsoleStore = create<DispatchConsoleState>()(
           carrierAssignTarget: null,
           carrierCancelTarget: null,
           tenderTarget: null,
+          candidatesOpen: true,
+          tendersOpen: true,
         }),
     }),
     { name: "dispatch-console" },

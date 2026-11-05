@@ -7,10 +7,33 @@ import {
   fetchWatchtowerItem,
   type WatchtowerPage,
 } from "@/lib/graphql/watchtower";
+import type { WatchtowerSourceKind } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { InfiniteData } from "@tanstack/react-query";
 
 type QueryContext = { signal?: AbortSignal };
+
+/**
+ * The exceptions a dispatcher owns once a move is covered: freight slipping, a stop
+ * missed, a truck gone quiet, a tender run dry, a driver out of hours. The dispatch
+ * console reads them from the Watchtower rather than keeping a list of its own.
+ */
+export const DISPATCH_EXCEPTION_KINDS: WatchtowerSourceKind[] = [
+  "EtaAtRisk",
+  "MissedPickup",
+  "MissedDelivery",
+  "NoCheckCall",
+  "TenderExhausted",
+  "HOSViolation",
+];
+
+const DISPATCH_EXCEPTIONS_FILTER: WatchtowerFilter = {
+  kinds: DISPATCH_EXCEPTION_KINDS,
+  statuses: ["Open", "Acknowledged", "InProgress"],
+  unresolvedOnly: true,
+  orderByDue: true,
+  first: 50,
+};
 
 export const watchtower = createQueryKeys("watchtower", {
   counts: () => ({
@@ -31,6 +54,11 @@ export const watchtower = createQueryKeys("watchtower", {
   item: (id: string) => ({
     queryKey: [id],
     queryFn: ({ signal }: QueryContext) => fetchWatchtowerItem(id, { signal }),
+  }),
+  dispatchExceptions: () => ({
+    queryKey: ["dispatch-exceptions"],
+    queryFn: ({ signal }: QueryContext) =>
+      fetchWatchtowerFeed(DISPATCH_EXCEPTIONS_FILTER, { signal }),
   }),
 });
 

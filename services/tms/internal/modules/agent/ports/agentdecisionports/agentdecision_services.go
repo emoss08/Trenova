@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -56,7 +57,7 @@ type DecisionOutcome struct {
 func (o *DecisionOutcome) Result(proposalID pulid.ID) AgentProposalDecisionResult {
 	result := AgentProposalDecisionResult{ProposalID: proposalID, Decision: o.Decision}
 	if o.ExecutionError != nil {
-		result.Error = o.ExecutionError.Error()
+		result.Error = errortypes.Summary(o.ExecutionError)
 		result.Refused = errors.Is(o.ExecutionError, agentplan.ErrTargetChanged)
 
 		return result

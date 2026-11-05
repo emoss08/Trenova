@@ -9,8 +9,13 @@ export function normalizeFieldPath(field: string): string {
 type RegisteredField = { _f?: unknown };
 
 // Structural rather than Control<T>: react-hook-form's Control carries an invariant
-// transformed-values generic, and this only ever reads the registry.
-export type FieldRegistry = { _fields?: Record<string, unknown> };
+// transformed-values generic, and this only ever reads the registry, the values and
+// whether the form validates with a resolver.
+export type FieldRegistry = {
+  _fields?: Record<string, unknown>;
+  _formValues?: unknown;
+  _options?: { resolver?: unknown };
+};
 
 // isRegisteredLeaf answers the only question that matters before calling setError: is
 // there an input mounted against this exact path?
@@ -46,6 +51,76 @@ export function isRegisteredLeaf(control: FieldRegistry, path: string): boolean 
   return node !== null && typeof node === "object" && (node as RegisteredField)._f !== undefined;
 }
 
+// The parts of each form that a component shows every error under, by the path that
+// heads them, each with the number of components showing it. Keyed by the form's
+// control, so a form's surfaces leave with it.
+const errorSurfaces = new WeakMap<object, Map<string, number>>();
+
+/**
+ * Declares that a component shows every error under `prefix` (a form path such as
+ * `moves.0`), whether or not a field is mounted there, until the returned function is
+ * called. A server error on a path under it is then set on that path, where the component
+ * shows it, instead of being sent to the form root.
+ *
+ * A move card is one: it says each stop's problems, while the stops' fields mount only in
+ * the move editor.
+ */
+export function addErrorSurface(control: object, prefix: string): () => void {
+  let surfaces = errorSurfaces.get(control);
+  if (!surfaces) {
+    surfaces = new Map();
+    errorSurfaces.set(control, surfaces);
+  }
+  surfaces.set(prefix, (surfaces.get(prefix) ?? 0) + 1);
+  let removed = false;
+  return () => {
+    if (removed) return;
+    removed = true;
+    const count = surfaces.get(prefix) ?? 0;
+    if (count <= 1) surfaces.delete(prefix);
+    else surfaces.set(prefix, count - 1);
+  };
+}
+
+function isUnderErrorSurface(control: object, path: string): boolean {
+  const surfaces = errorSurfaces.get(control);
+  if (!surfaces) return false;
+  for (const prefix of surfaces.keys()) {
+    if (path === prefix || path.startsWith(`${prefix}.`)) return true;
+  }
+  return false;
+}
+
+function valueAt(control: FieldRegistry, path: string): unknown {
+  let node: unknown = control._formValues;
+  for (const segment of path.split(".")) {
+    if (node === null || typeof node !== "object") return undefined;
+    node = (node as Record<string, unknown>)[segment];
+  }
+  return node;
+}
+
+/**
+ * Where a server error on `path` belongs on the form, or null when nothing on the form
+ * would show it and it belongs on the form root.
+ *
+ * A registered leaf shows its own error. A path under an error surface is shown by the
+ * surface: on the path itself for a value, and under `root` for an object or a list, where
+ * react-hook-form keeps an error on a whole (a field array's own error), beside the errors
+ * of the fields inside it. A surface counts only on a form that validates with a resolver:
+ * each submit replaces every error with what the resolver finds, so a server error on a
+ * path no field registers cannot outlive the attempt that earned it. A form validated
+ * field by field would never clear it, and could never be submitted again.
+ */
+export function serverErrorTarget(control: FieldRegistry, path: string): string | null {
+  if (isRegisteredLeaf(control, path)) return path;
+  if (path === "" || !control._options?.resolver || !isUnderErrorSurface(control, path)) {
+    return null;
+  }
+  const value = valueAt(control, path);
+  return value !== null && typeof value === "object" ? `${path}.root` : path;
+}
+
 /**
  * Every message in a form's errors, nested ones included, each once and in the order
  * the form holds them. The form-wide root message is left out: it has its own channel.
@@ -71,8 +146,9 @@ export function fieldErrorMessages(errors: object): string[] {
 }
 
 /**
- * The messages of a server refusal that land on a field of the form, each once. The
- * ones for no field of the form go to the form-wide root instead and are said there.
+ * The messages of a server refusal that land on the form (a field, or a surface that
+ * shows the path), each once. The ones nothing on the form shows go to the form-wide
+ * root instead and are said there.
  */
 export function refusedFieldMessages(
   fieldErrors: readonly { field: string; message: string }[],
@@ -81,7 +157,7 @@ export function refusedFieldMessages(
   return [
     ...new Set(
       fieldErrors
-        .filter((error) => isRegisteredLeaf(registry, normalizeFieldPath(error.field)))
+        .filter((error) => serverErrorTarget(registry, normalizeFieldPath(error.field)) !== null)
         .map((error) => error.message),
     ),
   ];

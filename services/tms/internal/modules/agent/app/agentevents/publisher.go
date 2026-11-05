@@ -42,6 +42,8 @@ type Publisher struct {
 	// depends, through its tools, on services that publish events.
 	attachments   atomic.Pointer[[]agenteventports.AttachmentExtractionObserver]
 	attachmentsMu sync.Mutex
+	// observers are bound the same way, by RegisterEventObservers.
+	observers atomic.Pointer[[]agenteventports.AgentEventObserver]
 }
 
 func New(p Params) *Publisher {
@@ -65,6 +67,25 @@ type ObserverParams struct {
 // extraction is saved.
 func RegisterAttachmentObservers(p ObserverParams) {
 	p.Publisher.ObserveAttachments(p.Observers...)
+}
+
+type EventObserverParams struct {
+	fx.In
+
+	Publisher *Publisher
+	Observers []agenteventports.AgentEventObserver `group:"agent_event_observers"`
+}
+
+// RegisterEventObservers binds the observers told of every event automation
+// may act on.
+func RegisterEventObservers(p EventObserverParams) {
+	observers := make([]agenteventports.AgentEventObserver, 0, len(p.Observers))
+	for _, observer := range p.Observers {
+		if observer != nil {
+			observers = append(observers, observer)
+		}
+	}
+	p.Publisher.observers.Store(&observers)
 }
 
 // ObserveAttachments adds observers told of every document extraction from
@@ -135,6 +156,12 @@ func (p *Publisher) Publish(ctx context.Context, event *agenteventports.AgentEve
 	if !allowed {
 		log.Debug("the organization's plan does not include automated agents; event skipped")
 		return
+	}
+
+	if observers := p.observers.Load(); observers != nil {
+		for _, observer := range *observers {
+			observer.ObserveAgentEvent(ctx, event)
+		}
 	}
 
 	definitions, err := p.definitions.ListEnabledByTrigger(
