@@ -1,6 +1,9 @@
 .git
 **/node_modules
 **/dist
-**/.env
+**/.env*
+**/*.local
 **/tmp
 legacy
+goroutines.txt
+services/tms/config/config.yaml
