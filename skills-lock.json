@@ -23,6 +23,12 @@
       "sourceType": "github",
       "skillPath": "skills/rust-review/SKILL.md",
       "computedHash": "af430a1aeaed47f1052b48ec974a6a5360c4e4f2b26c83f1d4ae0f88ae174e72"
+    },
+    "security-audit": {
+      "source": "cloudflare/security-audit-skill",
+      "sourceType": "github",
+      "skillPath": "skills/security-audit/SKILL.md",
+      "computedHash": "98b97aad2873b3b9a8e064007c25e7827b493ba27fda8bfbdb41dab586767973"
     }
   }
 }
