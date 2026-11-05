@@ -377,6 +377,8 @@ func (h *Handler) downloadSharedDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	c.Header("Cache-Control", "no-store")
+	c.Header("Referrer-Policy", "no-referrer")
 	c.Header("Content-Disposition", result.ContentDisposition)
 	c.Data(http.StatusOK, result.ContentType, result.Body)
 }
