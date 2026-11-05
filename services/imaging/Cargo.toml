@@ -11,6 +11,10 @@ publish.workspace = true
 name = "trenova-imaging"
 path = "src/main.rs"
 
+[[test]]
+name = "code_after_hardening"
+harness = false
+
 [dependencies]
 bytes.workspace = true
 clap.workspace = true

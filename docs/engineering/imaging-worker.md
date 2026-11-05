@@ -92,7 +92,13 @@ Each child is hardened before it reads untrusted input:
   identity changes) and an allow list answering `EPERM` to anything else, with thread-only
   `clone` and `clone3` as `ENOSYS`. `tgkill` reaches only the child itself, `prctl` only names
   threads, and no anonymous memory becomes executable, so a library that generates code at run
-  time can't work in a child;
+  time can't work in a child. A file may still be mapped executable, for the dynamic loader;
+  the child keeps no descriptor for its input once mapped, and a child serves one tenant (see
+  "Tenant isolation"). Refusing that too waits on `tests/code_after_hardening.rs`, which runs
+  every operation (HEIC included) under a filter that kills on any executable file mapping
+  after hardening: while it passes in CI and in the image's test stage, drop the `mmap` rule's
+  file case in `trenova-sandbox`'s `seccomp.rs`; a `SIGSYS` there means a library still loads
+  code and the case stays;
 - rlimits set between fork and exec: address space (3 GiB), lifetime CPU (1 hour), no file
   writes, 64 descriptors, no core dumps; `PR_SET_PDEATHSIG`, checked against the parent's pid
   after it is set;
