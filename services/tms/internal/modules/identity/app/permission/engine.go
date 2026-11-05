@@ -1184,7 +1184,7 @@ func (e *engine) computeAPIKeyPermissions(
 	e.restrictToCreator(resources, creator)
 
 	return &permissionports.CachedPermissions{
-		MaxSensitivity: string(permission.SensitivityRestricted),
+		MaxSensitivity: creator.MaxSensitivity,
 		Resources:      resources,
 		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 	}, key.CreatedByID, nil
@@ -1195,7 +1195,8 @@ func (e *engine) apiKeyCreatorPermissions(
 	creatorID, buID, orgID pulid.ID,
 ) (*permissionports.CachedPermissions, error) {
 	empty := &permissionports.CachedPermissions{
-		Resources: make(map[string]*permissionports.CachedResourcePermission),
+		MaxSensitivity: string(permission.SensitivityPublic),
+		Resources:      make(map[string]*permissionports.CachedResourcePermission),
 	}
 
 	creator, err := e.userRepo.GetTenantMember(ctx, tenantports.GetTenantMemberRequest{
