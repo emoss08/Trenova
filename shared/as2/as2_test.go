@@ -188,6 +188,17 @@ func TestBuildAndParseSignedMDN(t *testing.T) {
 	require.Equal(t, "q1w2e3r4, sha256", parsed.ReceivedContentMIC)
 }
 
+func TestMessageIDMatchesIgnoresAngleBracketsButNotContent(t *testing.T) {
+	t.Parallel()
+
+	require.True(t, MessageIDMatches("<abc@trenova.as2>", "<abc@trenova.as2>"))
+	require.True(t, MessageIDMatches("<abc@trenova.as2>", " abc@trenova.as2 "))
+	require.False(t, MessageIDMatches("<abc@trenova.as2>", "<other@trenova.as2>"))
+	require.False(t, MessageIDMatches("<abc@trenova.as2>", ""))
+	require.False(t, MessageIDMatches("", ""))
+	require.False(t, MessageIDMatches("<>", "<>"))
+}
+
 func TestBuildAndParseErrorMDN(t *testing.T) {
 	t.Parallel()
 

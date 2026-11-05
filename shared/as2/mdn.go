@@ -226,6 +226,11 @@ func ParseMDN(
 	return result, nil
 }
 
+func MessageIDMatches(expected, actual string) bool {
+	expected = strings.Trim(strings.TrimSpace(expected), "<>")
+	return expected != "" && expected == strings.Trim(strings.TrimSpace(actual), "<>")
+}
+
 func IsMDNContentType(contentType string) bool {
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
