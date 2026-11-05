@@ -261,7 +261,11 @@ func decisionLine(proposal *agent.AgentProposal) string {
 		if reason == "" {
 			return fmt.Sprintf("Approved %s, but it failed when it ran.", tool)
 		}
-		return fmt.Sprintf("Approved %s, but it failed when it ran: %s", tool, reason)
+		return fmt.Sprintf(
+			"Approved %s, but it failed when it ran: %s",
+			tool,
+			toolresult.FenceInline(reason),
+		)
 	case agent.ProposalStatusAccepted:
 		return fmt.Sprintf("Approved %s; it is being carried out.", tool)
 	case agent.ProposalStatusModified:
@@ -382,7 +386,7 @@ func planOutcomeLine(plan *agentplan.AgentPlan) string {
 				"were skipped.", title, step)
 		}
 		return fmt.Sprintf("Approved the plan %q, but step %d failed (%s) and the steps after "+
-			"it were skipped.", title, step, reason)
+			"it were skipped.", title, step, toolresult.FenceInline(reason))
 	case agentplan.PlanStatusApproved:
 		return fmt.Sprintf("Approved the plan %q; %d of %d steps have run so far.",
 			title, plan.CompletedSteps, plan.StepCount)
@@ -429,7 +433,7 @@ func DecisionReported(notes []conversation.Message, proposalID, planID pulid.ID)
 func DecisionHeadline(content string) string {
 	line, _, _ := strings.Cut(strings.TrimSpace(content), "\n")
 
-	return strings.TrimSpace(line)
+	return toolresult.UnfenceInline(strings.TrimSpace(line))
 }
 
 // MarkDecisionNote marks the turn's input as the application's note rather

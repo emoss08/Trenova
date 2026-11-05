@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -177,7 +178,7 @@ func proposalOutcomeText(toolName string, outcome *agentruntimeports.ProposalOut
 			"%s but it FAILED when it ran: %s\n"+
 				"Nothing was changed. Fix what the failure names before proposing again, "+
 				"and tell the person the change did not go through.",
-			subject, stringutils.Ellipsize(reason, maxExecutionErrorChars),
+			subject, toolresult.FenceInline(stringutils.Ellipsize(reason, maxExecutionErrorChars)),
 		)
 	case agent.ProposalStatusRejected:
 		return fmt.Sprintf(

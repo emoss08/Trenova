@@ -422,7 +422,7 @@ func writeToolMessage(b *strings.Builder, m *conversation.Message, trimmed bool)
 		writeText(b, message)
 		return
 	}
-	writeText(b, m.Content)
+	writeText(b, toolresult.UnfenceInline(m.Content))
 }
 
 func writeTrimmed(b *strings.Builder, trimmed bool) {

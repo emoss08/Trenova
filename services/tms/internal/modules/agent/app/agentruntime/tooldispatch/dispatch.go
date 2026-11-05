@@ -382,7 +382,7 @@ func validateCall(
 		vErr.Error(),
 		"Tool %q was not %s, because it would fail as called: %s\n"+
 			"Fix the call and try again.",
-		p.call.Name, verb, vErr.Error(),
+		p.call.Name, verb, toolresult.FenceInline(vErr.Error()),
 	), true
 }
 
@@ -482,7 +482,7 @@ func unresolvedSelection(toolName, verb string, err error) toolcall.Result {
 		err.Error(),
 		"Tool %q was not %s: its selection could not be resolved to records: %s\n"+
 			"Fix the call and try again.",
-		toolName, verb, err.Error(),
+		toolName, verb, toolresult.FenceInline(err.Error()),
 	)
 }
 
