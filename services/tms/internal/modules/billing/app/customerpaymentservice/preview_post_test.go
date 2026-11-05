@@ -76,7 +76,7 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 		}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 
-	svc := &Service{
+	svc := wired(t, &Service{
 		db:             fakePaymentDB{},
 		repo:           paymentRepo,
 		invoiceRepo:    invoiceRepo,
@@ -87,7 +87,7 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 			ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 	request := func() *customerpaymentports.PostCustomerPaymentRequest {
 		return &customerpaymentports.PostCustomerPaymentRequest{
 			CustomerID:     customerID,

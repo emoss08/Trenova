@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
@@ -31,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/notificationportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -170,21 +170,17 @@ func newHarness(t *testing.T) *harness {
 		Maybe()
 
 	h.svc = New(Params{
-		Logger:           zap.NewNop(),
-		AppConfig:        &h.cfg.App,
-		Repo:             h.shares,
-		InvoiceRepo:      h.invoices,
-		UserRepo:         h.users,
-		OrganizationRepo: h.orgs,
-		Permissions:      h.permissions,
-		NotificationService: notificationservice.New(notificationservice.Params{
-			Logger:   zap.NewNop(),
-			Repo:     notificationRepo,
-			Realtime: &mocks.NoopRealtimeService{},
-		}),
-		EmailService: h.emails,
-		Templates:    h.templates,
-		AuditService: h.audit,
+		Logger:              zap.NewNop(),
+		AppConfig:           &h.cfg.App,
+		Repo:                h.shares,
+		InvoiceRepo:         h.invoices,
+		UserRepo:            h.users,
+		OrganizationRepo:    h.orgs,
+		Permissions:         h.permissions,
+		NotificationService: notificationtest.New(notificationRepo, &mocks.NoopRealtimeService{}),
+		EmailService:        h.emails,
+		Templates:           h.templates,
+		AuditService:        h.audit,
 	})
 
 	return h

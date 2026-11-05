@@ -85,7 +85,7 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 	f.control = &accountingcontrol.AccountingControl{}
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, f.orgID).Return(f.control, nil).Maybe()
-	f.svc = &Service{
+	f.svc = wired(t, &Service{
 		l:              zap.NewNop(),
 		db:             fakePaymentDB{},
 		repo:           f.paymentRepo,
@@ -95,7 +95,7 @@ func newCreditMemoFixture(t *testing.T) *creditMemoFixture {
 			ValidatorParams{InvoiceRepo: f.invoiceRepo, FiscalPeriodRepo: f.fiscalRepo},
 		),
 		auditService: &mocks.NoopAuditService{},
-	}
+	})
 
 	return f
 }

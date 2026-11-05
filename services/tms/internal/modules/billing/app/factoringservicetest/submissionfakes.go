@@ -235,6 +235,13 @@ func (f *FakeInvoices) GetByIDs(
 	return out, nil
 }
 
+func (f *FakeInvoices) ListAttachments(
+	context.Context,
+	invoiceports.ListInvoiceEmailAttemptsRequest,
+) ([]*invoice.Attachment, error) {
+	return nil, nil
+}
+
 func (f *FakeInvoices) GetByID(
 	_ context.Context,
 	req invoiceports.GetInvoiceByIDRequest,

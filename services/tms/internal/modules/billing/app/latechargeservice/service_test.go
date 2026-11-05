@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -147,12 +148,13 @@ func newLateChargeFixture(t *testing.T, control *billingcontrol.BillingControl) 
 	}
 	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Once()
 	f.svc = &Service{
-		l:            zap.NewNop(),
-		db:           markingDB{},
-		repo:         f.repo,
-		billingRepo:  f.billingRepo,
-		invoiceMemos: f.invoiceService,
-		auditService: &mocks.NoopAuditService{},
+		l:                   zap.NewNop(),
+		db:                  markingDB{},
+		repo:                f.repo,
+		billingRepo:         f.billingRepo,
+		invoiceMemos:        f.invoiceService,
+		auditService:        &mocks.NoopAuditService{},
+		notificationService: notificationtest.Discarding(),
 	}
 
 	return f
