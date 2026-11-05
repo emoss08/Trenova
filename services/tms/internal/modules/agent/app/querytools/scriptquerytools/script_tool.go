@@ -312,7 +312,7 @@ type scriptAnswer struct {
 	NotShown         int                       `json:"notShown,omitempty"`
 	Note             string                    `json:"note"`
 
-	attachments  []agentrecord.RecordRef
+	outside      []agentrecord.RecordRef
 	continuation codemode.Continuation
 }
 
@@ -325,9 +325,10 @@ type scriptDatasetAnswer struct {
 	Text    bool                        `json:"text,omitempty"`
 }
 
-// TaintedRecords names the attached files the script read: what the person
-// attached may have been written outside the organization.
-func (a *scriptAnswer) TaintedRecords() []agentrecord.RecordRef { return a.attachments }
+// TaintedRecords names the attached files the script read, and the reports
+// with a free-text column: either may have been written outside the
+// organization.
+func (a *scriptAnswer) TaintedRecords() []agentrecord.RecordRef { return a.outside }
 
 // ScriptCompleted reports a script that ran to its end, the only one whose
 // prepared changes are proposed.
@@ -392,7 +393,7 @@ func (t *runScriptTool) Query(
 
 	answer := scriptAnswerOf(title, outcome, &summary)
 	answer.Note += missingReadNote(answer.Error, params.Broker.Index())
-	answer.attachments = resolved.attachments
+	answer.outside = resolved.outside
 	answer.Datasets = datasetAnswers(resolved.datasets)
 	if err = t.keepAnalysis(ctx, &analysisRecord{
 		params:   params,

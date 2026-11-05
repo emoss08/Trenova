@@ -714,7 +714,7 @@ func TestPreviewReport_RunsAnInlineDefinitionAndKeysRowsByLabel(t *testing.T) {
 	assert.Equal(t, ir.AggSum, service.Previewed.Definition.Columns[1].Measure.Agg)
 	assert.False(t, service.Previewed.Supersede, "a tool preview never cancels the builder's")
 
-	preview, ok := result.(reportPreview)
+	preview, ok := result.(*reportPreview)
 	require.True(t, ok)
 	assert.Empty(t, preview.Name, "an inline definition has no name to report")
 	assert.Equal(t, 2, preview.RowCount)
@@ -751,7 +751,7 @@ func TestPreviewReport_CapsTheRowsItHandsBack(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	preview, ok := result.(reportPreview)
+	preview, ok := result.(*reportPreview)
 	require.True(t, ok)
 	assert.Equal(t, maxPreviewRows+5, preview.RowCount)
 	assert.Len(t, preview.Rows, maxPreviewRows)
@@ -780,7 +780,7 @@ func TestPreviewReport_PreviewsASavedReportWithItsParameters(t *testing.T) {
 		"the compiler parses a numeric string itself",
 	)
 
-	preview, ok := result.(reportPreview)
+	preview, ok := result.(*reportPreview)
 	require.True(t, ok)
 	assert.Equal(t, "Revenue by customer", preview.Name)
 	assert.Contains(t, preview.Note, "no rows")
@@ -892,7 +892,7 @@ func TestPreviewReport_WritesDateColumnsAsReadableDates(t *testing.T) {
 	result, err := tools["report_preview"].Query(t.Context(), params)
 	require.NoError(t, err)
 
-	preview := result.(reportPreview)
+	preview := result.(*reportPreview)
 	assert.Equal(t, "2026-09-21 08:16 CDT", preview.Rows[0]["Last Move"])
 	assert.Nil(t, preview.Rows[1]["Last Move"])
 	assert.Contains(t, preview.Note, "Date columns are shown here as dates")

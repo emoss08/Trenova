@@ -55,6 +55,7 @@ func TestAnAuthenticatorKeyIsStoredEncryptedAndSentAsTheCodePlaceholder(t *testi
 	site, err := f.svc.CreateSite(t.Context(), f.siteRequest(
 		func(req *agentextensionports.SavePortalSiteRequest) {
 			req.AuthenticatorKey = "jbsw y3dp ehpk 3pxp"
+			req.ViewOnlyAccount = true
 		},
 	))
 	require.NoError(t, err)

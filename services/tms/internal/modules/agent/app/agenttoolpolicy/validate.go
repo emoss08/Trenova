@@ -261,9 +261,8 @@ func externalReadProblems(policy *agenttoolports.ToolPolicy) []string {
 		problems = append(problems, fmt.Sprintf("taint source %q is not valid", policy.Source))
 	}
 	problems = append(problems, furtherSourceProblems(policy)...)
-	if policy.CarriesTaint && policy.Kind != agenttooltrust.ToolKindAction &&
-		policy.Kind != agenttooltrust.ToolKindQuery {
-		problems = append(problems, "only a write or a read can be handed a run's taint")
+	if policy.CarriesTaint && policy.Kind != agenttooltrust.ToolKindAction {
+		problems = append(problems, "only a write can carry a run's taint into what it saves")
 	}
 	if hold := policy.TaintHold; hold != nil {
 		if policy.Kind != agenttooltrust.ToolKindAction {

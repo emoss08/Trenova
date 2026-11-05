@@ -150,9 +150,7 @@ func (r *AgentRun) RecordTaint(taint *RunTaint, now int64) bool {
 	if merged == nil {
 		merged = &RunTaint{}
 	}
-	before := len(merged.Marks)
-	merged.Merge(taint)
-	changed := !r.Tainted || len(merged.Marks) != before
+	changed := merged.Merge(taint) || !r.Tainted
 	r.Tainted = true
 	r.Taint = merged
 	if r.TaintedAt == nil {

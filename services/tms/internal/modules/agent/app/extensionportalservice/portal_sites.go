@@ -28,6 +28,7 @@ func portalSiteView(site *extensionportal.PortalSite) agentextensionports.Portal
 		StartURL:         site.StartURL,
 		BrowserProfileID: site.BrowserProfileID,
 		AllowActions:     site.AllowActions,
+		ViewOnlyAccount:  site.ViewOnlyAccount,
 		Enabled:          site.Enabled,
 		HasSignIn:        site.HasSignIn(),
 		HasAuthenticator: site.HasSignIn() && site.HasAuthenticator(),
@@ -140,6 +141,7 @@ func (s *Service) applySiteRequest(
 	site.StartURL = req.StartURL
 	site.BrowserProfileID = req.BrowserProfileID
 	site.AllowActions = req.AllowActions
+	site.ViewOnlyAccount = req.ViewOnlyAccount
 	site.Enabled = req.Enabled
 	site.Normalize()
 
@@ -394,6 +396,7 @@ func siteSnapshot(site *extensionportal.PortalSite) map[string]any {
 		"startUrl":         site.StartURL,
 		"browserProfileId": site.BrowserProfileID,
 		"allowActions":     site.AllowActions,
+		"viewOnlyAccount":  site.ViewOnlyAccount,
 		"enabled":          site.Enabled,
 		"hasSignIn":        site.HasSignIn(),
 		"version":          site.Version,

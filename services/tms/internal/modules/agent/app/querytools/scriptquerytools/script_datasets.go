@@ -128,8 +128,14 @@ type scriptDatasets struct {
 }
 
 type resolvedDatasets struct {
-	datasets    []scriptports.Dataset
-	attachments []agentrecord.RecordRef
+	datasets []scriptports.Dataset
+	outside  []agentrecord.RecordRef
+}
+
+func (r *resolvedDatasets) markReport(columns []table.Column, rows int, id string) {
+	if rows > 0 && reportquerytools.HoldsWrittenText(columns) {
+		r.outside = append(r.outside, reportquerytools.OutsideReport(id)...)
+	}
 }
 
 func (d *scriptDatasets) resolve(
@@ -138,8 +144,8 @@ func (d *scriptDatasets) resolve(
 	requests []datasetRequest,
 ) (*resolvedDatasets, error) {
 	resolved := &resolvedDatasets{
-		datasets:    make([]scriptports.Dataset, 0, len(requests)),
-		attachments: make([]agentrecord.RecordRef, 0),
+		datasets: make([]scriptports.Dataset, 0, len(requests)),
+		outside:  make([]agentrecord.RecordRef, 0),
 	}
 	if len(requests) == 0 {
 		return resolved, nil
@@ -166,13 +172,18 @@ func (d *scriptDatasets) resolve(
 		)
 		switch {
 		case request.definition != nil:
-			dataset, size, err = d.definitionDataset(ctx, params, request)
+			dataset, size, err = d.definitionDataset(ctx, params, request, resolved)
 		case readsReport(*request):
-			dataset, size, err = d.reportDataset(ctx, params, person, request)
+			dataset, size, err = d.reportDataset(ctx, &reportDatasetRead{
+				params:   params,
+				person:   person,
+				request:  request,
+				resolved: resolved,
+			})
 		default:
 			dataset, size, err = d.fileDataset(ctx, params, person, request)
 			if err == nil {
-				resolved.attachments = append(resolved.attachments, agentrecord.RecordRef{
+				resolved.outside = append(resolved.outside, agentrecord.RecordRef{
 					EntityType: agent.TaintEntityDocument,
 					ID:         request.documentID.String(),
 				})
@@ -218,6 +229,7 @@ func (d *scriptDatasets) definitionDataset(
 	ctx context.Context,
 	params *agenttoolports.QueryToolParams,
 	request *datasetRequest,
+	resolved *resolvedDatasets,
 ) (*scriptports.Dataset, int, error) {
 	label := "a report on " + request.definition.Entity
 	values := reportquerytools.NormalizeParameters(request.definition, nil)
@@ -269,6 +281,7 @@ func (d *scriptDatasets) definitionDataset(
 		return nil, 0, fmt.Errorf("dataset %s is larger than 20 MB; group it or narrow its "+
 			"filters", request.name)
 	}
+	resolved.markReport(result.Columns, len(rows), request.definition.Entity)
 
 	return &scriptports.Dataset{
 		Name:    request.name,
@@ -322,14 +335,20 @@ func (d *scriptDatasets) authorizeReports(
 	return nil
 }
 
+type reportDatasetRead struct {
+	params   *agenttoolports.QueryToolParams
+	person   pulid.ID
+	request  *datasetRequest
+	resolved *resolvedDatasets
+}
+
 // reportDataset is a report run's every row, typed by its columns and headed
 // by their labels, as report_run showed them. Totals are left out.
 func (d *scriptDatasets) reportDataset(
 	ctx context.Context,
-	params *agenttoolports.QueryToolParams,
-	person pulid.ID,
-	request *datasetRequest,
+	read *reportDatasetRead,
 ) (*scriptports.Dataset, int, error) {
+	params, person, request := read.params, read.person, read.request
 	runRequest := &reporting.GetRunRequest{
 		Request: reportquerytools.RequestFor(params),
 		RunID:   request.reportRun,
@@ -384,6 +403,7 @@ func (d *scriptDatasets) reportDataset(
 		return nil, 0, fmt.Errorf("the rows of report run %s could not be read: %w",
 			request.reportRun, err)
 	}
+	read.resolved.markReport(envelope.Table.Columns, len(rows), request.reportRun.String())
 
 	return &scriptports.Dataset{
 		Name:     request.name,

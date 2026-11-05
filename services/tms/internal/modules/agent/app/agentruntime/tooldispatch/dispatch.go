@@ -154,7 +154,6 @@ func (s *Dispatcher) dispatchQuery(
 
 	outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
 		fitPage: p.caller != aitrace.CallerScript,
-		taint:   p.taint,
 	})
 	outcome.RanWith = call.Arguments
 	if note := contract.Note(); note != "" && !outcome.Failed {
@@ -772,7 +771,6 @@ type queryExtras struct {
 	stepKey   string
 	continues map[string]any
 	fitPage   bool
-	taint     *agent.RunTaint
 }
 
 func (s *Dispatcher) runQueryToolWith(
@@ -782,10 +780,6 @@ func (s *Dispatcher) runQueryToolWith(
 	call *llmports.ToolCall,
 	extras *queryExtras,
 ) toolcall.Result {
-	var taint *agent.RunTaint
-	if tool.Policy().CarriesTaint {
-		taint = extras.taint.Clone()
-	}
 	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
@@ -796,7 +790,6 @@ func (s *Dispatcher) runQueryToolWith(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
-		Taint:             taint,
 		Broker:            extras.broker,
 		StepKey:           extras.stepKey,
 		CallID:            call.ID,

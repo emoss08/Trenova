@@ -95,42 +95,14 @@ func TestRunTaint_Merge(t *testing.T) {
 	)
 	second.Add(TaintMark{Source: TaintSourceMemory, ToolName: "agent_list_memories", CallID: "b"})
 
-	first.Merge(second)
-	first.Merge(nil)
+	assert.True(t, first.Merge(second))
+	assert.False(t, first.Merge(nil))
 	assert.Len(t, first.Marks, 2)
+	assert.False(t, first.Merge(second), "the same content again is nothing new")
+	assert.True(t, first.Merge(&RunTaint{Seen: []TaintSource{TaintSourceEDI}}))
+	assert.True(t, first.Merge(&RunTaint{Overflowed: true}))
 
 	var unknown *RunTaint
 	unknown.Merge(second)
 	assert.Nil(t, unknown)
-}
-
-func TestRunTaint_ReadBeyond(t *testing.T) {
-	t.Parallel()
-
-	const portal = "web_read_portal"
-	own := TaintMark{Source: TaintSourceWeb, ToolName: portal, CallID: "a"}
-	other := TaintMark{Source: TaintSourceEDI, ToolName: "shipment_get", CallID: "b"}
-
-	tests := []struct {
-		name  string
-		taint *RunTaint
-		want  bool
-	}{
-		{name: "unknown taint may hold anything", taint: nil, want: true},
-		{name: "clean run", taint: &RunTaint{}, want: false},
-		{name: "only this tool's reads", taint: &RunTaint{
-			Marks: []TaintMark{own}, Seen: []TaintSource{TaintSourceWeb},
-		}, want: false},
-		{name: "another tool's read", taint: &RunTaint{Marks: []TaintMark{own, other}}, want: true},
-		{name: "a source with no mark left", taint: &RunTaint{
-			Marks: []TaintMark{own}, Seen: []TaintSource{TaintSourceWeb, TaintSourceDocument},
-		}, want: true},
-		{name: "overflowed", taint: &RunTaint{Overflowed: true}, want: true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, tt.taint.ReadBeyond(portal))
-		})
-	}
 }

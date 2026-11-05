@@ -372,7 +372,7 @@ type reportRunStatus struct {
 	outside []agentrecord.RecordRef
 }
 
-func (s *reportRunStatus) TaintedRecords() []agentrecord.RecordRef { return s.outside }
+func (s reportRunStatus) TaintedRecords() []agentrecord.RecordRef { return s.outside }
 
 // reportKeyOf reads the report's key under the name the schema declares, or
 // under the plain "key" a model reaches for after reading a catalog row. The
@@ -802,7 +802,7 @@ func attachRunSample(
 	}
 	status.Rows = sampleRows(shape, reportvalue.TableRows(envelope.Table).Detail, maxRunSampleRows)
 	if shape.written && len(status.Rows) > 0 {
-		status.outside = outsideReport(run.ID.String())
+		status.outside = OutsideReport(run.ID.String())
 	}
 
 	status.Note += sampleNote(len(status.Rows), run.RowCount)

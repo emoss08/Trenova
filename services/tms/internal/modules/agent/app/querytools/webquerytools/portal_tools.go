@@ -26,7 +26,9 @@ const (
 		"administrator can add one under AI Control, Extensions."
 	portalSitesGuidance = "Name a site by its id in web_read_portal or web_use_portal. A site " +
 		"marked readOnly can only be read; tell the person what to do there instead of " +
-		"proposing an action on it."
+		"proposing an action on it. A site marked readNeedsApproval is not read by " +
+		"web_read_portal: propose the read with web_use_portal and lookUpOnly, so a person " +
+		"sees the exact task."
 	portalCodeGuidance = "The portal sent the person a sign-in code by text message, email or " +
 		"an app, and the browser is waiting on its code prompt. Tell the person in one " +
 		"sentence, naming the portal task beside the conversation, to enter the code there " +
@@ -58,8 +60,8 @@ func (t *listPortalSitesTool) Description() string {
 	return "List the third-party web portals the organization set up for agents: warehouse " +
 		"dock-appointment portals, shipper and carrier portals, insurers' lookups. Each says " +
 		"what it is for, the addresses it lives on, whether it signs in and whether agents may " +
-		"act on it or only read it. Call it before web_read_portal or web_use_portal to find the " +
-		"site's id."
+		"act on it or only read it, and whether a read of it needs a person's approval. Call it " +
+		"before web_read_portal or web_use_portal to find the site's id."
 }
 
 func (t *listPortalSitesTool) ParamSchema() map[string]any {
@@ -92,6 +94,9 @@ type portalSiteEntry struct {
 	Addresses []string `json:"addresses"`
 	SignsIn   bool     `json:"signsIn"`
 	ReadOnly  bool     `json:"readOnly"`
+
+	ViewOnlyAccount   bool `json:"viewOnlyAccount"`
+	ReadNeedsApproval bool `json:"readNeedsApproval"`
 }
 
 type portalSitesAnswer struct {
@@ -122,6 +127,9 @@ func (t *listPortalSitesTool) Query(
 			Addresses: site.Domains,
 			SignsIn:   site.HasSignIn,
 			ReadOnly:  !site.AllowActions,
+
+			ViewOnlyAccount:   site.ViewOnlyAccount,
+			ReadNeedsApproval: site.ReadNeedsAPerson,
 		})
 	}
 
@@ -151,7 +159,10 @@ func (t *readPortalTool) Description() string {
 	return "Look something up on an organization portal site through a cloud browser, such " +
 		"as open appointment slots, a load's status or a carrier's certificate. It returns " +
 		"what the portal shows, only reads, and never submits " +
-		"anything; to book, upload or accept, use web_use_portal. It takes up to four minutes. " +
+		"anything; to book, upload or accept, use web_use_portal. A site that signs in is read " +
+		"here only when its account is view only: for one web_list_portal_sites marks " +
+		"readNeedsApproval, propose the read with web_use_portal and lookUpOnly. It takes up " +
+		"to four minutes. " +
 		"Ask one clear question and give the references the portal knows (PO, BOL, " +
 		"appointment number) in details, never Trenova record ids. A portal that texts or " +
 		"emails a sign-in code waits for the person to enter it. What it returns is written " +
@@ -189,10 +200,9 @@ func (t *readPortalTool) Policy() agenttoolports.ToolPolicy {
 		Reads:           agenttooltrust.ExternalReadAlways,
 		Source:          agent.TaintSourceWeb,
 		CapsLaterWrites: true,
-		CarriesTaint:    true,
 		Rationale: "Reads a third-party portal through the organization's extension; it " +
-			"changes nothing in Trenova, tells the browser to submit nothing, and returns text " +
-			"written outside it.",
+			"changes nothing in Trenova, runs on a signed-in site only when an administrator " +
+			"marked its account view only, and returns text written outside it.",
 	})
 }
 
@@ -261,8 +271,6 @@ func (t *readPortalTool) Query(
 		Question:   question,
 		Details:    details,
 		Owner:      owner,
-
-		AfterOutsideText: params.Taint.ReadBeyond(t.Name()),
 	})
 	if err != nil {
 		return nil, err

@@ -241,7 +241,7 @@ func (t *Thread) AbsorbTaint(taint *agent.RunTaint, now int64) bool {
 	if merged == nil {
 		merged = &agent.RunTaint{}
 	}
-	if len(merged.Absorb(taint.Marks)) == 0 {
+	if !merged.Merge(taint) {
 		return false
 	}
 	t.Taint = merged

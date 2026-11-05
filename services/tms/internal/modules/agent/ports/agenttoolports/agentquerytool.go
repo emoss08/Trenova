@@ -3,7 +3,6 @@ package agenttoolports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -27,7 +26,6 @@ type QueryToolParams struct {
 	DataAccessCeiling permission.FieldSensitivity
 	ThreadID          pulid.ID
 	RunID             pulid.ID
-	Taint             *agent.RunTaint
 	// Broker is set only for the tool that runs a script: every read the
 	// script makes goes through it, as the run's actor.
 	Broker codemode.Broker

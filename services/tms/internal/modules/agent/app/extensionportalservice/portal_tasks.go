@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -35,6 +34,8 @@ const (
 	portalTimedOutMessage = "The portal did not answer within four minutes, so the task was stopped. Ask for one thing at a time, or name the page or reference to look at."
 
 	portalOnTrenovaMessage = "Trenova itself cannot be a portal site: agents act in Trenova with their own tools, as the person they work for."
+	portalFailureWithheld  = "what the browser reported is kept for a person under AI Control, Extensions."
+	portalReadNeedsAPerson = " signs in with an account that may be able to change things, so it is not read automatically. Propose the read with web_use_portal and lookUpOnly so a person sees the exact task, or tell the person what to look up there."
 )
 
 var (
@@ -102,6 +103,9 @@ func summaryOf(site *extensionportal.PortalSite) agentextensionports.PortalSiteS
 		StartURL:     site.StartURL,
 		AllowActions: site.AllowActions,
 		HasSignIn:    site.HasSignIn(),
+
+		ViewOnlyAccount:  site.ViewOnlyAccount,
+		ReadNeedsAPerson: site.ReadNeedsAPerson(),
 	}
 }
 
@@ -344,11 +348,6 @@ func (s *Service) newRun(
 // left to run unwatched. One the portal stopped for a sign-in code the person
 // can relay is kept open on the code prompt and followed from there, and the
 // outcome says it waits on the code.
-const signedInReadAfterOutsideText = "This conversation has read text from outside the " +
-	"organization, so it cannot drive a signed-in portal on its own: that text could have " +
-	"shaped the question. Propose it with web_use_portal so a person sees the exact task, or " +
-	"tell the person what to look up there."
-
 func (s *Service) ReadPortal(
 	ctx context.Context,
 	req *agentextensionports.PortalReadRequest,
@@ -365,8 +364,8 @@ func (s *Service) ReadPortal(
 	if err != nil {
 		return nil, err
 	}
-	if req.AfterOutsideText && site.HasSignIn() {
-		return nil, &agentextensionservice.ToolError{Message: signedInReadAfterOutsideText}
+	if site.ReadNeedsAPerson() {
+		return nil, &agentextensionservice.ToolError{Message: site.Name + portalReadNeedsAPerson}
 	}
 
 	start := &portalStart{
@@ -407,6 +406,9 @@ func (s *Service) ReadPortal(
 
 	finished := s.finish(ctx, req.TenantInfo, start.run, outcome)
 	s.release(ctx, call, finished)
+	if asked {
+		return nil, portalTaskFailed(finished.Failure)
+	}
 	if finished.Status != extensionportal.PortalRunStatusSucceeded {
 		return nil, s.portalOutcomeError(finished, nil, call)
 	}
@@ -611,8 +613,11 @@ func (s *Service) portalOutcomeError(
 		return s.core.ProviderError(call.Failing(cause, "follow the portal task"))
 	}
 
-	return &agentextensionservice.ToolError{Message: "The portal task did not succeed: " +
-		stringutils.Ellipsize(run.Failure, extensionportal.MaxPortalFailureRunes) +
+	return portalTaskFailed(portalFailureWithheld)
+}
+
+func portalTaskFailed(detail string) error {
+	return &agentextensionservice.ToolError{Message: "The portal task did not succeed: " + detail +
 		" Tell the person, and do not try the same task again unchanged."}
 }
 
@@ -631,11 +636,11 @@ func (s *Service) PlanPortalAction(
 	if err != nil {
 		return nil, err
 	}
-	site, err := s.site(ctx, req.TenantInfo, req.SiteID, true)
+	site, err := s.site(ctx, req.TenantInfo, req.SiteID, !req.LookUpOnly)
 	if err != nil {
 		return nil, err
 	}
-	text := taskText(site, extensionportal.PortalRunModeAct, req.Instruction, details)
+	text := taskText(site, req.Mode(), req.Instruction, details)
 
 	return &agentextensionports.PortalActionPlan{
 		Site:        summaryOf(site),
@@ -676,7 +681,7 @@ func (s *Service) StartPortalAction(
 	if err != nil {
 		return nil, err
 	}
-	site, err := s.site(ctx, req.TenantInfo, req.SiteID, true)
+	site, err := s.site(ctx, req.TenantInfo, req.SiteID, !req.LookUpOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -685,7 +690,7 @@ func (s *Service) StartPortalAction(
 		Tenant: req.TenantInfo,
 		call:   call,
 		site:   site,
-		text:   taskText(site, extensionportal.PortalRunModeAct, req.Instruction, details),
+		text:   taskText(site, req.Mode(), req.Instruction, details),
 	}
 	if _, err = s.core.Reserve(ctx, call.metered(req.TenantInfo)); err != nil {
 		return nil, err

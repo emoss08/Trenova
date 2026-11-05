@@ -309,3 +309,52 @@ func TestActOnPortalPreviewSaysWhenItAnswersAnAuthenticatorCode(t *testing.T) {
 	assert.True(t, strings.HasSuffix(preview.Summary,
 		"It signs in with the site's stored sign-in and answers its authenticator code."))
 }
+
+func TestActOnPortalLookUpOnlyPreviewSaysItOnlyLooksSomethingUp(t *testing.T) {
+	t.Parallel()
+
+	portals := newFakePortals()
+	tool := NewActOnPortalTool(portals, &fakeWaits{}, nil).(*ActOnPortalTool)
+	args := actArgs(portals.site.ID)
+	args[paramInstruction] = "Find the open dock appointments on October 20"
+	args[paramLookUpOnly] = true
+
+	preview, err := tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+	require.NoError(t, err)
+	assert.Equal(t,
+		"Would ask Browser Use's browser only to look this up on Acme DC, submitting nothing: "+
+			"Find the open dock appointments on October 20. It signs in with the site's stored "+
+			"sign-in.",
+		preview.Summary)
+
+	require.Len(t, portals.planned, 1)
+	assert.True(t, portals.planned[0].LookUpOnly)
+	assert.Equal(t, extensionportal.PortalRunModeRead, portals.planned[0].Mode())
+}
+
+func TestActOnPortalLookUpOnlyStillNeedsAPersonsApproval(t *testing.T) {
+	t.Parallel()
+
+	portals := newFakePortals()
+	tool := NewActOnPortalTool(portals, &fakeWaits{}, nil).(*ActOnPortalTool)
+	args := actArgs(portals.site.ID)
+	args[paramLookUpOnly] = true
+
+	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
+	_, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.AgentParamsFor(args))
+	require.ErrorIs(t, err, ErrPortalActionNeedsAPerson)
+	assert.Empty(t, portals.started)
+}
+
+func TestActOnPortalWithoutLookUpOnlyIsAnAction(t *testing.T) {
+	t.Parallel()
+
+	portals := newFakePortals()
+	tool := NewActOnPortalTool(portals, &fakeWaits{}, nil).(*ActOnPortalTool)
+
+	_, err := tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(actArgs(portals.site.ID)))
+	require.NoError(t, err)
+	require.Len(t, portals.planned, 1)
+	assert.False(t, portals.planned[0].LookUpOnly)
+	assert.Equal(t, extensionportal.PortalRunModeAct, portals.planned[0].Mode())
+}
