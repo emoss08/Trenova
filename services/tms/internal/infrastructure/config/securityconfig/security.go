@@ -18,6 +18,9 @@ var (
 	ErrProductionSessionSecretRequired = errors.New(
 		"production and staging require security.session.secret that is not a placeholder",
 	)
+	ErrProductionBrowserGuardRequired = errors.New(
+		"production and staging require security.csrf.browserGuard.mode to be enforce",
+	)
 	ErrInvalidHostPrefixCookie = errors.New(
 		"__Host- session cookies require secure=true, httpOnly=true, sameSite=strict, path=/, and an empty domain",
 	)
@@ -297,6 +300,14 @@ type CSRFBrowserGuardConfig struct {
 	Mode string `mapstructure:"mode" validate:"required,oneof=enforce report off"`
 }
 
+func (c CSRFBrowserGuardConfig) validateProduction() error {
+	if strings.EqualFold(strings.TrimSpace(c.Mode), "enforce") {
+		return nil
+	}
+
+	return ErrProductionBrowserGuardRequired
+}
+
 var InsecureDefaultValues = []string{"change", "secret", "example"}
 
 func IsPlaceholder(value string) bool {
@@ -381,7 +392,11 @@ func (c *Config) ValidateProduction() error {
 		return err
 	}
 
-	return validateProductionRecoveryCodePepper(c.MFA.RecoveryCodePepper)
+	if err := validateProductionRecoveryCodePepper(c.MFA.RecoveryCodePepper); err != nil {
+		return err
+	}
+
+	return c.CSRF.BrowserGuard.validateProduction()
 }
 
 func (c *Config) validateHostPrefixCookie() error {

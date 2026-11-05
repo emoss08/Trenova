@@ -35,6 +35,19 @@ func TestValidateProductionLocalKey_RequiresLength(t *testing.T) {
 	require.NoError(t, validateProductionLocalKey("3f9b1c7e5a2d48f6b0c9e1a7d4f2b8c6"))
 }
 
+func TestBrowserGuardValidateProduction_RequiresEnforce(t *testing.T) {
+	t.Parallel()
+
+	for _, mode := range []string{"report", "off", ""} {
+		require.ErrorIs(
+			t,
+			CSRFBrowserGuardConfig{Mode: mode}.validateProduction(),
+			ErrProductionBrowserGuardRequired,
+		)
+	}
+	require.NoError(t, CSRFBrowserGuardConfig{Mode: "enforce"}.validateProduction())
+}
+
 func TestValidateProduction_RequiresAHostPrefixedSessionCookie(t *testing.T) {
 	t.Parallel()
 
