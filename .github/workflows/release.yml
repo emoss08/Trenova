@@ -122,6 +122,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
 
       # trenova-db applies the migrations before each rollout; the TMS image
       # carries none of them.
@@ -147,6 +149,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
 
   build-and-push-client:
     needs: verify-source
@@ -194,6 +198,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+          sbom: true
+          provenance: mode=max
           build-args: |
             VITE_API_URL=/api/v1
 
@@ -298,6 +304,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+          sbom: true
+          provenance: mode=max
 
   # The Trenova Cloud operator (services/operator, its own module).
   build-and-push-operator:
@@ -344,6 +352,8 @@ jobs:
           cache-from: type=gha,scope=operator
           cache-to: type=gha,scope=operator,mode=max
           platforms: linux/amd64,linux/arm64
+          sbom: true
+          provenance: mode=max
 
   # The Helm charts, versioned with the release, as OCI artifacts beside the
   # images: oci://ghcr.io/emoss08/charts/trenova and trenova-operator.
