@@ -19,22 +19,31 @@ const (
 type Params struct {
 	fx.In
 
-	Cache    permissionports.PermissionCacheRepository
-	Realtime realtimeports.RealtimeService
-	Logger   *zap.Logger
+	Cache     permissionports.PermissionCacheRepository
+	Realtime  realtimeports.RealtimeService
+	Listeners []permissionports.PermissionChangeListener `group:"permissionChangeListeners"`
+	Logger    *zap.Logger
 }
 
 type Notifier struct {
-	cache    permissionports.PermissionCacheRepository
-	realtime realtimeports.RealtimeService
-	l        *zap.Logger
+	cache     permissionports.PermissionCacheRepository
+	realtime  realtimeports.RealtimeService
+	listeners []permissionports.PermissionChangeListener
+	l         *zap.Logger
 }
 
 func New(p Params) permissionports.PermissionChangeNotifier {
 	return &Notifier{
-		cache:    p.Cache,
-		realtime: p.Realtime,
-		l:        p.Logger.Named("service.permission-change"),
+		cache:     p.Cache,
+		realtime:  p.Realtime,
+		listeners: p.Listeners,
+		l:         p.Logger.Named("service.permission-change"),
+	}
+}
+
+func (n *Notifier) tell(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID) {
+	for _, listener := range n.listeners {
+		listener.PermissionsChanged(ctx, tenant, userID)
 	}
 }
 
@@ -47,6 +56,7 @@ func (n *Notifier) OrganizationChanged(ctx context.Context, tenant pagination.Te
 		)
 	}
 	n.announce(ctx, tenant, pulid.Nil)
+	n.tell(ctx, tenant, pulid.Nil)
 }
 
 func (n *Notifier) UserChanged(
@@ -63,6 +73,7 @@ func (n *Notifier) UserChanged(
 		)
 	}
 	n.announce(ctx, tenant, userID)
+	n.tell(ctx, tenant, userID)
 }
 
 func (n *Notifier) announce(

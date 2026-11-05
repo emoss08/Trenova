@@ -79,6 +79,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
@@ -174,6 +175,15 @@ func SharedOptions() fx.Option {
 			func(s *roleservice.Service) scimservice.RoleAssigner { return s },
 			scimcontract.NewRequester,
 			scimservice.New,
+			scimservice.NewSaverWatch,
+			fx.Annotate(
+				func(w *scimservice.SaverWatch) permissionports.PermissionChangeListener { return w },
+				fx.ResultTags(permissionports.PermissionChangeListenerGroup),
+			),
+			fx.Annotate(
+				func(w *scimservice.SaverWatch) tenantports.UserAccessRevoker { return w },
+				fx.ResultTags(`group:"userAccessRevokers"`),
+			),
 			func(s *scimservice.Service) scimports.Provisioner { return s },
 			func(s *scimservice.Service) scimports.GrantReconciler { return s },
 			func(s *scimservice.Service) scimports.DirectoryGrants { return s },

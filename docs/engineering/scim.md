@@ -82,8 +82,12 @@ pages of 100 and brings each up to date:
   as the actor, so `AssignRole` checks it a third time. A mapping saved before `saved_by_id`
   existed names nobody and grants nothing until it is saved again.
 - A grant the groups no longer justify, or whose saver lost the authority, is unassigned when
-  that person is next reconciled (any change to them, their groups or a mapping; saving a mapping
-  reconciles everyone in the organization's directories). Only
+  that person is next reconciled. The saver's own access counts too: `SaverWatch` hears every
+  permission change through the `permissionChangeListeners` group and every loss of access through
+  `userAccessRevokers`, and marks the people whose grants came from that saver's mappings (or, for
+  an organization-wide change, every mapping there), so a demoted or removed saver's grants are
+  re-checked at once. A role assignment that simply expires raises no event, so the sweep also marks
+  the mappings of savers whose assignment ran out in the last 30 minutes. Only
   assignments recorded in `scim_role_grants` are ever taken away; a role a person assigned by hand
   stays, and `ErrRoleAlreadyAssigned` leaves it unrecorded.
 - An administrator who unassigns a directory-granted role sees it come back on the next reconcile

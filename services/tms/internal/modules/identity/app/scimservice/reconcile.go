@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -29,6 +30,15 @@ const (
 )
 
 func (s *Service) RequestPendingReconciles(ctx context.Context) (int, error) {
+	now := timeutils.NowUnix()
+	if err := s.repo.MarkExpiredSaversPending(
+		ctx,
+		now-int64(ExpiredSaverWindow/time.Second),
+		now,
+	); err != nil {
+		return 0, err
+	}
+
 	directories, err := s.repo.ListPendingDirectories(ctx, pendingDirectoryPage)
 	if err != nil {
 		return 0, err

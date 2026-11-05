@@ -15,6 +15,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+const (
+	mappingsScopeReason = "mark for reconcile the SCIM users whose group roles come from mappings a person saved, in whichever organizations that person saved them, after their own access changed"
+	expiredScopeReason  = "mark for reconcile, across every organization, the SCIM users whose group roles come from a mapping saved by someone whose role assignment has just expired"
+)
+
 const pendingScopeReason = "find the SCIM directories, across every organization, whose group roles wait to be reconciled; each is then reconciled in its own tenant scope"
 
 func (r *repository) MarkPending(
@@ -231,5 +236,69 @@ func (r *repository) DeleteDirectoryAssignments(
 		}
 
 		return assignments, nil
+	})
+}
+
+func (r *repository) MarkMappingsPending(
+	ctx context.Context,
+	filter scimports.MappingFilter,
+) ([]scimports.PendingDirectory, error) {
+	if filter.OrganizationID.IsNil() && filter.SavedByID.IsNil() {
+		return nil, nil
+	}
+	ctx = dbscope.WithSystem(ctx, mappingsScopeReason)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]scimports.PendingDirectory, error) {
+		db := r.db.Keel(ctx)
+		m := iamdb.SCIMGroupRoleMappings
+		directories, err := keel.Into[scimports.PendingDirectory](
+			ctx,
+			db,
+			m.AllTenants().
+				Group(m.OrganizationID, m.BusinessUnitID, m.DirectoryID).
+				Pick(m.OrganizationID, m.BusinessUnitID, m.DirectoryID).
+				Where(
+					keel.When(filter.OrganizationID.IsNotNil(), m.OrganizationID.Eq(filter.OrganizationID)),
+					keel.When(filter.SavedByID.IsNotNil(), m.SavedByID.Eq(filter.SavedByID)),
+				),
+		)
+		if err != nil {
+			return nil, grantErrors.Map(err, filter.SavedByID.String())
+		}
+		if len(directories) == 0 {
+			return nil, nil
+		}
+
+		ids := make([]pulid.ID, 0, len(directories))
+		for _, directory := range directories {
+			ids = append(ids, directory.DirectoryID)
+		}
+		su := scimdb.Users
+		if _, err = su.AllTenants().Where(su.DirectoryID.In(ids...)).
+			Update(ctx, db, su.RolesVersion.Increment(1)); err != nil {
+			return nil, userErrors.Map(err, "")
+		}
+
+		return directories, nil
+	})
+}
+
+func (r *repository) MarkExpiredSaversPending(ctx context.Context, since, until int64) error {
+	ctx = dbscope.WithSystem(ctx, expiredScopeReason)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		ura := rbacdb.UserRoleAssignments
+		m := iamdb.SCIMGroupRoleMappings
+		su := scimdb.Users
+		if _, err := su.AllTenants().Where(
+			su.DirectoryID.InQuery(m.AllTenants().Pick(m.DirectoryID).Where(
+				m.SavedByID.InQuery(ura.AllTenants().Pick(ura.UserID).Where(
+					ura.ExpiresAt.Gt(since),
+					ura.ExpiresAt.Lte(until),
+				)),
+			)),
+		).Update(ctx, r.db.Keel(ctx), su.RolesVersion.Increment(1)); err != nil {
+			return userErrors.Map(err, "")
+		}
+
+		return nil
 	})
 }

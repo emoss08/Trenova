@@ -37,6 +37,29 @@ type fakeRepo struct {
 	created    []*scim.RoleGrant
 	completed  []*scim.User
 	recorded   []*iam.ProvisioningAuditRecord
+	filters    []scimports.MappingFilter
+	marked     []scimports.PendingDirectory
+	expired    [][2]int64
+}
+
+func (f *fakeRepo) MarkMappingsPending(
+	_ context.Context,
+	filter scimports.MappingFilter,
+) ([]scimports.PendingDirectory, error) {
+	f.filters = append(f.filters, filter)
+	return f.marked, nil
+}
+
+func (f *fakeRepo) ListPendingDirectories(
+	context.Context,
+	int,
+) ([]scimports.PendingDirectory, error) {
+	return nil, nil
+}
+
+func (f *fakeRepo) MarkExpiredSaversPending(_ context.Context, since, until int64) error {
+	f.expired = append(f.expired, [2]int64{since, until})
+	return nil
 }
 
 func newFakeRepo() *fakeRepo {

@@ -44,6 +44,14 @@ type PermissionCacheRepository interface {
 	InvalidateOrganization(ctx context.Context, orgID pulid.ID) error
 }
 
+// PermissionChangeListener hears that someone's permissions changed after the
+// cache has been told; a nil user means the whole organization's did.
+type PermissionChangeListener interface {
+	PermissionsChanged(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID)
+}
+
+const PermissionChangeListenerGroup = `group:"permissionChangeListeners"`
+
 type PermissionChangeNotifier interface {
 	OrganizationChanged(ctx context.Context, tenant pagination.TenantInfo)
 	UserChanged(ctx context.Context, tenant pagination.TenantInfo, userID pulid.ID)

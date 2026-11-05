@@ -52,6 +52,13 @@ type MemberChange struct {
 	UserIDs     []pulid.ID
 }
 
+// MappingFilter picks the group role mappings whose grants need a fresh
+// look: those one person saved, those in one organization, or both.
+type MappingFilter struct {
+	OrganizationID pulid.ID
+	SavedByID      pulid.ID
+}
+
 type PendingDirectory struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
@@ -93,6 +100,8 @@ type GrantRepository interface {
 	MarkPending(ctx context.Context, directoryID pulid.ID, userIDs []pulid.ID) error
 	MarkGroupPending(ctx context.Context, directoryID, groupID pulid.ID) error
 	MarkOrganizationPending(ctx context.Context) ([]pulid.ID, error)
+	MarkMappingsPending(ctx context.Context, filter MappingFilter) ([]PendingDirectory, error)
+	MarkExpiredSaversPending(ctx context.Context, since, until int64) error
 	ListPending(ctx context.Context, directoryID pulid.ID, limit int) ([]*scim.User, error)
 	ListPendingDirectories(ctx context.Context, limit int) ([]PendingDirectory, error)
 	CompleteReconcile(ctx context.Context, link *scim.User) error

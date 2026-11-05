@@ -47,16 +47,28 @@ func userPredicates(q *scimports.ListQuery) []keel.Pred {
 	return preds
 }
 
+type listUsersPage struct {
+	records []*scimports.UserRecord
+	total   int
+}
+
 func (r *repository) ListUsers(
 	ctx context.Context,
 	q *scimports.ListQuery,
 ) ([]*scimports.UserRecord, int, error) {
-	type page struct {
-		records []*scimports.UserRecord
-		total   int
+	result, err := r.readUsersPage(ctx, q)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	result, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (page, error) {
+	return result.records, result.total, nil
+}
+
+func (r *repository) readUsersPage(
+	ctx context.Context,
+	q *scimports.ListQuery,
+) (listUsersPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (listUsersPage, error) {
 		su := scimdb.Users
 		base := su.Where(userPredicates(q)...)
 
@@ -75,16 +87,11 @@ func (r *repository) ListUsers(
 			),
 			keel.CountEstimateInto(base, pagination.ExactTotalUpTo, &total),
 		); err != nil {
-			return page{}, userErrors.Map(err, q.DirectoryID.String())
+			return listUsersPage{}, userErrors.Map(err, q.DirectoryID.String())
 		}
 
-		return page{records: userRecords(links), total: int(total.N)}, nil
+		return listUsersPage{records: userRecords(links), total: int(total.N)}, nil
 	})
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return result.records, result.total, nil
 }
 
 func userRecords(links []*scim.User) []*scimports.UserRecord {

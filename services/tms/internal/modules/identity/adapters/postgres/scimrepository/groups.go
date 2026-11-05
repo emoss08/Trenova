@@ -43,16 +43,28 @@ func groupPredicates(q *scimports.ListQuery) []keel.Pred {
 	return preds
 }
 
+type listGroupsPage struct {
+	groups []*scim.Group
+	total  int
+}
+
 func (r *repository) ListGroups(
 	ctx context.Context,
 	q *scimports.ListQuery,
 ) ([]*scim.Group, int, error) {
-	type page struct {
-		groups []*scim.Group
-		total  int
+	result, err := r.readGroupsPage(ctx, q)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	result, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (page, error) {
+	return result.groups, result.total, nil
+}
+
+func (r *repository) readGroupsPage(
+	ctx context.Context,
+	q *scimports.ListQuery,
+) (listGroupsPage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (listGroupsPage, error) {
 		sg := scimdb.Groups
 
 		var groups []*scim.Group
@@ -73,16 +85,11 @@ func (r *repository) ListGroups(
 				&total,
 			),
 		); err != nil {
-			return page{}, groupErrors.Map(err, q.DirectoryID.String())
+			return listGroupsPage{}, groupErrors.Map(err, q.DirectoryID.String())
 		}
 
-		return page{groups: groups, total: int(total.N)}, nil
+		return listGroupsPage{groups: groups, total: int(total.N)}, nil
 	})
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return result.groups, result.total, nil
 }
 
 func (r *repository) GetGroup(
