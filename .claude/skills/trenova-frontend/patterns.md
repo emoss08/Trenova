@@ -214,7 +214,16 @@ useForm({
 
 A message the module returns is shown with `translateMessage(message, t)`.
 
-## A sheet of hundreds of rows (`board/views/timeline/timeline-canvas.tsx`)
+## A sheet of hundreds of rows (`components/timeline/`)
+
+Every timeline is one shared sheet: the shipments board and the dispatch console both draw on
+`TimelineCanvas`, `TimelineRow`/`TimelineGroupRow`, `TimelineBarFrame` and the lane parts, with
+the lane math (`packLane`, `laneGaps`, `nextStartsInRow`) in `lib/timeline/lanes.ts` and
+`dayBoundaries` in `lib/timeline/time-scale.ts`. A page owns only what a bar is (its tone, caption
+and inner marks, passed as children of the frame), its zooms (`TimelineZoom`), its hover card's
+content and what a drop does. Don't write another timeline renderer; add what a page needs to
+the shared parts.
+
 
 - **Virtualize by row with TanStack Virtual.** The sheet is a list of
   `{ key, height, header?, node }` lines, each at a known height, placed absolutely inside a
@@ -226,11 +235,11 @@ A message the module returns is shown with `translateMessage(message, t)`.
   keep a revealed row clear of the pinned header and the bottom edge. The component is
   `"use no memo"`: the virtualizer is a mutable object.
 - **Fill the width.** A range narrower than the sheet stretches to fill it
-  (`createTimelineScale(range, days, minWidth)` with the measured width), or a wide or
+  (`createTimelineScale(days, zoom, minWidth)` with the measured width), or a wide or
   zoomed-out window shows empty sheet past the range's end.
 - **One hover card for the whole sheet, not a tooltip per row.** A per-row `Tooltip` mounts a
-  provider, root and trigger hundreds of times. `timeline-hover-card.tsx` is the shared
-  `PointerHoverCard`, fed by a tiny external store: a bar calls `enter`/`move`/`leave` from context and holds no state, so
+  provider, root and trigger hundreds of times. Each page wraps its sheet in the shared
+  `PointerHoverCard` and passes a bar's `hoverItem` to the frame, fed by a tiny external store: a bar calls `enter`/`move`/`leave` from context and holds no state, so
   hovering redraws only the card, and following the pointer writes its position to the DOM once a
   frame. It opens after a short rest, switches bars at once while open, opens on keyboard focus
   only, and closes on scroll, Escape, pointer-down and when its bar unmounts (`release`).
