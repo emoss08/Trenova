@@ -372,7 +372,7 @@ type reportRunStatus struct {
 	outside []agentrecord.RecordRef
 }
 
-func (s *reportRunStatus) TaintedRecords() []agentrecord.RecordRef { return s.outside }
+func (s reportRunStatus) TaintedRecords() []agentrecord.RecordRef { return s.outside }
 
 // reportKeyOf reads the report's key under the name the schema declares, or
 // under the plain "key" a model reaches for after reading a catalog row. The
