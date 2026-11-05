@@ -114,10 +114,14 @@ func TestRun_MarksEveryCallOfATaskThatReadsAsNovas(t *testing.T) {
 		},
 		closingText: `{"signedBy":"Lee"}`,
 	}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 
 	var answer signature
-	_, err := harness.Run(t.Context(), readingTask(&lookup{}), &answer)
+	err := onWorker(func(ctx context.Context) error {
+		_, runErr := harness.Run(ctx, readingTask(&lookup{}), &answer)
+
+		return runErr
+	})
 	require.NoError(t, err)
 
 	require.Len(t, router.Requests, 2, "the reads run out before an answer")
@@ -134,7 +138,7 @@ func TestConverse_MarksEveryCallAsNovas(t *testing.T) {
 	router := &agenttest.ScriptedCompletion{
 		Turns: []*llmports.ChatCompletionResult{{Text: "Two loads are late."}},
 	}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 
 	answer, err := harness.Converse(t.Context(), &llmports.NovaConversation{
 		Name:         aitask.TaskPaletteAnswer,
@@ -156,7 +160,7 @@ func TestConverse_RefusesWhileNoProviderIsChosenForNova(t *testing.T) {
 	router := &agenttest.ScriptedCompletion{
 		Turns: []*llmports.ChatCompletionResult{{Text: "unused"}},
 	}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(false)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(false)})
 
 	_, err := harness.Converse(t.Context(), &llmports.NovaConversation{
 		Name:       aitask.TaskPaletteAnswer,
@@ -172,7 +176,7 @@ func TestDeferAndCollect_MarkTheSubmissionAndItsPollAsNovas(t *testing.T) {
 	t.Parallel()
 
 	router := &deferring{ScriptedCompletion: &agenttest.ScriptedCompletion{}}
-	harness := novaharness.New(novaharness.Params{Router: router, Providers: serves(true)})
+	harness := novaharness.New(novaharness.Params{Dispatcher: router, Router: router, Providers: serves(true)})
 
 	_, err := harness.Defer(t.Context(), readTask())
 	require.NoError(t, err)
