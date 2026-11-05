@@ -31,6 +31,9 @@ FROM alpine:3.21 AS runtime
 RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -S -g 65532 trenova && adduser -S -u 65532 -G trenova trenova
 
+# An unset APP_ENV means development, which relaxes production's checks.
+ENV APP_ENV=production
+
 WORKDIR /app
 
 # The deploy step: applies migrations and reference seeds before the API and
