@@ -7,10 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 // scopeRepo answers the two questions the scope check asks: what has been
@@ -69,8 +71,13 @@ const (
 	asOf         = int64(1_800_000_000)
 )
 
-func newScopeService(repo *scopeRepo) *orgstructureservice.Service {
-	return orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: repo})
+func newService(repo orgstructureports.OrgStructureRepository) *orgstructureservice.Service {
+	return orgstructureservice.New(orgstructureservice.Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		AuditService: &mocks.NoopAuditService{},
+		Realtime:     &mocks.NoopRealtimeService{},
+	})
 }
 
 func scopeTenant() pagination.TenantInfo {
@@ -84,7 +91,7 @@ func TestCanActFor_TheirOwnPeople(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	result, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	result, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     managerUser,
 		WorkerID:   teamWorker,
@@ -105,7 +112,7 @@ func TestCanActFor_RefusesSomebodyElsesWorker(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	result, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	result, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     managerUser,
 		WorkerID:   otherWorker,
@@ -134,7 +141,7 @@ func TestCanActFor_ThroughADelegation(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	result, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	result, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     coverUser,
 		WorkerID:   teamWorker,
@@ -164,7 +171,7 @@ func TestCanActFor_DelegationDoesNotCoverAnotherScope(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	result, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	result, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     coverUser,
 		WorkerID:   teamWorker,
@@ -193,7 +200,7 @@ func TestCanActFor_RevokedDelegationStopsAnswering(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	result, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	result, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     coverUser,
 		WorkerID:   teamWorker,
@@ -221,7 +228,7 @@ func TestCanActFor_DelegationFromSomebodyWhoManagesNobody(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	result, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	result, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     coverUser,
 		WorkerID:   teamWorker,
@@ -242,7 +249,7 @@ func TestCanActFor_AsksTheDatabaseRatherThanListingTheTeam(t *testing.T) {
 		manages: map[pulid.ID]map[pulid.ID]bool{managerUser: {teamWorker: true}},
 	}
 
-	_, err := newScopeService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
+	_, err := newService(repo).CanActFor(t.Context(), &orgstructureservice.ScopeRequest{
 		TenantInfo: scopeTenant(),
 		UserID:     managerUser,
 		WorkerID:   teamWorker,
@@ -275,7 +282,7 @@ func TestManagerIDs_IncludesActiveDelegatorsOnly(t *testing.T) {
 		},
 	}
 
-	ids, via, err := newScopeService(repo).ManagerIDs(
+	ids, via, err := newService(repo).ManagerIDs(
 		t.Context(),
 		scopeTenant(),
 		coverUser,

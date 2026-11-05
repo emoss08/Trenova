@@ -71,7 +71,8 @@ func newProviderFixture(t *testing.T) *providerFixture {
 			dispatchConsole: dispatchconsolerepository.New(
 				dispatchconsolerepository.Params{DB: conn, Logger: zap.NewNop()},
 			),
-			costingService: costingservice.NewTestService(costingservice.TestServiceParams{
+			costingService: costingservice.New(costingservice.Params{
+				Logger:      zap.NewNop(),
 				Repo:        deps.costing,
 				ActualsRepo: deps.actuals,
 			}),

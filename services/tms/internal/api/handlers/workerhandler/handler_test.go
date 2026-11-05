@@ -12,16 +12,22 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -78,6 +84,11 @@ func setupWorkerHandlerWithEngines(
 		},
 	)
 	cacheRepo := customerportsmock.NewMockWorkerCacheRepository(t)
+	dispatchControlRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
+	dispatchControlRepo.EXPECT().
+		GetOrCreate(mock.Anything, mock.Anything, mock.Anything).
+		Return(&dispatchcontrol.DispatchControl{}, nil).
+		Maybe()
 
 	cfService := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger:         logger,
@@ -86,11 +97,31 @@ func setupWorkerHandlerWithEngines(
 		Validator:      valuesValidator,
 	})
 
+	credentialService := workercredentialservice.New(workercredentialservice.Params{
+		Logger:       logger,
+		Repo:         emptyCredentialRepo{},
+		AuditService: auditSvc,
+		Realtime:     &mocks.NoopRealtimeService{},
+	})
+	ptoPolicyService := ptopolicyservice.New(ptopolicyservice.Params{
+		Logger:       logger,
+		Repo:         noDefaultPTOPolicyRepo{},
+		DB:           dbtest.NopConnection{},
+		AuditService: auditSvc,
+		Realtime:     &mocks.NoopRealtimeService{},
+	})
+
 	service := workerservice.New(workerservice.Params{
-		Logger:                    logger,
-		Repo:                      repo,
-		CacheRepo:                 cacheRepo,
-		Validator:                 workerservice.NewTestValidator(),
+		CredentialService: credentialService,
+		PTOPolicyService:  ptoPolicyService,
+		Logger:            logger,
+		Repo:              repo,
+		CacheRepo:         cacheRepo,
+		DB:                dbtest.NopConnection{},
+		Validator: workerservice.NewValidator(workerservice.ValidatorParams{
+			DB:                  pgstubtest.NewConnection(t, "us_states", "fleet_codes"),
+			DispatchControlRepo: dispatchControlRepo,
+		}),
 		AuditService:              auditSvc,
 		Realtime:                  &mocks.NoopRealtimeService{},
 		CustomFieldsValuesService: cfService,

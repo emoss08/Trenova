@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -73,6 +74,8 @@ func setupTest(t *testing.T) *testDeps {
 		sr:           sessionRepo,
 		rotator:      sessiontest.Rotator(sessionRepo),
 		auditService: auditSvc,
+		authEvents:   &recordedEvents{},
+		auditor:      &securityaudittest.Recorder{},
 		realtime:     &mocks.NoopRealtimeService{},
 		storage:      storageClient,
 		storageCfg: &storageconfig.Config{
@@ -880,13 +883,6 @@ func TestNew(t *testing.T) {
 	})
 
 	require.NotNil(t, svc)
-}
-
-func TestNewTestValidator(t *testing.T) {
-	t.Parallel()
-
-	v := NewTestValidator()
-	require.NotNil(t, v)
 }
 
 func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {

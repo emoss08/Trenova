@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
@@ -17,7 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
+	"github.com/emoss08/trenova/internal/testutil/pgstubtest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -45,9 +48,12 @@ func setupRoleHandler(t *testing.T, repo *permissionportsmock.MockRoleRepository
 		RoleRepo:         repo,
 		RBACRepo:         &rbactest.Repository{},
 		Notifier:         &permchangetest.Recorder{},
+		Auditor:          &securityaudittest.Recorder{},
 		PermissionEngine: permEngine,
-		Validator:        roleservice.NewTestValidator(),
-		Registry:         permissioncatalog.NewEmptyRegistry(),
+		Validator: roleservice.NewValidator(
+			roleservice.ValidatorParams{DB: pgstubtest.NewConnection(t)},
+		),
+		Registry: permissioncatalog.NewEmptyRegistry(),
 	})
 
 	cfg := &config.Config{
@@ -65,7 +71,13 @@ func setupRoleHandler(t *testing.T, repo *permissionportsmock.MockRoleRepository
 		handler: rolehandler.New(rolehandler.Params{
 			Service:          service,
 			PermissionEngine: permEngine,
-			ErrorHandler:     errorHandler,
+			PermissionMiddleware: middleware.NewPermissionMiddleware(
+				middleware.PermissionMiddlewareParams{
+					PermissionEngine: permEngine,
+					ErrorHandler:     errorHandler,
+				},
+			),
+			ErrorHandler: errorHandler,
 		}),
 	}
 }

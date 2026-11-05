@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
@@ -93,7 +94,8 @@ func openImportThread(
 				ErrorHandler:     errorHandler,
 			},
 		),
-		Logger: zap.NewNop(),
+		StorageConfig: &storageconfig.Config{},
+		Logger:        zap.NewNop(),
 	})
 
 	router := gin.New()
