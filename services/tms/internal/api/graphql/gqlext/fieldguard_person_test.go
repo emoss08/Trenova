@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	gqlgen "github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
@@ -191,6 +192,41 @@ func TestPersonRead_ARecordAMutationsPayloadCarriesIsLinked(t *testing.T) {
 		steps(assigned, fieldStep{object: "Worker", field: "email"})...)
 	assert.Equal(t, "stored value", result, "a worker reader sees the whole worker")
 	assert.True(t, resolved)
+}
+
+func TestPersonRead_ARecordOnATypeNamedLikeAWrapperIsLinked(t *testing.T) {
+	t.Parallel()
+
+	guard, ctx := personGuard(t, permission.ResourceUser)
+	pausedBy := []fieldStep{
+		{object: "Query", field: "accountingSyncStatus"},
+		{object: "AccountingSyncStatus", field: "connection"},
+		{object: "AccountingConnection", field: "pausedBy"},
+	}
+
+	result, resolved := resolveNested(t, guard, ctx,
+		steps(pausedBy, fieldStep{object: "User", field: "name", nonNull: true})...)
+	assert.Equal(t, "stored value", result, "a person's name is in the user reference view")
+	assert.True(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		steps(pausedBy, fieldStep{object: "User", field: "emailAddress"})...)
+	assert.Nil(t, result, "a user's email needs user read")
+	assert.False(t, resolved)
+}
+
+func TestWrapperTypes_AreToldByShapeNotByName(t *testing.T) {
+	t.Parallel()
+
+	schema, err := schemadiff.LoadDir("../schema")
+	require.NoError(t, err)
+	wrappers := WrapperTypes(schema)
+
+	assert.Contains(t, wrappers, "TractorConnection")
+	assert.Contains(t, wrappers, "TractorEdge")
+	assert.NotContains(t, wrappers, "AccountingConnection")
+	assert.NotContains(t, wrappers, "EdiConnection")
+	assert.NotContains(t, wrappers, "ReportCatalogEdge")
 }
 
 func TestPersonRead_APartOfALinkedRecordFollowsThatRecordsRead(t *testing.T) {

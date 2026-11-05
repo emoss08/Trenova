@@ -108,6 +108,7 @@ type FieldGuardExtension struct {
 	registry  *permissioncatalog.Registry
 	views     *refview.Views
 	resources map[string]permission.Resource
+	wrappers  map[string]struct{}
 	scoped    []string
 }
 
@@ -148,7 +149,22 @@ func (e *FieldGuardExtension) Validate(schema graphql.ExecutableSchema) error {
 	}
 	e.fields = fields
 	e.resources = resources
+	e.wrappers = WrapperTypes(schema.Schema())
 	return nil
+}
+
+func WrapperTypes(schema *ast.Schema) map[string]struct{} {
+	out := make(map[string]struct{})
+	if schema == nil {
+		return out
+	}
+	for name, def := range schema.Types {
+		if wrapperType(def) {
+			out[name] = struct{}{}
+		}
+	}
+
+	return out
 }
 
 // ResourceTypes maps each object type named for a registered resource
@@ -449,7 +465,7 @@ func (e *FieldGuardExtension) reachOf(
 		switch {
 		case e.payload(f):
 			carried = true
-		case !wrapper(f):
+		case !e.wrapper(f):
 			nested = true
 		}
 	}
@@ -478,8 +494,9 @@ func returnedByRoot(fc *graphql.FieldContext) bool {
 
 // wrapper reports whether a field's parent type only carries what its root
 // field returned: a connection or an edge.
-func wrapper(fc *graphql.FieldContext) bool {
-	return strings.HasSuffix(fc.Object, "Connection") || strings.HasSuffix(fc.Object, "Edge")
+func (e *FieldGuardExtension) wrapper(fc *graphql.FieldContext) bool {
+	_, ok := e.wrappers[fc.Object]
+	return ok
 }
 
 // payload reports whether a field belongs to the type a mutation returns

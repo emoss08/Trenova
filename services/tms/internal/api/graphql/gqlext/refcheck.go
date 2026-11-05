@@ -276,8 +276,15 @@ func (w *linkWalker) field(parent *ast.Definition, f *ast.Field, frame linkFrame
 	w.selections(child, f.SelectionSet, next, at, nil)
 }
 
-func wrapperType(parent *ast.Definition) bool {
-	return strings.HasSuffix(parent.Name, "Connection") || strings.HasSuffix(parent.Name, "Edge")
+func wrapperType(def *ast.Definition) bool {
+	switch {
+	case strings.HasSuffix(def.Name, "Connection"):
+		return def.Fields.ForName("edges") != nil && def.Fields.ForName("pageInfo") != nil
+	case strings.HasSuffix(def.Name, "Edge"):
+		return def.Fields.ForName("node") != nil && def.Fields.ForName("cursor") != nil
+	default:
+		return false
+	}
 }
 
 func (w *linkWalker) payloadType(parent *ast.Definition, frame linkFrame) bool {
