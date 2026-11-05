@@ -40,9 +40,11 @@ itself are yours.
 | `tms-api` | `ghcr.io/emoss08/trenova/tms` | REST and GraphQL API, live updates (server-sent events) |
 | `tms-worker` | `ghcr.io/emoss08/trenova/tms` | Background jobs and every AI feature, on Temporal |
 | `trenova-db` | `ghcr.io/emoss08/trenova/tms-db` | One-shot: database migrations, then the reference seeds that changed (reference data, each organization's defaults and administrator permissions, the row-level security key), on every start (`trenova-db up -env production`); the API and worker wait for it |
+| `rls-roles` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the roles the API and worker sign in as and sets their passwords from `.env` (`trenova db rls provision-roles`), on every start |
 | `tms-bootstrap` | `ghcr.io/emoss08/trenova/tms` | One-shot: creates the first organization and administrator once (`trenova db bootstrap`); a no-op afterwards |
 | `db-bootstrap` | `ghcr.io/emoss08/trenova/postgres` | One-shot: change-data-capture publication |
 | `postgres` | `ghcr.io/emoss08/trenova/postgres` | PostgreSQL 18 with PostGIS, pg_cron and pgvector |
+| `postgres-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues PostgreSQL's private CA and server certificate, once |
 | `redis` | `redis:8` | Sessions, rate limits, caches, the live-update streams |
 | `minio` | `pgsty/silo` (MinIO) | Documents and other uploaded files |
 | `meilisearch` | `getmeili/meilisearch` | Global search |
@@ -54,13 +56,14 @@ itself are yours.
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
 | `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
 
-The `tms-api`, `tms-worker` and `tms-bootstrap` services are one image with different
+The `tms-api`, `tms-worker`, `rls-roles` and `tms-bootstrap` services are one image with different
 commands; `trenova-db` is its own small image, so the server image carries no migrations or
 seed data.
-Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal,
-Gotenberg, docling-serve, the imaging worker and GTC sit on an internal Docker network with no route off the host; the API and
-worker get a separate network for outbound calls (AI providers, email, accounting
-integrations, release checks).
+Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal
+and GTC sit on an internal Docker network with no route off the host, and Gotenberg,
+docling-serve, the imaging worker and ClamAV each sit on an internal network of their own with
+the TMS processes; the API and worker get a separate network for outbound calls (AI providers,
+email, accounting integrations, release checks).
 
 ## Requirements
 
@@ -243,8 +246,8 @@ Configuration lives in two files next to `compose.yml`:
 | `config/config.yaml` | Everything else: timeouts, rate limits, AI, rendering, logging |
 
 `compose.yml` turns `.env` into `TRENOVA_<SECTION>_<KEY>` environment variables, which
-override `config/config.yaml` (for example `TRENOVA_DATABASE_PASSWORD` overrides
-`database.password`). Values in `config/config.yaml` marked "from .env" are placeholders; a
+override `config/config.yaml` (for example `TRENOVA_SECURITY_SESSION_SECRET` overrides
+`security.session.secret`). Values in `config/config.yaml` marked "from .env" are placeholders; a
 placeholder secret that reached production is refused at startup.
 
 Trenova reads its configuration strictly: an unknown key fails startup and names the key. The
@@ -336,6 +339,41 @@ database schema under you.
 **Rolling back** the images is only safe when the newer release did not migrate the
 database. Otherwise restore the backup you took before upgrading.
 
+### Upgrading to a release with row-level security
+
+The API and worker no longer sign in as the database owner, a superuser. They use two new
+roles, and PostgreSQL itself refuses another organization's rows
+([row-level security](../engineering/row-level-security.md)). `.env` needs their passwords and
+a scope-signing key, and `docker compose` refuses to run until it has them. After step 3 above,
+from this directory:
+
+```bash
+./scripts/init-env.sh --upgrade   # adds only what is missing; safe to run twice
+docker compose pull
+docker compose up -d
+```
+
+If you edited `config/config.yaml`, carry `database.user`, `database.system`,
+`database.migrator` and `database.rls` over from the new version: `rls.mode` is `enforce`.
+
+Nothing in your data is rewritten. `trenova-db` installs the key, `rls-roles` creates the roles,
+and the API and worker start on them. If either stops, `docker compose logs rls-roles tms-api`
+says why. Confirm it with:
+
+```bash
+docker compose run --rm --entrypoint trenova tms-bootstrap db rls status
+docker compose logs tms-api tms-worker | grep 'Refused database access'
+```
+
+The second command should print nothing. To go back, return to the previous release's
+deployment files and `TRENOVA_VERSION`: its compose file signs in as the owner and ignores the
+new roles and keys. This needs the same care as any other rollback, so keep the backup from
+step 2 until the release has run through a full day of schedules.
+
+Maintenance commands connect as the owner, whose password the API no longer holds, so
+`encryption rewrap` and `db rls status` now run through `tms-bootstrap` (`--entrypoint trenova`),
+as shown here and under [Rotating the encryption key](#rotating-the-encryption-key).
+
 ### Upgrading to a release with document conversion
 
 Releases that bundle the `docling` service read a new key from `.env`,
@@ -384,8 +422,8 @@ nothing has to be changed for the upgrade. To move them onto the new key, run on
 the upgrade:
 
 ```bash
-docker compose run --rm tms-api encryption rewrap --dry-run
-docker compose run --rm tms-api encryption rewrap
+docker compose run --rm --entrypoint trenova tms-bootstrap encryption rewrap --dry-run
+docker compose run --rm --entrypoint trenova tms-bootstrap encryption rewrap
 ```
 
 The same command binds older integration secrets (every integration's API keys and
@@ -438,10 +476,13 @@ credentials.
 
 Keep copies off the host, and test a restore now and then.
 
-**Restore** onto a fresh install (same `.env`, empty volumes):
+**Restore** onto a fresh install (same `.env`, empty volumes). A dump holds no roles, so the two
+groups its grants and row-level security policies name come first:
 
 ```bash
 docker compose up -d postgres
+docker compose exec -T postgres sh -c \
+  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE ROLE trenova_tenant NOLOGIN" -c "CREATE ROLE trenova_rls_bypass NOLOGIN"'
 docker compose exec -T postgres sh -c \
   'pg_restore --clean --if-exists --no-owner -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
   < trenova-YYYYMMDD-HHMM.dump
@@ -481,9 +522,9 @@ named in `.env`. Rotating replaces the outer key without decrypting anything els
    (`openssl rand -hex 32`). Back up `.env`.
 2. `docker compose up -d`. New values are sealed with the new key; values sealed with a
    retired key are still read.
-3. `docker compose run --rm tms-api encryption rewrap --dry-run` reports how many values
-   and documents each kind of record still holds under a retired key, and
-   `docker compose run --rm tms-api encryption rewrap` moves them. It writes each row only
+3. `docker compose run --rm --entrypoint trenova tms-bootstrap encryption rewrap --dry-run`
+   reports how many values and documents each kind of record still holds under a retired key,
+   and the same command without `--dry-run` moves them. It writes each row only
    if nothing changed it since it was read, so it can run while Trenova is in use; a row
    changed meanwhile is reported as a conflict and moved by the next run. It also moves
    AI provider keys, agent extension secrets and the CarrierOK and FMCSA QCMobile keys
@@ -622,15 +663,12 @@ networks. Beyond that:
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
   way when you add services.
 - **Host.** Keep the OS and Docker patched; enable unattended security updates.
-- **Tenant isolation in PostgreSQL.** This stack runs with `database.rls.mode: "off"`: the
-  application connects as the database owner, and tenant isolation is enforced by the
-  application. Trenova can also have PostgreSQL itself refuse rows of another organization
-  (row-level security), which needs separate application, system and migrator database roles
-  and a scope-signing key. Follow "Rolling out" in
-  [docs/engineering/row-level-security.md](../engineering/row-level-security.md): it is
-  `trenova db rls generate-key`, setting `database.migrator` to the current owner role,
-  `trenova db rls provision-roles`, a period in `observe`, then `enforce` with
-  `database.user` switched to the new application role. GTC keeps connecting as the owner.
+- **Tenant isolation in PostgreSQL.** This stack runs with `database.rls.mode: enforce`: the
+  API and worker sign in as `trenova_app`, which
+  [row-level security](../engineering/row-level-security.md) binds to one organization at a
+  time, and as `trenova_system` for the work that sees every organization. Neither is a
+  superuser, and neither holds the owner's password: only `trenova-db`, `rls-roles` and
+  `tms-bootstrap` do among the TMS services. Temporal and GTC still sign in as the owner.
   Run `trenova-db` as a PostgreSQL superuser if you can: each run marks enum comparisons
   `LEAKPROOF`, which lets status filters use their indexes under row-level security. Managed
   PostgreSQL (RDS, Cloud SQL) gives no superuser; Trenova works there, but those filters read
@@ -647,6 +685,18 @@ networks. Beyond that:
 error names the key at fault (an unknown key, a missing secret, a placeholder value). A
 database error usually means PostgreSQL was not ready or the database password in `.env`
 changed after the volume was created; PostgreSQL keeps the password it was initialized with.
+
+**`required variable TRENOVA_DATABASE_APP_PASSWORD is missing`, or the same for another
+`TRENOVA_DATABASE_*` secret.** `.env` predates row-level security: run
+`./scripts/init-env.sh --upgrade`.
+
+**`rls-roles` exited with an error, and the API never starts.** `docker compose logs rls-roles`.
+A role that does not exist means a restore skipped the first step under
+[Backups](#backups-and-restore): `trenova_tenant` and `trenova_rls_bypass` come before the dump.
+
+**`row-level security is enforced but the application database role can bypass it`.**
+`TRENOVA_DATABASE_APP_USER` names the owner or a superuser, which startup refuses. Leave it at
+`trenova_app`.
 
 **`tms-bootstrap` exited with an error, and the API never starts.** `docker compose logs
 tms-bootstrap`. `bootstrap inputs are not valid` lists each value at fault with the flag and

@@ -43,8 +43,13 @@ x-tms-environment: &tms-environment
   TRENOVA_PORTAL_BASEURL: https://${DOMAIN}/dash
   TRENOVA_REPORTING_DELIVERYLINKBASEURL: https://${DOMAIN}
   TRENOVA_DATABASE_NAME: ${TRENOVA_DATABASE_NAME:-trenova}
-  TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_USER:-trenova}
-  TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+  TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_APP_USER:-trenova_app}
+  TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_APP_PASSWORD:?set TRENOVA_DATABASE_APP_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+  TRENOVA_DATABASE_SYSTEM_USER: ${TRENOVA_DATABASE_SYSTEM_USER:-trenova_system}
+  TRENOVA_DATABASE_SYSTEM_PASSWORD: ${TRENOVA_DATABASE_SYSTEM_PASSWORD:?set TRENOVA_DATABASE_SYSTEM_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+  TRENOVA_DATABASE_MIGRATOR_USER: ${TRENOVA_DATABASE_USER:-trenova}
+  TRENOVA_DATABASE_RLS_SCOPEKEYID: ${TRENOVA_DATABASE_RLS_SCOPEKEYID:?set TRENOVA_DATABASE_RLS_SCOPEKEYID in .env (./scripts/init-env.sh --upgrade)}
+  TRENOVA_DATABASE_RLS_SCOPEKEY: ${TRENOVA_DATABASE_RLS_SCOPEKEY:?set TRENOVA_DATABASE_RLS_SCOPEKEY in .env (./scripts/init-env.sh --upgrade)}
   TRENOVA_CACHE_PASSWORD: ${TRENOVA_REDIS_PASSWORD:?set TRENOVA_REDIS_PASSWORD in .env}
   TRENOVA_SEARCH_MEILISEARCH_APIKEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
   TRENOVA_STORAGE_ENDPOINT: ${TRENOVA_STORAGE_ENDPOINT:-minio:9000}
@@ -78,6 +83,12 @@ x-tms-environment: &tms-environment
   TRENOVA_BUSINESSCENTRAL_WEBHOOK_BASE_URL: ${TRENOVA_BUSINESSCENTRAL_WEBHOOK_BASE_URL:-}
   TRENOVA_NETSUITE_CLIENT_ID: ${TRENOVA_NETSUITE_CLIENT_ID:-}
   TRENOVA_NETSUITE_CLIENT_SECRET: ${TRENOVA_NETSUITE_CLIENT_SECRET:-}
+
+# The owner is a superuser, so its password goes only to the one-shot services
+# that need it, never to the API and worker.
+x-tms-migrator-environment: &tms-migrator-environment
+  <<: *tms-environment
+  TRENOVA_DATABASE_MIGRATOR_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
 
 x-tms-service: &tms-service
   image: ghcr.io/emoss08/trenova/tms:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
@@ -499,7 +510,7 @@ services:
   trenova-db:
     image: ghcr.io/emoss08/trenova/tms-db:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
     command: ["up", "-env", "production"]
-    environment: *tms-environment
+    environment: *tms-migrator-environment
     volumes:
       - ./config/config.yaml:/app/config/config.yaml:ro
       - postgres-client-tls:/certs/postgres:ro
@@ -512,6 +523,19 @@ services:
     logging: *logging
     networks: [data]
 
+  # One-shot: creates the application and system roles the API and worker sign
+  # in as (trenova db rls provision-roles), as the Helm chart's release Job does.
+  # Idempotent, and it runs on every start: it sets each role's password back to
+  # the one in .env and touches no table, so it works on a database with data.
+  rls-roles:
+    <<: *tms-service
+    command: ["db", "rls", "provision-roles"]
+    environment: *tms-migrator-environment
+    depends_on:
+      trenova-db:
+        condition: service_completed_successfully
+    restart: "no"
+    networks: [data]
 
   # One-shot: creates the first organization and its administrator from the
   # TRENOVA_BOOTSTRAP_* values in .env (trenova db bootstrap). It runs on every
@@ -531,7 +555,7 @@ services:
         fi
         exec trenova db bootstrap
     environment:
-      <<: *tms-environment
+      <<: *tms-migrator-environment
       TRENOVA_BOOTSTRAP_ORG_NAME: ${TRENOVA_BOOTSTRAP_ORG_NAME:-}
       TRENOVA_BOOTSTRAP_ADMIN_NAME: ${TRENOVA_BOOTSTRAP_ADMIN_NAME:-}
       TRENOVA_BOOTSTRAP_ADMIN_EMAIL: ${TRENOVA_BOOTSTRAP_ADMIN_EMAIL:-}
@@ -544,7 +568,7 @@ services:
       TRENOVA_BOOTSTRAP_SCAC: ${TRENOVA_BOOTSTRAP_SCAC:-}
       TRENOVA_BOOTSTRAP_DOT_NUMBER: ${TRENOVA_BOOTSTRAP_DOT_NUMBER:-}
     depends_on:
-      trenova-db:
+      rls-roles:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
@@ -651,6 +675,8 @@ services:
     depends_on:
       trenova-db:
         condition: service_completed_successfully
+      rls-roles:
+        condition: service_completed_successfully
       db-bootstrap:
         condition: service_completed_successfully
       tms-bootstrap:
@@ -684,6 +710,8 @@ services:
     command: ["worker", "run"]
     depends_on:
       trenova-db:
+        condition: service_completed_successfully
+      rls-roles:
         condition: service_completed_successfully
       db-bootstrap:
         condition: service_completed_successfully

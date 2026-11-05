@@ -88,10 +88,12 @@ func TestRequiredAPIKeyInterpolationPattern(t *testing.T) {
 
 type selfHostCompose struct {
 	Services map[string]struct {
-		Networks   []string `yaml:"networks"`
-		User       string   `yaml:"user"`
-		Entrypoint []string `yaml:"entrypoint"`
-		Volumes    []string `yaml:"volumes"`
+		Networks   []string       `yaml:"networks"`
+		User       string         `yaml:"user"`
+		Entrypoint []string       `yaml:"entrypoint"`
+		Volumes    []string       `yaml:"volumes"`
+		Env        map[string]any `yaml:"environment"`
+		DependsOn  map[string]any `yaml:"depends_on"`
 	} `yaml:"services"`
 	Networks map[string]struct {
 		Internal bool `yaml:"internal"`
@@ -225,4 +227,98 @@ func TestPostgresKeyIsIssuedPerInstallAndStaysWithTheServer(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(dockerfile), "server.key")
 	assert.NotContains(t, string(dockerfile), "openssl req")
+}
+
+func TestSelfHostAPIAndWorkerSignInAsTheirOwnRole(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	for _, name := range []string{"tms-api", "tms-worker"} {
+		env := compose.Services[name].Env
+		assert.Contains(t, env["TRENOVA_DATABASE_USER"], "TRENOVA_DATABASE_APP_USER", name)
+		assert.Contains(t, env["TRENOVA_DATABASE_PASSWORD"], "TRENOVA_DATABASE_APP_PASSWORD", name)
+		assert.Contains(t, env, "TRENOVA_DATABASE_SYSTEM_PASSWORD", name)
+		assert.Contains(t, env, "TRENOVA_DATABASE_RLS_SCOPEKEY", name)
+		assert.NotContains(
+			t,
+			env,
+			"TRENOVA_DATABASE_MIGRATOR_PASSWORD",
+			"%s must not hold the superuser's password",
+			name,
+		)
+	}
+}
+
+func TestSelfHostOneShotsHoldTheOwnerPassword(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	for _, name := range []string{"trenova-db", "rls-roles", "tms-bootstrap"} {
+		assert.Contains(t, compose.Services[name].Env, "TRENOVA_DATABASE_MIGRATOR_PASSWORD", name)
+		assert.Contains(t, compose.Services[name].Env, "TRENOVA_DATABASE_RLS_SCOPEKEY", name)
+	}
+}
+
+func TestSelfHostRolesExistBeforeAnythingSignsInAsThem(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+
+	assert.Contains(t, compose.Services["rls-roles"].DependsOn, "trenova-db")
+	for _, name := range []string{"tms-api", "tms-worker", "tms-bootstrap"} {
+		assert.Contains(t, compose.Services[name].DependsOn, "rls-roles", name)
+	}
+}
+
+func TestSelfHostConfigEnforcesRowLevelSecurity(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost")
+	raw, err := os.ReadFile(filepath.Join(root, "config", "config.yaml"))
+	require.NoError(t, err)
+
+	var config struct {
+		Database struct {
+			User   string `yaml:"user"`
+			System struct {
+				User string `yaml:"user"`
+			} `yaml:"system"`
+			Migrator struct {
+				User     string `yaml:"user"`
+				Password string `yaml:"password"`
+			} `yaml:"migrator"`
+			RLS struct {
+				Mode string `yaml:"mode"`
+			} `yaml:"rls"`
+		} `yaml:"database"`
+	}
+	require.NoError(t, yaml.Unmarshal(raw, &config))
+
+	assert.Equal(t, "enforce", config.Database.RLS.Mode)
+	assert.Equal(t, "trenova_app", config.Database.User)
+	assert.Equal(t, "trenova_system", config.Database.System.User)
+	assert.Equal(t, "trenova", config.Database.Migrator.User)
+	assert.Empty(t, config.Database.Migrator.Password)
+}
+
+func TestSelfHostInstallAndUpgradeWriteEverySecretComposeRequires(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost")
+	example, err := os.ReadFile(filepath.Join(root, ".env.example"))
+	require.NoError(t, err)
+	script, err := os.ReadFile(filepath.Join(root, "scripts", "init-env.sh"))
+	require.NoError(t, err)
+
+	for _, name := range []string{
+		"TRENOVA_DATABASE_APP_PASSWORD",
+		"TRENOVA_DATABASE_SYSTEM_PASSWORD",
+		"TRENOVA_DATABASE_RLS_SCOPEKEYID",
+		"TRENOVA_DATABASE_RLS_SCOPEKEY",
+	} {
+		assert.Contains(t, string(example), name+"=change-me", name)
+		assert.Contains(t, string(script), "add_missing "+name, name)
+	}
 }

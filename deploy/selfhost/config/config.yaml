@@ -1,6 +1,6 @@
 # Trenova runtime configuration for the self-hosted stack (compose.yml).
 #
-# Mounted into trenova-db, tms-api and tms-worker at /app/config/config.yaml,
+# Mounted into every TMS service and trenova-db at /app/config/config.yaml,
 # which they read with APP_ENV=production. Decoding is strict: a key Trenova
 # does not know fails startup, so keep this file to the keys the release you
 # run understands. services/tms/config/config.example.yaml documents every key.
@@ -66,7 +66,7 @@ database:
   host: postgres
   port: 5432
   name: trenova # from .env
-  user: trenova # from .env
+  user: trenova_app # from .env
   password: change-me # from .env
   sslMode: verify-full
   sslRootCert: /certs/postgres/ca.pem
@@ -96,12 +96,22 @@ database:
   # maxRepeats round trips (an N+1 read).
   budget:
     maxRepeats: 10
-  # PostgreSQL row-level security is off in this stack: the application
-  # connects as the database owner. Moving to enforced tenant isolation takes
-  # separate application, system and migrator roles; see "Hardening" in
-  # docs/self-hosting/README.md and docs/engineering/row-level-security.md.
+  # PostgreSQL itself refuses another organization's rows: the API and worker
+  # sign in as the role above, which row-level security binds, and as the system
+  # role for the work that sees every organization. The rls-roles service creates
+  # both. The migrator is the owner, a superuser: only the one-shot services hold
+  # its password. See docs/engineering/row-level-security.md.
+  system:
+    user: trenova_system # from .env
+    password: change-me # from .env
+    maxOpenConns: 8
+  migrator:
+    user: trenova # from .env
+    password: "" # from .env, for the one-shot services alone
   rls:
-    mode: "off"
+    mode: enforce
+    scopeKeyId: "" # from .env
+    scopeKey: "" # from .env
 
 cache:
   host: redis

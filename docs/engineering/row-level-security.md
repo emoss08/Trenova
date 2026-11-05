@@ -317,6 +317,9 @@ switch to `enforce` and watch for `Refused database access` errors.
 
 ## Rolling out
 
+The Helm chart and the self-host Compose stack run `enforce` from the start and create the roles
+on every deploy (`rls-roles` in both). These steps are for any other deployment.
+
 `observe` is a dry run only while the application still connects as a role that
 bypasses row-level security. The scope guard signs every scope and reports the
 access `enforce` would refuse, but PostgreSQL lets it through. Connected as the
