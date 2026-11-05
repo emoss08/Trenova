@@ -270,10 +270,6 @@ func (ec *Exec) fieldContext(
 	field graphql.CollectedField,
 ) (fc *graphql.FieldContext, err error) {
 	isMethod := f.IsMethod || f.IsResolver
-	if f.Args == nil && !f.HasChild {
-		return graphql.NewScalarFieldContext(objectName, field, isMethod, f.IsResolver, f.ChildErr)
-	}
-
 	fc = &graphql.FieldContext{
 		Object:     objectName,
 		Field:      field,
