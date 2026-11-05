@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rbacrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/scimrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/sequenceconfigrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/settlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/dataretentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/directoryaccounts"
 	"github.com/emoss08/trenova/internal/modules/identity/app/documentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -59,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/scimservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/securitybriefingservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sequenceconfigservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
@@ -70,9 +73,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
+	"github.com/emoss08/trenova/internal/modules/identity/jobs/scimjobs/scimcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
@@ -95,6 +100,7 @@ func SharedOptions() fx.Option {
 			iamrepository.NewAuthEventHistoryRepository,
 			iamrepository.NewMFARepository,
 			iamrepository.NewSecurityBriefingRepository,
+			scimrepository.New,
 			ssoconfigrepository.New,
 			ssoidentitylinkrepository.New,
 			datarententionrepository.New,
@@ -162,6 +168,15 @@ func SharedOptions() fx.Option {
 			func(s *roleservice.Service) userservice.RoleAssigner { return s },
 			func(s *roleservice.Service) permissionports.RoleGrantGuard { return s },
 			func(s *passwordresetservice.Service) userservice.AccountInviter { return s },
+			func(s *userservice.Service) directoryaccounts.Lifecycle { return s },
+			directoryaccounts.New,
+			func(s *directoryaccounts.Service) scimservice.Accounts { return s },
+			func(s *roleservice.Service) scimservice.RoleAssigner { return s },
+			scimcontract.NewRequester,
+			scimservice.New,
+			func(s *scimservice.Service) scimports.Provisioner { return s },
+			func(s *scimservice.Service) scimports.GrantReconciler { return s },
+			func(s *scimservice.Service) scimports.DirectoryGrants { return s },
 			sequenceconfigservice.New,
 			shipmentcontrolservice.New,
 			dataretentionservice.New,
