@@ -32,6 +32,8 @@ the stance to hold while you do.
    `jobs.md`, `testing.md`, `go.md`, and `scale.md` always.
 3. The subsystem's doc from `docs/engineering/README.md`. Its "rule that bites" column lists the
    invariants that compile and still break production.
+4. `security-review.md` when the change touches who may do what, money, sign-in, a stored secret
+   or anything shared between people.
 
 ## When the patterns are wrong
 

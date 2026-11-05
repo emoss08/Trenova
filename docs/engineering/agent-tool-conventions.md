@@ -57,7 +57,9 @@ A tool is `<namespace>_<verb>[_<object>]`, all lower case: `shipment_get`, `ship
 One tool does one thing to one kind of record. Two tools that differ only by a trailing "s"
 (one record and several) become one tool taking a list. Two reads of the same records become
 one read with the union of their parameters (`shipment_list` was `list_shipments` and
-`search_shipments`). Tools are not merged across permission operations: a tool's policy names
+`search_shipments`). A tool's permission matches what its page asks; a further grant asked of a
+person goes in `PersonAlsoNeeds` ([security-review](backend/security-review.md)). Tools are not
+merged across permission operations: a tool's policy names
 one resource and one operation, so pin and unpin stay two tools.
 
 A write over one record or many is a `recordbatch.RecordBatch` around the single-record tool, which
