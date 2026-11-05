@@ -11,11 +11,7 @@ import (
 )
 
 func fiscalYearSelectOptionItem(entity *fiscalyear.FiscalYear) selectoption.Item {
-	return selectoption.ItemFor(
-		fiscalYearSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(fiscalYearSelectOption(entity))
 }
 
 func fiscalYearSelectOption(entity *fiscalyear.FiscalYear) *gqlmodel.SelectOption {
@@ -34,11 +30,7 @@ func fiscalYearSelectOption(entity *fiscalyear.FiscalYear) *gqlmodel.SelectOptio
 }
 
 func fiscalPeriodSelectOptionItem(entity *fiscalperiod.FiscalPeriod) selectoption.Item {
-	return selectoption.ItemFor(
-		fiscalPeriodSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(fiscalPeriodSelectOption(entity))
 }
 
 func fiscalPeriodSelectOption(entity *fiscalperiod.FiscalPeriod) *gqlmodel.SelectOption {

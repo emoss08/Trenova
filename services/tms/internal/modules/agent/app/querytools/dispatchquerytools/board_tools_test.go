@@ -189,10 +189,10 @@ func TestDispatchBoard_ReadsDueFirstAndPagesTheLateMoves(t *testing.T) {
 	short, _ := cut.(*boardView)
 	assert.Len(t, short.Moves, 1)
 	assert.True(t, short.HasMore)
-	scope, err := querytool.CursorScope(tool.Name(), call.Params)
+	binding, err := querytool.BindCall(querytool.CallOf(tool.Name(), call))
 	require.NoError(t, err)
-	key, err := pagination.DecodeKeyCursor(scope, short.NextCursor)
+	offset, err := pagination.DecodeOffsetCursor(binding, short.NextCursor)
 	require.NoError(t, err)
-	assert.Equal(t, "1", key, "a cut board resumes at the move after the last one kept")
+	assert.Equal(t, 1, offset, "a cut board resumes at the move after the last one kept")
 	assert.Contains(t, short.Note, "1 late moves listed")
 }

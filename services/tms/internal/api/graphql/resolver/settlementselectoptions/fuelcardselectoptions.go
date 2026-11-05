@@ -10,11 +10,7 @@ import (
 func fuelCardID(entity *fuelpurchase.FuelCard) pulid.ID { return entity.ID }
 
 func fuelCardSelectOptionItem(entity *fuelpurchase.FuelCard) selectoption.Item {
-	return selectoption.ItemFor(
-		fuelCardSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(fuelCardSelectOption(entity))
 }
 
 func fuelCardSelectOption(entity *fuelpurchase.FuelCard) *gqlmodel.SelectOption {

@@ -13,17 +13,13 @@ func factoringCompanySelectOptionItem(
 	if entity.City != "" {
 		description += " · " + entity.City
 	}
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: &description,
-			Meta: map[string]any{
-				selectoption.MetaKeyCode:   entity.Code,
-				selectoption.MetaKeyStatus: string(entity.Status),
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: &description,
+		Meta: map[string]any{
+			selectoption.MetaKeyCode:   entity.Code,
+			selectoption.MetaKeyStatus: string(entity.Status),
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }

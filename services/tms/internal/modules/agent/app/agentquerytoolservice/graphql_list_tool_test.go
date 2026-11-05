@@ -124,7 +124,7 @@ func (m *manufacturerRows) ListConnection(
 
 	rows := m.matching(req.Filter)
 	start := 0
-	if after := req.Cursor.Cursor.Keyset; after != "" {
+	if after := pagetest.Keyset(req.Cursor); after != "" {
 		for idx, row := range rows {
 			if row.ID.String() == after {
 				start = idx + 1

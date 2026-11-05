@@ -48,8 +48,8 @@ func TestParamsIn(timezone string, params map[string]any) *agenttoolports.QueryT
 }
 
 func TestParams(params map[string]any) *agenttoolports.QueryToolParams {
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
+	orgID := TestOrganizationID
+	buID := TestBusinessUnitID
 
 	return &agenttoolports.QueryToolParams{
 		OrganizationID: orgID,

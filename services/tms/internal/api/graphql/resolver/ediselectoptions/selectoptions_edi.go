@@ -320,11 +320,7 @@ func (r *Sources) EDITransfer(
 func ediCommunicationProfileSelectOptionItem(
 	entity *edi.EDICommunicationProfile,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		ediCommunicationProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(ediCommunicationProfileSelectOption(entity))
 }
 
 func ediCommunicationProfileSelectOption(
@@ -344,11 +340,7 @@ func ediCommunicationProfileSelectOption(
 func ediDocumentTypeSelectOptionItem(
 	entity *edidocument.EDIDocumentType,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		ediDocumentTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(ediDocumentTypeSelectOption(entity))
 }
 
 func ediDocumentTypeSelectOption(entity *edidocument.EDIDocumentType) *gqlmodel.SelectOption {
@@ -370,11 +362,7 @@ func ediDocumentTypeSelectOption(entity *edidocument.EDIDocumentType) *gqlmodel.
 func ediTransactionSetSelectOptionItem(
 	entity *edidocument.EDITransactionSet,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		ediTransactionSetSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(ediTransactionSetSelectOption(entity))
 }
 
 func ediTransactionSetSelectOption(entity *edidocument.EDITransactionSet) *gqlmodel.SelectOption {
@@ -392,11 +380,7 @@ func ediTransactionSetSelectOption(entity *edidocument.EDITransactionSet) *gqlmo
 }
 
 func ediMappingProfileSelectOptionItem(entity *edi.EDIMappingProfile) selectoption.Item {
-	return selectoption.ItemFor(
-		ediMappingProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(ediMappingProfileSelectOption(entity))
 }
 
 func ediMappingProfileSelectOption(entity *edi.EDIMappingProfile) *gqlmodel.SelectOption {
@@ -408,11 +392,7 @@ func ediMappingProfileSelectOption(entity *edi.EDIMappingProfile) *gqlmodel.Sele
 }
 
 func ediPartnerSelectOptionItem(entity *edi.EDIPartner) selectoption.Item {
-	return selectoption.ItemFor(
-		ediPartnerSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(ediPartnerSelectOption(entity))
 }
 
 func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
@@ -431,11 +411,7 @@ func ediTransferSelectOptionItemFor(
 	orgID pulid.ID,
 ) func(*editransfer.EDITransfer) selectoption.Item {
 	return func(entity *editransfer.EDITransfer) selectoption.Item {
-		return selectoption.ItemFor(
-			ediTransferSelectOption(entity, orgID),
-			entity.CreatedAt,
-			entity.ID,
-		)
+		return selectoption.ItemFor(ediTransferSelectOption(entity, orgID))
 	}
 }
 
@@ -471,11 +447,7 @@ func ediTransferSelectOption(
 }
 
 func ediConnectionSelectOptionItem(entity *edi.EDIConnection) selectoption.Item {
-	return selectoption.ItemFor(
-		ediConnectionSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(ediConnectionSelectOption(entity))
 }
 
 func ediConnectionSelectOption(entity *edi.EDIConnection) *gqlmodel.SelectOption {

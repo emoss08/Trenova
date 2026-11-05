@@ -192,11 +192,7 @@ func (r *Sources) DetentionPolicy(
 }
 
 func rateMatrixSelectOptionItem(entity *ratematrix.RateMatrix) selectoption.Item {
-	return selectoption.ItemFor(
-		rateMatrixSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(rateMatrixSelectOption(entity))
 }
 
 func rateMatrixSelectOption(entity *ratematrix.RateMatrix) *gqlmodel.SelectOption {
@@ -211,11 +207,7 @@ func rateMatrixSelectOption(entity *ratematrix.RateMatrix) *gqlmodel.SelectOptio
 }
 
 func rateAgreementSelectOptionItem(entity *rateagreement.RateAgreement) selectoption.Item {
-	return selectoption.ItemFor(
-		rateAgreementSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(rateAgreementSelectOption(entity))
 }
 
 func rateAgreementSelectOption(entity *rateagreement.RateAgreement) *gqlmodel.SelectOption {
@@ -232,11 +224,7 @@ func rateAgreementSelectOption(entity *rateagreement.RateAgreement) *gqlmodel.Se
 func accessorialChargeSelectOptionItem(
 	entity *accessorialcharge.AccessorialCharge,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		accessorialChargeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(accessorialChargeSelectOption(entity))
 }
 
 func accessorialChargeSelectOption(
@@ -257,11 +245,7 @@ func accessorialChargeSelectOption(
 func detentionPolicySelectOptionItem(
 	entity *detentionpolicy.DetentionPolicy,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		detentionPolicySelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(detentionPolicySelectOption(entity))
 }
 
 func detentionPolicySelectOption(entity *detentionpolicy.DetentionPolicy) *gqlmodel.SelectOption {
@@ -320,11 +304,7 @@ func (r *Sources) FormulaTemplate(
 func formulaTemplateSelectOptionItem(
 	entity *formulatemplate.FormulaTemplate,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		formulaTemplateSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(formulaTemplateSelectOption(entity))
 }
 
 func formulaTemplateSelectOption(entity *formulatemplate.FormulaTemplate) *gqlmodel.SelectOption {

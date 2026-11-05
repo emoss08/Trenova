@@ -56,7 +56,7 @@ type SearchOutcome struct {
 // call's cursor scope, or, for a list paged by offset, the offset after the
 // rows kept.
 type PageResume struct {
-	Scope    string
+	Binding  pagination.CursorBinding
 	Cursors  []string
 	ByOffset bool
 }
@@ -97,7 +97,7 @@ func (o *SearchOutcome) Cut(rows int) (SearchOutcome, bool) {
 		next := o.Offset + rows
 		cut.NextOffset = &next
 	case len(o.Resume.Cursors) == list.Len() && o.Resume.Cursors[rows-1] != "":
-		cut.NextCursor = pagination.EncodeKeyCursor(o.Resume.Scope, o.Resume.Cursors[rows-1])
+		cut.NextCursor = pagination.EncodeKeyCursor(o.Resume.Binding, o.Resume.Cursors[rows-1])
 	default:
 		return SearchOutcome{}, false
 	}

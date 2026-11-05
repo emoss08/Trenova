@@ -360,7 +360,7 @@ func (r *QueryResolver) AgentQualityAgentConnection(ctx context.Context, window 
 		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		WindowDays:     qualityWindow(window),
 		IncludeRatings: r.HasPermission(ctx, authCtx, permission.ResourceAgentFeedback, permission.OpRead),
-		Table:          gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
+		Table:          gqlconnection.MemtableRequestFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx)),
 	})
 	if err != nil {
 		return nil, err
@@ -385,7 +385,7 @@ func (r *QueryResolver) AgentWorstRatedAnswerConnection(ctx context.Context, age
 		AgentDefinitionID: agentID,
 		WindowDays:        qualityWindow(window),
 		ViewerID:          authCtx.UserID,
-		Table:             gqlconnection.MemtableRequestFromGraphQL(ctx, &input),
+		Table:             gqlconnection.MemtableRequestFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx)),
 	})
 	if err != nil {
 		return nil, err

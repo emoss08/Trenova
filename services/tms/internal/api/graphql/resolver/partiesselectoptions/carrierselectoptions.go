@@ -60,11 +60,7 @@ func (r *Sources) Carrier(
 }
 
 func carrierSelectOptionItem(entity *carrier.Carrier) selectoption.Item {
-	return selectoption.ItemFor(
-		carrierSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(carrierSelectOption(entity))
 }
 
 func carrierSelectOption(entity *carrier.Carrier) *gqlmodel.SelectOption {

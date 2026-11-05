@@ -69,10 +69,11 @@ func (r *QueryResolver) AiUsageFeatures(ctx context.Context, input gqlmodel.Data
 	}
 	since := timeutils.NowUnix() - int64(window)*24*60*60
 
-	summary, err := r.AiUsageService.Summary(ctx, resolvercore.TenantInfo(authCtx), since)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
+	summary, err := r.AiUsageService.Summary(ctx, tenantInfo, since)
 	if err != nil {
 		return nil, err
 	}
 
-	return featureConnection(&input, summary.ByFeature)
+	return featureConnection(&input, summary.ByFeature, tenantInfo)
 }

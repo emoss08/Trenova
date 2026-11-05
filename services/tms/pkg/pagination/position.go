@@ -1,47 +1,45 @@
 package pagination
 
 import (
-	"encoding/base64"
+	"encoding/binary"
 	"errors"
-	"fmt"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var ErrPositionIDRequired = errors.New("position cursor id is required")
 
 type PositionCursor struct {
-	At int64    `json:"at"`
-	ID pulid.ID `json:"id"`
+	At int64
+	ID pulid.ID
 }
 
-func EncodePositionCursor(cursor PositionCursor) (string, error) {
+func EncodePositionCursor(binding CursorBinding, cursor PositionCursor) (string, error) {
 	if cursor.ID.IsNil() {
 		return "", ErrPositionIDRequired
 	}
 
-	bytes, err := sonic.Marshal(cursor)
-	if err != nil {
-		return "", fmt.Errorf("marshal position cursor: %w", err)
-	}
+	payload := binary.AppendVarint(nil, cursor.At)
+	payload = append(payload, cursor.ID...)
 
-	return base64.RawURLEncoding.EncodeToString(bytes), nil
+	return sealCursor(cursorKindPosition, binding, payload), nil
 }
 
-func DecodePositionCursor(encoded string) (PositionCursor, error) {
-	bytes, err := base64.RawURLEncoding.DecodeString(encoded)
+func DecodePositionCursor(binding CursorBinding, encoded string) (PositionCursor, error) {
+	raw, err := openCursor(cursorKindPosition, binding, encoded)
 	if err != nil {
-		return PositionCursor{}, fmt.Errorf("decode position cursor: %w", err)
+		return PositionCursor{}, err
 	}
 
-	var cursor PositionCursor
-	if err = sonic.Unmarshal(bytes, &cursor); err != nil {
-		return PositionCursor{}, fmt.Errorf("unmarshal position cursor: %w", err)
-	}
-	if cursor.ID.IsNil() {
-		return PositionCursor{}, ErrPositionIDRequired
+	at, read := binary.Varint(raw)
+	if read <= 0 {
+		return PositionCursor{}, ErrCursorInvalid
 	}
 
-	return cursor, nil
+	id := pulid.ID(raw[read:])
+	if id.IsNil() {
+		return PositionCursor{}, ErrCursorInvalid
+	}
+
+	return PositionCursor{At: at, ID: id}, nil
 }

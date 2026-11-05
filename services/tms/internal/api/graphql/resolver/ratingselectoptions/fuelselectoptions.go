@@ -7,11 +7,7 @@ import (
 )
 
 func fuelIndexSelectOptionItem(entity *fuelsurcharge.FuelIndex) selectoption.Item {
-	return selectoption.ItemFor(
-		fuelIndexSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(fuelIndexSelectOption(entity))
 }
 
 func fuelIndexSelectOption(entity *fuelsurcharge.FuelIndex) *gqlmodel.SelectOption {
@@ -33,11 +29,7 @@ func fuelIndexSelectOption(entity *fuelsurcharge.FuelIndex) *gqlmodel.SelectOpti
 func fuelSurchargeProgramSelectOptionItem(
 	entity *fuelsurcharge.FuelSurchargeProgram,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		fuelSurchargeProgramSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(fuelSurchargeProgramSelectOption(entity))
 }
 
 func fuelSurchargeProgramSelectOption(

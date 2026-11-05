@@ -1,11 +1,13 @@
 package listquery
 
 import (
+	"encoding/base64"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -633,7 +635,7 @@ func TestKeysetOrder_OrdersByARelationsColumn(t *testing.T) {
 func TestConnectionResult_AnEmptyPageHasNoCursors(t *testing.T) {
 	t.Parallel()
 
-	result, err := connectionResult(&keel.Page[*testTruck]{}, nil)
+	result, err := connectionResult(&keel.Page[*testTruck]{}, pagination.CursorBinding{})
 	require.NoError(t, err)
 
 	assert.Empty(t, result.Items)
@@ -758,28 +760,73 @@ func TestPick_NarrowsToTheNamedColumns(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestKeysetAfter_RefusesACursorOfAnotherSort(t *testing.T) {
+func TestKeysetAfter_ReadsOnlyACursorIssuedForTheSameQuery(t *testing.T) {
 	t.Parallel()
 
+	tenant := pagination.TenantInfo{
+		OrgID: "org_0000000000000000000000000",
+		BuID:  "bu_00000000000000000000000000",
+	}
 	shape := []pagination.CursorSortField{
 		{Field: "createdAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
-	encoded, err := pagination.EncodeKeysetCursor(shape, "abc")
+	keyset := base64.RawURLEncoding.EncodeToString([]byte("\x01keyset"))
+	binding := pagination.BindCursor(tenant, "test_trucks", shape)
+	encoded, err := pagination.EncodeKeysetCursor(binding, keyset)
 	require.NoError(t, err)
 	info, err := pagination.NewCursorInfo(20, encoded)
 	require.NoError(t, err)
 
-	after, err := keysetAfter(&info, shape)
+	after, err := keysetAfter(&info, binding)
 	require.NoError(t, err)
-	assert.Equal(t, "abc", after)
+	assert.Equal(t, keyset, after)
 
-	_, err = keysetAfter(&info, []pagination.CursorSortField{{Field: "code", Direction: "asc"}})
-	require.Error(t, err)
+	other := tenant
+	other.OrgID = "org_other_000000000000000000"
+	for name, refused := range map[string]pagination.CursorBinding{
+		"sort": pagination.BindCursor(
+			tenant,
+			"test_trucks",
+			[]pagination.CursorSortField{{Field: "code", Direction: "asc"}},
+		),
+		"table":  pagination.BindCursor(tenant, "test_trailers", shape),
+		"tenant": pagination.BindCursor(other, "test_trucks", shape),
+	} {
+		_, err = keysetAfter(&info, refused)
+		require.Error(t, err, name)
+		assert.True(t, errortypes.IsError(err), name)
+	}
 
-	none, err := keysetAfter(&pagination.CursorInfo{Limit: 20}, shape)
+	raw, err := base64.RawURLEncoding.DecodeString(encoded)
+	require.NoError(t, err)
+	raw[0] ^= 0x01
+	edited := pagination.CursorInfo{Limit: 20, After: base64.RawURLEncoding.EncodeToString(raw)}
+	_, err = keysetAfter(&edited, binding)
+	require.Error(t, err, "an edited cursor is refused")
+
+	none, err := keysetAfter(&pagination.CursorInfo{Limit: 20}, binding)
 	require.NoError(t, err)
 	assert.Empty(t, none)
+}
+
+func TestCursorTenant_PrefersTheFilterAndFallsBackToTheScope(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{
+		OrgID: "org_0000000000000000000000000",
+		BuID:  "bu_00000000000000000000000000",
+	}
+	ctx := dbscope.WithTenant(t.Context(), dbscope.Tenant{
+		OrganizationID: "org_scope_000000000000000000",
+		BusinessUnitID: "bu_scope_0000000000000000000",
+	})
+
+	assert.Equal(t, tenant, cursorTenant(ctx, &pagination.QueryOptions{TenantInfo: tenant}))
+	assert.Equal(t, pagination.TenantInfo{
+		OrgID: "org_scope_000000000000000000",
+		BuID:  "bu_scope_0000000000000000000",
+	}, cursorTenant(ctx, nil))
 }
 
 func TestCatalog_ResolvesJSONNamesThroughTheSchema(t *testing.T) {

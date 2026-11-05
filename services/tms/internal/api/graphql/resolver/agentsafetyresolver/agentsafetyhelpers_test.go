@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/memtable"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,6 +91,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 	t.Parallel()
 
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	first := 50
 	after := "cursor"
 	query := "move"
@@ -103,8 +106,9 @@ func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 			{Field: "kind", Operator: "eq", Value: "Query"},
 		}}},
 		Sort: []*gqlmodel.SortFieldInput{{Field: "maxTier", Direction: "desc"}},
-	})
+	}, tenant)
 
+	assert.Equal(t, tenant, req.Tenant)
 	assert.Equal(t, 50, req.First)
 	assert.Equal(t, "cursor", req.After)
 	assert.Equal(t, "move", req.Query)
@@ -119,7 +123,7 @@ func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 	assert.True(t, req.IncludeTotalCount, "outside a request the count is kept")
 
 	assert.Equal(t,
-		memtable.Request{IncludeTotalCount: true},
-		gqlconnection.MemtableRequestFromGraphQL(t.Context(), nil),
+		memtable.Request{Tenant: tenant, IncludeTotalCount: true},
+		gqlconnection.MemtableRequestFromGraphQL(t.Context(), nil, tenant),
 	)
 }

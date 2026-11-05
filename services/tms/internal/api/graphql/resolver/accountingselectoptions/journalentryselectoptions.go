@@ -7,11 +7,7 @@ import (
 )
 
 func journalEntrySelectOptionItem(entity *journalentry.JournalEntry) selectoption.Item {
-	return selectoption.ItemFor(
-		journalEntrySelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(journalEntrySelectOption(entity))
 }
 
 func journalEntrySelectOption(entity *journalentry.JournalEntry) *gqlmodel.SelectOption {
