@@ -80,6 +80,7 @@ func (s *Service) approveDeferred(
 		Note:            req.Note,
 		PreviewDigest:   prepared.shown.digest(),
 		CommitsAt:       commitsAt,
+		Session:         actor.Session,
 	}); err != nil {
 		s.l.Error("a plan approval could not be scheduled; taking it back",
 			zap.String("plan", plan.ID.String()), zap.Error(err))
@@ -106,7 +107,7 @@ func (s *Service) CommitApproval(
 	req *agentapprovalports.CommitApprovalRequest,
 ) error {
 	tenant := req.TenantInfo()
-	actor := permissionports.UserActor(tenant)
+	actor := req.Actor()
 	ctx = dbscope.WithTenant(ctx, actor.DBTenant())
 
 	plan, err := s.plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
@@ -243,6 +244,7 @@ func (s *Service) CommitOwnApprovalNow(
 		Note:            plan.ApprovalNote,
 		PreviewDigest:   plan.ApprovalPreviewDigest,
 		CommitsAt:       commitsAt,
+		Session:         actor.Session,
 	})
 }
 

@@ -139,6 +139,7 @@ func (s *Service) startCommit(
 		DecidedByUserID: actor.UserID,
 		WorkflowID:      window.workflowID,
 		CommitsAt:       window.commitsAt,
+		Session:         actor.Session,
 	})
 
 	return err
@@ -195,7 +196,7 @@ func (s *Service) CommitApproval(
 	req *agentapprovalports.CommitApprovalRequest,
 ) error {
 	tenant := req.TenantInfo()
-	actor := permissionports.UserActor(tenant)
+	actor := req.Actor()
 	ctx = dbscope.WithTenant(ctx, actor.DBTenant())
 
 	group, err := s.windowDecisions(ctx, tenant, req.WorkflowID, req.CommitsAt)
@@ -466,6 +467,7 @@ func (s *Service) CommitOwnApprovalNow(
 		DecidedByUserID: window[0].DecidedByUserID,
 		WorkflowID:      workflowID,
 		CommitsAt:       *window[0].CommitsAt,
+		Session:         actor.Session,
 	})
 }
 
