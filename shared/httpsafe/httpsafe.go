@@ -8,8 +8,8 @@
 // A caller that must reach an operator-designated host on its own network — a
 // self-hosted model server, for instance — opts in with Policy.AllowPrivateNetworks.
 // That relaxation is deliberately partial: loopback and private ranges open up,
-// while link-local stays blocked, because 169.254.169.254 is the cloud metadata
-// endpoint and reaching it is never the intent behind "this host is internal".
+// while link-local and every other cloud metadata address stay blocked, because
+// reaching one is never the intent behind "this host is internal".
 package httpsafe
 
 import (
@@ -45,6 +45,10 @@ var (
 		"0.0.0.0/8",
 		"240.0.0.0/4",
 		"2001::/32",
+		"100.100.100.200/32",
+		"168.63.129.16/32",
+		"fd00:ec2::254/128",
+		"fd20:ce::254/128",
 	)
 	privatePrefixes = mustPrefixes(
 		"100.64.0.0/10",
@@ -100,9 +104,10 @@ func embeddedIPv4(addr netip.Addr) (netip.Addr, bool) {
 // strict default that every existing caller gets.
 type Policy struct {
 	// AllowPrivateNetworks permits loopback, RFC 1918 / RFC 4193 private, and
-	// carrier-grade-NAT destinations. Link-local, multicast, and unspecified
-	// addresses remain blocked regardless, so cloud metadata endpoints stay
-	// unreachable. Only set this for a host an operator explicitly designated.
+	// carrier-grade-NAT destinations. Link-local, multicast, unspecified and
+	// cloud metadata addresses remain blocked regardless, so metadata endpoints
+	// stay unreachable. Only set this for a host an operator explicitly
+	// designated.
 	AllowPrivateNetworks bool
 
 	// ResponseHeaderTimeout overrides how long the transport waits for response
