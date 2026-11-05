@@ -20,7 +20,7 @@
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.105.3",
     "eslint-plugin-better-tailwindcss": "^4.10.0",
-    "oxfmt": "^0.76.0",
+    "oxfmt": "^0.75.0",
     "oxlint": "^1.91.0",
     "oxlint-tsgolint": "^7.0.2005",
     "turbo": "^2.11.10"
