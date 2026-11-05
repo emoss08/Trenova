@@ -78,7 +78,7 @@ func (s *Service) Approve(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	return s.approveInternal(ctx, tenantInfo, settlementID, actor, false)
+	return s.approveInternal(ctx, tenantInfo, settlementID, actor, approvalRoute{})
 }
 
 func (s *Service) SubmitAndApprove(
@@ -87,7 +87,26 @@ func (s *Service) SubmitAndApprove(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	return s.approveInternal(ctx, tenantInfo, settlementID, actor, true)
+	return s.approveInternal(ctx, tenantInfo, settlementID, actor, approvalRoute{fromDraft: true})
+}
+
+type approvalRoute struct {
+	fromDraft bool
+	byPolicy  bool
+}
+
+func (s *Service) requireSeparateApprover(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *driversettlement.Settlement,
+	actor *permissionports.RequestActor,
+) error {
+	control, err := s.settlementControl.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	return PlanSeparateApprover(control, entity, actor.UserID)
 }
 
 func (s *Service) approveInternal(
@@ -95,7 +114,7 @@ func (s *Service) approveInternal(
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
-	fromDraft bool,
+	route approvalRoute,
 ) (*driversettlement.Settlement, error) {
 	if err := settlementshared.RequireActor(actor, "Settlement approval"); err != nil {
 		return nil, err
@@ -108,7 +127,7 @@ func (s *Service) approveInternal(
 		if txErr != nil {
 			return txErr
 		}
-		if fromDraft && entity.Status == driversettlement.StatusDraft {
+		if route.fromDraft && entity.Status == driversettlement.StatusDraft {
 			if txErr = PlanSubmit(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
 				return txErr
 			}
@@ -119,6 +138,12 @@ func (s *Service) approveInternal(
 		}
 
 		previous = *entity
+		if !route.byPolicy {
+			txErr = s.requireSeparateApprover(txCtx, tenantInfo, entity, actor)
+			if txErr != nil {
+				return txErr
+			}
+		}
 		if txErr = PlanApprove(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
 			return txErr
 		}

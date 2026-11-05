@@ -228,7 +228,13 @@ func (s *Service) driveToPaid(
 
 	if current.Status == driversettlement.StatusDraft ||
 		current.Status == driversettlement.StatusPendingApproval {
-		approved, err := s.approveInternal(ctx, req.TenantInfo, current.ID, actor, true)
+		approved, err := s.approveInternal(
+			ctx,
+			req.TenantInfo,
+			current.ID,
+			actor,
+			approvalRoute{fromDraft: true},
+		)
 		if err != nil {
 			return current, s.instantStepError(current, "approve", err)
 		}

@@ -598,6 +598,7 @@ query SettlementControl {
     autoGenerateBatches
     autoApproveClean
     autoAttachAccruals
+    requireSeparateApprover
     autoPostOnApprove
     allowNegativeNet
     varianceThresholdPct

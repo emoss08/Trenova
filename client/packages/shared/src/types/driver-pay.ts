@@ -335,6 +335,7 @@ export const settlementControlFormSchema = z.object({
   autoGenerateBatches: z.boolean(),
   autoApproveClean: z.boolean(),
   autoAttachAccruals: z.boolean(),
+  requireSeparateApprover: z.boolean(),
   autoPostOnApprove: z.boolean(),
   allowNegativeNet: z.boolean(),
   varianceThresholdPct: z.number().min(0),

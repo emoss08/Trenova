@@ -12736,6 +12736,7 @@ type UpdateSettlementControlInput struct {
 	AutoGenerateBatches           bool                                 `json:"autoGenerateBatches"`
 	AutoApproveClean              bool                                 `json:"autoApproveClean"`
 	AutoAttachAccruals            bool                                 `json:"autoAttachAccruals"`
+	RequireSeparateApprover       bool                                 `json:"requireSeparateApprover"`
 	AutoPostOnApprove             bool                                 `json:"autoPostOnApprove"`
 	AllowNegativeNet              bool                                 `json:"allowNegativeNet"`
 	VarianceThresholdPct          string                               `json:"varianceThresholdPct"`
