@@ -116,7 +116,7 @@ services:
     networks: [data]
 
   redis:
-    image: redis:8
+    image: redis:8@sha256:f245f4c83b84a9e9a0588da1c9456e579455310f0945d5db52cd2ba27f2000cc
     # Sessions, rate limits and short caches carry a TTL and may be evicted;
     # GTC's tca:events stream, its dead-letter queue and the synced caches carry
     # none, so volatile-lru never drops them. AOF keeps them across restarts.
@@ -170,7 +170,7 @@ services:
     networks: [data, edge]
 
   meilisearch:
-    image: getmeili/meilisearch:v1.16
+    image: getmeili/meilisearch:v1.16@sha256:c0c45cb82a96221d7c855d1cc36ca04ff4b3ce6330fbd8df5ba82e86e632a053
     environment:
       MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
       MEILI_ENV: production
@@ -191,7 +191,7 @@ services:
     # Every AI feature runs here. auto-setup creates and migrates its schema
     # in the temporal and temporal_visibility databases on start; the settings
     # the agent runtime needs are in temporal/dynamicconfig.yaml.
-    image: temporalio/auto-setup:1.29.7
+    image: temporalio/auto-setup:1.29.7@sha256:f14912b699cf73015ad5c4fc18d522d4b014db90e794039214dfb7c022c2644f
     environment:
       DB: postgres12
       DB_PORT: 5432
@@ -219,7 +219,7 @@ services:
   # allowed, no published port, no route through Caddy, no network off the
   # host. See dev/compose.yml for why each flag is there.
   gotenberg:
-    image: gotenberg/gotenberg:8
+    image: gotenberg/gotenberg:8@sha256:13672f317b443c793e972b1bd2155ec62a3e7b6891b411e8196442cc053ee5f5
     command:
       - gotenberg
       - --chromium-disable-javascript=true
@@ -405,7 +405,7 @@ services:
   # scanning" in docs/self-hosting/README.md.
   clamav:
     profiles: [clamav]
-    image: clamav/clamav:1.4
+    image: clamav/clamav:1.4@sha256:8ad6197396974726c35d017e50aaaaf4b91745726a04faec8480c203edd98052
     volumes:
       - clamav_data:/var/lib/clamav
     security_opt:

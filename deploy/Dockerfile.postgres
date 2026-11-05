@@ -1,12 +1,16 @@
-FROM postgis/postgis:18-3.6-alpine
+FROM postgis/postgis:18-3.6-alpine@sha256:c53a483fc274072dfa02cd491efa79f3c8ae0a10774a0ece6c9c53b6a632cdef
 
+# A tag can move, so each clone is checked against the commit it was pinned at.
 ARG PG_CRON_VERSION=v1.6.7
+ARG PG_CRON_COMMIT=465b38c737f584d520229f5a1d69d1d44649e4e5
 ARG PGVECTOR_VERSION=v0.8.1
+ARG PGVECTOR_COMMIT=778dacf20c07caf904557a88705142631818d8cb
 
 RUN apk add --no-cache --virtual .build-deps \
         build-base git && \
     git clone --branch ${PG_CRON_VERSION} --depth 1 https://github.com/citusdata/pg_cron.git /tmp/pg_cron && \
-    cd /tmp/pg_cron && make with_llvm=no && make with_llvm=no install && \
+    cd /tmp/pg_cron && test "$(git rev-parse HEAD)" = "${PG_CRON_COMMIT}" && \
+    make with_llvm=no && make with_llvm=no install && \
     cd / && rm -rf /tmp/pg_cron && \
     apk del .build-deps
 
@@ -15,7 +19,8 @@ RUN apk add --no-cache --virtual .build-deps \
 RUN apk add --no-cache --virtual .build-deps \
         build-base git && \
     git clone --branch ${PGVECTOR_VERSION} --depth 1 https://github.com/pgvector/pgvector.git /tmp/pgvector && \
-    cd /tmp/pgvector && make with_llvm=no OPTFLAGS="" && make with_llvm=no OPTFLAGS="" install && \
+    cd /tmp/pgvector && test "$(git rev-parse HEAD)" = "${PGVECTOR_COMMIT}" && \
+    make with_llvm=no OPTFLAGS="" && make with_llvm=no OPTFLAGS="" install && \
     cd / && rm -rf /tmp/pgvector && \
     apk del .build-deps
 
