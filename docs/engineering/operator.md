@@ -123,13 +123,15 @@ first, and what the spec decides is merged over them:
 | `plan.vcpu`, `memoryGiB`, `diskGiB` | every component's requests and limits, Redis's `maxMemory`, PostgreSQL's memory settings and volume |
 
 **Sizing** (`internal/values/size.go`). 2 GiB and 0.5 vCPU are left to k3s, CloudNativePG and the
-operator; the rest is shared by weight among the components that run (PostgreSQL 28, API 12,
-worker 12, imaging 10, ClamAV 10, docling 15, the rest 1 to 5), each with a floor (ClamAV
-1.5 GiB, docling 2 GiB, PostgreSQL 1 GiB). Requests are the shares; memory limits are 1.5 times
-them (PostgreSQL 1.25). The imaging worker gets a CPU limit of half the plan's vCPUs, at least
+operator. ClamAV's memory does not grow with the plan (it is the signature database: about
+1.2 GiB, twice that while clamd reloads it each day), so it takes a fixed 3 GiB request and
+4 GiB limit, ClamAV's documented minimum and preferred container size, off the top. The rest
+is shared by weight among the components that run (PostgreSQL 28, API 12, worker 12, imaging
+10, docling 15, the rest 1 to 5; ClamAV 4 of the CPU), each with a floor (docling 2 GiB,
+PostgreSQL 1 GiB). Requests are the shares; memory limits are 1.5 times them (PostgreSQL 1.25). The imaging worker gets a CPU limit of half the plan's vCPUs, at least
 one, because its sandbox pool sizes itself by it. PostgreSQL's volume is 35% of the disk;
 `shared_buffers` is a quarter of its memory limit and `effective_cache_size` three quarters. A
-plan smaller than 2 vCPU, 8 GiB and 40 GiB is refused. The values test renders every catalog
+plan smaller than 2 vCPU, 8 GiB (10 GiB with ClamAV) and 40 GiB is refused. The values test renders every catalog
 plan and lifecycle through the real chart and its schema, and checks the requests fit.
 
 Only PostgreSQL's volume follows the plan: a StatefulSet's volume claims cannot change after it

@@ -10,6 +10,9 @@ const (
 	reservedMiB       = 2048
 	reservedMillicore = 500
 	minMemoryGiB      = 8
+	minMemoryGiBScan  = 10
+	clamavRequestMiB  = 3072
+	clamavLimitMiB    = 4096
 	minVCPU           = 2
 	minDiskGiB        = 40
 	postgresDiskShare = 0.35
@@ -29,14 +32,20 @@ type share struct {
 	memory   float64
 	cpu      float64
 	floorMiB float64
+	fixedMiB float64
+	limitMiB float64
 	on       bool
 }
 
 func size(in sizeInput) (map[string]any, error) {
-	if in.vcpu < minVCPU || in.memoryGiB < minMemoryGiB || in.diskGiB < minDiskGiB {
+	minMemory := int64(minMemoryGiB)
+	if in.clamav {
+		minMemory = minMemoryGiBScan
+	}
+	if in.vcpu < minVCPU || in.memoryGiB < minMemory || in.diskGiB < minDiskGiB {
 		return nil, fmt.Errorf(
 			"%w: a plan needs at least %d vCPU, %d GiB of memory and %d GiB of disk",
-			ErrInvalidSpec, minVCPU, minMemoryGiB, minDiskGiB,
+			ErrInvalidSpec, minVCPU, minMemory, minDiskGiB,
 		)
 	}
 	shares := []share{
@@ -51,17 +60,24 @@ func size(in sizeInput) (map[string]any, error) {
 		{path: []string{keyMinio}, memory: 3, cpu: 3, floorMiB: 256, on: in.minio},
 		{path: []string{"gtc"}, memory: 2, cpu: 2, floorMiB: 128, on: true},
 		{path: []string{"client"}, memory: 1, cpu: 1, floorMiB: 64, on: true},
-		{path: []string{"clamav"}, memory: 10, cpu: 4, floorMiB: 1536, on: in.clamav},
+		{
+			path:     []string{"clamav"},
+			cpu:      4,
+			fixedMiB: clamavRequestMiB,
+			limitMiB: clamavLimitMiB,
+			on:       in.clamav,
+		},
 		{path: []string{"docling"}, memory: 15, cpu: 8, floorMiB: 2048, on: in.docling},
 	}
-	var memTotal, cpuTotal float64
+	var memTotal, cpuTotal, memFixed float64
 	for _, s := range shares {
 		if s.on {
 			memTotal += s.memory
 			cpuTotal += s.cpu
+			memFixed += s.fixedMiB
 		}
 	}
-	memAlloc := float64(in.memoryGiB*1024 - reservedMiB)
+	memAlloc := float64(in.memoryGiB*1024-reservedMiB) - memFixed
 	cpuAlloc := float64(in.vcpu*1000 - reservedMillicore)
 
 	out := map[string]any{}
@@ -71,7 +87,10 @@ func size(in sizeInput) (map[string]any, error) {
 			continue
 		}
 		request := math.Max(memAlloc*s.memory/memTotal, s.floorMiB)
-		limit := request * 1.5
+		if s.fixedMiB > 0 {
+			request = s.fixedMiB
+		}
+		limit := math.Max(request*1.5, s.limitMiB)
 		limits := map[string]any{keyMemory: mib(limit)}
 		switch s.path[0] {
 		case keyPostgres:
