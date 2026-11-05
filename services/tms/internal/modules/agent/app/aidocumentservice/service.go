@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,6 +37,7 @@ type Params struct {
 	Nova     llmports.TaskRunner
 	Deferrer llmports.TaskDeferrer
 	Plans    platformplanports.PlanService
+	Quota    platformplanports.QuotaGuard
 }
 
 type Service struct {
@@ -45,6 +47,7 @@ type Service struct {
 	nova     llmports.TaskRunner
 	deferrer llmports.TaskDeferrer
 	plans    platformplanports.PlanService
+	quota    platformplanports.QuotaGuard
 }
 
 func New(p Params) documentaiextractionports.AIDocumentService {
@@ -55,6 +58,7 @@ func New(p Params) documentaiextractionports.AIDocumentService {
 		nova:     p.Nova,
 		deferrer: p.Deferrer,
 		plans:    p.Plans,
+		quota:    quotaservice.OrUnlimited(p.Quota),
 	}
 }
 
@@ -246,7 +250,7 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 
 	call := s.extractCall(req)
 	call.metric = "extract_background_submit"
-	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
+	if err := s.admit(ctx, call); err != nil {
 		return nil, err
 	}
 

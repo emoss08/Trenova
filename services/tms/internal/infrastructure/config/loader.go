@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/cacheconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
@@ -297,6 +298,7 @@ func (l *Loader) setDefaults() {
 		{key: "ai", defaults: aiconfig.Defaults()},
 		{key: "platform", defaults: platformconfig.Defaults()},
 		{key: "storage", defaults: storageconfig.Defaults()},
+		{key: "managed", defaults: managedconfig.Defaults()},
 	}
 	for _, section := range sections {
 		for key, value := range section.defaults {
@@ -358,6 +360,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		config.Storage.Validate,
 		config.Monitoring.Validate,
 		config.AIAudit.Validate,
+		config.Managed.Validate,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {

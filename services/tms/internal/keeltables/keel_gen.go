@@ -142,6 +142,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription/subscriptiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage/managedusagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
@@ -588,6 +589,7 @@ func All() []*schema.Table {
 		workerleavedb.LeaveControlsSchema(),
 		locationcategorydb.LocationCategoriesSchema(),
 		locationdb.LocationsSchema(),
+		managedusagedb.StatesSchema(),
 		manualjournaldb.LinesSchema(),
 		manualjournaldb.RequestsSchema(),
 		iamdb.MFAAuthenticatorsSchema(),

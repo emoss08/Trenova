@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/portalconfig"
@@ -66,6 +67,7 @@ type Config struct {
 	Integrations        integrationconfig.Config         `mapstructure:"integrations"`
 	Imports             importsconfig.Config             `mapstructure:"imports"`
 	ContentScan         contentscanconfig.Config         `mapstructure:"contentScan"`
+	Managed             managedconfig.Config             `mapstructure:"managed"`
 }
 
 // IsProductionLike reports whether an environment holds real data: production and staging

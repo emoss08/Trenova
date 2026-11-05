@@ -3,10 +3,12 @@ package quotaservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +20,11 @@ func TestUnlimitedQuotaGuard(t *testing.T) {
 
 	guard := quotaservice.NewUnlimited()
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	req := &platformplanports.QuotaRequest{TenantInfo: tenant, Meter: platformcatalog.MeterShipmentsTotal, Quantity: 9_999}
+	req := &platformplanports.QuotaRequest{
+		TenantInfo: tenant,
+		Meter:      platformcatalog.MeterShipmentsTotal,
+		Quantity:   9_999,
+	}
 
 	require.NoError(t, guard.Enforce(t.Context(), req))
 	require.ErrorIs(t, guard.Enforce(t.Context(), nil), quotaservice.ErrRequestRequired)
@@ -38,5 +44,7 @@ func TestUnlimitedQuotaGuard(t *testing.T) {
 func TestNewIsUnlimited(t *testing.T) {
 	t.Parallel()
 
-	assert.IsType(t, &quotaservice.UnlimitedQuotaGuard{}, quotaservice.New())
+	assert.IsType(t, &quotaservice.UnlimitedQuotaGuard{}, quotaservice.New(quotaservice.Params{
+		Config: &managedconfig.Config{},
+	}))
 }

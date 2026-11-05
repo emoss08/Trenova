@@ -533,6 +533,14 @@ contentScan:
     maxStreamBytes: 104857600 # 100 MiB; keep at or below clamd's StreamMaxLength
   failOpen: false
 
+# A dedicated instance run by Trenova Cloud: the operator reads usage and sets what may continue
+# on this listener (the API process only). Keep it off everywhere else.
+managed:
+  enabled: false
+  host: 127.0.0.1 # 0.0.0.0 in a cluster, where a NetworkPolicy admits only the operator
+  port: 8090
+  token: "" # TRENOVA_MANAGED_TOKEN; at least 32 characters
+
 # Limits on one uploaded rate sheet, fuel card statement or factoring remittance (CSV or
 # XLSX). A file past any of them is refused with the limit it went past; 0 or unset takes
 # the default shown.

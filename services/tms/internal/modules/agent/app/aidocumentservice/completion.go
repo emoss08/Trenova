@@ -9,7 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -73,7 +76,7 @@ func (s *Service) runStructured(
 	call *structuredCall,
 	out any,
 ) (*llmports.StructuredCompletionResult, error) {
-	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
+	if err := s.admit(ctx, call); err != nil {
 		return nil, err
 	}
 
@@ -118,6 +121,21 @@ func failureOutcome(err error) string {
 
 func (s *Service) recordAIUsage(operation string, success bool, outcome string) {
 	s.metrics.Document.RecordAIOutcome(operation, success, outcome)
+}
+
+func (s *Service) admit(ctx context.Context, call *structuredCall) error {
+	if err := s.requireDocumentIntelligence(ctx, call.tenant); err != nil {
+		return err
+	}
+	if call.feature != aiusage.FeatureDocumentIntelligenceExtract {
+		return nil
+	}
+
+	return quotaservice.Preflight(ctx, s.quota, &platformplanports.QuotaRequest{
+		TenantInfo: call.tenant,
+		Meter:      platformcatalog.MeterDocumentAIExtractions,
+		Quantity:   1,
+	})
 }
 
 func (s *Service) requireDocumentIntelligence(

@@ -7,6 +7,7 @@ modules:
     domain:
       - configspec
       - editchange
+      - managedusage
       - platformcatalog
       - settingversion
       - usstate
@@ -15,6 +16,7 @@ modules:
       - editioninfo
       - encryptionservice
       - entitlementservice
+      - managedusageservice
       - platformbillingservice
       - realtimeservice
       - secretconfig
@@ -23,6 +25,7 @@ modules:
       - usstateservice
       - versionservice
     repository:
+      - managedusagerepository
       - settingversionrepository
       - usstaterepository
   identity:
@@ -506,6 +509,7 @@ modules:
       - capturerepository
       - documentaiextractionrepository
       - documentcontentrepository
+      - documentmeter
       - documentpacketrulerepository
       - documentrepository
       - documentsearchprojectionrepository
@@ -722,6 +726,7 @@ modules:
       - ratingreviewrepository
       - shipmentgraph
       - shipmentinsightrepository
+      - shipmentmeter
       - shipmentlistreadrepository
       - shipmentpredicate
       - shipmentsearchcardrepository
@@ -1304,6 +1309,7 @@ modules:
       - airetrievalrepository
       - aituneuprepository
       - aiusagerepository
+      - aiusagemeter
       - assistantartifactrepository
       - assistantcaserepository
       - assistantqueuerepository

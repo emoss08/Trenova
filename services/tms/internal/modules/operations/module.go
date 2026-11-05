@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentholdrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentinsightrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentlistreadrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmeter"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
@@ -164,6 +165,7 @@ func SharedOptions() fx.Option {
 			shipmentholdrepository.New,
 			shipmentmoverepository.New,
 			shipmentrepository.New,
+			shipmentmeter.New,
 			ratingreviewrepository.NewRatingReviewRepository,
 			shipmentsearchcardrepository.NewSearchCardReader,
 			shipmentlistreadrepository.NewOrderReferenceMatcher,
