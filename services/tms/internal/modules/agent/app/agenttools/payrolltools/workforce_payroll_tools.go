@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -98,7 +99,22 @@ func payrollSpec(name, description, rationale string) *toolspec.ReceivableSpec {
 	return spec
 }
 
-func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool {
+func requireOrganizationScope(
+	ctx context.Context,
+	permissions permissionports.PermissionEngine,
+	params *agenttoolports.ToolExecuteParams,
+) error {
+	return permissionports.RequireOrganizationScope(
+		ctx,
+		permissions,
+		params.Actor.PermissionCheck(permission.ResourceTimesheet, permission.OpExport),
+	)
+}
+
+func newGeneratePayrollExportTool(
+	exporter PayrollExporter,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentTool {
 	spec := workforcekit.WithSchema(payrollSpec(
 		"settlement_generate_payroll_export",
 		"Draft a payroll run over a pay period for a person to approve. Every approved "+
@@ -150,6 +166,13 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 				UserID:      params.Actor.UserID,
 			}, nil
 		},
+		Settle: func(
+			ctx context.Context,
+			_ *timesheetservice.GenerateExportRequest,
+			params *agenttoolports.ToolExecuteParams,
+		) error {
+			return requireOrganizationScope(ctx, permissions, params)
+		},
 		Plan: func(
 			ctx context.Context,
 			req *timesheetservice.GenerateExportRequest,
@@ -191,7 +214,10 @@ func newGeneratePayrollExportTool(exporter PayrollExporter) agenttoolports.Agent
 	})
 }
 
-func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool {
+func newVoidPayrollExportTool(
+	exporter PayrollExporter,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentTool {
 	spec := workforcekit.Targeting(workforcekit.WithSchema(payrollSpec(
 		"settlement_void_payroll_export",
 		"Draft voiding a payroll run for a person to approve, with the reason: the run is "+
@@ -237,6 +263,13 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 				UserID:     params.Actor.UserID,
 			}, nil
 		},
+		Settle: func(
+			ctx context.Context,
+			_ *timesheetservice.VoidExportRequest,
+			params *agenttoolports.ToolExecuteParams,
+		) error {
+			return requireOrganizationScope(ctx, permissions, params)
+		},
 		Plan: func(
 			ctx context.Context,
 			req *timesheetservice.VoidExportRequest,
@@ -280,10 +313,16 @@ func newVoidPayrollExportTool(exporter PayrollExporter) agenttoolports.AgentTool
 	})
 }
 
-func provideGeneratePayrollExportTool(s *timesheetservice.Service) agenttoolports.AgentTool {
-	return newGeneratePayrollExportTool(s)
+func provideGeneratePayrollExportTool(
+	s *timesheetservice.Service,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentTool {
+	return newGeneratePayrollExportTool(s, permissions)
 }
 
-func provideVoidPayrollExportTool(s *timesheetservice.Service) agenttoolports.AgentTool {
-	return newVoidPayrollExportTool(s)
+func provideVoidPayrollExportTool(
+	s *timesheetservice.Service,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentTool {
+	return newVoidPayrollExportTool(s, permissions)
 }

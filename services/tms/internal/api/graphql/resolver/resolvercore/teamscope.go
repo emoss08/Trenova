@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -20,9 +21,9 @@ import (
 // The permission engine answers whether the grant exists and how wide it is;
 // it deliberately knows nothing about who manages whom, because teaching it
 // would point the authorization layer at the HR module. So the narrowing
-// happens here, where the worker being acted on is already known: a grant
-// scoped to "team" is checked against the people the user actually manages,
-// and every wider scope is left alone.
+// happens here, where the worker being acted on is already known: a narrowed
+// grant is checked against the people the user actually manages, and every
+// wider scope is left alone.
 //
 // The delegator, when the answer came through one, is returned so the action
 // can record that it was taken in somebody's place rather than in the actor's
@@ -52,11 +53,11 @@ func (r *Core) RequireTeamScope(
 		)
 	}
 
-	if result.DataScope != permission.DataScopeTeam {
+	if !result.DataScope.IsNarrow() {
 		return authCtx, pulid.Nil, nil
 	}
 
-	// A team-scoped grant with no org structure service behind it would widen
+	// A narrowed grant with no org structure service behind it would widen
 	// silently, so the absence is refused rather than ignored.
 	if r.OrgStructureService == nil {
 		return nil, pulid.Nil, errortypes.NewAuthorizationError(
@@ -114,10 +115,10 @@ func (r *Core) RequirePTOTeamScope(
 }
 
 // RequireListTeamScope is requirePermission for a list that spans workers. A
-// grant scoped to "team" narrows the list to the people the user answers for,
+// narrowed grant limits the list to the people the user answers for,
 // directly or through a fleet code, and the managers it returns are what the
 // repository filters by; a wider grant returns none and the list is the
-// organization's. A team-scoped caller who answers for no one, such as an
+// organization's. A narrowed caller who answers for no one, such as an
 // unattended agent, which names no person, is refused: no managers would
 // read as the whole organization.
 func (r *Core) RequireListTeamScope(
@@ -143,7 +144,7 @@ func (r *Core) RequireListTeamScope(
 			"You don't have permission to perform this action: {0} {1}", resource, operation,
 		)
 	}
-	if result.DataScope != permission.DataScopeTeam {
+	if !result.DataScope.IsNarrow() {
 		return authCtx, nil, nil
 	}
 
@@ -212,22 +213,12 @@ func (r *Core) RequireOrganizationScope(
 		return nil, errortypes.NewAuthenticationError("Authentication required")
 	}
 
-	result, err := r.PermissionEngine.Check(
+	if err := permissionports.RequireOrganizationScope(
 		ctx,
+		r.PermissionEngine,
 		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
-	)
-	if err != nil {
+	); err != nil {
 		return nil, err
-	}
-	if !result.Allowed {
-		return nil, errortypes.NewAuthorizationError(
-			"You don't have permission to perform this action: {0} {1}", resource, operation,
-		)
-	}
-	if result.DataScope.IsNarrow() {
-		return nil, errortypes.NewAuthorizationError(
-			"This covers the whole organization, and your access is limited to part of it",
-		)
 	}
 
 	return authCtx, nil
