@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -132,4 +133,47 @@ func TestTokenRedactionMiddleware_PassesThroughWithoutToken(t *testing.T) {
 	require.NotEmpty(t, logs.All())
 	logText := observedLogText(t, logs)
 	assert.NotContains(t, logText, redactedTokenPlaceholder)
+}
+
+func TestTokenRedactionMiddleware_RedactsWebhookAndMailboxTokens(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		route  string
+		secret string
+	}{
+		{
+			name:   "webhook token",
+			route:  "/webhooks/samsara/:webhookToken/",
+			secret: "samsara_0123456789abcdef",
+		},
+		{
+			name:   "mailbox token",
+			route:  "/webhooks/inbound-mail/:mailboxToken/",
+			secret: "Ab-_09mailboxSecret",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			router, logs := newTokenRedactionTestRouter(t)
+			param := strings.TrimSuffix(tc.route[strings.Index(tc.route, ":")+1:], "/")
+			received := ""
+			router.POST(tc.route, func(c *gin.Context) {
+				received = c.Param(param)
+				c.Status(http.StatusNoContent)
+			})
+
+			path := strings.Replace(tc.route, ":"+param, tc.secret, 1)
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, path, nil))
+
+			assert.Equal(t, http.StatusNoContent, recorder.Code)
+			assert.Equal(t, tc.secret, received, "the handler still reads the real token")
+			logged := observedLogText(t, logs)
+			assert.NotContains(t, logged, tc.secret)
+			assert.Contains(t, logged, redactedTokenPlaceholder)
+		})
+	}
 }

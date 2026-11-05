@@ -1,7 +1,6 @@
 package emailhandler
 
 import (
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,6 +21,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
+
+const maxWebhookBodyBytes = 1 << 20
 
 type Params struct {
 	fx.In
@@ -363,7 +364,7 @@ type postmarkWebhookPayload struct {
 
 func (h *Handler) handleResendWebhook(c *gin.Context) {
 	token := c.Param("webhookToken")
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+	body, err := helpers.ReadBoundedRequestBody(c, maxWebhookBodyBytes)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -461,7 +462,7 @@ func resendRecipient(payload *resendWebhookPayload) string {
 
 func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 	token := c.Param("webhookToken")
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, 1<<20))
+	body, err := helpers.ReadBoundedRequestBody(c, maxWebhookBodyBytes)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

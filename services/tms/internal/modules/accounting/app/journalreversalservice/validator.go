@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
@@ -137,6 +138,14 @@ func (v *Validator) ResolvePostingPeriod(
 			"requestedAccountingDate",
 			errortypes.ErrInvalidOperation,
 			"No next open fiscal period is available for reversal posting",
+		)
+		return nil, 0, me
+	}
+	if !journalposting.AcceptsPostings(period.Status) {
+		me.Add(
+			"requestedAccountingDate",
+			errortypes.ErrInvalidOperation,
+			"Journal reversals cannot post to an inactive fiscal period",
 		)
 		return nil, 0, me
 	}

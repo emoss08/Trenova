@@ -321,3 +321,19 @@ func TestIntegrationTypeIsRampFuel(t *testing.T) {
 
 	require.Equal(t, integration.TypeRampFuel, rampconnector.New(loopbackPolicy).IntegrationType())
 }
+
+func TestFetchRefusesAnOversizedRampResponseInsteadOfParsingAPartOfIt(t *testing.T) {
+	t.Parallel()
+
+	stub := newRampServer(t, strings.Repeat(" ", 16<<20+1))
+
+	_, err := rampconnector.New(loopbackPolicy).FetchTransactions(
+		t.Context(),
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
+			Provider: fuelpurchase.CardProviderRamp,
+			Config:   stub.config(),
+		},
+	)
+
+	require.ErrorContains(t, err, "Ramp response exceeds")
+}

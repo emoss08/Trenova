@@ -453,12 +453,21 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
 		Return(&accountingcontrol.AccountingControl{FunctionalCurrencyCode: "USD"}, nil)
+	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           reversal.ResolvedFiscalPeriodID,
+			FiscalYearID: reversal.ResolvedFiscalYearID,
+			Status:       fiscalperiod.StatusOpen,
+		}, nil)
 	svc := &Service{
 		db:                  dbtest.NopConnection{},
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
 		journalPostingRepo:  postingRepo,
 		accountingRepo:      accountingRepo,
+		validator:           &Validator{fiscalRepo: fiscalRepo},
 		sequenceGenerator:   testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
 		auditService:        &mocks.NoopAuditService{},
 	}

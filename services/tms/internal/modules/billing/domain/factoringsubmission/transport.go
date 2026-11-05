@@ -199,6 +199,13 @@ func (t *Transport) Normalize() {
 	t.SftpDirectory = path.Clean(t.SftpDirectory)
 }
 
+func (t *Transport) SftpTargetChanged(next *Transport) bool {
+	return t.SftpAuthMethod != next.SftpAuthMethod ||
+		t.SftpHost != next.SftpHost ||
+		t.SftpPort != next.SftpPort ||
+		t.SftpKnownHostKey != next.SftpKnownHostKey
+}
+
 func (t *Transport) SecretSet() bool {
 	return t != nil && t.SftpSecret != ""
 }

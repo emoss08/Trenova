@@ -363,7 +363,7 @@ func TestSanitizeCSS(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diags := CSS("cssContent", tt.source)
+			diags := CSS("cssContent", tt.source, DocumentOptions())
 			assert.Equal(t, tt.wantErr, diags.HasErrors(),
 				"source %q produced %v", tt.source, templatediagtest.Codes(diags))
 		})

@@ -349,7 +349,11 @@ func printedSourceDiagnostics(
 	content *documenttemplateports.TemplateContent,
 ) templatediag.Diagnostics {
 	opts := templatesanitize.DocumentOptions()
-	diags := templatesanitize.CSS("cssContent", content.CSSContent)
+	diags := templatesanitize.CSS(
+		"cssContent",
+		content.CSSContent,
+		templatesanitize.RenderedDocumentOptions(),
+	)
 	diags = append(diags, templatesanitize.HTML("headerHtml", content.HeaderHTML, opts)...)
 	return append(diags, templatesanitize.HTML("footerHtml", content.FooterHTML, opts)...)
 }

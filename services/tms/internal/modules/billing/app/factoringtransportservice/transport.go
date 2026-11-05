@@ -172,8 +172,8 @@ func (s *TransportService) apply(
 	entity.SftpKnownHostKey = in.SftpKnownHostKey
 	entity.SftpDirectory = in.SftpDirectory
 
-	switch {
-	case in.SftpSecret != nil && strings.TrimSpace(*in.SftpSecret) != "":
+	secretEntered := in.SftpSecret != nil && strings.TrimSpace(*in.SftpSecret) != ""
+	if secretEntered {
 		if len(*in.SftpSecret) > maxSftpSecretBytes {
 			return errortypes.NewValidationError(
 				"sftpSecret",
@@ -186,11 +186,12 @@ func (s *TransportService) apply(
 			return err
 		}
 		entity.SftpSecret = sealed
-	case previous != nil && previous.SftpAuthMethod != in.SftpAuthMethod:
-		entity.SftpSecret = ""
 	}
 
 	entity.Normalize()
+	if !secretEntered && previous != nil && previous.SftpTargetChanged(entity) {
+		entity.SftpSecret = ""
+	}
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	return factoringaction.ValidationOf(multiErr)

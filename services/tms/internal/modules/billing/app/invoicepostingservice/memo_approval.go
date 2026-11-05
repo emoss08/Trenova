@@ -84,16 +84,20 @@ func (s *Service) guardMemoPoster(
 	actor *permissionports.RequestActor,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if actor == nil || actor.UserID.IsNil() {
-		return nil
-	}
-
 	control, err := s.adjustmentApprovalControl(ctx, entity.OrganizationID)
 	if err != nil {
 		return err
 	}
 	if control == nil || !control.RequireSeparateApprover || !memoNeedsApproval(control, entity) {
 		return nil
+	}
+	posterID := actor.UserIDOrNil()
+	if posterID.IsNil() {
+		return errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrInvalidOperation,
+			"This credit memo needs a signed-in user to post it",
+		)
 	}
 
 	item, err := s.billingQueueRepo.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
@@ -103,7 +107,7 @@ func (s *Service) guardMemoPoster(
 	if err != nil {
 		return err
 	}
-	if memoRaisedBy(item) != actor.UserID {
+	if memoRaisedBy(item) != posterID {
 		return nil
 	}
 

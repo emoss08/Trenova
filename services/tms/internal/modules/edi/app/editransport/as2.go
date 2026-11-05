@@ -275,7 +275,7 @@ func (t *AS2Transport) Deliver(
 		response.Header.Get("Content-Type"),
 		responseBody,
 		cfg,
-		built.MIC,
+		built,
 	); err != nil {
 		return nil, err
 	}
@@ -316,7 +316,12 @@ func (t *AS2Transport) post(
 	return response, nil
 }
 
-func verifySyncMDN(contentType string, body []byte, cfg *AS2Config, sentMIC string) error {
+func verifySyncMDN(
+	contentType string,
+	body []byte,
+	cfg *AS2Config,
+	built *as2.BuiltMessage,
+) error {
 	if strings.TrimSpace(contentType) == "" || len(bytes.TrimSpace(body)) == 0 {
 		return errors.New(
 			"AS2 partner did not return a synchronous MDN; configure async MDN mode for this partner",
@@ -332,7 +337,18 @@ func verifySyncMDN(contentType string, body []byte, cfg *AS2Config, sentMIC stri
 			mdn.Disposition,
 		)
 	}
-	if mdn.ReceivedContentMIC != "" && !as2.MICMatches(sentMIC, mdn.ReceivedContentMIC) {
+	if !as2.MessageIDMatches(built.MessageID, mdn.OriginalMessageID) {
+		return errors.New("AS2 MDN does not reference the transmitted message")
+	}
+	if cfg.PartnerSigningCertificate != nil && !mdn.Signed {
+		return errors.New("AS2 MDN must be signed with the partner's signing certificate")
+	}
+	if cfg.PartnerSigningCertificate == nil && mdn.ReceivedContentMIC == "" {
+		return errors.New(
+			"AS2 MDN could not be authenticated: it is not signed with a configured partner certificate and does not carry the transmitted content's MIC",
+		)
+	}
+	if mdn.ReceivedContentMIC != "" && !as2.MICMatches(built.MIC, mdn.ReceivedContentMIC) {
 		return errors.New("AS2 MDN MIC does not match the transmitted content")
 	}
 

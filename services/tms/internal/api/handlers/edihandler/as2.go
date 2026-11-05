@@ -2,10 +2,10 @@ package edihandler
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"time"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundas2"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +17,7 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 }
 
 func (h *Handler) receiveAS2Message(c *gin.Context) {
-	body, err := io.ReadAll(io.LimitReader(c.Request.Body, as2MaxRequestBody))
+	body, err := helpers.ReadBoundedRequestBody(c, as2MaxRequestBody)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

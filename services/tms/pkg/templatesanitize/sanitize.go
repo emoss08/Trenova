@@ -192,7 +192,7 @@ func HTML(field, source string, opts Options) templatediag.Diagnostics {
 			name, _ := tokenizer.TagName()
 			if strings.EqualFold(string(name), "style") && inStyle {
 				inStyle = false
-				diags = append(diags, CSS(field, styleBody.String())...)
+				diags = append(diags, CSS(field, styleBody.String(), opts)...)
 			}
 
 		case html.TextToken:
@@ -213,6 +213,10 @@ func HTML(field, source string, opts Options) templatediag.Diagnostics {
 
 		case html.DoctypeToken, html.ErrorToken:
 		}
+	}
+
+	if inStyle {
+		diags = append(diags, CSS(field, styleBody.String(), opts)...)
 	}
 
 	return diags
@@ -264,7 +268,7 @@ func checkAttributes(
 		}
 
 		if name == "style" {
-			diags = append(diags, CSS(field, value)...)
+			diags = append(diags, CSS(field, value, opts)...)
 			continue
 		}
 
@@ -438,7 +442,7 @@ func normalizeURLForSchemeCheck(value string) string {
 }
 
 // CSS reports stylesheet constructs that fetch or execute.
-func CSS(field, source string) templatediag.Diagnostics {
+func CSS(field, source string, opts Options) templatediag.Diagnostics {
 	if strings.TrimSpace(source) == "" {
 		return nil
 	}
@@ -478,7 +482,7 @@ func CSS(field, source string) templatediag.Diagnostics {
 		if checked == "" || strings.HasPrefix(checked, "data:") {
 			continue
 		}
-		if strings.Contains(target, "{{") && strings.Contains(source, target) {
+		if !opts.Rendered && strings.Contains(target, "{{") && strings.Contains(source, target) {
 			continue
 		}
 		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field, fmt.Sprintf(
@@ -494,7 +498,7 @@ func CSS(field, source string) templatediag.Diagnostics {
 // parser does, so a quote or a bracket inside a string cannot end one early.
 func cssFetchTargets(normalized string) []string {
 	var targets []string
-	lower := strings.ToLower(normalized)
+	lower := asciiLower(normalized)
 
 	for _, name := range [...]string{"url", "src"} {
 		for at := 0; at < len(lower); {
@@ -610,59 +614,94 @@ func normalizeCSS(source string) string {
 	var b strings.Builder
 	b.Grow(len(source))
 
+	var quote byte
+	inURL := false
 	for i := 0; i < len(source); {
-		if strings.HasPrefix(source[i:], "/*") {
+		c := source[i]
+		switch {
+		case c == 0:
+			i++
+			continue
+		case c == '\\':
+			i = decodeCSSEscape(&b, source, i+1)
+			continue
+		case quote != 0:
+			if c == quote || isCSSNewline(c) {
+				quote = 0
+			}
+		case inURL:
+			inURL = c != ')'
+		case c == '"' || c == '\'':
+			quote = c
+		case strings.HasPrefix(source[i:], "/*"):
 			end := strings.Index(source[i+2:], "*/")
 			if end < 0 {
-				break
+				return b.String()
 			}
 			i += end + 4
 			continue
+		case c == '(':
+			inURL = opensUnquotedURL(b.String(), source[i+1:])
 		}
-
-		c := source[i]
-		if c == 0 {
-			i++
-			continue
-		}
-		if c != '\\' {
-			b.WriteByte(c)
-			i++
-			continue
-		}
-
+		b.WriteByte(c)
 		i++
-		if i >= len(source) {
-			break
-		}
-		if source[i] == '\n' {
-			i++
-			continue
-		}
-
-		hexEnd := i
-		for hexEnd < len(source) && hexEnd-i < 6 && isHexDigit(source[hexEnd]) {
-			hexEnd++
-		}
-		if hexEnd == i {
-			b.WriteByte(source[i])
-			i++
-			continue
-		}
-
-		decoded := utf8.RuneError
-		if code, err := strconv.ParseInt(source[i:hexEnd], 16, 32); err == nil &&
-			code > 0 && code <= utf8.MaxRune {
-			decoded = rune(code)
-		}
-		b.WriteRune(decoded)
-		i = hexEnd
-		if i < len(source) && isCSSWhitespace(source[i]) {
-			i++
-		}
 	}
 
 	return b.String()
+}
+
+func opensUnquotedURL(written, rest string) bool {
+	if len(written) < len("url") || asciiLower(written[len(written)-len("url"):]) != "url" {
+		return false
+	}
+	rest = strings.TrimLeft(rest, " \t\n\r\f")
+
+	return rest == "" || rest[0] != '"' && rest[0] != '\''
+}
+
+func decodeCSSEscape(b *strings.Builder, source string, i int) int {
+	if i >= len(source) {
+		return i
+	}
+	if source[i] == '\n' {
+		return i + 1
+	}
+
+	hexEnd := i
+	for hexEnd < len(source) && hexEnd-i < 6 && isHexDigit(source[hexEnd]) {
+		hexEnd++
+	}
+	if hexEnd == i {
+		b.WriteByte(source[i])
+		return i + 1
+	}
+
+	decoded := utf8.RuneError
+	if code, err := strconv.ParseInt(source[i:hexEnd], 16, 32); err == nil &&
+		code > 0 && code <= utf8.MaxRune {
+		decoded = rune(code)
+	}
+	b.WriteRune(decoded)
+	if hexEnd < len(source) && isCSSWhitespace(source[hexEnd]) {
+		hexEnd++
+	}
+
+	return hexEnd
+}
+
+func isCSSNewline(c byte) bool {
+	return c == '\n' || c == '\r' || c == '\f'
+}
+
+func asciiLower(source string) string {
+	lowered := []byte(source)
+	for i, c := range lowered {
+		if c >= 'A' && c <= 'Z' {
+			lowered[i] = c + 'a' - 'A'
+		}
+	}
+
+	return string(lowered)
 }
 
 func isHexDigit(c byte) bool {

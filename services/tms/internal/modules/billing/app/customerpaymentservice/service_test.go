@@ -56,7 +56,7 @@ func TestValidatorRejectsOverApplication(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_")}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: pulid.MustNew("fy_"), Status: fiscalperiod.StatusOpen}, nil)
 	v := NewValidator(ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalRepo})
 
 	_, _, me := v.ValidatePostAndApply(
@@ -153,7 +153,7 @@ func TestPostAndApplyUsesRevenueForCashBasis(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -244,7 +244,7 @@ func TestPostAndApplyCreatesUnappliedCashLine(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -372,7 +372,7 @@ func TestApplyUnappliedUsesUnappliedCashReclassification(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 200}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -494,7 +494,7 @@ func TestReverseCreatesReversingPaymentEntry(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 300}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
@@ -607,7 +607,7 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 	fiscalRepo := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 100}).
-		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID}, nil)
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 	journalRepo := journalentryportsmock.NewMockJournalPostingRepository(t)
 	var lastPosting journalentryports.CreateJournalPostingParams
 	journalRepo.EXPECT().
