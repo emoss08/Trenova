@@ -22,6 +22,8 @@ on:
       - "deploy/Dockerfile.postgres"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # TestDeploymentConfigsDecodeStrictly decodes the self-hosted config.
+      - "deploy/selfhost/config/**"
       - "docs/engineering/ai-tool-safety.md"
       - "docs/engineering/agent-write-coverage.md"
   pull_request:
@@ -45,6 +47,8 @@ on:
       - "deploy/Dockerfile.postgres"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # TestDeploymentConfigsDecodeStrictly decodes the self-hosted config.
+      - "deploy/selfhost/config/**"
       - "docs/engineering/ai-tool-safety.md"
       - "docs/engineering/agent-write-coverage.md"
   # Race Detection only, weekly: it takes about 90 minutes.
