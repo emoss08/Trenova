@@ -58,6 +58,13 @@ mod probes {
         protected == 0
     }
 
+    /// Whether any descriptor is a memory file, the only kind with seals.
+    pub fn holds_a_sealed_file() -> bool {
+        // SAFETY: `F_GET_SEALS` reads a descriptor's seals and takes no
+        // argument; a number that is no descriptor just fails.
+        (0..64).any(|fd| unsafe { libc::fcntl(fd, libc::F_GET_SEALS) } >= 0)
+    }
+
     pub fn may_read_thread_name() -> bool {
         let mut name = [0u8; 16];
         // SAFETY: `PR_GET_NAME` writes at most 16 bytes, the buffer's size.
@@ -141,6 +148,8 @@ fn main() -> ExitCode {
             ("map-executable", _) => answer(&mut child, probes::may_map_executable()),
             #[cfg(target_os = "linux")]
             ("protect-executable", _) => answer(&mut child, probes::may_protect_executable()),
+            #[cfg(target_os = "linux")]
+            ("input-descriptor", _) => answer(&mut child, probes::holds_a_sealed_file()),
             #[cfg(target_os = "linux")]
             ("prctl-name", _) => answer(&mut child, probes::may_read_thread_name()),
             #[cfg(target_os = "linux")]

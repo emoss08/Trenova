@@ -106,6 +106,25 @@ async fn input_arrives_through_a_sealed_memfd_and_output_streams_back() {
 }
 
 #[tokio::test]
+async fn a_child_keeps_no_descriptor_for_an_input_it_has_mapped() {
+    let pool = pool(1, 100).await;
+    let mut writer = InputWriter::new("job", 1 << 20).expect("memfd");
+    writer.write_chunk(b"a page of bytes").expect("write");
+    let (tx, _rx) = mpsc::channel(1);
+    let result = pool
+        .run(
+            Job {
+                body: b"input-descriptor".to_vec(),
+                input: Some(writer.seal().expect("seal")),
+                deadline: Instant::now() + Duration::from_secs(10),
+            },
+            tx,
+        )
+        .await;
+    assert_eq!(result, Ok(Outcome::Failed(b"refused".to_vec())));
+}
+
+#[tokio::test]
 async fn a_slow_consumer_holds_the_child_back_rather_than_buffering() {
     let pool = pool(1, 100).await;
     let (tx, mut rx) = mpsc::channel(1);
