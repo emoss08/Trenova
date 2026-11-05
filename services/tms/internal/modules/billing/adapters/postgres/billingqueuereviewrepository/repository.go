@@ -338,7 +338,7 @@ func (r *repository) GetNeighbors(
 				return nil, itemErrors.Map(err, req.ItemID.String())
 			}
 
-			n := neighborQueries(req, anchor.CreatedAt)
+			n := neighborQueries(ctx, req, anchor.CreatedAt)
 			var (
 				total, before int64
 				member        bool
@@ -380,6 +380,7 @@ type neighbors struct {
 }
 
 func neighborQueries(
+	ctx context.Context,
 	req *billingqueueports.GetBillingQueueNeighborsRequest,
 	createdAt int64,
 ) neighbors {
@@ -389,6 +390,7 @@ func neighborQueries(
 	return neighbors{
 		base: func() keel.Query[*billingqueue.BillingQueueItem] {
 			return listquery.Filter(
+				ctx,
 				bq.Where(keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted))),
 				req.Filter,
 			)

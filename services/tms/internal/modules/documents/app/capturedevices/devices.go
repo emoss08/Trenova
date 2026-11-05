@@ -2,12 +2,15 @@ package capturedevices
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,6 +42,7 @@ const (
 	maxRevokeReason       = 255
 	reasonReplayed        = "The device's credential was presented twice; it may have been copied"
 	reasonIdle            = "The device was not used for 90 days"
+	reasonPersonLeft      = "The person this device acts for can no longer sign in"
 )
 
 // OutdatedAgentError refuses a companion older than the organization allows.
@@ -208,6 +212,10 @@ func (s *Service) Refresh(ctx context.Context, req *RefreshRequest) (*TokenPair,
 	}
 
 	tenantInfo := (&DevicePrincipal{Device: device}).TenantInfo()
+	if err = s.requireStanding(ctx, device, tenantInfo, now); err != nil {
+		return nil, err
+	}
+
 	control, err := s.support.RequireEnabled(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -267,6 +275,56 @@ func (s *Service) Refresh(ctx context.Context, req *RefreshRequest) (*TokenPair,
 	}
 
 	return issued.forDevice(updated), nil
+}
+
+func (s *Service) requireStanding(
+	ctx context.Context,
+	device *capture.CaptureDevice,
+	tenantInfo pagination.TenantInfo,
+	now int64,
+) error {
+	person, err := s.users.GetByID(ctx, tenantports.GetUserByIDRequest{
+		TenantInfo:   tenantInfo,
+		LookupUserID: device.UserID,
+	})
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return err
+	}
+	if err == nil && person.ValidateStatus() == nil {
+		return nil
+	}
+
+	s.revoke(ctx, device, nil, reasonPersonLeft, now)
+
+	return pairingError(PairingInvalidGrant)
+}
+
+func (s *Service) RevokeUserAccess(
+	ctx context.Context,
+	req tenantports.RevokeUserAccessRequest,
+) error {
+	devices, err := s.deviceRepo.ListActiveByUser(ctx, req.UserID)
+	if err != nil {
+		return fmt.Errorf("list capture devices of user %s: %w", req.UserID, err)
+	}
+
+	var by *pulid.ID
+	if req.TenantInfo.UserID.IsNotNil() {
+		by = &req.TenantInfo.UserID
+	}
+
+	now := timeutils.NowUnix()
+	var errs []error
+	for _, device := range devices {
+		if req.OrganizationID.IsNotNil() && device.OrganizationID != req.OrganizationID {
+			continue
+		}
+		if s.revoke(deviceScope(ctx, device), device, by, reasonPersonLeft, now) == nil {
+			errs = append(errs, fmt.Errorf("revoke capture device %s", device.ID))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // handleRefreshMiss looks for the token among replaced ones. Finding it means

@@ -133,7 +133,7 @@ func searchPredicate(
 	q keel.Query[*inboundmessage.InboundMessage],
 	query string,
 ) keel.Query[*inboundmessage.InboundMessage] {
-	return listquery.Filter(q, &pagination.QueryOptions{Query: query})
+	return listquery.Filter(ctx, q, &pagination.QueryOptions{Query: query})
 }
 
 func (r *repository) List(

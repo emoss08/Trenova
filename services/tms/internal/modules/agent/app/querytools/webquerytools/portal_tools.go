@@ -189,6 +189,7 @@ func (t *readPortalTool) Policy() agenttoolports.ToolPolicy {
 		Reads:           agenttooltrust.ExternalReadAlways,
 		Source:          agent.TaintSourceWeb,
 		CapsLaterWrites: true,
+		CarriesTaint:    true,
 		Rationale: "Reads a third-party portal through the organization's extension; it " +
 			"changes nothing in Trenova, tells the browser to submit nothing, and returns text " +
 			"written outside it.",
@@ -260,6 +261,8 @@ func (t *readPortalTool) Query(
 		Question:   question,
 		Details:    details,
 		Owner:      owner,
+
+		AfterOutsideText: params.Taint.ReadBeyond(t.Name()),
 	})
 	if err != nil {
 		return nil, err

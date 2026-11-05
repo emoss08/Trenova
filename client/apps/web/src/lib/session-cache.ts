@@ -1,4 +1,5 @@
 import { buildId } from "@/lib/build-id";
+import { clearDocumentUploadSessions } from "@/lib/document-upload-store";
 import { indexedDbStore, type KeyValueStore } from "@/lib/indexed-db-store";
 import { attention } from "@/lib/queries/attention";
 import { homeLayout } from "@/lib/queries/home-layout";
@@ -16,7 +17,11 @@ import {
 import type { PersistQueryClientOptions, Persister } from "@tanstack/react-query-persist-client";
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
+import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { useDeskStore } from "@/stores/desk-store";
+import { useRecentPagesStore } from "@/stores/recent-pages-store";
 import { useRecentRecordsStore } from "@/stores/recent-records-store";
 
 // What draws the app's frame and its first screen, written to the browser's disk so a
@@ -151,6 +156,19 @@ export const sessionPersistence = createSessionPersistence(
 );
 
 /**
+ * The stores that outlive a reload and hold what a person typed or opened: a draft, a search,
+ * the pages and threads they had up. Each keeps its layout preferences and drops these.
+ */
+export function forgetSessionStores(): void {
+  useAssistantStore.getState().clearSession();
+  useDeskAttachedPageStore.getState().clear();
+  useDeskSettingsStore.getState().clearSession();
+  useDeskStore.getState().clearSession();
+  useRecentPagesStore.getState().clear();
+  useRecentRecordsStore.getState().clear();
+}
+
+/**
  * Ends what the cache holds for a session, in memory and on disk. Every way a session ends
  * or changes hands — signing out, switching organization, a new sign-in, an expired session
  * — goes through here. A failure to reach the disk is reported and not thrown: the caller
@@ -159,11 +177,15 @@ export const sessionPersistence = createSessionPersistence(
  */
 export async function clearSessionCache(): Promise<void> {
   queryClient.clear();
-  useDeskAttachedPageStore.getState().clear();
-  useRecentRecordsStore.getState().clear();
+  forgetSessionStores();
   try {
     await sessionPersistence.forgetAll();
   } catch (error) {
     console.error("Could not delete the persisted query cache:", error);
+  }
+  try {
+    await clearDocumentUploadSessions();
+  } catch (error) {
+    console.error("Could not delete the uploads kept for resuming:", error);
   }
 }

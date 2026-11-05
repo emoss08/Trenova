@@ -58,6 +58,10 @@ type Guard struct {
 	planner  *planner
 }
 
+func (g *Guard) InstallListGuard() gin.HandlerFunc {
+	return fieldguard.InstallListGuard(g.engine)
+}
+
 func NewGuard(p GuardParams) *Guard {
 	registry := fieldsensitivity.DefaultRegistry()
 	return &Guard{

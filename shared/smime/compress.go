@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/asn1"
+	"errors"
 	"fmt"
 	"io"
 )
@@ -14,6 +15,7 @@ var (
 	oidData                  = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 7, 1}
 	errNotCompressedData     = fmt.Errorf("as2: content is not CMS compressed data")
 	errUnsupportedCompressor = fmt.Errorf("as2: unsupported compression algorithm")
+	ErrDecompressedTooLarge  = errors.New("as2: decompressed content exceeds the size limit")
 )
 
 type compressedContentInfo struct {
@@ -62,7 +64,7 @@ func Compress(content []byte) ([]byte, error) {
 	return encoded, nil
 }
 
-func Decompress(encoded []byte) ([]byte, error) {
+func Decompress(encoded []byte, maxBytes int64) ([]byte, error) {
 	var info compressedContentInfo
 	if _, err := asn1.Unmarshal(encoded, &info); err != nil {
 		return nil, fmt.Errorf("as2: decode compressed data: %w", err)
@@ -78,9 +80,12 @@ func Decompress(encoded []byte) ([]byte, error) {
 		return nil, fmt.Errorf("as2: open compressed content: %w", err)
 	}
 	defer reader.Close()
-	content, err := io.ReadAll(reader)
+	content, err := io.ReadAll(io.LimitReader(reader, maxBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("as2: decompress content: %w", err)
+	}
+	if int64(len(content)) > maxBytes {
+		return nil, ErrDecompressedTooLarge
 	}
 	return content, nil
 }

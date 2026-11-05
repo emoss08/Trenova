@@ -84,11 +84,8 @@ func validateProductionRecoveryCodePepper(pepper string) error {
 	if len(trimmed) < minProductionLocalEncryptionKeyLength {
 		return ErrProductionRecoveryCodePepperRequired
 	}
-	lowered := strings.ToLower(trimmed)
-	for _, placeholder := range InsecureDefaultValues {
-		if strings.Contains(lowered, placeholder) {
-			return ErrProductionRecoveryCodePepperRequired
-		}
+	if IsPlaceholder(trimmed) {
+		return ErrProductionRecoveryCodePepperRequired
 	}
 	return nil
 }
@@ -99,11 +96,8 @@ func validateProductionLocalKey(key string) error {
 		return ErrProductionLocalEncryptionKeyRequired
 	}
 
-	lowered := strings.ToLower(trimmed)
-	for _, placeholder := range InsecureDefaultValues {
-		if strings.Contains(lowered, placeholder) {
-			return ErrEncryptionKeyIsInsecure
-		}
+	if IsPlaceholder(trimmed) {
+		return ErrEncryptionKeyIsInsecure
 	}
 
 	return nil

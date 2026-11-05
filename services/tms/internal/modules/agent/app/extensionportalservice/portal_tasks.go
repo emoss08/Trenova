@@ -344,6 +344,11 @@ func (s *Service) newRun(
 // left to run unwatched. One the portal stopped for a sign-in code the person
 // can relay is kept open on the code prompt and followed from there, and the
 // outcome says it waits on the code.
+const signedInReadAfterOutsideText = "This conversation has read text from outside the " +
+	"organization, so it cannot drive a signed-in portal on its own: that text could have " +
+	"shaped the question. Propose it with web_use_portal so a person sees the exact task, or " +
+	"tell the person what to look up there."
+
 func (s *Service) ReadPortal(
 	ctx context.Context,
 	req *agentextensionports.PortalReadRequest,
@@ -359,6 +364,9 @@ func (s *Service) ReadPortal(
 	site, err := s.site(ctx, req.TenantInfo, req.SiteID, false)
 	if err != nil {
 		return nil, err
+	}
+	if req.AfterOutsideText && site.HasSignIn() {
+		return nil, &agentextensionservice.ToolError{Message: signedInReadAfterOutsideText}
 	}
 
 	start := &portalStart{

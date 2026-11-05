@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::Duration;
 
-use capture_platform::acl::{SYSTEM_ONLY_SDDL, create_secured};
+use capture_platform::acl::{SYSTEM_ONLY_SDDL, create_trusted};
 use capture_platform::{logging, machine, paths, settings};
 use capture_protocol::release::pinned_public_key;
 use trenova_capture_update::{Http, Installer, UpdaterError, manifest_url, run};
@@ -87,7 +87,7 @@ impl Installer for WindowsInstaller {
 
     fn download_dir(&self) -> Result<PathBuf, UpdaterError> {
         let dir = paths::shared_dir()?.join("updates");
-        create_secured(&dir, SYSTEM_ONLY_SDDL)?;
+        create_trusted(&dir, SYSTEM_ONLY_SDDL)?;
         sweep(&dir);
         Ok(dir)
     }

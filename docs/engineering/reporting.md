@@ -185,6 +185,10 @@ per entity, field and edge the request touches.
   ask `reportaccess`, so the builder offers exactly what the compiler accepts.
   `TestReportSurfacesDecideAccessOnlyThroughReportaccess` fails if a report surface calls a
   permission primitive (`CanAccess`, `Decide`, `InReferenceView`, `ProtectedGroupAt`, …) itself.
+- **A model reads below the person.** A read whose rows reach a model sets
+  `Request.FieldCeiling` (`reportquerytools.RequestFor`, from `fieldsensitivity.AgentReadLimit`).
+  `Access.LimitFields` then withholds anything above the agent's data access, and Confidential
+  always, in previews, stored-run reads and the catalog. A person's own run and export set none.
 
 ## The engine
 

@@ -58,6 +58,55 @@ func TestAgentCeiling(t *testing.T) {
 	}
 }
 
+func TestAgentReadLimit(t *testing.T) {
+	t.Parallel()
+
+	person := &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		UserID:        pulid.MustNew("usr_"),
+	}
+	agent := &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent}
+
+	tests := []struct {
+		name    string
+		actor   *permissionports.RequestActor
+		granted permission.FieldSensitivity
+		want    permission.FieldSensitivity
+	}{
+		{
+			name:    "an agent's data access holds a person's read",
+			actor:   person,
+			granted: permission.SensitivityInternal,
+			want:    permission.SensitivityInternal,
+		},
+		{
+			name:  "a person with no agent setting still never reaches Confidential",
+			actor: person,
+			want:  permission.SensitivityRestricted,
+		},
+		{
+			name:    "Confidential data access is read as Restricted",
+			actor:   person,
+			granted: permission.SensitivityConfidential,
+			want:    permission.SensitivityRestricted,
+		},
+		{
+			name:  "an unattended agent with no setting reads at Internal",
+			actor: agent,
+			want:  permission.SensitivityInternal,
+		},
+		{name: "no actor reads at Internal", want: permission.SensitivityInternal},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, AgentReadLimit(tt.actor, tt.granted))
+		})
+	}
+}
+
 func TestAgentCeilings_AsksOncePerResource(t *testing.T) {
 	t.Parallel()
 

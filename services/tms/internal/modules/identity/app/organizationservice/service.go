@@ -122,6 +122,14 @@ func (s *service) Update(
 				return err
 			}
 
+			stored, err := s.repo.GetByID(txCtx, tenantports.GetOrganizationByIDRequest{
+				TenantInfo: pagination.TenantInfo{OrgID: entity.ID, BuID: entity.BusinessUnitID},
+			})
+			if err != nil {
+				return err
+			}
+			entity.LogoURL = stored.LogoURL
+
 			updated, err := s.repo.Update(txCtx, entity)
 			if err != nil {
 				log.Error("failed to update organization", zap.Error(err))

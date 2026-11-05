@@ -688,8 +688,12 @@ export function credentialLabel(key: string, method: string, t: TranslateFn): st
       return method === "AS2" ? t("Our private key") : t("Private key");
     case "basicAuthPassword":
       return t("Basic auth password");
+    case "decryptionPrivateKey":
+      return t("Our decryption key");
     case "localCertificate":
       return t("Our signing certificate");
+    case "localEncryptionCertificate":
+      return t("Our encryption certificate");
     case "partnerSigningCertificate":
       return t("Their signing certificate");
     case "partnerEncryptionCertificate":

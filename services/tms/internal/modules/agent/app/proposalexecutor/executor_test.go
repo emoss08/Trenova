@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,13 +111,15 @@ type fakePermissions struct {
 	err      error
 	lastReq  *permissionports.PermissionCheckRequest
 	checkErr error
+	session  authctx.SessionAttributes
 }
 
 func (p *fakePermissions) Check(
-	_ context.Context,
+	ctx context.Context,
 	req *permissionports.PermissionCheckRequest,
 ) (*permissionports.PermissionCheckResult, error) {
 	p.lastReq = req
+	p.session, _ = authctx.GetSessionAttributes(ctx)
 	if p.checkErr != nil {
 		return nil, p.checkErr
 	}
@@ -216,6 +219,44 @@ func TestExecute_AttributesTheWriteToTheApprover(t *testing.T) {
 	assert.Equal(t, actor.UserID, tool.lastParams.Actor.UserID)
 	assert.Equal(t, proposal.OrganizationID, tool.lastParams.OrganizationID)
 	assert.Equal(t, proposal.BusinessUnitID, tool.lastParams.BusinessUnitID)
+}
+
+func TestExecute_ChecksAsAnUnprovenSessionWithoutOne(t *testing.T) {
+	t.Parallel()
+
+	tool := &recordingTool{
+		name:      "reassign_move",
+		resource:  permission.ResourceShipmentMove,
+		operation: permission.OpUpdate,
+	}
+	proposal := testProposal("reassign_move", map[string]any{})
+	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
+	perms := &fakePermissions{allowed: true}
+
+	require.NoError(t, newExecutor(tool, &fakeProposalRepo{}, perms).
+		Execute(t.Context(), proposal, nil, actor))
+
+	assert.Equal(t, actor.UserID, perms.session.UserID)
+	assert.Equal(t, authctx.UnprovenAssurance, perms.session.AuthenticatorAAL)
+}
+
+func TestExecute_ChecksInTheApproversSession(t *testing.T) {
+	t.Parallel()
+
+	tool := &recordingTool{
+		name:      "reassign_move",
+		resource:  permission.ResourceShipmentMove,
+		operation: permission.OpUpdate,
+	}
+	proposal := testProposal("reassign_move", map[string]any{})
+	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
+	actor.Session = &authctx.SessionAttributes{UserID: actor.UserID, AuthenticatorAAL: 2}
+	perms := &fakePermissions{allowed: true}
+
+	require.NoError(t, newExecutor(tool, &fakeProposalRepo{}, perms).
+		Execute(t.Context(), proposal, nil, actor))
+
+	assert.Equal(t, 2, perms.session.AuthenticatorAAL)
 }
 
 // The proposal id is stable across retries of the same approval and distinct

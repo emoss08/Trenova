@@ -125,7 +125,8 @@ records `mfa_state` `federated` or `federated_not_trusted`. When the provider's 
 trusted and the person has an authenticator app, the callback issues no session: it sends the
 browser back to the sign-in page with a challenge in the URL fragment, and the `mfa` step
 finishes the sign-in with the SSO provider, subject and federation level. Without an app the
-session stays at assurance level 1, so an access policy with `mfaRequired` refuses it.
+session stays at assurance level 1, so an access policy with `mfaRequired` refuses it (see
+"Access policies" in [permissions.md](permissions.md)).
 
 Turning the authenticator off, generating new recovery codes and re-authenticating with
 password and code are step-ups of a signed-in person, recorded as `mfa.step_up` rows
@@ -168,8 +169,11 @@ a later grant is refused and the whole creation rolls back.
 Losing access ends it everywhere it is held, and each step is recorded:
 
 - Deactivating or locking a user, one at a time or in bulk, ends every session they
-  have open. Saving the same deactivation again ends any session a failed first
-  attempt left behind.
+  have open and revokes their Capture devices in every organization, through the
+  `userAccessRevokers` fx group (`tenantports.UserAccessRevoker`). Saving the same
+  deactivation again ends any session or device a failed first attempt left behind. A
+  device's refresh also checks its person's standing, so a revocation that failed stops
+  at the next refresh, within the fifteen-minute life of its access token.
 - Revoking a driver's portal access ends the portal user's sessions.
 - An API key never grants more than its creator holds. Creating or editing a key with a
   resource, operation or scope the person saving it does not hold is refused, and at

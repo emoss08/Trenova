@@ -1169,6 +1169,12 @@ func (s *Service) UpdateResourcePermission(
 
 	previous := findResourcePermission(role.Permissions, rp.ID)
 
+	multiErr := errortypes.NewMultiError()
+	rp.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
 	if scopeErr := unenforcedScopes(
 		s.scopes,
 		s.registry,

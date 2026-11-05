@@ -1,6 +1,7 @@
 package formulalibraryhandler
 
 import (
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"net/http"
 	"strings"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -97,12 +97,5 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 }
 
 func requestActor(authCtx *authctx.AuthContext) *permissionports.RequestActor {
-	return &permissionports.RequestActor{
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		OrganizationID: authCtx.OrganizationID,
-	}
+	return actorutil.FromAuthContext(authCtx)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -22,6 +23,49 @@ func lostSignInAccess(before, after *tenant.User) bool {
 }
 
 func (s *Service) endAllSessions(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) error {
+	return errors.Join(
+		s.deleteAllSessions(ctx, tenantInfo, userID),
+		s.revokeLongLivedAccess(ctx, tenantInfo, userID),
+	)
+}
+
+func (s *Service) revokeLongLivedAccess(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) error {
+	return s.revokeAccessIn(ctx, tenantInfo, userID, pulid.Nil)
+}
+
+func (s *Service) revokeAccessIn(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	userID, organizationID pulid.ID,
+) error {
+	errs := make([]error, 0, len(s.accessRevokers))
+	for _, revoker := range s.accessRevokers {
+		if err := revoker.RevokeUserAccess(ctx, tenantports.RevokeUserAccessRequest{
+			TenantInfo:     tenantInfo,
+			UserID:         userID,
+			OrganizationID: organizationID,
+		}); err != nil {
+			s.l.Error(
+				"failed to revoke the access of a user who lost sign-in",
+				zap.String("userID", userID.String()),
+				zap.Error(err),
+			)
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func (s *Service) deleteAllSessions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
@@ -75,7 +119,7 @@ func (s *Service) endLingeringSessions(
 		return fmt.Errorf("list sessions for user %s: %w", user.ID, err)
 	}
 	if len(sessions) == 0 {
-		return nil
+		return s.revokeLongLivedAccess(ctx, tenantInfo, user.ID)
 	}
 
 	return s.endAllSessions(ctx, tenantInfo, user.ID)
@@ -133,12 +177,18 @@ func (s *Service) revokeRemovedOrganizations(
 		}
 	}
 
-	if err := s.endOrganizationSessions(ctx, pagination.TenantInfo{
+	tenantInfo := pagination.TenantInfo{
 		OrgID:  change.organizationID,
 		BuID:   change.businessUnitID,
 		UserID: change.actorID,
-	}, change.userID, removed); err != nil {
+	}
+	if err := s.endOrganizationSessions(ctx, tenantInfo, change.userID, removed); err != nil {
 		errs = append(errs, err)
+	}
+	for orgID := range removed {
+		if err := s.revokeAccessIn(ctx, tenantInfo, change.userID, orgID); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	return errors.Join(errs...)
@@ -210,10 +260,20 @@ func (s *Service) revokeOrphanedAccess(
 		)
 	}
 
-	return s.endOrganizationSessions(ctx, pagination.TenantInfo{
+	tenantInfo := pagination.TenantInfo{
 		OrgID: orphan.OrganizationID,
 		BuID:  orphan.BusinessUnitID,
-	}, orphan.UserID, map[pulid.ID]struct{}{orphan.OrganizationID: {}})
+	}
+
+	return errors.Join(
+		s.endOrganizationSessions(
+			ctx,
+			tenantInfo,
+			orphan.UserID,
+			map[pulid.ID]struct{}{orphan.OrganizationID: {}},
+		),
+		s.revokeAccessIn(ctx, tenantInfo, orphan.UserID, orphan.OrganizationID),
+	)
 }
 
 func removedOrganizations(

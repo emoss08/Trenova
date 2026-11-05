@@ -5,13 +5,12 @@ import { DashIdleTimeout } from "./dash-idle-timeout";
 
 const mocks = vi.hoisted(() => ({
   logout: vi.fn(),
-  navigate: vi.fn(),
+  leaveDashSession: vi.fn(),
   endSession: null as ((notice: SignOutNotice | undefined) => void) | null,
 }));
 
-vi.mock("react-router", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("react-router")>()),
-  useNavigate: () => mocks.navigate,
+vi.mock("@/lib/session-context-handler", () => ({
+  leaveDashSession: mocks.leaveDashSession,
 }));
 
 vi.mock("@trenova/shared/stores/auth-store", () => ({
@@ -43,7 +42,7 @@ async function endSession(notice: SignOutNotice | undefined) {
 describe("DashIdleTimeout", () => {
   beforeEach(() => {
     mocks.logout.mockReset();
-    mocks.navigate.mockReset();
+    mocks.leaveDashSession.mockReset();
     mocks.endSession = null;
   });
 
@@ -58,7 +57,7 @@ describe("DashIdleTimeout", () => {
     await endSession("idle");
 
     expect(mocks.logout).toHaveBeenCalledTimes(1);
-    expect(mocks.navigate).toHaveBeenCalledWith("/dash/login?signed_out=idle", { replace: true });
+    expect(mocks.leaveDashSession).toHaveBeenCalledWith("/dash/login?signed_out=idle");
   });
 
   it("still reaches the sign-in page when the server already ended the session", async () => {
@@ -67,9 +66,7 @@ describe("DashIdleTimeout", () => {
 
     await endSession("expired");
 
-    expect(mocks.navigate).toHaveBeenCalledWith("/dash/login?signed_out=expired", {
-      replace: true,
-    });
+    expect(mocks.leaveDashSession).toHaveBeenCalledWith("/dash/login?signed_out=expired");
   });
 
   it("shows no notice when the driver chose to sign out", async () => {
@@ -78,6 +75,6 @@ describe("DashIdleTimeout", () => {
 
     await endSession(undefined);
 
-    expect(mocks.navigate).toHaveBeenCalledWith("/dash/login", { replace: true });
+    expect(mocks.leaveDashSession).toHaveBeenCalledWith("/dash/login");
   });
 });

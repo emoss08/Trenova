@@ -37,7 +37,7 @@ func Connection[T any](
 	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
-	p := newPlan(q, req.Computed).withCopies(req.Copies)
+	p := newPlan(ctx, q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
 	q, err := bindWindow(ctx, db, p, q, req)
 	if err != nil {
@@ -166,7 +166,7 @@ func List[T any](
 	q keel.Query[*T],
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
-	p := newPlan(q, req.Computed).withCopies(req.Copies)
+	p := newPlan(ctx, q, req.Computed).withCopies(req.Copies)
 	read := narrow(p, q, req)
 	q, err := bindWindow(ctx, db, p, q, req)
 	if err != nil {
@@ -242,7 +242,7 @@ func SelectOptions[T any](
 	if req.Query != "" && search != nil {
 		q.Where(search(req.Query))
 		if o.matchCap > 0 {
-			capped, err := capMatches(ctx, db, newPlan(q, nil), q, o.matchCap)
+			capped, err := capMatches(ctx, db, newPlan(ctx, q, nil), q, o.matchCap)
 			if err != nil {
 				return nil, err
 			}
@@ -377,6 +377,10 @@ func cursorLimit(filter *pagination.QueryOptions, cursor *pagination.CursorInfo)
 	return pagination.DefaultLimit
 }
 
-func Filter[T any](q keel.Query[*T], filter *pagination.QueryOptions) keel.Query[*T] {
-	return q.Where(newPlan(q, nil).where(filter)...)
+func Filter[T any](
+	ctx context.Context,
+	q keel.Query[*T],
+	filter *pagination.QueryOptions,
+) keel.Query[*T] {
+	return q.Where(newPlan(ctx, q, nil).where(filter)...)
 }

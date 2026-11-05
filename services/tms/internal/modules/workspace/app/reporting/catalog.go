@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
-	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type Catalog struct {
@@ -39,18 +38,19 @@ func (e *CatalogEntity) Usable() bool {
 }
 
 func (s *Service) Catalog(ctx context.Context, req *Request) (*Catalog, error) {
-	return CatalogFor(ctx, s.access, req.TenantInfo)
+	return CatalogFor(ctx, s.access, req)
 }
 
 func CatalogFor(
 	ctx context.Context,
 	kinds *reportaccess.Resolver,
-	tenant pagination.TenantInfo,
+	req *Request,
 ) (*Catalog, error) {
-	access, err := kinds.For(ctx, tenant, reportaccess.ModeRead)
+	access, err := kinds.For(ctx, req.TenantInfo, reportaccess.ModeRead)
 	if err != nil {
 		return nil, err
 	}
+	access.LimitFields(req.FieldCeiling)
 
 	catalog := kinds.Catalog()
 	view := catalog.For(ctx, access)

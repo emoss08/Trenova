@@ -59,10 +59,16 @@ func setupTest(t *testing.T) *testDeps {
 	permissions := permissionportsmock.NewMockPermissionEngine(t)
 	storageClient := kernelportsmock.NewMockClient(t)
 	auditSvc := auditportsmock.NewMockAuditService(t)
+	ssoConfigs := tenantportsmock.NewMockSSOConfigRepository(t)
+	ssoConfigs.EXPECT().
+		ListEnabledByOrganizationID(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	svc := &Service{
 		permissions:  permissions,
 		l:            zap.NewNop(),
 		repo:         repo,
+		ssoConfigs:   ssoConfigs,
 		roleRepo:     roleRepo,
 		sr:           sessionRepo,
 		rotator:      sessiontest.Rotator(sessionRepo),

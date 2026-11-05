@@ -15,6 +15,9 @@ import (
 )
 
 var (
+	ErrProductionSessionSecretRequired = errors.New(
+		"production and staging require security.session.secret that is not a placeholder",
+	)
 	ErrInvalidHostPrefixCookie = errors.New(
 		"__Host- session cookies require secure=true, httpOnly=true, sameSite=strict, path=/, and an empty domain",
 	)
@@ -296,6 +299,17 @@ type CSRFBrowserGuardConfig struct {
 
 var InsecureDefaultValues = []string{"change", "secret", "example"}
 
+func IsPlaceholder(value string) bool {
+	lowered := strings.ToLower(strings.TrimSpace(value))
+	for _, placeholder := range InsecureDefaultValues {
+		if strings.Contains(lowered, placeholder) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func Defaults(env string) map[string]any {
 	defaults := map[string]any{
 		"session.name":                                "trv-session-id",
@@ -359,6 +373,9 @@ func (c *Config) ValidateProduction() error {
 	encryptionMode := strings.ToLower(strings.TrimSpace(c.Encryption.Mode))
 	if encryptionMode != EncryptionModeEnvelope {
 		return ErrProductionEncryptionModeRequired
+	}
+	if IsPlaceholder(c.Session.Secret) {
+		return ErrProductionSessionSecretRequired
 	}
 	if err := c.Encryption.validateProductionKeyManager(); err != nil {
 		return err

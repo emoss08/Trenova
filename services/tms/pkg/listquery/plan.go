@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -13,6 +14,7 @@ type plan struct {
 	ref      *keel.Ref
 	computed map[string]keel.Expr
 	copies   map[string]keel.Expr
+	guard    FieldGuard
 }
 
 type field struct {
@@ -23,9 +25,18 @@ type field struct {
 	index  int32
 }
 
-func newPlan[T any](q keel.Query[*T], computed map[string]keel.Expr) *plan {
+func newPlan[T any](
+	ctx context.Context,
+	q keel.Query[*T],
+	computed map[string]keel.Expr,
+) *plan {
 	ref := q.TableRef()
-	return &plan{cat: listcatalog.For[T](ref.Table), ref: ref, computed: computed}
+	return &plan{
+		cat:      listcatalog.For[T](ref.Table),
+		ref:      ref,
+		computed: computed,
+		guard:    fieldGuardFrom(ctx),
+	}
 }
 
 func (p *plan) withCopies(copies map[string]keel.Expr) *plan {
@@ -38,6 +49,10 @@ func (p *plan) baseColumn(index int32) keel.Col {
 }
 
 func (p *plan) resolve(name string) (field, bool) {
+	if p.guard != nil && p.guard(p.cat.Table.Name, name) {
+		return field{}, false
+	}
+
 	head, rest, nested := strings.Cut(name, ".")
 	if !nested {
 		index, ok := p.cat.Fields[name]

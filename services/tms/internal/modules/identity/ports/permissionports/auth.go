@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,12 +21,30 @@ const PrincipalTypeSystem kernelports.PrincipalType = "system"
 const PrincipalTypeAgent kernelports.PrincipalType = "agent"
 
 type RequestActor struct {
-	PrincipalType  kernelports.PrincipalType `json:"principalType"`
-	PrincipalID    pulid.ID                  `json:"principalId"`
-	UserID         pulid.ID                  `json:"userId,omitempty"`
-	APIKeyID       pulid.ID                  `json:"apiKeyId,omitempty"`
-	BusinessUnitID pulid.ID                  `json:"businessUnitId"`
-	OrganizationID pulid.ID                  `json:"organizationId"`
+	PrincipalType  kernelports.PrincipalType  `json:"principalType"`
+	PrincipalID    pulid.ID                   `json:"principalId"`
+	UserID         pulid.ID                   `json:"userId,omitempty"`
+	APIKeyID       pulid.ID                   `json:"apiKeyId,omitempty"`
+	BusinessUnitID pulid.ID                   `json:"businessUnitId"`
+	OrganizationID pulid.ID                   `json:"organizationId"`
+	Session        *authctx.SessionAttributes `json:"session,omitempty"`
+}
+
+func BindActorSession(ctx context.Context, actor *RequestActor) context.Context {
+	if !actor.IsUser() {
+		return ctx
+	}
+	if actor.Session != nil {
+		return authctx.BindSession(ctx, *actor.Session)
+	}
+	if session, ok := authctx.GetSessionAttributes(ctx); ok && session.UserID == actor.UserID {
+		return ctx
+	}
+
+	return authctx.WithSessionAttributes(ctx, authctx.SessionAttributes{
+		UserID:           actor.UserID,
+		AuthenticatorAAL: authctx.UnprovenAssurance,
+	})
 }
 
 func (a *RequestActor) IsAgent() bool {

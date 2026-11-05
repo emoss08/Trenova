@@ -228,7 +228,7 @@ trenova-capture-svc.exe install-printer  # the "Trenova" printer on the IPP Clas
 
 `uninstall` and `uninstall-printer` undo them; each can be run again safely. `run` serves in
 the console instead of as a service, for development. The printer listens on
-`http://127.0.0.1:8631/ipp/print`; `PrintPort` (a DWORD under
+`http://127.0.0.1:8631/ipp/print`; `PrintPort` (a DWORD or a string under
 `HKLM\SOFTWARE\Policies\Trenova\Capture` or `HKLM\SOFTWARE\Trenova\Capture`) moves it, and
 `install-printer` must be run again after changing it.
 
@@ -258,7 +258,9 @@ and where, names each step while it runs, and ends with what to do next and an o
 Trenova Capture. Every install writes a verbose log to `%TEMP%` (`MsiLogging`); the ready,
 finish and error pages show its path, and the print service and updater record each thing they
 did in it. An upgrade keeps the server address and update choice an earlier install recorded,
-unless new ones are given; a non-default `PRINTPORT` must be given again. The banner and side
+unless new ones are given; a non-default `PRINTPORT` must be given again. A repair runs elevated
+for whoever starts it, so it restores the recorded settings and ignores `TRENOVAURL`, `AUTOUPDATE`
+and `PRINTPORT` on its command line. The banner and side
 images are drawn from the web app's logo by `installer/assets/make-bitmaps.py`.
 
 The installer adds the **Trenova** printer as the person installing. Windows refuses an IPP

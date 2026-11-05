@@ -49,7 +49,6 @@ func (s *Service) ReportAutoPostFailure(
 
 	reason := strings.TrimSpace(req.Reason)
 	snapshot := invoicerealtime.NewRealtimeSnapshot(current)
-	snapshot.PostError = reason
 	if s.notifyAutoPostFailed(ctx, req, current, reason) {
 		snapshot.NotifiedUserID = req.Actor.UserID
 	}

@@ -10,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/listtool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -417,6 +420,10 @@ func (t *shipmentListTool) filtersSchema() map[string]any {
 func (t *shipmentListTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
 		Resource: permission.ResourceShipment,
+		Reads:    agenttooltrust.ExternalReadMarked,
+		Source:   agent.TaintSourceEDI,
+		Rationale: "Lists shipments, and one entered over EDI holds a trading partner's own " +
+			"text; nothing changes and nothing is sent.",
 	})
 }
 
@@ -468,7 +475,51 @@ func (t *shipmentListTool) Query(
 		return nil, err
 	}
 
-	return t.withActiveHolds(ctx, params, result, readsHolds)
+	result, err = t.withActiveHolds(ctx, params, result, readsHolds)
+	if err != nil {
+		return nil, err
+	}
+
+	return withOutsideRows(result), nil
+}
+
+func withOutsideRows(result any) any {
+	switch outcome := result.(type) {
+	case querytool.SearchOutcome:
+		if refs := outsideRows(outcome.Items); len(refs) > 0 {
+			return fieldgate.Result(&outcome, nil).WithTaint(refs)
+		}
+	case *fieldgate.Outcome:
+		return outcome.WithTaint(outsideRows(outcome.Items))
+	}
+
+	return result
+}
+
+func outsideRows(items any) []agentrecord.RecordRef {
+	var refs []agentrecord.RecordRef
+	mark := func(row *Row) {
+		if row.enteredOverEDI {
+			refs = append(refs, agentrecord.RecordRef{
+				EntityType: agent.TaintEntityShipment,
+				ID:         row.ID,
+			})
+		}
+	}
+	switch typed := items.(type) {
+	case []Row:
+		for idx := range typed {
+			mark(&typed[idx])
+		}
+	case []any:
+		for _, item := range typed {
+			if row, ok := item.(Row); ok {
+				mark(&row)
+			}
+		}
+	}
+
+	return refs
 }
 
 func (t *shipmentListTool) readsHolds(

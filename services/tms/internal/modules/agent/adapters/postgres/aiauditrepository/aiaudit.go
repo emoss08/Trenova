@@ -376,7 +376,7 @@ func scoped(scope *aiauditports.AIAuditEventScope) keel.Query[*aiaudit.AIAuditEv
 		filter = &aiaudit.ExportFilter{}
 	}
 
-	q := listquery.Filter(e.Query(), &pagination.QueryOptions{
+	q := listquery.Filter(ctx, e.Query(), &pagination.QueryOptions{
 		TenantInfo:   scope.TenantInfo,
 		Query:        filter.Query,
 		FieldFilters: filter.FieldFilters,

@@ -104,11 +104,29 @@ func Decrypt(
 	if err != nil {
 		return nil, fmt.Errorf("as2: parse enveloped data: %w", err)
 	}
-	content, err := parsed.Decrypt(certificate, key)
+	content, err := decryptEnvelopeContent(
+		parsed,
+		certificate,
+		withImplicitRejection(key, algorithm),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("as2: decrypt content: %w", err)
 	}
 	return content, nil
+}
+
+func decryptEnvelopeContent(
+	parsed *pkcs7.PKCS7,
+	certificate *x509.Certificate,
+	key crypto.PrivateKey,
+) (content []byte, err error) {
+	defer func() {
+		if recover() != nil {
+			content, err = nil, ErrMalformedEncryptedContent
+		}
+	}()
+
+	return parsed.Decrypt(certificate, key)
 }
 
 func VerifySignedData(der []byte, certificate *x509.Certificate) ([]byte, error) {

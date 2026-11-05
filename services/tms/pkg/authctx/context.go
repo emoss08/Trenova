@@ -24,6 +24,7 @@ const (
 	SessionSecretHashKey      = Key("sessionSecretHash")
 	ActiveRoleIDsKey          = Key("activeRoleIds")
 	RequiresRoleActivationKey = Key("requiresRoleActivation")
+	RoleActivationKey         = Key("roleActivation")
 	AuthProviderKey           = Key("authProvider")
 	ExternalIdentityIDKey     = Key("externalIdentityId")
 	ExternalSubjectKey        = Key("externalSubject")
@@ -165,14 +166,21 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	c.Set(string(IsPortalUserKey), p.IsPortalUser)
 	c.Set(string(MustChangePasswordKey), p.MustChangePassword)
 	c.Set(string(LocaleKey), p.Locale)
-	if !p.RoleActivation {
+	c.Set(string(RoleActivationKey), p.RoleActivation)
+	if c.Request == nil {
 		return
 	}
-	c.Request = c.Request.WithContext(WithSessionRoleActivation(
-		c.Request.Context(),
-		p.ActiveRoleIDs,
-		p.RequiresRoleActivation,
-	))
+	c.Request = c.Request.WithContext(BindSession(c.Request.Context(), SessionAttributes{
+		UserID:                 p.UserID,
+		ActiveRoleIDs:          p.ActiveRoleIDs,
+		RoleActivation:         p.RoleActivation,
+		RequiresRoleActivation: p.RequiresRoleActivation,
+		AuthenticatorAAL:       p.AuthenticatorAAL,
+		FederationFAL:          p.FederationFAL,
+		MFAAuthenticatedAt:     p.MFAAuthenticatedAt,
+		LastReauthenticatedAt:  p.LastReauthenticatedAt,
+		RiskDecision:           p.RiskDecision,
+	}))
 }
 
 func GetSessionSecretHash(c *gin.Context) string {
@@ -203,9 +211,14 @@ func SetCaptureDeviceContext(c *gin.Context, deviceID, userID, buID, orgID pulid
 	SetBusinessUnitID(c, buID)
 	SetOrganizationID(c, orgID)
 	bindDBScope(c, userID, buID, orgID)
+	c.Request = c.Request.WithContext(WithSessionAttributes(c.Request.Context(), SessionAttributes{
+		UserID:           userID,
+		AuthenticatorAAL: UnprovenAssurance,
+	}))
 }
 
 type AuthContext struct {
+	RoleActivation         bool
 	PrincipalType          string
 	PrincipalID            pulid.ID
 	UserID                 pulid.ID
@@ -234,6 +247,24 @@ func (ac *AuthContext) IsCaptureDevice() bool {
 		return false
 	}
 	return ac.PrincipalType == PrincipalTypeCaptureDevice && ac.CaptureDeviceID.IsNotNil()
+}
+
+func (ac *AuthContext) Session() *SessionAttributes {
+	if ac == nil || ac.AuthenticatorAAL == 0 {
+		return nil
+	}
+
+	return &SessionAttributes{
+		UserID:                 ac.UserID,
+		ActiveRoleIDs:          ac.ActiveRoleIDs,
+		RoleActivation:         ac.RoleActivation,
+		RequiresRoleActivation: ac.RequiresRoleActivation,
+		AuthenticatorAAL:       ac.AuthenticatorAAL,
+		FederationFAL:          ac.FederationFAL,
+		MFAAuthenticatedAt:     ac.MFAAuthenticatedAt,
+		LastReauthenticatedAt:  ac.LastReauthenticatedAt,
+		RiskDecision:           ac.RiskDecision,
+	}
 }
 
 func (ac *AuthContext) IsAgent() bool {
@@ -328,6 +359,11 @@ func authContextFromGin(c *gin.Context) *AuthContext {
 			string(RequiresRoleActivationKey),
 			false,
 		),
+		RoleActivation: helpers.ContextValueOr[bool](
+			c,
+			string(RoleActivationKey),
+			false,
+		),
 		AuthProvider: helpers.ContextValueOr[string](
 			c,
 			string(AuthProviderKey),
@@ -387,6 +423,44 @@ func authContextFromGin(c *gin.Context) *AuthContext {
 }
 
 type sessionRoleActivationContextKey struct{}
+
+type sessionAttributesContextKey struct{}
+
+const UnprovenAssurance = 1
+
+type SessionAttributes struct {
+	UserID                 pulid.ID   `json:"userId"`
+	ActiveRoleIDs          []pulid.ID `json:"activeRoleIds,omitempty"`
+	RoleActivation         bool       `json:"roleActivation,omitempty"`
+	RequiresRoleActivation bool       `json:"requiresRoleActivation,omitempty"`
+	AuthenticatorAAL       int        `json:"authenticatorAal"`
+	FederationFAL          int        `json:"federationFal,omitempty"`
+	MFAAuthenticatedAt     int64      `json:"mfaAuthenticatedAt,omitempty"`
+	LastReauthenticatedAt  int64      `json:"lastReauthenticatedAt,omitempty"`
+	RiskDecision           string     `json:"riskDecision,omitempty"`
+}
+
+func WithSessionAttributes(ctx context.Context, attributes SessionAttributes) context.Context {
+	return context.WithValue(ctx, sessionAttributesContextKey{}, attributes)
+}
+
+func GetSessionAttributes(ctx context.Context) (SessionAttributes, bool) {
+	value, ok := ctx.Value(sessionAttributesContextKey{}).(SessionAttributes)
+	return value, ok
+}
+
+func BindSession(ctx context.Context, attributes SessionAttributes) context.Context {
+	ctx = WithSessionAttributes(ctx, attributes)
+	if !attributes.RoleActivation {
+		return ctx
+	}
+
+	return WithSessionRoleActivation(
+		ctx,
+		attributes.ActiveRoleIDs,
+		attributes.RequiresRoleActivation,
+	)
+}
 
 type SessionRoleActivation struct {
 	ActiveRoleIDs      []pulid.ID

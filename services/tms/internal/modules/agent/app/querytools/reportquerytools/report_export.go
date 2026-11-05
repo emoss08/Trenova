@@ -70,9 +70,5 @@ func ReportOfPreview(
 
 // ReportingRequestFor is the reporting request a person's actor makes.
 func ReportingRequestFor(actor *permissionports.RequestActor) reporting.Request {
-	return RequestFor(&agenttoolports.QueryToolParams{
-		OrganizationID: actor.OrganizationID,
-		BusinessUnitID: actor.BusinessUnitID,
-		Actor:          actor,
-	})
+	return personRequest(actor.OrganizationID, actor.BusinessUnitID, actor)
 }

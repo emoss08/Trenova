@@ -17,7 +17,7 @@ func TestFilteringReversalsByOriginalEntryNumberJoinsTheEntryInTheSameTenant(t *
 	t.Parallel()
 
 	jr := journalreversaldb.Reversals
-	q := listquery.Filter(jr.Query(), &pagination.QueryOptions{
+	q := listquery.Filter(t.Context(), jr.Query(), &pagination.QueryOptions{
 		FieldFilters: []domaintypes.FieldFilter{
 			{
 				Field:    "originalJournalEntry.entryNumber",

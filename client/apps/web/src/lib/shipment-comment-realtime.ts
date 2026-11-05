@@ -1,12 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { ResourceInvalidationEvent } from "@trenova/shared/hooks/realtime-patching";
 import {
-  adjustCommentCount,
-  applyCommentRemoval,
-  applyCommentUpsert,
-  applyReplyCountDelta,
   commentKeys,
-  findCommentInCaches,
   patchCommentInPage,
   patchCommentInPages,
   syncPinnedPage,
@@ -14,7 +9,6 @@ import {
   type CommentPage,
   type LocalShipmentComment,
 } from "@/lib/shipment-comment-cache";
-import { shipmentCommentSchema } from "@/types/shipment-comment";
 
 export const SHIPMENT_COMMENT_RESOURCE = "shipment_comment";
 
@@ -29,29 +23,7 @@ const COMMENT_ACTIONS = new Set([
   "acknowledged",
 ]);
 
-const seenCommentIds = new Map<string, Set<string>>();
-
-function seenSet(shipmentId: string): Set<string> {
-  let set = seenCommentIds.get(shipmentId);
-  if (!set) {
-    set = new Set();
-    seenCommentIds.set(shipmentId, set);
-  }
-  return set;
-}
-
-export function markCommentSeen(shipmentId: string, commentId: string): boolean {
-  const set = seenSet(shipmentId);
-  if (set.has(commentId)) return false;
-  set.add(commentId);
-  return true;
-}
-
-function forgetComment(shipmentId: string, commentId: string): boolean {
-  return seenSet(shipmentId).delete(commentId);
-}
-
-type CommentInsertListener = (comment: LocalShipmentComment) => void;
+type CommentInsertListener = () => void;
 
 const insertListeners = new Map<string, Set<CommentInsertListener>>();
 
@@ -71,128 +43,36 @@ export function subscribeToCommentInserts(
   };
 }
 
-function notifyCommentInsert(shipmentId: string, comment: LocalShipmentComment) {
-  insertListeners.get(shipmentId)?.forEach((listener) => listener(comment));
-}
-
-function parseCommentEntity(entity: unknown): LocalShipmentComment | null {
-  const parsed = shipmentCommentSchema.safeParse(entity);
-  return parsed.success ? parsed.data : null;
+function notifyCommentInsert(shipmentId: string) {
+  insertListeners.get(shipmentId)?.forEach((listener) => listener());
 }
 
 export function isShipmentCommentEvent(evt: ResourceInvalidationEvent): boolean {
   return evt.resource === SHIPMENT_COMMENT_RESOURCE && COMMENT_ACTIONS.has(evt.action ?? "");
 }
 
+/**
+ * A comment event names the shipment and who acted, never what was said: the
+ * stream applies no reader's grants. The thread refetches where it is on
+ * screen, through the read that does.
+ */
 export function handleShipmentCommentEvent(
   queryClient: QueryClient,
   evt: ResourceInvalidationEvent,
   currentUserId: string | undefined,
 ): void {
-  const action = evt.action ?? "";
-  const comment = parseCommentEntity(evt.entity);
-  const shipmentId = comment?.shipmentId ?? evt.recordId ?? "";
-
-  if (!comment || !shipmentId) {
-    void queryClient.invalidateQueries({ queryKey: ["shipment-comments"], refetchType: "all" });
-    void queryClient.invalidateQueries({
-      queryKey: ["shipment-comment-count"],
-      refetchType: "all",
-    });
+  const shipmentId = evt.recordId ?? "";
+  if (!shipmentId) {
+    void queryClient.invalidateQueries({ queryKey: ["shipment-comments"] });
+    void queryClient.invalidateQueries({ queryKey: ["shipment-comment-count"] });
     return;
   }
 
-  switch (action) {
-    case "created":
-      handleCreated(queryClient, shipmentId, comment, currentUserId);
-      return;
-    case "deleted":
-      handleDeleted(queryClient, shipmentId, comment);
-      return;
-    default:
-      handleEntitySync(queryClient, shipmentId, comment);
-  }
-}
+  void queryClient.invalidateQueries({ queryKey: commentKeys.root(shipmentId) });
+  void queryClient.invalidateQueries({ queryKey: commentKeys.count(shipmentId) });
 
-function handleCreated(
-  queryClient: QueryClient,
-  shipmentId: string,
-  comment: LocalShipmentComment,
-  currentUserId: string | undefined,
-): void {
-  const newlySeen = markCommentSeen(shipmentId, comment.id);
-  const effects = applyCommentUpsert(queryClient, shipmentId, comment);
-  const isOwn = comment.userId != null && comment.userId === currentUserId;
-
-  if (comment.parentCommentId) {
-    if (effects.insertedReply) {
-      adjustCommentCount(queryClient, shipmentId, 1);
-    } else if (!effects.sawRepliesCache && newlySeen && !isOwn) {
-      applyReplyCountDelta(queryClient, shipmentId, comment.parentCommentId, 1);
-      adjustCommentCount(queryClient, shipmentId, 1);
-    }
-    return;
-  }
-
-  if (effects.insertedTopLevel) {
-    adjustCommentCount(queryClient, shipmentId, 1);
-    if (!isOwn) {
-      notifyCommentInsert(shipmentId, comment);
-    }
-  } else if (!effects.sawTopLevelCache && newlySeen && !isOwn) {
-    adjustCommentCount(queryClient, shipmentId, 1);
-  }
-}
-
-function handleDeleted(
-  queryClient: QueryClient,
-  shipmentId: string,
-  comment: LocalShipmentComment,
-): void {
-  const removed = applyCommentRemoval(queryClient, shipmentId, comment.id);
-  const wasSeen = forgetComment(shipmentId, comment.id);
-
-  if (removed || wasSeen) {
-    adjustCommentCount(queryClient, shipmentId, -1);
-  } else {
-    void queryClient.invalidateQueries({
-      queryKey: commentKeys.count(shipmentId),
-      refetchType: "all",
-    });
-  }
-
-  if (comment.parentCommentId) {
-    applyReplyCountDelta(queryClient, shipmentId, comment.parentCommentId, -1);
-  }
-}
-
-function handleEntitySync(
-  queryClient: QueryClient,
-  shipmentId: string,
-  comment: LocalShipmentComment,
-): void {
-  const previous = findCommentInCaches(queryClient, shipmentId, comment.id);
-  const becameTombstone =
-    comment.deletedAt != null && previous != null && previous.deletedAt == null;
-
-  const entries = queryClient.getQueriesData({ queryKey: commentKeys.root(shipmentId) });
-  for (const [queryKey] of entries) {
-    const segment = queryKey[2];
-    if (segment === "list" && queryKey[3] != null) {
-      void queryClient.invalidateQueries({ queryKey, refetchType: "all" });
-    }
-  }
-
-  patchEverywhere(queryClient, shipmentId, comment);
-
-  if (becameTombstone) {
-    adjustCommentCount(queryClient, shipmentId, -1);
-    forgetComment(shipmentId, comment.id);
-  } else if (comment.deletedAt != null && previous == null) {
-    void queryClient.invalidateQueries({
-      queryKey: commentKeys.count(shipmentId),
-      refetchType: "all",
-    });
+  if (evt.action === "created" && evt.actorUserId !== currentUserId) {
+    notifyCommentInsert(shipmentId);
   }
 }
 

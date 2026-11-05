@@ -466,7 +466,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 		directed:     delegation.DirectedTask(req),
 		command:      kit.command,
 		opened:       opened,
-		external:     req.AfterExternalContent,
+		external:     req.AfterExternalContent || toolaccess.CarriesExternalContent(taint),
 		world:        s.watchWorld(ctx, req, now),
 		toolMemories: toolMemories,
 	}

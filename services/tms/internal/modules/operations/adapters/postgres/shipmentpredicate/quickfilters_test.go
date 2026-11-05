@@ -246,6 +246,7 @@ func TestAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 	t.Parallel()
 
 	q, err := AggregateScope(
+		t.Context(),
 		&pagination.QueryOptions{},
 		&shipmentports.ShipmentOptions{
 			IncludeCustomer: true,
@@ -264,6 +265,6 @@ func TestAggregateScope_AndsEveryQuickFilter(t *testing.T) {
 	assert.NotContains(t, sql, `"customers"`)
 	assert.Contains(t, sql, `s."organization_id" = $`)
 
-	_, err = AggregateScope(nil, &shipmentports.ShipmentOptions{})
+	_, err = AggregateScope(t.Context(), nil, &shipmentports.ShipmentOptions{})
 	require.ErrorIs(t, err, ErrShipmentScopeFilterMissing)
 }

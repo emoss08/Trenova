@@ -1,6 +1,7 @@
 package driverportalhandler
 
 import (
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
@@ -47,6 +48,8 @@ func New(p Params) *Handler {
 	}
 }
 
+const maxUploadBodyBytes = 64 << 20
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/portal/")
 	api.GET("invitations/preview", h.previewInvitation)
@@ -57,12 +60,12 @@ func (h *Handler) RegisterProtectedRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/portal/", responseguard.SelfScoped())
 	api.GET("document-types/", h.listShipmentDocumentTypes)
 	api.GET("loads/:shipmentID/documents/", h.listLoadDocuments)
-	api.POST("loads/:shipmentID/documents/", h.uploadLoadDocument)
+	api.POST("loads/:shipmentID/documents/", middleware.NewBodyLimit(maxUploadBodyBytes), h.uploadLoadDocument)
 	api.GET("profile/document-types/", h.listWorkerDocumentTypes)
 	api.GET("profile/documents/", h.listProfileDocuments)
-	api.POST("profile/documents/", h.uploadProfileDocument)
-	api.POST("credentials/:credentialID/document/", h.uploadCredentialDocument)
-	api.POST("expenses/:expenseID/receipt/", h.uploadExpenseReceipt)
+	api.POST("profile/documents/", middleware.NewBodyLimit(maxUploadBodyBytes), h.uploadProfileDocument)
+	api.POST("credentials/:credentialID/document/", middleware.NewBodyLimit(maxUploadBodyBytes), h.uploadCredentialDocument)
+	api.POST("expenses/:expenseID/receipt/", middleware.NewBodyLimit(maxUploadBodyBytes), h.uploadExpenseReceipt)
 }
 
 // @Summary List worker document types for the driver portal

@@ -4,11 +4,16 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 )
 
 var (
 	ErrProductionTLSRequired = errors.New(
 		"production and staging require TLS for non-local object storage endpoints",
+	)
+	ErrProductionCredentialsRequired = errors.New(
+		"production and staging require storage credentials that are not placeholders",
 	)
 )
 
@@ -103,6 +108,9 @@ func (c *Config) ValidateProduction() error {
 	if c.GetProvider() == ProviderR2 &&
 		(!c.UseSSL || !strings.HasPrefix(c.Endpoint, "https://")) {
 		return ErrProductionTLSRequired
+	}
+	if securityconfig.IsPlaceholder(c.AccessKey) || securityconfig.IsPlaceholder(c.SecretKey) {
+		return ErrProductionCredentialsRequired
 	}
 
 	return nil

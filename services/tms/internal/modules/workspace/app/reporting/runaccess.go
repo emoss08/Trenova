@@ -27,10 +27,11 @@ func (s *Service) authorizeStoredRun(
 	}
 
 	err = s.Check(ctx, &PrepareParams{
-		Tenant:     req.TenantInfo,
-		Definition: definition,
-		Params:     run.Params,
-		Mode:       reportaccess.ModeExport,
+		Tenant:       req.TenantInfo,
+		Definition:   definition,
+		Params:       run.Params,
+		Mode:         reportaccess.ModeExport,
+		FieldCeiling: req.FieldCeiling,
 	})
 	if err == nil {
 		return nil

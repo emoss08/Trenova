@@ -6,11 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/rampconnector"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/fuelimport"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,6 +26,8 @@ type rampServer struct {
 	pages       []string
 	tokenStatus int
 }
+
+var loopbackPolicy = httpsafe.Policy{AllowPrivateNetworks: true}
 
 func newRampServer(t *testing.T, pages ...string) *rampServer {
 	t.Helper()
@@ -94,7 +97,7 @@ func fetch(
 ) *fuelpurchaseports.FetchFuelTransactionsResult {
 	t.Helper()
 
-	result, err := rampconnector.New().FetchTransactions(
+	result, err := rampconnector.New(loopbackPolicy).FetchTransactions(
 		t.Context(),
 		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
@@ -194,7 +197,7 @@ func TestFetchHoldsEveryRowForReview(t *testing.T) {
 	row := result.Staged.Rows[0]
 	require.True(t, row.Failed())
 	require.ErrorContains(t, row.Err, "quantity")
-	require.Equal(t, fuelpurchaseports.FuelFeedCapabilitySpendOnly, rampconnector.New().Capability())
+	require.Equal(t, fuelpurchaseports.FuelFeedCapabilitySpendOnly, rampconnector.New(loopbackPolicy).Capability())
 }
 
 // Without a fuel type to fall back on, staging rejects the sheet and the entire
@@ -206,7 +209,7 @@ func TestFetchRefusesAConnectionWithoutADefaultFuelType(t *testing.T) {
 	config := stub.config()
 	delete(config, integration.ConfigKeyFuelDefaultFuelType)
 
-	_, err := rampconnector.New().FetchTransactions(
+	_, err := rampconnector.New(loopbackPolicy).FetchTransactions(
 		t.Context(),
 		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
@@ -234,6 +237,24 @@ func TestFetchWalksEveryPage(t *testing.T) {
 	require.Equal(t, 2, stub.pageCalls)
 	require.Len(t, result.Staged.Rows, 2)
 	require.Len(t, result.Cards, 2)
+}
+
+func TestFetchRefusesANextPageOnAnotherHost(t *testing.T) {
+	t.Parallel()
+
+	first := `{"data":[],"page":{"next":"https://elsewhere.example/transactions"}}`
+	stub := newRampServer(t, first)
+
+	_, err := rampconnector.New(loopbackPolicy).FetchTransactions(
+		t.Context(),
+		&fuelpurchaseports.FetchFuelTransactionsRequest{
+			Provider: fuelpurchase.CardProviderRamp,
+			Config:   stub.config(),
+		},
+	)
+
+	require.ErrorContains(t, err, "another host")
+	require.Equal(t, 1, stub.pageCalls)
 }
 
 func TestFetchReportsEachCardOnce(t *testing.T) {
@@ -264,7 +285,7 @@ func TestFetchSurfacesAnAuthenticationFailure(t *testing.T) {
 	stub := newRampServer(t, oneTransaction)
 	stub.tokenStatus = http.StatusUnauthorized
 
-	_, err := rampconnector.New().FetchTransactions(
+	_, err := rampconnector.New(loopbackPolicy).FetchTransactions(
 		t.Context(),
 		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
@@ -277,7 +298,7 @@ func TestFetchSurfacesAnAuthenticationFailure(t *testing.T) {
 func TestFetchRefusesAConnectionWithoutCredentials(t *testing.T) {
 	t.Parallel()
 
-	_, err := rampconnector.New().FetchTransactions(
+	_, err := rampconnector.New(loopbackPolicy).FetchTransactions(
 		t.Context(),
 		&fuelpurchaseports.FetchFuelTransactionsRequest{
 			Provider: fuelpurchase.CardProviderRamp,
@@ -291,12 +312,12 @@ func TestTestConnectionExchangesAToken(t *testing.T) {
 	t.Parallel()
 
 	stub := newRampServer(t, oneTransaction)
-	require.NoError(t, rampconnector.New().TestConnection(t.Context(), stub.config()))
+	require.NoError(t, rampconnector.New(loopbackPolicy).TestConnection(t.Context(), stub.config()))
 	require.Equal(t, 1, stub.tokenCalls)
 }
 
 func TestIntegrationTypeIsRampFuel(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, integration.TypeRampFuel, rampconnector.New().IntegrationType())
+	require.Equal(t, integration.TypeRampFuel, rampconnector.New(loopbackPolicy).IntegrationType())
 }

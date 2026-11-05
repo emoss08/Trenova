@@ -1,6 +1,7 @@
 package fuelcard
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/fileconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/rampconnector"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -31,6 +32,6 @@ func newComdataConnector(contentGate contentscanports.Gate) fuelpurchaseports.Fu
 	return fileconnector.New(integration.TypeComdataFuel, contentGate)
 }
 
-func newRampConnector() fuelpurchaseports.FuelCardProvider {
-	return rampconnector.New()
+func newRampConnector(cfg *integrationconfig.Config) fuelpurchaseports.FuelCardProvider {
+	return rampconnector.New(cfg.EgressPolicy())
 }

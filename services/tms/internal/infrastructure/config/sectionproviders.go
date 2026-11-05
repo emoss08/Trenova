@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
@@ -63,6 +64,7 @@ var SectionProviders = fx.Provide(
 	func(c *Config) *carrierintelligenceconfig.Config { return &c.CarrierIntelligence },
 	func(c *Config) *accountingconfig.Config { return &c.Accounting },
 	func(c *Config) *ediconfig.Config { return &c.EDI },
+	func(c *Config) *integrationconfig.Config { return &c.Integrations },
 	func(c *Config) *importsconfig.Config { return &c.Imports },
 	func(c *Config) *contentscanconfig.Config { return &c.ContentScan },
 )

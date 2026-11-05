@@ -122,13 +122,14 @@ func (s *Service) receiveAS2Message(
 	}
 
 	parsed, parseErr := as2.ParseMessage(req.ContentType, req.Body, &as2.ParseMessageOptions{
-		DecryptionCertificate: cfg.LocalCertificate,
-		DecryptionKey:         cfg.PrivateKey,
+		DecryptionCertificate: cfg.DecryptionCertificate,
+		DecryptionKey:         cfg.DecryptionKey,
 		PartnerCertificate:    cfg.PartnerSigningCertificate,
 		MICAlgorithm:          micAlgorithmFromOptions(req.DispositionNotificationOptions),
 		TransferEncoding:      req.TransferEncoding,
 		RequireSignature:      cfg.RequireSignedInbound,
 		RequireEncryption:     cfg.RequireEncryptedInbound,
+		MaxDecompressedBytes:  s.maxFileBytes,
 	})
 	if parseErr != nil {
 		s.l.Warn(
@@ -229,7 +230,7 @@ func (s *Service) buildAS2MDNResult(
 		ReceivedContentMIC: mic,
 	}
 	if receiveErr != nil {
-		options.ErrorText = receiveErr.Error()
+		options.ErrorText = as2.MDNErrorFor(receiveErr)
 	}
 	if wantsSignedMDN(req.DispositionNotificationOptions) &&
 		cfg.LocalCertificate != nil && cfg.PrivateKey != nil {

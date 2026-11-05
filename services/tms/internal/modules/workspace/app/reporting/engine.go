@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -27,12 +28,13 @@ type Prepared struct {
 }
 
 type PrepareParams struct {
-	Tenant     pagination.TenantInfo
-	Definition *ir.Definition
-	Params     map[string]any
-	Mode       reportaccess.Mode
-	Key        string
-	Timezone   string
+	Tenant       pagination.TenantInfo
+	Definition   *ir.Definition
+	Params       map[string]any
+	Mode         reportaccess.Mode
+	Key          string
+	Timezone     string
+	FieldCeiling permission.FieldSensitivity
 }
 
 func (s *Service) Prepare(ctx context.Context, p *PrepareParams) (*Prepared, error) {
@@ -45,6 +47,7 @@ func (s *Service) Prepare(ctx context.Context, p *PrepareParams) (*Prepared, err
 	if err != nil {
 		return nil, err
 	}
+	access.LimitFields(p.FieldCeiling)
 
 	timezone := p.Timezone
 	if timezone == "" {

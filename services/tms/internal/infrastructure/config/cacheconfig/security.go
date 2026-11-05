@@ -36,14 +36,8 @@ func (c *Config) Validate() error {
 }
 
 func (c *Config) ValidateProduction() error {
-	password := strings.ToLower(strings.TrimSpace(c.Password))
-	if password == "" {
+	if strings.TrimSpace(c.Password) == "" || securityconfig.IsPlaceholder(c.Password) {
 		return ErrProductionRedisPasswordRequired
-	}
-	for _, placeholder := range securityconfig.InsecureDefaultValues {
-		if strings.Contains(password, placeholder) {
-			return ErrProductionRedisPasswordRequired
-		}
 	}
 
 	return nil

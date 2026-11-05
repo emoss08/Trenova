@@ -198,3 +198,37 @@ func (r *Core) RotaManagerIDs(
 
 	return ids, nil
 }
+
+// RequireOrganizationScope is for a record that spans the organization, such as
+// a payroll export, which a grant narrowed to a team or to one's own records
+// cannot be limited to.
+func (r *Core) RequireOrganizationScope(
+	ctx context.Context,
+	resource permission.Resource,
+	operation permission.Operation,
+) (*authctx.AuthContext, error) {
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if !ok || authCtx == nil {
+		return nil, errortypes.NewAuthenticationError("Authentication required")
+	}
+
+	result, err := r.PermissionEngine.Check(
+		ctx,
+		middleware.BuildPermissionCheckRequest(authCtx, resource.String(), operation),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !result.Allowed {
+		return nil, errortypes.NewAuthorizationError(
+			"You don't have permission to perform this action: {0} {1}", resource, operation,
+		)
+	}
+	if result.DataScope.IsNarrow() {
+		return nil, errortypes.NewAuthorizationError(
+			"This covers the whole organization, and your access is limited to part of it",
+		)
+	}
+
+	return authCtx, nil
+}

@@ -672,25 +672,14 @@ func (r *repository) UpdateResourcePermission(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := rbacdb.ResourcePermissions
-		sets := make([]keel.Assignment, 0, 3)
-		if rp.Resource != "" {
-			sets = append(sets, p.Resource.To(rp.Resource))
-		}
-		if len(rp.Operations) > 0 {
-			sets = append(
-				sets,
-				p.Operations.To(operationNames(permission.Normalize(rp.Operations))),
-			)
-		}
-		if rp.DataScope != "" {
-			sets = append(sets, p.DataScope.To(rp.DataScope))
-		}
-		if len(sets) == 0 {
-			sets = append(sets, p.UpdatedAt.To(timeutils.NowUnix()))
-		}
-
 		rows, err := p.Where(p.ID.Eq(rp.ID), p.RoleID.Eq(rp.RoleID)).
-			UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+			UpdateReturning(
+				ctx,
+				r.db.Keel(ctx),
+				p.Resource.To(rp.Resource),
+				p.Operations.To(operationNames(permission.Normalize(rp.Operations))),
+				p.DataScope.To(rp.DataScope),
+			)
 		if err != nil {
 			r.l.Error(
 				"failed to update resource permission",

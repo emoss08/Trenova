@@ -127,6 +127,8 @@ fn create_directories() -> io::Result<()> {
     let service_sid = acl::service_sid()?;
     let shared = paths::shared_dir()?;
     std::fs::create_dir_all(&shared)?;
+    capture_platform::acl::refuse_reparse(&shared)?;
+    capture_platform::acl::apply_dacl(&shared, capture_platform::acl::SHARED_DIR_SDDL)?;
     let logs = shared.join("logs");
     acl::create_secured(
         &logs,

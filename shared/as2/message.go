@@ -43,10 +43,16 @@ const (
 )
 
 var (
-	ErrMissingPayload     = errors.New("as2: payload is required")
-	ErrMissingIdentifiers = errors.New("as2: AS2-From and AS2-To identifiers are required")
-	ErrSignatureRequired  = errors.New("as2: message is not signed but a signature is required")
-	ErrEncryptionRequired = errors.New(
+	ErrMissingPayload       = errors.New("as2: payload is required")
+	ErrMissingIdentifiers   = errors.New("as2: AS2-From and AS2-To identifiers are required")
+	ErrSignatureRequired    = errors.New("as2: message is not signed but a signature is required")
+	ErrNoPartnerCertificate = errors.New(
+		"as2: a signature is required but no partner certificate is configured to verify it",
+	)
+	ErrDecryptionFailed     = errors.New("as2: message could not be decrypted")
+	ErrAuthenticationFailed = errors.New("as2: signature could not be verified")
+	ErrDecompressionFailed  = errors.New("as2: message could not be decompressed")
+	ErrEncryptionRequired   = errors.New(
 		"as2: message is not encrypted but encryption is required",
 	)
 	ErrMalformedMultipart   = errors.New("as2: malformed multipart entity")
@@ -184,6 +190,8 @@ func BuildMessage(opts *BuildMessageOptions) (*BuiltMessage, error) {
 	return built, nil
 }
 
+const defaultMaxDecompressedBytes int64 = 32 << 20
+
 type ParseMessageOptions struct {
 	DecryptionCertificate *x509.Certificate
 	DecryptionKey         crypto.PrivateKey
@@ -192,6 +200,7 @@ type ParseMessageOptions struct {
 	TransferEncoding      string
 	RequireSignature      bool
 	RequireEncryption     bool
+	MaxDecompressedBytes  int64
 }
 
 type ParsedMessage struct {
@@ -212,6 +221,13 @@ func ParseMessage(
 	if opts == nil {
 		opts = &ParseMessageOptions{}
 	}
+	if opts.RequireSignature && opts.PartnerCertificate == nil {
+		return nil, ErrNoPartnerCertificate
+	}
+	maxDecompressed := opts.MaxDecompressedBytes
+	if maxDecompressed <= 0 {
+		maxDecompressed = defaultMaxDecompressedBytes
+	}
 	result := &ParsedMessage{}
 	currentType := contentType
 	currentBody := body
@@ -229,8 +245,9 @@ func ParseMessage(
 		case mediaType == contentTypePKCS7MIME &&
 			smimeTypeOf(params) == smimeTypeEnvelopedData:
 			if opts.DecryptionKey == nil || opts.DecryptionCertificate == nil {
-				return nil, errors.New(
-					"as2: message is encrypted but no decryption key is configured",
+				return nil, fmt.Errorf(
+					"%w: message is encrypted but no decryption key is configured",
+					ErrDecryptionFailed,
 				)
 			}
 			decoded := decodeTransferEncoding(
@@ -243,7 +260,7 @@ func ParseMessage(
 				opts.DecryptionKey,
 			)
 			if decryptErr != nil {
-				return nil, decryptErr
+				return nil, fmt.Errorf("%w: %w", ErrDecryptionFailed, decryptErr)
 			}
 			result.Encrypted = true
 			currentHeaders, currentBody, err = splitEntity(plaintext)
@@ -258,9 +275,9 @@ func ParseMessage(
 				opts.PartnerCertificate,
 			)
 			if verifyErr != nil {
-				return nil, verifyErr
+				return nil, fmt.Errorf("%w: %w", ErrAuthenticationFailed, verifyErr)
 			}
-			result.Signed = true
+			result.Signed = opts.PartnerCertificate != nil
 			result.MIC, err = ComputeMIC(
 				contentPart,
 				smime.NormalizeAlgorithm(opts.MICAlgorithm, micAlgorithmFromParams(params)),
@@ -281,9 +298,9 @@ func ParseMessage(
 			)
 			content, verifyErr := verifyEmbeddedSignedData(decoded, opts.PartnerCertificate)
 			if verifyErr != nil {
-				return nil, verifyErr
+				return nil, fmt.Errorf("%w: %w", ErrAuthenticationFailed, verifyErr)
 			}
-			result.Signed = true
+			result.Signed = opts.PartnerCertificate != nil
 			result.MIC, err = ComputeMIC(
 				content,
 				smime.NormalizeAlgorithm(opts.MICAlgorithm, MICAlgorithmSHA256),
@@ -302,9 +319,9 @@ func ParseMessage(
 				currentBody,
 				currentHeaders.Get("Content-Transfer-Encoding"),
 			)
-			decompressed, decompressErr := smime.Decompress(decoded)
+			decompressed, decompressErr := smime.Decompress(decoded, maxDecompressed)
 			if decompressErr != nil {
-				return nil, decompressErr
+				return nil, fmt.Errorf("%w: %w", ErrDecompressionFailed, decompressErr)
 			}
 			result.Compressed = true
 			currentHeaders, currentBody, err = splitEntity(decompressed)

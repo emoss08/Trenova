@@ -3,6 +3,7 @@ package apikeyservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -104,4 +105,54 @@ func TestUpdateAPIKey_RefusesGrantsBeyondTheEditor(t *testing.T) {
 
 	require.Error(t, err)
 	repo.AssertNotCalled(t, "UpdateWithPermissions", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestRotateAPIKey_RefusesAKeyBeyondTheActor(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	svc.engine = actorHolding(t, permissiondomain.ResourceCustomer, permissiondomain.OpRead)
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	key := &apikey.Key{
+		ID:     pulid.MustNew("ak_"),
+		Status: apikey.StatusActive,
+		Permissions: []*apikey.Permission{{
+			Resource: permissiondomain.ResourceInvoice.String(),
+			Operations: []permissiondomain.Operation{
+				permissiondomain.OpRead,
+			},
+			DataScope: permissiondomain.DataScopeOrganization,
+		}},
+	}
+	repo.EXPECT().GetByID(mock.Anything, tenantInfo, key.ID).Return(key, nil)
+
+	result, err := svc.RotateAPIKey(t.Context(), tenantInfo, key.ID)
+
+	require.Nil(t, result)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestRotateAPIKey_ARevokedKeyStaysRevoked(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	tenantInfo := pagination.TenantInfo{
+		OrgID:  pulid.MustNew("org_"),
+		BuID:   pulid.MustNew("bu_"),
+		UserID: pulid.MustNew("usr_"),
+	}
+	key := &apikey.Key{ID: pulid.MustNew("ak_"), Status: apikey.StatusRevoked}
+	repo.EXPECT().GetByID(mock.Anything, tenantInfo, key.ID).Return(key, nil)
+
+	result, err := svc.RotateAPIKey(t.Context(), tenantInfo, key.ID)
+
+	require.Nil(t, result)
+	require.Error(t, err)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }

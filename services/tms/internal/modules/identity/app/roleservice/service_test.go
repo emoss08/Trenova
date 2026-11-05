@@ -757,6 +757,55 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 	deps.roleRepo.AssertExpectations(t)
 }
 
+func TestUpdateResourcePermission_RefusesAnIncompleteGrant(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		operations []permission.Operation
+		scope      permission.DataScope
+	}{
+		{
+			name:       "no operations",
+			operations: []permission.Operation{},
+			scope:      permission.DataScopeOrganization,
+		},
+		{
+			name:       "an undefined data scope",
+			operations: []permission.Operation{permission.OpRead},
+			scope:      permission.DataScope("zzz"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			deps := setupTestService(t)
+			ctx := t.Context()
+			orgID := pulid.MustNew("org_")
+			roleID := pulid.MustNew("rol_")
+			rp := &rbac.ResourcePermission{
+				ID:         pulid.MustNew("rp_"),
+				RoleID:     roleID,
+				Resource:   "invoice",
+				Operations: tt.operations,
+				DataScope:  tt.scope,
+			}
+			deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+				ID:         roleID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID},
+			}).Return(&rbac.Role{ID: roleID}, nil)
+
+			err := deps.svc.UpdateResourcePermission(ctx, pulid.MustNew("usr_"), orgID, rp)
+
+			var multiErr *errortypes.MultiError
+			require.ErrorAs(t, err, &multiErr)
+			deps.roleRepo.AssertNotCalled(t, "UpdateResourcePermission", mock.Anything, mock.Anything)
+		})
+	}
+}
+
 func TestUpdateResourcePermission_SystemRole_Fails(t *testing.T) {
 	t.Parallel()
 

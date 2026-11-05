@@ -3,6 +3,8 @@ package documenttemplateservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/templatesanitize"
+	"github.com/emoss08/trenova/shared/pulid"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -58,7 +60,11 @@ func (s *Service) RenderDocument(
 	// a built-in the tests cover. Re-judging it strictly here would let a rule
 	// added after publication break an invoice mid-billing-run.
 	rendered, diags, err := s.renderDocumentHTML(ctx, def, resolved, data, req.Title,
-		compileOptions{CacheKeyPrefix: s.cacheKeyFor(resolved), Locale: resolved.Locale})
+		compileOptions{
+			CacheKeyPrefix: s.cacheKeyFor(resolved),
+			Locale:         resolved.Locale,
+			OrganizationID: req.TenantInfo.OrgID,
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -127,14 +133,25 @@ func (s *Service) renderDocumentHTML(
 	// Images are resolved after rendering, not before: the source may build a
 	// src from context, and only the rendered markup knows the final URL.
 	inlined, err := s.inliner.InlineAssets(ctx, &documenttemplateports.AssetInlineRequest{
-		HTML:  document,
-		Field: documenttemplate.ChannelPDF.Field(),
+		HTML:           document,
+		Field:          documenttemplate.ChannelPDF.Field(),
+		OrganizationID: opts.OrganizationID,
 	})
 	if err != nil {
 		return nil, nil, fmt.Errorf("inline %s document assets: %w", def.Kind, err)
 	}
 	document = inlined.HTML
 	diags = append(diags, inlined.Diags...)
+
+	output := templatesanitize.HTML(
+		documenttemplate.ChannelPDF.Field(),
+		document,
+		templatesanitize.RenderedDocumentOptions(),
+	)
+	if multiErr := diagnosticsToMultiError(output); multiErr != nil && !opts.Draft {
+		return nil, nil, multiErr
+	}
+	diags = append(diags, output...)
 
 	header, err := s.renderRunningPart(
 		ctx, resolved.Content.HeaderHTML, def, data, "headerHtml",
@@ -148,6 +165,14 @@ func (s *Service) renderDocumentHTML(
 	)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	for field, part := range map[string]string{"headerHtml": header, "footerHtml": footer} {
+		found := templatesanitize.HTML(field, part, templatesanitize.RenderedDocumentOptions())
+		if multiErr := diagnosticsToMultiError(found); multiErr != nil && !opts.Draft {
+			return nil, nil, multiErr
+		}
+		diags = append(diags, found...)
 	}
 
 	return &renderedDocument{body: document, header: header, footer: footer}, diags, nil
@@ -246,7 +271,7 @@ func (s *Service) RenderMessage(
 		return nil, err
 	}
 
-	message, err := s.renderMessageWith(ctx, def, resolved, data, resolved.Locale)
+	message, err := s.renderMessageWith(ctx, def, resolved, data, resolved.Locale, req.TenantInfo.OrgID)
 	if err == nil || !req.FallbackToBuiltIn || resolved.FromBuiltIn() {
 		return message, err
 	}
@@ -265,7 +290,7 @@ func (s *Service) RenderMessage(
 		return nil, err
 	}
 
-	return s.renderMessageWith(ctx, def, fallback, data, fallback.Locale)
+	return s.renderMessageWith(ctx, def, fallback, data, fallback.Locale, req.TenantInfo.OrgID)
 }
 
 func (s *Service) resolveForMessage(
@@ -286,6 +311,7 @@ func (s *Service) renderMessageWith(
 	resolved *documenttemplateports.ResolvedTemplate,
 	data any,
 	locale i18n.Locale,
+	organizationID pulid.ID,
 ) (*documenttemplateports.RenderedMessage, error) {
 	compiled := s.compile(def, &resolved.Content, compileOptions{
 		CacheKeyPrefix: s.cacheKeyFor(resolved),
@@ -333,14 +359,22 @@ func (s *Service) renderMessageWith(
 
 	if out.HTML != "" {
 		inlined, err := s.inliner.InlineAssets(ctx, &documenttemplateports.AssetInlineRequest{
-			HTML:  out.HTML,
-			Field: documenttemplate.ChannelEmailHTML.Field(),
+			HTML:           out.HTML,
+			Field:          documenttemplate.ChannelEmailHTML.Field(),
+			OrganizationID: organizationID,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("inline %s message assets: %w", def.Kind, err)
 		}
 		out.HTML = inlined.HTML
 		out.Warnings = append(out.Warnings, warningsFrom(inlined.Diags)...)
+		if multiErr := diagnosticsToMultiError(templatesanitize.HTML(
+			documenttemplate.ChannelEmailHTML.Field(),
+			out.HTML,
+			templatesanitize.RenderedEmailOptions(),
+		)); multiErr != nil {
+			return nil, multiErr
+		}
 	}
 
 	return out, nil
@@ -402,7 +436,8 @@ func (s *Service) PreviewVersion(
 
 	// A draft changes under a stable id, so the print tier is not cached either.
 	rendered, diags, err := s.renderDocumentHTML(
-		ctx, def, resolved, data, def.DisplayName, compileOptions{},
+		ctx, def, resolved, data, def.DisplayName,
+		compileOptions{Draft: true, OrganizationID: req.TenantInfo.OrgID},
 	)
 	if err != nil {
 		return nil, err

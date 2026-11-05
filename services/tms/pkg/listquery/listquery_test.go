@@ -25,7 +25,7 @@ func filtered(t *testing.T, filter *pagination.QueryOptions) (string, []any) {
 	t.Helper()
 
 	q := testTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	q.Where(p.where(filter)...).Limit(10)
 
 	return render(t, q)
@@ -278,7 +278,7 @@ func TestFilters_ACopiedRelationFieldReadsTheCopyWithoutTheJoin(t *testing.T) {
 	t.Parallel()
 
 	q := testTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	p.withCopies(map[string]keel.Expr{"owner.name": p.baseColumn(p.cat.Fields["ownerId"])})
 	q.Where(p.where(filters(domaintypes.FieldFilter{
 		Field:    "owner.name",
@@ -380,7 +380,7 @@ func TestFilters_ARelationThatIsNotQueryableIsSkipped(t *testing.T) {
 	t.Parallel()
 
 	q := testPlainTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	q.Where(p.where(filters(domaintypes.FieldFilter{
 		Field:    "owner.name",
 		Operator: dbtype.OpEqual,
@@ -506,7 +506,7 @@ func TestSearch_ConfiguredFieldsWithoutAVector(t *testing.T) {
 	t.Parallel()
 
 	q := testPlainTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	q.Where(p.where(&pagination.QueryOptions{Query: "12"})...).Limit(10)
 
 	sql, args := render(t, q)
@@ -516,7 +516,7 @@ func TestSearch_ConfiguredFieldsWithoutAVector(t *testing.T) {
 	assert.Equal(t, []any{"org_1", "bu_1", "%12%", "%12%", "12"}, args)
 
 	q = testPlainTrucks.Query()
-	p = newPlan(q, nil)
+	p = newPlan(t.Context(), q, nil)
 	q.Where(p.where(&pagination.QueryOptions{Query: "acme"})...).Limit(10)
 
 	sql, args = render(t, q)
@@ -545,7 +545,7 @@ func TestSearch_AModelWithoutConfigurationSearchesItsTextColumns(t *testing.T) {
 		Ref: &keel.Ref{Table: newTrucksTable("test_bare_trucks", "bt", testOwners)},
 	}
 	q := h.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	q.Where(p.where(&pagination.QueryOptions{Query: "x"})...).Limit(10)
 
 	sql, _ := render(t, q)
@@ -559,7 +559,7 @@ func TestOrders_RequestSortsInOrder(t *testing.T) {
 	t.Parallel()
 
 	q := testTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	q.Order(p.orders([]domaintypes.SortField{
 		{Field: "code", Direction: dbtype.SortDirectionAsc},
 		{Field: "nope", Direction: dbtype.SortDirectionAsc},
@@ -575,7 +575,7 @@ func TestOrders_RequestSortsInOrder(t *testing.T) {
 func TestKeysetOrder_DefaultsToNewestFirst(t *testing.T) {
 	t.Parallel()
 
-	p := newPlan(testTrucks.Query(), nil)
+	p := newPlan(t.Context(), testTrucks.Query(), nil)
 	orders, shape, err := p.keysetOrder(nil)
 	require.NoError(t, err)
 
@@ -592,7 +592,7 @@ func TestKeysetOrder_DefaultsToNewestFirst(t *testing.T) {
 func TestKeysetOrder_NullableColumnsSortTheirNullsLast(t *testing.T) {
 	t.Parallel()
 
-	p := newPlan(testTrucks.Query(), nil)
+	p := newPlan(t.Context(), testTrucks.Query(), nil)
 	orders, shape, err := p.keysetOrder([]domaintypes.SortField{
 		{Field: "year", Direction: dbtype.SortDirectionAsc},
 		{Field: "description", Direction: dbtype.SortDirectionDesc},
@@ -613,7 +613,7 @@ func TestKeysetOrder_NullableColumnsSortTheirNullsLast(t *testing.T) {
 func TestKeysetOrder_OrdersByARelationsColumn(t *testing.T) {
 	t.Parallel()
 
-	p := newPlan(testTrucks.Query(), nil)
+	p := newPlan(t.Context(), testTrucks.Query(), nil)
 	orders, shape, err := p.keysetOrder([]domaintypes.SortField{
 		{Field: "owner.name", Direction: dbtype.SortDirectionAsc},
 	})
@@ -694,6 +694,7 @@ func TestKeysetOrder_RefusesWhatAKeysetCannotOrderBy(t *testing.T) {
 			t.Parallel()
 
 			_, _, err := newPlan(
+				t.Context(),
 				testTrucks.Query(),
 				nil,
 			).keysetOrder([]domaintypes.SortField{tc.sort})
@@ -870,7 +871,7 @@ func TestPageOrders_AnOffsetPageAlwaysHasADeterministicOrder(t *testing.T) {
 	ordered := func(sorts []domaintypes.SortField, then []keel.Order, ranked bool) string {
 		t.Helper()
 		q := testTrucks.Query()
-		p := newPlan(q, nil)
+		p := newPlan(t.Context(), q, nil)
 		q.Order(p.pageOrders(sorts, then, ranked)...).Limit(3).Offset(2)
 		sql, _ := render(t, q)
 		_, order, found := strings.Cut(sql, "ORDER BY ")

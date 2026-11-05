@@ -78,6 +78,7 @@ type DispatchParams struct {
 func (s *Dispatcher) dispatch(ctx context.Context, p *DispatchParams) toolcall.Result {
 	req := p.req
 	call := p.call
+	ctx = permissionports.BindActorSession(ctx, req.Actor)
 	// The loop refuses a tool the agent does not hold before it gets here, with
 	// the nearest tools it does hold; this is the backstop for any other caller.
 	if refusal, refused := s.access.ExtensionRefusal(ctx, req, call.Name); refused {
@@ -153,6 +154,7 @@ func (s *Dispatcher) dispatchQuery(
 
 	outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
 		fitPage: p.caller != aitrace.CallerScript,
+		taint:   p.taint,
 	})
 	outcome.RanWith = call.Arguments
 	if note := contract.Note(); note != "" && !outcome.Failed {
@@ -770,6 +772,7 @@ type queryExtras struct {
 	stepKey   string
 	continues map[string]any
 	fitPage   bool
+	taint     *agent.RunTaint
 }
 
 func (s *Dispatcher) runQueryToolWith(
@@ -779,6 +782,10 @@ func (s *Dispatcher) runQueryToolWith(
 	call *llmports.ToolCall,
 	extras *queryExtras,
 ) toolcall.Result {
+	var taint *agent.RunTaint
+	if tool.Policy().CarriesTaint {
+		taint = extras.taint.Clone()
+	}
 	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
@@ -789,6 +796,7 @@ func (s *Dispatcher) runQueryToolWith(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
+		Taint:             taint,
 		Broker:            extras.broker,
 		StepKey:           extras.stepKey,
 		CallID:            call.ID,

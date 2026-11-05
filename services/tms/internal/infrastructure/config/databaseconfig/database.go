@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 )
 
 var (
@@ -27,6 +29,9 @@ var (
 	)
 	ErrProductionSSLRequired = errors.New(
 		"production and staging require database.sslMode other than disable",
+	)
+	ErrProductionPasswordRequired = errors.New(
+		"production and staging require database passwords that are not placeholders",
 	)
 	ErrSharedCacheNeedsCache = errors.New(
 		"database.cache.shared.enabled needs database.cache.enabled",
@@ -110,6 +115,11 @@ func (c *Config) Validate() error {
 func (c *Config) ValidateProduction() error {
 	if strings.EqualFold(c.SSLMode, "disable") {
 		return ErrProductionSSLRequired
+	}
+	for _, password := range []string{c.Password, c.System.Password, c.Migrator.Password} {
+		if securityconfig.IsPlaceholder(password) {
+			return ErrProductionPasswordRequired
+		}
 	}
 
 	return nil

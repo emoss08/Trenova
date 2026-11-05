@@ -531,6 +531,7 @@ func (r *portalAccessRepository) WorkerAssignedToShipment(
 		exists, err := a.Where(
 			a.ShipmentMove().ShipmentID.Eq(shipmentID),
 			assignedTo(workerID),
+			a.ArchivedAt.IsNull(),
 		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check worker shipment assignment: %w", err)

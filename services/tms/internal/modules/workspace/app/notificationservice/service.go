@@ -99,12 +99,13 @@ func (s *Service) Create(
 	pubErr := s.realtime.PublishResourceInvalidation(
 		ctx,
 		&realtimeports.PublishResourceInvalidationRequest{
-			OrganizationID: created.OrganizationID,
-			BusinessUnitID: buID,
-			AudienceUserID: pulid.ConvertFromPtr(created.TargetUserID),
-			Resource:       "notifications",
-			Action:         "created",
-			Entity:         created,
+			OrganizationID:  created.OrganizationID,
+			BusinessUnitID:  buID,
+			AudienceUserID:  pulid.ConvertFromPtr(created.TargetUserID),
+			Resource:        "notifications",
+			Action:          "created",
+			Entity:          created,
+			BroadcastEntity: created.TargetUserID == nil,
 		},
 	)
 	if pubErr != nil {

@@ -21,7 +21,7 @@ Keywords: new transport profile, add AS2 endpoint, add SFTP connection
 3. On the **Overview** tab, enter a **Name**, choose the **Method** and **Status**, and pick the **Partner** this profile delivers for.
 4. On the **Transport** tab, fill in the connection details for the method: for AS2 the **Local AS2 ID**, **Partner AS2 ID**, **Endpoint URL** and certificates; for SFTP the **Host**, **Port**, **Username**, **Authentication** and directories; for VAN the mailbox and gateway details. Set **Max attempts** and the backoff under **Delivery retry** if the defaults do not suit.
 5. On the **Envelope** tab, pick the **Environment**.
-6. On the **Secrets** tab, enter the password or private key the method needs.
+6. On the **Secrets** tab, enter the password or private key the method needs. For AS2 you can keep decryption apart from signing: add an encryption certificate on the **Transport** tab, give it to your partner to encrypt to, and enter its decryption key here. **Test connection** warns when one key does both.
 7. Select **Save** (or **Save & close**).
 
 ### Update credentials or endpoint details

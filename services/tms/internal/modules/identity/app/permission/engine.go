@@ -1,6 +1,7 @@
 package permission
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -24,7 +25,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -63,6 +66,7 @@ type Params struct {
 	RoleRepository      permissionports.RoleRepository
 	RBACRepository      permissionports.RBACRepository
 	IAMRepository       iamports.IAMRepository
+	AccessSettings      iamports.AccessSettingsRepository
 	APIKeyRepository    apikeyports.APIKeyRepository
 	PermissionCacheRepo permissionports.PermissionCacheRepository
 	UserRepository      tenantports.UserRepository
@@ -78,6 +82,7 @@ type engine struct {
 	roleRepo      permissionports.RoleRepository
 	rbacRepo      permissionports.RBACRepository
 	iamRepo       iamports.IAMRepository
+	settings      iamports.AccessSettingsRepository
 	apiKeyRepo    apikeyports.APIKeyRepository
 	cacheRepo     permissionports.PermissionCacheRepository
 	userRepo      tenantports.UserRepository
@@ -95,6 +100,7 @@ func NewEngine(p Params) permissionports.PermissionEngine {
 		roleRepo:      p.RoleRepository,
 		rbacRepo:      p.RBACRepository,
 		iamRepo:       p.IAMRepository,
+		settings:      p.AccessSettings,
 		apiKeyRepo:    p.APIKeyRepository,
 		cacheRepo:     p.PermissionCacheRepo,
 		userRepo:      p.UserRepository,
@@ -113,6 +119,14 @@ func (e *engine) Check(
 ) (*permissionports.PermissionCheckResult, error) {
 	start := time.Now()
 	log := e.checkLogger("Check", req)
+	req = requestInSession(ctx, req)
+	ctx = e.withoutActivatedRoles(
+		ctx,
+		req.PrincipalType,
+		req.UserID,
+		req.OrganizationID,
+		req.BusinessUnitID,
+	)
 
 	if req.PrincipalType == permissionports.PrincipalTypeAPIKey {
 		return e.checkAPIKeyPermission(ctx, req, start)
@@ -136,6 +150,80 @@ func (e *engine) Check(
 
 	policies := e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID)
 	return e.checkUserPermission(ctx, log, start, load, req, policies)
+}
+
+func (e *engine) withoutActivatedRoles(
+	ctx context.Context,
+	principalType kernelports.PrincipalType,
+	userID, orgID, buID pulid.ID,
+) context.Context {
+	if principalType != permissionports.PrincipalTypeUser && principalType != "" {
+		return ctx
+	}
+	session, ok := authctx.GetSessionAttributes(ctx)
+	if !ok || session.UserID != userID || session.AuthenticatorAAL != authctx.UnprovenAssurance {
+		return ctx
+	}
+	if _, bound := authctx.GetSessionRoleActivation(ctx); bound {
+		return ctx
+	}
+
+	settings, err := e.settings.Get(dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	}), pagination.TenantInfo{OrgID: orgID, BuID: buID})
+	if err != nil {
+		e.l.Warn(
+			"could not read whether the organization requires role activation; requiring it",
+			zap.String("organizationID", orgID.String()),
+			zap.Error(err),
+		)
+		return authctx.WithSessionRoleActivation(ctx, nil, true)
+	}
+	if !settings.RequireRoleActivation {
+		return ctx
+	}
+
+	return authctx.WithSessionRoleActivation(ctx, nil, true)
+}
+
+func requestInSession(
+	ctx context.Context,
+	req *permissionports.PermissionCheckRequest,
+) *permissionports.PermissionCheckRequest {
+	attributes, ok := sessionContextAttributes(ctx, req.PrincipalType, req.UserID)
+	if !ok || req.ContextAttributes.AuthenticatorAAL > 0 {
+		return req
+	}
+
+	scoped := *req
+	scoped.ContextAttributes = attributes
+	return &scoped
+}
+
+func sessionContextAttributes(
+	ctx context.Context,
+	principalType kernelports.PrincipalType,
+	userID pulid.ID,
+) (permissionports.RequestContextAttributes, bool) {
+	if principalType != permissionports.PrincipalTypeUser && principalType != "" &&
+		principalType != authctx.PrincipalTypeCaptureDevice {
+		return permissionports.RequestContextAttributes{}, false
+	}
+
+	session, ok := authctx.GetSessionAttributes(ctx)
+	if !ok || session.UserID != userID {
+		return permissionports.RequestContextAttributes{}, false
+	}
+
+	return permissionports.RequestContextAttributes{
+		ActiveRoleIDs:         session.ActiveRoleIDs,
+		AuthenticatorAAL:      session.AuthenticatorAAL,
+		FederationFAL:         session.FederationFAL,
+		MFAAuthenticatedAt:    session.MFAAuthenticatedAt,
+		LastReauthenticatedAt: session.LastReauthenticatedAt,
+		RiskDecision:          session.RiskDecision,
+	}, true
 }
 
 func (e *engine) checkLogger(
@@ -215,11 +303,7 @@ func (e *engine) applyAccessPolicies(
 		return result, nil
 	}
 
-	enabled, err := policies.enabledPolicies(
-		ctx,
-		e.registry.GetEffectiveResource(req.Resource),
-		req.Operation,
-	)
+	enabled, err := e.policiesFor(ctx, req, policies)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +316,30 @@ func (e *engine) applyAccessPolicies(
 	result.Allowed = false
 	result.Reason = "iam_policy_denied"
 	return result, nil
+}
+
+func (e *engine) policiesFor(
+	ctx context.Context,
+	req *permissionports.PermissionCheckRequest,
+	policies accessPolicySource,
+) ([]*iam.AccessPolicy, error) {
+	effective := e.registry.GetEffectiveResource(req.Resource)
+	enabled, err := policies.enabledPolicies(ctx, effective, req.Operation)
+	if err != nil || effective == req.Resource {
+		return enabled, err
+	}
+
+	own, err := policies.enabledPolicies(ctx, req.Resource, req.Operation)
+	if err != nil {
+		return nil, err
+	}
+
+	merged := slices.Concat(own, enabled)
+	slices.SortStableFunc(merged, func(a, b *iam.AccessPolicy) int {
+		return cmp.Compare(b.Priority, a.Priority)
+	})
+
+	return merged, nil
 }
 
 func (e *engine) newAccessPolicySource(orgID, buID pulid.ID) accessPolicySource {
@@ -292,6 +400,12 @@ func (s *tenantAccessPolicySource) load(ctx context.Context) error {
 	return nil
 }
 
+const (
+	conditionMFARequired         = "mfaRequired"
+	conditionAuthenticatorAALMin = "authenticatorAalMin"
+	conditionFederationFALMin    = "federationFalMin"
+)
+
 func evaluateAccessPolicies(
 	policies []*iam.AccessPolicy,
 	req *permissionports.PermissionCheckRequest,
@@ -301,7 +415,8 @@ func evaluateAccessPolicies(
 	var matchedAllow bool
 
 	for _, policy := range policies {
-		if !accessPolicyMatches(policy, req) {
+		effect, applies := accessPolicyEffect(policy, req)
+		if !applies {
 			continue
 		}
 		if hasPriority && policy.Priority != currentPriority {
@@ -314,10 +429,10 @@ func evaluateAccessPolicies(
 			hasPriority = true
 			currentPriority = policy.Priority
 		}
-		if policy.Effect == iam.PolicyEffectDeny {
+		if effect == iam.PolicyEffectDeny {
 			return iam.PolicyEffectDeny
 		}
-		if policy.Effect == iam.PolicyEffectAllow {
+		if effect == iam.PolicyEffectAllow {
 			matchedAllow = true
 		}
 	}
@@ -328,20 +443,87 @@ func evaluateAccessPolicies(
 	return ""
 }
 
+func accessPolicyEffect(
+	policy *iam.AccessPolicy,
+	req *permissionports.PermissionCheckRequest,
+) (iam.PolicyEffect, bool) {
+	if policy == nil || !accessPolicyMatches(policy, req) {
+		return "", false
+	}
+
+	required, met := accessPolicyRequirements(policy, req)
+	switch {
+	case !met:
+		return iam.PolicyEffectDeny, true
+	case required && policy.Effect == iam.PolicyEffectDeny:
+		return "", false
+	default:
+		return policy.Effect, true
+	}
+}
+
 func accessPolicyMatches(
 	policy *iam.AccessPolicy,
 	req *permissionports.PermissionCheckRequest,
 ) bool {
-	if policy == nil || len(policy.Conditions) == 0 {
-		return true
-	}
-
 	for key, expected := range policy.Conditions {
+		if isAccessPolicyRequirement(key, expected) {
+			continue
+		}
 		if !accessPolicyConditionMatches(key, expected, req) {
 			return false
 		}
 	}
 	return true
+}
+
+func accessPolicyRequirements(
+	policy *iam.AccessPolicy,
+	req *permissionports.PermissionCheckRequest,
+) (required, met bool) {
+	met = true
+	for key, expected := range policy.Conditions {
+		if !isAccessPolicyRequirement(key, expected) {
+			continue
+		}
+		required = true
+		if req.ContextAttributes.AuthenticatorAAL > 0 &&
+			!accessPolicyRequirementMet(key, expected, req) {
+			met = false
+		}
+	}
+	return required, met
+}
+
+func isAccessPolicyRequirement(key, expected string) bool {
+	switch strings.TrimSpace(key) {
+	case conditionMFARequired:
+		return strings.EqualFold(strings.TrimSpace(expected), "true")
+	case conditionAuthenticatorAALMin, conditionFederationFALMin:
+		return true
+	default:
+		return false
+	}
+}
+
+func accessPolicyRequirementMet(
+	key string,
+	expected string,
+	req *permissionports.PermissionCheckRequest,
+) bool {
+	attributes := req.ContextAttributes
+	normalizedExpected := strings.TrimSpace(expected)
+
+	switch strings.TrimSpace(key) {
+	case conditionMFARequired:
+		return attributes.MFAAuthenticatedAt > 0
+	case conditionAuthenticatorAALMin:
+		return intConditionAtLeast(attributes.AuthenticatorAAL, normalizedExpected)
+	case conditionFederationFALMin:
+		return intConditionAtLeast(attributes.FederationFAL, normalizedExpected)
+	default:
+		return false
+	}
 }
 
 func accessPolicyConditionMatches(
@@ -371,13 +553,8 @@ func accessPolicyConditionMatches(
 		return slices.Contains(req.ContextAttributes.ActiveRoleIDs, pulid.ID(normalizedExpected))
 	case "riskDecision":
 		return strings.EqualFold(req.ContextAttributes.RiskDecision, normalizedExpected)
-	case "mfaRequired":
-		return !strings.EqualFold(normalizedExpected, "true") ||
-			req.ContextAttributes.MFAAuthenticatedAt > 0
-	case "authenticatorAalMin":
-		return intConditionAtLeast(req.ContextAttributes.AuthenticatorAAL, normalizedExpected)
-	case "federationFalMin":
-		return intConditionAtLeast(req.ContextAttributes.FederationFAL, normalizedExpected)
+	case conditionMFARequired:
+		return true
 	default:
 		return false
 	}
@@ -446,6 +623,20 @@ func (e *engine) CheckBatch(
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
 	}
+
+	if attributes, ok := sessionContextAttributes(ctx, req.PrincipalType, req.UserID); ok &&
+		req.ContextAttributes.AuthenticatorAAL == 0 {
+		scoped := *req
+		scoped.ContextAttributes = attributes
+		req = &scoped
+	}
+	ctx = e.withoutActivatedRoles(
+		ctx,
+		req.PrincipalType,
+		req.UserID,
+		req.OrganizationID,
+		req.BusinessUnitID,
+	)
 
 	var err error
 	switch req.PrincipalType {
@@ -525,7 +716,7 @@ func (e *engine) checkAPIKeyBatch(
 	req *permissionports.BatchPermissionCheckRequest,
 	results []permissionports.PermissionCheckResult,
 ) error {
-	perms, err := e.computeAPIKeyPermissions(
+	perms, creatorID, err := e.computeAPIKeyPermissions(
 		ctx,
 		req.APIKeyID,
 		req.BusinessUnitID,
@@ -535,8 +726,16 @@ func (e *engine) checkAPIKeyBatch(
 		return err
 	}
 
+	policies := e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID)
 	for i, check := range req.Checks {
-		results[i] = *e.resolveAPIKeyPermission(perms, batchCheckRequest(req, check), time.Now())
+		checkReq := batchCheckRequest(req, check)
+		result := e.resolveAPIKeyPermission(perms, checkReq, creatorID, time.Now())
+		if result.Allowed {
+			if result, err = e.applyAccessPolicies(ctx, checkReq, result, policies); err != nil {
+				return err
+			}
+		}
+		results[i] = *result
 	}
 	return nil
 }
@@ -891,7 +1090,7 @@ func (e *engine) checkAPIKeyPermission(
 	req *permissionports.PermissionCheckRequest,
 	start time.Time,
 ) (*permissionports.PermissionCheckResult, error) {
-	perms, err := e.computeAPIKeyPermissions(
+	perms, creatorID, err := e.computeAPIKeyPermissions(
 		ctx,
 		req.APIKeyID,
 		req.BusinessUnitID,
@@ -901,12 +1100,23 @@ func (e *engine) checkAPIKeyPermission(
 		return nil, err
 	}
 
-	return e.resolveAPIKeyPermission(perms, req, start), nil
+	result := e.resolveAPIKeyPermission(perms, req, creatorID, start)
+	if !result.Allowed {
+		return result, nil
+	}
+
+	return e.applyAccessPolicies(
+		ctx,
+		req,
+		result,
+		e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID),
+	)
 }
 
 func (e *engine) resolveAPIKeyPermission(
 	perms *permissionports.CachedPermissions,
 	req *permissionports.PermissionCheckRequest,
+	creatorID pulid.ID,
 	start time.Time,
 ) *permissionports.PermissionCheckResult {
 	resourcePerms, ok := e.resolveResourcePermission(perms, req.Resource, req.Operation)
@@ -920,10 +1130,18 @@ func (e *engine) resolveAPIKeyPermission(
 		}
 	}
 
+	dataScope := permission.DataScope(resourcePerms.DataScope)
+	asCreator := *req
+	asCreator.UserID = creatorID
+	if result := enforceResourceAttributes(&asCreator, dataScope); result != nil {
+		result.CheckDuration = time.Since(start).Milliseconds()
+		return result
+	}
+
 	return &permissionports.PermissionCheckResult{
 		Allowed:       true,
 		Reason:        "allowed",
-		DataScope:     permission.DataScope(resourcePerms.DataScope),
+		DataScope:     dataScope,
 		CacheHit:      false,
 		CheckDuration: time.Since(start).Milliseconds(),
 	}
@@ -932,13 +1150,13 @@ func (e *engine) resolveAPIKeyPermission(
 func (e *engine) computeAPIKeyPermissions(
 	ctx context.Context,
 	apiKeyID, buID, orgID pulid.ID,
-) (*permissionports.CachedPermissions, error) {
+) (*permissionports.CachedPermissions, pulid.ID, error) {
 	key, err := e.apiKeyRepo.GetByID(ctx, pagination.TenantInfo{
 		OrgID: orgID,
 		BuID:  buID,
 	}, apiKeyID)
 	if err != nil {
-		return nil, err
+		return nil, pulid.Nil, err
 	}
 
 	resources := make(map[string]*permissionports.CachedResourcePermission)
@@ -948,7 +1166,7 @@ func (e *engine) computeAPIKeyPermissions(
 
 	creator, err := e.apiKeyCreatorPermissions(ctx, key.CreatedByID, buID, orgID)
 	if err != nil {
-		return nil, err
+		return nil, pulid.Nil, err
 	}
 	e.restrictToCreator(resources, creator)
 
@@ -956,7 +1174,7 @@ func (e *engine) computeAPIKeyPermissions(
 		MaxSensitivity: string(permission.SensitivityRestricted),
 		Resources:      resources,
 		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-	}, nil
+	}, key.CreatedByID, nil
 }
 
 func (e *engine) apiKeyCreatorPermissions(

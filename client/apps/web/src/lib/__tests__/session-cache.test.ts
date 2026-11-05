@@ -10,8 +10,13 @@ import {
   persistQueryClientSave,
 } from "@tanstack/react-query-persist-client";
 import { describe, expect, it, vi } from "vitest";
+import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { useDeskStore } from "@/stores/desk-store";
+import { useRecentPagesStore } from "@/stores/recent-pages-store";
 import {
   createSessionPersistence,
+  forgetSessionStores,
   isShellQuery,
   retainShellQueries,
   SHELL_CACHE_MAX_AGE_MS,
@@ -222,5 +227,30 @@ describe("session persistence", () => {
     await persistence.forgetAll();
 
     expect([...store.entries.keys()]).toEqual(["usr_1:org_1"]);
+  });
+});
+
+describe("forgetSessionStores", () => {
+  it("drops what a person typed and opened, and keeps their layout", () => {
+    useAssistantStore.setState({
+      drafts: { thread_1: "Rebook PRO 4512 for Acme" },
+      activeThreadId: "thread_1",
+      sidebarCollapsed: true,
+    });
+    useDeskSettingsStore.setState({ recentSearches: ["acme invoice"], railFolded: true });
+    useDeskStore.setState({ activeArtifactByThread: { thread_1: "artifact_1" } });
+    useRecentPagesStore.setState({
+      pagesByOrganization: { org_1: [{ path: "/shipments/shp_1", title: "PRO 4512" }] },
+    });
+
+    forgetSessionStores();
+
+    expect(useAssistantStore.getState().drafts).toEqual({});
+    expect(useAssistantStore.getState().activeThreadId).toBeNull();
+    expect(useAssistantStore.getState().sidebarCollapsed).toBe(true);
+    expect(useDeskSettingsStore.getState().recentSearches).toEqual([]);
+    expect(useDeskSettingsStore.getState().railFolded).toBe(true);
+    expect(useDeskStore.getState().activeArtifactByThread).toEqual({});
+    expect(useRecentPagesStore.getState().pagesByOrganization).toEqual({});
   });
 });

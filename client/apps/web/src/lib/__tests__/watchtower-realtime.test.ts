@@ -270,13 +270,15 @@ describe("a burst of notices", () => {
   });
 });
 
-describe("a notice's entity", () => {
+describe("a notice", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it("moves the row's version at once, before the item is read again", () => {
-    const queryClient = queueWith(watchtowerItem({ id: "wt_a", version: 3 }));
-    const fetchItem = vi.fn(() => new Promise<never>(() => undefined));
+  it("changes nothing until the item is read, because it names the item and nothing else", async () => {
+    const queryClient = queueWith(watchtowerItem({ id: "wt_a", version: 3, title: "Before" }));
+    const fetchItem = vi
+      .fn()
+      .mockResolvedValue(watchtowerItem({ id: "wt_a", version: 4, title: "After" }));
     const patcher = createWatchtowerPatcher({
       queryClient,
       invalidate: invalidate(),
@@ -284,41 +286,15 @@ describe("a notice's entity", () => {
       coalesceMs: 10,
     });
 
-    patcher.handle({
-      ...notice("watchtower", "wt_a"),
-      entity: { id: "wt_a", version: 4, status: "Open", title: "Now five hours late" },
-    });
+    patcher.handle({ ...notice("watchtower", "wt_a"), entity: { id: "wt_a" } });
+    expect(cachedQueueItems(queryClient)[0].title).toBe("Before");
 
-    const [row] = cachedQueueItems(queryClient);
-    expect(row.version).toBe(4);
-    expect(row.title).toBe("Now five hours late");
+    await vi.advanceTimersByTimeAsync(20);
+    expect(cachedQueueItems(queryClient)[0]).toMatchObject({ version: 4, title: "After" });
     patcher.dispose();
   });
 
-  it("takes out at once an item the notice says is resolved or snoozed", () => {
-    const queryClient = queueWith(watchtowerItem({ id: "wt_a" }), watchtowerItem({ id: "wt_b" }));
-    const fetchItem = vi.fn(() => new Promise<never>(() => undefined));
-    const patcher = createWatchtowerPatcher({
-      queryClient,
-      invalidate: invalidate(),
-      fetchItem,
-      coalesceMs: 10,
-    });
-
-    patcher.handle({
-      ...notice("watchtower", "wt_a"),
-      entity: { id: "wt_a", version: 4, status: "Resolved", resolvedAt: 100 },
-    });
-    patcher.handle({
-      ...notice("watchtower", "wt_b"),
-      entity: { id: "wt_b", version: 4, status: "Snoozed", snoozedUntil: 200 },
-    });
-
-    expect(cachedQueueItems(queryClient)).toEqual([]);
-    patcher.dispose();
-  });
-
-  it("ignores a notice older than the row, and a read that comes back older", async () => {
+  it("ignores a read that comes back older than the row", async () => {
     const queryClient = queueWith(watchtowerItem({ id: "wt_a", version: 7, title: "Current" }));
     const fetchItem = vi
       .fn()
@@ -330,11 +306,7 @@ describe("a notice's entity", () => {
       coalesceMs: 10,
     });
 
-    patcher.handle({
-      ...notice("watchtower", "wt_a"),
-      entity: { id: "wt_a", version: 5, status: "Open", title: "Stale notice" },
-    });
-    expect(cachedQueueItems(queryClient)[0].title).toBe("Current");
+    patcher.handle(notice("watchtower", "wt_a"));
 
     await vi.advanceTimersByTimeAsync(20);
     expect(cachedQueueItems(queryClient)[0]).toMatchObject({ version: 7, title: "Current" });

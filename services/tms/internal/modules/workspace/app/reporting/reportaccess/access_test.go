@@ -186,6 +186,49 @@ func TestField_TheCeilingAppliesOnAReadableKind(t *testing.T) {
 	assert.Positive(t, withheld, "a public ceiling withholds the shipment's internal fields")
 }
 
+func TestField_AReadThatReachesAModelIsHeldBelowThePerson(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, protectedfield.AllGroups())
+	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
+		Operations:     []permission.Operation{permission.OpRead},
+		MaxSensitivity: permission.SensitivityRestricted,
+	}
+	access := f.access(t, reportaccess.ModeRead)
+	access.LimitFields(permission.SensitivityPublic)
+
+	withheld := 0
+	entity, _ := f.catalog.Entity("shipment")
+	for _, field := range entity.Fields {
+		use := access.FieldUse(t.Context(), field)
+		if use.Sensitivity != permission.SensitivityPublic {
+			assert.Equalf(t, reportaccess.WithheldByCeiling, use.Decision, "shipment.%s", field.Key)
+			withheld++
+		}
+	}
+	assert.Positive(t, withheld, "the person's grant does not lift the ceiling")
+}
+
+func TestField_NoCeilingLeavesThePersonsGrant(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, protectedfield.AllGroups())
+	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
+		Operations:     []permission.Operation{permission.OpRead},
+		MaxSensitivity: permission.SensitivityRestricted,
+	}
+	access := f.access(t, reportaccess.ModeRead)
+	access.LimitFields("")
+
+	entity, _ := f.catalog.Entity("shipment")
+	for _, field := range entity.Fields {
+		use := access.FieldUse(t.Context(), field)
+		if permission.SensitivityRestricted.CanAccess(use.Sensitivity) {
+			assert.NotEqualf(t, reportaccess.WithheldByCeiling, use.Decision, "shipment.%s", field.Key)
+		}
+	}
+}
+
 func TestField_AProtectedFieldNeedsItsGroup(t *testing.T) {
 	t.Parallel()
 

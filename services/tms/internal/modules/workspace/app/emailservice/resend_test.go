@@ -44,7 +44,7 @@ func TestResendSenderSendsMessageWithAttachments(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := NewResendSender().Send(t.Context(), SendProviderRequest{
+	result, err := NewResendSender(loopbackPolicy).Send(t.Context(), SendProviderRequest{
 		Config: map[string]string{
 			"apiKey":  "resend-api-key",
 			"baseUrl": server.URL,
@@ -82,7 +82,7 @@ func TestResendSenderIncludesProviderFailureBody(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := NewResendSender().Send(t.Context(), SendProviderRequest{
+	_, err := NewResendSender(loopbackPolicy).Send(t.Context(), SendProviderRequest{
 		Config: map[string]string{
 			"apiKey":  "resend-api-key",
 			"baseUrl": server.URL,

@@ -25,6 +25,13 @@ Organization settings holds the organization's profile and sign-in security, in 
 Administrators use it to keep the company's details current and to set up single sign-on and user
 provisioning.
 
+An access policy narrows what roles allow, and it binds people, agents and API keys alike. It can
+ask for proof as well as name who it applies to: a policy that requires two-factor refuses anyone
+signed in without it, whether the policy allows or denies, and an agent working for them is held to
+the same sign-in. A policy that denies unless two-factor was used steps aside once it was. API keys
+and agents working alone have no sign-in to prove anything with, so a two-factor policy does not
+stop them: add a policy that denies them by principal type.
+
 ## Tasks
 
 ### Update the company profile

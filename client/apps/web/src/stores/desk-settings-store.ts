@@ -80,6 +80,7 @@ interface DeskSettingsState {
   /** The rail is folded away beside the page. */
   railFolded: boolean;
   rememberSearch: (query: string) => void;
+  clearSession: () => void;
   toggleShelf: (key: DeskShelfKey) => void;
   setRailWidth: (width: number) => void;
   setRailFolded: (folded: boolean) => void;
@@ -94,6 +95,7 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
       set: (key, value) => set((state) => ({ settings: { ...state.settings, [key]: value } })),
       reset: () => set({ settings: DESK_SETTINGS_DEFAULTS }),
       recentSearches: [],
+      clearSession: () => set({ recentSearches: [] }),
       rememberSearch: (query) =>
         set((state) => ({
           recentSearches: [

@@ -2,12 +2,16 @@ package reportaccess
 
 import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 
-const ownerColumn = "owner_id"
+const (
+	ownerColumn      = "owner_id"
+	visibilityColumn = "visibility"
+)
 
 type kind struct {
 	resource     permission.Resource
 	withinRecord bool
 	ownership    string
+	visibility   string
 }
 
 var entityKinds = map[string]kind{
@@ -84,7 +88,11 @@ var entityKinds = map[string]kind{
 		resource:     permission.ResourceFactoringRemittance,
 		withinRecord: true,
 	},
-	"report_definition": {resource: permission.ResourceReport, ownership: ownerColumn},
+	"report_definition": {
+		resource:   permission.ResourceReport,
+		ownership:  ownerColumn,
+		visibility: visibilityColumn,
+	},
 	"report_run":        {resource: permission.ResourceReport, withinRecord: true},
 	"reserve_entry":     {resource: permission.ResourceFactoringReserve},
 	"return":            {resource: permission.ResourceIFTAReturn},

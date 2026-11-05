@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"maps"
 	"math/big"
 	"testing"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/smime"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -461,6 +463,149 @@ func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
 	require.NoError(t, err)
 	require.False(t, mdn.Processed())
+}
+
+func TestReceiveAS2MessageAnswersAFailedDecryptionWithOneFixedReceipt(t *testing.T) {
+	t.Parallel()
+
+	trenova := newAS2ReceiverIdentity(t, "trenova.example")
+	stranger := newAS2ReceiverIdentity(t, "stranger.example")
+	partner := newAS2ReceiverIdentity(t, "partner.example")
+
+	profile := &edi.EDICommunicationProfile{
+		ID:             pulid.MustNew("edicp_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		EDIPartnerID:   pulid.MustNew("edip_"),
+		Method:         edi.ConnectionMethodAS2,
+		Config: map[string]any{
+			editransport.ConfigKeyLocalAS2ID:                "TRENOVA-AS2",
+			editransport.ConfigKeyPartnerAS2ID:              "PARTNER-AS2",
+			editransport.ConfigKeyPartnerSigningCertificate: partner.certificatePEM,
+			editransport.ConfigKeyLocalCertificate:          trenova.certificatePEM,
+		},
+		EncryptedSecrets: map[string]string{
+			editransport.SecretKeyAS2PrivateKey: stranger.keyPEM,
+		},
+	}
+	profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+		Return(profile, nil).
+		Once()
+
+	service := New(Params{
+		Logger:      zap.NewNop(),
+		ProfileRepo: profileRepo,
+		Delivery:    ediServices().Delivery,
+		Secrets:     ediServices().Secrets,
+	})
+
+	built, err := as2.BuildMessage(&as2.BuildMessageOptions{
+		From:                  "PARTNER-AS2",
+		To:                    "TRENOVA-AS2",
+		Payload:               []byte(as2ReceiverPayload),
+		SigningCertificate:    partner.certificate,
+		SigningKey:            partner.key,
+		EncryptionCertificate: trenova.certificate,
+		EncryptionAlgorithm:   smime.EncryptionAlgorithmAES256GCM,
+	})
+	require.NoError(t, err)
+
+	result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+		From:             "PARTNER-AS2",
+		To:               "TRENOVA-AS2",
+		MessageID:        built.MessageID,
+		ContentType:      built.ContentType,
+		TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
+		Body:             built.Body,
+	})
+	require.NoError(t, err)
+	require.True(t, result.Rejected)
+
+	mdn, err := as2.ParseMDN(result.MDNContentType, result.MDNBody, nil)
+	require.NoError(t, err)
+	require.Equal(t, as2.MDNErrorDecryptionFailed, mdn.FailureText())
+	require.NotContains(t, string(result.MDNBody), "crypto/")
+}
+
+func TestReceiveAS2MessageRejectsAnySignerWhenNoPartnerCertificateIsConfigured(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		config map[string]any
+	}{
+		{name: "the default requires a signature", config: map[string]any{}},
+		{
+			name:   "automatic requires a signature",
+			config: map[string]any{editransport.ConfigKeyRequireSignedInbound: "auto"},
+		},
+		{
+			name:   "an explicit requirement holds",
+			config: map[string]any{editransport.ConfigKeyRequireSignedInbound: "true"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			trenova := newAS2ReceiverIdentity(t, "trenova.example")
+			impostor := newAS2ReceiverIdentity(t, "impostor.example")
+			config := map[string]any{
+				editransport.ConfigKeyLocalAS2ID:       "TRENOVA-AS2",
+				editransport.ConfigKeyPartnerAS2ID:     "PARTNER-AS2",
+				editransport.ConfigKeyLocalCertificate: trenova.certificatePEM,
+			}
+			maps.Copy(config, tt.config)
+			profile := &edi.EDICommunicationProfile{
+				ID:             pulid.MustNew("edicp_"),
+				OrganizationID: pulid.MustNew("org_"),
+				BusinessUnitID: pulid.MustNew("bu_"),
+				EDIPartnerID:   pulid.MustNew("edip_"),
+				Method:         edi.ConnectionMethodAS2,
+				Config:         config,
+				EncryptedSecrets: map[string]string{
+					editransport.SecretKeyAS2PrivateKey: trenova.keyPEM,
+				},
+			}
+			profileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
+			profileRepo.EXPECT().
+				GetActiveAS2ProfileByIdentifiers(mock.Anything, mock.Anything).
+				Return(profile, nil).
+				Once()
+
+			service := New(Params{
+				Logger:      zap.NewNop(),
+				ProfileRepo: profileRepo,
+				Delivery:    ediServices().Delivery,
+				Secrets:     ediServices().Secrets,
+			})
+
+			built, err := as2.BuildMessage(&as2.BuildMessageOptions{
+				From:                  "PARTNER-AS2",
+				To:                    "TRENOVA-AS2",
+				Payload:               []byte(as2ReceiverPayload),
+				SigningCertificate:    impostor.certificate,
+				SigningKey:            impostor.key,
+				EncryptionCertificate: trenova.certificate,
+			})
+			require.NoError(t, err)
+
+			result, err := service.ReceiveAS2Message(t.Context(), &ReceiveAS2MessageRequest{
+				From:             "PARTNER-AS2",
+				To:               "TRENOVA-AS2",
+				MessageID:        built.MessageID,
+				ContentType:      built.ContentType,
+				TransferEncoding: built.Headers.Get("Content-Transfer-Encoding"),
+				Body:             built.Body,
+			})
+
+			require.NoError(t, err)
+			require.True(t, result.Rejected)
+		})
+	}
 }
 
 func ediServices() *ediservicetest.Services {

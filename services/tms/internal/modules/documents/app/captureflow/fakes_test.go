@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,29 +47,30 @@ import (
 type world struct {
 	mu sync.Mutex
 
-	tenant      pagination.TenantInfo
-	devices     map[pulid.ID]*capture.CaptureDevice
-	pairings    map[pulid.ID]*capturepairing.CapturePairing
-	profiles    map[pulid.ID]*captureprofile.CaptureProfile
-	requests    map[pulid.ID]*capturerequest.CaptureRequest
-	batches     map[pulid.ID]*capture.CaptureBatch
-	pages       map[pulid.ID]*capture.CapturePage
-	items       map[pulid.ID]*capture.CaptureItem
-	coverSheets map[pulid.ID]*capturecoversheet.CaptureCoverSheet
-	records     map[string]bool
-	docTypes    map[pulid.ID]*documenttype.DocumentType
-	objects     map[string][]byte
-	control     *documentcontrol.DocumentControl
-	denied      map[string]bool
-	ownScope    bool
-	inspections map[string]*pageReading
-	inspected   int
-	sessions    map[pulid.ID]*documentupload.DocumentUploadSession
-	uploaded    map[pulid.ID][]byte
-	published   []string
-	audited     []string
-	references  map[string]pulid.ID
-	notified    []*notification.Notification
+	tenant       pagination.TenantInfo
+	personLocked bool
+	devices      map[pulid.ID]*capture.CaptureDevice
+	pairings     map[pulid.ID]*capturepairing.CapturePairing
+	profiles     map[pulid.ID]*captureprofile.CaptureProfile
+	requests     map[pulid.ID]*capturerequest.CaptureRequest
+	batches      map[pulid.ID]*capture.CaptureBatch
+	pages        map[pulid.ID]*capture.CapturePage
+	items        map[pulid.ID]*capture.CaptureItem
+	coverSheets  map[pulid.ID]*capturecoversheet.CaptureCoverSheet
+	records      map[string]bool
+	docTypes     map[pulid.ID]*documenttype.DocumentType
+	objects      map[string][]byte
+	control      *documentcontrol.DocumentControl
+	denied       map[string]bool
+	ownScope     bool
+	inspections  map[string]*pageReading
+	inspected    int
+	sessions     map[pulid.ID]*documentupload.DocumentUploadSession
+	uploaded     map[pulid.ID][]byte
+	published    []string
+	audited      []string
+	references   map[string]pulid.ID
+	notified     []*notification.Notification
 }
 
 func newWorld() *world {
@@ -264,6 +266,23 @@ func (f *fakeDevices) GetByPreviousRefreshHash(
 	return f.byHash(
 		func(d *capture.CaptureDevice) bool { return h != "" && d.PreviousRefreshHash == h },
 	)
+}
+
+func (f *fakeDevices) ListActiveByUser(
+	_ context.Context,
+	userID pulid.ID,
+) ([]*capture.CaptureDevice, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+
+	active := make([]*capture.CaptureDevice, 0, len(f.w.devices))
+	for _, device := range f.w.devices {
+		if device.UserID == userID && device.IsActive() {
+			active = append(active, device)
+		}
+	}
+
+	return active, nil
 }
 
 func (f *fakeDevices) Touch(_ context.Context, req captureports.TouchCaptureDeviceRequest) error {
@@ -1224,6 +1243,8 @@ func (f fakeUsers) GetByID(
 		ID:           f.w.tenant.UserID,
 		Name:         "Jordan Doe",
 		EmailAddress: "jordan@carrier.test",
+		Status:       domaintypes.StatusActive,
+		IsLocked:     f.w.personLocked,
 	}, nil
 }
 

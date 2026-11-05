@@ -55,6 +55,7 @@ interface DeskState {
   setActiveArtifact: (threadId: string, artifactId: string | null) => void;
   markTermsSeen: () => void;
   setSharePage: (sharePage: boolean) => void;
+  clearSession: () => void;
   setBrowsing: (browsing: boolean) => void;
   askAgent: (threadId: string, question: string) => void;
   takeAsk: (threadId: string) => string | null;
@@ -133,6 +134,7 @@ export const useDeskStore = create<DeskState>()(
         })),
       markTermsSeen: () => set({ termsSeen: true }),
       setSharePage: (sharePage) => set({ sharePage }),
+      clearSession: () => set({ activeArtifactByThread: {} }),
       setBrowsing: (browsing) => set({ browsing }),
       askAgent: (threadId, question) =>
         set((state) => ({ asks: { ...state.asks, [threadId]: question } })),

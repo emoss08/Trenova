@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -92,6 +93,23 @@ func newShipmentActivity(
 }
 
 func (a *shipmentActivity) TaintedRecords() []agentrecord.RecordRef { return a.outside }
+
+func (a *shipmentActivity) noteEntry(entity *shipment.Shipment) {
+	if ref, outside := enteredOutside(entity); outside {
+		a.outside = append(a.outside, ref)
+	}
+}
+
+func enteredOutside(entity *shipment.Shipment) (agentrecord.RecordRef, bool) {
+	if entity.EntryMethod != shipmentvocab.EntryMethodEDI {
+		return agentrecord.RecordRef{}, false
+	}
+
+	return agentrecord.RecordRef{
+		EntityType: agent.TaintEntityShipment,
+		ID:         entity.ID.String(),
+	}, true
+}
 
 func commentRowOf(comment *shipment.ShipmentComment) (shipmentCommentRow, bool) {
 	outside := comment.WrittenOutside()

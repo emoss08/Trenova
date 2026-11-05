@@ -90,7 +90,7 @@ jobs:
       authenticode: ${{ steps.decide.outputs.authenticode }}
       manifest: ${{ steps.decide.outputs.manifest }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
 
@@ -118,7 +118,7 @@ jobs:
             exit 1
           fi
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         if: inputs.version != ''
         with:
           toolchain: 1.96.1
@@ -141,6 +141,12 @@ jobs:
             version="${GITHUB_REF_NAME#capture-v}"
             if [ "$version" != "$current" ]; then
               echo "::error::The tag names $version but Cargo.toml says $current."
+              exit 1
+            fi
+            default="$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)"
+            git fetch --no-tags origin "$default"
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+              echo "::error::capture-v$version points at a commit that is not on $default."
               exit 1
             fi
             echo "release=true" >> "$GITHUB_OUTPUT"
@@ -191,17 +197,17 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.96.1
           components: rustfmt, clippy
           targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: desktop/capture
 
@@ -246,17 +252,17 @@ jobs:
       AUTHENTICODE: ${{ needs.prepare.outputs.release == 'true' && needs.prepare.outputs.authenticode == 'true' }}
       MANIFEST: ${{ needs.prepare.outputs.release == 'true' && needs.prepare.outputs.manifest == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: 1.96.1
           components: rustfmt, clippy
           targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
           workspaces: desktop/capture
 
@@ -286,7 +292,7 @@ jobs:
 
       - name: Sign in to Azure for Trusted Signing
         if: env.AUTHENTICODE == 'true'
-        uses: azure/login@v2
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -355,7 +361,7 @@ jobs:
           "$hash  $($msi.Name)" | Set-Content -Path "installer/out/TrenovaCapture-$env:VERSION-x64.msi.sha256" -NoNewline
           Write-Host "$($msi.Name): $hash ($([math]::Round($msi.Length / 1MB, 1)) MB)"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: trenova-capture-msi
           path: |
@@ -378,7 +384,7 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: trenova-capture-msi
           path: out

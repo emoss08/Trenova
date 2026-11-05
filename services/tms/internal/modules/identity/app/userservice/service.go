@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"mime/multipart"
 	"slices"
 
@@ -55,49 +56,55 @@ type Params struct {
 	AuthEventHistory  iamports.AuthEventHistoryRepository
 	AuthEvents        iamports.AuthEventRecorder
 	ContentGate       contentscanports.Gate
+	SSOConfigs        tenantports.SSOConfigRepository
+	AccessRevokers    []tenantports.UserAccessRevoker `group:"userAccessRevokers"`
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         tenantports.UserRepository
-	roleRepo     permissionports.RoleRepository
-	sr           sessionports.SessionRepository
-	rotator      *sessionrotation.Rotator
-	auditService auditports.AuditService
-	auditor      permissionports.SecurityAuditor
-	realtime     realtimeports.RealtimeService
-	storage      kernelports.Client
-	storageCfg   *storageconfig.Config
-	validator    *Validator
-	db           kernelports.Transactor
-	roles        RoleAssigner
-	invites      AccountInviter
-	permissions  permissionports.PermissionEngine
-	signIns      iamports.AuthEventHistoryRepository
-	authEvents   iamports.AuthEventRecorder
-	contentGate  contentscanports.Gate
+	l              *zap.Logger
+	repo           tenantports.UserRepository
+	roleRepo       permissionports.RoleRepository
+	sr             sessionports.SessionRepository
+	rotator        *sessionrotation.Rotator
+	auditService   auditports.AuditService
+	auditor        permissionports.SecurityAuditor
+	realtime       realtimeports.RealtimeService
+	storage        kernelports.Client
+	storageCfg     *storageconfig.Config
+	validator      *Validator
+	db             kernelports.Transactor
+	roles          RoleAssigner
+	invites        AccountInviter
+	permissions    permissionports.PermissionEngine
+	signIns        iamports.AuthEventHistoryRepository
+	authEvents     iamports.AuthEventRecorder
+	contentGate    contentscanports.Gate
+	accessRevokers []tenantports.UserAccessRevoker
+	ssoConfigs     tenantports.SSOConfigRepository
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
 	return &Service{
-		l:            p.Logger.Named("service.user"),
-		sr:           p.SessionRepository,
-		rotator:      p.Rotator,
-		repo:         p.Repo,
-		roleRepo:     p.RoleRepository,
-		auditService: p.AuditService,
-		auditor:      p.Auditor,
-		realtime:     p.Realtime,
-		storage:      p.Storage,
-		storageCfg:   p.StorageConfig,
-		validator:    p.Validator,
-		db:           p.DB,
-		roles:        p.Roles,
-		invites:      p.Invites,
-		permissions:  p.PermissionEngine,
-		signIns:      p.AuthEventHistory,
-		authEvents:   p.AuthEvents,
-		contentGate:  p.ContentGate,
+		l:              p.Logger.Named("service.user"),
+		sr:             p.SessionRepository,
+		rotator:        p.Rotator,
+		repo:           p.Repo,
+		roleRepo:       p.RoleRepository,
+		auditService:   p.AuditService,
+		auditor:        p.Auditor,
+		realtime:       p.Realtime,
+		storage:        p.Storage,
+		storageCfg:     p.StorageConfig,
+		validator:      p.Validator,
+		db:             p.DB,
+		roles:          p.Roles,
+		invites:        p.Invites,
+		permissions:    p.PermissionEngine,
+		signIns:        p.AuthEventHistory,
+		authEvents:     p.AuthEvents,
+		contentGate:    p.ContentGate,
+		accessRevokers: p.AccessRevokers,
+		ssoConfigs:     p.SSOConfigs,
 	}
 }
 
@@ -274,6 +281,31 @@ func (s *Service) GetOrganizations(
 	return orgs, nil
 }
 
+func (s *Service) requireTargetSignIn(
+	ctx context.Context,
+	sess *session.Session,
+	target *tenant.OrganizationMembership,
+) error {
+	scoped := dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: target.OrganizationID,
+		BusinessUnitID: target.BusinessUnitID,
+		UserID:         sess.UserID,
+	})
+	configs, err := s.ssoConfigs.ListEnabledByOrganizationID(scoped, target.OrganizationID)
+	if err != nil {
+		return err
+	}
+	for _, cfg := range configs {
+		if cfg.EnforceSSO {
+			return errortypes.NewAuthorizationError(
+				"This organization requires single sign-on. Sign in through it to continue.",
+			)
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) SwitchOrganization(
 	ctx context.Context,
 	req tenantports.SwitchOrganizationRequest,
@@ -316,6 +348,12 @@ func (s *Service) SwitchOrganization(
 		return nil, errortypes.NewAuthorizationError(
 			"You do not have access to this organization",
 		)
+	}
+
+	if req.OrganizationID != sess.OrganizationID {
+		if err = s.requireTargetSignIn(ctx, sess, targetOrg); err != nil {
+			return nil, err
+		}
 	}
 
 	if err = s.repo.UpdateCurrentOrganization(

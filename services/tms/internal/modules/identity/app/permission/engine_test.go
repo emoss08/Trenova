@@ -66,11 +66,19 @@ func setupTestEngine(
 	metricsRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, logger)
 	require.NoError(t, err)
 
+	noPolicies := iamportsmock.NewMockIAMRepository(t)
+	noPolicies.EXPECT().
+		ListEnabledTenantAccessPolicies(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
+
 	e := &engine{
 		roleRepo:      roleRepo,
 		rbacRepo:      &rbactest.Repository{},
 		cacheRepo:     cacheRepo,
 		userRepo:      userRepo,
+		iamRepo:       noPolicies,
+		settings:      &stubAccessSettings{},
 		registry:      permissioncatalog.NewRegistry(),
 		routeRegistry: routeaccess.NewRouteRegistry(),
 		metrics:       metricsRegistry,

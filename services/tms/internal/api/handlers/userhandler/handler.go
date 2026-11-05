@@ -63,6 +63,8 @@ func New(p Params) *Handler {
 	}
 }
 
+const maxImageBodyBytes = 20 << 20
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/users")
 	api.GET(
@@ -111,7 +113,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	meAPI.POST("/switch-organization/", h.switchOrganization)
 	meAPI.GET("/organizations/", h.getOrganizations)
 	meAPI.PATCH("/settings/", h.updateMySettings)
-	meAPI.POST("/profile-picture/", h.uploadProfilePicture)
+	meAPI.POST("/profile-picture/", middleware.NewBodyLimit(maxImageBodyBytes), h.uploadProfilePicture)
 	meAPI.DELETE("/profile-picture/", h.deleteProfilePicture)
 	meAPI.POST("/change-password/", h.changeMyPassword)
 	meAPI.PATCH("/profile/", h.updateMyProfile)

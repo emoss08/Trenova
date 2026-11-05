@@ -49,6 +49,11 @@ export async function persistDocumentUploadSession(record: PersistedUploadRecord
   await withStore("readwrite", (store) => store.put(record));
 }
 
+/** Deletes every upload kept for resuming; each record holds the file itself. */
+export async function clearDocumentUploadSessions(): Promise<void> {
+  await withStore("readwrite", (store) => store.clear());
+}
+
 export async function removeDocumentUploadSession(sessionId: string): Promise<void> {
   await withStore("readwrite", (store) => store.delete(sessionId));
 }

@@ -22,6 +22,21 @@ func AgentDataAccess(granted permission.FieldSensitivity) permission.FieldSensit
 	}
 }
 
+func AgentReadLimit(
+	actor *permissionports.RequestActor,
+	granted permission.FieldSensitivity,
+) permission.FieldSensitivity {
+	limit := AgentDataAccess(granted)
+	switch {
+	case limit != "":
+		return limit
+	case actor == nil || !actor.IsUser():
+		return permission.SensitivityInternal
+	default:
+		return permission.SensitivityRestricted
+	}
+}
+
 // AgentCeiling is the most sensitive tier an agent's read may be shown on a
 // resource. An agent principal reads at its definition's data access,
 // Internal when it has none. A person reads at their own role's tier,

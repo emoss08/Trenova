@@ -3,13 +3,10 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useTheme } from "@trenova/shared/components/theme-provider";
-import {
-  disablePush,
-  enablePush,
-  getPushSubscription,
-  pushSupported,
-} from "@trenova/shared/lib/push";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { enablePush, getPushSubscription, pushSupported } from "@trenova/shared/lib/push";
+import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
+import { rememberPushOwner, releasePush } from "@/lib/push-owner";
+import { leaveDashSession } from "@/lib/session-context-handler";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BellRinging01Icon,
@@ -18,7 +15,6 @@ import {
   Moon01Icon,
   SunIcon,
 } from "@trenova/shared/components/icons";
-import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { ComplianceCard } from "../_components/compliance-card";
 import { LeaveCard } from "../_components/leave-card";
@@ -45,15 +41,15 @@ const themeOptions = [
 export function DashProfilePage() {
   const t = useT();
 
-  const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
   const { theme, setTheme } = useTheme();
   const profile = useDashProfile();
   const features = useDashFeatures();
 
   const handleLogout = async () => {
-    await logout();
-    void navigate("/dash/login", { replace: true });
+    await releasePush().catch(() => {});
+    await logout().catch(() => {});
+    leaveDashSession("/dash/login");
   };
 
   return (
@@ -170,8 +166,12 @@ function PushNotificationsCard() {
     mutationFn: async (enable: boolean) => {
       if (enable) {
         await enablePush();
+        const userId = currentProfile(useAuthStore.getState())?.id;
+        if (userId) {
+          rememberPushOwner(userId);
+        }
       } else {
-        await disablePush();
+        await releasePush();
       }
       return enable;
     },

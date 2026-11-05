@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
+	sheetlimits "github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -41,6 +42,8 @@ func New(p Params) *Handler {
 	}
 }
 
+const multipartOverheadBytes = 1 << 20
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	resource := permission.ResourceRateAgreement.String()
 
@@ -52,7 +55,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 	// Uploading stages a dry run and changes nothing, so it needs no more than
 	// permission to edit the agreement it will eventually amend.
-	api.POST("/", h.pm.RequirePermission(resource, permission.OpUpdate), h.upload)
+	api.POST(
+		"/",
+		h.pm.RequirePermission(resource, permission.OpUpdate),
+		middleware.NewBodyLimit(sheetlimits.DefaultMaxSheetBytes+multipartOverheadBytes),
+		h.upload,
+	)
 	api.POST(
 		"/:rateImportID/commit/",
 		h.pm.RequirePermission(resource, permission.OpUpdate),

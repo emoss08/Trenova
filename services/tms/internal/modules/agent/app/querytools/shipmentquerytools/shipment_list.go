@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/listcatalog"
@@ -31,6 +32,8 @@ var (
 )
 
 type Row struct {
+	enteredOverEDI bool
+
 	ID                 string                 `json:"id"`
 	ProNumber          string                 `json:"proNumber"`
 	BOL                string                 `json:"bol,omitempty"`
@@ -141,6 +144,8 @@ func countShipments(
 // ToRow is the one shipment projection, for the same reasons.
 func ToRow(item *shipment.Shipment) Row {
 	row := Row{
+		enteredOverEDI: item.EntryMethod == shipmentvocab.EntryMethodEDI,
+
 		ID:            item.ID.String(),
 		ProNumber:     item.ProNumber,
 		BOL:           item.BOL,

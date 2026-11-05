@@ -80,7 +80,7 @@ func New(cfg *Config) Result {
 
 func Filtered[T any](query func() keel.Query[*T]) BaseQuery {
 	return func(
-		_ context.Context,
+		ctx context.Context,
 		scope *permissionports.TableInsightScope,
 	) (Base, error) {
 		if scope.Filter == nil {
@@ -91,7 +91,7 @@ func Filtered[T any](query func() keel.Query[*T]) BaseQuery {
 			)
 		}
 
-		return Typed(listquery.Filter(query(), scope.Filter)), nil
+		return Typed(listquery.Filter(ctx, query(), scope.Filter)), nil
 	}
 }
 

@@ -2,12 +2,14 @@ package rateimportservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
@@ -139,5 +141,57 @@ func TestPlanDiscard_ShowsTheDiscardWithoutSavingIt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, rateimport.StatusParsed, change.Before.Status)
 	assert.Equal(t, rateimport.StatusDiscarded, change.After.Status)
+	assert.Zero(t, repo.updates)
+}
+
+type recordingAmender struct {
+	calls  int
+	userID pulid.ID
+	err    error
+}
+
+func (a *recordingAmender) AmendRules(
+	_ context.Context,
+	_ *rateagreementports.AmendRateAgreementRulesRequest,
+	userID pulid.ID,
+) (*rateagreement.RateAgreement, error) {
+	a.calls++
+	a.userID = userID
+	return &rateagreement.RateAgreement{}, a.err
+}
+
+func TestCommit_AmendsThroughTheAgreementServiceAsThePerson(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, batch := importFixture(t, rateimport.StatusParsed)
+	amender := &recordingAmender{}
+	svc.agreements = amender
+	userID := pulid.MustNew("usr_")
+
+	_, err := svc.Commit(t.Context(), &CommitRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  batch.OrganizationID,
+			BuID:   batch.BusinessUnitID,
+			UserID: userID,
+		},
+		RateImportBatchID: batch.ID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, amender.calls)
+	assert.Equal(t, userID, amender.userID)
+	assert.Equal(t, 1, repo.updates)
+}
+
+func TestCommit_LeavesTheBatchOpenWhenValidationRefuses(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, batch := importFixture(t, rateimport.StatusParsed)
+	svc.agreements = &recordingAmender{err: errors.New("overlapping lanes")}
+
+	_, err := svc.Commit(t.Context(), &CommitRequest{
+		TenantInfo:        pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
+		RateImportBatchID: batch.ID,
+	})
+	require.Error(t, err)
 	assert.Zero(t, repo.updates)
 }

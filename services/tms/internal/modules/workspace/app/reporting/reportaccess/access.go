@@ -1,6 +1,7 @@
 package reportaccess
 
 import (
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"context"
 	"errors"
 	"fmt"
@@ -267,6 +268,7 @@ type Access struct {
 	linked   permissionports.LinkedFields
 	groups   func() protectedfield.GroupSet
 	export   bool
+	ceiling  permission.FieldSensitivity
 
 	mu      sync.Mutex
 	details map[permission.Resource]*permissionports.ResourcePermissionDetail
@@ -274,6 +276,17 @@ type Access struct {
 }
 
 var _ analytics.Policy = (*Access)(nil)
+
+func (a *Access) LimitFields(ceiling permission.FieldSensitivity) {
+	a.ceiling = ceiling
+}
+
+func (a *Access) holdsGroup(group protectedfield.Group) bool {
+	if a.ceiling != "" && !a.ceiling.CanAccess(permission.SensitivityRestricted) {
+		return false
+	}
+	return a.groups().Has(group)
+}
 
 func (a *Access) detail(
 	ctx context.Context,
@@ -390,7 +403,7 @@ func (a *Access) FieldUse(ctx context.Context, f *analytics.Field) Use {
 	}
 	if group, ok := r.Protection(f); ok {
 		use.Group = group
-		use.HoldsGroup = a.groups().Has(group)
+		use.HoldsGroup = a.holdsGroup(group)
 	}
 
 	use.Decision = a.decide(ctx, k, key, use.Reference, &use.Sensitivity)
@@ -454,10 +467,18 @@ func (a *Access) Edge(ctx context.Context, g *analytics.Edge, _ analytics.Path) 
 
 func (a *Access) Rows(_ context.Context, e *analytics.Entity) []keel.Pred {
 	k := a.resolver.kinds[e]
-	if k.ownership == "" || a.Kind(k.resource).Scope != permission.DataScopeOwn {
-		return nil
+	table := keel.DynFrom(e.Table)
+	var preds []keel.Pred
+	if k.visibility != "" {
+		preds = append(preds, keel.Or(
+			table.Path(k.visibility).Eq(string(report.VisibilityShared)),
+			table.Path(k.ownership).Eq(a.tenant.UserID.String()),
+		))
 	}
-	return []keel.Pred{keel.DynFrom(e.Table).Path(k.ownership).Eq(a.tenant.UserID.String())}
+	if k.ownership != "" && a.Kind(k.resource).Scope == permission.DataScopeOwn {
+		preds = append(preds, table.Path(k.ownership).Eq(a.tenant.UserID.String()))
+	}
+	return preds
 }
 
 func (a *Access) needsExport(k kind, reference bool) bool {
@@ -469,6 +490,21 @@ func (a *Access) needsExport(k kind, reference bool) bool {
 }
 
 func (a *Access) decide(
+	ctx context.Context,
+	k kind,
+	key string,
+	reference bool,
+	sensitivity *permission.FieldSensitivity,
+) Decision {
+	decision := a.decideGrant(ctx, k, key, reference, sensitivity)
+	if decision == Available && a.ceiling != "" && sensitivity != nil &&
+		!a.ceiling.CanAccess(*sensitivity) {
+		return WithheldByCeiling
+	}
+	return decision
+}
+
+func (a *Access) decideGrant(
 	ctx context.Context,
 	k kind,
 	key string,

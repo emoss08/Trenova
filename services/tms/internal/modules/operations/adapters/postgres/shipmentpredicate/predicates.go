@@ -1,6 +1,7 @@
 package shipmentpredicate
 
 import (
+	"context"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -233,6 +234,7 @@ func UnassignedPredicate() keel.Pred {
 }
 
 func Scope(
+	ctx context.Context,
 	filter *pagination.QueryOptions,
 	opts *shipmentports.ShipmentOptions,
 	quick []keel.Pred,
@@ -242,5 +244,5 @@ func Scope(
 		return q
 	}
 
-	return listquery.Filter(q, filter)
+	return listquery.Filter(ctx, q, filter)
 }

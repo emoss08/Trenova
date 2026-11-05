@@ -116,11 +116,13 @@ type StartSSOLoginRequest struct {
 	ProviderID       pulid.ID
 	OrganizationSlug string
 	ReturnTo         string
+	BrowserBinding   string
 }
 
 type SSOCallbackRequest struct {
-	State string
-	Code  string
+	State          string
+	Code           string
+	BrowserBinding string
 }
 
 type SSOCallbackResponse struct {

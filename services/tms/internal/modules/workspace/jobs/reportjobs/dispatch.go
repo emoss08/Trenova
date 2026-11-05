@@ -1,6 +1,9 @@
 package reportjobs
 
 import (
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"context"
 	"fmt"
 
@@ -57,6 +60,17 @@ func (a *Activities) DispatchDueSchedulesActivity(
 	return result, nil
 }
 
+func mayRunAs(runAs *tenant.User, err error) bool {
+	switch {
+	case errortypes.IsNotFoundError(err):
+		return false
+	case err != nil:
+		return true
+	default:
+		return runAs.ValidateStatus() == nil
+	}
+}
+
 func (a *Activities) dispatchSchedule(
 	ctx context.Context,
 	schedule *report.ReportSchedule,
@@ -84,6 +98,25 @@ func (a *Activities) dispatchSchedule(
 		UserID: schedule.RunAsID,
 	}
 	tenantCtx := dbscope.WithTenant(ctx, tenant.DBTenant())
+
+	runAs, err := a.userRepo.GetByID(tenantCtx, tenantports.GetUserByIDRequest{
+		TenantInfo:   tenant,
+		LookupUserID: schedule.RunAsID,
+	})
+	if !mayRunAs(runAs, err) {
+		schedule.Enabled = false
+		result.Disabled++
+		a.l.Warn("disabled a report schedule whose owner can no longer sign in",
+			zap.String("scheduleId", schedule.ID.String()))
+		_, updateErr := a.scheduleRepo.Update(tenantCtx, schedule)
+		return updateErr
+	}
+	if err != nil {
+		if _, updateErr := a.scheduleRepo.Update(tenantCtx, schedule); updateErr != nil {
+			return updateErr
+		}
+		return err
+	}
 
 	definition, err := a.defRepo.GetByID(tenantCtx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenant,

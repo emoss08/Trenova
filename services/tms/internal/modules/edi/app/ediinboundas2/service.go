@@ -1,6 +1,7 @@
 package ediinboundas2
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
@@ -16,6 +17,7 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
+	EDIConfig       *ediconfig.Config
 	ProfileRepo     edipartnerports.EDICommunicationProfileRepository
 	Delivery        *edidelivery.Service
 	Secrets         *ediprofilesecret.Service
@@ -32,6 +34,7 @@ type Service struct {
 	inbound         *ediinboundservice.Service
 	workflowStarter kernelports.WorkflowStarter
 	metrics         *documentmetrics.EDI
+	maxFileBytes    int64
 }
 
 func New(p Params) *Service {
@@ -45,5 +48,6 @@ func New(p Params) *Service {
 		inbound:         p.Inbound,
 		workflowStarter: p.WorkflowStarter,
 		metrics:         ediMetrics,
+		maxFileBytes:    p.EDIConfig.GetMaxInboundFileBytes(),
 	}
 }

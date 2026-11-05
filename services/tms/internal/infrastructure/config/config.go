@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
@@ -62,6 +63,7 @@ type Config struct {
 	CarrierIntelligence carrierintelligenceconfig.Config `mapstructure:"carrierIntelligence"`
 	Accounting          accountingconfig.Config          `mapstructure:"accounting"`
 	EDI                 ediconfig.Config                 `mapstructure:"edi"`
+	Integrations        integrationconfig.Config         `mapstructure:"integrations"`
 	Imports             importsconfig.Config             `mapstructure:"imports"`
 	ContentScan         contentscanconfig.Config         `mapstructure:"contentScan"`
 }

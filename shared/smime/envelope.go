@@ -28,6 +28,8 @@ var (
 	errRecipientKeyType = errors.New("as2: encryption certificate must carry an RSA public key")
 )
 
+var ErrMalformedEncryptedContent = errors.New("as2: encrypted content is malformed")
+
 var ErrInsecureEncryptionAlgorithm = errors.New(
 	"as2: content is encrypted with single DES, which is refused",
 )

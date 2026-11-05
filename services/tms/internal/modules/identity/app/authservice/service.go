@@ -2,6 +2,7 @@
 package authservice
 
 import (
+	"github.com/emoss08/trenova/shared/tokenutils"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -196,7 +197,6 @@ func (s *Service) Login(
 		s.recordLoginFailure(ctx, decision)
 		return nil, err
 	}
-	s.resetLoginThrottle(ctx, throttleKey)
 
 	scoped := userScope(ctx, usr)
 
@@ -218,16 +218,28 @@ func (s *Service) Login(
 		return nil, err
 	}
 
+	requestedOrg := targetOrg
 	targetOrg, err = s.enforcePlanLogin(scoped, usr, targetOrg)
 	if err != nil {
 		attempt.fail(authErrorSubscriptionExpired)
 		return nil, err
+	}
+	if targetOrg != requestedOrg {
+		if err = s.enforcePasswordLoginPolicy(
+			scoped,
+			req.OrganizationSlug,
+			usr,
+			targetOrg,
+		); err != nil {
+			return nil, err
+		}
 	}
 
 	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt, nil)
 	if err != nil || challenge != nil {
 		return challenge, err
 	}
+	s.resetLoginThrottle(ctx, throttleKey)
 
 	return s.finishLogin(scoped, usr, targetOrg, loginSessionContext{
 		AuthProvider:          iamports.AuthEventProviderPassword,
@@ -364,6 +376,7 @@ func (s *Service) StartSSOLogin(
 		CodeVerifier:     verifier,
 		Nonce:            nonce,
 		ReturnTo:         req.ReturnTo,
+		BrowserBinding:   tokenutils.Hash(req.BrowserBinding),
 	}, ssoLoginStateTTL); err != nil {
 		return "", err
 	}
@@ -373,6 +386,13 @@ func (s *Service) StartSSOLogin(
 		oidc.Nonce(nonce),
 		oauth2.S256ChallengeOption(verifier),
 	), nil
+}
+
+func sameBrowser(state *tenantports.SSOLoginState, binding string) bool {
+	return binding != "" && subtle.ConstantTimeCompare(
+		[]byte(tokenutils.Hash(binding)),
+		[]byte(state.BrowserBinding),
+	) == 1
 }
 
 func (s *Service) resolveSSOConfig(
@@ -419,7 +439,8 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	displayName := providerDisplayName(loginState.Provider)
 
-	if loginState.OrganizationID.IsNil() || loginState.BusinessUnitID.IsNil() {
+	if loginState.OrganizationID.IsNil() || loginState.BusinessUnitID.IsNil() ||
+		!sameBrowser(loginState, req.BrowserBinding) {
 		attempt.fail(authErrorSSOState)
 		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
 	}
@@ -1222,14 +1243,11 @@ func (s *Service) enforcePasswordLoginPolicy(
 
 	ctx = organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, user.ID)
 
-	for _, p := range []sso.SSOProvider{sso.SSOProviderAzureAD, sso.SSOProviderOkta} {
-		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID, p)
-		if err != nil {
-			if errortypes.IsNotFoundError(err) {
-				continue
-			}
-			return err
-		}
+	configs, err := s.ssoRepo.ListEnabledByOrganizationID(ctx, targetOrg.ID)
+	if err != nil {
+		return err
+	}
+	for _, cfg := range configs {
 		if cfg.EnforceSSO {
 			return errSSORequired
 		}

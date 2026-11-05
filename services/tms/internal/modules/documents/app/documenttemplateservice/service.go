@@ -3,6 +3,7 @@ package documenttemplateservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/shared/pulid"
 	"sort"
 	"strings"
 
@@ -270,6 +271,11 @@ type compileOptions struct {
 	// their id is a safe key; a draft changes under the same id, so the editor
 	// passes nothing.
 	CacheKeyPrefix string
+	// Draft keeps a finding about rendered output as a finding, for an author to
+	// read beside the render, rather than a refusal.
+	Draft bool
+	// OrganizationID is whose stored images the output may embed.
+	OrganizationID pulid.ID
 	// Locale binds `t` at parse time, so it is part of the cache identity. A
 	// compiled template carries the language it was compiled in; reusing one
 	// across locales would answer a Spanish recipient in English.

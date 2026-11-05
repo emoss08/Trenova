@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -258,4 +259,38 @@ func TestReadPortalDeclaresWhatItBringsIn(t *testing.T) {
 
 	listed := NewListPortalSitesTool(&stubPortals{}).Policy()
 	assert.NotEqual(t, agenttooltrust.ExternalReadAlways, listed.ReadsExternal)
+}
+
+func TestReadPortalTellsTheServiceWhenOtherOutsideTextIsInTheRun(t *testing.T) {
+	t.Parallel()
+
+	siteID := pulid.MustNew(extensionportal.PortalSiteIDPrefix)
+	read := func(t *testing.T, taint *agent.RunTaint) bool {
+		t.Helper()
+
+		portals := &stubPortals{outcome: &agentextensionports.PortalReadOutcome{
+			Status: extensionportal.PortalRunStatusSucceeded,
+		}}
+		params := querytooltest.TestParams(map[string]any{
+			"siteId":   siteID.String(),
+			"question": "Which slots are open?",
+		})
+		params.Taint = taint
+
+		_, err := NewReadPortalTool(portals, nil).Query(t.Context(), params)
+		require.NoError(t, err)
+
+		return portals.read.AfterOutsideText
+	}
+
+	assert.False(t, read(t, &agent.RunTaint{}))
+	assert.False(t, read(t, &agent.RunTaint{Marks: []agent.TaintMark{{
+		Source:   agent.TaintSourceWeb,
+		ToolName: "web_read_portal",
+	}}}))
+	assert.True(t, read(t, &agent.RunTaint{Marks: []agent.TaintMark{{
+		Source:   agent.TaintSourceEDI,
+		ToolName: "shipment_get",
+	}}}))
+	assert.True(t, read(t, nil))
 }

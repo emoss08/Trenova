@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/keel/analytics/diff"
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -76,8 +77,11 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 
 func (t *compareReportRunsTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
-		Resource: permission.ResourceReport,
-		Effect:   agenttooltrust.ToolEffectPresent,
+		Resource:  permission.ResourceReport,
+		Effect:    agenttooltrust.ToolEffectPresent,
+		Reads:     agenttooltrust.ExternalReadAlways,
+		Source:    agent.TaintSourceRecordNote,
+		Rationale: reportRowsRationale,
 	})
 }
 

@@ -1,13 +1,28 @@
 package searchconfig
 
 import (
+	"errors"
 	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+)
+
+var ErrProductionAPIKeyRequired = errors.New(
+	"production and staging require search.meilisearch.apiKey that is not a placeholder",
 )
 
 type Config struct {
 	Enabled      bool              `mapstructure:"enabled"`
 	DefaultLimit int               `mapstructure:"defaultLimit" validate:"omitempty,min=1,max=100"`
 	Meilisearch  MeilisearchConfig `mapstructure:"meilisearch"`
+}
+
+func (c *Config) ValidateProduction() error {
+	if c.Enabled && securityconfig.IsPlaceholder(c.Meilisearch.APIKey) {
+		return ErrProductionAPIKeyRequired
+	}
+
+	return nil
 }
 
 func (c *Config) GetDefaultLimit() int {

@@ -35,7 +35,7 @@ func (r *Repository) GroupSummary(
 				return nil, ErrScopeMissing
 			}
 
-			q, err := scoped(req.Scope)
+			q, err := scoped(ctx, req.Scope)
 			if err != nil {
 				return nil, err
 			}

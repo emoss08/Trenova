@@ -672,7 +672,14 @@ Web content is held more strictly: once a turn has read the web through an exten
 X12 a person pasted for `edi_inspect_x12` to read, every later write is capped at `Propose`,
 whatever its class ([agent-extensions.md](agent-extensions.md#pasted-partner-text)). That rule rides its own flag
 (`TurnState.ExternalContent`) beside the taint, and the web read also adds a `web` mark to the
-taint, so both record it.
+taint, so both record it. The flag outlives the turn: the text stays in the thread's history, so
+a new turn opens capped when the thread's taint names a capping read
+(`toolaccess.CarriesExternalContent`).
+
+A shipment entered over EDI is outside text wherever it is read, not only as a run's subject:
+`shipment_get` and `shipment_list` mark it. Report rows are marked when a column of the result
+is free text (`report_preview`, `report_get_run`, `report_run`), because no catalog field says
+who wrote it, and a comparison of runs always is. A report of figures and enums taints nothing.
 
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool

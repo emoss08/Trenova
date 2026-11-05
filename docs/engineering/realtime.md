@@ -57,8 +57,17 @@ or reset.
   refetches the permission manifest on the event (`usePermissionPolling`), so a change
   reaches open tabs within a second; the five-minute poll and the thirty-minute cache
   TTL are only safety nets.
-- **Large entities.** An event whose encoded entity is larger than
-  `maxEntityBytes` is sent without it; the reader refetches instead of patching.
+- **No record on a tenant-wide event.** The stream applies no reader's permissions,
+  data scope or field groups, so an event with no `AudienceUserID` carries only the
+  identifiers of its entity (`id`, `threadId`, `shipmentId`, `invoiceId`, `resourceId`,
+  `notifiedUserId`; `referenceKeys` in `realtimeservice`). The service enforces this, so
+  a publisher cannot leak a record by attaching one. The browser refetches through the
+  guarded read, and never patches a row from an event. `Fields` stay, because they are
+  column names, not values, and a running agent turn reads them from the change feed. A
+  notification with no target user is written for everyone, so it sets `BroadcastEntity`
+  and keeps its text; nothing else should.
+- **Large entities.** An event addressed to one person whose encoded entity is larger
+  than `maxEntityBytes` is sent without it; the reader refetches instead.
 - **Sweeps publish once.** Every connected reader in a tenant hears every event,
   so an event costs readers × events requests. A scheduled sweep, reconcile or
   backfill that may touch many records publishes one `bulk_<action>` event with no
@@ -87,8 +96,7 @@ entries announce nothing. The names live in `pkg/realtimeinvalidation/recordchan
 
 The browser maps these in `RECORD_CHANGE_KEYS` (`client/packages/shared/src/hooks/realtime-patching.ts`).
 List only resources with no richer event of their own: a resource that already
-publishes its own event (shipments, customers, workers) patches rows in place, which an
-`audited:` event cannot do.
+publishes its own event (shipments, customers, workers) is mapped to its lists directly.
 
 A data table shows a refetched page at once when it holds the same rows in the same
 order, and the rows whose values changed glow once (`--animate-row-changed-a/-b`). A page
@@ -273,9 +281,8 @@ such as the open billing queue when a shipment's or order's charges change.
 
 Every write that changes an invoice publishes resource `invoice` through
 `realtimeinvalidation.PublishInvoice` (or `PublishInvoiceAfterCommit` inside a
-transaction), with a small snapshot as the entity: `id`, `number`, `status`,
-`sendStatus`, `lastSendError`, `pdfDocumentId`, `ediSendStatus`. The action says
-what changed:
+transaction). Like every tenant-wide event it reaches the browser with the invoice's
+identifiers only, and the action says what changed:
 
 | Action | Published by |
 |---|---|
@@ -289,7 +296,8 @@ In the web app an `invoice` event reaches the invoice page, the invoice list and
 register, adjustments, the billing queue, receivables and customer payments,
 refetching only what is on screen. The open invoice also toasts the outcomes its
 viewer is waiting on (PDF ready, emailed, partly emailed, failed) through
-`useInvoiceDeliveryToasts`, announcing each change of status once.
+`useInvoiceDeliveryToasts`, which compares the invoice the page refetched with what it
+last showed, announcing each change of status once.
 
 ## Operating it
 

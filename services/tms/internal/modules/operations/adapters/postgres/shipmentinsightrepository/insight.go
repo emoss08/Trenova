@@ -107,5 +107,5 @@ func (s *insightSource) baseQuery(
 		return nil, err
 	}
 
-	return tableinsight.Typed(shipmentpredicate.Scope(scope.Filter, &opts, quick)), nil
+	return tableinsight.Typed(shipmentpredicate.Scope(ctx, scope.Filter, &opts, quick)), nil
 }

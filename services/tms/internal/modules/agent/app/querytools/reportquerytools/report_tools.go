@@ -10,8 +10,11 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -365,7 +368,11 @@ type reportRunStatus struct {
 	Columns []previewColumnRow `json:"columns,omitempty"`
 	Rows    []map[string]any   `json:"rows,omitempty"`
 	Note    string             `json:"note"`
+
+	outside []agentrecord.RecordRef
 }
+
+func (s *reportRunStatus) TaintedRecords() []agentrecord.RecordRef { return s.outside }
 
 // reportKeyOf reads the report's key under the name the schema declares, or
 // under the plain "key" a model reaches for after reading a catalog row. The
@@ -474,8 +481,11 @@ func (t *runReportTool) ParamSchema() map[string]any {
 
 func (t *runReportTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
-		Resource: permission.ResourceReport,
-		Effect:   agenttooltrust.ToolEffectPresent,
+		Resource:  permission.ResourceReport,
+		Effect:    agenttooltrust.ToolEffectPresent,
+		Reads:     agenttooltrust.ExternalReadMarked,
+		Source:    agent.TaintSourceRecordNote,
+		Rationale: reportRowsRationale,
 	})
 }
 
@@ -719,7 +729,10 @@ func (t *getReportRunTool) ParamSchema() map[string]any {
 
 func (t *getReportRunTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
-		Resource: permission.ResourceReport,
+		Resource:  permission.ResourceReport,
+		Reads:     agenttooltrust.ExternalReadMarked,
+		Source:    agent.TaintSourceRecordNote,
+		Rationale: reportRowsRationale,
 	})
 }
 
@@ -788,6 +801,9 @@ func attachRunSample(
 		status.Columns = append(status.Columns, shape.add(&columns[idx]))
 	}
 	status.Rows = sampleRows(shape, reportvalue.TableRows(envelope.Table).Detail, maxRunSampleRows)
+	if shape.written && len(status.Rows) > 0 {
+		status.outside = outsideReport(run.ID.String())
+	}
 
 	status.Note += sampleNote(len(status.Rows), run.RowCount)
 	if hasDated(shape.dated) {
@@ -867,17 +883,27 @@ func toRunStatus(run *report.ReportRun) reportRunStatus {
 }
 
 func RequestFor(params *agenttoolports.QueryToolParams) reporting.Request {
+	request := personRequest(params.OrganizationID, params.BusinessUnitID, params.Actor)
+	request.FieldCeiling = fieldsensitivity.AgentReadLimit(params.Actor, params.DataAccessCeiling)
+
+	return request
+}
+
+func personRequest(
+	organizationID, businessUnitID pulid.ID,
+	actor *permissionports.RequestActor,
+) reporting.Request {
 	return reporting.Request{
 		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.PersonUserID(),
+			OrgID:  organizationID,
+			BuID:   businessUnitID,
+			UserID: actor.PersonUserID(),
 		},
 		Principal: kernelports.PrincipalInfo{
-			Type:     params.Actor.PrincipalType,
-			ID:       params.Actor.PrincipalID,
-			UserID:   params.Actor.UserID,
-			APIKeyID: params.Actor.APIKeyID,
+			Type:     actor.PrincipalType,
+			ID:       actor.PrincipalID,
+			UserID:   actor.UserID,
+			APIKeyID: actor.APIKeyID,
 		},
 	}
 }

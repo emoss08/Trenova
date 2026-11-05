@@ -303,6 +303,7 @@ func (h *Handler) startSSOLogin(provider sso.SSOProvider) gin.HandlerFunc {
 				Provider:         provider,
 				OrganizationSlug: c.Param("slug"),
 				ReturnTo:         c.Query("returnTo"),
+				BrowserBinding:   sessioncookie.SetSSOBinding(c, &h.securityConfig.Session),
 			},
 		)
 		if err != nil {
@@ -329,6 +330,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 				ProviderID:       providerID,
 				OrganizationSlug: orgSlug,
 				ReturnTo:         c.Query("returnTo"),
+				BrowserBinding:   sessioncookie.SetSSOBinding(c, &h.securityConfig.Session),
 			},
 		)
 		if err != nil {
@@ -352,6 +354,7 @@ func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
 			Provider:         provider,
 			OrganizationSlug: orgSlug,
 			ReturnTo:         c.Query("returnTo"),
+			BrowserBinding:   sessioncookie.SetSSOBinding(c, &h.securityConfig.Session),
 		},
 	)
 	if err != nil {
@@ -386,10 +389,12 @@ func (h *Handler) ssoCallback(provider sso.SSOProvider) gin.HandlerFunc {
 		resp, err := h.service.HandleSSOCallback(
 			c.Request.Context(),
 			tenantports.SSOCallbackRequest{
-				State: state,
-				Code:  strings.TrimSpace(c.Query("code")),
+				State:          state,
+				Code:           strings.TrimSpace(c.Query("code")),
+				BrowserBinding: sessioncookie.SSOBinding(c, &h.securityConfig.Session),
 			},
 		)
+		sessioncookie.ClearSSOBinding(c, &h.securityConfig.Session)
 		if err != nil {
 			h.redirectSSOError(c, loginState, err)
 			return

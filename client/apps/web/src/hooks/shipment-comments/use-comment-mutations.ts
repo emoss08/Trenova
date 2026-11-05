@@ -18,7 +18,7 @@ import {
   type CommentPage,
   type LocalShipmentComment,
 } from "@/lib/shipment-comment-cache";
-import { applyCommentEntitySync, markCommentSeen } from "@/lib/shipment-comment-realtime";
+import { applyCommentEntitySync } from "@/lib/shipment-comment-realtime";
 import { apiService } from "@/services/api";
 import type {
   ShipmentComment,
@@ -110,7 +110,6 @@ export function useCommentMutations(shipmentId: string) {
     },
     onSuccess: (created, variables) => {
       pendingInputsRef.current.delete(variables.clientRef);
-      markCommentSeen(shipmentId, created.id);
       applyCommentUpsert(queryClient, shipmentId, created as LocalShipmentComment);
     },
     onError: (_error, _variables, context) => {

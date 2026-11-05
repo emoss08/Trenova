@@ -17,6 +17,7 @@ type ReadSpec struct {
 	Reads           agenttooltrust.ExternalRead
 	Source          agent.TaintSource
 	CapsLaterWrites bool
+	CarriesTaint    bool
 	Rationale       string
 }
 
@@ -36,6 +37,7 @@ func ReadPolicy(name string, spec *ReadSpec) agenttoolports.ToolPolicy {
 		ReadsExternal:   spec.Reads,
 		Source:          spec.Source,
 		CapsLaterWrites: spec.CapsLaterWrites,
+		CarriesTaint:    spec.CarriesTaint,
 		Rationale:       spec.Rationale,
 	}
 	if policy.Scope == "" {

@@ -37,6 +37,7 @@ type SSOLoginState struct {
 	CodeVerifier     string          `json:"codeVerifier"`
 	Nonce            string          `json:"nonce"`
 	ReturnTo         string          `json:"returnTo"`
+	BrowserBinding   string          `json:"browserBinding"`
 }
 
 type SSOLoginStateRepository interface {

@@ -98,7 +98,6 @@ func TestReportAutoPostFailureAnnouncesTheReasonOnADraft(t *testing.T) {
 	assert.Equal(t, invoicerealtime.RealtimeActionPostFailed, event.Action)
 	snapshot, ok := event.Entity.(*invoicerealtime.RealtimeSnapshot)
 	require.True(t, ok)
-	assert.Equal(t, "The fiscal period is closed", snapshot.PostError)
 	assert.True(
 		t,
 		snapshot.NotifiedUserID.IsNil(),

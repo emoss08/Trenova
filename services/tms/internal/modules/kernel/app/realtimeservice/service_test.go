@@ -86,7 +86,9 @@ func TestPublishResourceInvalidation_EnqueuesFullAndRedactedPayloads(t *testing.
 	assert.Equal(t, "shipments.updated", full.Type)
 	assert.Equal(t, req.RecordID.String(), full.RecordID)
 	assert.Equal(t, req.ActorUserID.String(), full.ActorUserID)
-	assert.NotNil(t, full.Entity)
+	assert.Nil(t, full.Entity)
+	assert.NotContains(t, string(env.Payload), "rate")
+	assert.Equal(t, req.Fields, full.Fields)
 	assert.True(t, strings.HasPrefix(full.EventID, "evt_"))
 
 	redacted := decode(t, env.PortalPayload)
@@ -94,6 +96,66 @@ func TestPublishResourceInvalidation_EnqueuesFullAndRedactedPayloads(t *testing.
 	assert.Empty(t, redacted.Fields)
 	assert.Equal(t, full.RecordID, redacted.RecordID)
 	assert.NotContains(t, string(env.PortalPayload), "rate")
+}
+
+func TestPublishResourceInvalidation_ATenantWideEventCarriesOnlyIdentifiers(t *testing.T) {
+	t.Parallel()
+
+	pub := &recordingPublisher{}
+	svc := newTestService(pub, 0)
+	req := validRequest()
+	req.Entity = map[string]any{
+		"id":         "shc_1",
+		"shipmentId": "shp_1",
+		"comment":    "the customer owes us",
+		"version":    4,
+	}
+
+	require.NoError(t, svc.PublishResourceInvalidation(t.Context(), req))
+
+	event := decode(t, pub.enqueued[0].Payload)
+	assert.Equal(t, map[string]any{"id": "shc_1", "shipmentId": "shp_1"}, event.Entity)
+	assert.NotContains(t, string(pub.enqueued[0].Payload), "the customer owes us")
+}
+
+func TestPublishResourceInvalidation_AnEntityThatIsNotAnObjectIsDropped(t *testing.T) {
+	t.Parallel()
+
+	pub := &recordingPublisher{}
+	svc := newTestService(pub, 0)
+	req := validRequest()
+	req.Entity = []string{"rate"}
+
+	require.NoError(t, svc.PublishResourceInvalidation(t.Context(), req))
+
+	assert.Nil(t, decode(t, pub.enqueued[0].Payload).Entity)
+}
+
+func TestPublishResourceInvalidation_AnAddressedEventKeepsItsEntity(t *testing.T) {
+	t.Parallel()
+
+	pub := &recordingPublisher{}
+	svc := newTestService(pub, 0)
+	req := validRequest()
+	req.AudienceUserID = pulid.MustNew("usr_")
+
+	require.NoError(t, svc.PublishResourceInvalidation(t.Context(), req))
+
+	assert.Contains(t, string(pub.enqueued[0].Payload), "PRO-1")
+}
+
+func TestPublishResourceInvalidation_ABroadcastEntityReachesEveryInternalReader(t *testing.T) {
+	t.Parallel()
+
+	pub := &recordingPublisher{}
+	svc := newTestService(pub, 0)
+	req := validRequest()
+	req.BroadcastEntity = true
+
+	require.NoError(t, svc.PublishResourceInvalidation(t.Context(), req))
+
+	assert.Contains(t, string(pub.enqueued[0].Payload), "PRO-1")
+	assert.NotContains(t, string(pub.enqueued[0].PortalPayload), "PRO-1")
 }
 
 func TestPublishResourceInvalidation_AddressedEventsHaveNoPortalForm(t *testing.T) {
@@ -116,6 +178,7 @@ func TestPublishResourceInvalidation_DropsOversizedEntity(t *testing.T) {
 	pub := &recordingPublisher{}
 	svc := newTestService(pub, 256)
 	req := validRequest()
+	req.AudienceUserID = pulid.MustNew("usr_")
 	req.Entity = map[string]any{"notes": strings.Repeat("x", 1024)}
 
 	require.NoError(t, svc.PublishResourceInvalidation(t.Context(), req))

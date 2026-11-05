@@ -64,6 +64,16 @@ func (s *Service) PublishResourceInvalidation(
 	}
 
 	event := buildInvalidationEvent(req)
+	if req.AudienceUserID.IsNil() && !req.BroadcastEntity {
+		references, err := recordReferences(req.Entity)
+		if err != nil {
+			return err
+		}
+		event.Entity = nil
+		if len(references) > 0 {
+			event.Entity = references
+		}
+	}
 
 	payload, err := s.encode(&event)
 	if err != nil {
@@ -113,6 +123,43 @@ func (s *Service) encode(event *realtimeports.ResourceInvalidationEvent) ([]byte
 		return nil, fmt.Errorf("encode realtime invalidation: %w", err)
 	}
 	return payload, nil
+}
+
+var referenceKeys = [...]string{
+	"id",
+	"threadId",
+	"shipmentId",
+	"invoiceId",
+	"resourceId",
+	"notifiedUserId",
+}
+
+func recordReferences(entity any) (map[string]string, error) {
+	references := make(map[string]string, len(referenceKeys))
+	if entity == nil {
+		return references, nil
+	}
+
+	encoded, err := sonic.Marshal(entity)
+	if err != nil {
+		return nil, fmt.Errorf("encode realtime entity: %w", err)
+	}
+	if len(encoded) == 0 || encoded[0] != '{' {
+		return references, nil
+	}
+
+	var fields map[string]any
+	if err = sonic.Unmarshal(encoded, &fields); err != nil {
+		return nil, fmt.Errorf("read realtime entity: %w", err)
+	}
+
+	for _, key := range referenceKeys {
+		if value, ok := fields[key].(string); ok && value != "" {
+			references[key] = value
+		}
+	}
+
+	return references, nil
 }
 
 // redactedPayload is what a portal user sees of an event not addressed to

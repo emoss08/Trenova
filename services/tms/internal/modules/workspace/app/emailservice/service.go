@@ -13,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -59,6 +60,7 @@ type Params struct {
 	Storage            kernelports.Client
 	Plans              platformplanports.PlanService
 	Realtime           realtimeports.RealtimeService
+	IntegrationConfig  *integrationconfig.Config
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -107,8 +109,8 @@ func New(p Params) *Service {
 		encryptionService:  p.EncryptionService,
 		auditService:       p.AuditService,
 		providerSenders: map[email.Provider]ProviderSender{
-			email.ProviderResend:   NewResendSender(),
-			email.ProviderPostmark: NewPostmarkSender(),
+			email.ProviderResend:   NewResendSender(p.IntegrationConfig.EgressPolicy()),
+			email.ProviderPostmark: NewPostmarkSender(p.IntegrationConfig.EgressPolicy()),
 		},
 		workflowStarter: p.WorkflowStarter,
 		storage:         p.Storage,

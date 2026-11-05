@@ -1,11 +1,15 @@
 package pcmiler
 
-import "strconv"
+import (
+	"net/http"
+	"strconv"
+)
 
 type Config struct {
-	APIKey  string
-	BaseURL string
-	Timeout int
+	APIKey     string
+	BaseURL    string
+	Timeout    int
+	HTTPClient *http.Client
 }
 
 type RouteOptions struct {

@@ -67,18 +67,19 @@ type PublishResourceInvalidationRequest struct {
 	BusinessUnitID pulid.ID
 	// AudienceUserID limits delivery to one person's connections. Zero means
 	// every connection in the tenant.
-	AudienceUserID pulid.ID
-	Resource       string
-	Action         string
-	EventType      string
-	Fields         []string
-	EntityVersion  int64
-	Entity         any
-	RecordID       pulid.ID
-	ActorUserID    pulid.ID
-	ActorType      kernelports.PrincipalType
-	ActorID        pulid.ID
-	ActorAPIKeyID  pulid.ID
+	AudienceUserID  pulid.ID
+	Resource        string
+	Action          string
+	EventType       string
+	Fields          []string
+	EntityVersion   int64
+	Entity          any
+	BroadcastEntity bool
+	RecordID        pulid.ID
+	ActorUserID     pulid.ID
+	ActorType       kernelports.PrincipalType
+	ActorID         pulid.ID
+	ActorAPIKeyID   pulid.ID
 }
 
 type RealtimeService interface {

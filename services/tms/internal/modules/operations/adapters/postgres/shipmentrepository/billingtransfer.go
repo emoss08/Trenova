@@ -26,7 +26,7 @@ func (r *repository) ListBillingTransferCandidateIDs(
 				q = q.Where(sp.Status.Eq(req.Status))
 			}
 			if req.Filter != nil {
-				q = listquery.Filter(q, req.Filter)
+				q = listquery.Filter(ctx, q, req.Filter)
 			}
 
 			total, err := q.Clone().Count(ctx, r.db.Keel(ctx))

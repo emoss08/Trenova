@@ -13,6 +13,8 @@ type ListDocumentsRequest struct {
 	ResourceID   string                   `json:"resourceId"`
 	ResourceType string                   `json:"resourceType"`
 	Status       string                   `json:"status"`
+	PrivateTo    pulid.ID                 `json:"-"`
+	HidePrivate  bool                     `json:"-"`
 }
 
 type DocumentSelectOptionsRequest struct {

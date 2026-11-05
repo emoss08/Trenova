@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/imageutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 	"golang.org/x/net/html"
 )
@@ -99,6 +100,8 @@ type Request struct {
 	HTML string
 	// Field names the editor pane, so a diagnostic can be routed back to it.
 	Field string
+	// OrganizationID is whose stored objects a storage key may name.
+	OrganizationID pulid.ID
 }
 
 // Result is the rewritten document plus whatever had to be dropped.
@@ -148,7 +151,7 @@ func (i *Inliner) Inline(ctx context.Context, req *Request) (*Result, error) {
 			continue
 		}
 
-		rewritten, keep := i.rewriteImage(ctx, tokenizer, req.Field, result)
+		rewritten, keep := i.rewriteImage(ctx, tokenizer, req, result)
 		if !keep {
 			continue
 		}
@@ -164,9 +167,10 @@ func (i *Inliner) Inline(ctx context.Context, req *Request) (*Result, error) {
 func (i *Inliner) rewriteImage(
 	ctx context.Context,
 	tokenizer *html.Tokenizer,
-	field string,
+	req *Request,
 	result *Result,
 ) (markup string, keep bool) {
+	field := req.Field
 	attrs := collectAttributes(tokenizer)
 
 	src, hasSrc := attrs["src"]
@@ -189,7 +193,9 @@ func (i *Inliner) rewriteImage(
 		return "", false
 	}
 
-	img, err := i.resolve(ctx, src)
+	img, err := i.resolve(ctx, src, func(key string) bool {
+		return ownsStorageKey(req.OrganizationID, key)
+	})
 	if err != nil {
 		result.Diags = append(result.Diags, templatediag.Diagnostic{
 			Severity: templatediag.SeverityWarning,
@@ -224,7 +230,11 @@ func (i *Inliner) rewriteImage(
 }
 
 // resolve turns one src value into validated image bytes.
-func (i *Inliner) resolve(ctx context.Context, src string) (*imageutils.Image, error) {
+func (i *Inliner) resolve(
+	ctx context.Context,
+	src string,
+	mayRead func(key string) bool,
+) (*imageutils.Image, error) {
 	trimmed := strings.TrimSpace(src)
 
 	switch {
@@ -243,8 +253,17 @@ func (i *Inliner) resolve(ctx context.Context, src string) (*imageutils.Image, e
 		// Anything else is a storage key. Relative paths and bare filenames land
 		// here too, and fail as missing objects rather than reaching the host
 		// filesystem.
+		if !mayRead(trimmed) {
+			return nil, errors.New("that image belongs to another organization")
+		}
 		return i.fetchStorage(ctx, trimmed)
 	}
+}
+
+func ownsStorageKey(organizationID pulid.ID, key string) bool {
+	return organizationID.IsNotNil() &&
+		strings.HasPrefix(key, organizationID.String()+"/") &&
+		!strings.Contains(key, "..")
 }
 
 func (i *Inliner) fetchStorage(ctx context.Context, key string) (*imageutils.Image, error) {

@@ -7,8 +7,13 @@ import (
 func (s *Service) TransportSecrets(
 	profile *edi.EDICommunicationProfile,
 ) (map[string]string, error) {
-	secrets := make(map[string]string, 3)
-	for _, key := range []string{"password", "privateKey", "basicAuthPassword"} {
+	secrets := make(map[string]string, 4)
+	for _, key := range []string{
+		"password",
+		"privateKey",
+		"decryptionPrivateKey",
+		"basicAuthPassword",
+	} {
 		value, err := s.decryptProfileSecret(profile, key)
 		if err != nil {
 			return nil, err

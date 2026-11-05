@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
@@ -43,6 +44,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Repo          rateimportports.RateImportRepository
 	AgreementRepo rateagreementports.RateAgreementRepository
+	Agreements    *rateagreementservice.Service
 	TemplateRepo  formulatemplateports.FormulaTemplateRepository
 	Resolver      tariffports.Resolver
 	AuditService  auditports.AuditService
@@ -54,6 +56,7 @@ type Service struct {
 	l             *zap.Logger
 	repo          rateimportports.RateImportRepository
 	agreementRepo rateagreementports.RateAgreementRepository
+	agreements    agreementAmender
 	templateRepo  formulatemplateports.FormulaTemplateRepository
 	resolver      tariffports.Resolver
 	audit         auditports.AuditService
@@ -67,6 +70,7 @@ func New(p Params) *Service {
 		l:             p.Logger.Named("service.rateimport"),
 		repo:          p.Repo,
 		agreementRepo: p.AgreementRepo,
+		agreements:    p.Agreements,
 		templateRepo:  p.TemplateRepo,
 		resolver:      p.Resolver,
 		audit:         p.AuditService,
@@ -363,6 +367,14 @@ func (s *Service) currentRules(
 }
 
 // CommitRequest applies a reviewed import.
+type agreementAmender interface {
+	AmendRules(
+		ctx context.Context,
+		req *rateagreementports.AmendRateAgreementRulesRequest,
+		userID pulid.ID,
+	) (*rateagreement.RateAgreement, error)
+}
+
 type CommitRequest struct {
 	TenantInfo        pagination.TenantInfo
 	RateImportBatchID pulid.ID
@@ -386,13 +398,13 @@ func (s *Service) Commit(
 	}
 	batch := plan.Batch
 
-	if err = s.agreementRepo.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
+	if _, err = s.agreements.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
 		TenantInfo:      req.TenantInfo,
 		RateAgreementID: batch.RateAgreementID,
 		EffectiveFrom:   batch.EffectiveFrom,
 		SupersededIDs:   plan.SupersededIDs,
 		Rules:           plan.Rules,
-	}); err != nil {
+	}, req.TenantInfo.UserID); err != nil {
 		s.l.Error("failed to apply a rate import", zap.Error(err))
 		return nil, err
 	}

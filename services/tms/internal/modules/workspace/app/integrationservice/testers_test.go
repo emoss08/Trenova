@@ -21,7 +21,7 @@ func TestPostmarkConnectionTesterCallsServerEndpoint(t *testing.T) {
 	}))
 	defer server.Close()
 
-	err := (&postmarkConnectionTester{}).Test(t.Context(), map[string]string{
+	err := (&postmarkConnectionTester{client: loopbackClient()}).Test(t.Context(), map[string]string{
 		"serverToken": "server-token",
 		"baseUrl":     server.URL,
 	})
@@ -61,7 +61,7 @@ func TestPCMilerConnectionTesterUsesRouteReportsForCurrentDataVersion(t *testing
 	}))
 	defer server.Close()
 
-	err := (&pcmilerConnectionTester{}).Test(t.Context(), map[string]string{
+	err := (&pcmilerConnectionTester{client: loopbackClient()}).Test(t.Context(), map[string]string{
 		"apiKey":      "valid-trial-key",
 		"baseUrl":     server.URL + "/Service.svc",
 		"dataVersion": "Current",
@@ -103,7 +103,7 @@ func TestPCMilerConnectionTesterIgnoresRoutingPolicyFields(t *testing.T) {
 	}))
 	defer server.Close()
 
-	err := (&pcmilerConnectionTester{}).Test(t.Context(), map[string]string{
+	err := (&pcmilerConnectionTester{client: loopbackClient()}).Test(t.Context(), map[string]string{
 		"apiKey":      "valid-trial-key",
 		"baseUrl":     server.URL + "/Service.svc",
 		"dataVersion": "PCM36",

@@ -223,11 +223,8 @@ func validateAIAuditChain(chain *ChainConfig) error {
 
 func (c *Config) ValidateProduction() error {
 	for _, key := range c.Chain.Keys {
-		secret := strings.ToLower(key.Secret)
-		for _, placeholder := range securityconfig.InsecureDefaultValues {
-			if strings.Contains(secret, placeholder) {
-				return fmt.Errorf("%w: key %q", ErrChainSecretInsecure, key.ID)
-			}
+		if securityconfig.IsPlaceholder(key.Secret) {
+			return fmt.Errorf("%w: key %q", ErrChainSecretInsecure, key.ID)
 		}
 	}
 

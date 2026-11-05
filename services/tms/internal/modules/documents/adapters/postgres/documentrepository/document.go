@@ -65,6 +65,10 @@ func (r *repository) List(
 					keel.When(req.ResourceID != "", d.ResourceID.Eq(req.ResourceID)),
 					keel.When(req.ResourceType != "", d.ResourceType.Eq(req.ResourceType)),
 					keel.When(req.Status != "", d.Status.Eq(document.Status(req.Status))),
+					keel.When(req.HidePrivate, keel.Or(
+						d.ResourceType.Ne(document.ConversationResourceType),
+						d.UploadedByID.Eq(req.PrivateTo),
+					)),
 				),
 				&listquery.Request[document.Document]{
 					Filter: req.Filter,

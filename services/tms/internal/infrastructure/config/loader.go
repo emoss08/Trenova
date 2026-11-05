@@ -386,6 +386,8 @@ func validateProductionSecurity(config *Config) error {
 		config.Storage.ValidateProduction,
 		config.ContentScan.ValidateProduction,
 		config.AIAudit.ValidateProduction,
+		config.System.ValidateProduction,
+		config.Search.ValidateProduction,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {

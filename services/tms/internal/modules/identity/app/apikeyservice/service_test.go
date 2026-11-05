@@ -182,12 +182,10 @@ func TestRotateAPIKeyResetsUsageState(t *testing.T) {
 		BusinessUnitID:    tenantInfo.BuID,
 		Name:              "Rotating Key",
 		KeyPrefix:         "trv_old",
-		Status:            apikey.StatusRevoked,
+		Status:            apikey.StatusActive,
 		LastUsedAt:        123,
 		LastUsedIP:        "192.0.2.1",
 		LastUsedUserAgent: "integration-test",
-		RevokedAt:         456,
-		RevokedByID:       pulid.MustNew("usr_"),
 	}
 
 	repo.EXPECT().GetByID(mock.Anything, tenantInfo, keyID).Return(existing, nil)
@@ -198,8 +196,6 @@ func TestRotateAPIKeyResetsUsageState(t *testing.T) {
 			assert.Zero(t, key.LastUsedAt)
 			assert.Empty(t, key.LastUsedIP)
 			assert.Empty(t, key.LastUsedUserAgent)
-			assert.Zero(t, key.RevokedAt)
-			assert.True(t, key.RevokedByID.IsNil())
 			assert.NotEqual(t, "trv_old", key.KeyPrefix)
 		}).
 		Return(nil)

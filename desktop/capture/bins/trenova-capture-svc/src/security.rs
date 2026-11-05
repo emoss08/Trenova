@@ -23,10 +23,16 @@ pub fn spool_sddl(service_sid: &str) -> String {
     format!("D:P{}(A;;0x100020;;;AU)", owners(service_sid))
 }
 
-/// One person's inbox: they may read and delete what is in it (modify, not
-/// full control, so they cannot change who else may).
+/// One person's inbox: they may list it, and read and delete what is in it
+/// (modify, not full control, so they cannot change who else may). On the
+/// directory itself they hold no write or delete right, because setting a mount
+/// point needs one, and a mount point would send the service's next write into
+/// someone else's inbox.
 pub fn inbox_sddl(service_sid: &str, user_sid: &str) -> String {
-    format!("D:P{}(A;OICI;0x1301bf;;;{user_sid})", owners(service_sid))
+    format!(
+        "D:P{}(A;;0x1200e9;;;{user_sid})(A;OIIO;0x1301bf;;;{user_sid})",
+        owners(service_sid)
+    )
 }
 
 #[cfg(test)]
@@ -53,6 +59,24 @@ mod tests {
             spool_sddl(SERVICE).ends_with("(A;;0x100020;;;AU)"),
             "traverse only, not inherited"
         );
-        assert!(inbox_sddl(SERVICE, USER).ends_with("(A;OICI;0x1301bf;;;S-1-5-21-7-8-9-1001)"));
+        assert!(inbox_sddl(SERVICE, USER).ends_with(
+            "(A;;0x1200e9;;;S-1-5-21-7-8-9-1001)(A;OIIO;0x1301bf;;;S-1-5-21-7-8-9-1001)"
+        ));
+    }
+
+    #[test]
+    fn the_inbox_owner_cannot_write_to_the_directory_itself() {
+        const FILE_WRITE_DATA: u32 = 0x2;
+        const FILE_APPEND_DATA: u32 = 0x4;
+        const FILE_WRITE_EA: u32 = 0x10;
+        const FILE_WRITE_ATTRIBUTES: u32 = 0x100;
+        const DELETE: u32 = 0x1_0000;
+        let directory_rights = 0x0012_00e9_u32;
+
+        assert_eq!(
+            directory_rights
+                & (FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | DELETE),
+            0
+        );
     }
 }

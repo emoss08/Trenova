@@ -2,6 +2,7 @@ package integrationservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,9 +11,9 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
@@ -22,13 +23,17 @@ type connectionTester interface {
 	Test(ctx context.Context, config map[string]string) error
 }
 
-var connectionTesters = map[integration.Type]connectionTester{
-	integration.TypeSamsara:            &samsaraConnectionTester{},
-	integration.TypeOANDAExchangeRates: &oandaExchangeRatesConnectionTester{},
-	integration.TypeEIAFuelPrices:      &eiaFuelPricesConnectionTester{},
-	integration.TypePCMiler:            &pcmilerConnectionTester{},
-	integration.TypeResend:             &resendConnectionTester{},
-	integration.TypePostmark:           &postmarkConnectionTester{},
+const connectionTestTimeout = 15 * time.Second
+
+func newConnectionTesters(client *http.Client) map[integration.Type]connectionTester {
+	return map[integration.Type]connectionTester{
+		integration.TypeSamsara:            &samsaraConnectionTester{client: client},
+		integration.TypeOANDAExchangeRates: &oandaExchangeRatesConnectionTester{client: client},
+		integration.TypeEIAFuelPrices:      &eiaFuelPricesConnectionTester{client: client},
+		integration.TypePCMiler:            &pcmilerConnectionTester{client: client},
+		integration.TypeResend:             &resendConnectionTester{client: client},
+		integration.TypePostmark:           &postmarkConnectionTester{client: client},
+	}
 }
 
 // fuelCardConnectionTester delegates to the connector that reads the feed, so
@@ -58,12 +63,14 @@ func (s *Service) testerFor(typ integration.Type) (connectionTester, bool) {
 		return &carrierIntelConnectionTester{connector: connector}, true
 	}
 
-	tester, ok := connectionTesters[typ]
+	tester, ok := s.connectionTesters[typ]
 
 	return tester, ok
 }
 
-type resendConnectionTester struct{}
+type resendConnectionTester struct {
+	client *http.Client
+}
 
 func (t *resendConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
 	apiKey := cfg["apiKey"]
@@ -83,8 +90,7 @@ func (t *resendConnectionTester) Test(ctx context.Context, cfg map[string]string
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Resend: %w", err)
 	}
@@ -97,7 +103,9 @@ func (t *resendConnectionTester) Test(ctx context.Context, cfg map[string]string
 	return nil
 }
 
-type postmarkConnectionTester struct{}
+type postmarkConnectionTester struct {
+	client *http.Client
+}
 
 func (t *postmarkConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
 	serverToken := cfg["serverToken"]
@@ -117,8 +125,7 @@ func (t *postmarkConnectionTester) Test(ctx context.Context, cfg map[string]stri
 	req.Header.Set("X-Postmark-Server-Token", serverToken)
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to Postmark: %w", err)
 	}
@@ -131,7 +138,9 @@ func (t *postmarkConnectionTester) Test(ctx context.Context, cfg map[string]stri
 	return nil
 }
 
-type oandaExchangeRatesConnectionTester struct{}
+type oandaExchangeRatesConnectionTester struct {
+	client *http.Client
+}
 
 func (t *oandaExchangeRatesConnectionTester) Test(
 	ctx context.Context,
@@ -164,8 +173,7 @@ func (t *oandaExchangeRatesConnectionTester) Test(
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to OANDA Exchange Rates: %w", err)
 	}
@@ -206,7 +214,9 @@ func (t *oandaExchangeRatesConnectionTester) Test(
 	return nil
 }
 
-type eiaFuelPricesConnectionTester struct{}
+type eiaFuelPricesConnectionTester struct {
+	client *http.Client
+}
 
 func (t *eiaFuelPricesConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
 	apiKey := cfg["apiKey"]
@@ -239,8 +249,7 @@ func (t *eiaFuelPricesConnectionTester) Test(ctx context.Context, cfg map[string
 	}
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to EIA: %w", err)
 	}
@@ -280,13 +289,16 @@ func (t *eiaFuelPricesConnectionTester) Test(ctx context.Context, cfg map[string
 	return nil
 }
 
-type samsaraConnectionTester struct{}
+type samsaraConnectionTester struct {
+	client *http.Client
+}
 
 func (t *samsaraConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
 	client, err := sharedsamsara.New(
 		cfg["token"],
 		sharedsamsara.WithBaseURL(cfg["baseUrl"]),
-		sharedsamsara.WithTimeout(15*time.Second),
+		sharedsamsara.WithHTTPClient(cloneClient(t.client)),
+		sharedsamsara.WithTimeout(connectionTestTimeout),
 	)
 	if err != nil {
 		return err
@@ -296,12 +308,15 @@ func (t *samsaraConnectionTester) Test(ctx context.Context, cfg map[string]strin
 	return err
 }
 
-type pcmilerConnectionTester struct{}
+type pcmilerConnectionTester struct {
+	client *http.Client
+}
 
 func (t *pcmilerConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
 	client, err := pcmiler.New(pcmiler.Config{
-		APIKey:  cfg["apiKey"],
-		BaseURL: cfg["baseUrl"],
+		APIKey:     cfg["apiKey"],
+		BaseURL:    cfg["baseUrl"],
+		HTTPClient: t.client,
 	})
 	if err != nil {
 		return err
@@ -318,10 +333,25 @@ func (t *pcmilerConnectionTester) Test(ctx context.Context, cfg map[string]strin
 		BordersOpen:         true,
 	}
 	if err = testPCMilerMileage(ctx, client, options); err != nil {
-		return err
+		return pcmilerTestError(err)
 	}
 
 	return nil
+}
+
+func pcmilerTestError(err error) error {
+	var httpErr *pcmiler.HTTPError
+	if errors.As(err, &httpErr) {
+		return fmt.Errorf("PC*Miler returned status %d", httpErr.StatusCode)
+	}
+
+	return errors.New("PC*Miler could not be reached or sent an unreadable response")
+}
+
+func cloneClient(client *http.Client) *http.Client {
+	clone := *client
+
+	return &clone
 }
 
 func testPCMilerMileage(

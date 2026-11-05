@@ -105,8 +105,8 @@ func (t *getShipmentTool) Policy() agenttoolports.ToolPolicy {
 		Reads:    agenttooltrust.ExternalReadMarked,
 		Source:   agent.TaintSourceRecordNote,
 		Rationale: "Reads a shipment with its newest comments, some of which a driver, a " +
-			"trading partner or another system outside the organization wrote; nothing " +
-			"changes and nothing is sent.",
+			"trading partner or another system outside the organization wrote, and a shipment " +
+			"entered over EDI holds a partner's own text; nothing changes and nothing is sent.",
 	})
 }
 
@@ -153,6 +153,7 @@ func (t *getShipmentTool) Query(
 	}
 
 	activity := newShipmentActivity(comments, holds)
+	activity.noteEntry(entity)
 	activity.LeftOutForAccess = readable.leftOutNote(params)
 	people := t.access.Redactor(ctx, params)
 

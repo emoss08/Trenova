@@ -4,8 +4,12 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"net/http"
 	"sort"
+	"strings"
+	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
@@ -22,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,6 +42,7 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	AuditService auditports.AuditService
 	Registry     *permissioncatalog.Registry
+	Config       *integrationconfig.Config
 
 	FuelCardConnectors     []fuelpurchaseports.FuelCardProvider      `group:"fuelCardConnectors"`
 	CarrierIntelConnectors []carrierintelports.CarrierIntelConnector `group:"carrierIntelConnectors"`
@@ -55,7 +61,12 @@ type Service struct {
 	carrierIntelConnectors map[integration.Type]carrierintelports.CarrierIntelConnector
 	carrierIntelControls   carrierintelports.CarrierIntelControlRepository
 	plans                  platformplanports.PlanService
+	egress                 httpsafe.Policy
+	httpClient             *http.Client
+	connectionTesters      map[integration.Type]connectionTester
 }
+
+const runtimeRequestTimeout = 30 * time.Second
 
 func New(p Params) *Service {
 	connectors := make(
@@ -78,6 +89,8 @@ func New(p Params) *Service {
 		}
 	}
 
+	egress := p.Config.EgressPolicy()
+
 	return &Service{
 		l:                      p.Logger.Named("service.integration"),
 		repo:                   p.Repo,
@@ -89,6 +102,11 @@ func New(p Params) *Service {
 		carrierIntelConnectors: intelConnectors,
 		carrierIntelControls:   p.CarrierIntelControls,
 		plans:                  p.Plans,
+		egress:                 egress,
+		httpClient:             httpsafe.NewClientWithPolicy(runtimeRequestTimeout, egress),
+		connectionTesters: newConnectionTesters(
+			httpsafe.NewClientWithPolicy(connectionTestTimeout, egress),
+		),
 	}
 }
 
@@ -276,6 +294,14 @@ func (s *Service) UpdateConfig(
 		return nil, err
 	}
 
+	if err = validateURLFields(spec, finalConfig, s.egress); err != nil {
+		return nil, err
+	}
+
+	if err = requireSecretsForNewTarget(spec, req.Configuration, existingConfig, finalConfig); err != nil {
+		return nil, err
+	}
+
 	roleChange := &carrierIntelRoleChange{
 		tenant:  tenantInfo,
 		typ:     typ,
@@ -424,6 +450,7 @@ type RuntimeConfig struct {
 	Ready                 bool              `json:"ready"`
 	MissingRequiredFields []string          `json:"missingRequiredFields"`
 	Config                map[string]string `json:"config"`
+	HTTPClient            *http.Client      `json:"-"`
 }
 
 var clientRuntimeConfigFields = map[integration.Type]map[string]struct{}{
@@ -584,6 +611,7 @@ func (s *Service) getRuntimeConfig(
 		Ready:                 record.Enabled && len(missingRequiredFields) == 0,
 		MissingRequiredFields: missingRequiredFields,
 		Config:                cfg,
+		HTTPClient:            s.httpClient,
 	}, nil
 }
 
@@ -620,6 +648,93 @@ func validateRequiredFields(
 		}
 	}
 	return nil
+}
+
+func validateURLFields(
+	spec integration.IntegrationSpec,
+	config map[string]any,
+	policy httpsafe.Policy,
+) error {
+	multiErr := errortypes.NewMultiError()
+	for _, field := range spec.Fields {
+		if field.Type != integration.ConfigFieldTypeURL {
+			continue
+		}
+		value := integration.ReadConfigString(config, field.Key)
+		if value != "" && !isAllowedBaseURL(value, policy) {
+			multiErr.Add(
+				"configuration."+field.Key,
+				errortypes.ErrInvalid,
+				"{0} must be an https address on a public host",
+				field.Label,
+			)
+		}
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func requireSecretsForNewTarget(
+	spec integration.IntegrationSpec,
+	incoming map[string]string,
+	existing, final map[string]any,
+) error {
+	if !targetChanged(spec, existing, final) {
+		return nil
+	}
+
+	multiErr := errortypes.NewMultiError()
+	for _, field := range spec.Fields {
+		if field.Sensitive && strings.TrimSpace(incoming[field.Key]) == "" &&
+			integration.ReadConfigString(existing, field.Key) != "" {
+			multiErr.Add(
+				"configuration."+field.Key,
+				errortypes.ErrRequired,
+				"Enter {0} again: a saved secret does not follow a change of address",
+				field.Label,
+			)
+		}
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func targetChanged(spec integration.IntegrationSpec, existing, final map[string]any) bool {
+	for _, field := range spec.Fields {
+		if field.Type != integration.ConfigFieldTypeURL {
+			continue
+		}
+		before := integration.ReadConfigString(existing, field.Key)
+		if before == "" {
+			before = field.Default
+		}
+		after := integration.ReadConfigString(final, field.Key)
+		if strings.TrimRight(before, "/") != strings.TrimRight(after, "/") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isAllowedBaseURL(value string, policy httpsafe.Policy) bool {
+	validate := httpsafe.ValidateHTTPSURL
+	if policy.AllowPrivateNetworks {
+		validate = httpsafe.ValidateURLWithPolicy
+	}
+
+	parsed, err := validate(value, policy)
+	if err != nil {
+		return false
+	}
+
+	return parsed.User == nil && parsed.RawQuery == "" && parsed.Fragment == ""
 }
 
 func findCatalogDefinition(typ integration.Type) integrationports.CatalogItem {

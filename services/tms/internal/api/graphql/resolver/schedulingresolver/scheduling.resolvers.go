@@ -311,12 +311,20 @@ func (r *QueryResolver) ShiftSwapRequest(ctx context.Context, id string) (*worke
 }
 
 func (r *QueryResolver) Rota(ctx context.Context, filter *gqlmodel.RotaFilterInput) (*gqlmodel.Rota, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSchedule, permission.OpRead)
+	authCtx, teamManagers, err := r.RequireListTeamScope(
+		ctx,
+		permission.ResourceWorkerSchedule,
+		permission.OpRead,
+		approvaldelegation.ApprovalScopeAll,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &schedulingservice.RotaRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
+	req := &schedulingservice.RotaRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ManagerIDs: teamManagers,
+	}
 	if filter != nil {
 		req.At = gqlscalar.Int64Value(filter.At)
 		req.Weeks = gqlscalar.IntValue(filter.Weeks)
@@ -327,7 +335,7 @@ func (r *QueryResolver) Rota(ctx context.Context, filter *gqlmodel.RotaFilterInp
 		if req.WorkerIDs, err = parseIDList(filter.WorkerIds); err != nil {
 			return nil, gqlid.InvalidIDError("workerIds", "Worker is invalid")
 		}
-		if gqlscalar.BoolValue(filter.TeamOnly) {
+		if gqlscalar.BoolValue(filter.TeamOnly) && len(teamManagers) == 0 {
 			if req.ManagerIDs, err = r.RotaManagerIDs(ctx, authCtx.UserID, resolvercore.TenantInfo(authCtx)); err != nil {
 				return nil, err
 			}

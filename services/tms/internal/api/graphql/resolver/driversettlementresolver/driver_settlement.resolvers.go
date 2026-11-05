@@ -607,11 +607,11 @@ func (r *MutationResolver) DetachPayEventFromSettlement(ctx context.Context, inp
 }
 
 func (r *MutationResolver) BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error) {
-	operation := permission.OpUpdate
-	if input.Action == driversettlementworkspaceservice.BulkActionApprove {
-		operation = permission.OpApprove
-	}
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverSettlement, operation)
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceDriverSettlement,
+		bulkActionOperation(input.Action),
+	)
 	if err != nil {
 		return nil, err
 	}

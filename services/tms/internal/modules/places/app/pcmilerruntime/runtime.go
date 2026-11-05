@@ -68,8 +68,9 @@ func Resolve(ctx context.Context, p *ResolveParams) Runtime {
 	}
 
 	client, err := pcmiler.New(pcmiler.Config{
-		APIKey:  cfg.Config["apiKey"],
-		BaseURL: cfg.Config["baseUrl"],
+		APIKey:     cfg.Config["apiKey"],
+		BaseURL:    cfg.Config["baseUrl"],
+		HTTPClient: cfg.HTTPClient,
 	})
 	if err != nil {
 		return runtime

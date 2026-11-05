@@ -12,6 +12,7 @@ export interface RecentPage {
 }
 
 interface RecentPagesState {
+  clear: () => void;
   pagesByOrganization: Record<string, RecentPage[]>;
   recordVisit: (organizationId: string | undefined, page: RecentPage) => void;
   forget: (organizationId: string | undefined, path: string) => void;
@@ -31,6 +32,8 @@ export const useRecentPagesStore = create<RecentPagesState>()(
   persist(
     (set) => ({
       pagesByOrganization: {},
+
+      clear: () => set({ pagesByOrganization: {} }),
 
       recordVisit: (organizationId, page) => {
         if (!organizationId || !isRecordable(page)) {

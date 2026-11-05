@@ -61,6 +61,7 @@ type CaptureDeviceRepository interface {
 	GetByAccessTokenHash(ctx context.Context, hash string) (*capture.CaptureDevice, error)
 	GetByRefreshTokenHash(ctx context.Context, hash string) (*capture.CaptureDevice, error)
 	GetByPreviousRefreshHash(ctx context.Context, hash string) (*capture.CaptureDevice, error)
+	ListActiveByUser(ctx context.Context, userID pulid.ID) ([]*capture.CaptureDevice, error)
 	Touch(ctx context.Context, req TouchCaptureDeviceRequest) error
 }
 

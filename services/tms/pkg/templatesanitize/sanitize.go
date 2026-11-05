@@ -109,13 +109,10 @@ var dataURIAllowedTypes = []string{
 // cssImportPattern and friends catch stylesheet constructs that fetch or execute.
 var (
 	cssImportPattern     = regexp.MustCompile(`(?i)@import`)
-	cssURLPattern        = regexp.MustCompile(`(?i)url\s*\(\s*['"]?([^'")]*)['"]?\s*\)`)
 	cssExpressionPattern = regexp.MustCompile(`(?i)expression\s*\(`)
 	cssBehaviorPattern   = regexp.MustCompile(`(?i)\bbehaviou?r\s*:`)
 	cssBindingPattern    = regexp.MustCompile(`(?i)-moz-binding\s*:`)
 	cssStyleEndPattern   = regexp.MustCompile(`(?i)</\s*style`)
-	cssImageSetPattern   = regexp.MustCompile(`(?i)image-set\s*\(([^)]*)\)`)
-	cssQuotedPattern     = regexp.MustCompile(`['"]([^'"]*)['"]`)
 )
 
 // HTML walks markup and reports every construct we refuse to render.
@@ -165,6 +162,15 @@ func HTML(field, source string, opts Options) templatediag.Diagnostics {
 				continue
 			}
 
+			if tag == "style" && tokenType == html.SelfClosingTagToken {
+				diags = append(diags, templatediag.ErrorAt(
+					templatediag.CodeForbiddenElement, field,
+					"<style/> is not allowed: a browser reads everything after it as a stylesheet",
+					tokenLine, tokenColumn,
+				))
+				continue
+			}
+
 			if tag == "style" && tokenType == html.StartTagToken {
 				if !opts.AllowStyleElement {
 					diags = append(diags, templatediag.ErrorAt(
@@ -179,7 +185,7 @@ func HTML(field, source string, opts Options) templatediag.Diagnostics {
 			}
 
 			diags = append(diags, checkAttributes(
-				tokenizer, tag, field, hasAttr, tokenLine, tokenColumn,
+				tokenizer, tag, field, hasAttr, tokenLine, tokenColumn, opts,
 			)...)
 
 		case html.EndTagToken:
@@ -218,6 +224,7 @@ func checkAttributes(
 	tag, field string,
 	hasAttr bool,
 	line, column int,
+	opts Options,
 ) templatediag.Diagnostics {
 	var diags templatediag.Diagnostics
 
@@ -261,15 +268,30 @@ func checkAttributes(
 			continue
 		}
 
+		if name == "srcset" {
+			for _, candidate := range srcsetCandidates(value) {
+				if diag, bad := checkURLScheme(
+					field, tag, name, candidate, true, line, column, opts,
+				); bad {
+					diags = append(diags, diag)
+				}
+			}
+			continue
+		}
+
 		if _, fetches := fetchingURLAttributes[name]; fetches {
-			if diag, bad := checkURLScheme(field, tag, name, value, true, line, column); bad {
+			if diag, bad := checkURLScheme(
+				field, tag, name, value, true, line, column, opts,
+			); bad {
 				diags = append(diags, diag)
 			}
 			continue
 		}
 
 		if _, navigates := navigationURLAttributes[name]; navigates {
-			if diag, bad := checkURLScheme(field, tag, name, value, false, line, column); bad {
+			if diag, bad := checkURLScheme(
+				field, tag, name, value, false, line, column, opts,
+			); bad {
 				diags = append(diags, diag)
 			}
 		}
@@ -286,6 +308,7 @@ func checkURLScheme(
 	field, tag, attr, value string,
 	fetched bool,
 	line, column int,
+	opts Options,
 ) (templatediag.Diagnostic, bool) {
 	// Entity-encoded and whitespace-padded schemes are the standard evasions;
 	// browsers decode both before dispatching, so we normalize the same way.
@@ -324,7 +347,7 @@ func checkURLScheme(
 
 	// A template variable in the URL position resolves at render time; the
 	// render-time pass checks the result.
-	if strings.Contains(value, "{{") {
+	if !opts.Rendered && strings.Contains(value, "{{") {
 		return templatediag.Diagnostic{}, false
 	}
 
@@ -341,6 +364,10 @@ func checkURLScheme(
 			),
 			line, column,
 		), true
+	}
+
+	if opts.Rendered {
+		return templatediag.Diagnostic{}, false
 	}
 
 	// A relative link has no base to resolve against once a document has left the
@@ -446,37 +473,134 @@ func CSS(field, source string) templatediag.Diagnostics {
 			"-moz-binding is not allowed: it executes script"))
 	}
 
-	for _, match := range cssURLPattern.FindAllStringSubmatch(normalized, -1) {
-		target := normalizeURLForSchemeCheck(match[1])
-		if target == "" || strings.HasPrefix(target, "data:") {
+	for _, target := range cssFetchTargets(normalized) {
+		checked := normalizeURLForSchemeCheck(target)
+		if checked == "" || strings.HasPrefix(checked, "data:") {
 			continue
 		}
-		if strings.Contains(match[1], "{{") {
+		if strings.Contains(target, "{{") && strings.Contains(source, target) {
 			continue
 		}
 		diags = append(diags, templatediag.Error(templatediag.CodeForbiddenCSS, field, fmt.Sprintf(
 			"url(%s) is not allowed: only data: URIs can be loaded",
-			strings.TrimSpace(match[1]),
+			strings.TrimSpace(target),
 		)))
 	}
 
-	for _, match := range cssImageSetPattern.FindAllStringSubmatch(normalized, -1) {
-		for _, quoted := range cssQuotedPattern.FindAllStringSubmatch(match[1], -1) {
-			target := normalizeURLForSchemeCheck(quoted[1])
-			if target == "" || strings.HasPrefix(target, "data:") {
-				continue
+	return diags
+}
+
+// cssFetchTargets reads every url(), image-set() and src() argument the way a CSS
+// parser does, so a quote or a bracket inside a string cannot end one early.
+func cssFetchTargets(normalized string) []string {
+	var targets []string
+	lower := strings.ToLower(normalized)
+
+	for _, name := range [...]string{"url", "src"} {
+		for at := 0; at < len(lower); {
+			next := strings.Index(lower[at:], name+"(")
+			if next < 0 {
+				break
 			}
-			diags = append(
-				diags,
-				templatediag.Error(templatediag.CodeForbiddenCSS, field, fmt.Sprintf(
-					"image-set(%s) is not allowed: only data: URIs can be loaded",
-					strings.TrimSpace(quoted[1]),
-				)),
-			)
+			start := at + next + len(name) + 1
+			at = start
+			if target, end, ok := cssArgument(normalized, start); ok {
+				targets = append(targets, target)
+				at = end
+			}
 		}
 	}
 
-	return diags
+	for at := 0; at < len(lower); {
+		next := strings.Index(lower[at:], "image-set(")
+		if next < 0 {
+			break
+		}
+		at += next + len("image-set(")
+		targets = append(targets, cssQuotedStrings(normalized, at)...)
+	}
+
+	return targets
+}
+
+func cssArgument(source string, start int) (string, int, bool) {
+	i := start
+	for i < len(source) && isCSSSpace(source[i]) {
+		i++
+	}
+	if i >= len(source) {
+		return "", i, false
+	}
+	if source[i] == '"' || source[i] == '\'' {
+		return cssString(source, i)
+	}
+
+	end := strings.IndexByte(source[i:], ')')
+	if end < 0 {
+		return source[i:], len(source), true
+	}
+
+	return strings.TrimSpace(source[i : i+end]), i + end + 1, true
+}
+
+func cssString(source string, start int) (string, int, bool) {
+	quote := source[start]
+	for i := start + 1; i < len(source); i++ {
+		if source[i] == quote {
+			return source[start+1 : i], i + 1, true
+		}
+	}
+
+	return source[start+1:], len(source), true
+}
+
+func cssQuotedStrings(source string, start int) []string {
+	var found []string
+	depth := 1
+	for i := start; i < len(source) && depth > 0; i++ {
+		switch source[i] {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case '"', '\'':
+			value, end, _ := cssString(source, i)
+			found = append(found, value)
+			i = end - 1
+		}
+	}
+
+	return found
+}
+
+func isCSSSpace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'
+}
+
+// srcsetCandidates splits a srcset as a browser does: a URL runs to whitespace, so
+// the comma inside a data: URI stays in it, and a descriptor runs to the next comma.
+func srcsetCandidates(value string) []string {
+	var candidates []string
+	for i := 0; i < len(value); {
+		for i < len(value) && (isCSSSpace(value[i]) || value[i] == ',') {
+			i++
+		}
+		start := i
+		for i < len(value) && !isCSSSpace(value[i]) {
+			i++
+		}
+		if start == i {
+			break
+		}
+		candidates = append(candidates, strings.TrimRight(value[start:i], ","))
+		if next := strings.IndexByte(value[i:], ','); next >= 0 {
+			i += next
+		} else {
+			break
+		}
+	}
+
+	return candidates
 }
 
 // normalizeCSS returns the stylesheet the way a CSS parser sees it: comments
@@ -556,11 +680,25 @@ type Options struct {
 	// and an author who relies on it ships a document that looks broken in half
 	// the inboxes that receive it.
 	AllowStyleElement bool
+	// Rendered judges output rather than source. What fetches or executes is held
+	// to the same rules; a relative link is left alone, because it cannot do
+	// either and a live invoice must not fail over one.
+	Rendered bool
 }
 
 // DocumentOptions is the rule set for PDF output.
 func DocumentOptions() Options {
 	return Options{AllowStyleElement: true}
+}
+
+// RenderedDocumentOptions is the rule set for finished PDF output.
+func RenderedDocumentOptions() Options {
+	return Options{AllowStyleElement: true, Rendered: true}
+}
+
+// RenderedEmailOptions is the rule set for a finished HTML email body.
+func RenderedEmailOptions() Options {
+	return Options{Rendered: true}
 }
 
 // EmailOptions is the rule set for HTML email bodies.

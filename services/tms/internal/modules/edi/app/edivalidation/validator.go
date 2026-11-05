@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/smime"
@@ -416,6 +417,12 @@ func (v *Validator) validateAS2ProfileConfig(
 	validateAS2Certificate(
 		multiErr,
 		entity.Config,
+		editransport.ConfigKeyLocalEncryptionCertificate,
+		"config.localEncryptionCertificate",
+	)
+	validateAS2Certificate(
+		multiErr,
+		entity.Config,
 		editransport.ConfigKeyPartnerSigningCertificate,
 		"config.partnerSigningCertificate",
 	)
@@ -425,7 +432,26 @@ func (v *Validator) validateAS2ProfileConfig(
 		editransport.ConfigKeyPartnerEncryptionCertificate,
 		"config.partnerEncryptionCertificate",
 	)
+	validateAS2SignedInbound(multiErr, entity)
 	requireCredentials(multiErr, entity)
+}
+
+func validateAS2SignedInbound(multiErr *errortypes.MultiError, entity *edi.EDICommunicationProfile) {
+	if entity.Status == domaintypes.StatusInactive {
+		return
+	}
+	config := entity.Config
+	required, ok := maputils.BoolValue(config, editransport.ConfigKeyRequireSignedInbound)
+	if ok && !required {
+		return
+	}
+	if maputils.StringValue(config, editransport.ConfigKeyPartnerSigningCertificate) == "" {
+		multiErr.Add(
+			"config.partnerSigningCertificate",
+			errortypes.ErrRequired,
+			"A partner signing certificate is required to verify signed inbound documents",
+		)
+	}
 }
 
 func validateAS2Algorithm(

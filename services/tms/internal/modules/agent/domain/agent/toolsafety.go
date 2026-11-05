@@ -248,6 +248,24 @@ func (t *RunTaint) Absorb(marks []TaintMark) []TaintMark {
 	return added
 }
 
+func (t *RunTaint) ReadBeyond(toolName string) bool {
+	if t == nil || t.Overflowed {
+		return true
+	}
+
+	own := make([]TaintSource, 0, 1)
+	for _, mark := range t.Marks {
+		if mark.ToolName != toolName {
+			return true
+		}
+		own = append(own, mark.Source)
+	}
+
+	return slices.ContainsFunc(t.Seen, func(source TaintSource) bool {
+		return !slices.Contains(own, source)
+	})
+}
+
 func (t *RunTaint) Unknown() bool {
 	return t == nil
 }
@@ -295,6 +313,7 @@ const (
 	TaintEntityWeatherAlert    = "weather_alert"
 	TaintEntityWatchtowerItem  = "watchtower_item"
 	TaintEntityShipment        = "shipment"
+	TaintEntityReport          = "report"
 )
 
 var outsideAuthoredEntities = map[SubjectType]string{

@@ -78,7 +78,7 @@ func TestFuzzy_EveryWordMatchesACloseSpellingAndThePhraseRanks(t *testing.T) {
 	t.Parallel()
 
 	q := testTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	match, ok := p.fuzzy(&pagination.QueryOptions{Query: "Acme manufacuring co"})
 	require.True(t, ok)
 
@@ -95,7 +95,7 @@ func TestFuzzy_OneWordRanksByItself(t *testing.T) {
 	t.Parallel()
 
 	q := testTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	match, ok := p.fuzzy(&pagination.QueryOptions{Query: "frshhaul"})
 	require.True(t, ok)
 
@@ -117,22 +117,22 @@ func TestFuzzy_NotOfferedWithoutFieldsOrWords(t *testing.T) {
 	}{
 		{
 			name:   "a model without fuzzy fields",
-			plan:   newPlan(testPlainTrucks.Query(), nil),
+			plan:   newPlan(t.Context(), testPlainTrucks.Query(), nil),
 			filter: &pagination.QueryOptions{Query: "frshhaul"},
 		},
 		{
 			name:   "no filter",
-			plan:   newPlan(testTrucks.Query(), nil),
+			plan:   newPlan(t.Context(), testTrucks.Query(), nil),
 			filter: nil,
 		},
 		{
 			name:   "only short words",
-			plan:   newPlan(testTrucks.Query(), nil),
+			plan:   newPlan(t.Context(), testTrucks.Query(), nil),
 			filter: &pagination.QueryOptions{Query: "dry van"},
 		},
 		{
 			name:   "websearch syntax",
-			plan:   newPlan(testTrucks.Query(), nil),
+			plan:   newPlan(t.Context(), testTrucks.Query(), nil),
 			filter: &pagination.QueryOptions{Query: `"freshhaul foods"`},
 		},
 	}
@@ -151,7 +151,7 @@ func TestNarrow_TheFallbackKeepsTheFiltersAndDropsTheSearch(t *testing.T) {
 	t.Parallel()
 
 	q := testTrucks.Query()
-	p := newPlan(q, nil)
+	p := newPlan(t.Context(), q, nil)
 	req := &Request[testTruck]{Filter: &pagination.QueryOptions{
 		Query: "frshhaul",
 		FieldFilters: []domaintypes.FieldFilter{
@@ -171,7 +171,7 @@ func TestNarrow_TheFallbackKeepsTheFiltersAndDropsTheSearch(t *testing.T) {
 	assert.Contains(t, fallback, `t."active" = $3`)
 
 	plain := testPlainTrucks.Query()
-	assert.Nil(t, narrow(newPlan(plain, nil), plain, &Request[testPlainTruck]{
+	assert.Nil(t, narrow(newPlan(t.Context(), plain, nil), plain, &Request[testPlainTruck]{
 		Filter: &pagination.QueryOptions{Query: "frshhaul"},
 	}))
 }

@@ -5,7 +5,7 @@ import {
 import { signInPathAfter } from "@trenova/shared/lib/sign-out-notice";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 
-function leaveDashSession(destination: string): void {
+export function leaveDashSession(destination: string): void {
   useAuthStore.getState().clearAuth();
   window.location.assign(destination);
 }

@@ -261,6 +261,7 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 		proposal.BusinessUnitID != actor.BusinessUnitID {
 		return nil, ErrTenantMismatch
 	}
+	ctx = permissionports.BindActorSession(ctx, actor)
 
 	tool, execParams, err := s.admit(ctx, approval)
 	if err != nil {

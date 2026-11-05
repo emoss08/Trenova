@@ -1,6 +1,9 @@
 package iam
 
 import (
+	"strings"
+	"strconv"
+	"slices"
 	"context"
 	"fmt"
 	"regexp"
@@ -330,6 +333,23 @@ func (p *AccessPolicy) BeforeUpdate(_ context.Context) error {
 	return nil
 }
 
+var accessPolicyMinimumKeys = []string{"authenticatorAalMin", "federationFalMin"}
+
+var accessPolicyConditionKeys = []string{
+	"principalType",
+	"principalId",
+	"userId",
+	"businessUnitId",
+	"organizationId",
+	"resourceId",
+	"ownerId",
+	"activeRoleId",
+	"riskDecision",
+	"mfaRequired",
+	"authenticatorAalMin",
+	"federationFalMin",
+}
+
 func (p *AccessPolicy) BeforeCreate(_ context.Context) error {
 	if p.Conditions == nil {
 		p.Conditions = map[string]string{}
@@ -353,6 +373,27 @@ func (p *AccessPolicy) Validate(multiErr *errortypes.MultiError) {
 		),
 	)
 	multiErr.AddOzzoError(err)
+	p.validateConditions(multiErr)
+}
+
+func (p *AccessPolicy) validateConditions(multiErr *errortypes.MultiError) {
+	for key, expected := range p.Conditions {
+		trimmedKey := strings.TrimSpace(key)
+		if !slices.Contains(accessPolicyConditionKeys, trimmedKey) {
+			multiErr.Add(
+				"conditions",
+				errortypes.ErrInvalid,
+				"{0} is not a condition a policy can use, so this policy would never apply",
+				key,
+			)
+			continue
+		}
+		if slices.Contains(accessPolicyMinimumKeys, trimmedKey) {
+			if _, err := strconv.Atoi(strings.TrimSpace(expected)); err != nil {
+				multiErr.Add("conditions", errortypes.ErrInvalid, "{0} must be a number", key)
+			}
+		}
+	}
 }
 
 func (p *AccessPolicy) GetID() pulid.ID {

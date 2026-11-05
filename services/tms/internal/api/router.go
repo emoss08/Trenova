@@ -551,6 +551,7 @@ func (r *Router) setupMiddleware() {
 
 	r.s.router.Use(middleware.NewSecurityHeadersMiddleware(r.appConfig))
 	r.s.router.Use(gin.Recovery())
+	r.s.router.Use(middleware.NewMultipartCleanupMiddleware(r.l))
 	r.s.router.Use(requestid.New())
 	r.s.router.Use(middleware.NewRequestMetaMiddleware())
 	r.s.router.Use(r.tenantBoundaryMiddleware.Track())
@@ -708,6 +709,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
 	protected.Use(r.responseGuard.Install())
+	protected.Use(r.responseGuard.InstallListGuard())
 	protected.Use(r.readScopeMiddleware.Install())
 	protected.Use(r.rateLimiter.ByAPIKey())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())

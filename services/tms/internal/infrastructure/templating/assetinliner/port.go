@@ -24,7 +24,11 @@ func (i *Inliner) InlineAssets(
 		return &documenttemplateports.AssetInlineResult{}, nil
 	}
 
-	result, err := i.Inline(ctx, &Request{HTML: req.HTML, Field: req.Field})
+	result, err := i.Inline(ctx, &Request{
+		HTML:           req.HTML,
+		Field:          req.Field,
+		OrganizationID: req.OrganizationID,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +52,7 @@ func (i *Inliner) ResolveImageDataURI(ctx context.Context, src string) (string, 
 		return "", nil
 	}
 
-	img, err := i.resolve(ctx, src)
+	img, err := i.resolve(ctx, src, func(string) bool { return true })
 	if err != nil {
 		i.l.Debug("could not resolve image for a template context", zap.Error(err))
 		return "", nil

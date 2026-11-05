@@ -305,6 +305,8 @@ type AssetInlineRequest struct {
 	HTML string
 	// Field names the editor pane, so a diagnostic routes back to it.
 	Field string
+	// OrganizationID is whose stored objects a storage key may name.
+	OrganizationID pulid.ID
 }
 
 type AssetInlineResult struct {

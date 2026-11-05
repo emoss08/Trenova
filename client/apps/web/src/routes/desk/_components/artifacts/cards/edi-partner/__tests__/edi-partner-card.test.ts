@@ -8,6 +8,7 @@ import {
   certificateReading,
   connectionExchange,
   credentialChips,
+  credentialLabel,
   deliveryFigure,
   headFacts,
   mappingChips,
@@ -494,5 +495,22 @@ describe("listed messages", () => {
     expect(messageRowLine(message({ ackStatus: "Rejected", ackLastError: "AK5*R" }), t)).toBe(
       "Interchange 000000417 · AK5*R",
     );
+  });
+});
+
+describe("credentialLabel", () => {
+  it("names the AS2 keys and certificates by whose they are", () => {
+    expect(credentialLabel("privateKey", "AS2", t)).toBe("Our private key");
+    expect(credentialLabel("decryptionPrivateKey", "AS2", t)).toBe("Our decryption key");
+    expect(credentialLabel("localEncryptionCertificate", "AS2", t)).toBe(
+      "Our encryption certificate",
+    );
+    expect(credentialLabel("partnerSigningCertificate", "AS2", t)).toBe(
+      "Their signing certificate",
+    );
+  });
+
+  it("keeps a plain private key for other methods", () => {
+    expect(credentialLabel("privateKey", "SFTP", t)).toBe("Private key");
   });
 });

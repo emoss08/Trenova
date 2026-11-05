@@ -180,7 +180,7 @@ func (f *FakeReporting) Catalog(
 	ctx context.Context,
 	req *reporting.Request,
 ) (*reporting.Catalog, error) {
-	return reporting.CatalogFor(ctx, f.Kinds, req.TenantInfo)
+	return reporting.CatalogFor(ctx, f.Kinds, req)
 }
 
 func (f *FakeReporting) ListCanned() []*canned.Entry { return f.Entries }

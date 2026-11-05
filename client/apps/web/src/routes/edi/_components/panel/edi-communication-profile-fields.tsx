@@ -153,7 +153,7 @@ export function TransportProfileFields({
                 label={t("Require signed inbound")}
                 options={as2InboundRequirementOptions}
                 description={t(
-                  "Reject inbound documents that are not signed by the partner. Automatic requires a signature when a partner signing certificate is configured.",
+                  "Reject inbound documents that are not signed by the partner. Automatic requires a signature, so inbound documents are refused until a partner signing certificate is configured. Off accepts documents with no proof of who sent them.",
                 )}
               />
             </FormControl>
@@ -178,7 +178,17 @@ export function TransportProfileFields({
                 name="config.localCertificate"
                 label={t("Local certificate (PEM)")}
                 description={t(
-                  "Our public certificate. Partners use it to encrypt to us and verify our signatures; pair it with the private key secret.",
+                  "Our public certificate. Partners verify our signatures with it, and encrypt to it unless an encryption certificate is set; pair it with the private key secret.",
+                )}
+              />
+            </FormControl>
+            <FormControl cols="full">
+              <EDICertificateField
+                control={control}
+                name="config.localEncryptionCertificate"
+                label={t("Encryption certificate (PEM)")}
+                description={t(
+                  "Optional. Give partners this certificate to encrypt to, so a separate key decrypts and the signing key is never used for it; pair it with the decryption key secret.",
                 )}
               />
             </FormControl>
@@ -502,7 +512,17 @@ export function SecretProfileFields({
                   name="secrets.privateKey"
                   label={t("AS2 private key (PEM)")}
                   description={t(
-                    "Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.",
+                    "Pairs with the local certificate. It signs, and decrypts too unless a decryption key is set. Leave blank to keep the saved value.",
+                  )}
+                />
+              </FormControl>
+              <FormControl cols="full">
+                <SensitiveTextareaField
+                  control={control}
+                  name="secrets.decryptionPrivateKey"
+                  label={t("AS2 decryption key (PEM)")}
+                  description={t(
+                    "Pairs with the encryption certificate and only decrypts. Leave blank to keep the saved value.",
                   )}
                 />
               </FormControl>

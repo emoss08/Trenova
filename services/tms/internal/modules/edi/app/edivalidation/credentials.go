@@ -79,6 +79,19 @@ var as2Credentials = []credentialSpec{
 		message:  "AS2 private key secret is required when a local certificate is configured",
 	},
 	{
+		keys:     []string{editransport.ConfigKeyLocalEncryptionCertificate},
+		label:    "Your encryption certificate",
+		kind:     ediconnectiondraftports.CredentialKindSetting,
+		required: never,
+	},
+	{
+		keys:     []string{editransport.SecretKeyAS2DecryptionPrivateKey},
+		label:    "AS2 private key for your encryption certificate",
+		kind:     ediconnectiondraftports.CredentialKindSecret,
+		required: configSet(editransport.ConfigKeyLocalEncryptionCertificate),
+		message:  "AS2 decryption key secret is required when an encryption certificate is configured",
+	},
+	{
 		keys:     []string{editransport.SecretKeyBasicAuthPassword},
 		label:    "Basic auth password",
 		kind:     ediconnectiondraftports.CredentialKindSecret,

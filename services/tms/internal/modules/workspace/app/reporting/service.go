@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -101,8 +102,9 @@ func New(p Params) (*Service, error) {
 }
 
 type Request struct {
-	TenantInfo pagination.TenantInfo
-	Principal  kernelports.PrincipalInfo
+	TenantInfo   pagination.TenantInfo
+	Principal    kernelports.PrincipalInfo
+	FieldCeiling permission.FieldSensitivity
 }
 
 type SaveDefinitionRequest struct {

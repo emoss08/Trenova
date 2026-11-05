@@ -4,7 +4,7 @@
 use std::io;
 
 use capture_platform::accounts::account_sid;
-pub use capture_platform::acl::create_secured;
+pub use capture_platform::acl::{apply_dacl, create_secured, refuse_reparse};
 use capture_protocol::handoff::Inbox;
 use trenova_capture_svc::SERVICE_NAME;
 use trenova_capture_svc::attribution::{Owner, valid_sid};
@@ -36,7 +36,10 @@ impl Inboxes for SecuredInboxes {
             return Err(io::Error::from(io::ErrorKind::InvalidInput));
         }
         let dir = self.root.join(&owner.sid);
-        create_secured(&dir, &inbox_sddl(&self.service_sid, &owner.sid))?;
+        let sddl = inbox_sddl(&self.service_sid, &owner.sid);
+        create_secured(&dir, &sddl)?;
+        refuse_reparse(&dir)?;
+        apply_dacl(&dir, &sddl)?;
         Ok(Inbox::new(dir))
     }
 }

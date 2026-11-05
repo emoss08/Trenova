@@ -217,7 +217,7 @@ func TestWorkerSearchConfig_ProfileIsFilterableAndSortable(t *testing.T) {
 
 func TestWorkerSearchConfig_ProfileFilterJoinsAndQualifies(t *testing.T) {
 	w := workerdb.Workers
-	q := listquery.Filter(w.Query(), &pagination.QueryOptions{
+	q := listquery.Filter(t.Context(), w.Query(), &pagination.QueryOptions{
 		FieldFilters: []domaintypes.FieldFilter{
 			{
 				Field:    "profile.trainingHealth",

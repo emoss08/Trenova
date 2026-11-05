@@ -209,6 +209,11 @@ func (t *getShipmentTool) several(
 	if len(outcome.outside) > 0 {
 		outcome.CommentsNote = outsideCommentsNote
 	}
+	for _, entity := range entities {
+		if ref, outside := enteredOutside(entity); outside {
+			outcome.outside = append(outcome.outside, ref)
+		}
+	}
 
 	return outcome, nil
 }

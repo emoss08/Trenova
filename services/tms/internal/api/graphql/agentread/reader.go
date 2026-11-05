@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/api/fieldguard"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"math"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -134,6 +138,10 @@ func (r *Reader) Read(
 	ctx = gqlctx.WithPermissionMemo(ctx, gqlctx.NewPermissionMemo())
 	ctx = gqlctx.WithResponseStatus(ctx, status)
 	ctx = gqlctx.WithFieldCeiling(ctx, ceiling)
+	groupCtx := ctx
+	ctx = listquery.WithFieldGuard(ctx, fieldguard.NewListGuard(func() protectedfield.GroupSet {
+		return resolvercore.VisibleFieldGroups(groupCtx, r.permissions, auth)
+	}))
 	ctx = r.loaders.Attach(ctx, pagination.TenantInfo{
 		OrgID:  auth.OrganizationID,
 		BuID:   auth.BusinessUnitID,

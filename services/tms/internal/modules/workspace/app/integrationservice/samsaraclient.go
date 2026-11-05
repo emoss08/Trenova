@@ -26,6 +26,7 @@ func (s *Service) SamsaraClient(
 	client, err := sharedsamsara.New(
 		token,
 		sharedsamsara.WithBaseURL(runtimeCfg.Config["baseUrl"]),
+		sharedsamsara.WithHTTPClient(cloneClient(s.httpClient)),
 	)
 	if err != nil {
 		return nil, errortypes.NewBusinessError(

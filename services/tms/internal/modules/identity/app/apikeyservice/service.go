@@ -268,6 +268,19 @@ func (s *Service) RotateAPIKey(
 		return nil, err
 	}
 
+	if key.Status == apikey.StatusRevoked {
+		return nil, errortypes.NewBusinessError("a revoked api key cannot be rotated")
+	}
+
+	if err = s.validateWithinActor(
+		ctx,
+		tenantInfo.UserID,
+		tenantInfo.OrgID,
+		permissionInputs(key.Permissions),
+	); err != nil {
+		return nil, err
+	}
+
 	before := s.mapAPIKeyResponse(key)
 
 	generated, err := apikey.GenerateAPIKeySecret()
@@ -278,9 +291,6 @@ func (s *Service) RotateAPIKey(
 	key.KeyPrefix = generated.Prefix
 	key.SecretHash = generated.Hash
 	key.SecretSalt = generated.Salt
-	key.Status = apikey.StatusActive
-	key.RevokedAt = 0
-	key.RevokedByID = ""
 	key.LastUsedAt = 0
 	key.LastUsedIP = ""
 	key.LastUsedUserAgent = ""
@@ -560,6 +570,18 @@ func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissi
 	}
 
 	return nil
+}
+
+func permissionInputs(perms []*apikey.Permission) []apikeyports.APIKeyPermissionInput {
+	inputs := make([]apikeyports.APIKeyPermissionInput, 0, len(perms))
+	for _, perm := range perms {
+		inputs = append(inputs, apikeyports.APIKeyPermissionInput{
+			Resource:   perm.Resource,
+			Operations: perm.Operations,
+			DataScope:  perm.DataScope,
+		})
+	}
+	return inputs
 }
 
 func (s *Service) validateWithinActor(

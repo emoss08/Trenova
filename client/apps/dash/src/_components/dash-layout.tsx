@@ -2,6 +2,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { fetchMyPortalProfile } from "@trenova/shared/lib/graphql/driver-portal";
 import { cn } from "@trenova/shared/lib/utils";
+import { dropPushOfAnotherDriver } from "@/lib/push-owner";
+import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQuery } from "@tanstack/react-query";
 import {
   Bell01Icon,
@@ -12,6 +14,7 @@ import {
   Wallet02Icon,
 } from "@trenova/shared/components/icons";
 import { m } from "motion/react";
+import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, Link } from "react-router";
 import { DashIdleTimeout } from "./dash-idle-timeout";
 import { useDashRealtime } from "./use-dash-realtime";
@@ -59,6 +62,14 @@ function NotificationBell() {
 }
 
 export function DashLayout() {
+  const userId = useAuthStore((state) => currentProfile(state)?.id);
+
+  useEffect(() => {
+    if (userId) {
+      void dropPushOfAnotherDriver(userId).catch(() => {});
+    }
+  }, [userId]);
+
   const t = useT();
 
   const location = useLocation();

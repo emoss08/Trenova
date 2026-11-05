@@ -231,6 +231,7 @@ type PortalReadRequest struct {
 	Question   string
 	Details    map[string]string
 	Owner      PortalTaskOwner
+	AfterOutsideText bool
 }
 
 type PortalReadOutcome struct {

@@ -631,3 +631,23 @@ func TestPortalTasksNeedTheExtensionOn(t *testing.T) {
 	require.True(t, agentextensionservice.IsToolError(err))
 	assert.True(t, strings.Contains(err.Error(), "Portal work is not set up"))
 }
+
+func TestReadPortalRefusesASignedInSiteAfterOtherOutsideText(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.enableBrowser(t)
+	site := f.addSite(t, false)
+
+	_, err := f.svc.ReadPortal(t.Context(), &agentextensionports.PortalReadRequest{
+		TenantInfo:       f.tenant,
+		SiteID:           site.ID,
+		Question:         "Which dock appointments are open on October 20?",
+		AfterOutsideText: true,
+	})
+
+	var refusal *agentextensionservice.ToolError
+	require.ErrorAs(t, err, &refusal)
+	assert.Contains(t, refusal.Message, "web_use_portal")
+	assert.Empty(t, f.browser.started)
+}

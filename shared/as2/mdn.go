@@ -27,6 +27,31 @@ var (
 	errMDNDispositionEmpty = errors.New("as2: disposition notification has no disposition field")
 )
 
+const (
+	MDNErrorAuthenticationFailed = "authentication-failed"
+	MDNErrorDecryptionFailed     = "decryption-failed"
+	MDNErrorDecompressionFailed  = "decompression-failed"
+	MDNErrorInsufficientSecurity = "insufficient-message-security"
+	MDNErrorUnexpected           = "unexpected-processing-error"
+)
+
+func MDNErrorFor(err error) string {
+	switch {
+	case errors.Is(err, ErrDecryptionFailed):
+		return MDNErrorDecryptionFailed
+	case errors.Is(err, ErrAuthenticationFailed),
+		errors.Is(err, ErrSignatureRequired),
+		errors.Is(err, ErrNoPartnerCertificate):
+		return MDNErrorAuthenticationFailed
+	case errors.Is(err, ErrDecompressionFailed):
+		return MDNErrorDecompressionFailed
+	case errors.Is(err, ErrEncryptionRequired):
+		return MDNErrorInsufficientSecurity
+	default:
+		return MDNErrorUnexpected
+	}
+}
+
 type BuildMDNOptions struct {
 	From               string
 	To                 string

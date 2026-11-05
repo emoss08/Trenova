@@ -8,19 +8,19 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/shared/httpsafe"
 )
 
 type PostmarkSender struct {
 	client *http.Client
 }
 
-func NewPostmarkSender() *PostmarkSender {
-	return &PostmarkSender{client: &http.Client{Timeout: 20 * time.Second}}
+func NewPostmarkSender(policy httpsafe.Policy) *PostmarkSender {
+	return &PostmarkSender{client: httpsafe.NewClientWithPolicy(providerRequestTimeout, policy)}
 }
 
 func (s *PostmarkSender) Provider() email.Provider {

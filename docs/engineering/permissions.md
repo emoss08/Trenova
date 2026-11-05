@@ -458,8 +458,8 @@ The REST routes withhold the same fields through the entity's `WithholdFields`
 the root or nested inside another (a driver on a shipment), and an update keeps the stored value of any group the writer
 cannot see (`KeepFields` in the worker, credential and rate agreement services), so a form
 that never received a field cannot clear it. Creating a record takes the values as sent.
-Workers are published to the realtime stream without their entity, so a subscriber refetches
-through the guarded paths.
+A tenant-wide realtime event carries identifiers and never a record, so a subscriber refetches
+through the guarded paths ([realtime.md](realtime.md)).
 
 The audit trail withholds the same fields when an entry is read, not when it is written, so a
 reader who holds the group (an administrator reviewing a change) still sees the whole diff.
@@ -543,13 +543,45 @@ is `PrincipalTypeAgent` with the agent definition's id, and a check passes only 
 2. the role the organization chose for the agent, if any, grants it, through the role's
    parents too (`agent_definitions.unattended_role_id`, read through
    `permissionports.AgentRoleSource` and cached per agent under the organization epoch);
-3. no access policy denies it. Policies bind agent principals as they bind people; match
-   them with the `principalType` condition `agent` or `principalId` the agent's id.
+3. no access policy denies it. Policies bind agent principals as they bind people and API
+   keys; match them with the `principalType` condition `agent` or `principalId` the agent's id.
 
 `setAgentUnattendedRole` needs `agent_definition:update` and `role:update`, and runs the
 delegation check over the role's whole closure: the person setting it must hold every grant
 and the sensitivity ceiling the role carries. The change advances the organization epoch,
 so the next unattended call reads the new role, and is recorded as a critical audit entry.
+
+## Access policies
+
+An enabled policy narrows a grant for every principal: people, agents and API keys
+(`applyAccessPolicies`). It never widens one. Its conditions are of two kinds.
+
+- **Scope** conditions say who and what the policy is about (`principalType`, `principalId`,
+  `userId`, `resourceId`, `ownerId`, `activeRoleId`, `riskDecision`, …). A policy whose scope does
+  not match is skipped.
+- **Requirement** conditions say what a session must have proved: `mfaRequired`,
+  `authenticatorAalMin`, `federationFalMin`. A session that falls short is refused whatever the
+  policy's effect. One that meets them gets the Allow, and a Deny stands down, so a Deny with
+  `mfaRequired` reads "deny unless MFA". An unreadable minimum refuses.
+
+Requirements bind a person's session, wherever the check is made. `authctx.BindSession` puts the
+session on the request's context, and the engine reads it for any check of that same person, so a
+service-layer `RequestActor.PermissionCheck` is held like a route's; a check about somebody else
+never borrows it. An agent turn runs elsewhere, so the actor carries `Session` across Temporal and
+`permissionports.BindActorSession` restores it, with its role activation, in `tooldispatch` and
+`proposalexecutor`. An actor for a person with no session (a queued, scheduled or resumed turn)
+counts as `authctx.UnprovenAssurance`: it fails an MFA requirement and passes nothing it cannot prove. A capture device binds the same
+unproven session (`SetCaptureDeviceContext`), so a policy asking for MFA holds for a device too.
+Where an organization requires role activation, an unproven session holds no roles: nothing
+activated them, so a queued or scheduled turn is refused rather than running with every role
+(`engine.withoutActivatedRoles`). A capture device is exempt from that part, because it has no way
+to activate one and its routes are its own.
+
+A principal that is not a person (an API key, an unattended agent, a job with no person behind it)
+has no session to prove anything with, so a requirement does not refuse it. Scope a plain Deny to
+`principalType` to stop those.
+
+An API key's `own` data scope means the records of the person who created the key.
 
 ## Organization security settings
 

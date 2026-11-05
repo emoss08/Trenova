@@ -13,22 +13,17 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/shared/httpsafe"
 )
+
+const providerRequestTimeout = 20 * time.Second
 
 type ResendSender struct {
 	client *http.Client
 }
 
-func NewResendSender() *ResendSender {
-	return NewResendSenderWithClient(&http.Client{Timeout: 20 * time.Second})
-}
-
-func NewResendSenderWithClient(client *http.Client) *ResendSender {
-	if client == nil {
-		client = &http.Client{Timeout: 20 * time.Second}
-	}
-
-	return &ResendSender{client: client}
+func NewResendSender(policy httpsafe.Policy) *ResendSender {
+	return &ResendSender{client: httpsafe.NewClientWithPolicy(providerRequestTimeout, policy)}
 }
 
 func (s *ResendSender) Provider() email.Provider {

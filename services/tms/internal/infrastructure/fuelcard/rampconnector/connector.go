@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/rateimport"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -55,8 +56,8 @@ type Connector struct {
 	client *http.Client
 }
 
-func New() *Connector {
-	return NewWithClient(&http.Client{Timeout: requestTimeout})
+func New(policy httpsafe.Policy) *Connector {
+	return NewWithClient(httpsafe.NewClientWithPolicy(requestTimeout, policy))
 }
 
 func NewWithClient(client *http.Client) *Connector {

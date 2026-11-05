@@ -14,9 +14,12 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxActiveDevicesPerUser = 200
 
 var deviceErrors = dberror.Mapping{Entity: "Device"}
 
@@ -135,6 +138,28 @@ func (r *deviceRepository) GetByPreviousRefreshHash(
 		"detect reuse of a rotated capture device refresh token before its tenant is known",
 	)
 	return r.getByToken(ctx, capturedb.CaptureDevices.PreviousRefreshHash.Eq(hash))
+}
+
+func (r *deviceRepository) ListActiveByUser(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*capture.CaptureDevice, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"find a person's active capture devices in every organization when they lose access",
+	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureDevice, error) {
+		d := capturedb.CaptureDevices
+		devices, err := d.AllTenants().
+			Where(d.UserID.Eq(userID), d.Status.Eq(capture.DeviceActive)).
+			Limit(maxActiveDevicesPerUser).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, deviceErrors.Map(err, userID.String())
+		}
+
+		return devices, nil
+	})
 }
 
 func (r *deviceRepository) getByToken(

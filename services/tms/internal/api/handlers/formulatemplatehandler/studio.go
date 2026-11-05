@@ -1,6 +1,7 @@
 package formulatemplatehandler
 
 import (
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"net/http"
 	"strings"
 	"unicode/utf8"
@@ -10,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -45,14 +45,7 @@ type explainTestRequest struct {
 }
 
 func (h *Handler) studioActor(authCtx *authctx.AuthContext) *permissionports.RequestActor {
-	return &permissionports.RequestActor{
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		OrganizationID: authCtx.OrganizationID,
-	}
+	return actorutil.FromAuthContext(authCtx)
 }
 
 func (r *formulaDraftRequest) toDraft() (formulastudioports.FormulaStudioDraft, error) {

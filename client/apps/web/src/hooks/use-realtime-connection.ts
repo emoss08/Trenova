@@ -27,13 +27,9 @@ import {
   CORE_QUERY_KEYS,
   RESOURCE_EVENT_NAME,
   invalidationFor,
-  isBulkAction,
   parseInvalidationEvent,
-  patchEntityInListRows,
   queryKeyPrefix,
   queryKeyRootId,
-  resolveEntityID,
-  shouldPatchEvent,
   type QueryKeyRoot,
   type ResourceInvalidationEvent,
 } from "@trenova/shared/hooks/realtime-patching";
@@ -172,24 +168,6 @@ export function useRealtimeConnection() {
 
     const invalidateCoreKeys = () => {
       enqueueInvalidation(CORE_QUERY_KEYS);
-    };
-
-    const applyEntityPatch = (root: QueryKeyRoot, event: ResourceInvalidationEvent) => {
-      const entityID = resolveEntityID(event);
-      const entity = event.entity;
-      if (!entityID || !entity) return false;
-
-      let patched = false;
-      queryClient.setQueriesData(
-        { queryKey: queryKeyPrefix(root) },
-        (current: unknown): unknown => {
-          const result = patchEntityInListRows(current, event);
-          patched = result.patched || patched;
-          return result.data;
-        },
-      );
-
-      return patched;
     };
 
     // A gap the server could not replay (the tab was away longer than the
@@ -367,24 +345,6 @@ export function useRealtimeConnection() {
       if (queryKeys.length === 0) return;
       if (activeOnly) {
         enqueueInvalidation(queryKeys, true);
-        return;
-      }
-
-      const action = evt.action ?? "";
-      if (isBulkAction(action)) {
-        enqueueInvalidation(queryKeys);
-        return;
-      }
-
-      if (shouldPatchEvent(evt)) {
-        let patchedAny = false;
-        queryKeys.forEach((root) => {
-          patchedAny = applyEntityPatch(root, evt) || patchedAny;
-        });
-
-        if (!patchedAny) {
-          enqueueInvalidation(queryKeys);
-        }
         return;
       }
 

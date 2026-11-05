@@ -31,14 +31,16 @@ const (
 	ConfigKeyEncryptionAlgorithm          = "encryptionAlgorithm"
 	ConfigKeyCompressionAlgorithm         = "compressionAlgorithm"
 	ConfigKeyLocalCertificate             = "localCertificate"
+	ConfigKeyLocalEncryptionCertificate   = "localEncryptionCertificate"
 	ConfigKeyPartnerSigningCertificate    = "partnerSigningCertificate"
 	ConfigKeyPartnerEncryptionCertificate = "partnerEncryptionCertificate"
 	ConfigKeyBasicAuthUsername            = "basicAuthUsername"
 	ConfigKeyRequireSignedInbound         = "requireSignedInbound"
 	ConfigKeyRequireEncryptedInbound      = "requireEncryptedInbound"
 
-	SecretKeyAS2PrivateKey     = "privateKey"
-	SecretKeyBasicAuthPassword = "basicAuthPassword"
+	SecretKeyAS2PrivateKey           = "privateKey"
+	SecretKeyAS2DecryptionPrivateKey = "decryptionPrivateKey"
+	SecretKeyBasicAuthPassword       = "basicAuthPassword"
 
 	MDNModeSync  = "sync"
 	MDNModeAsync = "async"
@@ -64,6 +66,9 @@ type AS2Config struct {
 	BasicAuthPassword            string
 	LocalCertificate             *x509.Certificate
 	PrivateKey                   crypto.PrivateKey
+	DecryptionCertificate        *x509.Certificate
+	DecryptionKey                crypto.PrivateKey
+	SeparateDecryptionKey        bool
 	PartnerSigningCertificate    *x509.Certificate
 	PartnerEncryptionCertificate *x509.Certificate
 	RequireSignedInbound         bool
@@ -127,17 +132,52 @@ func AS2ConfigFromProfile(
 		}
 		cfg.PrivateKey = key
 	}
+	if err := applyDecryptionIdentity(cfg, profile, secrets); err != nil {
+		return nil, err
+	}
 	if required, ok := maputils.BoolValue(profile.Config, ConfigKeyRequireSignedInbound); ok {
 		cfg.RequireSignedInbound = required
 	} else {
-		cfg.RequireSignedInbound = cfg.PartnerSigningCertificate != nil
+		cfg.RequireSignedInbound = true
 	}
 	if required, ok := maputils.BoolValue(profile.Config, ConfigKeyRequireEncryptedInbound); ok {
 		cfg.RequireEncryptedInbound = required
 	} else {
-		cfg.RequireEncryptedInbound = cfg.LocalCertificate != nil && cfg.PrivateKey != nil
+		cfg.RequireEncryptedInbound = cfg.DecryptionCertificate != nil && cfg.DecryptionKey != nil
 	}
 	return cfg, nil
+}
+
+func applyDecryptionIdentity(
+	cfg *AS2Config,
+	profile *edi.EDICommunicationProfile,
+	secrets map[string]string,
+) error {
+	pemData := maputils.StringValue(profile.Config, ConfigKeyLocalEncryptionCertificate)
+	keyPEM := strings.TrimSpace(secrets[SecretKeyAS2DecryptionPrivateKey])
+	if pemData == "" && keyPEM == "" {
+		cfg.DecryptionCertificate = cfg.LocalCertificate
+		cfg.DecryptionKey = cfg.PrivateKey
+		return nil
+	}
+
+	cfg.SeparateDecryptionKey = true
+	if pemData != "" {
+		certificate, err := smime.ParseCertificate([]byte(pemData))
+		if err != nil {
+			return fmt.Errorf("local AS2 encryption certificate is invalid: %w", err)
+		}
+		cfg.DecryptionCertificate = certificate
+	}
+	if keyPEM != "" {
+		key, err := smime.ParsePrivateKey([]byte(keyPEM))
+		if err != nil {
+			return fmt.Errorf("AS2 decryption private key secret is invalid: %w", err)
+		}
+		cfg.DecryptionKey = key
+	}
+
+	return nil
 }
 
 type AS2Transport struct {
@@ -313,6 +353,14 @@ func validateAS2DeliveryConfig(cfg *AS2Config) error {
 		)
 	case cfg.LocalCertificate == nil && cfg.PrivateKey != nil:
 		return errors.New("local AS2 certificate is required when a private key is configured")
+	case cfg.DecryptionCertificate != nil && cfg.DecryptionKey == nil:
+		return errors.New(
+			"AS2 decryption private key secret is required when an encryption certificate is configured",
+		)
+	case cfg.DecryptionCertificate == nil && cfg.DecryptionKey != nil:
+		return errors.New(
+			"local AS2 encryption certificate is required when a decryption key is configured",
+		)
 	case cfg.Async() && cfg.MDNURL == "":
 		return errors.New("async MDN return URL is required when MDN mode is async")
 	default:

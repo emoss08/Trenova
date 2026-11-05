@@ -2,7 +2,6 @@ import { fetchWatchtowerItem, type WatchtowerItem } from "@/lib/graphql/watchtow
 import { attention } from "@/lib/queries/attention";
 import { watchtower } from "@/lib/queries/watchtower";
 import {
-  applyNoticeToQueue,
   cachedQueueItem,
   cachedQueueItemsForRun,
   placeInQueue,
@@ -169,7 +168,6 @@ export function createWatchtowerPatcher({
         refreshQueue();
         return;
       }
-      applyNoticeToQueue(queryClient, id, event.entity);
       schedule(id);
     },
     handleRun: (event) => {

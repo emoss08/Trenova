@@ -96,6 +96,7 @@ export const communicationProfileConfigSchema = z.object({
   partnerAS2Id: z.string(),
   endpointUrl: z.string(),
   localCertificate: z.string(),
+  localEncryptionCertificate: z.string(),
   partnerSigningCertificate: z.string(),
   partnerEncryptionCertificate: z.string(),
   mdnMode: z.string(),
@@ -134,6 +135,7 @@ export const communicationProfileSecretsSchema = z.object({
   basicAuthPassword: z.string(),
   password: z.string(),
   privateKey: z.string(),
+  decryptionPrivateKey: z.string(),
   credential: z.string(),
   token: z.string(),
 });

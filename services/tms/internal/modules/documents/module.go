@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionaccuracyports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"go.uber.org/fx"
@@ -190,6 +191,10 @@ func SharedOptions() fx.Option {
 			capturesupport.New,
 			captureprofiles.New,
 			capturedevices.New,
+			fx.Annotate(
+				func(s *capturedevices.Service) tenantports.UserAccessRevoker { return s },
+				fx.ResultTags(`group:"userAccessRevokers"`),
+			),
 			capturerequests.New,
 			captureprocessing.New,
 			captureintake.NewArrivalReaders,

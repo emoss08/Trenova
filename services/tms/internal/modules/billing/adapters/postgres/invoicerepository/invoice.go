@@ -970,7 +970,6 @@ func (r *repository) UpdateDocumentShareToken(
 		dt := invoicedb.DocumentShareTokens
 		n, err := dt.Where(dt.ID.Eq(token.ID)).Update(ctx, db,
 			dt.DownloadedAt.ToExpr(keel.Val(token.DownloadedAt)),
-			dt.RevokedAt.ToExpr(keel.Val(token.RevokedAt)),
 		)
 		if err != nil {
 			return nil, shareTokenErrors.Map(err, token.ID.String())

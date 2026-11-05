@@ -66,11 +66,12 @@ func (s *Service) runPreview(ctx context.Context, req *PreviewRequest) (*Preview
 		key = previewSupersedeKey
 	}
 	prepared, err := s.Prepare(ctx, &PrepareParams{
-		Tenant:     req.TenantInfo,
-		Definition: req.Definition,
-		Params:     req.Params,
-		Mode:       mode,
-		Key:        key,
+		Tenant:       req.TenantInfo,
+		Definition:   req.Definition,
+		Params:       req.Params,
+		Mode:         mode,
+		Key:          key,
+		FieldCeiling: req.FieldCeiling,
 	})
 	if err != nil {
 		return nil, err

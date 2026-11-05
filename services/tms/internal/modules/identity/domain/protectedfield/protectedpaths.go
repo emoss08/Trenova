@@ -117,6 +117,16 @@ func GroupAt(resource permission.Resource, steps []string, holder map[string]any
 	return "", false
 }
 
+// ColumnGroup is the group protecting a list field of a table, named as a list
+// filter or sort names it. A permission resource is its table's singular.
+func ColumnGroup(table, field string) (Group, bool) {
+	return GroupAt(
+		permission.Resource(strings.TrimSuffix(table, "s")),
+		strings.Split(field, "."),
+		nil,
+	)
+}
+
 // WithholdJSON returns a record's JSON with every protected field a
 // reader without its group may not see answered null. The value is copied
 // before anything is withheld; one with nothing to withhold is returned as is.

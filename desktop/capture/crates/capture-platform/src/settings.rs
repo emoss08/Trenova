@@ -115,7 +115,12 @@ fn read_dword(root: HKEY, key: &str, value: &str) -> Option<u32> {
 pub fn print_port() -> Option<u16> {
     [POLICY_KEY, KEY]
         .iter()
-        .find_map(|key| read_dword(HKEY_LOCAL_MACHINE, key, PRINT_PORT))
+        .find_map(|key| {
+            read_dword(HKEY_LOCAL_MACHINE, key, PRINT_PORT).or_else(|| {
+                read_string(HKEY_LOCAL_MACHINE, key, PRINT_PORT)
+                    .and_then(|text| text.trim().parse().ok())
+            })
+        })
         .and_then(|port| u16::try_from(port).ok())
         .filter(|&port| port != 0)
 }

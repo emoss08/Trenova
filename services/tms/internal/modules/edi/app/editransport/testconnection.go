@@ -138,7 +138,7 @@ func (t *AS2Transport) TestConnection(
 		checks = append(checks, passedCheck("configuration", "AS2 configuration is complete"))
 	}
 
-	checks = append(checks, testAS2LocalIdentity(cfg))
+	checks = append(checks, testAS2LocalIdentity(cfg), testAS2DecryptionIdentity(cfg))
 	if cfg.PartnerSigningCertificate != nil {
 		checks = append(checks, certificateExpiryCheck(
 			"partner signing certificate",
@@ -163,12 +163,7 @@ func testAS2LocalIdentity(cfg *AS2Config) editransportports.EDIConnectionCheck {
 	if cfg.PrivateKey == nil {
 		return failedCheck("local identity", "AS2 private key secret is not configured")
 	}
-	signer, ok := cfg.PrivateKey.(crypto.Signer)
-	if !ok {
-		return failedCheck("local identity", "AS2 private key type is not supported")
-	}
-	publicKey, ok := signer.Public().(interface{ Equal(x crypto.PublicKey) bool })
-	if !ok || !publicKey.Equal(cfg.LocalCertificate.PublicKey) {
+	if !keyMatchesCertificate(cfg.PrivateKey, cfg.LocalCertificate) {
 		return failedCheck(
 			"local identity",
 			"AS2 private key does not match the local certificate",
@@ -179,6 +174,42 @@ func testAS2LocalIdentity(cfg *AS2Config) editransportports.EDIConnectionCheck {
 		return expiry
 	}
 	return passedCheck("local identity", "Private key matches the local certificate")
+}
+
+func testAS2DecryptionIdentity(cfg *AS2Config) editransportports.EDIConnectionCheck {
+	if !cfg.SeparateDecryptionKey {
+		return warningCheck(
+			"decryption identity",
+			"One key both signs and decrypts; a separate encryption certificate and decryption key limit what a compromise of either can do",
+		)
+	}
+	if cfg.DecryptionCertificate == nil {
+		return failedCheck("decryption identity", "Encryption certificate is not configured")
+	}
+	if cfg.DecryptionKey == nil {
+		return failedCheck("decryption identity", "AS2 decryption key secret is not configured")
+	}
+	if !keyMatchesCertificate(cfg.DecryptionKey, cfg.DecryptionCertificate) {
+		return failedCheck(
+			"decryption identity",
+			"AS2 decryption key does not match the encryption certificate",
+		)
+	}
+	expiry := certificateExpiryCheck("encryption certificate", cfg.DecryptionCertificate)
+	if expiry.Status != editransportports.EDIConnectionCheckPassed {
+		return expiry
+	}
+	return passedCheck("decryption identity", "Decryption key matches the encryption certificate")
+}
+
+func keyMatchesCertificate(key crypto.PrivateKey, certificate *x509.Certificate) bool {
+	signer, ok := key.(crypto.Signer)
+	if !ok {
+		return false
+	}
+	publicKey, ok := signer.Public().(interface{ Equal(x crypto.PublicKey) bool })
+
+	return ok && publicKey.Equal(certificate.PublicKey)
 }
 
 func certificateExpiryCheck(

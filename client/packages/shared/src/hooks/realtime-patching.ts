@@ -347,23 +347,6 @@ export const RESOURCE_ACTIVE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   orders: ["billing-queue-list", "billingQueue"],
 };
 
-export const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
-  shipments: new Set(["status", "proNumber", "moves", "updatedAt"]),
-  users: new Set([
-    "status",
-    "name",
-    "emailAddress",
-    "username",
-    "thumbnailUrl",
-    "lastLoginAt",
-    "updatedAt",
-  ]),
-  customers: new Set(["status", "name", "code", "emailAddress", "updatedAt"]),
-  tractors: new Set(["status", "code", "updatedAt"]),
-  trailers: new Set(["status", "code", "updatedAt"]),
-  workers: new Set(["status", "firstName", "lastName", "updatedAt"]),
-};
-
 export const CORE_QUERY_KEYS: QueryKeyRoot[] = Array.from(
   new Map(
     Object.values(RESOURCE_QUERY_KEY_MAP)
@@ -381,6 +364,7 @@ export interface ResourceInvalidationEvent {
   fields?: string[];
   entityId?: string;
   recordId?: string;
+  actorUserId?: string;
   entity?: Record<string, unknown>;
 }
 
@@ -516,58 +500,4 @@ export function resolveEntityID(event: ResourceInvalidationEvent) {
   if (!entity || typeof entity !== "object") return "";
 
   return typeof entity.id === "string" ? entity.id : "";
-}
-
-export function shouldPatchEvent(event: ResourceInvalidationEvent) {
-  const action = event.action ?? "";
-  const entityID = resolveEntityID(event);
-  if (action !== "updated" || !entityID || !event.entity) return false;
-
-  const patchableFields = PATCHABLE_FIELDS_BY_RESOURCE[event.resource];
-  if (!patchableFields) return false;
-
-  if (!event.fields || event.fields.length === 0) {
-    return true;
-  }
-
-  return event.fields.every((field) => patchableFields.has(field));
-}
-
-export function patchEntityInListRows(
-  current: unknown,
-  event: ResourceInvalidationEvent,
-): { data: unknown; patched: boolean } {
-  const entityID = resolveEntityID(event);
-  const entity = event.entity;
-  if (!entityID || !entity || !hasRowsShape(current)) {
-    return { data: current, patched: false };
-  }
-
-  const index = current.results.findIndex((row) => row.id === entityID);
-  if (index < 0) {
-    return { data: current, patched: false };
-  }
-
-  const nextResults = [...current.results];
-  nextResults[index] = {
-    ...nextResults[index],
-    ...entity,
-  };
-
-  return {
-    data: {
-      ...current,
-      results: nextResults,
-    },
-    patched: true,
-  };
-}
-
-function hasRowsShape(value: unknown): value is { results: Record<string, unknown>[] } {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    "results" in value &&
-    Array.isArray((value as { results: unknown[] }).results)
-  );
 }

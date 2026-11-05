@@ -45,12 +45,15 @@ func NewWatchlistRepository(
 	return r
 }
 
-func scoped(scope *shipmentboardports.ShipmentBoardScope) (keel.Query[*shipment.Shipment], error) {
+func scoped(
+	ctx context.Context,
+	scope *shipmentboardports.ShipmentBoardScope,
+) (keel.Query[*shipment.Shipment], error) {
 	if scope == nil {
 		return nil, ErrScopeMissing
 	}
 
-	return shipmentpredicate.AggregateScope(scope.Filter, &scope.Options)
+	return shipmentpredicate.AggregateScope(ctx, scope.Filter, &scope.Options)
 }
 
 func revenueSum() keel.Expr {
@@ -65,7 +68,7 @@ func (r *Repository) StageSummary(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentboardports.ShipmentStageSummaryRow, error) {
-			q, err := scoped(scope)
+			q, err := scoped(ctx, scope)
 			if err != nil {
 				return nil, err
 			}
@@ -109,7 +112,7 @@ func (r *Repository) QuickFilterTotals(
 				return nil, ErrScopeMissing
 			}
 
-			q, err := scoped(req.Scope)
+			q, err := scoped(ctx, req.Scope)
 			if err != nil {
 				return nil, err
 			}

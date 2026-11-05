@@ -461,6 +461,17 @@ type DeleteEntryRequest struct {
 	UserID     pulid.ID
 }
 
+func (s *Service) GetEntry(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) (*timesheet.TimeEntry, error) {
+	return s.repo.GetEntryByID(ctx, &timesheetports.GetTimeClockEntryByIDRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+}
+
 func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) error {
 	if req.Reason == "" {
 		return errortypes.NewValidationError(

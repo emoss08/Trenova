@@ -14,6 +14,9 @@ import (
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -27,6 +30,9 @@ import (
 )
 
 const maxPreviewRows = 20
+
+const reportRowsRationale = "Shows report rows, whose text columns can hold what a trading " +
+	"partner, a bank or a driver wrote; nothing changes and nothing is sent."
 
 type reportSource struct {
 	Name          string
@@ -918,7 +924,11 @@ type reportPreview struct {
 	Totals    map[string]any     `json:"totals,omitempty"`
 	Truncated bool               `json:"truncated"`
 	Note      string             `json:"note"`
+
+	outside []agentrecord.RecordRef
 }
+
+func (p *reportPreview) TaintedRecords() []agentrecord.RecordRef { return p.outside }
 
 type previewReportTool struct {
 	reports Runner
@@ -969,7 +979,10 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 
 func (t *previewReportTool) Policy() agenttoolports.ToolPolicy {
 	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
-		Resource: permission.ResourceReport,
+		Resource:  permission.ResourceReport,
+		Reads:     agenttooltrust.ExternalReadMarked,
+		Source:    agent.TaintSourceRecordNote,
+		Rationale: reportRowsRationale,
 	})
 }
 
@@ -1003,7 +1016,9 @@ func (t *previewReportTool) Query(
 		return nil, fmt.Errorf("the report could not be previewed: %w", err)
 	}
 
-	return previewOf(&source, result, querytool.ClockFor(params)), nil
+	preview := previewOf(&source, result, querytool.ClockFor(params))
+
+	return &preview, nil
 }
 
 func (t *previewReportTool) source(
@@ -1057,6 +1072,9 @@ func previewOf(
 
 	preview.Rows = sampleRows(shape, result.Rows, maxPreviewRows)
 	shown := len(preview.Rows)
+	if shape.written && shown > 0 {
+		preview.outside = outsideReport(source.Definition.Entity)
+	}
 	if len(result.Totals) > 0 {
 		preview.Totals = shape.row(result.Totals)
 	}
@@ -1093,6 +1111,11 @@ type sampleShape struct {
 	labels []string
 	dated  []bool
 	clk    filtercatalog.Clock
+	written bool
+}
+
+func outsideReport(id string) []agentrecord.RecordRef {
+	return []agentrecord.RecordRef{{EntityType: agent.TaintEntityReport, ID: id}}
 }
 
 func newSampleShape(width int, clk filtercatalog.Clock) sampleShape {
@@ -1104,6 +1127,7 @@ func newSampleShape(width int, clk filtercatalog.Clock) sampleShape {
 }
 
 func (s *sampleShape) add(column *table.Column) previewColumnRow {
+	s.written = s.written || column.Type == value.String || column.Type == value.JSON
 	label := column.Label
 	if label == "" {
 		label = column.ID

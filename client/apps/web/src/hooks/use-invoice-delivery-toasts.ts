@@ -5,51 +5,54 @@ import {
 import { useT } from "@trenova/shared/i18n/use-t";
 import { realtimeClient } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import type { Invoice } from "@trenova/shared/types/invoice";
 import { useEffect, useRef } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { invoiceDeliveryOutcome, type InvoiceDeliveryState } from "@/lib/invoice-delivery-realtime";
-
-type DeliveryInvoice = Pick<Invoice, "id" | "sendStatus" | "pdfDocumentId">;
+import {
+  invoiceDeliveryOutcomes,
+  invoicePostFailure,
+  isInvoiceDeliveryEvent,
+  type DeliveryInvoice,
+  type InvoiceDeliveryState,
+} from "@/lib/invoice-delivery-realtime";
 
 /**
  * Announces, on the invoice someone has open, the background work they are
  * waiting on: the PDF finishing and an email send settling. The page itself
- * refreshes through the realtime connection; this only adds the toast.
+ * refreshes through the realtime connection; this compares what it refetched
+ * with what it last showed, and only adds the toast.
  */
 export function useInvoiceDeliveryToasts(invoice: DeliveryInvoice) {
   const t = useT();
   const currentUserId = useAuthStore((s) => s.user?.id ?? null);
-  const seenRef = useRef<InvoiceDeliveryState>({
+  const seenRef = useRef<InvoiceDeliveryState & { invoiceId: string }>({
+    invoiceId: invoice.id,
     sendStatus: invoice.sendStatus,
     pdfDocumentId: invoice.pdfDocumentId ?? null,
   });
+  const numberRef = useRef(invoice.number);
+  const awaitingRef = useRef(false);
 
   useEffect(() => {
-    seenRef.current = {
-      sendStatus: invoice.sendStatus,
-      pdfDocumentId: invoice.pdfDocumentId ?? null,
-    };
-  }, [invoice.id, invoice.sendStatus, invoice.pdfDocumentId]);
+    numberRef.current = invoice.number;
 
-  const invoiceId = invoice.id;
-  useEffect(() => {
-    if (!invoiceId) {
-      return undefined;
+    if (seenRef.current.invoiceId !== invoice.id) {
+      awaitingRef.current = false;
+      seenRef.current = {
+        invoiceId: invoice.id,
+        sendStatus: invoice.sendStatus,
+        pdfDocumentId: invoice.pdfDocumentId ?? null,
+      };
+      return;
     }
 
-    return realtimeClient.on(RESOURCE_EVENT_NAME, (data) => {
-      const event = parseInvalidationEvent(data);
-      if (!event) {
-        return;
-      }
+    const { outcomes, seen } = invoiceDeliveryOutcomes(invoice, seenRef.current);
+    seenRef.current = { invoiceId: invoice.id, ...seen };
+    if (!awaitingRef.current || outcomes.length === 0) {
+      return;
+    }
+    awaitingRef.current = false;
 
-      const { outcome, seen } = invoiceDeliveryOutcome(event, invoiceId, seenRef.current);
-      seenRef.current = seen;
-      if (!outcome) {
-        return;
-      }
-
+    for (const outcome of outcomes) {
       switch (outcome.kind) {
         case "pdf-ready":
           toast.success(t("{0} PDF is ready", outcome.number));
@@ -67,15 +70,35 @@ export function useInvoiceDeliveryToasts(invoice: DeliveryInvoice) {
             description: outcome.error ?? undefined,
           });
           break;
-        case "post-failed":
-          if (outcome.notifiedUserId && outcome.notifiedUserId === currentUserId) {
-            break;
-          }
-          toast.error(t("{0} could not be posted automatically", outcome.number), {
-            description: outcome.error ?? t("It is still a draft. Fix the problem and post it."),
-          });
-          break;
       }
+    }
+  }, [invoice, t]);
+
+  const invoiceId = invoice.id;
+  useEffect(() => {
+    if (!invoiceId) {
+      return undefined;
+    }
+
+    return realtimeClient.on(RESOURCE_EVENT_NAME, (data) => {
+      const event = parseInvalidationEvent(data);
+      if (!event) {
+        return;
+      }
+
+      if (isInvoiceDeliveryEvent(event, invoiceId)) {
+        awaitingRef.current = true;
+        return;
+      }
+
+      const failure = invoicePostFailure(event, invoiceId);
+      if (!failure || (failure.notifiedUserId && failure.notifiedUserId === currentUserId)) {
+        return;
+      }
+
+      toast.error(t("{0} could not be posted automatically", numberRef.current), {
+        description: t("It is still a draft. Fix the problem and post it."),
+      });
     });
   }, [invoiceId, currentUserId, t]);
 }

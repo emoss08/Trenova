@@ -1,13 +1,13 @@
 package tablequeryhandler
 
 import (
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -128,12 +128,5 @@ func (h *Handler) catalogue(c *gin.Context) {
 }
 
 func requestActor(authCtx *authctx.AuthContext) permissionports.RequestActor {
-	return permissionports.RequestActor{
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		OrganizationID: authCtx.OrganizationID,
-	}
+	return *actorutil.FromAuthContext(authCtx)
 }

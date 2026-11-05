@@ -188,6 +188,14 @@ written to steer an agent. The rules:
   `CapsLaterWrites`, exactly as `web_read` does. Outside content is declared per
   tool (`CapabilitySpec.OutsideContentTools`), so `web_list_portal_sites` and
   `web_use_portal` do not taint the turn by themselves.
+- **A signed-in portal is not driven after outside text.** `web_read_portal` is a query, so it
+  runs at once, and the only thing telling the vendor's browser to submit nothing is the task's
+  own wording: Trenova has no vendor control that makes a signed-in session read-only. So a
+  conversation holding outside text from anywhere but portal reads
+  (`RunTaint.ReadBeyond`) cannot start a read on a site with a sign-in; the tool refuses and
+  points at `web_use_portal`, where a person sees the exact task. Portals without a sign-in, and
+  further reads of a portal in a conversation tainted only by portal reads, still run. Page text
+  reaching the vendor's model inside a run remains outside Trenova's control.
 - **Acting on a portal is always a proposal.** `web_use_portal` is an
   `external_recipient` write with a `Propose` ceiling. Its preview is a `Send`
   on the `Portal` message channel: the site's addresses as the recipients, the

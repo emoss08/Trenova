@@ -104,6 +104,19 @@ func ReadsExternalContent(name string) bool {
 		agentextension.ReturnsExternalContent(name)
 }
 
+func CarriesExternalContent(taint *agent.RunTaint) bool {
+	if taint == nil {
+		return false
+	}
+	if taint.Overflowed || taint.Has(agent.TaintSourceWeb) {
+		return true
+	}
+
+	return slices.ContainsFunc(taint.Marks, func(mark agent.TaintMark) bool {
+		return ReadsExternalContent(mark.ToolName)
+	})
+}
+
 // DecisionTaint is the taint a call is decided with: what the turn had read,
 // and, when it has read the web, a web mark even where a turn from before
 // taint was kept could not say so. A nil taint stays nil, which Decide already

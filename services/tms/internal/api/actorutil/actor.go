@@ -15,6 +15,7 @@ func FromAuthContext(auth *authctx.AuthContext) *permissionports.RequestActor {
 		APIKeyID:       auth.APIKeyID,
 		BusinessUnitID: auth.BusinessUnitID,
 		OrganizationID: auth.OrganizationID,
+		Session:        auth.Session(),
 	}
 }
 

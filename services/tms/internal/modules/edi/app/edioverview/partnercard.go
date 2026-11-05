@@ -54,6 +54,7 @@ var partnerCertificateKeys = []struct {
 		key:  editransport.ConfigKeyPartnerSigningCertificate,
 	},
 	{role: PartnerCertificateRoleLocal, key: editransport.ConfigKeyLocalCertificate},
+	{role: PartnerCertificateRoleLocal, key: editransport.ConfigKeyLocalEncryptionCertificate},
 }
 
 type GetEDIPartnerCardRequest struct {

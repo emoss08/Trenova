@@ -180,7 +180,7 @@ func selectIDsQuery(
 	m := inboundmessagedb.InboundMessages
 	folder := req.Folder
 
-	return listquery.Filter(m.Where(narrow(folder)...), folder.Filter).
+	return listquery.Filter(ctx, m.Where(narrow(folder)...), folder.Filter).
 		Pick(m.ID).
 		Order(folderOrder(folder.Sort)...).
 		Limit(req.Limit)

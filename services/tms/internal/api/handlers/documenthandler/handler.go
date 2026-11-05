@@ -1,6 +1,7 @@
 package documenthandler
 
 import (
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"net/http"
 	"strconv"
 
@@ -18,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -63,15 +63,22 @@ type Handler struct {
 	logger          *zap.Logger
 }
 
-func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
-	return permissionports.RequestActor{
-		PrincipalType:  kernelports.PrincipalType(authCtx.PrincipalType),
-		PrincipalID:    authCtx.PrincipalID,
-		UserID:         authCtx.UserID,
-		APIKeyID:       authCtx.APIKeyID,
-		BusinessUnitID: authCtx.BusinessUnitID,
-		OrganizationID: authCtx.OrganizationID,
+func (h *Handler) requireReadable(c *gin.Context, authCtx *authctx.AuthContext, id pulid.ID) bool {
+	actor := requestActorFromAuthContext(authCtx)
+	if err := h.service.RequireReadable(
+		c.Request.Context(),
+		documentports.GetDocumentByIDRequest{ID: id, TenantInfo: pagination.FromAuth(authCtx)},
+		&actor,
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return false
 	}
+
+	return true
+}
+
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
+	return *actorutil.FromAuthContext(authCtx)
 }
 
 const multipartFormOverheadBytes int64 = 1 << 20
@@ -327,6 +334,8 @@ func (h *Handler) list(c *gin.Context) {
 					ResourceID:   helpers.QueryString(c, "resourceId", ""),
 					ResourceType: helpers.QueryString(c, "resourceType", ""),
 					Status:       helpers.QueryString(c, "status", ""),
+					PrivateTo:    authCtx.UserID,
+					HidePrivate:  true,
 				},
 			)
 		},
@@ -351,6 +360,10 @@ func (h *Handler) get(c *gin.Context) {
 	id, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+
+	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -430,6 +443,10 @@ func (h *Handler) download(c *gin.Context) {
 		return
 	}
 
+	if !h.requireReadable(c, authCtx, id) {
+		return
+	}
+
 	content, err := h.service.GetDownloadContent(
 		c.Request.Context(),
 		documentports.GetDocumentByIDRequest{
@@ -465,6 +482,10 @@ func (h *Handler) view(c *gin.Context) {
 	id, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+
+	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -505,6 +526,10 @@ func (h *Handler) preview(c *gin.Context) {
 	id, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+
+	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -569,6 +594,10 @@ func (h *Handler) pageImage(c *gin.Context) {
 				"Page number must be a whole number from 1",
 			),
 		)
+		return
+	}
+
+	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -1159,6 +1188,10 @@ func (h *Handler) getContent(c *gin.Context) {
 	documentID, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+
+	if !h.requireReadable(c, authCtx, documentID) {
 		return
 	}
 

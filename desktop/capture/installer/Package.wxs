@@ -82,6 +82,10 @@
       <RegistrySearch Id="SavedAutoUpdate" Root="HKLM" Key="SOFTWARE\Trenova\Capture"
                       Name="AutoUpdate" Type="raw" Bitness="always64" />
     </Property>
+    <Property Id="SAVEDPRINTPORT">
+      <RegistrySearch Id="SavedPrintPort" Root="HKLM" Key="SOFTWARE\Trenova\Capture"
+                      Name="PrintPort" Type="raw" Bitness="always64" />
+    </Property>
     <SetProperty Action="KeepServerUrl" Id="TRENOVAURL" Value="[SAVEDTRENOVAURL]"
                  After="AppSearch" Sequence="both"
                  Condition="NOT TRENOVAURL AND SAVEDTRENOVAURL" />
@@ -102,6 +106,23 @@
     <SetProperty Action="DefaultAutoUpdate" Id="AUTOUPDATE" Value="1"
                  After="KeepAutoUpdateOff" Sequence="both"
                  Condition="AUTOUPDATE &lt;&gt; &quot;0&quot;" />
+    <!--
+      A repair runs elevated for whoever starts it, and a standard user may start
+      one. The settings are machine-wide, so a repair restores what was recorded
+      and takes nothing from its command line. Changing them is a new install.
+    -->
+    <SetProperty Action="RepairKeepsServerUrl" Id="TRENOVAURL" Value="[SAVEDTRENOVAURL]"
+                 After="DefaultAutoUpdate" Sequence="both"
+                 Condition="Installed" />
+    <SetProperty Action="RepairKeepsAutoUpdateOff" Id="AUTOUPDATE" Value="0"
+                 After="RepairKeepsServerUrl" Sequence="both"
+                 Condition="Installed AND SAVEDAUTOUPDATE = &quot;#0&quot;" />
+    <SetProperty Action="RepairKeepsAutoUpdateOn" Id="AUTOUPDATE" Value="1"
+                 After="RepairKeepsAutoUpdateOff" Sequence="both"
+                 Condition="Installed AND SAVEDAUTOUPDATE &lt;&gt; &quot;#0&quot;" />
+    <SetProperty Action="RepairKeepsPrintPort" Id="PRINTPORT" Value="[SAVEDPRINTPORT]"
+                 After="RepairKeepsAutoUpdateOn" Sequence="both"
+                 Condition="Installed AND SAVEDPRINTPORT" />
     <SetProperty Action="ShowAutoUpdateChoice" Id="AUTOUPDATECHOICE" Value="1"
                  After="DefaultAutoUpdate" Sequence="ui"
                  Condition="AUTOUPDATE = &quot;1&quot;" />
@@ -202,7 +223,7 @@
           <RegistryValue Name="InstallDir" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
           <RegistryValue Name="InstalledVersion" Type="string" Value="$(var.Version)" />
           <RegistryValue Name="AutoUpdate" Type="integer" Value="[AUTOUPDATE]" />
-          <RegistryValue Name="PrintPort" Type="integer" Value="[PRINTPORT]" />
+          <RegistryValue Name="PrintPort" Type="string" Value="[PRINTPORT]" />
         </RegistryKey>
       </Component>
       <!-- Written only when the deployment names a server; a person can still choose one in the tray. -->

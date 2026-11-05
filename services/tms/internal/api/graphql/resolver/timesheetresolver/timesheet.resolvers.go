@@ -89,6 +89,18 @@ func (r *MutationResolver) DeleteTimeEntry(ctx context.Context, input gqlmodel.D
 		return false, gqlid.InvalidIDError("id", "Entry is invalid")
 	}
 
+	entry, err := r.TimesheetService.GetEntry(ctx, resolvercore.TenantInfo(authCtx), entryID)
+	if err != nil {
+		return false, err
+	}
+	if _, _, err = r.RequireTimesheetWorkerScope(
+		ctx,
+		permission.OpDelete,
+		entry.WorkerID.String(),
+	); err != nil {
+		return false, err
+	}
+
 	if err = r.TimesheetService.DeleteEntry(ctx, &timesheetservice.DeleteEntryRequest{
 		ID:         entryID,
 		Reason:     input.Reason,
@@ -144,7 +156,7 @@ func (r *MutationResolver) TransitionTimesheet(ctx context.Context, input gqlmod
 }
 
 func (r *MutationResolver) GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*timesheet.PayrollExport, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
+	authCtx, err := r.RequireOrganizationScope(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +171,7 @@ func (r *MutationResolver) GeneratePayrollExport(ctx context.Context, input gqlm
 }
 
 func (r *MutationResolver) VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*timesheet.PayrollExport, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
+	authCtx, err := r.RequireOrganizationScope(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +313,7 @@ func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool
 }
 
 func (r *QueryResolver) PayrollExports(ctx context.Context, limit *int) ([]*timesheet.PayrollExport, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
+	authCtx, err := r.RequireOrganizationScope(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +325,7 @@ func (r *QueryResolver) PayrollExports(ctx context.Context, limit *int) ([]*time
 }
 
 func (r *QueryResolver) PayrollExport(ctx context.Context, id string) (*timesheet.PayrollExport, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
+	authCtx, err := r.RequireOrganizationScope(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +339,7 @@ func (r *QueryResolver) PayrollExport(ctx context.Context, id string) (*timeshee
 }
 
 func (r *QueryResolver) PayrollExportRows(ctx context.Context, id string) ([]*timesheetservice.PayrollExportRow, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpExport)
+	authCtx, err := r.RequireOrganizationScope(ctx, permission.ResourceTimesheet, permission.OpExport)
 	if err != nil {
 		return nil, err
 	}

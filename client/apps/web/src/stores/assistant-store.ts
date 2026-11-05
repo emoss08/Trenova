@@ -74,6 +74,8 @@ interface AssistantState {
    * decision that arrives afterwards opens it again.
    */
   deferredDecisions: string[];
+  /** Forgets what one session left here; layout preferences stay with the browser. */
+  clearSession: () => void;
   /** The decision each conversation's approval box was asked to show now. */
   decisionFocus: Record<string, DecisionFocus>;
 
@@ -215,6 +217,14 @@ export const useAssistantStore = create<AssistantState>()(
       noteReplied: (threadId) =>
         set((state) => (state.open ? state : { repliedThreadId: threadId })),
       setActiveThreadId: (id) => set({ activeThreadId: id }),
+      clearSession: () =>
+        set({
+          activeThreadId: null,
+          dismissedSuggestions: [],
+          drafts: {},
+          lastAgentId: null,
+          deferredDecisions: [],
+        }),
       dismissSuggestion: (prompt) =>
         set((state) =>
           state.dismissedSuggestions.includes(prompt)

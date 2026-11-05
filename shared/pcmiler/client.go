@@ -45,12 +45,15 @@ func New(cfg Config) (*Client, error) {
 		timeout = time.Duration(cfg.Timeout) * time.Second
 	}
 
+	httpClient := cfg.HTTPClient
+	if httpClient == nil {
+		httpClient = &http.Client{Timeout: timeout}
+	}
+
 	return &Client{
-		apiKey:  apiKey,
-		baseURL: baseURL,
-		httpClient: &http.Client{
-			Timeout: timeout,
-		},
+		apiKey:     apiKey,
+		baseURL:    baseURL,
+		httpClient: httpClient,
 	}, nil
 }
 

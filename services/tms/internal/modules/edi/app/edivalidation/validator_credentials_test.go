@@ -104,6 +104,25 @@ func TestValidateCommunicationProfile_AnInactiveAS2ProfileMayWaitForItsPrivateKe
 		multiErrFields(NewValidator().ValidateCommunicationProfile(profile)))
 }
 
+func TestValidateCommunicationProfile_SignedInboundNeedsAPartnerCertificate(t *testing.T) {
+	t.Parallel()
+
+	profile := sftpProfileWithoutCredentials(domaintypes.StatusInactive)
+	profile.Method = edi.ConnectionMethodAS2
+	profile.Config["localAS2Id"] = "TRENOVA"
+	profile.Config["partnerAS2Id"] = "ACMERETAIL"
+	profile.Config["endpointUrl"] = "https://as2.acmeretail.example/as2"
+	profile.Config["mdnMode"] = "sync"
+	profile.Config["localCertificate"] = testCertificatePEM(t)
+	profile.Config["requireSignedInbound"] = "true"
+
+	assert.Equal(t, []string{"config.partnerSigningCertificate"},
+		multiErrFields(NewValidator().ValidateCommunicationProfile(profile)))
+
+	profile.Config["partnerSigningCertificate"] = testCertificatePEM(t)
+	assert.Nil(t, NewValidator().ValidateCommunicationProfile(profile))
+}
+
 func TestCredentialRequirements_NamesWhatAPersonMustEnter(t *testing.T) {
 	t.Parallel()
 

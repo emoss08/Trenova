@@ -2,6 +2,7 @@ package rampconnector
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/httpsafe"
 )
 
 // Ramp issues a bearer token from an app a workspace admin creates. Unlike the
@@ -186,6 +188,9 @@ func (c *Connector) transactions(
 
 		collected = append(collected, parsed.Data...)
 		next = strings.TrimSpace(parsed.Page.Next)
+		if next != "" && !httpsafe.SameOrigin(settings.baseURL, next) {
+			return nil, errors.New("read Ramp transactions: next page is on another host")
+		}
 	}
 
 	return collected, nil

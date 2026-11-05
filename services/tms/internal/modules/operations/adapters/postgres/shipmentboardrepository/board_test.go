@@ -121,7 +121,7 @@ func TestGroupSummaryRefusesAnUnknownGrouping(t *testing.T) {
 func TestStageSummaryReadsTheScopedShipments(t *testing.T) {
 	t.Parallel()
 
-	q, err := scoped(testScope())
+	q, err := scoped(t.Context(), testScope())
 	require.NoError(t, err)
 
 	sp := shipmentdb.Shipments
@@ -131,14 +131,14 @@ func TestStageSummaryReadsTheScopedShipments(t *testing.T) {
 	assert.Contains(t, sql, `s."status" = 'New'`)
 	assert.NotContains(t, args, "New")
 
-	_, err = scoped(nil)
+	_, err = scoped(t.Context(), nil)
 	require.ErrorIs(t, err, ErrScopeMissing)
 }
 
 func TestQuickFilterTotalsIsOneQuery(t *testing.T) {
 	t.Parallel()
 
-	q, err := scoped(testScope())
+	q, err := scoped(t.Context(), testScope())
 	require.NoError(t, err)
 
 	totals, err := quickFilterTotalsQuery(
@@ -181,7 +181,7 @@ func TestQuickFilterTotalsNeverTieASubqueryToTheShipment(t *testing.T) {
 		scope := testScope()
 		scope.Options.QuickFilterBasis.Detention.UsePolicyEngine = policyEngine
 
-		q, err := scoped(scope)
+		q, err := scoped(t.Context(), scope)
 		require.NoError(t, err)
 		totals, err := quickFilterTotalsQuery(q, scope.Options.QuickFilterBasis, specs)
 		require.NoError(t, err)

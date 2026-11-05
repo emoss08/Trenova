@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
@@ -177,6 +178,36 @@ func (s *Service) List(
 ) (*pagination.ListResult[*document.Document], error) {
 	return s.repo.List(ctx, req)
 }
+
+func (s *Service) RequireReadable(
+	ctx context.Context,
+	req documentports.GetDocumentByIDRequest,
+	actor *permissionports.RequestActor,
+) error {
+	doc, err := s.Get(ctx, req)
+	if err != nil {
+		return err
+	}
+	if doc.OwnedByConversation() && doc.UploadedByID != actor.PersonUserID() {
+		return errDocumentNotReadable
+	}
+
+	owner := doc.OwnerResource()
+	if !permissioncatalog.Default().HasResource(owner.String()) {
+		return nil
+	}
+	result, err := s.permissions.Check(ctx, actor.PermissionCheck(owner, permission.OpRead))
+	if err != nil {
+		return err
+	}
+	if !result.Allowed {
+		return errDocumentNotReadable
+	}
+
+	return nil
+}
+
+var errDocumentNotReadable = errortypes.NewNotFoundError("Document not found")
 
 func (s *Service) SelectOptions(
 	ctx context.Context,

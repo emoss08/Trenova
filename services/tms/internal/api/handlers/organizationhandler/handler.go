@@ -39,6 +39,8 @@ func New(p Params) *Handler {
 	}
 }
 
+const maxLogoBodyBytes = 20 << 20
+
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/organizations/")
 	api.GET(
@@ -54,6 +56,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST(
 		"/:id/logo",
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		middleware.NewBodyLimit(maxLogoBodyBytes),
 		h.uploadLogo,
 	)
 	api.GET(

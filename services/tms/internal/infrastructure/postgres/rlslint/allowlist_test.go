@@ -1,6 +1,7 @@
 package rlslint
 
 var allowed = map[string]string{
+	"internal/modules/documents/adapters/postgres/capturerepository/device.go:deviceRepository.ListActiveByUser":                                                "find a person's active capture devices in every organization when they lose access",
 	"internal/modules/documents/app/capturedevices/pairing.go:Service.ExchangePairing":                                                                          "exchange an approved pairing, which belongs to no organization until now, for its device",
 	"internal/modules/edi/app/editransferchangeservice/transfer_changes.go:Service.reviewTransferChange":                                                        "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	"internal/modules/identity/app/instancebootstrapservice/service.go:Service.Bootstrap":                                                                       "create the first business unit, organization, administrator and system user of an instance in one transaction before any tenant exists",

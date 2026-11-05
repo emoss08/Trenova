@@ -195,3 +195,10 @@ imaging:
 edi:
     allowPrivateNetworks: false
     maxInboundFileBytes: 33554432 # Largest file read from a partner's SFTP or VAN mailbox (32 MiB)
+
+# Tenant-configured integrations. A base URL that resolves to a loopback, private or reserved
+# address is refused, so an integration cannot reach into this network, and base URLs must be
+# https. Turn this on only to reach a provider over a private link; link-local and cloud metadata
+# addresses stay refused either way.
+integrations:
+    allowPrivateNetworks: false

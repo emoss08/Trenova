@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -240,6 +241,38 @@ func TestRefreshRotatesAndReuseRevokes(t *testing.T) {
 	_, err = s.devices().
 		Refresh(t.Context(), &capturedevices.RefreshRequest{RefreshToken: second.RefreshToken})
 	assert.Equal(t, capturedevices.PairingInvalidGrant, pairingCode(t, err))
+}
+
+func TestRefreshRevokesADeviceWhosePersonCanNoLongerSignIn(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	first := pair(t, w, s)
+	w.personLocked = true
+
+	_, err := s.devices().
+		Refresh(t.Context(), &capturedevices.RefreshRequest{RefreshToken: first.RefreshToken})
+
+	assert.Equal(t, capturedevices.PairingInvalidGrant, pairingCode(t, err))
+	assert.Equal(t, capture.DeviceRevoked, w.devices[first.DeviceID].Status)
+}
+
+func TestRevokeUserAccessEndsThePersonsDevices(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+	first := pair(t, w, s)
+
+	require.NoError(t, s.devices().RevokeUserAccess(t.Context(), tenantports.RevokeUserAccessRequest{
+		TenantInfo: w.tenant,
+		UserID:     w.tenant.UserID,
+	}))
+
+	assert.Equal(t, capture.DeviceRevoked, w.devices[first.DeviceID].Status)
+	_, err := s.devices().Authenticate(t.Context(), first.AccessToken, "")
+	require.Error(t, err, "revoking takes effect before the access token expires")
 }
 
 func TestRefreshEnforcesMinimumVersion(t *testing.T) {

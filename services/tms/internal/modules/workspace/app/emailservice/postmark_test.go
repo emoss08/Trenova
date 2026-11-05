@@ -50,7 +50,7 @@ func TestPostmarkSenderSendsMessageWithAttachments(t *testing.T) {
 	}))
 	defer server.Close()
 
-	result, err := NewPostmarkSender().Send(t.Context(), SendProviderRequest{
+	result, err := NewPostmarkSender(loopbackPolicy).Send(t.Context(), SendProviderRequest{
 		Config: map[string]string{
 			"serverToken":   "server-token",
 			"baseUrl":       server.URL,
@@ -104,7 +104,7 @@ func TestPostmarkSenderClassifiesFailures(t *testing.T) {
 			)
 			defer server.Close()
 
-			_, err := NewPostmarkSender().Send(t.Context(), SendProviderRequest{
+			_, err := NewPostmarkSender(loopbackPolicy).Send(t.Context(), SendProviderRequest{
 				Config: map[string]string{
 					"serverToken": "server-token",
 					"baseUrl":     server.URL,

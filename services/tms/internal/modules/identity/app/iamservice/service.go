@@ -1,6 +1,8 @@
 package iamservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"slices"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -681,6 +683,9 @@ func (s *service) CreateAccessPolicy(
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
+	if multiErr := accessPolicyTargetErrors(entity); multiErr != nil {
+		return nil, multiErr
+	}
 	created, err := s.repo.CreateAccessPolicy(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -709,6 +714,9 @@ func (s *service) UpdateAccessPolicy(
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
+	if multiErr := accessPolicyTargetErrors(entity); multiErr != nil {
+		return nil, multiErr
+	}
 	updated, err := s.repo.UpdateAccessPolicy(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -722,6 +730,37 @@ func (s *service) UpdateAccessPolicy(
 		comment:    "Access policy updated",
 	})
 	return updated, nil
+}
+
+func accessPolicyTargetErrors(entity *iam.AccessPolicy) *errortypes.MultiError {
+	registry := permissioncatalog.Default()
+	multiErr := errortypes.NewMultiError()
+
+	if !registry.HasResource(entity.Resource) {
+		multiErr.Add(
+			"resource",
+			errortypes.ErrInvalid,
+			"{0} is not a resource, so this policy would never apply",
+			entity.Resource,
+		)
+	} else if !slices.Contains(
+		registry.GetOperationsForResource(entity.Resource),
+		permission.Operation(entity.Operation),
+	) {
+		multiErr.Add(
+			"operation",
+			errortypes.ErrInvalid,
+			"{0} is not an operation of {1}, so this policy would never apply",
+			entity.Operation,
+			entity.Resource,
+		)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
 func prepareAccessPolicy(entity *iam.AccessPolicy) {

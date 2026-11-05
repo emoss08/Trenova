@@ -1,6 +1,7 @@
 package shipmentpredicate
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -319,6 +320,7 @@ func DwellingStops(
 }
 
 func AggregateScope(
+	ctx context.Context,
 	filter *pagination.QueryOptions,
 	opts *shipmentports.ShipmentOptions,
 ) (keel.Query[*shipment.Shipment], error) {
@@ -331,5 +333,5 @@ func AggregateScope(
 		return nil, err
 	}
 
-	return Scope(filter, opts, quick), nil
+	return Scope(ctx, filter, opts, quick), nil
 }
