@@ -95,6 +95,7 @@ func (w Writer) Plan(ctx context.Context, req *WriteRequest) (*Plan, error) {
 		BusinessUnitID: req.BusinessUnitID,
 		Date:           req.AccountingDate,
 		Policy:         ClosedPeriodPolicy(req.Control),
+		RefuseLocked:   RefusesLockedSubledger(req.Control),
 		Subject:        req.Subject,
 		Field:          req.DateField,
 	})

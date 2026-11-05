@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload/documentuploaddb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
@@ -254,6 +255,10 @@ func (r *repository) ListActive(
 				s.Status.NotIn(terminalStatuses...),
 				keel.When(req.ResourceID != "", s.ResourceID.Eq(req.ResourceID)),
 				keel.When(req.ResourceType != "", s.ResourceType.Eq(req.ResourceType)),
+				keel.Or(
+					s.ResourceType.Ne(document.ConversationResourceType),
+					s.UploadedByID.Eq(req.TenantInfo.UserID),
+				),
 			).
 				Order(s.CreatedAt.Desc()).
 				All(ctx, r.db.Keel(ctx))

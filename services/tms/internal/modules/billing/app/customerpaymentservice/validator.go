@@ -474,6 +474,7 @@ func resolvePaymentPeriod(
 		BusinessUnitID: req.tenant.BuID,
 		Date:           req.date,
 		Policy:         journalposting.ClosedPeriodPolicy(req.control),
+		RefuseLocked:   journalposting.RefusesLockedSubledger(req.control),
 		Subject:        "customer payment",
 	})
 }
