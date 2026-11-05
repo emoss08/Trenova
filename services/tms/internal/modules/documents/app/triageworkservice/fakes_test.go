@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -187,12 +189,9 @@ type fakeDocuments struct {
 
 func (f *fakeDocuments) AttachLineageToResource(
 	_ context.Context,
-	documentID pulid.ID,
-	resourceType string,
-	resourceID string,
-	_ pagination.TenantInfo,
-	_ pulid.ID,
+	req *documentservice.AttachLineageRequest,
 ) (*document.Document, error) {
+	documentID, resourceType, resourceID := req.DocumentID, req.ResourceType, req.ResourceID
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.lineage = append(f.lineage, lineageCall{
@@ -222,7 +221,7 @@ func (f *fakeDocuments) GetDownloadContent(
 func (f *fakeDocuments) Delete(
 	_ context.Context,
 	req documentports.DeleteDocumentRequest,
-	_ pulid.ID,
+	_ *permissionports.RequestActor,
 ) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()

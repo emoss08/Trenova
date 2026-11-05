@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,6 +16,7 @@ type AttachLineageRequest struct {
 	ResourceType string
 	ResourceID   string
 	TenantInfo   pagination.TenantInfo
+	Actor        *permissionports.RequestActor
 }
 
 type AttachLineagePlan struct {
@@ -40,10 +42,10 @@ func (s *Service) planAttach(
 	ctx context.Context,
 	req *AttachLineageRequest,
 ) (*AttachLineagePlan, error) {
-	current, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
+	current, err := s.visibleDocument(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
-	})
+	}, req.Actor)
 	if err != nil {
 		return nil, err
 	}

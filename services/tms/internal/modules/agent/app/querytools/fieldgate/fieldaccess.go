@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
@@ -36,17 +35,10 @@ import (
 type Access struct {
 	Permissions permissionports.PermissionEngine
 	registry    *permissioncatalog.Registry
-	threads     conversationports.ThreadOwnerRepository
 }
 
 func NewAccess(permissions permissionports.PermissionEngine) Access {
 	return Access{Permissions: permissions, registry: permissioncatalog.Default()}
-}
-
-func (a Access) WithThreads(threads conversationports.ThreadOwnerRepository) Access {
-	a.threads = threads
-
-	return a
 }
 
 // ceiling is the most sensitive tier the actor may be shown on a resource,
@@ -169,51 +161,19 @@ func (a Access) ReadableDocuments(
 	mayReadRecord func(permission.Resource, string) bool,
 ) (map[pulid.ID]bool, error) {
 	person := PersonOf(params.Actor)
-	owners, err := a.conversationOwners(ctx, params, person, docs)
-	if err != nil {
-		return nil, err
-	}
-
 	readable := make(map[pulid.ID]bool, len(docs))
 	for _, doc := range docs {
 		if doc == nil {
 			continue
 		}
-		owner := doc.OwnerResource()
-		if !a.registry.HasResource(owner.String()) ||
-			!doc.VisibleToPerson(owners, person) ||
-			!mayReadRecord(owner, doc.ResourceID) {
+		owner, ok := doc.ReadableOwner(person, a.registry)
+		if !ok || !mayReadRecord(owner, doc.ResourceID) {
 			continue
 		}
 		readable[doc.ID] = true
 	}
 
 	return readable, nil
-}
-
-func (a Access) conversationOwners(
-	ctx context.Context,
-	params *agenttoolports.QueryToolParams,
-	person pulid.ID,
-	docs []*document.Document,
-) (map[pulid.ID]pulid.ID, error) {
-	if a.threads == nil || person.IsNil() {
-		return map[pulid.ID]pulid.ID{}, nil
-	}
-	ids := document.ConversationIDs(docs)
-	if len(ids) == 0 {
-		return map[pulid.ID]pulid.ID{}, nil
-	}
-
-	owners, err := a.threads.ThreadOwners(ctx, conversationports.ThreadOwnersRequest{
-		TenantInfo: querytool.TenantOf(params),
-		ThreadIDs:  ids,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("read who owns the conversations documents are attached to: %w", err)
-	}
-
-	return owners, nil
 }
 
 func (a Access) recordTextVisible(

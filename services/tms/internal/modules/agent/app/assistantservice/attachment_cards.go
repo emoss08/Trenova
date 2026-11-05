@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -100,8 +99,8 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventport
 		log.Debug("extracted document could not be read for its card", zap.Error(err))
 		return
 	}
-	threads := document.ConversationIDs([]*document.Document{doc})
-	if len(threads) != 1 || doc.UploadedByID.IsNil() {
+	threadID, ok := doc.ConversationID()
+	if !ok || doc.UploadedByID.IsNil() {
 		return
 	}
 
@@ -111,7 +110,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventport
 		UserID: doc.UploadedByID,
 	}
 	sent, err := s.conversations.CarriesAttachment(ctx, &conversationports.CarriesAttachmentRequest{
-		ThreadID:   threads[0],
+		ThreadID:   threadID,
 		DocumentID: doc.ID,
 		TenantInfo: tenant,
 	})
@@ -124,7 +123,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventport
 	}
 
 	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
-		ID:         threads[0],
+		ID:         threadID,
 		UserID:     doc.UploadedByID,
 		TenantInfo: tenant,
 	})

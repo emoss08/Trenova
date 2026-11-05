@@ -13,6 +13,7 @@ const ConversationResourceType = "assistant_thread"
 var ownerResourceAliases = map[string]permission.Resource{
 	ConversationResourceType: permission.ResourceAssistant,
 	"invoice_adjustment":     permission.ResourceInvoice,
+	"shipment_import":        permission.ResourceShipment,
 }
 
 func normalizedOwner(resourceType string) string {
@@ -36,7 +37,7 @@ func (d *Document) OwnedByConversation() bool {
 	return normalizedOwner(d.ResourceType) == ConversationResourceType
 }
 
-func (d *Document) conversationID() (pulid.ID, bool) {
+func (d *Document) ConversationID() (pulid.ID, bool) {
 	if !d.OwnedByConversation() {
 		return pulid.Nil, false
 	}
@@ -48,48 +49,46 @@ func (d *Document) conversationID() (pulid.ID, bool) {
 	return id, true
 }
 
-func ConversationIDs(docs []*Document) []pulid.ID {
-	ids := make([]pulid.ID, 0, len(docs))
-	seen := make(map[pulid.ID]struct{}, len(docs))
-	for _, doc := range docs {
-		if doc == nil {
-			continue
-		}
-		id, ok := doc.conversationID()
-		if !ok {
-			continue
-		}
-		if _, dup := seen[id]; dup {
-			continue
-		}
-		seen[id] = struct{}{}
-		ids = append(ids, id)
-	}
-
-	return ids
+type ResourceCatalog interface {
+	HasResource(resource string) bool
 }
 
-func (d *Document) VisibleToPerson(conversationOwners map[pulid.ID]pulid.ID, userID pulid.ID) bool {
+func (d *Document) VisibleToPerson(userID pulid.ID) bool {
 	if !d.OwnedByConversation() {
 		return true
 	}
-	if userID.IsNil() {
-		return false
-	}
-	id, ok := d.conversationID()
-	if !ok {
-		return false
-	}
-	owner, ok := conversationOwners[id]
 
-	return ok && owner == userID
+	return userID.IsNotNil() && d.UploadedByID == userID
+}
+
+func (d *Document) ReadableOwner(
+	userID pulid.ID,
+	catalog ResourceCatalog,
+) (permission.Resource, bool) {
+	owner := d.OwnerResource()
+	if !catalog.HasResource(owner.String()) || !d.VisibleToPerson(userID) {
+		return "", false
+	}
+
+	return owner, true
+}
+
+func VisibleDocuments(docs []*Document, userID pulid.ID) []*Document {
+	visible := make([]*Document, 0, len(docs))
+	for _, doc := range docs {
+		if doc != nil && doc.VisibleToPerson(userID) {
+			visible = append(visible, doc)
+		}
+	}
+
+	return visible
 }
 
 func (d *Document) AttachedTo(conversationID pulid.ID) bool {
 	if conversationID.IsNil() {
 		return false
 	}
-	id, ok := d.conversationID()
+	id, ok := d.ConversationID()
 
 	return ok && id == conversationID
 }
@@ -98,7 +97,7 @@ func (d *Document) AttachedBy(conversationID, userID pulid.ID) bool {
 	if conversationID.IsNil() || userID.IsNil() || d.UploadedByID != userID {
 		return false
 	}
-	id, ok := d.conversationID()
+	id, ok := d.ConversationID()
 
 	return ok && id == conversationID
 }

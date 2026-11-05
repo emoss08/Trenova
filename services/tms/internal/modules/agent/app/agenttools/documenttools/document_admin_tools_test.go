@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,13 +20,15 @@ import (
 )
 
 type fakeDocumentKeeper struct {
-	guard     *agenttoolstest.WriteGuard
-	docs      []*document.Document
-	versions  []*document.Document
-	deleted   pulid.ID
-	bulk      *documentservice.BulkDeleteRequest
-	restored  pulid.ID
-	unchanged bool
+	guard      *agenttoolstest.WriteGuard
+	docs       []*document.Document
+	versions   []*document.Document
+	deleted    pulid.ID
+	bulk       *documentservice.BulkDeleteRequest
+	restored   pulid.ID
+	unchanged  bool
+	gated      []pulid.ID
+	unreadable error
 }
 
 func (f *fakeDocumentKeeper) PlanDelete(
@@ -46,7 +49,7 @@ func (f *fakeDocumentKeeper) PlanDelete(
 func (f *fakeDocumentKeeper) Delete(
 	_ context.Context,
 	req documentports.DeleteDocumentRequest,
-	_ pulid.ID,
+	_ *permissionports.RequestActor,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -72,14 +75,27 @@ func (f *fakeDocumentKeeper) ListVersions(
 	context.Context,
 	pulid.ID,
 	pagination.TenantInfo,
+	*permissionports.RequestActor,
 ) ([]*document.Document, error) {
 	return f.versions, nil
+}
+
+func (f *fakeDocumentKeeper) RequireAllReadable(
+	_ context.Context,
+	ids []pulid.ID,
+	_ pagination.TenantInfo,
+	_ *permissionports.RequestActor,
+) error {
+	f.gated = append(f.gated, ids...)
+
+	return f.unreadable
 }
 
 func (f *fakeDocumentKeeper) PlanRestoreVersion(
 	_ context.Context,
 	id pulid.ID,
 	_ pagination.TenantInfo,
+	_ *permissionports.RequestActor,
 ) (*documentservice.RestorePlan, error) {
 	var target, current *document.Document
 	for _, version := range f.versions {
@@ -102,7 +118,7 @@ func (f *fakeDocumentKeeper) RestoreVersion(
 	_ context.Context,
 	id pulid.ID,
 	_ pagination.TenantInfo,
-	_ pulid.ID,
+	_ *permissionports.RequestActor,
 ) (*document.Document, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -187,4 +203,29 @@ func TestRestoreDocumentVersion_FindsTheVersionByItsNumber(t *testing.T) {
 
 	documents.unchanged = true
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+}
+
+func TestDocumentAdminTools_StopAtADocumentThePersonMayNotRead(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("doc_")
+	keeper := &fakeDocumentKeeper{
+		guard:      &agenttoolstest.WriteGuard{},
+		docs:       []*document.Document{{ID: id, OriginalName: "theirs.pdf"}},
+		versions:   []*document.Document{{ID: id, VersionNumber: 1}},
+		unreadable: errortypes.NewNotFoundError("Document not found"),
+	}
+
+	require.Error(t, NewDeleteDocumentsTool(keeper).(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{paramDocumentIDs: []any{id.String()}}),
+	))
+	require.Error(t, NewRestoreDocumentVersionTool(keeper).(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			paramDocumentID:    id.String(),
+			paramVersionNumber: 1,
+		}),
+	))
+	assert.Equal(t, []pulid.ID{id, id}, keeper.gated)
 }

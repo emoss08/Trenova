@@ -63,18 +63,52 @@ type Handler struct {
 	logger          *zap.Logger
 }
 
-func (h *Handler) requireReadable(c *gin.Context, authCtx *authctx.AuthContext, id pulid.ID) bool {
+func (h *Handler) requireReadableDocument(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		c.Abort()
+		return
+	}
+
 	actor := requestActorFromAuthContext(authCtx)
-	if err := h.service.RequireReadable(
+	if err = h.service.RequireReadable(
 		c.Request.Context(),
 		documentports.GetDocumentByIDRequest{ID: id, TenantInfo: pagination.FromAuth(authCtx)},
 		&actor,
 	); err != nil {
 		h.eh.HandleError(c, err)
-		return false
+		c.Abort()
+		return
 	}
 
-	return true
+	c.Next()
+}
+
+func (h *Handler) requireReadableResource(c *gin.Context) {
+	actor := requestActorFromAuthContext(authctx.GetAuthContext(c))
+	if err := h.service.RequireResourceReadable(
+		c.Request.Context(),
+		c.Param("resourceType"),
+		&actor,
+	); err != nil {
+		h.eh.HandleError(c, err)
+		c.Abort()
+		return
+	}
+
+	c.Next()
+}
+
+func (h *Handler) onDocument(
+	operation permission.Operation,
+	handlers ...gin.HandlerFunc,
+) []gin.HandlerFunc {
+	return append([]gin.HandlerFunc{
+		h.pm.RequirePermission(permission.ResourceDocument.String(), operation),
+		h.requireReadableDocument,
+	}, handlers...)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.RequestActor {
@@ -174,97 +208,45 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.list,
 	)
-	api.GET(
-		"/:documentID/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.get,
-	)
-	api.GET(
-		"/:documentID/content/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.getContent,
-	)
-	api.GET(
-		"/:documentID/reading/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.getReading,
-	)
-	api.GET(
-		"/:documentID/versions/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.listVersions,
-	)
-	api.POST(
-		"/:documentID/restore/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
-		h.restoreVersion,
-	)
-	api.POST(
-		"/:documentID/approve/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpApprove),
-		h.approve,
-	)
-	api.POST(
-		"/:documentID/reject/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpReject),
-		h.reject,
-	)
-	api.POST(
-		"/:documentID/signature/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
-		h.setSignature,
-	)
-	api.POST(
-		"/:documentID/delivery-facts/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
-		h.setDeliveryFacts,
-	)
-	api.GET(
-		"/:documentID/shipment-draft/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.getShipmentDraft,
-	)
+	api.GET("/:documentID/", h.onDocument(permission.OpRead, h.get)...)
+	api.GET("/:documentID/content/", h.onDocument(permission.OpRead, h.getContent)...)
+	api.GET("/:documentID/reading/", h.onDocument(permission.OpRead, h.getReading)...)
+	api.GET("/:documentID/versions/", h.onDocument(permission.OpRead, h.listVersions)...)
+	api.POST("/:documentID/restore/", h.onDocument(permission.OpUpdate, h.restoreVersion)...)
+	api.POST("/:documentID/approve/", h.onDocument(permission.OpApprove, h.approve)...)
+	api.POST("/:documentID/reject/", h.onDocument(permission.OpReject, h.reject)...)
+	api.POST("/:documentID/signature/", h.onDocument(permission.OpUpdate, h.setSignature)...)
+	api.POST("/:documentID/delivery-facts/", h.onDocument(permission.OpUpdate, h.setDeliveryFacts)...)
+	api.GET("/:documentID/shipment-draft/", h.onDocument(permission.OpRead, h.getShipmentDraft)...)
 	api.POST(
 		"/:documentID/shipment-draft/reextract/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
-		h.reextractDocumentContent,
+		h.onDocument(permission.OpUpdate,
+			h.reextractDocumentContent,
+		)...,
 	)
 	api.POST(
 		"/:documentID/attach-to-shipment/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
-		h.attachToShipment,
+		h.onDocument(permission.OpUpdate,
+			h.attachToShipment,
+		)...,
 	)
 	api.POST(
 		"/:documentID/import-assistant/thread/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.pm.RequirePermission(permission.ResourceAssistant.String(), permission.OpCreate),
-		h.openImportAssistantThread,
+		h.onDocument(permission.OpRead,
+			h.pm.RequirePermission(permission.ResourceAssistant.String(), permission.OpCreate),
+			h.openImportAssistantThread,
+		)...,
 	)
 	api.GET(
 		"/:documentID/import-assistant/history/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.getImportAssistantHistory,
+		h.onDocument(permission.OpRead,
+			h.getImportAssistantHistory,
+		)...,
 	)
-	api.GET(
-		"/:documentID/download/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.download,
-	)
-	api.GET(
-		"/:documentID/view/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.view,
-	)
-	api.GET(
-		"/:documentID/preview/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.preview,
-	)
-	api.GET(
-		"/:documentID/pages/:pageNumber/image/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.pageImage,
-	)
+	api.GET("/:documentID/download/", h.onDocument(permission.OpRead, h.download)...)
+	api.GET("/:documentID/view/", h.onDocument(permission.OpRead, h.view)...)
+	api.GET("/:documentID/preview/", h.onDocument(permission.OpRead, h.preview)...)
+	api.GET("/:documentID/pages/:pageNumber/image/", h.onDocument(permission.OpRead, h.pageImage)...)
 	api.POST(
 		"/upload/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
@@ -277,11 +259,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.limitUploadBody(h.storageConfig.GetMaxFilesPerUpload()),
 		h.uploadBulk,
 	)
-	api.DELETE(
-		"/:documentID/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpDelete),
-		h.delete,
-	)
+	api.DELETE("/:documentID/", h.onDocument(permission.OpDelete, h.delete)...)
 	api.POST(
 		"/bulk-delete/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpDelete),
@@ -290,11 +268,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET(
 		"/resource/:resourceType/:resourceID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.requireReadableResource,
 		h.getByResource,
 	)
 	api.GET(
 		"/resource/:resourceType/:resourceID/packet-summary/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.requireReadableResource,
 		h.getPacketSummary,
 	)
 }
@@ -334,8 +314,7 @@ func (h *Handler) list(c *gin.Context) {
 					ResourceID:   helpers.QueryString(c, "resourceId", ""),
 					ResourceType: helpers.QueryString(c, "resourceType", ""),
 					Status:       helpers.QueryString(c, "status", ""),
-					PrivateTo:    authCtx.UserID,
-					HidePrivate:  true,
+					Viewer:       actorutil.FromAuthContext(authCtx).PersonUserID(),
 				},
 			)
 		},
@@ -363,10 +342,6 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	if !h.requireReadable(c, authCtx, id) {
-		return
-	}
-
 	entity, err := h.service.Get(
 		c.Request.Context(),
 		documentports.GetDocumentByIDRequest{
@@ -390,10 +365,11 @@ func (h *Handler) listVersions(c *gin.Context) {
 		return
 	}
 
+	actor := requestActorFromAuthContext(authCtx)
 	versions, err := h.service.ListVersions(c.Request.Context(), id, pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
-	})
+	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -410,10 +386,11 @@ func (h *Handler) restoreVersion(c *gin.Context) {
 		return
 	}
 
+	actor := requestActorFromAuthContext(authCtx)
 	doc, err := h.service.RestoreVersion(c.Request.Context(), id, pagination.TenantInfo{
 		OrgID: authCtx.OrganizationID,
 		BuID:  authCtx.BusinessUnitID,
-	}, authCtx.UserID)
+	}, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -440,10 +417,6 @@ func (h *Handler) download(c *gin.Context) {
 	id, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
-		return
-	}
-
-	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -485,10 +458,6 @@ func (h *Handler) view(c *gin.Context) {
 		return
 	}
 
-	if !h.requireReadable(c, authCtx, id) {
-		return
-	}
-
 	content, err := h.service.GetViewContent(
 		c.Request.Context(),
 		documentports.GetDocumentByIDRequest{
@@ -526,10 +495,6 @@ func (h *Handler) preview(c *gin.Context) {
 	id, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
-		return
-	}
-
-	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -594,10 +559,6 @@ func (h *Handler) pageImage(c *gin.Context) {
 				"Page number must be a whole number from 1",
 			),
 		)
-		return
-	}
-
-	if !h.requireReadable(c, authCtx, id) {
 		return
 	}
 
@@ -1005,13 +966,14 @@ func (h *Handler) delete(c *gin.Context) {
 		return
 	}
 
+	actor := requestActorFromAuthContext(authCtx)
 	err = h.service.Delete(
 		c.Request.Context(),
 		documentports.DeleteDocumentRequest{
 			ID:         id,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},
-		authCtx.UserID,
+		&actor,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -1057,12 +1019,24 @@ func (h *Handler) bulkDelete(c *gin.Context) {
 		ids = append(ids, id)
 	}
 
+	actor := requestActorFromAuthContext(authCtx)
+	tenantInfo := pagination.FromAuthAsUser(authCtx)
+	if err := h.service.RequireAllReadable(
+		c.Request.Context(),
+		ids,
+		tenantInfo,
+		&actor,
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	result, err := h.service.BulkDelete(
 		c.Request.Context(),
 		&documentservice.BulkDeleteRequest{
 			IDs:        ids,
-			TenantInfo: pagination.FromAuthAsUser(authCtx),
-			UserID:     authCtx.UserID,
+			TenantInfo: tenantInfo,
+			Actor:      &actor,
 		},
 	)
 	if err != nil {
@@ -1095,17 +1069,16 @@ func (h *Handler) getByResource(c *gin.Context) {
 	resourceID := c.Param("resourceID")
 	searchQuery := helpers.QueryString(c, "query", "")
 
+	req := &documentports.GetDocumentsByResourceRequest{
+		TenantInfo:          pagination.FromAuth(authCtx),
+		ResourceID:          resourceID,
+		ResourceType:        resourceType,
+		IncludeDocumentType: helpers.QueryBool(c, "includeDocumentType", false),
+		Viewer:              actorutil.FromAuthContext(authCtx).PersonUserID(),
+	}
+
 	if searchQuery != "" {
-		documents, err := h.contentService.SearchDocuments(
-			c.Request.Context(),
-			pagination.TenantInfo{
-				OrgID: authCtx.OrganizationID,
-				BuID:  authCtx.BusinessUnitID,
-			},
-			resourceType,
-			resourceID,
-			searchQuery,
-		)
+		documents, err := h.service.SearchByResource(c.Request.Context(), req, searchQuery)
 		if err != nil {
 			h.eh.HandleError(c, err)
 			return
@@ -1115,15 +1088,7 @@ func (h *Handler) getByResource(c *gin.Context) {
 		return
 	}
 
-	documents, err := h.service.GetByResource(
-		c.Request.Context(),
-		&documentports.GetDocumentsByResourceRequest{
-			TenantInfo:          pagination.FromAuth(authCtx),
-			ResourceID:          resourceID,
-			ResourceType:        resourceType,
-			IncludeDocumentType: helpers.QueryBool(c, "includeDocumentType", false),
-		},
-	)
+	documents, err := h.service.GetByResource(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -1188,10 +1153,6 @@ func (h *Handler) getContent(c *gin.Context) {
 	documentID, err := pulid.MustParse(c.Param("documentID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
-		return
-	}
-
-	if !h.requireReadable(c, authCtx, documentID) {
 		return
 	}
 
@@ -1421,17 +1382,20 @@ func (h *Handler) attachToShipment(c *gin.Context) {
 		return
 	}
 
+	actor := requestActorFromAuthContext(authCtx)
 	updated, err := h.service.AttachLineageToResource(
 		c.Request.Context(),
-		documentID,
-		"shipment",
-		req.ShipmentID,
-		pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+		&documentservice.AttachLineageRequest{
+			DocumentID:   documentID,
+			ResourceType: "shipment",
+			ResourceID:   req.ShipmentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			Actor: &actor,
 		},
-		authCtx.UserID,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)

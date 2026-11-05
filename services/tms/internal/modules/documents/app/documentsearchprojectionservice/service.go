@@ -39,8 +39,13 @@ func New(p Params) documentsearchprojectionports.DocumentSearchProjectionService
 }
 
 func (s *Service) Upsert(ctx context.Context, doc *document.Document, contentText string) error {
-	if _, err := s.repo.Upsert(ctx, documentsearchprojection.Build(doc, contentText)); err != nil {
-		return err
+	if !doc.OwnedByConversation() {
+		if _, err := s.repo.Upsert(
+			ctx,
+			documentsearchprojection.Build(doc, contentText),
+		); err != nil {
+			return err
+		}
 	}
 
 	s.markStale(ctx, doc)

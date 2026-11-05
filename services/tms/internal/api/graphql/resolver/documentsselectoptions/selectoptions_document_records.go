@@ -3,6 +3,7 @@ package documentsselectoptions
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -14,11 +15,8 @@ func (r *Sources) Document(
 	ctx context.Context,
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	if _, err := r.RequirePermission(
-		ctx,
-		permission.ResourceDocument,
-		permission.OpRead,
-	); err != nil {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceDocument, permission.OpRead)
+	if err != nil {
 		return nil, err
 	}
 
@@ -33,6 +31,7 @@ func (r *Sources) Document(
 		ResourceID:         selectoption.StringFilter(req.Filters, "resourceId"),
 		ResourceType:       selectoption.StringFilter(req.Filters, "resourceType"),
 		IDs:                req.IDs,
+		Viewer:             actorutil.FromAuthContext(authCtx).PersonUserID(),
 	})
 	if err != nil {
 		return nil, err

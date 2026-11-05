@@ -13,8 +13,7 @@ type ListDocumentsRequest struct {
 	ResourceID   string                   `json:"resourceId"`
 	ResourceType string                   `json:"resourceType"`
 	Status       string                   `json:"status"`
-	PrivateTo    pulid.ID                 `json:"-"`
-	HidePrivate  bool                     `json:"-"`
+	Viewer       pulid.ID                 `json:"-"`
 }
 
 type DocumentSelectOptionsRequest struct {
@@ -22,6 +21,7 @@ type DocumentSelectOptionsRequest struct {
 	ResourceID         string                         `json:"resourceId"`
 	ResourceType       string                         `json:"resourceType"`
 	IDs                []pulid.ID                     `json:"ids"`
+	Viewer             pulid.ID                       `json:"-"`
 }
 
 type GetDocumentByIDRequest struct {
@@ -52,6 +52,7 @@ type GetDocumentsByResourceRequest struct {
 	ResourceID          string                `json:"resourceId"`
 	ResourceType        string                `json:"resourceType"`
 	IncludeDocumentType bool                  `json:"includeDocumentType"`
+	Viewer              pulid.ID              `json:"-"`
 }
 
 type GetDocumentsByIDsRequest struct {

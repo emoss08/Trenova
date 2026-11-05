@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
@@ -69,14 +68,13 @@ func NewGetDocumentTool(
 	labels recordLabeler,
 	users uploaderReader,
 	permissions permissionports.PermissionEngine,
-	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return &getDocumentTool{
 		documents: documents,
 		contents:  contents,
 		labels:    labels,
 		users:     users,
-		access:    fieldgate.NewAccess(permissions).WithThreads(threads),
+		access:    fieldgate.NewAccess(permissions),
 	}
 }
 

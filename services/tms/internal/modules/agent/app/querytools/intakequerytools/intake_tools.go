@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
@@ -29,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/shopspring/decimal"
 )
 
@@ -41,16 +44,33 @@ type draftReader interface {
 	) (*documentshipmentdraft.DocumentShipmentDraft, error)
 }
 
+type draftDocumentReader interface {
+	GetByID(
+		ctx context.Context,
+		req documentports.GetDocumentByIDRequest,
+	) (*document.Document, error)
+}
+
 // getShipmentDraftTool reads what document intelligence extracted from a
 // customer's document, so an agent can turn it into a shipment without
 // re-reading the PDF. The draft is the import assistant's output; this is the
 // hand-off from that assistant to whichever agent creates the record.
 type getShipmentDraftTool struct {
-	drafts draftReader
+	drafts    draftReader
+	documents draftDocumentReader
+	access    fieldgate.Access
 }
 
-func NewGetShipmentDraftTool(drafts draftReader) agenttoolports.AgentQueryTool {
-	return &getShipmentDraftTool{drafts: drafts}
+func NewGetShipmentDraftTool(
+	drafts draftReader,
+	documents draftDocumentReader,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return &getShipmentDraftTool{
+		drafts:    drafts,
+		documents: documents,
+		access:    fieldgate.NewAccess(permissions),
+	}
 }
 
 func (t *getShipmentDraftTool) Name() string { return "intake_get_draft" }
@@ -164,12 +184,48 @@ func (t *getShipmentDraftTool) Query(
 		return nil, err
 	}
 
-	draft, err := t.drafts.GetShipmentDraft(ctx, documentID, querytool.TenantOf(params))
+	tenant := querytool.TenantOf(params)
+	if err = t.requireReadable(ctx, params, documentID, tenant); err != nil {
+		return nil, err
+	}
+
+	draft, err := t.drafts.GetShipmentDraft(ctx, documentID, tenant)
 	if err != nil {
 		return nil, err
 	}
 
 	return draftViewOf(draft)
+}
+
+func (t *getShipmentDraftTool) requireReadable(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+	documentID pulid.ID,
+	tenant pagination.TenantInfo,
+) error {
+	doc, err := t.documents.GetByID(ctx, documentports.GetDocumentByIDRequest{
+		ID:         documentID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return err
+	}
+
+	readable, err := t.access.ReadableDocuments(ctx, params, []*document.Document{doc},
+		func(resource permission.Resource, recordID string) bool {
+			return t.access.MayReadRecord(ctx, params, resource, recordID)
+		})
+	if err != nil {
+		return err
+	}
+	if !readable[doc.ID] {
+		return fmt.Errorf(
+			"document %s is attached to a %s you may not read",
+			doc.ID, textcase.HumanizeSnakeCase(doc.OwnerResource().String()),
+		)
+	}
+
+	return nil
 }
 
 func draftViewOf(draft *documentshipmentdraft.DocumentShipmentDraft) (*draftView, error) {

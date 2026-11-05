@@ -8,16 +8,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type savingAttacher struct {
-	doc   *document.Document
-	guard agenttoolstest.WriteGuard
+	doc        *document.Document
+	guard      agenttoolstest.WriteGuard
+	unreadable error
 }
 
 func (f *savingAttacher) PreviewAttachLineage(
@@ -41,18 +44,22 @@ func (f *savingAttacher) PreviewAttachLineage(
 
 func (f *savingAttacher) AttachLineageToResource(
 	_ context.Context,
-	_ pulid.ID,
-	resourceType string,
-	resourceID string,
-	_ pagination.TenantInfo,
-	_ pulid.ID,
+	req *documentservice.AttachLineageRequest,
 ) (*document.Document, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
-	documentservice.ApplyLineageMove(f.doc, resourceType, resourceID)
+	documentservice.ApplyLineageMove(f.doc, req.ResourceType, req.ResourceID)
 
 	return f.doc, nil
+}
+
+func (f *savingAttacher) RequireReadable(
+	context.Context,
+	documentports.GetDocumentByIDRequest,
+	*permissionports.RequestActor,
+) error {
+	return f.unreadable
 }
 
 func TestAttachDocument_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -120,4 +127,24 @@ func TestAttachDocument_PreviewSaysWhenItIsAlreadyThere(t *testing.T) {
 
 	assert.Empty(t, preview.Changes)
 	assert.Contains(t, preview.Summary, "already attached")
+}
+
+func TestAttachDocument_RefusesADocumentThePersonMayNotRead(t *testing.T) {
+	t.Parallel()
+
+	doc := &document.Document{ID: pulid.MustNew("doc_"), OriginalName: "theirs.pdf"}
+	attacher := &savingAttacher{doc: doc, unreadable: errortypes.NewNotFoundError("Document not found")}
+	tool := NewAttachDocumentTool(attacher).(*AttachDocumentTool)
+	raw := map[string]any{
+		"documentId": doc.ID.String(),
+		"shipmentId": pulid.MustNew("shp_").String(),
+	}
+
+	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
+	require.NoError(t, err)
+	assert.NotContains(t, preview.Summary, "theirs.pdf")
+	assert.Empty(t, preview.Changes)
+
+	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)))
+	assert.Empty(t, doc.ResourceType, "nothing moved")
 }

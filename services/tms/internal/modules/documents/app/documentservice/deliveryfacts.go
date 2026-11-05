@@ -51,10 +51,10 @@ func (s *Service) SetDeliveryFacts(
 		return nil, err
 	}
 
-	current, err := s.repo.GetByID(ctx, documentports.GetDocumentByIDRequest{
+	current, err := s.visibleDocument(ctx, documentports.GetDocumentByIDRequest{
 		ID:         req.DocumentID,
 		TenantInfo: req.TenantInfo,
-	})
+	}, &req.Actor)
 	if err != nil {
 		return nil, err
 	}

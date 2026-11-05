@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -46,6 +48,29 @@ func (f *fakeDrafts) GetShipmentDraft(
 	return f.draft, nil
 }
 
+type fakeDraftDocuments struct {
+	doc *document.Document
+}
+
+func (f *fakeDraftDocuments) GetByID(
+	_ context.Context,
+	req documentports.GetDocumentByIDRequest,
+) (*document.Document, error) {
+	if f.doc != nil {
+		return f.doc, nil
+	}
+
+	return &document.Document{ID: req.ID, ResourceType: "shipment"}, nil
+}
+
+func draftTool(drafts *fakeDrafts) agenttoolports.AgentQueryTool {
+	return NewGetShipmentDraftTool(
+		drafts,
+		&fakeDraftDocuments{},
+		&querytooltest.FakePermissions{Allowed: true},
+	)
+}
+
 func TestGetShipmentDraft_ReadsFieldsStopsAndWhatNeedsAPerson(t *testing.T) {
 	t.Parallel()
 
@@ -75,7 +100,7 @@ func TestGetShipmentDraft_ReadsFieldsStopsAndWhatNeedsAPerson(t *testing.T) {
 			},
 		},
 	}}
-	tool := NewGetShipmentDraftTool(drafts)
+	tool := draftTool(drafts)
 	assert.Equal(t, permission.ResourceDocument, tool.Policy().Resource)
 
 	params := querytooltest.TestParams(map[string]any{"documentId": docID.String()})
@@ -106,7 +131,7 @@ func TestGetShipmentDraft_SaysWhenTheDraftWasAlreadyUsed(t *testing.T) {
 		Status:             documentshipmentdraft.StatusReady,
 		AttachedShipmentID: &attached,
 	}}
-	tool := NewGetShipmentDraftTool(drafts)
+	tool := draftTool(drafts)
 
 	result, err := tool.Query(
 		t.Context(),
@@ -121,11 +146,42 @@ func TestGetShipmentDraft_SaysWhenTheDraftWasAlreadyUsed(t *testing.T) {
 	assert.NotNil(t, view.Stops)
 }
 
+func TestGetShipmentDraft_ConversationFileIsReadOnlyByThePersonWhoAttachedIt(t *testing.T) {
+	t.Parallel()
+
+	params := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
+	id := pulid.MustNew("doc_")
+	params.Params = map[string]any{"documentId": id.String()}
+	drafts := &fakeDrafts{draft: &documentshipmentdraft.DocumentShipmentDraft{
+		DocumentID: id,
+		Status:     documentshipmentdraft.StatusReady,
+	}}
+	attached := &document.Document{
+		ID:           id,
+		ResourceType: document.ConversationResourceType,
+		ResourceID:   pulid.MustNew("athr_").String(),
+		UploadedByID: params.Actor.UserID,
+	}
+	permissions := &querytooltest.FakePermissions{Allowed: true}
+
+	_, err := NewGetShipmentDraftTool(drafts, &fakeDraftDocuments{doc: attached}, permissions).
+		Query(t.Context(), params)
+	require.NoError(t, err)
+
+	theirs := *attached
+	theirs.UploadedByID = pulid.MustNew("usr_")
+	drafts.lastID = pulid.Nil
+	_, err = NewGetShipmentDraftTool(drafts, &fakeDraftDocuments{doc: &theirs}, permissions).
+		Query(t.Context(), params)
+	require.ErrorContains(t, err, "may not read")
+	assert.True(t, drafts.lastID.IsNil(), "the draft is never read")
+}
+
 func TestGetShipmentDraft_RejectsAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	drafts := &fakeDrafts{}
-	tool := NewGetShipmentDraftTool(drafts)
+	tool := draftTool(drafts)
 	params := querytooltest.TestParams(map[string]any{"documentId": pulid.MustNew("doc_").String()})
 	params.Actor.OrganizationID = pulid.MustNew("org_")
 

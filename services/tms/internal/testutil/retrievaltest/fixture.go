@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -117,7 +116,6 @@ type Access struct {
 	Registry   *permissioncatalog.Registry
 	Tenant     pagination.TenantInfo
 	UserID     pulid.ID
-	Threads    conversationports.ThreadOwnerRepository
 }
 
 var _ retrievalports.RetrievalAccess = Access{}
@@ -134,22 +132,9 @@ func (a Access) ReadableDocuments(
 	ctx context.Context,
 	docs []*document.Document,
 ) (map[pulid.ID]bool, error) {
-	var owners map[pulid.ID]pulid.ID
-	if ids := document.ConversationIDs(docs); len(ids) > 0 && a.Threads != nil &&
-		a.UserID.IsNotNil() {
-		found, err := a.Threads.ThreadOwners(ctx, conversationports.ThreadOwnersRequest{
-			TenantInfo: a.Tenant,
-			ThreadIDs:  ids,
-		})
-		if err != nil {
-			return nil, err
-		}
-		owners = found
-	}
-
 	readable := make(map[pulid.ID]bool, len(docs))
 	for _, doc := range docs {
-		if doc.VisibleToPerson(owners, a.UserID) &&
+		if doc.VisibleToPerson(a.UserID) &&
 			a.MayReadRecord(ctx, doc.OwnerResource(), doc.ResourceID) {
 			readable[doc.ID] = true
 		}

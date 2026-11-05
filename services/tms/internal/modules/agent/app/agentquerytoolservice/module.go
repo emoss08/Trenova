@@ -39,7 +39,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/workforcequerytools"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
@@ -250,10 +249,9 @@ func provideGetDocumentTool(
 	labels captureports.CaptureRecordFinder,
 	users tenantports.UserRepository,
 	permissions permissionports.PermissionEngine,
-	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
 	return documentquerytools.NewGetDocumentTool(
-		documents, content, labels, users, permissions, threads,
+		documents, content, labels, users, permissions,
 	)
 }
 
@@ -274,8 +272,10 @@ func provideReadAttachmentTool(
 
 func provideGetShipmentDraftTool(
 	content documentports.DocumentContentService,
+	documents documentports.DocumentRepository,
+	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return intakequerytools.NewGetShipmentDraftTool(content)
+	return intakequerytools.NewGetShipmentDraftTool(content, documents, permissions)
 }
 
 func provideQuoteShipmentTool(
@@ -330,7 +330,6 @@ func provideGetBankReceiptTool(
 func provideSearchDocumentsTool(
 	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads conversationports.ThreadOwnerRepository,
 ) agenttoolports.AgentQueryTool {
-	return documentquerytools.NewSearchDocumentsTool(searcher, permissions, threads)
+	return documentquerytools.NewSearchDocumentsTool(searcher, permissions)
 }

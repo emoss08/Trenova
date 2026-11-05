@@ -79,7 +79,6 @@ func readOrigin(
 		labels,
 		users,
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 	result, err := tool.Query(
 		t.Context(),
@@ -186,12 +185,10 @@ func TestGetDocument_SurfacesAFailureToNameTheRecord(t *testing.T) {
 func TestGetDocument_AsksNoLabelForAFileOnAConversation(t *testing.T) {
 	t.Parallel()
 
-	threadID := pulid.MustNew("athr_")
-	doc := conversationDocument(threadID)
-	doc.ProcessingProfile = document.ProcessingProfileAssistantAttachment
 	owner := querytooltest.PersonParams(permissionports.PrincipalTypeUser)
+	doc := conversationDocument(owner.Actor.UserID)
+	doc.ProcessingProfile = document.ProcessingProfileAssistantAttachment
 	owner.Params = map[string]any{"documentId": doc.ID.String()}
-	doc.UploadedByID = owner.Actor.UserID
 	labels := noLabels()
 	users := &stubUploader{users: []*tenant.User{{ID: owner.Actor.UserID, Name: "Dana Reyes"}}}
 
@@ -204,7 +201,6 @@ func TestGetDocument_AsksNoLabelForAFileOnAConversation(t *testing.T) {
 		labels,
 		users,
 		&querytooltest.FakePermissions{Allowed: true},
-		&fakeThreadOwners{owners: map[pulid.ID]pulid.ID{threadID: owner.Actor.UserID}},
 	)
 	result, err := tool.Query(t.Context(), owner)
 
@@ -227,7 +223,6 @@ func TestGetDocument_ReadsAsTheDocumentKindsGet(t *testing.T) {
 		noLabels(),
 		noUploader(),
 		&querytooltest.FakePermissions{Allowed: true},
-		nil,
 	)
 
 	assert.Equal(t, "get_document", agenttoolports.ReadingOrder(tool.Name()))
