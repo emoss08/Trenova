@@ -113,8 +113,8 @@ setting on a 16 GB machine. Run only the client app you are working on
 
 ### Malware scanning locally
 
-ClamAV is in the local stack behind a profile, since it holds about 2 GB of signatures in
-memory. Start it, wait for it to report healthy (the first start downloads its signatures, which
+ClamAV is in the local stack behind a profile, since it reserves 3 GB of memory and may use
+4 GB while it reloads its signatures. Start it, wait for it to report healthy (the first start downloads its signatures, which
 takes several minutes), and point the TMS at it:
 
 ```bash

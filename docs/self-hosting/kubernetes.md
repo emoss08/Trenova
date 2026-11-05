@@ -113,7 +113,7 @@ The ones you are most likely to change:
 | `bootstrap.*` | The first organization and administrator; skipped while `adminEmail` is empty |
 | `minio.enabled`, `storage.external.*` | Bundled MinIO, or an S3-compatible service and a Secret with `accessKey` and `secretKey` |
 | `docling.enabled` | Document extraction (docling-serve, 2 to 4 GiB of memory) |
-| `clamav.enabled` | Malware scanning; files are refused while clamd is down |
+| `clamav.enabled` | Malware scanning (requests 3 GiB of memory, limit 4 GiB: clamd holds two copies of its signatures while it reloads them); files are refused while clamd is down |
 | `tms.config` | Merged over the TMS configuration the chart renders; see `services/tms/config/config.example.yaml` |
 | `tms.extraEnv` | Integration credentials and other `TRENOVA_*` settings, as env entries (`valueFrom` works) |
 | `*.resources`, `postgres.parameters` | Sizing; raise `shared_buffers` with the PostgreSQL memory limit |

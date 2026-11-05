@@ -386,6 +386,12 @@ services:
         volumes:
             - clamav_data:/var/lib/clamav
         restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 4G
+                reservations:
+                    memory: 3G
         healthcheck:
             test: ["CMD", "clamdcheck.sh"]
             interval: 30s

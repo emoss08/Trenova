@@ -56,7 +56,7 @@ itself are yours.
 | `imaging-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues the private CA and the certificates the TMS and the imaging worker authenticate each other with, once |
 | `temporal-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: the same for the TMS and Temporal |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
-| `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
+| `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; off by default, needs 3 to 4 GB of memory; see [Malware scanning](#malware-scanning) |
 
 The `tms-api`, `tms-worker`, `rls-roles` and `tms-bootstrap` services are one image with different
 commands; `trenova-db` is its own small image, so the server image carries no migrations or
@@ -82,6 +82,10 @@ email, accounting integrations, release checks).
   per CPU, each needing about 1 GB under load, and idles at a few megabytes. Every document
   preview, page view and capture page goes through it, so the API and worker wait for it to be
   healthy.
+- Malware scanning (the optional `clamav` service, off by default) needs **3 GB of memory
+  reserved and up to 4 GB**, one CPU core at 2 GHz or better and about 1 GB of disk for its
+  signatures. With it on, the host needs **4 vCPU and 12 GB RAM** at the least. See
+  [Malware scanning](#malware-scanning).
 - Docker Engine 24 or newer with the Compose plugin v2.24 or newer (`docker compose version`).
 - `git` and `openssl` on the host.
 - For a public install: a hostname for Trenova and one for its file storage (for example
@@ -637,21 +641,38 @@ stored, and before PDFium, pdfcpu, the spreadsheet readers, the zip and XML pars
 EDI parser read it. Scanning uses ClamAV's `clamd` over its `INSTREAM` command, so nothing is
 written to disk on either side.
 
-Scanning is off until an address is set. With it off, the API and worker log a warning at
-startup saying files are not scanned.
+Scanning is off by default, because ClamAV needs more memory than the rest of a small install
+can spare. With it off, the API and worker log a warning at startup saying files are not
+scanned. Turn it on when files arrive from outside your company (email attachments, EDI
+partners, customers' portals).
+
+**What it needs.** `clamd` keeps ClamAV's signature databases in memory: about 1.2 GB to hold
+them, and about 2.4 GB for a short time each day while it loads the new signatures beside the
+old ones, plus what each scan uses. ClamAV documents 3 GB as the minimum and 4 GB as the
+preferred size for its container, so the compose file reserves 3 GB and caps it at 4 GB; a
+smaller cap gets `clamd` killed during the daily reload, and every file is refused until it is
+back. Add 4 GB to the host: **4 vCPU and 12 GB RAM** at the least. It also needs one CPU core
+at 2 GHz or better, about 1 GB of disk in the `clamav_data` volume, and outbound HTTPS to
+`database.clamav.net` for its hourly signature updates.
 
 **Turning it on.**
 
 1. Start the bundled scanner: `docker compose --profile clamav up -d clamav`. On first start
    it downloads the signature databases (a few hundred megabytes) into the `clamav_data`
-   volume, which takes several minutes; `docker compose ps clamav` shows it healthy when it is
-   ready. It needs about 2 GB of memory (4 GB while it reloads signatures) and the outbound
-   network for its hourly signature updates; `clamd` itself is reachable only on the internal
+   volume, which takes several minutes (the health check allows ten); `docker compose ps
+   clamav` shows it healthy when it is ready. `clamd` itself is reachable only on the internal
    network.
 2. Add `TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS=clamav:3310` to `.env`, and add `--profile clamav`
    to every later `docker compose up`, or set `COMPOSE_PROFILES=clamav` in `.env`.
-3. `docker compose up -d` so the API and worker pick up the address. Their startup log says
-   scanning is on, or that the scanner did not answer.
+3. `docker compose up -d` so the API and worker pick up the address. With the profile on they
+   wait for `clamav` to be healthy before they start. Their startup log says scanning is on, or
+   that the scanner did not answer.
+
+From then on, a file is refused while `clamd` is starting, reloading after a crash or down
+(see *Scanner unreachable* below). To turn scanning off again, empty
+`TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS`, drop `clamav` from `COMPOSE_PROFILES`, and run
+`docker compose up -d` and `docker compose stop clamav`. Files are then stored and parsed
+without being checked.
 
 To use a `clamd` you already run, point the address at it instead (`host:3310`, or
 `unix:/path/to/clamd.sock` with the socket mounted into `tms-api` and `tms-worker`). Its

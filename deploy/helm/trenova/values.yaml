@@ -474,7 +474,9 @@ docling:
 # Malware scanning: clamd checks every uploaded file, inbound email
 # attachment, capture page and inbound EDI file before anything opens it.
 # Once on, a file is refused while clamd is unreachable, and the first
-# signature download takes several minutes.
+# signature download takes several minutes. clamd holds about 1.2 GiB of
+# signatures and twice that while it reloads them each day; ClamAV documents
+# 3 GiB as the minimum and 4 GiB as the preferred size for its container.
 clamav:
   enabled: false
   image:
@@ -484,7 +486,7 @@ clamav:
     size: 2Gi
     storageClass: ""
   resources:
-    requests: { cpu: 250m, memory: 1536Mi }
+    requests: { cpu: 250m, memory: 3Gi }
     limits: { memory: 4Gi }
 
 # The document and imaging worker, reached by the TMS over mutual TLS. One

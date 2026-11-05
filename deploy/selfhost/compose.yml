@@ -564,7 +564,11 @@ services:
   # opens it. Start it with `docker compose --profile clamav up -d` and set
   # TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS=clamav:3310 in .env. Once the address
   # is set a file is refused while clamd is unreachable, so wait for the
-  # first signature download (several minutes) before setting it. freshclam
+  # first signature download (several minutes) before setting it. clamd holds
+  # about 1.2 GB of signatures and about 2.4 GB while it reloads them each day
+  # (the old and new copies at once), plus what scans use: ClamAV documents
+  # 3 GB as the minimum and 4 GB as the preferred size for its container, so
+  # 3 GB is reserved and 4 GB is the limit. freshclam
   # runs inside the container and needs the egress network for signature
   # updates; clamd itself is reached only on the scan network, so the service
   # with a route out cannot reach the databases. See "Malware scanning" in
@@ -587,6 +591,8 @@ services:
         limits:
           memory: 4G
           pids: 256
+        reservations:
+          memory: 3G
     healthcheck:
       test: ["CMD", "clamdcheck.sh"]
       interval: 30s
