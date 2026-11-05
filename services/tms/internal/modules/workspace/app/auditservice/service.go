@@ -377,7 +377,7 @@ func (s *service) pushNonCriticalEntries(nonCriticalEntries []*audit.Entry) {
 }
 
 func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*audit.Entry) {
-	if len(entries) == 0 {
+	if len(entries) == 0 || s.realtime == nil {
 		return
 	}
 
@@ -447,7 +447,7 @@ func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*au
 }
 
 func (s *service) publishRecordChanges(ctx context.Context, entries []*audit.Entry) {
-	if len(entries) == 0 {
+	if len(entries) == 0 || s.realtime == nil {
 		return
 	}
 

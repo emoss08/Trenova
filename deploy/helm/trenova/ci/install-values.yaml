@@ -1,0 +1,52 @@
+# The CI install on k3d (.github/workflows/helm.yml): every component the
+# chart runs by default, with images built from the commit and resources
+# trimmed to fit a runner.
+domain: trenova.ci.test
+storageDomain: storage.trenova.ci.test
+
+tms:
+  image: { repository: trenova-tms, tag: ci, pullPolicy: Never }
+  dbImage: { repository: trenova-tms-db, tag: ci, pullPolicy: Never }
+  api:
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { memory: 1536Mi }
+  worker:
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { memory: 1536Mi }
+
+imaging:
+  image: { repository: trenova-imaging, tag: ci, pullPolicy: Never }
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1536Mi }
+
+client:
+  image: { repository: trenova-client, tag: ci, pullPolicy: Never }
+
+postgres:
+  image: { repository: trenova-postgres, tag: "18-ci" }
+  storage: { size: 5Gi }
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { memory: 2Gi }
+  parameters:
+    shared_buffers: 256MB
+    effective_cache_size: 1GB
+
+redis: { storage: { size: 1Gi } }
+minio: { storage: { size: 2Gi } }
+meilisearch: { storage: { size: 1Gi } }
+
+bootstrap:
+  orgName: CI Freight
+  adminName: CI Admin
+  adminEmail: admin@trenova.ci.test
+  timezone: America/Chicago
+  state: TX
+  city: Austin
+  postalCode: "78701"
+  addressLine1: 1 Main St
+  scac: CIFR
+  dotNumber: "1234567"

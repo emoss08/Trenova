@@ -1,0 +1,1 @@
+../../../selfhost/scripts/db-bootstrap.sh

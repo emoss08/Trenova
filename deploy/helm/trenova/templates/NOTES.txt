@@ -1,0 +1,29 @@
+Trenova {{ include "trenova.appVersion" . }} is installing as release {{ .Release.Name }} in {{ .Release.Namespace }}.
+
+The release Job prepares PostgreSQL, applies the migrations and seeds, and
+provisions the database roles; the API and worker start once it has. Follow it:
+
+  kubectl -n {{ .Release.Namespace }} logs -f job/{{ include "trenova.name" (dict "root" . "component" "release") }}-{{ .Release.Revision }} --all-containers
+
+{{- if .Values.ingress.enabled }}
+
+Trenova will answer at https://{{ .Values.domain }} once the Ingress has an address
+and DNS for {{ .Values.domain }}{{ if .Values.minio.enabled }} and {{ .Values.storageDomain }}{{ end }} points at it.
+{{- else if .Values.client.enabled }}
+
+No Ingress was created. To try it from this machine:
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "trenova.name" (dict "root" . "component" "client") }} 8080:80
+{{- end }}
+{{- if .Values.bootstrap.adminEmail }}
+
+Sign in as {{ .Values.bootstrap.adminEmail }}. The password:
+
+  kubectl -n {{ .Release.Namespace }} get secret {{ include "trenova.appSecret" . }} -o jsonpath='{.data.bootstrapAdminPassword}' | base64 -d
+{{- end }}
+{{- if not .Values.secrets.existingSecret }}
+
+Back up the Secret {{ include "trenova.appSecret" . }} apart from the cluster: its encryptionKey
+is the only way to read encrypted data, and its other keys sign sessions and
+recovery codes. It is kept when the release is uninstalled.
+{{- end }}

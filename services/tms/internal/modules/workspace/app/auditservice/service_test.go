@@ -212,6 +212,24 @@ func TestLogAction_Critical_DirectInsert(t *testing.T) {
 	bufferRepo.AssertNotCalled(t, "Push", mock.Anything, mock.Anything)
 }
 
+func TestLogAction_WithoutRealtime(t *testing.T) {
+	t.Parallel()
+
+	repo := new(mockAuditRepository)
+	bufferRepo := new(mockBufferRepository)
+	srv := newTestService(repo, bufferRepo, nil)
+
+	repo.On("InsertAuditEntries", mock.Anything, mock.Anything).Return(nil)
+
+	params := validLogActionParams()
+	params.Critical = true
+
+	require.NotPanics(t, func() {
+		require.NoError(t, srv.LogAction(params))
+	})
+	repo.AssertExpectations(t)
+}
+
 func TestLogAction_Critical_InsertError_Buffered(t *testing.T) {
 	t.Parallel()
 

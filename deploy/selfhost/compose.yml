@@ -120,11 +120,13 @@ services:
     # Sessions, rate limits and short caches carry a TTL and may be evicted;
     # GTC's tca:events stream, its dead-letter queue and the synced caches carry
     # none, so volatile-lru never drops them. AOF keeps them across restarts.
+    # It starts through the image's entrypoint, which loads the bundled
+    # modules (RedisJSON, for GTC's caches) only when handed redis-server.
     command:
       - sh
       - -c
       - >-
-        exec redis-server
+        exec docker-entrypoint.sh redis-server
         --requirepass "$${REDIS_PASSWORD}"
         --maxmemory ${REDIS_MAXMEMORY:-1gb}
         --maxmemory-policy volatile-lru

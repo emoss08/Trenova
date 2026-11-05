@@ -1,0 +1,258 @@
+{{- $app := include "trenova.appSecret" . -}}
+{{- /* Redis: sessions, rate limits, caches and GTC's event stream. */ -}}
+{{- $c := dict "root" . "component" "redis" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "trenova.name" $c }}
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 999) | nindent 6 }}
+      containers:
+        - name: redis
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.redis.image) }}
+          # Through the image's entrypoint, which loads the bundled modules
+          # (RedisJSON for GTC's caches) only when handed redis-server.
+          command:
+            - sh
+            - -c
+            - >-
+              exec docker-entrypoint.sh redis-server
+              --requirepass "$REDIS_PASSWORD"
+              --maxmemory {{ .Values.redis.maxMemory }}
+              --maxmemory-policy volatile-lru
+              --appendonly yes
+              --appendfsync everysec
+          env:
+            {{- include "trenova.secretEnv" (dict "name" "REDIS_PASSWORD" "secret" $app "key" "redisPassword") | nindent 12 }}
+            {{- include "trenova.secretEnv" (dict "name" "REDISCLI_AUTH" "secret" $app "key" "redisPassword") | nindent 12 }}
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: [sh, -c, "redis-cli ping | grep -q PONG"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- include "trenova.storageClass" .Values.redis.storage | nindent 8 }}
+        resources:
+          requests:
+            storage: {{ .Values.redis.storage.size }}
+{{- /* Meilisearch: the search indexes GTC keeps current. */ -}}
+{{- $c = dict "root" . "component" "meilisearch" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 7700
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "trenova.name" $c }}
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 1000) | nindent 6 }}
+      containers:
+        - name: meilisearch
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.meilisearch.image) }}
+          env:
+            {{- include "trenova.secretEnv" (dict "name" "MEILI_MASTER_KEY" "secret" $app "key" "meiliMasterKey") | nindent 12 }}
+            - name: MEILI_ENV
+              value: production
+            - name: MEILI_NO_ANALYTICS
+              value: "true"
+            - name: MEILI_DB_PATH
+              value: /meili_data/data.ms
+            - name: MEILI_DUMP_DIR
+              value: /meili_data/dumps
+            - name: MEILI_SNAPSHOT_DIR
+              value: /meili_data/snapshots
+          ports:
+            - name: http
+              containerPort: 7700
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.meilisearch.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /meili_data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- include "trenova.storageClass" .Values.meilisearch.storage | nindent 8 }}
+        resources:
+          requests:
+            storage: {{ .Values.meilisearch.storage.size }}
+{{- if .Values.minio.enabled }}
+{{- /* The bundled object store. The API creates its bucket on first start. */ -}}
+{{- $c = dict "root" . "component" "minio" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: s3
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "trenova.name" $c }}
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 1000) | nindent 6 }}
+      containers:
+        - name: minio
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.minio.image) }}
+          args: [server, /data, --certs-dir, /tmp/certs]
+          env:
+            {{- include "trenova.secretEnv" (dict "name" "MINIO_ROOT_USER" "secret" $app "key" "storageAccessKey") | nindent 12 }}
+            {{- include "trenova.secretEnv" (dict "name" "MINIO_ROOT_PASSWORD" "secret" $app "key" "storageSecretKey") | nindent 12 }}
+            - name: MINIO_API_CORS_ALLOW_ORIGIN
+              value: {{ include "trenova.origin" . | quote }}
+            - name: MINIO_BROWSER
+              value: "off"
+          ports:
+            - name: s3
+              containerPort: 9000
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: s3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: s3
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.minio.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- include "trenova.storageClass" .Values.minio.storage | nindent 8 }}
+        resources:
+          requests:
+            storage: {{ .Values.minio.storage.size }}
+{{- end }}

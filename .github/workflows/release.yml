@@ -275,3 +275,65 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
+
+  # The Helm chart, versioned with the release, as an OCI artifact beside the
+  # images: oci://ghcr.io/emoss08/charts/trenova. Published once every image
+  # it names exists.
+  publish-chart:
+    name: Publish Helm Chart
+    runs-on: ubuntu-latest
+    needs:
+      - detect-postgres-changes
+      - build-and-push-tms
+      - build-and-push-client
+      - build-and-push-imaging
+      - build-and-push-postgres
+    if: >-
+      ${{ !cancelled()
+      && needs.build-and-push-tms.result == 'success'
+      && needs.build-and-push-client.result == 'success'
+      && needs.build-and-push-imaging.result == 'success'
+      && (needs.build-and-push-postgres.result == 'success' || needs.build-and-push-postgres.result == 'skipped') }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        run: |
+          set -euo pipefail
+          curl -fsSL https://get.helm.sh/helm-v3.19.0-linux-amd64.tar.gz | tar xz -C /tmp
+          sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+
+      # The PostgreSQL image is published only when it changes; a release
+      # that built one points the chart at it.
+      - name: Point the chart at this release's PostgreSQL image
+        if: needs.detect-postgres-changes.outputs.should_build == 'true'
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          python3 - "$version" <<'PY'
+          import re, sys
+          path = "deploy/helm/trenova/values.yaml"
+          text = open(path).read()
+          block = re.search(r"^postgres:\n(?:  .*\n|\n)*?    tag: \"[^\"]*\"", text, re.M)
+          if not block:
+              sys.exit("postgres.image.tag not found in values.yaml")
+          updated = re.sub(r'tag: "[^"]*"$', f'tag: "{sys.argv[1]}"', block.group(0), flags=re.M)
+          open(path, "w").write(text.replace(block.group(0), updated, 1))
+          PY
+          grep -n -A4 '^postgres:' deploy/helm/trenova/values.yaml
+
+      - name: Package and push the chart
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          echo "${GHCR_TOKEN}" | helm registry login "${REGISTRY}" -u "${{ github.actor }}" --password-stdin
+          helm lint deploy/helm/trenova --set domain=trenova.example.com --set storageDomain=storage.trenova.example.com
+          helm package deploy/helm/trenova --version "${version}" --app-version "${version}" -d "${RUNNER_TEMP}"
+          helm push "${RUNNER_TEMP}/trenova-${version}.tgz" "oci://${REGISTRY}/emoss08/charts"

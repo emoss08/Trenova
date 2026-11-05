@@ -1,0 +1,267 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- /*
+The release's network, as compose's data, edge and egress networks drew it:
+every pod refuses connections unless a rule below admits them, each
+component admits only the components that use it, and the components that
+parse untrusted input or need nothing outside the release open no
+connections at all.
+*/ -}}
+{{- $tms := list "api" "worker" "release" "test" -}}
+{{- $ingress := dict
+  "redis" (dict "ports" (list 6379) "from" (concat $tms (list "gtc")))
+  "meilisearch" (dict "ports" (list 7700) "from" (concat $tms (list "gtc")))
+  "minio" (dict "ports" (list 9000) "from" (concat $tms (list "client")))
+  "temporal" (dict "ports" (list 7233) "from" $tms)
+  "gotenberg" (dict "ports" (list 3000) "from" $tms)
+  "docling" (dict "ports" (list 5001) "from" $tms)
+  "clamav" (dict "ports" (list 3310) "from" $tms)
+  "imaging" (dict "ports" (list 50051) "from" $tms)
+-}}
+{{- $isolated := list "redis" "meilisearch" "minio" "gotenberg" "docling" "imaging" -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "default-deny") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ .Chart.Name }}
+  policyTypes: [Ingress]
+{{- range $component, $rule := $ingress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" $ "component" $component) }}
+  labels:
+    {{- include "trenova.labels" (dict "root" $ "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" $ "component" $component) | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        {{- range $rule.from }}
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" $ "component" .) | nindent 14 }}
+        {{- end }}
+      ports:
+        {{- range $rule.ports }}
+        - port: {{ . }}
+          protocol: TCP
+        {{- end }}
+    {{- if eq $component "temporal" }}
+    # Temporal's services reach each other on the pod's own address.
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" $ "component" "temporal") | nindent 14 }}
+    {{- end }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "postgres") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ include "trenova.postgresCluster" . }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        {{- range (concat $tms (list "temporal" "gtc")) }}
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" $ "component" .) | nindent 14 }}
+        {{- end }}
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "trenova.postgresCluster" . }}
+      ports:
+        - port: 5432
+          protocol: TCP
+    # The operator reads each instance's status, and instances replicate.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.networkPolicy.cnpgNamespace }}
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "trenova.postgresCluster" . }}
+      ports:
+        - port: 8000
+          protocol: TCP
+        - port: 5432
+          protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "api") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "api") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        {{- if .Values.networkPolicy.apiFrom }}
+        {{- range (list "client" "test") }}
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" $ "component" .) | nindent 14 }}
+        {{- end }}
+        {{- toYaml .Values.networkPolicy.apiFrom | nindent 8 }}
+        {{- else }}
+        - namespaceSelector: {}
+        {{- end }}
+      ports:
+        - port: 8080
+          protocol: TCP
+    {{- with .Values.networkPolicy.metricsFrom }}
+    - from:
+        {{- toYaml . | nindent 8 }}
+      ports:
+        - port: 9090
+          protocol: TCP
+    {{- end }}
+{{- with .Values.networkPolicy.metricsFrom }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" $ "component" "worker") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" $ "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" $ "component" "worker") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        {{- toYaml . | nindent 8 }}
+      ports:
+        - port: 9090
+          protocol: TCP
+{{- end }}
+{{- if .Values.client.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "client") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "client") | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - port: 8080
+          protocol: TCP
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" . "component" "api") | nindent 14 }}
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" . "component" "minio") | nindent 14 }}
+      ports:
+        - port: 9000
+          protocol: TCP
+    {{- include "trenova.dnsEgress" . | nindent 4 }}
+{{- end }}
+{{- range $isolated }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" $ "component" (printf "%s-egress" .)) }}
+  labels:
+    {{- include "trenova.labels" (dict "root" $ "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" $ "component" .) | nindent 6 }}
+  policyTypes: [Egress]
+  egress: []
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "temporal-egress") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "temporal") | nindent 6 }}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "trenova.postgresCluster" . }}
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" . "component" "temporal") | nindent 14 }}
+    {{- include "trenova.dnsEgress" . | nindent 4 }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "gtc-egress") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "network") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" (dict "root" . "component" "gtc") | nindent 6 }}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ include "trenova.postgresCluster" . }}
+      ports:
+        - port: 5432
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" . "component" "redis") | nindent 14 }}
+      ports:
+        - port: 6379
+          protocol: TCP
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" . "component" "meilisearch") | nindent 14 }}
+      ports:
+        - port: 7700
+          protocol: TCP
+    {{- include "trenova.dnsEgress" . | nindent 4 }}
+{{- end }}

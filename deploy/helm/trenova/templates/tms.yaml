@@ -1,0 +1,183 @@
+{{- range $role := list "api" "worker" }}
+{{- $c := dict "root" $ "component" $role }}
+{{- $v := index $.Values.tms $role }}
+{{- if eq $role "api" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ $v.replicas }}
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.tmsChecksums" $ | nindent 8 }}
+        {{- include "trenova.podAnnotations" (dict "root" $ "extra" $v.podAnnotations) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" $ | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 65532) | nindent 6 }}
+      terminationGracePeriodSeconds: {{ ternary 30 120 (eq $role "api") }}
+      initContainers:
+        {{- include "trenova.waitForTmsRole" $ | nindent 8 }}
+      containers:
+        - name: {{ $role }}
+          image: {{ include "trenova.image" (dict "root" $ "image" $.Values.tms.image) }}
+          imagePullPolicy: {{ include "trenova.pullPolicy" $.Values.tms.image }}
+          args: [{{ $role }}, run]
+          env:
+            {{- include "trenova.tmsEnv" $ | nindent 12 }}
+          {{- with $.Values.tms.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          ports:
+            {{- if eq $role "api" }}
+            - name: http
+              containerPort: 8080
+            {{- end }}
+            - name: monitoring
+              containerPort: 9090
+          # The process waits up to ten minutes for the release Job to bring
+          # the schema to its version before it serves.
+          startupProbe:
+            httpGet:
+              path: /live
+              port: monitoring
+            periodSeconds: 10
+            failureThreshold: 72
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: monitoring
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: monitoring
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 4
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml $v.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "trenova.tmsVolumeMounts" $ | nindent 12 }}
+      volumes:
+        {{- include "trenova.tmsVolumes" $ | nindent 8 }}
+---
+{{- end }}
+{{- if .Values.client.enabled }}
+{{- $c := dict "root" . "component" "client" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.client.replicas }}
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 1000) | nindent 6 }}
+      containers:
+        - name: caddy
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.client.image) }}
+          imagePullPolicy: {{ include "trenova.pullPolicy" .Values.client.image }}
+          # TLS ends at the Ingress, so Caddy serves each hostname over plain
+          # HTTP on an unprivileged port (deploy/Caddyfile).
+          env:
+            - name: DOMAIN
+              value: {{ printf "http://%s:8080" .Values.domain | quote }}
+            - name: STORAGE_DOMAIN
+              value: {{ printf "http://%s:8080" (.Values.storageDomain | default (printf "storage.%s" .Values.domain)) | quote }}
+            - name: STORAGE_ORIGIN
+              value: {{ .Values.client.storageOrigin | default (include "trenova.storagePublicEndpoint" .) | quote }}
+            - name: API_UPSTREAM
+              value: {{ printf "%s:8080" (include "trenova.name" (dict "root" . "component" "api")) | quote }}
+            - name: STORAGE_UPSTREAM
+              value: {{ printf "%s:9000" (include "trenova.name" (dict "root" . "component" "minio")) | quote }}
+            - name: CADDY_GLOBAL_OPTIONS
+              value: admin off
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: {{ .Values.domain | quote }}
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 15
+            failureThreshold: 4
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.client.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: data
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: config
+          emptyDir:
+            sizeLimit: 16Mi
+{{- end }}

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "config") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "config") | nindent 4 }}
+data:
+  config.yaml: |
+    {{- include "trenova.config" . | nindent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "trenova.name" (dict "root" . "component" "files") }}
+  labels:
+    {{- include "trenova.labels" (dict "root" . "component" "files") | nindent 4 }}
+data:
+  db-prepare.sh: |
+    {{- .Files.Get "files/db-prepare.sh" | nindent 4 }}
+  db-publication.sh: |
+    {{- .Files.Get "files/db-publication.sh" | nindent 4 }}
+  gtc-sinks.yaml: |
+    {{- .Files.Get "files/gtc-sinks.yaml" | nindent 4 }}
+  temporal-dynamicconfig.yaml: |
+    {{- .Files.Get "files/temporal-dynamicconfig.yaml" | nindent 4 }}

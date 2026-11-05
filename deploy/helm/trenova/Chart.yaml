@@ -1,0 +1,24 @@
+apiVersion: v2
+name: trenova
+description: >-
+  Trenova, the transportation management system, on Kubernetes: the API, the
+  worker, the imaging worker and everything they need, with PostgreSQL run by
+  CloudNativePG.
+type: application
+# The release workflow packages the chart with the release's version as both
+# the chart version and appVersion; these are what an unreleased checkout
+# renders with.
+version: 0.0.0-dev
+appVersion: 0.0.0-dev
+kubeVersion: ">=1.29.0-0"
+home: https://github.com/emoss08/trenova
+sources:
+  - https://github.com/emoss08/trenova/tree/master/deploy/helm/trenova
+keywords:
+  - tms
+  - transportation
+  - logistics
+annotations:
+  # The CloudNativePG operator this chart is tested against; install it once
+  # per cluster before the chart (docs/self-hosting/kubernetes.md).
+  trenova.app/cloudnative-pg: "1.30.1"

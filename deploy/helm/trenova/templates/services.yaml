@@ -1,0 +1,557 @@
+{{- $app := include "trenova.appSecret" . -}}
+{{- $db := include "trenova.dbSecret" . -}}
+{{- $files := include "trenova.name" (dict "root" . "component" "files") -}}
+{{- /* Temporal: every AI feature's workflows. auto-setup migrates its schema in
+the databases the release Job made, then serves. */ -}}
+{{- $c := dict "root" . "component" "temporal" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: grpc
+      port: 7233
+      targetPort: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        checksum/dynamicconfig: {{ .Files.Get "files/temporal-dynamicconfig.yaml" | sha256sum }}
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 1000) | nindent 6 }}
+      initContainers:
+        {{- include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.temporalRole "secret" $db "key" "temporalPassword" "database" "temporal_visibility" "query" "SELECT 1" "why" "the temporal databases (the release Job creates them)") | nindent 8 }}
+      containers:
+        - name: temporal
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.temporal.image) }}
+          env:
+            - name: DB
+              value: postgres12
+            - name: DB_PORT
+              value: "5432"
+            - name: POSTGRES_SEEDS
+              value: {{ include "trenova.postgresHost" . }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.temporalRole }}
+            {{- include "trenova.secretEnv" (dict "name" "POSTGRES_PWD" "secret" $db "key" "temporalPassword") | nindent 12 }}
+            - name: SKIP_DB_CREATE
+              value: "true"
+            - name: POSTGRES_TLS_ENABLED
+              value: "true"
+            - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
+              value: "true"
+            - name: SQL_TLS_ENABLED
+              value: "true"
+            - name: SQL_HOST_VERIFICATION
+              value: "false"
+            - name: DYNAMIC_CONFIG_FILE_PATH
+              value: /etc/temporal/dynamicconfig/dynamic_config.yaml
+            - name: BIND_ON_IP
+              value: 0.0.0.0
+            - name: TEMPORAL_BROADCAST_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          ports:
+            - name: grpc
+              containerPort: 7233
+          startupProbe:
+            tcpSocket:
+              port: grpc
+            periodSeconds: 5
+            failureThreshold: 120
+          readinessProbe:
+            exec:
+              command: [sh, -c, "temporal operator cluster health --address 127.0.0.1:7233 | grep -q SERVING"]
+            periodSeconds: 10
+            timeoutSeconds: 8
+          livenessProbe:
+            tcpSocket:
+              port: grpc
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- include "trenova.containerSecurity" (dict) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.temporal.resources | nindent 12 }}
+          volumeMounts:
+            - name: dynamicconfig
+              mountPath: /etc/temporal/dynamicconfig
+              readOnly: true
+      volumes:
+        - name: dynamicconfig
+          configMap:
+            name: {{ $files }}
+            items:
+              - key: temporal-dynamicconfig.yaml
+                path: dynamic_config.yaml
+{{- /* Gotenberg renders organization-authored HTML to PDF, so it is locked
+down rather than trusted: JavaScript off, only data: and its own staging
+files allowed, no network (templates/networkpolicy.yaml). */ -}}
+{{- $c = dict "root" . "component" "gotenberg" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 1001) | nindent 6 }}
+      containers:
+        - name: gotenberg
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.gotenberg.image) }}
+          args:
+            - gotenberg
+            - --chromium-disable-javascript=true
+            - "--chromium-allow-list=^(data:|file:///tmp/).*"
+            - --chromium-max-queue-size=16
+            - --libreoffice-disable-routes=true
+            - --pdfengines-disable-routes=true
+            - --api-timeout=30s
+            - --api-disable-health-check-logging=true
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.gotenberg.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: home
+              mountPath: /home/gotenberg
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 1Gi
+        - name: home
+          emptyDir:
+            sizeLimit: 256Mi
+{{- if .Values.docling.enabled }}
+{{- /* docling-serve reads uploaded files for document extraction. It parses
+files nobody vetted, so it is locked down like Gotenberg; the image carries
+its models and never downloads anything. Every request needs the API key. */ -}}
+{{- $c = dict "root" . "component" "docling" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: http
+      port: 5001
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 1001) | nindent 6 }}
+      containers:
+        - name: docling
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.docling.image) }}
+          command: [container-entrypoint, docling-serve, run]
+          env:
+            {{- include "trenova.secretEnv" (dict "name" "DOCLING_SERVE_API_KEY" "secret" $app "key" "doclingApiKey") | nindent 12 }}
+            - name: DOCLING_SERVE_ENABLE_UI
+              value: "false"
+            - name: DOCLING_SERVE_ENABLE_API_DOCS
+              value: "false"
+            - name: DOCLING_SERVE_ENABLE_REMOTE_SERVICES
+              value: "false"
+            - name: DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS
+              value: "false"
+            - name: DOCLING_SERVE_MAX_FILE_SIZE
+              value: {{ .Values.docling.maxFileBytes | quote }}
+            - name: DOCLING_SERVE_MAX_NUM_PAGES
+              value: {{ .Values.docling.maxPages | quote }}
+            - name: DOCLING_SERVE_ENG_KIND
+              value: local
+            - name: DOCLING_SERVE_ENG_LOC_NUM_WORKERS
+              value: {{ .Values.docling.workers | quote }}
+            - name: DOCLING_SERVE_LOAD_MODELS_AT_BOOT
+              value: "true"
+            - name: DOCLING_SERVE_SINGLE_USE_RESULTS
+              value: "true"
+            - name: DOCLING_SERVE_SCRATCH_PATH
+              value: /tmp/docling
+          ports:
+            - name: http
+              containerPort: 5001
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.docling.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+{{- end }}
+{{- if .Values.clamav.enabled }}
+{{- /* clamd checks every file before anything opens it. freshclam inside the
+container fetches signatures, so it is the one service here with egress. */ -}}
+{{- $c = dict "root" . "component" "clamav" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: clamd
+      port: 3310
+      targetPort: clamd
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  serviceName: {{ include "trenova.name" $c }}
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: clamav
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.clamav.image) }}
+          ports:
+            - name: clamd
+              containerPort: 3310
+          startupProbe:
+            exec:
+              command: [clamdcheck.sh]
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: [clamdcheck.sh]
+            periodSeconds: 30
+            timeoutSeconds: 10
+          livenessProbe:
+            exec:
+              command: [clamdcheck.sh]
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            {{- toYaml .Values.clamav.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/clamav
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        {{- include "trenova.storageClass" .Values.clamav.storage | nindent 8 }}
+        resources:
+          requests:
+            storage: {{ .Values.clamav.storage.size }}
+{{- end }}
+{{- /* The document and imaging worker: every document is parsed in a hardened
+child process, and the worker holds no database, storage or key access and
+opens no connections. The TMS reaches it over mutual TLS. */ -}}
+{{- $c = dict "root" . "component" "imaging" }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  selector:
+    {{- include "trenova.selectorLabels" $c | nindent 4 }}
+  ports:
+    - name: grpc
+      port: 50051
+      targetPort: grpc
+      appProtocol: grpc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      {{- include "trenova.podSecurity" (dict "uid" 65532) | nindent 6 }}
+      containers:
+        - name: imaging
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.imaging.image) }}
+          imagePullPolicy: {{ include "trenova.pullPolicy" .Values.imaging.image }}
+          args: [serve]
+          env:
+            - name: TRENOVA_IMAGING__ENVIRONMENT
+              value: production
+            - name: TRENOVA_IMAGING__GRPC__TLS__CERT
+              value: /certs/tls.crt
+            - name: TRENOVA_IMAGING__GRPC__TLS__KEY
+              value: /certs/tls.key
+            - name: TRENOVA_IMAGING__GRPC__TLS__CLIENT_CA
+              value: /certs/ca.crt
+          ports:
+            - name: grpc
+              containerPort: 50051
+            - name: metrics
+              containerPort: 9464
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: metrics
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: metrics
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: metrics
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 10 }}
+          resources:
+            {{- toYaml .Values.imaging.resources | nindent 12 }}
+          volumeMounts:
+            - name: tls
+              mountPath: /certs
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tls
+          secret:
+            secretName: {{ include "trenova.imagingServerSecret" . }}
+            defaultMode: 0440
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+{{- /* GTC: change data capture from logical replication into Meilisearch,
+the Redis caches and the event stream. It signs in as its own role, which
+the release Job gives replication and read access to the published tables. */ -}}
+{{- $c = dict "root" . "component" "gtc" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "trenova.name" $c }}
+  labels:
+    {{- include "trenova.labels" $c | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "trenova.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "trenova.podLabels" $c | nindent 8 }}
+      annotations:
+        checksum/sinks: {{ .Files.Get "files/gtc-sinks.yaml" | sha256sum }}
+        {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
+    spec:
+      {{- include "trenova.podCommon" . | nindent 6 }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        {{- include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.gtcRole "secret" $db "key" "gtcPassword" "database" .Values.postgres.database "query" "SELECT 1 FROM pg_publication WHERE pubname = 'gtc_publication'" "why" "the gtc_publication publication (the release Job creates it)") | nindent 8 }}
+      containers:
+        - name: gtc
+          image: {{ include "trenova.image" (dict "root" . "image" .Values.gtc.image) }}
+          env:
+            {{- include "trenova.secretEnv" (dict "name" "GTC_DB_PASSWORD" "secret" $db "key" "gtcPassword") | nindent 12 }}
+            {{- include "trenova.secretEnv" (dict "name" "REDIS_PASSWORD" "secret" $app "key" "redisPassword") | nindent 12 }}
+            - name: DATABASE_URL
+              value: {{ printf "postgres://%s:$(GTC_DB_PASSWORD)@%s:5432/%s?replication=database&sslmode=require" .Values.postgres.gtcRole (include "trenova.postgresHost" .) .Values.postgres.database | quote }}
+            - name: CDC_SLOT_NAME
+              value: gtc_slot
+            - name: CDC_PUBLICATION_NAME
+              value: gtc_publication
+            - name: CDC_AUTO_CREATE_SLOT
+              value: "true"
+            - name: CDC_AUTO_CREATE_PUBLICATION
+              value: "false"
+            - name: CDC_BACKFILL_MODE
+              value: auto
+            - name: SINK_CONFIG_FILE
+              value: /app/sinks/sinks.yaml
+            - name: REDIS_URL
+              value: {{ printf "redis://:$(REDIS_PASSWORD)@%s:6379/0" (include "trenova.name" (dict "root" . "component" "redis")) | quote }}
+            - name: REDIS_JSON_URL
+              value: {{ printf "redis://:$(REDIS_PASSWORD)@%s:6379/0" (include "trenova.name" (dict "root" . "component" "redis")) | quote }}
+            - name: MEILISEARCH_URL
+              value: {{ printf "http://%s:7700" (include "trenova.name" (dict "root" . "component" "meilisearch")) | quote }}
+            {{- include "trenova.secretEnv" (dict "name" "MEILISEARCH_API_KEY" "secret" $app "key" "meiliMasterKey") | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 6
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 6
+            failureThreshold: 6
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml .Values.gtc.resources | nindent 12 }}
+          volumeMounts:
+            - name: sinks
+              mountPath: /app/sinks
+              readOnly: true
+      volumes:
+        - name: sinks
+          configMap:
+            name: {{ $files }}
+            items:
+              - key: gtc-sinks.yaml
+                path: sinks.yaml
