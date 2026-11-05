@@ -62,7 +62,7 @@ impl Default for MetricsConfig {
 }
 
 fn default_metrics_listen() -> SocketAddr {
-    SocketAddr::from(([0, 0, 0, 0], 9464))
+    SocketAddr::from(([127, 0, 0, 1], 9464))
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -398,5 +398,15 @@ impl Validate for Config {
             "drain_grace",
             "must be 1s to 10m",
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MetricsConfig;
+
+    #[test]
+    fn metrics_stay_on_this_machine_unless_a_deployment_says_otherwise() {
+        assert!(MetricsConfig::default().listen.ip().is_loopback());
     }
 }
