@@ -2,7 +2,6 @@
 package authservice
 
 import (
-	"github.com/emoss08/trenova/shared/tokenutils"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
@@ -12,6 +11,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/tokenutils"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
@@ -981,17 +982,17 @@ func (s *Service) AuthenticateAPIKey(
 		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
 	}
 
+	computed := apikey.HashSecret(key.SecretSalt, secret)
+	if subtle.ConstantTimeCompare([]byte(computed), []byte(key.SecretHash)) != 1 {
+		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
+	}
+
 	if key.Status != apikey.StatusActive {
 		return nil, errortypes.NewAuthenticationError("API key is inactive")
 	}
 
 	if key.IsExpired(timeutils.NowUnix()) {
 		return nil, errortypes.NewAuthenticationError("API key has expired")
-	}
-
-	computed := apikey.HashSecret(key.SecretSalt, secret)
-	if subtle.ConstantTimeCompare([]byte(computed), []byte(key.SecretHash)) != 1 {
-		return nil, errortypes.NewAuthenticationError("Invalid bearer token")
 	}
 
 	s.usageBuf.RecordUsage(apikeyports.APIKeyUsageEvent{
