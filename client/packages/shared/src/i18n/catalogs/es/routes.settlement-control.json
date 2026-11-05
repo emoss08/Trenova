@@ -22,5 +22,6 @@
   "Settlements without exceptions skip manual review and go straight to approved.": "Las liquidaciones sin excepciones omiten la revisión manual y pasan directamente a aprobadas.",
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": "El hito en el que se devenga el pago del conductor. «Tramo completado» paga a cada conductor en cuanto termina su propio tramo, la opción más precisa cuando los conductores se reparten una carga.",
   "Variance threshold": "Umbral de variación",
-  "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.": "Cuando las deducciones superen las percepciones, arrastre el saldo a la próxima liquidación en lugar de limitar las recuperaciones."
+  "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.": "Cuando las deducciones superen las percepciones, arrastre el saldo a la próxima liquidación en lugar de limitar las recuperaciones.",
+  "Whoever submits a settlement cannot also approve it. Turn this off if one person runs payroll. Auto-approving clean settlements is not affected.": "Quien envía una liquidación no puede aprobarla también. Desactívelo si una sola persona gestiona la nómina. La aprobación automática de liquidaciones limpias no se ve afectada."
 }

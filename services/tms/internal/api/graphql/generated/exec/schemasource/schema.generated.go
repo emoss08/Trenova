@@ -8045,6 +8045,8 @@ type CapturePairingPreview {
   osVersion: String!
   "The address the request came from."
   clientIp: String!
+  "Whether that request reached Trenova from the network the person reading this is on."
+  sameNetwork: Boolean!
   expiresAt: Timestamp!
 }
 
@@ -14209,10 +14211,10 @@ type WorkerPortalStatus {
 type InviteWorkerToPortalResult {
   invitation: PortalInvitation!
   """
-  Shareable invitation link. Also emailed to the driver when an email provider
-  is configured; surface this so dispatch can text it manually if needed.
+  The invitation link, given only when the email could not be sent, so someone
+  can pass it to the driver by hand. Once emailed it is the driver's alone.
   """
-  inviteUrl: String!
+  inviteUrl: String
   emailSent: Boolean!
 }
 
@@ -15852,6 +15854,8 @@ type SettlementControl {
   autoApproveClean: Boolean!
   "When on, newly accrued pay events flow into the driver's open draft settlement automatically."
   autoAttachAccruals: Boolean!
+  "When on, whoever submits a settlement cannot also approve it. Auto-approving clean settlements is unaffected."
+  requireSeparateApprover: Boolean!
   "When on, approving a settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
@@ -16237,6 +16241,7 @@ input UpdateSettlementControlInput {
   autoGenerateBatches: Boolean!
   autoApproveClean: Boolean!
   autoAttachAccruals: Boolean!
+  requireSeparateApprover: Boolean!
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
   varianceThresholdPct: Decimal!

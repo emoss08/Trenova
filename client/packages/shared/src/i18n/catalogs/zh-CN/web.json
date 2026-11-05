@@ -4980,6 +4980,7 @@
   "Request time off on behalf of a worker": "代员工提交休假申请",
   "Request worker PTO": "为员工申请带薪休假",
   "Requested By": "申请人",
+  "Require a separate approver": "需要由他人批准",
   "Require approval": "须经批准",
   "Require approval above threshold": "超过阈值须经批准",
   "Require it with {0}": "用 {0} 要求其存在",

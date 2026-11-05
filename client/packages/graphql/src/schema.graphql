@@ -8574,6 +8574,10 @@ type CapturePairingPreview {
   expiresAt: Timestamp!
   machineName: String!
   osVersion: String!
+  """
+  Whether that request reached Trenova from the network the person reading this is on.
+  """
+  sameNetwork: Boolean!
   userCode: String!
   windowsUser: String!
 }
@@ -20555,10 +20559,10 @@ type InviteWorkerToPortalResult {
   emailSent: Boolean!
   invitation: PortalInvitation!
   """
-  Shareable invitation link. Also emailed to the driver when an email provider
-  is configured; surface this so dispatch can text it manually if needed.
+  The invitation link, given only when the email could not be sent, so someone
+  can pass it to the driver by hand. Once emailed it is the driver's alone.
   """
-  inviteUrl: String!
+  inviteUrl: String
 }
 
 type Invoice {
@@ -29553,6 +29557,10 @@ type SettlementControl {
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
   periodEndDayOfWeek: Int!
+  """
+  When on, whoever submits a settlement cannot also approve it. Auto-approving clean settlements is unaffected.
+  """
+  requireSeparateApprover: Boolean!
   updatedAt: Timestamp!
   varianceLookbackWeeks: Int!
   varianceThresholdPct: Decimal!
@@ -34372,6 +34380,7 @@ input UpdateSettlementControlInput {
   payPeriodFrequency: PayPeriodFrequency!
   payTrigger: SettlementPayTrigger!
   periodEndDayOfWeek: Int!
+  requireSeparateApprover: Boolean!
   varianceLookbackWeeks: Int!
   varianceThresholdPct: Decimal!
   version: Int!

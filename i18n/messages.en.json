@@ -13738,15 +13738,6 @@
       "go/other"
     ]
   },
-  "A user is required to start a session": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A user is required to start a transfer": {
     "sites": 1,
     "scope": [
@@ -23249,7 +23240,7 @@
     ]
   },
   "Agent memory not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -23447,6 +23438,15 @@
   },
   "Agent version is required": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Agent version is too long": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -59372,6 +59372,15 @@
       "go/other"
     ]
   },
+  "Code shown on the computer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Code strategy": {
     "sites": 1,
     "scope": [
@@ -63957,6 +63966,15 @@
     "areas": [
       "apps/web/types",
       "routes/table-change-alert"
+    ]
+  },
+  "Contains characters that cannot be shown": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Content": {
@@ -84569,6 +84587,15 @@
       "go/other"
     ]
   },
+  "Document links need a public base URL; set app.webBaseUrl": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Document not found": {
     "sites": 3,
     "scope": [
@@ -92152,7 +92179,7 @@
       "apps/web/config"
     ]
   },
-  "Email (optional override)": {
+  "Email (if none is on file)": {
     "sites": 1,
     "scope": [
       "ts"
@@ -116963,6 +116990,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Generate webhook credentials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Generated": {
@@ -161670,15 +161706,6 @@
       "apps/web/components"
     ]
   },
-  "No active AS2 communication profile matches the AS2 identifiers": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "No active courses to assign.": {
     "sites": 1,
     "scope": [
@@ -176903,6 +176930,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "OS version is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "OS&D": {
@@ -200386,6 +200422,15 @@
       "routes/admin"
     ]
   },
+  "Postmark sends these with every webhook. Trenova refuses delivery events without them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Postmark verifies deliveries with a user and password in the webhook URL. Generate new ones, then put them in the URL in Postmark.": {
     "sites": 1,
     "scope": [
@@ -219874,6 +219919,15 @@
       "routes/inbox"
     ]
   },
+  "Replace webhook credentials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Replace with `{0}`": {
     "sites": 2,
     "scope": [
@@ -221701,12 +221755,13 @@
     ]
   },
   "Require a separate approver": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice-adjustment-control"
+      "routes/invoice-adjustment-control",
+      "routes/settlement-control"
     ]
   },
   "Require approval": {
@@ -228549,15 +228604,6 @@
       "routes/shipment"
     ]
   },
-  "Rows Key": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Rows a page": {
     "sites": 1,
     "scope": [
@@ -230232,6 +230278,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "SCIM directory not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "SCIM directory, token, and group mapping administration": {
@@ -248668,6 +248723,15 @@
       "routes/agent-control"
     ]
   },
+  "Sign-in is briefly unavailable. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Sign-in outcomes, the risk checks run on them, identities linked from your providers and the two-factor devices people have enrolled.": {
     "sites": 1,
     "scope": [
@@ -264124,6 +264188,15 @@
       "go/other"
     ]
   },
+  "The agent that raised this proposal no longer exists, so it cannot be decided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The agent the composer picks when you start fresh. You can still switch per message.": {
     "sites": 1,
     "scope": [
@@ -266968,6 +267041,15 @@
     ]
   },
   "The computer asking": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "The computer reports these details itself. Trenova cannot verify them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -270904,6 +270986,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The fiscal period closed while this reversal was posting. Post it again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The fiscal year is closed. Reopen the fiscal year first.": {
@@ -280645,6 +280736,24 @@
       "go/other"
     ]
   },
+  "The signer's name must be at most {0} characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The signer's title must be at most {0} characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The single facility this end covers": {
     "sites": 1,
     "scope": [
@@ -287393,6 +287502,15 @@
       "routes/worker"
     ]
   },
+  "This driver has an email address on file; change it on their record to invite them at another one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This driver has no payable accrued events. Pay accrues once a load reaches the pay trigger milestone; held events must be released first.": {
     "sites": 1,
     "scope": [
@@ -290995,6 +291113,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This request came from a different network than the one you are on. If you are not sitting at this computer, someone may be trying to get access as you. Deny it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "This request has already been decided.": {
@@ -298715,6 +298842,15 @@
       "routes/inbox"
     ]
   },
+  "Trenova refuses webhooks without credentials. Generate them above to put them in this URL, then save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova retries within the hour and reads changes every five minutes meanwhile.": {
     "sites": 1,
     "scope": [
@@ -300471,6 +300607,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Type the code shown on the computer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Type to search": {
@@ -303310,7 +303455,7 @@
     ]
   },
   "Unsupported email provider": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -307062,6 +307207,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Verification is briefly unavailable. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Verification state is invalid": {
@@ -312242,6 +312396,15 @@
       "go/other"
     ]
   },
+  "Webhook Credentials": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Webhook Secret": {
     "sites": 2,
     "scope": [
@@ -312287,6 +312450,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Webhook credentials": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Webhook credentials (leave blank to keep existing credentials)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Webhook endpoint": {
@@ -319713,6 +319894,15 @@
       "routes/worker"
     ]
   },
+  "Whoever submits a settlement cannot also approve it. Turn this off if one person runs payroll. Auto-approving clean settlements is not affected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settlement-control"
+    ]
+  },
   "Whoever submits an adjustment or raises a credit memo that needs approval cannot approve or post it themselves. Leave this off if one person handles billing.": {
     "sites": 1,
     "scope": [
@@ -320799,6 +320989,15 @@
     ],
     "areas": [
       "routes/capture"
+    ]
+  },
+  "Windows user is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Winter weather": {
@@ -324639,6 +324838,15 @@
       "go/other"
     ]
   },
+  "You do not have access to {0}, so you cannot decide its proposal. An administrator can give one of your roles access to it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You do not have access to {0}. An administrator can give one of your roles access to it.": {
     "sites": 3,
     "scope": [
@@ -325137,6 +325345,15 @@
       "routes/inbox"
     ]
   },
+  "You requested this reversal, so someone else must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You run your own fleet and broker loads to partner carriers. Every part of the product is turned on.": {
     "sites": 1,
     "scope": [
@@ -325209,6 +325426,15 @@
       "go/other"
     ]
   },
+  "You submitted this settlement, so someone else must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "You submitted this template; someone else must approve it": {
     "sites": 1,
     "scope": [
@@ -325262,6 +325488,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You wrote or submitted this manual journal, so someone else must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You'll be notified when it's reviewed.": {
@@ -329867,6 +330102,15 @@
     ],
     "areas": [
       "routes/customer-ledger"
+    ]
+  },
+  "database is unavailable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "date range cannot exceed 366 days": {

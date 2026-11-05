@@ -9180,6 +9180,7 @@ export type UpdateSettlementControlInput = {
   payPeriodFrequency: PayPeriodFrequency;
   payTrigger: SettlementPayTrigger;
   periodEndDayOfWeek: number;
+  requireSeparateApprover: boolean;
   varianceLookbackWeeks: number;
   varianceThresholdPct: string;
   version: number;
@@ -12083,7 +12084,7 @@ export type CaptureDevicePairingQueryVariables = Exact<{
 }>;
 
 
-export type CaptureDevicePairingQuery = { captureDevicePairing: { userCode: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, clientIp: string, expiresAt: number } };
+export type CaptureDevicePairingQuery = { captureDevicePairing: { userCode: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, clientIp: string, sameNetwork: boolean, expiresAt: number } };
 
 export type EditCaptureItemsMutationVariables = Exact<{
   batchId: string | number;
@@ -13335,7 +13336,7 @@ export type InviteWorkerToPortalMutationVariables = Exact<{
 }>;
 
 
-export type InviteWorkerToPortalMutation = { inviteWorkerToPortal: { inviteUrl: string, emailSent: boolean, invitation: { id: string, email: string, status: PortalInvitationStatus, expiresAt: number } } };
+export type InviteWorkerToPortalMutation = { inviteWorkerToPortal: { inviteUrl: string | null, emailSent: boolean, invitation: { id: string, email: string, status: PortalInvitationStatus, expiresAt: number } } };
 
 export type RevokeWorkerPortalAccessMutationVariables = Exact<{
   workerId: string | number;
@@ -13899,7 +13900,7 @@ export type WorkerYtdPaySummariesQuery = { workerYtdPaySummaries: Array<{ worker
 export type SettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettlementControlQuery = { settlementControl: { id: string, organizationId: string, businessUnitId: string, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, payTrigger: SettlementPayTrigger, autoGenerateBatches: boolean, autoApproveClean: boolean, autoAttachAccruals: boolean, autoPostOnApprove: boolean, allowNegativeNet: boolean, varianceThresholdPct: string, varianceLookbackWeeks: number, defaultEscrowInterestRate: string, escrowInterestFrequencyMonths: number, version: number } };
+export type SettlementControlQuery = { settlementControl: { id: string, organizationId: string, businessUnitId: string, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, payTrigger: SettlementPayTrigger, autoGenerateBatches: boolean, autoApproveClean: boolean, autoAttachAccruals: boolean, requireSeparateApprover: boolean, autoPostOnApprove: boolean, allowNegativeNet: boolean, varianceThresholdPct: string, varianceLookbackWeeks: number, defaultEscrowInterestRate: string, escrowInterestFrequencyMonths: number, version: number } };
 
 export type SettlementWorkspaceSummaryQueryVariables = Exact<{
   periodStart?: number | null | undefined;

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e950ab78c0f9d568cf8486c270fbee7f3621920dede1f62f887f06f855a6ed49",
+  "version": "sha256:26b76f0d49da7f4e24064f06eb038250cb82e275755b6b28d9383de77091f908",
   "screens": [
     {
       "path": "/",
@@ -35642,7 +35642,14 @@
       "name": "ConnectAccountingWithCertificate",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -38560,7 +38567,14 @@
       "name": "FinishAccountingAuthorization",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {
