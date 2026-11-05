@@ -62,3 +62,17 @@ func TestApplicationSignsInAsItsOwnRoleInEveryMode(t *testing.T) {
 		require.Contains(t, template(t, out, "templates/release-job.yaml"), "name: rls-roles", mode)
 	}
 }
+
+func TestClamAVRunsUnprivileged(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+	services := template(t, out, "templates/services.yaml")
+	clamav := services[strings.Index(services, "name: clamav\n          image:")-400:]
+	clamav = clamav[:strings.Index(clamav, "volumeClaimTemplates")]
+
+	require.Contains(t, clamav, "runAsNonRoot: true")
+	require.Contains(t, clamav, "runAsUser: 100")
+	require.Contains(t, clamav, "command: [/init-unprivileged]")
+	require.Contains(t, clamav, "allowPrivilegeEscalation: false")
+	require.Contains(t, clamav, "drop: [ALL]")
+}

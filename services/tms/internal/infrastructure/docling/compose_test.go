@@ -88,7 +88,9 @@ func TestRequiredAPIKeyInterpolationPattern(t *testing.T) {
 
 type selfHostCompose struct {
 	Services map[string]struct {
-		Networks []string `yaml:"networks"`
+		Networks   []string `yaml:"networks"`
+		User       string   `yaml:"user"`
+		Entrypoint []string `yaml:"entrypoint"`
 	} `yaml:"services"`
 	Networks map[string]struct {
 		Internal bool `yaml:"internal"`
@@ -152,6 +154,15 @@ func TestSelfHostUnauthenticatedServicesStayOnTheDataNetwork(t *testing.T) {
 	assert.True(t, compose.Networks["data"].Internal)
 	assert.Equal(t, []string{"data"}, compose.Services["temporal"].Networks)
 	assert.Equal(t, []string{"data"}, compose.Services["gtc"].Networks)
+}
+
+func TestSelfHostClamAVRunsUnprivileged(t *testing.T) {
+	t.Parallel()
+
+	clamav := loadSelfHostCompose(t).Services["clamav"]
+
+	assert.Equal(t, "clamav", clamav.User)
+	assert.Equal(t, []string{"/init-unprivileged"}, clamav.Entrypoint)
 }
 
 func TestSelfHostTMSProcessesReachEveryServiceTheyCall(t *testing.T) {

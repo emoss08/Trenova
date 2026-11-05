@@ -290,7 +290,9 @@ spec:
 {{- end }}
 {{- if .Values.clamav.enabled }}
 {{- /* clamd checks every file before anything opens it. freshclam inside the
-container fetches signatures, so it is the one service here with egress. */ -}}
+container fetches signatures, so it is the one service here with egress. The
+image's default entrypoint needs root to chown its volume; this one does not, and
+uid 100 is the image's clamav user, which owns everything it writes. */ -}}
 {{- $c = dict "root" . "component" "clamav" }}
 ---
 apiVersion: v1
@@ -327,12 +329,11 @@ spec:
         {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
     spec:
       {{- include "trenova.podCommon" . | nindent 6 }}
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
+      {{- include "trenova.podSecurity" (dict "uid" 100) | nindent 6 }}
       containers:
         - name: clamav
           image: {{ include "trenova.image" (dict "root" . "image" .Values.clamav.image) }}
+          command: [/init-unprivileged]
           ports:
             - name: clamd
               containerPort: 3310
@@ -353,8 +354,7 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 5
-          securityContext:
-            allowPrivilegeEscalation: false
+          {{- include "trenova.containerSecurity" (dict) | nindent 10 }}
           resources:
             {{- toYaml .Values.clamav.resources | nindent 12 }}
           volumeMounts:

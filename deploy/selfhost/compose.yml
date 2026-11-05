@@ -414,8 +414,14 @@ services:
   clamav:
     profiles: [clamav]
     image: clamav/clamav:1.4@sha256:8ad6197396974726c35d017e50aaaaf4b91745726a04faec8480c203edd98052
+    # The image's default entrypoint needs root to chown the volume; this one
+    # does not, and the clamav user owns everything it writes.
+    entrypoint: ["/init-unprivileged"]
+    user: clamav
     volumes:
       - clamav_data:/var/lib/clamav
+    cap_drop:
+      - ALL
     security_opt:
       - "no-new-privileges:true"
     deploy:
