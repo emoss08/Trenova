@@ -1,6 +1,7 @@
 //! The updater's flow with a scripted network and installer: what it checks,
 //! in what order, and what it refuses.
 
+use std::future::pending;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
@@ -11,7 +12,10 @@ use capture_protocol::release::{
 use capture_update::UpdateError;
 use capture_update::ed25519_dalek::{SigningKey, VerifyingKey};
 use sha2::{Digest, Sha256};
-use trenova_capture_update::{Installer, Source, UpdaterError, manifest_url, run};
+use tokio::sync::watch;
+use trenova_capture_update::{
+    Installed, Installer, Source, UpdaterError, manifest_url, run as run_until,
+};
 use url::Url;
 
 const MSI: &[u8] = b"a genuine installer";
@@ -128,6 +132,54 @@ fn url() -> Url {
     manifest_url("https://app.acme.test/api/v1/capture/releases/latest/").expect("url")
 }
 
+/// One update nobody stops.
+async fn run(
+    manifest: &Url,
+    key: Option<&VerifyingKey>,
+    source: &impl Source,
+    installer: &dyn Installer,
+) -> Result<Installed, UpdaterError> {
+    let (_never, stop) = watch::channel(false);
+    run_until(manifest, key, source, installer, &stop, || {}).await
+}
+
+/// A manifest that never arrives.
+struct NeverAnswers;
+
+impl Source for NeverAnswers {
+    async fn fetch_manifest(&self, _url: &Url) -> Result<Option<SignedRelease>, UpdateError> {
+        pending().await
+    }
+
+    async fn download(&self, _release: &Release, _dir: &Path) -> Result<PathBuf, UpdateError> {
+        pending().await
+    }
+}
+
+/// The service is told to stop partway through the download, which then
+/// hangs, or finishes when `finishes` is set.
+struct StoppedDuringDownload {
+    manifest: SignedRelease,
+    stop: watch::Sender<bool>,
+    finishes: bool,
+}
+
+impl Source for StoppedDuringDownload {
+    async fn fetch_manifest(&self, _url: &Url) -> Result<Option<SignedRelease>, UpdateError> {
+        Ok(Some(self.manifest.clone()))
+    }
+
+    async fn download(&self, release: &Release, dir: &Path) -> Result<PathBuf, UpdateError> {
+        self.stop.send_replace(true);
+        if !self.finishes {
+            return pending().await;
+        }
+        let path = dir.join(&release.installer.file_name);
+        std::fs::write(&path, MSI)?;
+        Ok(path)
+    }
+}
+
 #[tokio::test]
 async fn a_newer_signed_release_is_verified_installed_and_the_agent_restarted() {
     let (private, public) = keys(5);
@@ -152,6 +204,103 @@ async fn a_newer_signed_release_is_verified_installed_and_the_agent_restarted() 
             .next()
             .is_none(),
         "the installer is removed afterwards"
+    );
+}
+
+#[tokio::test]
+async fn the_service_stops_answering_to_stop_just_before_it_installs() {
+    let (private, public) = keys(5);
+    let source = Scripted {
+        manifest: Some(sign(&release("1.5.0", 19045), &private).expect("signs")),
+        bytes: MSI.to_vec(),
+    };
+    let installer = fake("1.4.2");
+    let (_never, stop) = watch::channel(false);
+
+    run_until(&url(), Some(&public), &source, &installer, &stop, || {
+        installer.record("committing");
+    })
+    .await
+    .expect("installs");
+
+    assert_eq!(
+        *installer.calls.lock().expect("lock"),
+        ["verify", "committing", "install", "relaunch"]
+    );
+}
+
+#[tokio::test]
+async fn a_stop_ends_a_manifest_fetch_that_never_answers() {
+    let (_, public) = keys(5);
+    let installer = fake("1.4.2");
+    let (asked, stop) = watch::channel(false);
+    let unblock = async {
+        tokio::task::yield_now().await;
+        asked.send_replace(true);
+    };
+
+    let (result, ()) = tokio::join!(
+        run_until(
+            &url(),
+            Some(&public),
+            &NeverAnswers,
+            &installer,
+            &stop,
+            || {
+                installer.record("committing");
+            }
+        ),
+        unblock,
+    );
+
+    assert!(matches!(result, Err(UpdaterError::Stopped)), "{result:?}");
+    assert!(installer.calls.lock().expect("lock").is_empty());
+}
+
+#[tokio::test]
+async fn a_stop_ends_a_download_that_hangs() {
+    let (private, public) = keys(5);
+    let (asked, stop) = watch::channel(false);
+    let source = StoppedDuringDownload {
+        manifest: sign(&release("1.5.0", 19045), &private).expect("signs"),
+        stop: asked,
+        finishes: false,
+    };
+    let installer = fake("1.4.2");
+
+    let result = run_until(&url(), Some(&public), &source, &installer, &stop, || {
+        installer.record("committing");
+    })
+    .await;
+
+    assert!(matches!(result, Err(UpdaterError::Stopped)), "{result:?}");
+    assert!(installer.calls.lock().expect("lock").is_empty());
+}
+
+#[tokio::test]
+async fn a_stop_that_arrives_before_the_install_installs_nothing() {
+    let (private, public) = keys(5);
+    let (asked, stop) = watch::channel(false);
+    let source = StoppedDuringDownload {
+        manifest: sign(&release("1.5.0", 19045), &private).expect("signs"),
+        stop: asked,
+        finishes: true,
+    };
+    let installer = fake("1.4.2");
+
+    let result = run_until(&url(), Some(&public), &source, &installer, &stop, || {
+        installer.record("committing");
+    })
+    .await;
+
+    assert!(matches!(result, Err(UpdaterError::Stopped)), "{result:?}");
+    assert_eq!(*installer.calls.lock().expect("lock"), ["verify"]);
+    assert!(
+        std::fs::read_dir(installer.dir.as_ref().expect("dir").path())
+            .expect("lists")
+            .next()
+            .is_none(),
+        "the download is removed"
     );
 }
 

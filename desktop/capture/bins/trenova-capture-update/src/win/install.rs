@@ -116,6 +116,8 @@ pub fn uninstall_service() -> Result<(), UpdaterError> {
         Err(err) => return Err(service_error(err)),
     };
     if service.query_status().map_err(service_error)?.current_state != ServiceState::Stopped {
+        // Refused while an install is running; the wait below then covers it.
+        let _ = service.stop();
         let deadline = Instant::now() + STOP_TIMEOUT;
         while service.query_status().map_err(service_error)?.current_state != ServiceState::Stopped
         {

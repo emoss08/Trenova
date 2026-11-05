@@ -24,6 +24,7 @@ use std::time::Duration;
 use capture_protocol::release::{MANIFEST_ROUTE, Release, SignedRelease, verify};
 use capture_update::ed25519_dalek::VerifyingKey;
 use capture_update::{Decision, UpdateError, decide, download, fetch_signed};
+use tokio::sync::watch;
 use url::{Host, Url};
 
 /// The Windows service's name.
@@ -58,6 +59,8 @@ pub enum UpdaterError {
     },
     #[error("updates are turned off on this computer")]
     PolicyOff,
+    #[error("the update was stopped before it installed anything")]
+    Stopped,
     #[error(transparent)]
     Update(#[from] UpdateError),
     #[error("the installer is not a Trenova release: {0}")]
@@ -201,21 +204,56 @@ pub struct Installed {
     pub to: String,
 }
 
+/// Turns true when the service is told to stop. A sender that goes away is
+/// not a request to stop.
+pub type Stop = watch::Receiver<bool>;
+
+async fn stopped(stop: &mut Stop) {
+    if stop.wait_for(|stopped| *stopped).await.is_err() {
+        std::future::pending::<()>().await;
+    }
+}
+
+/// Runs `work`, giving it up as soon as the service is told to stop.
+async fn until_stopped<T>(
+    stop: &Stop,
+    work: impl Future<Output = Result<T, UpdaterError>>,
+) -> Result<T, UpdaterError> {
+    let mut stop = stop.clone();
+    tokio::select! {
+        biased;
+        () = stopped(&mut stop) => Err(UpdaterError::Stopped),
+        outcome = work => outcome,
+    }
+}
+
 /// Runs one update: everything in the module doc, in that order. `manifest`
 /// has passed [`manifest_url`].
+///
+/// `stop` ends the run at any point up to the install. `committing` is called
+/// just before it, the last moment that can happen: the installer replaces
+/// and restarts this service, so a service that could still be stopped would
+/// be stopped by its own upgrade.
 pub async fn run(
     manifest: &Url,
     key: Option<&VerifyingKey>,
     source: &impl Source,
     installer: &dyn Installer,
+    stop: &Stop,
+    committing: impl FnOnce(),
 ) -> Result<Installed, UpdaterError> {
     let key = key.ok_or(UpdaterError::NoKey)?;
     if !installer.policy_allows() {
         return Err(UpdaterError::PolicyOff);
     }
 
-    let signed = source
-        .fetch_manifest(manifest)
+    let fetched = async {
+        source
+            .fetch_manifest(manifest)
+            .await
+            .map_err(UpdaterError::from)
+    };
+    let signed = until_stopped(stop, fetched)
         .await?
         .ok_or(UpdaterError::NoRelease)?;
     let release = verify(&signed, key).map_err(UpdateError::from)?;
@@ -239,12 +277,20 @@ pub async fn run(
     tracing::info!(from = %current, to = %release.version, "installing a new release");
 
     let dir = installer.download_dir()?;
-    let path = source.download(&release, &dir).await?;
-    let outcome = async {
-        installer.verify_installer(&path)?;
+    let downloaded = async {
+        source
+            .download(&release, &dir)
+            .await
+            .map_err(UpdaterError::from)
+    };
+    let path = until_stopped(stop, downloaded).await?;
+    let outcome = installer.verify_installer(&path).and_then(|()| {
+        if *stop.borrow() {
+            return Err(UpdaterError::Stopped);
+        }
+        committing();
         installer.install(&path)
-    }
-    .await;
+    });
     let _ = tokio::fs::remove_file(&path).await;
     outcome?;
 
