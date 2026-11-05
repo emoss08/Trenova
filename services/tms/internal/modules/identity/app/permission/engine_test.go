@@ -632,6 +632,51 @@ func TestGetResourcePermissions_UnknownResource(t *testing.T) {
 
 }
 
+func TestCachedPermissionsEndWithTheEarliestAssignment(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	soon := timeutils.NowUnix() + 60
+	later := timeutils.NowUnix() + 300
+	past := timeutils.NowUnix() - 60
+
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: roleID, UserID: userID, OrganizationID: orgID, ExpiresAt: &later},
+			{RoleID: roleID, UserID: userID, OrganizationID: orgID, ExpiresAt: &soon},
+			{
+				RoleID:         pulid.MustNew("rol_"),
+				UserID:         userID,
+				OrganizationID: orgID,
+				ExpiresAt:      &past,
+			},
+		}, nil)
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*rbac.Role{
+		{ID: roleID, MaxSensitivity: permission.SensitivityInternal},
+	}, nil)
+
+	perms, err := eng.computePermissions(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, soon, perms.ExpiresAt)
+}
+
+func TestPermissionsExpireAt_KeepsTheCacheLifetimeWithoutAnEarlierExpiry(t *testing.T) {
+	t.Parallel()
+
+	far := timeutils.NowUnix() + 2*int64(cacheTTL.Seconds())
+	before := timeutils.NowUnix()
+
+	expiresAt := permissionsExpireAt([]*rbac.UserRoleAssignment{{}, {ExpiresAt: &far}})
+
+	assert.GreaterOrEqual(t, expiresAt, before+int64(cacheTTL.Seconds()))
+	assert.Less(t, expiresAt, far)
+}
+
 func TestExpiredAssignmentsIgnored(t *testing.T) {
 	t.Parallel()
 

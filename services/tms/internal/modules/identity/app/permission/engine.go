@@ -1342,7 +1342,7 @@ func (e *engine) computePermissions(
 		return &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityPublic),
 			Resources:      make(map[string]*permissionports.CachedResourcePermission),
-			ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+			ExpiresAt:      permissionsExpireAt(assignments),
 		}, nil
 	}
 
@@ -1352,7 +1352,7 @@ func (e *engine) computePermissions(
 		return &permissionports.CachedPermissions{
 			MaxSensitivity: string(permission.SensitivityPublic),
 			Resources:      make(map[string]*permissionports.CachedResourcePermission),
-			ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+			ExpiresAt:      permissionsExpireAt(assignments),
 		}, nil
 	}
 
@@ -1379,8 +1379,19 @@ func (e *engine) computePermissions(
 		MaxSensitivity: string(maxSensitivity),
 		Resources:      resources,
 		AgentIDs:       agentIDs,
-		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+		ExpiresAt:      permissionsExpireAt(assignments),
 	}, nil
+}
+
+func permissionsExpireAt(assignments []*rbac.UserRoleAssignment) int64 {
+	expiresAt := timeutils.NowUnix() + int64(cacheTTL.Seconds())
+	for _, assignment := range assignments {
+		if assignment.ExpiresAt != nil && !assignment.IsExpired() {
+			expiresAt = min(expiresAt, *assignment.ExpiresAt)
+		}
+	}
+
+	return expiresAt
 }
 
 func activePermissionRoleIDs(
