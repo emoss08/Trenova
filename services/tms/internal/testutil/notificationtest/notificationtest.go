@@ -6,11 +6,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/pushconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +28,17 @@ func (discardedNotifications) Create(
 	return entity, nil
 }
 
+type absentMembers struct {
+	tenantports.UserRepository
+}
+
+func (absentMembers) GetTenantMember(
+	context.Context,
+	tenantports.GetTenantMemberRequest,
+) (*tenant.User, error) {
+	return nil, errortypes.NewNotFoundError("no tenant member")
+}
+
 func New(
 	repo notificationports.NotificationRepository,
 	realtime realtimeports.RealtimeService,
@@ -37,6 +51,7 @@ func New(
 			Logger:     zap.NewNop(),
 			PushConfig: &pushconfig.Config{},
 		}),
+		Users:     absentMembers{},
 		AppConfig: &appconfig.Config{},
 	})
 }

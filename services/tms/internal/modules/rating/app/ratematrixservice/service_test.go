@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratematrixportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -46,14 +47,15 @@ func setupTest(t *testing.T) *testDeps {
 		audit:       auditportsmock.NewMockAuditService(t),
 	}
 	deps.svc = &Service{
-		l:            zap.NewNop(),
-		db:           dbtest.NopConnection{},
-		repo:         deps.repo,
-		versionRepo:  deps.versionRepo,
-		reviewRepo:   deps.reviewRepo,
-		usages:       deps.usages,
-		validator:    NewTestValidator(),
-		auditService: deps.audit,
+		l:             zap.NewNop(),
+		db:            dbtest.NopConnection{},
+		repo:          deps.repo,
+		versionRepo:   deps.versionRepo,
+		reviewRepo:    deps.reviewRepo,
+		usages:        deps.usages,
+		validator:     NewTestValidator(),
+		auditService:  deps.audit,
+		notifications: notificationtest.Discarding(),
 	}
 	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 	return deps

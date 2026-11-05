@@ -34,6 +34,13 @@ type NoopDetentionBilling struct {
 	detentionports.DetentionBillingService
 }
 
+func (*NoopDetentionBilling) GuardShipments(
+	context.Context,
+	*detentionports.DetentionBillingHoldsRequest,
+) error {
+	return nil
+}
+
 func (*NoopDetentionBilling) HoldsForShipments(
 	context.Context,
 	*detentionports.DetentionBillingHoldsRequest,

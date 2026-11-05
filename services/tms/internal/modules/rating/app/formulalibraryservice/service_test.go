@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulalibraryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
+	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -118,7 +119,8 @@ func setupTest(t *testing.T) *testDeps {
 		checker: tariff.NewChecker(
 			tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}},
 		),
-		auditService: deps.auditSvc,
+		auditService:  deps.auditSvc,
+		notifications: notificationtest.Discarding(),
 	}
 	return deps
 }

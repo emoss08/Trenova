@@ -1,10 +1,11 @@
 package carrierservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -31,6 +32,7 @@ func setupTest(t *testing.T) *testDeps {
 	auditSvc := auditportsmock.NewMockAuditService(t)
 	svc := &Service{
 		l:            zap.NewNop(),
+		db:           dbtest.NopConnection{},
 		repo:         repo,
 		validator:    NewTestValidator(),
 		auditService: auditSvc,
