@@ -310,10 +310,8 @@ mod tests {
         fn sid_of(&self, domain: &str, user: &str) -> io::Result<String> {
             match (domain, user) {
                 ("CONTOSO", "jdoe") | ("", "jdoe@contoso.com") => Ok("S-1-5-21-1-2-3-1001".into()),
-                ("", "jdoe") | ("WORKSTATION", "jdoe") => Ok("S-1-5-21-9-9-9-1001".into()),
-                ("WORKSTATION", "asmith" | "ASMITH") | ("", "asmith" | "ASMITH") => {
-                    Ok("S-1-5-21-9-9-9-1002".into())
-                }
+                ("" | "WORKSTATION", "jdoe") => Ok("S-1-5-21-9-9-9-1001".into()),
+                ("" | "WORKSTATION", "asmith" | "ASMITH") => Ok("S-1-5-21-9-9-9-1002".into()),
                 ("AzureAD", "JohnDoe") => Ok("S-1-12-1-11-22-33-44".into()),
                 _ => Err(io::Error::from(io::ErrorKind::NotFound)),
             }
