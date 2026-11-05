@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/internal/testutil/keeltest/keeltestdb"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -227,6 +228,7 @@ func TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt(t *testing.T) {
 		DatabaseConfig:  &f.cfg.Database,
 		ReportingConfig: &f.cfg.Reporting,
 		Logger:          zap.New(core),
+		Metrics:         metricstest.Disabled(),
 		Observers:       shapetest.Observers(t),
 	}, oltpSettings(&f.cfg.Database))
 	require.NoError(t, err)

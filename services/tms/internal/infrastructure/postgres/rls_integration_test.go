@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/metricstest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -206,6 +207,7 @@ func (f *rlsFixture) connect(t *testing.T) *Connection {
 		DatabaseConfig:  &f.cfg.Database,
 		ReportingConfig: &f.cfg.Reporting,
 		Logger:          zaptest.NewLogger(t),
+		Metrics:         metricstest.Disabled(),
 		Observers:       shapetest.Observers(t),
 	}, oltpSettings(&f.cfg.Database))
 	require.NoError(t, err)
@@ -445,6 +447,7 @@ func TestRLS_StartupRefusesAnApplicationRoleThatCanBypass(t *testing.T) {
 		DatabaseConfig:  &f.cfg.Database,
 		ReportingConfig: &f.cfg.Reporting,
 		Logger:          zaptest.NewLogger(t),
+		Metrics:         metricstest.Disabled(),
 		Observers:       shapetest.Observers(t),
 	}, oltpSettings(&f.cfg.Database))
 	require.NoError(t, err)
