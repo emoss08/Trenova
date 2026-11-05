@@ -91,6 +91,7 @@ type selfHostCompose struct {
 		Networks   []string `yaml:"networks"`
 		User       string   `yaml:"user"`
 		Entrypoint []string `yaml:"entrypoint"`
+		Volumes    []string `yaml:"volumes"`
 	} `yaml:"services"`
 	Networks map[string]struct {
 		Internal bool `yaml:"internal"`
@@ -180,4 +181,48 @@ func TestSelfHostTMSProcessesReachEveryServiceTheyCall(t *testing.T) {
 		compose.Services["tms-worker"].Networks,
 		[]string{"data", "egress", "render", "documents", "imaging", "scan"},
 	)
+}
+
+func TestSelfHostClientsVerifyPostgres(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join("..", "..", "..", "..", "..", "deploy", "selfhost")
+	raw, err := os.ReadFile(filepath.Join(root, "compose.yml"))
+	require.NoError(t, err)
+	contents := string(raw)
+
+	assert.NotContains(t, contents, "sslmode=require")
+	assert.NotContains(t, contents, "PGSSLMODE: require")
+	assert.Contains(t, contents, "sslmode=verify-full&sslrootcert=/certs/postgres/ca.pem")
+	assert.Contains(t, contents, "PGSSLMODE: verify-full")
+	assert.Contains(t, contents, `SQL_HOST_VERIFICATION: "true"`)
+	assert.Contains(t, contents, `POSTGRES_TLS_DISABLE_HOST_VERIFICATION: "false"`)
+
+	config, err := os.ReadFile(filepath.Join(root, "config", "config.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(config), "sslMode: verify-full")
+	assert.Contains(t, string(config), "sslRootCert: /certs/postgres/ca.pem")
+}
+
+func TestPostgresKeyIsIssuedPerInstallAndStaysWithTheServer(t *testing.T) {
+	t.Parallel()
+
+	compose := loadSelfHostCompose(t)
+	for name, service := range compose.Services {
+		for _, volume := range service.Volumes {
+			if strings.HasPrefix(volume, "postgres-server-tls:") {
+				assert.Contains(t, []string{"postgres", "postgres-certs"}, name)
+			}
+			if strings.HasPrefix(volume, "postgres-ca:") {
+				assert.Equal(t, "postgres-certs", name)
+			}
+		}
+	}
+
+	dockerfile, err := os.ReadFile(
+		filepath.Join("..", "..", "..", "..", "..", "deploy", "Dockerfile.postgres"),
+	)
+	require.NoError(t, err)
+	assert.NotContains(t, string(dockerfile), "server.key")
+	assert.NotContains(t, string(dockerfile), "openssl req")
 }

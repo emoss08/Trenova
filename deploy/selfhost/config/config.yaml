@@ -68,7 +68,8 @@ database:
   name: trenova # from .env
   user: trenova # from .env
   password: change-me # from .env
-  sslMode: require
+  sslMode: verify-full
+  sslRootCert: /certs/postgres/ca.pem
   maxOpenConns: 60
   statementTimeout: 10s
   lockTimeout: 5s

@@ -23,13 +23,3 @@ RUN apk add --no-cache --virtual .build-deps \
     make with_llvm=no OPTFLAGS="" && make with_llvm=no OPTFLAGS="" install && \
     cd / && rm -rf /tmp/pgvector && \
     apk del .build-deps
-
-RUN apk add --no-cache openssl && \
-    mkdir -p /etc/postgresql/ssl && \
-    openssl req -new -x509 -days 3650 -nodes -text \
-      -out /etc/postgresql/ssl/server.crt \
-      -keyout /etc/postgresql/ssl/server.key \
-      -subj '/CN=postgres' && \
-    chown -R postgres:postgres /etc/postgresql/ssl && \
-    chmod 600 /etc/postgresql/ssl/server.key && \
-    apk del openssl

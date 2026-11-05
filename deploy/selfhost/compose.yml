@@ -85,13 +85,51 @@ x-tms-service: &tms-service
   volumes:
     - ./config/config.yaml:/app/config/config.yaml:ro
     - imaging-client-tls:/certs/imaging:ro
+    - postgres-client-tls:/certs/postgres:ro
   security_opt:
     - "no-new-privileges:true"
   logging: *logging
 
 services:
+  # Issues PostgreSQL's private CA and server certificate, once: a run that finds
+  # them leaves them alone. Every client verifies the server against that CA; the
+  # client certificate it also writes is not used. Reissue by adding --force to
+  # this command, running it, then `docker compose up -d --force-recreate`.
+  postgres-certs:
+    image: ghcr.io/emoss08/trenova/imaging:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+    command:
+      - certs
+      - --server-dir=/certs/server
+      - --client-dir=/certs/client
+      - --ca-dir=/certs/ca
+      - --server-name=postgres
+    user: "65532:65532"
+    volumes:
+      - postgres-server-tls:/certs/server
+      - postgres-client-tls:/certs/client
+      - postgres-ca:/certs/ca
+    read_only: true
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    restart: "no"
+    logging: *logging
+
   postgres:
     image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_POSTGRES_VERSION:?set TRENOVA_POSTGRES_VERSION in .env}
+    # PostgreSQL refuses a key anyone else can read, so it gets its own copy.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        install -d -o postgres -g postgres -m 0700 /etc/postgresql/ssl
+        install -o postgres -g postgres -m 0644 /certs/server.pem /etc/postgresql/ssl/server.crt
+        install -o postgres -g postgres -m 0600 /certs/server-key.pem /etc/postgresql/ssl/server.key
+        exec docker-entrypoint.sh "$$@"
+      - docker-entrypoint.sh
     command:
       - postgres
       - -c
@@ -108,6 +146,10 @@ services:
       - postgres_data:/var/lib/postgresql
       - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./initdb/10-temporal-databases.sh:/docker-entrypoint-initdb.d/10-temporal-databases.sh:ro
+      - postgres-server-tls:/certs:ro
+    depends_on:
+      postgres-certs:
+        condition: service_completed_successfully
     healthcheck:
       test:
         - CMD-SHELL
@@ -204,9 +246,18 @@ services:
       POSTGRES_SEEDS: postgres
       POSTGRES_USER: ${TRENOVA_DATABASE_USER:-trenova}
       POSTGRES_PWD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      POSTGRES_TLS_ENABLED: "true"
+      POSTGRES_TLS_DISABLE_HOST_VERIFICATION: "false"
+      POSTGRES_TLS_CA_FILE: /certs/postgres/ca.pem
+      POSTGRES_TLS_SERVER_NAME: postgres
+      SQL_TLS_ENABLED: "true"
+      SQL_HOST_VERIFICATION: "true"
+      SQL_CA: /certs/postgres/ca.pem
+      SQL_HOST_NAME: postgres
       DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/dynamic_config.yaml
     volumes:
       - ./temporal/dynamicconfig.yaml:/etc/temporal/dynamic_config.yaml:ro
+      - postgres-client-tls:/certs/postgres:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -451,6 +502,7 @@ services:
     environment: *tms-environment
     volumes:
       - ./config/config.yaml:/app/config/config.yaml:ro
+      - postgres-client-tls:/certs/postgres:ro
     security_opt:
       - "no-new-privileges:true"
     depends_on:
@@ -510,11 +562,13 @@ services:
       PGUSER: ${TRENOVA_DATABASE_USER:-trenova}
       PGPASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
       PGDATABASE: ${TRENOVA_DATABASE_NAME:-trenova}
-      PGSSLMODE: require
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /certs/postgres/ca.pem
       SINKS_FILE: /config/sinks.yaml
     volumes:
       - ./scripts/db-bootstrap.sh:/scripts/db-bootstrap.sh:ro
       - ../gtc/sinks.yaml:/config/sinks.yaml:ro
+      - postgres-client-tls:/certs/postgres:ro
     depends_on:
       trenova-db:
         condition: service_completed_successfully
@@ -668,7 +722,7 @@ services:
   gtc:
     image: ghcr.io/emoss08/gtc:${GTC_VERSION:?set GTC_VERSION in .env}
     environment:
-      DATABASE_URL: postgres://${TRENOVA_DATABASE_USER:-trenova}:${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}@postgres:5432/${TRENOVA_DATABASE_NAME:-trenova}?replication=database&sslmode=require
+      DATABASE_URL: postgres://${TRENOVA_DATABASE_USER:-trenova}:${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}@postgres:5432/${TRENOVA_DATABASE_NAME:-trenova}?replication=database&sslmode=verify-full&sslrootcert=/certs/postgres/ca.pem
       CDC_SLOT_NAME: gtc_slot
       CDC_PUBLICATION_NAME: gtc_publication
       CDC_AUTO_CREATE_SLOT: "true"
@@ -681,6 +735,7 @@ services:
       MEILISEARCH_API_KEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
     volumes:
       - ../gtc/sinks.yaml:/app/sinks/sinks.yaml:ro
+      - postgres-client-tls:/certs/postgres:ro
     depends_on:
       db-bootstrap:
         condition: service_completed_successfully
@@ -739,6 +794,9 @@ volumes:
   imaging-server-tls:
   imaging-client-tls:
   imaging-ca:
+  postgres-server-tls:
+  postgres-client-tls:
+  postgres-ca:
   clamav_data:
 
 networks:
