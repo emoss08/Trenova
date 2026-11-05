@@ -133,6 +133,10 @@ func (s *Service) linkSSOIdentity(ctx context.Context, req *ssoUserLookup) (*ten
 		)
 	}
 
+	if err = s.requireConfigMember(ctx, req, usr); err != nil {
+		return nil, err
+	}
+
 	existing, err := s.links.GetByUser(ctx, tenantports.GetSSOIdentityLinkByUserRequest{
 		SSOConfigID: req.Config.ID,
 		Issuer:      identity.Issuer,
@@ -174,6 +178,32 @@ func (s *Service) linkSSOIdentity(ctx context.Context, req *ssoUserLookup) (*ten
 	}
 
 	return usr, nil
+}
+
+func (s *Service) requireConfigMember(
+	ctx context.Context,
+	req *ssoUserLookup,
+	usr *tenant.User,
+) error {
+	memberships, err := s.ur.ListOrganizationMemberships(ctx, usr.ID, req.Config.BusinessUnitID)
+	if err != nil {
+		return err
+	}
+	for _, membership := range memberships {
+		if membership.OrganizationID == req.Config.OrganizationID {
+			return nil
+		}
+	}
+
+	s.l.Warn(
+		"refused an sso sign-in matching a user outside the organization",
+		zap.String("ssoConfigID", req.Config.ID.String()),
+		zap.String("userID", usr.ID.String()),
+	)
+
+	return errortypes.NewAuthenticationError(
+		"No Trenova user exists for this {0} account", req.DisplayName,
+	)
 }
 
 func (s *Service) resolveConcurrentLink(

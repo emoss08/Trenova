@@ -373,14 +373,29 @@ func (r *portalAccessRepository) lockWorker(
 	if err != nil {
 		return nil, workerErrors.Map(err, invitation.WorkerID.String())
 	}
+	if err = requireInvitable(wrk); err != nil {
+		return nil, err
+	}
+	return wrk, nil
+}
+
+func requireInvitable(wrk *worker.Worker) error {
 	if !wrk.UserID.IsNil() {
-		return nil, errortypes.NewValidationError(
+		return errortypes.NewValidationError(
 			"token",
 			errortypes.ErrInvalid,
 			"This driver already has portal access.",
 		)
 	}
-	return wrk, nil
+	if wrk.Status != domaintypes.StatusActive {
+		return errortypes.NewValidationError(
+			"token",
+			errortypes.ErrInvalid,
+			"This driver is no longer active, so this invitation cannot be used.",
+		)
+	}
+
+	return nil
 }
 
 func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email string) error {
