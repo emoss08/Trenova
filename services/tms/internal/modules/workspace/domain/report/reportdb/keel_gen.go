@@ -2284,7 +2284,7 @@ var reportRunsTable = schema.Table{
 		{Name: "truncated", Quoted: `"truncated"`, Field: "Truncated", Kind: schema.KindBool, Flags: 0, Label: `Truncated`, JSON: `truncated`, Report: &reportDimBool},
 		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Error`, JSON: `error`, Report: &reportDimJsonbHidden},
 		{Name: "artifact_key", Quoted: `"artifact_key"`, Field: "ArtifactKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Artifact Key`, JSON: `artifactKey`, Report: &reportDimStringHidden},
-		{Name: "rows_key", Quoted: `"rows_key"`, Field: "RowsKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rows Key`, JSON: `rowsKey`, Report: &reportDimString},
+		{Name: "rows_key", Quoted: `"rows_key"`, Field: "RowsKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rows Key`, JSON: `rowsKey`, Report: &reportDimStringHidden},
 		{Name: "sample", Quoted: `"sample"`, Field: "Sample", Kind: schema.KindBytes, Flags: schema.FlagNullable, Label: `Sample`, Report: &reportDimByteaHidden},
 		{Name: "artifact_expires_at", Quoted: `"artifact_expires_at"`, Field: "ArtifactExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Artifact Expires At`, JSON: `artifactExpiresAt`, Report: &reportDimEpochHidden},
 		{Name: "cache_hit", Quoted: `"cache_hit"`, Field: "CacheHit", Kind: schema.KindBool, Flags: 0, Label: `Cache Hit`, JSON: `cacheHit`, Report: &reportDimBool},

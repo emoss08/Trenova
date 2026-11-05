@@ -4,7 +4,7 @@
 #
 # The operator module is not in go.work: Helm and client-go would raise the
 # versions of dependencies it shares with the TMS in workspace builds.
-FROM golang:1.26-alpine AS source
+FROM golang:1.26-alpine@sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308 AS source
 
 WORKDIR /build/services/operator
 ENV GOWORK=off CGO_ENABLED=0
@@ -20,13 +20,13 @@ RUN go build -trimpath -ldflags="-s -w" -o /out/trenova-operator ./cmd/operator
 FROM source AS build-stub
 RUN go build -trimpath -ldflags="-s -w" -o /out/controlplane-stub ./cmd/controlplane-stub
 
-FROM gcr.io/distroless/static-debian12:nonroot AS operator
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab AS operator
 COPY --from=build-operator /out/trenova-operator /usr/local/bin/trenova-operator
 USER 65532:65532
 EXPOSE 8081
 ENTRYPOINT ["/usr/local/bin/trenova-operator"]
 
-FROM gcr.io/distroless/static-debian12:nonroot AS controlplane-stub
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab AS controlplane-stub
 COPY --from=build-stub /out/controlplane-stub /usr/local/bin/controlplane-stub
 USER 65532:65532
 EXPOSE 8080 8443

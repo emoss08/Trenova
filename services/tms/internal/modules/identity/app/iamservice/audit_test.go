@@ -1,6 +1,7 @@
 package iamservice
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -8,9 +9,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -103,6 +107,8 @@ func TestSCIMTokenLifecycleIsRecordedWithoutTheSecret(t *testing.T) {
 	orgID, directoryID := pulid.MustNew("org_"), pulid.MustNew("scd_")
 	saved := &iam.SCIMToken{ID: pulid.MustNew("sct_"), DirectoryID: directoryID, Prefix: "scim_abc"}
 
+	repo.EXPECT().GetSCIMDirectory(mock.Anything, mock.Anything).
+		Return(&iam.SCIMDirectory{ID: directoryID, OrganizationID: orgID}, nil).Once()
 	repo.EXPECT().CreateSCIMToken(mock.Anything, mock.AnythingOfType("*iam.SCIMToken")).Return(saved, nil).Once()
 	repo.EXPECT().RevokeSCIMToken(mock.Anything, orgID, saved.ID).Return(saved, nil).Once()
 
@@ -121,6 +127,126 @@ func TestSCIMTokenLifecycleIsRecordedWithoutTheSecret(t *testing.T) {
 		assert.NotContains(t, change.Metadata, "token")
 		assert.NotEqual(t, created.Token, change.Metadata["tokenPrefix"])
 	}
+}
+
+type fixedRoleGrants struct {
+	err     error
+	checkOf []pulid.ID
+}
+
+func (f *fixedRoleGrants) RequireCanGrantRole(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	roleID pulid.ID,
+) error {
+	f.checkOf = append(f.checkOf, roleID)
+	return f.err
+}
+
+func expectDirectory(
+	repo *iamportsmock.MockIAMRepository,
+	id, ownerOrgID pulid.ID,
+) {
+	repo.EXPECT().GetSCIMDirectory(mock.Anything, mock.Anything).
+		Return(&iam.SCIMDirectory{ID: id, OrganizationID: ownerOrgID}, nil).Once()
+}
+
+func TestSCIMTokenRefusedForAnotherOrganizationsDirectory(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	orgID, directoryID := pulid.MustNew("org_"), pulid.MustNew("scd_")
+	expectDirectory(repo, directoryID, pulid.MustNew("org_"))
+
+	_, err := svc.CreateSCIMToken(
+		t.Context(),
+		orgID,
+		directoryID,
+		&iamports.SCIMTokenCreateRequest{Name: "Okta sync"},
+	)
+
+	require.True(t, errortypes.IsNotFoundError(err))
+	assert.Empty(t, recorder.Changes())
+}
+
+func TestSCIMMappingRefusedForAnotherOrganizationsDirectory(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	grants := &fixedRoleGrants{}
+	svc.grants = grants
+	tenant := auditTenant()
+	directoryID := pulid.MustNew("scd_")
+	expectDirectory(repo, directoryID, pulid.MustNew("org_"))
+
+	_, err := svc.CreateSCIMGroupRoleMapping(
+		t.Context(),
+		tenant,
+		directoryID,
+		&iam.SCIMGroupRoleMapping{RoleID: pulid.MustNew("rol_")},
+	)
+
+	require.True(t, errortypes.IsNotFoundError(err))
+	assert.Empty(t, grants.checkOf)
+	assert.Empty(t, recorder.Changes())
+}
+
+func TestSCIMMappingRefusedForARoleTheActorCannotGrant(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	svc.grants = &fixedRoleGrants{err: errortypes.NewAuthorizationError("beyond your access")}
+	tenant := auditTenant()
+	directoryID := pulid.MustNew("scd_")
+
+	expectDirectory(repo, directoryID, tenant.OrgID)
+	_, err := svc.CreateSCIMGroupRoleMapping(
+		t.Context(),
+		tenant,
+		directoryID,
+		&iam.SCIMGroupRoleMapping{RoleID: pulid.MustNew("rol_")},
+	)
+	require.True(t, errortypes.IsAuthorizationError(err))
+
+	expectDirectory(repo, directoryID, tenant.OrgID)
+	_, err = svc.UpdateSCIMGroupRoleMapping(
+		t.Context(),
+		tenant,
+		pulid.MustNew("sgr_"),
+		&iam.SCIMGroupRoleMapping{DirectoryID: directoryID, RoleID: pulid.MustNew("rol_")},
+	)
+	require.True(t, errortypes.IsAuthorizationError(err))
+
+	assert.Empty(t, recorder.Changes())
+}
+
+func TestSCIMMappingSavedForARoleTheActorCanGrant(t *testing.T) {
+	t.Parallel()
+
+	svc, repo, recorder := auditedService(t)
+	svc.plans = plantest.Allowing(t, platformplan.CapabilitySSO)
+	grants := &fixedRoleGrants{}
+	svc.grants = grants
+	tenant := auditTenant()
+	directoryID, roleID := pulid.MustNew("scd_"), pulid.MustNew("rol_")
+	expectDirectory(repo, directoryID, tenant.OrgID)
+	repo.EXPECT().
+		CreateSCIMGroupRoleMapping(mock.Anything, mock.AnythingOfType("*iam.SCIMGroupRoleMapping")).
+		Return(&iam.SCIMGroupRoleMapping{ID: pulid.MustNew("sgr_")}, nil).
+		Once()
+
+	_, err := svc.CreateSCIMGroupRoleMapping(
+		t.Context(),
+		tenant,
+		directoryID,
+		&iam.SCIMGroupRoleMapping{RoleID: roleID},
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{roleID}, grants.checkOf)
+	assert.Len(t, recorder.Changes(), 1)
 }
 
 func TestSCIMDirectoryUpdateRequiresTheDirectoryInTheTenant(t *testing.T) {

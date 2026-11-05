@@ -65,7 +65,10 @@ func (p *testPermCacheRepo) Get(
 	return &perms, nil
 }
 
-func (p *testPermCacheRepo) Epoch(ctx context.Context, orgID pulid.ID) (int64, error) {
+func (p *testPermCacheRepo) Epoch(
+	ctx context.Context,
+	_, orgID pulid.ID,
+) (int64, error) {
 	key := p.epochKey(orgID)
 	epoch, err := p.client.Get(ctx, key).Int64()
 	if err == nil {
@@ -208,13 +211,14 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 	require.NoError(t, err)
 
 	eng := &engine{
-		roleRepo:      rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
-		cacheRepo:     cacheRepo,
-		userRepo:      userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
-		registry:      permissioncatalog.NewRegistry(),
-		routeRegistry: routeaccess.NewRouteRegistry(),
-		metrics:       metricsRegistry,
-		l:             zap.NewNop().Named("test.permission-engine"),
+		roleRepo:          rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
+		cacheRepo:         cacheRepo,
+		userRepo:          userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
+		registry:          permissioncatalog.NewRegistry(),
+		routeRegistry:     routeaccess.NewRouteRegistry(),
+		databaseEnforcing: true,
+		metrics:           metricsRegistry,
+		l:                 zap.NewNop().Named("test.permission-engine"),
 	}
 
 	return eng, &integrationEnv{ctx: data.Ctx(ctx), db: db, data: data}, redisClient

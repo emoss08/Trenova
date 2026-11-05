@@ -61,11 +61,19 @@ spec:
             - name: POSTGRES_TLS_ENABLED
               value: "true"
             - name: POSTGRES_TLS_DISABLE_HOST_VERIFICATION
-              value: "true"
+              value: "false"
+            - name: POSTGRES_TLS_CA_FILE
+              value: /certs/postgres/ca.crt
+            - name: POSTGRES_TLS_SERVER_NAME
+              value: {{ include "trenova.postgresHost" . }}
             - name: SQL_TLS_ENABLED
               value: "true"
             - name: SQL_HOST_VERIFICATION
-              value: "false"
+              value: "true"
+            - name: SQL_CA
+              value: /certs/postgres/ca.crt
+            - name: SQL_HOST_NAME
+              value: {{ include "trenova.postgresHost" . }}
             - name: DYNAMIC_CONFIG_FILE_PATH
               value: /etc/temporal/dynamicconfig/dynamic_config.yaml
             - name: BIND_ON_IP
@@ -99,7 +107,9 @@ spec:
             - name: dynamicconfig
               mountPath: /etc/temporal/dynamicconfig
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
       volumes:
+        {{- include "trenova.postgresCaVolume" . | nindent 8 }}
         - name: dynamicconfig
           configMap:
             name: {{ $files }}
@@ -290,7 +300,9 @@ spec:
 {{- end }}
 {{- if .Values.clamav.enabled }}
 {{- /* clamd checks every file before anything opens it. freshclam inside the
-container fetches signatures, so it is the one service here with egress. */ -}}
+container fetches signatures, so it is the one service here with egress. The
+image's default entrypoint needs root to chown its volume; this one does not, and
+uid 100 is the image's clamav user, which owns everything it writes. */ -}}
 {{- $c = dict "root" . "component" "clamav" }}
 ---
 apiVersion: v1
@@ -327,12 +339,11 @@ spec:
         {{- include "trenova.podAnnotations" (dict "root" .) | indent 8 }}
     spec:
       {{- include "trenova.podCommon" . | nindent 6 }}
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
+      {{- include "trenova.podSecurity" (dict "uid" 100) | nindent 6 }}
       containers:
         - name: clamav
           image: {{ include "trenova.image" (dict "root" . "image" .Values.clamav.image) }}
+          command: [/init-unprivileged]
           ports:
             - name: clamd
               containerPort: 3310
@@ -353,8 +364,7 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 10
             failureThreshold: 5
-          securityContext:
-            allowPrivilegeEscalation: false
+          {{- include "trenova.containerSecurity" (dict) | nindent 10 }}
           resources:
             {{- toYaml .Values.clamav.resources | nindent 12 }}
           volumeMounts:
@@ -502,7 +512,7 @@ spec:
             {{- include "trenova.secretEnv" (dict "name" "GTC_DB_PASSWORD" "secret" $db "key" "gtcPassword") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "REDIS_PASSWORD" "secret" $app "key" "redisPassword") | nindent 12 }}
             - name: DATABASE_URL
-              value: {{ printf "postgres://%s:$(GTC_DB_PASSWORD)@%s:5432/%s?replication=database&sslmode=require" .Values.postgres.gtcRole (include "trenova.postgresHost" .) .Values.postgres.database | quote }}
+              value: {{ printf "postgres://%s:$(GTC_DB_PASSWORD)@%s:5432/%s?replication=database&sslmode=verify-full&sslrootcert=/certs/postgres/ca.crt" .Values.postgres.gtcRole (include "trenova.postgresHost" .) .Values.postgres.database | quote }}
             - name: CDC_SLOT_NAME
               value: gtc_slot
             - name: CDC_PUBLICATION_NAME
@@ -548,7 +558,9 @@ spec:
             - name: sinks
               mountPath: /app/sinks
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
       volumes:
+        {{- include "trenova.postgresCaVolume" . | nindent 8 }}
         - name: sinks
           configMap:
             name: {{ $files }}

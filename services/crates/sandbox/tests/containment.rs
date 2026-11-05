@@ -191,6 +191,42 @@ async fn opening_a_socket_kills_the_child() {
 }
 
 #[tokio::test]
+async fn a_child_may_signal_itself_and_nobody_else() {
+    let pool = pool(1, 100).await;
+    let (own, _) = run(&pool, "signal:self", Duration::from_secs(10)).await;
+    assert_eq!(own, Ok(Outcome::Done(b"allowed".to_vec())));
+
+    let supervisor = format!("signal:{}", std::process::id());
+    let (other, _) = run(&pool, &supervisor, Duration::from_secs(10)).await;
+    assert_eq!(other, Ok(Outcome::Failed(b"refused".to_vec())));
+    still_works(&pool).await;
+}
+
+#[tokio::test]
+async fn a_child_cannot_make_memory_executable() {
+    let pool = pool(1, 100).await;
+    for attempt in ["map-executable", "protect-executable"] {
+        let (result, _) = run(&pool, attempt, Duration::from_secs(10)).await;
+        assert_eq!(
+            result,
+            Ok(Outcome::Failed(b"refused".to_vec())),
+            "{attempt}"
+        );
+    }
+    still_works(&pool).await;
+}
+
+#[tokio::test]
+async fn prctl_only_names_threads() {
+    let pool = pool(1, 100).await;
+    let (name, _) = run(&pool, "prctl-name", Duration::from_secs(10)).await;
+    assert_eq!(name, Ok(Outcome::Done(b"allowed".to_vec())));
+
+    let (other, _) = run(&pool, "prctl-dumpable", Duration::from_secs(10)).await;
+    assert_eq!(other, Ok(Outcome::Failed(b"refused".to_vec())));
+}
+
+#[tokio::test]
 async fn landlock_hides_everything_the_policy_does_not_name() {
     let pool = pool(1, 100).await;
     let (outside, _) = run(&pool, "read:/etc/hostname", Duration::from_secs(10)).await;

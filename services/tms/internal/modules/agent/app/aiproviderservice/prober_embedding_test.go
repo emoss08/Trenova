@@ -46,7 +46,7 @@ func embeddingProbeServer(t *testing.T, returnedDims int) (*httptest.Server, *at
 func newTestProber() *Prober {
 	return &Prober{
 		logger:   zap.NewNop(),
-		cfg:      &aiconfig.Config{},
+		cfg:      &aiconfig.Config{PrivateNetworkProviders: true},
 		adapters: adapterregistry.NewRegistry(),
 		clients:  make(map[bool]*http.Client, 2),
 	}

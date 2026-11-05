@@ -59,6 +59,10 @@ func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
 	fiscalRepo.EXPECT().
 		GetPeriodByDate(mock.Anything, fiscalperiodports.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
 		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
+	fiscalRepo.EXPECT().
+		GetByIDForUpdate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil).
+		Maybe()
 
 	svc := &Service{
 		journalEntryRepo:    entryRepo,
@@ -461,6 +465,14 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 			FiscalYearID: reversal.ResolvedFiscalYearID,
 			Status:       fiscalperiod.StatusOpen,
 		}, nil)
+	fiscalRepo.EXPECT().
+		GetByIDForUpdate(mock.Anything, mock.Anything).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           reversal.ResolvedFiscalPeriodID,
+			FiscalYearID: reversal.ResolvedFiscalYearID,
+			Status:       fiscalperiod.StatusOpen,
+		}, nil).
+		Maybe()
 	svc := &Service{
 		db:                  dbtest.NopConnection{},
 		journalEntryRepo:    entryRepo,

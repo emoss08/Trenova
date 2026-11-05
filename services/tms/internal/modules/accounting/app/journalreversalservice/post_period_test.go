@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
@@ -39,6 +40,8 @@ type reversalWorld struct {
 	posted     []journalentryports.CreateJournalPostingParams
 	marked     []journalentryports.MarkJournalEntryReversedRequest
 	saved      []*journalreversal.Reversal
+	held       []pulid.ID
+	closing    bool
 	svc        *Service
 }
 
@@ -112,6 +115,19 @@ func newReversalWorld(t *testing.T) *reversalWorld {
 	fiscalRepo.EXPECT().ListByFiscalYearID(mock.Anything, mock.Anything).
 		Return(nil, nil).
 		Maybe()
+	fiscalRepo.EXPECT().GetByIDForUpdate(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			req fiscalperiodports.GetFiscalPeriodByIDRequest,
+		) (*fiscalperiod.FiscalPeriod, error) {
+			w.held = append(w.held, req.ID)
+			held := *w.period
+			if w.closing {
+				held.Status = fiscalperiod.StatusClosed
+			}
+			return &held, nil
+		}).
+		Maybe()
 
 	w.svc = &Service{
 		db:                  dbtest.NopConnection{},
@@ -153,6 +169,7 @@ func (w *reversalWorld) closeAndAllowNextOpen(
 	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, mock.Anything).Return(w.period, nil)
 	fiscalRepo.EXPECT().ListByFiscalYearID(mock.Anything, mock.Anything).
 		Return([]*fiscalperiod.FiscalPeriod{next}, nil)
+	fiscalRepo.EXPECT().GetByIDForUpdate(mock.Anything, mock.Anything).Return(next, nil).Maybe()
 	w.svc.validator = &Validator{fiscalRepo: fiscalRepo}
 
 	return next
@@ -172,6 +189,56 @@ func TestPostRefusesAPeriodThatClosedAfterTheReversalWasCreated(t *testing.T) {
 	assert.Empty(t, w.posted)
 	assert.Empty(t, w.marked)
 	assert.Empty(t, w.saved)
+}
+
+func TestPostRefusesAPeriodThatClosesBeforeItsTransactionHoldsThePeriod(t *testing.T) {
+	t.Parallel()
+
+	w := newReversalWorld(t)
+	w.closing = true
+
+	result, err := w.svc.Post(t.Context(), w.request(), w.actor)
+
+	require.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "closed while this reversal was posting")
+	assert.Empty(t, w.posted)
+	assert.Empty(t, w.marked)
+	assert.Empty(t, w.saved)
+}
+
+func TestApproveNeedsSomeoneOtherThanWhoRequestedTheReversal(t *testing.T) {
+	t.Parallel()
+
+	w := newReversalWorld(t)
+	w.reversal.Status = journalreversal.StatusPendingApproval
+
+	result, err := w.svc.Approve(t.Context(), w.request(), w.actor)
+
+	require.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "someone else must approve it")
+	assert.Empty(t, w.saved)
+
+	w.reversal.RequestedByID = pulid.MustNew("usr_")
+
+	result, err = w.svc.Approve(t.Context(), w.request(), w.actor)
+
+	require.NoError(t, err)
+	assert.Equal(t, journalreversal.StatusApproved, result.Status)
+	assert.Equal(t, w.actor.UserID, result.ApprovedByID)
+}
+
+func TestPostHoldsThePeriodItPostsTo(t *testing.T) {
+	t.Parallel()
+
+	w := newReversalWorld(t)
+
+	_, err := w.svc.Post(t.Context(), w.request(), w.actor)
+
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{w.period.ID}, w.held)
+	assert.Len(t, w.posted, 1)
 }
 
 func TestPostRefusesAPeriodThatWentInactiveAfterTheReversalWasCreated(t *testing.T) {

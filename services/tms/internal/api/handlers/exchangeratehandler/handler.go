@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/reference/app/exchangerateservice"
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,19 +20,22 @@ const defaultDateLayout = "2006-01-02"
 type Params struct {
 	fx.In
 
-	ExchangeRateService *exchangerateservice.Service
-	ErrorHandler        *helpers.ErrorHandler
+	ExchangeRateService  exchangerateports.ExchangeRateService
+	ErrorHandler         *helpers.ErrorHandler
+	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *exchangerateservice.Service
+	service exchangerateports.ExchangeRateService
 	eh      *helpers.ErrorHandler
+	pm      *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
 		service: p.ExchangeRateService,
 		eh:      p.ErrorHandler,
+		pm:      p.PermissionMiddleware,
 	}
 }
 
@@ -39,8 +43,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/exchange-rates")
 	api.GET("/convert", h.convert)
 	api.GET("/latest", h.latest)
-	api.POST("/refresh", h.refresh)
-	api.POST("/settlement-quotes", h.createSettlementQuote)
+	api.POST(
+		"/refresh",
+		h.pm.RequirePermission(permission.ResourceIntegration.String(), permission.OpUpdate),
+		h.refresh,
+	)
+	api.POST(
+		"/settlement-quotes",
+		h.pm.RequirePermission(permission.ResourceCustomerPayment.String(), permission.OpCreate),
+		h.createSettlementQuote,
+	)
 }
 
 func (h *Handler) convert(c *gin.Context) {

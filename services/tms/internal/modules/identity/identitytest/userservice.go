@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
+	"github.com/emoss08/trenova/internal/testutil/sessiontest"
 	"go.uber.org/zap"
 )
 
@@ -29,16 +30,17 @@ func NewUserServiceForTest(deps UserServiceDeps) *userservice.Service {
 	}
 
 	return userservice.New(userservice.Params{
-		Logger:        zap.NewNop(),
-		Repo:          deps.Users,
-		AuditService:  deps.Audit,
-		Auditor:       &securityaudittest.Recorder{},
-		Realtime:      &mocks.NoopRealtimeService{},
-		StorageConfig: &storageconfig.Config{},
-		Validator:     userservice.NewValidator(userservice.ValidatorParams{Repo: deps.Users}),
-		DB:            dbtest.NopConnection{},
-		Roles:         deps.Roles,
-		Invites:       deps.Invites,
+		Logger:         zap.NewNop(),
+		Repo:           deps.Users,
+		AuditService:   deps.Audit,
+		Auditor:        &securityaudittest.Recorder{},
+		Realtime:       &mocks.NoopRealtimeService{},
+		StorageConfig:  &storageconfig.Config{},
+		Validator:      userservice.NewValidator(userservice.ValidatorParams{Repo: deps.Users}),
+		DB:             dbtest.NopConnection{},
+		Roles:          deps.Roles,
+		Invites:        deps.Invites,
+		PasswordStepUp: sessiontest.OpenStepUp{},
 		Accounts: accountguard.New(accountguard.Params{
 			Users:       deps.Users,
 			Permissions: held,

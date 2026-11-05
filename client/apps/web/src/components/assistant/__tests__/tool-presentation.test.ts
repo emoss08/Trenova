@@ -255,6 +255,16 @@ describe("parseToolResult", () => {
     });
   });
 
+  it("extracts the reason from a failed call the server fenced", () => {
+    const content =
+      'Tool "shipment_get" failed:\n<untrusted_data>\nshipment not found\n</untrusted_data>';
+
+    expect(parseToolResult(content)).toEqual({
+      kind: "error",
+      message: "shipment not found",
+    });
+  });
+
   // The server appends a note after the fence when the result is already on
   // screen as an artifact. It is addressed to the model and is not part of
   // the record.

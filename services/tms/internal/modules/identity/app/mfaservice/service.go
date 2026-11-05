@@ -97,7 +97,7 @@ type Service struct {
 
 func New(
 	p Params, //nolint:gocritic // fx params are passed by value
-) (sessionports.MFAService, error) {
+) (*Service, error) {
 	return newService(&p)
 }
 
@@ -172,7 +172,12 @@ func (s *Service) BeginTOTPEnrollment(
 	ctx context.Context,
 	req *sessionports.BeginTOTPEnrollmentRequest,
 ) (*sessionports.TOTPEnrollment, error) {
-	usr, err := s.verifyPassword(ctx, req.TenantInfo.UserID, req.Password)
+	var usr *tenant.User
+	err := s.GuardPassword(ctx, req.TenantInfo, func() error {
+		var verifyErr error
+		usr, verifyErr = s.verifyPassword(ctx, req.TenantInfo.UserID, req.Password)
+		return verifyErr
+	})
 	if err != nil {
 		return nil, err
 	}

@@ -444,7 +444,6 @@ func TestAutoSendInvoiceAfterPDFGenerationSkipsDisabledAndAlreadySending(t *test
 				&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 					InvoiceID:  invoiceID,
 					TenantInfo: tenantInfo,
-					BaseURL:    "https://billing.example.test",
 				},
 				testutil.NewSessionActor(userID, orgID, buID),
 			)

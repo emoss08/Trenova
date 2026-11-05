@@ -36,7 +36,7 @@ type InviteWorkerRequest struct {
 
 type InviteWorkerResult struct {
 	Invitation *portalinvitation.PortalInvitation
-	InviteURL  string
+	InviteURL  *string
 	EmailSent  bool
 }
 
@@ -149,21 +149,50 @@ func (s *Service) InviteWorker(
 		req.TenantInfo,
 		actor.UserID,
 		permission.OpCreate,
-		fmt.Sprintf("Portal invitation sent to %s", inviteEmail),
+		inviteAuditComment(inviteEmail, emailSent),
 		created,
 	)
 
-	return &InviteWorkerResult{
-		Invitation: created,
-		InviteURL:  inviteURL,
-		EmailSent:  emailSent,
-	}, nil
+	return inviteResult(created, inviteURL, emailSent), nil
+}
+
+func inviteResult(
+	created *portalinvitation.PortalInvitation,
+	inviteURL string,
+	emailSent bool,
+) *InviteWorkerResult {
+	result := &InviteWorkerResult{Invitation: created, EmailSent: emailSent}
+	if !emailSent {
+		result.InviteURL = &inviteURL
+	}
+
+	return result
+}
+
+func inviteAuditComment(inviteEmail string, emailSent bool) string {
+	if emailSent {
+		return fmt.Sprintf("Portal invitation sent to %s", inviteEmail)
+	}
+
+	return fmt.Sprintf(
+		"Portal invitation for %s could not be emailed; the link was given to the inviter",
+		inviteEmail,
+	)
 }
 
 func resolveInviteEmail(override, workerEmail string) (string, error) {
 	inviteEmail := strings.TrimSpace(strings.ToLower(override))
-	if inviteEmail == "" {
-		inviteEmail = strings.TrimSpace(strings.ToLower(workerEmail))
+	onFile := strings.TrimSpace(strings.ToLower(workerEmail))
+	if onFile != "" && inviteEmail != "" && inviteEmail != onFile {
+		return "", errortypes.NewValidationError(
+			"email",
+			errortypes.ErrInvalidOperation,
+			"This driver has an email address on file; change it on their record to invite "+
+				"them at another one",
+		)
+	}
+	if onFile != "" {
+		return onFile, nil
 	}
 	if inviteEmail == "" {
 		return "", errortypes.NewValidationError(

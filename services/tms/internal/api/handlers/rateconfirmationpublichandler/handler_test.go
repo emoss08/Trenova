@@ -145,6 +145,8 @@ func TestPreviewServesTheFrozenSnapshot(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 	assert.Contains(t, rec.Body.String(), "Eastline Transport")
 	assert.Contains(t, rec.Body.String(), "PRO-1001")
+	assert.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
+	assert.Equal(t, "no-referrer", rec.Header().Get("Referrer-Policy"))
 }
 
 func TestUnknownTokenGetsTheVagueCopy(t *testing.T) {

@@ -146,7 +146,7 @@ func (c *memoryPermissionCache) Set(
 	return nil
 }
 
-func (c *memoryPermissionCache) Epoch(context.Context, pulid.ID) (int64, error) {
+func (c *memoryPermissionCache) Epoch(context.Context, pulid.ID, pulid.ID) (int64, error) {
 	return c.epoch, nil
 }
 

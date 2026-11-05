@@ -1,6 +1,8 @@
 .git
 **/node_modules
 **/dist
-**/.env
+**/.env*
+**/*.local
 **/tmp
 legacy
+services/tms/config/config.yaml

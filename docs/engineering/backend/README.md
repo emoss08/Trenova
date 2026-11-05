@@ -13,6 +13,7 @@ writing it, then check the subsystem's own doc in the [index](../README.md).
 | [api.md](api.md) | GraphQL schema, resolvers, dataloaders, limits, REST handlers |
 | [jobs.md](jobs.md) | Temporal workflows, activities, schedules, sweeps |
 | [testing.md](testing.md) | unit and integration tests, fixtures, running them |
+| [security-review.md](security-review.md) | the defects that compile and pass: races, a control on one path, tools looser than pages, secrets and sign-in |
 | [go.md](go.md) | Go style, utilities, generics and build time, dependencies |
 | [module-architecture.md](../module-architecture.md) | modules, levels, ports, where a new package goes |
 

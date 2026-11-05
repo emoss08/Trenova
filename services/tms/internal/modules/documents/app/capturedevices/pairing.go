@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"math/big"
+	"net/netip"
 	"strings"
+	"unicode"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
@@ -18,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/requestmeta"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -32,6 +35,8 @@ const (
 	pairingVerifyPath    = "/capture/pair"
 	userCodeGroupSize    = 4
 	maxMachineNameLength = 255
+	maxWindowsUserLength = 255
+	ipv6NetworkBits      = 64
 )
 
 // PairingErrorCode is one of the RFC 8628 §3.5 token endpoint answers.
@@ -86,7 +91,7 @@ func (s *Service) StartPairing(
 	ctx context.Context,
 	req *StartPairingRequest,
 ) (*PairingGrant, error) {
-	if err := validateMachine(req.MachineName, req.AgentVersion, req.Architecture); err != nil {
+	if err := validateMachine(req); err != nil {
 		return nil, err
 	}
 
@@ -140,25 +145,50 @@ func (s *Service) StartPairing(
 	return nil, err
 }
 
-func validateMachine(machineName, agentVersion string, arch capture.Architecture) error {
+func validateMachine(req *StartPairingRequest) error {
 	multiErr := errortypes.NewMultiError()
-	name := strings.TrimSpace(machineName)
+	name := strings.TrimSpace(req.MachineName)
 	if name == "" {
 		multiErr.Add("machineName", errortypes.ErrRequired, "Machine name is required")
 	} else if len(name) > maxMachineNameLength {
 		multiErr.Add("machineName", errortypes.ErrInvalid, "Machine name is too long")
 	}
-	if strings.TrimSpace(agentVersion) == "" {
-		multiErr.Add("agentVersion", errortypes.ErrRequired, "Agent version is required")
+	if len(strings.TrimSpace(req.WindowsUser)) > maxWindowsUserLength {
+		multiErr.Add("windowsUser", errortypes.ErrInvalid, "Windows user is too long")
 	}
-	if !arch.IsValid() {
+	agentVersion := strings.TrimSpace(req.AgentVersion)
+	if agentVersion == "" {
+		multiErr.Add("agentVersion", errortypes.ErrRequired, "Agent version is required")
+	} else if len(agentVersion) > maxAgentVersionLength {
+		multiErr.Add("agentVersion", errortypes.ErrInvalid, "Agent version is too long")
+	}
+	if len(strings.TrimSpace(req.OSVersion)) > maxOSVersionLength {
+		multiErr.Add("osVersion", errortypes.ErrInvalid, "OS version is too long")
+	}
+	if !req.Architecture.IsValid() {
 		multiErr.Add("architecture", errortypes.ErrInvalid, "Architecture must be x64")
+	}
+	for field, value := range map[string]string{
+		"machineName":  req.MachineName,
+		"windowsUser":  req.WindowsUser,
+		"agentVersion": req.AgentVersion,
+		"osVersion":    req.OSVersion,
+	} {
+		if !displayable(value) {
+			multiErr.Add(field, errortypes.ErrInvalid, "Contains characters that cannot be shown")
+		}
 	}
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
 	return nil
+}
+
+func displayable(value string) bool {
+	return strings.IndexFunc(strings.TrimSpace(value), func(r rune) bool {
+		return !unicode.IsPrint(r)
+	}) < 0
 }
 
 func newUserCode() (string, error) {
@@ -211,6 +241,7 @@ type PairingPreview struct {
 	Architecture capture.Architecture `json:"architecture"`
 	OSVersion    string               `json:"osVersion"`
 	ClientIP     string               `json:"clientIp"`
+	SameNetwork  bool                 `json:"sameNetwork"`
 	ExpiresAt    int64                `json:"expiresAt"`
 }
 
@@ -242,8 +273,39 @@ func (s *Service) PreviewPairing(
 		Architecture: pairing.Architecture,
 		OSVersion:    pairing.OSVersion,
 		ClientIP:     pairing.ClientIP,
+		SameNetwork:  askedFromSameNetwork(ctx, pairing.ClientIP),
 		ExpiresAt:    pairing.ExpiresAt,
 	}, nil
+}
+
+func askedFromSameNetwork(ctx context.Context, machineIP string) bool {
+	meta, ok := requestmeta.From(ctx)
+	if !ok {
+		return false
+	}
+
+	return sameNetwork(meta.ClientIP, machineIP)
+}
+
+func sameNetwork(left, right string) bool {
+	a, err := netip.ParseAddr(left)
+	if err != nil {
+		return false
+	}
+	b, err := netip.ParseAddr(right)
+	if err != nil {
+		return false
+	}
+	a, b = a.Unmap(), b.Unmap()
+	if a.Is4() || b.Is4() {
+		return a == b
+	}
+	network, err := a.Prefix(ipv6NetworkBits)
+	if err != nil {
+		return false
+	}
+
+	return network.Contains(b)
 }
 
 // openPairing finds a grant a person can still act on. Every miss reads the

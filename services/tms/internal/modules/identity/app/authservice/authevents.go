@@ -30,6 +30,7 @@ const (
 	authErrorSubscriptionExpired = "subscription_expired"
 	authErrorThrottledAccount    = "login_throttled_account"
 	authErrorThrottledIP         = "login_throttled_ip"
+	authErrorThrottleUnavailable = "login_throttle_unavailable"
 )
 
 type authAttempt struct {

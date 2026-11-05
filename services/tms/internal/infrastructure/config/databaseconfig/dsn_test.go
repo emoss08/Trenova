@@ -9,6 +9,40 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestConfig_DSNCarriesTheRootCertificateOnEveryRole(t *testing.T) {
+	t.Parallel()
+
+	c := &Config{
+		User:        "app",
+		Password:    "app-password",
+		Host:        "postgres",
+		Port:        5432,
+		Name:        "trenova",
+		SSLMode:     "verify-full",
+		SSLRootCert: "/certs/postgres/ca.pem",
+		Migrator:    Role{User: "owner", Password: "owner-password"},
+	}
+
+	for name, dsn := range map[string]string{
+		"application": c.DSN("trenova", c.Password),
+		"migrator":    c.MigrationDSN("trenova"),
+		"role":        c.DSNForRole("trenova", Role{User: "system", Password: "system-password"}),
+	} {
+		parsed, err := url.Parse(dsn)
+		require.NoError(t, err, name)
+		assert.Equal(t, "verify-full", parsed.Query().Get("sslmode"), name)
+		assert.Equal(t, "/certs/postgres/ca.pem", parsed.Query().Get("sslrootcert"), name)
+	}
+}
+
+func TestConfig_DSNLeavesTheRootCertificateOutWhenUnset(t *testing.T) {
+	t.Parallel()
+
+	c := &Config{User: "app", Host: "postgres", Port: 5432, Name: "trenova", SSLMode: "require"}
+
+	assert.NotContains(t, c.DSN("trenova", "password"), "sslrootcert")
+}
+
 func TestConfig_DSN(t *testing.T) {
 	t.Parallel()
 

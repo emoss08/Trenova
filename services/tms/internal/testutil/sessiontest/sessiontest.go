@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/sessionrotation"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/sessiontoken"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -52,4 +53,14 @@ func (OpenThrottle) Begin(
 
 func (OpenThrottle) Succeed(context.Context, sessionports.LoginThrottleKey) error {
 	return nil
+}
+
+type OpenStepUp struct{}
+
+func (OpenStepUp) GuardPassword(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	verify func() error,
+) error {
+	return verify()
 }

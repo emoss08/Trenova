@@ -52,19 +52,7 @@ func New(p Params) *Service {
 		teams:             p.Teams,
 		registry:          p.Registry,
 		kinds:             p.Registry.DatabaseScopedResources(),
-		databaseEnforcing: databaseEnforcesScopes(p.DatabaseConfig),
-	}
-}
-
-func databaseEnforcesScopes(cfg *databaseconfig.Config) bool {
-	if cfg == nil {
-		return false
-	}
-	switch cfg.RLS.Mode {
-	case databaseconfig.RLSModeObserve, databaseconfig.RLSModeEnforce:
-		return true
-	default:
-		return false
+		databaseEnforcing: p.DatabaseConfig.RLS.Enforced(),
 	}
 }
 

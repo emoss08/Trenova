@@ -224,6 +224,11 @@ applies it to every read: lists, lookups, loaders, search, insights and reports 
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
 
+Only `database.rls.mode: enforce` counts as the database enforcing. Under any other mode a stored
+`own` or `team` grant on one of these kinds allows nothing, for people, API keys and agents alike
+(`engine.usableGrant`), because nothing would narrow it and it would reach the whole organization.
+The grant stays stored and works again once `enforce` is back.
+
 The first query that needs the value may be inside a transaction that has not sent its
 `BEGIN` yet (the result cache keys a read by its read scope before the read runs), so the
 grants resolve in a read-only transaction of their own (`RunDetached`, through
@@ -604,7 +609,14 @@ resource, operation, data scope or sensitivity the person saving does not hold:
 - role assignment, including what the assigned role inherits;
 - role inheritance edges (the junior role's closure is checked, and a system role can
   never be made to inherit);
-- API key create and update.
+- API key create and update;
+- SCIM group role mappings, through `permissionports.RoleGrantGuard`, because a mapping
+  hands its role to whoever the identity provider puts in the group.
+
+What the person holds is `GetEffectivePermissions`, which counts only the roles active in
+their session when the organization requires role activation. Comparing two people
+(`accountguard`) or reading someone else's access clears the activation first with
+`authctx.WithoutSessionRoleActivation`.
 
 A refused grant is recorded in the security audit trail ("Refused a grant beyond the
 actor's own permissions") with what was refused. An API key is also held, at request
@@ -625,7 +637,10 @@ Every change to who can do what calls `permissionports.PermissionChangeNotifier`
 - `OrganizationChanged` advances the organization's permission epoch, so every cached
   permission set computed before the change stops being served at once, and publishes
   `permissions`/`changed` to the tenant;
-- `UserChanged` drops one person's cached set and publishes the event to them alone.
+- `UserChanged` advances that person's own epoch, drops their cached set and publishes the
+  event to them alone. A cached set is served only while the organization and user epochs
+  it was computed under still add up to the current total, so a set computed before the
+  change and written after it is never served, and nobody else's cache is touched.
 
 The browser refetches its permission manifest on the event. The thirty-minute cache TTL
 and the five-minute client poll are only safety nets. Never delete permission keys by

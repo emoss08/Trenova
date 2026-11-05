@@ -15,7 +15,14 @@ import (
 const (
 	configKeyInboundDir = "inboundDirectory"
 	configKeyArchiveDir = "archiveDirectory"
+
+	maxInboundFilesPerPoll = 200
+	maxInboundBytesPerPoll = 128 << 20
 )
+
+type inboundFileReader interface {
+	ReadFile(remotePath string) (string, error)
+}
 
 func (t *SFTPTransport) FetchInboundFiles(
 	ctx context.Context,
@@ -66,12 +73,40 @@ func fetchInboundOverSFTP(
 	if err != nil {
 		return nil, err
 	}
-	files := make([]*editransportports.EDIInboundRemoteFile, 0, len(entries))
+	return readInboundBatch(client, entries), nil
+}
+
+func readInboundBatch(
+	reader inboundFileReader,
+	entries []sftp.RemoteFile,
+) []*editransportports.EDIInboundRemoteFile {
+	files := make(
+		[]*editransportports.EDIInboundRemoteFile,
+		0,
+		min(len(entries), maxInboundFilesPerPoll),
+	)
+	read, failed := 0, 0
+	total := int64(0)
 	for _, entry := range entries {
-		contents, readErr := client.ReadFile(entry.Path)
-		if readErr != nil {
-			return nil, fmt.Errorf("read inbound file %s: %w", entry.Path, readErr)
+		if read >= maxInboundFilesPerPoll || failed >= maxInboundFilesPerPoll {
+			break
 		}
+		if read > 0 && total+entry.Size > maxInboundBytesPerPoll {
+			break
+		}
+		contents, err := reader.ReadFile(entry.Path)
+		if err != nil {
+			failed++
+			files = append(files, &editransportports.EDIInboundRemoteFile{
+				Path:      entry.Path,
+				Name:      entry.Name,
+				Size:      entry.Size,
+				ReadError: fmt.Errorf("read inbound file %s: %w", entry.Path, err),
+			})
+			continue
+		}
+		read++
+		total += int64(len(contents))
 		files = append(files, &editransportports.EDIInboundRemoteFile{
 			Path:     entry.Path,
 			Name:     entry.Name,
@@ -79,7 +114,7 @@ func fetchInboundOverSFTP(
 			Size:     entry.Size,
 		})
 	}
-	return files, nil
+	return files
 }
 
 func archiveInboundOverSFTP(

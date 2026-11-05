@@ -196,7 +196,7 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentmemorydb.Memories.Query(),
+				agentmemorydb.Memories.Where(listAudience(req)),
 				&listquery.Request[agentmemory.Memory]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
@@ -636,6 +636,18 @@ func forAgent(agentID pulid.ID, reader agentmemory.MemoryReader) keel.Pred {
 			m.AgentDefinitionID.Eq(agentID),
 		)),
 		forPerson(reader),
+	)
+}
+
+func listAudience(req *agentmemoryports.ListAgentMemoryConnectionRequest) keel.Pred {
+	if req.AllAudiences {
+		return keel.True()
+	}
+	m := agentmemorydb.Memories
+
+	return keel.Or(
+		m.Scope.In(agentmemory.MemoryScopeOrganization, agentmemory.MemoryScopeAgent),
+		forPerson(req.Reader),
 	)
 }
 

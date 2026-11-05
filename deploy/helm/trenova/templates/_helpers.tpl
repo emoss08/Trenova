@@ -20,6 +20,32 @@
 {{- printf "%s-rw" (include "trenova.postgresCluster" .) -}}
 {{- end -}}
 
+{{/* The CA CloudNativePG issues the cluster's server certificate from, which
+every client verifies PostgreSQL against. The Secret also holds the CA's key,
+so a pod mounts the certificate alone. */}}
+{{- define "trenova.postgresCaVolume" -}}
+- name: postgres-ca
+  secret:
+    secretName: {{ printf "%s-ca" (include "trenova.postgresCluster" .) }}
+    items:
+      - key: ca.crt
+        path: ca.crt
+{{- end -}}
+
+{{- define "trenova.postgresCaMount" -}}
+- name: postgres-ca
+  mountPath: /certs/postgres
+  readOnly: true
+{{- end -}}
+
+{{/* libpq's settings for a verified connection. */}}
+{{- define "trenova.postgresTlsEnv" -}}
+- name: PGSSLMODE
+  value: verify-full
+- name: PGSSLROOTCERT
+  value: /certs/postgres/ca.crt
+{{- end -}}
+
 {{- define "trenova.appSecret" -}}
 {{- .Values.secrets.existingSecret | default (printf "%s-secrets" (include "trenova.fullname" .)) -}}
 {{- end -}}
@@ -153,10 +179,6 @@ storageClassName: {{ .storageClass | quote }}
 {{- end -}}
 {{- end -}}
 
-{{- define "trenova.rlsEnforced" -}}
-{{- if ne .Values.postgres.rlsMode "off" }}true{{ end -}}
-{{- end -}}
-
 {{/* A secret key as an env var. Call with (dict "name" "X" "secret" s "key" k). */}}
 {{- define "trenova.secretEnv" -}}
 - name: {{ .name }}
@@ -176,14 +198,10 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{- $db := include "trenova.dbSecret" . -}}
 - name: APP_ENV
   value: production
-{{- if include "trenova.rlsEnforced" . }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_PASSWORD" "secret" $db "key" "appPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_SYSTEM_PASSWORD" "secret" $db "key" "systemPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEYID" "secret" $app "key" "rlsScopeKeyId") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEY" "secret" $app "key" "rlsScopeKey") }}
-{{- else }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_PASSWORD" "secret" $db "key" "password") }}
-{{- end }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_CACHE_PASSWORD" "secret" $app "key" "redisPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SEARCH_MEILISEARCH_APIKEY" "secret" $app "key" "meiliMasterKey") }}
 {{- if .Values.minio.enabled }}
@@ -212,9 +230,7 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{/* The owner's password, for the release Job's steps alone: migrations and
 role provisioning run as it (database.migrator), and nothing else needs it. */}}
 {{- define "trenova.migratorEnv" -}}
-{{- if include "trenova.rlsEnforced" . -}}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_MIGRATOR_PASSWORD" "secret" (include "trenova.dbSecret" .) "key" "password") }}
-{{- end -}}
 {{- end -}}
 
 {{/* What a TMS container mounts: the rendered config and the imaging client
@@ -226,6 +242,7 @@ certificate. */}}
 - name: imaging-client-tls
   mountPath: /certs/imaging
   readOnly: true
+{{ include "trenova.postgresCaMount" . }}
 - name: tmp
   mountPath: /tmp
 {{- end -}}
@@ -238,6 +255,7 @@ certificate. */}}
   secret:
     secretName: {{ include "trenova.imagingClientSecret" . }}
     defaultMode: 0440
+{{ include "trenova.postgresCaVolume" . }}
 - name: tmp
   emptyDir:
     sizeLimit: 1Gi
@@ -269,8 +287,7 @@ query returns a row. Call with (dict "root" $ "user" u "secret" s "key" k
     - name: PGUSER
       value: {{ .user }}
     {{- include "trenova.secretEnv" (dict "name" "PGPASSWORD" "secret" .secret "key" .key) | nindent 4 }}
-    - name: PGSSLMODE
-      value: require
+    {{- include "trenova.postgresTlsEnv" . | nindent 4 }}
     - name: PGCONNECT_TIMEOUT
       value: "5"
     - name: WAIT_QUERY
@@ -281,16 +298,14 @@ query returns a row. Call with (dict "root" $ "user" u "secret" s "key" k
   resources:
     requests: { cpu: 10m, memory: 16Mi }
     limits: { memory: 64Mi }
+  volumeMounts:
+    {{- include "trenova.postgresCaMount" . | nindent 4 }}
 {{- end -}}
 
-{{/* The TMS's own role, signed in: the release Job has made it (enforce) or
-the cluster exists (off). The processes then wait for the schema themselves. */}}
+{{/* The TMS's own role, signed in: the release Job has made it. The processes
+then wait for the schema themselves. */}}
 {{- define "trenova.waitForTmsRole" -}}
-{{- if include "trenova.rlsEnforced" . -}}
 {{ include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.appRole "secret" (include "trenova.dbSecret" .) "key" "appPassword" "database" .Values.postgres.database "query" "SELECT 1" "why" "the application role (the release Job provisions it)") }}
-{{- else -}}
-{{ include "trenova.waitForPostgres" (dict "root" . "user" .Values.postgres.owner "secret" (include "trenova.dbSecret" .) "key" "password" "database" .Values.postgres.database "query" "SELECT 1" "why" "PostgreSQL") }}
-{{- end -}}
 {{- end -}}
 
 {{- define "trenova.dnsEgress" -}}

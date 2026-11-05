@@ -340,7 +340,7 @@ func (s *Service) planConfirm(
 			"A {0} rate confirmation cannot be confirmed", entity.Status,
 		)
 	}
-	if confirmedByName == "" {
+	if strings.TrimSpace(confirmedByName) == "" {
 		return nil, errortypes.NewValidationError(
 			"confirmedByName", errortypes.ErrRequired,
 			"The confirming party's name is required")
@@ -425,7 +425,11 @@ func markSent(entity *rateconfirmation.RateConfirmation, recipients []string, no
 }
 
 func dispatcherConfirmation(name string, at int64) rateconfirmation.Confirmation {
-	return rateconfirmation.Confirmation{Name: name, Via: rateconfirmation.ViaDispatcher, At: at}
+	return rateconfirmation.Confirmation{
+		Name: strings.TrimSpace(name),
+		Via:  rateconfirmation.ViaDispatcher,
+		At:   at,
+	}
 }
 
 func (s *Service) signLinkConfigured() bool {

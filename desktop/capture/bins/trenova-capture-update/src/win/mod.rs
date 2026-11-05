@@ -14,7 +14,8 @@ use std::time::Duration;
 use capture_platform::acl::{SYSTEM_ONLY_SDDL, create_trusted};
 use capture_platform::{logging, machine, paths, settings};
 use capture_protocol::release::pinned_public_key;
-use trenova_capture_update::{Http, Installer, UpdaterError, manifest_url, run};
+use tokio::sync::watch;
+use trenova_capture_update::{Http, Installer, Stop, UpdaterError, manifest_url, run};
 use windows::Win32::System::SystemInformation::GetSystemDirectoryW;
 
 /// The tray agent, beside the updater.
@@ -142,15 +143,26 @@ fn sweep(dir: &Path) {
     }
 }
 
-/// One update, reported.
-pub(crate) fn update(manifest: &str) -> Result<(), UpdaterError> {
+/// One update, reported. `stop` and `committing` are [`run`]'s.
+pub(crate) fn update(
+    manifest: &str,
+    stop: &Stop,
+    committing: impl FnOnce(),
+) -> Result<(), UpdaterError> {
     let url = manifest_url(manifest)?;
     let installer = WindowsInstaller::new()?;
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
     let source = Http::new()?;
-    let outcome = runtime.block_on(run(&url, pinned_public_key().as_ref(), &source, &installer))?;
+    let outcome = runtime.block_on(run(
+        &url,
+        pinned_public_key().as_ref(),
+        &source,
+        &installer,
+        stop,
+        committing,
+    ))?;
     tracing::info!(from = %outcome.from, to = %outcome.to, "updated");
     Ok(())
 }
@@ -186,7 +198,8 @@ pub fn main() -> ExitCode {
         "service" => service::dispatch(),
         "run" => {
             if let Some(manifest) = args.next() {
-                step("Updating Trenova Capture", update(&manifest))
+                let (_never, stop) = watch::channel(false);
+                step("Updating Trenova Capture", update(&manifest, &stop, || {}))
             } else {
                 say(USAGE);
                 ExitCode::from(2)

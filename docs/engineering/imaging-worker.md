@@ -85,9 +85,12 @@ Each child is hardened before it reads untrusted input:
 
 - `PR_SET_NO_NEW_PRIVS`;
 - landlock: the filesystem shrinks to read-only shared libraries and fonts; no writable path;
+  on a kernel that has it (6.12 and later), signals stop at the child as well;
 - seccomp-bpf: a kill list (sockets, exec, ptrace, namespaces, mounts, BPF, keys, `io_uring`,
   identity changes) and an allow list answering `EPERM` to anything else, with thread-only
-  `clone` and `clone3` as `ENOSYS`;
+  `clone` and `clone3` as `ENOSYS`. `tgkill` reaches only the child itself, `prctl` only names
+  threads, and no anonymous memory becomes executable, so a library that generates code at run
+  time can't work in a child;
 - rlimits set between fork and exec: address space (3 GiB), lifetime CPU (1 hour), no file
   writes, 64 descriptors, no core dumps; `PR_SET_PDEATHSIG`, checked against the parent's pid
   after it is set;
@@ -165,7 +168,7 @@ CPU per child and about 1 GiB of memory per child.
 | `grpc.listen` | `0.0.0.0:50051` in the image | |
 | `grpc.tls.cert`, `.key`, `.client_ca` | none | required in production |
 | `grpc.max_message_bytes` | 4 MiB | |
-| `metrics.listen` | `0.0.0.0:9464` | `/metrics`, `/livez`, `/readyz` |
+| `metrics.listen` | `127.0.0.1:9464`; `0.0.0.0:9464` in the image | `/metrics`, `/livez`, `/readyz` |
 | `telemetry.log_level`, `.log_format`, `.otlp_endpoint`, `.trace_sample_ratio` | `info`, `json`, none, 1.0 | |
 | `pool.size` | CPUs available | |
 | `pool.max_jobs_per_child`, `.rss_high_water`, `.address_space`, `.cpu_seconds`, `.open_files` | 500, 768 MiB, 3 GiB, 3600, 64 | |

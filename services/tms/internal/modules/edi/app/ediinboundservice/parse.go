@@ -70,6 +70,9 @@ func parseInterchange(
 		for groupIndex := range reading.Interchanges[interchangeIndex].Groups {
 			group := &reading.Interchanges[interchangeIndex].Groups[groupIndex]
 			parsed := parsedGroup{group: group}
+			if header := reading.Interchanges[interchangeIndex].Header; header != nil {
+				parsed.interchangeControlNumber = header.ControlNumber
+			}
 			if group.Header != nil {
 				parsed.functionalGroupID = group.Header.FunctionalID
 				parsed.controlNumber = group.Header.ControlNumber
@@ -122,16 +125,17 @@ func buildTransaction(
 		raw.WriteString(segments[index].RawWithTerminator)
 	}
 	return &parsedTransaction{
-		set:                edidocument.TransactionSet(transaction.TransactionSet),
-		controlNumber:      transaction.ControlNumber,
-		groupControlNumber: parsed.controlNumber,
-		functionalGroupID:  parsed.functionalGroupID,
-		segments:           segments,
-		raw:                raw.String(),
-		version:            stringutils.FirstNonEmpty(transaction.Convention, parsed.version),
-		group:              group,
-		status:             transaction.Status,
-		findings:           transaction.Findings,
+		set:                      edidocument.TransactionSet(transaction.TransactionSet),
+		controlNumber:            transaction.ControlNumber,
+		interchangeControlNumber: parsed.interchangeControlNumber,
+		groupControlNumber:       parsed.controlNumber,
+		functionalGroupID:        parsed.functionalGroupID,
+		segments:                 segments,
+		raw:                      raw.String(),
+		version:                  stringutils.FirstNonEmpty(transaction.Convention, parsed.version),
+		group:                    group,
+		status:                   transaction.Status,
+		findings:                 transaction.Findings,
 	}, nil
 }
 

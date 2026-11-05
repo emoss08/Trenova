@@ -1,4 +1,4 @@
-FROM golang:1.26-alpine AS source
+FROM golang:1.26-alpine@sha256:a2012b4a1d1f9f7e9f44e0d39b805a901e856b1dd80b4e6ee4338db547050308 AS source
 
 WORKDIR /build
 
@@ -24,12 +24,15 @@ RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
 FROM source AS build-db
 RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova-db ./cmd/db
 
-FROM alpine:3.21 AS runtime
+FROM alpine:3.21@sha256:ee16d92f96db08d9d2d07da48555a27f3a69d8f0759021dbc601195ed0d2b5bd AS runtime
 
 # The same uid as the imaging worker, which issues the client certificate in
 # deploy/selfhost/compose.yml: its key is readable by its owner only.
 RUN apk add --no-cache ca-certificates tzdata && \
     addgroup -S -g 65532 trenova && adduser -S -u 65532 -G trenova trenova
+
+# An unset APP_ENV means development, which relaxes production's checks.
+ENV APP_ENV=production
 
 WORKDIR /app
 

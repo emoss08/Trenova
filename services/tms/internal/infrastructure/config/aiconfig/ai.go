@@ -38,11 +38,10 @@ type Config struct {
 	// StreamIdleTimeout is how long a streaming reply may go silent.
 	StreamIdleTimeout time.Duration `mapstructure:"streamIdleTimeout"`
 	// PrivateNetworkProviders lets an organization point a provider at a
-	// private or loopback address, which a self-hosted model needs. It is a
-	// pointer so an absent key keeps that working; a deployment that hosts
-	// many organizations sets it false, because otherwise any of their
-	// administrators can make the server call into its own network.
-	PrivateNetworkProviders *bool `mapstructure:"privateNetworkProviders"`
+	// private or loopback address, which a self-hosted model needs. It is off
+	// unless set, because otherwise any organization's administrator can make
+	// the server call into its own network.
+	PrivateNetworkProviders bool `mapstructure:"privateNetworkProviders"`
 	// ServerCloudCredentials lets a provider on Amazon Bedrock, Vertex AI or
 	// Claude Platform on AWS or Google Cloud sign in with this server's own
 	// cloud identity (an IAM role, application default credentials) instead
@@ -112,15 +111,10 @@ func (c *Config) GetVerdictCacheTTL() time.Duration {
 // install says which switch to look at rather than leaving it to be guessed.
 const EnabledKey = "ai.enabled"
 
-// AIEnabled is nil-safe on the receiver as well as the field. A service built
-// without this section — which a test does, and which a future caller that
-// forgets to wire it would — must fall to the same "available" default as an
-// absent key, rather than panicking inside a gate whose whole job is to answer
-// a yes-or-no question.
 // PrivateNetworkProvidersAllowed reports whether a provider may be reached
 // on a private or loopback address.
 func (c *Config) PrivateNetworkProvidersAllowed() bool {
-	return c == nil || c.PrivateNetworkProviders == nil || *c.PrivateNetworkProviders
+	return c != nil && c.PrivateNetworkProviders
 }
 
 // ServerCloudCredentialsAllowed reports whether a provider may sign in with

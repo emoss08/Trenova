@@ -107,6 +107,7 @@ database:
   user: postgres # Database user
   password: postgres # Database password
   sslMode: disable # SSL mode: disable, require, verify-ca, verify-full
+  sslRootCert: "" # CA file verify-ca and verify-full check the server against; empty uses the system's
   statementTimeout: 10s # Per-statement database deadline
   lockTimeout: 5s # Maximum time a statement may wait for a lock
   idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle

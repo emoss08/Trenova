@@ -816,8 +816,12 @@ func (s *Dispatcher) runQueryToolWith(
 		)
 	}
 	if err != nil {
-		return toolcall.Refused(aitrace.OutcomeFailed, err.Error(),
-			"Tool %q failed: %s", call.Name, err.Error())
+		failed := toolcall.Refused(aitrace.OutcomeFailed, err.Error(),
+			"%s", toolresult.FenceFailure(call.Name, err.Error()))
+		policy := s.Ruled(ctx, req, new(tool.Policy()))
+		failed.Taint = turntaint.Call(&policy, call, nil, timeutils.NowUnix())
+
+		return failed
 	}
 
 	now := timeutils.NowUnix()
@@ -904,11 +908,13 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
 		write.End()
 		action.ExecutionError = err.Error()
+		policy := s.Ruled(ctx, a.req, new(a.tool.Policy()))
 
 		return toolcall.Result{
-			Content: fmt.Sprintf("Tool %q failed: %s", call.Name, err.Error()),
+			Content: toolresult.FenceFailure(call.Name, err.Error()),
 			Failed:  true,
 			Action:  action,
+			Taint:   turntaint.Call(&policy, &call, nil, timeutils.NowUnix()),
 			Verdict: aitrace.OutcomeFailed,
 			Reason:  err.Error(),
 		}

@@ -20,6 +20,8 @@ use serde::{Deserialize, Serialize};
 
 /// The product every manifest names.
 pub const PRODUCT: &str = "trenova-capture";
+/// Where every server serves the manifest, below any path it is hosted at.
+pub const MANIFEST_ROUTE: &str = "/api/v1/capture/releases/latest/";
 /// The file name a manifest is published under.
 pub const MANIFEST_FILE: &str = "trenova-capture-manifest.json";
 /// The largest installer a manifest may describe.
@@ -364,6 +366,14 @@ mod tests {
         assert_eq!(
             "1.4.2".parse::<Version>().expect("parses").to_string(),
             "1.4.2"
+        );
+    }
+
+    #[test]
+    fn the_manifest_route_is_a_capture_api_route() {
+        assert_eq!(
+            MANIFEST_ROUTE,
+            format!("{}releases/latest/", crate::api::API_PREFIX)
         );
     }
 

@@ -59,6 +59,7 @@ type Params struct {
 	AuthEvents        iamports.AuthEventRecorder
 	ContentGate       contentscanports.Gate
 	SSOConfigs        tenantports.SSOConfigRepository
+	PasswordStepUp    sessionports.PasswordStepUp
 	AccessRevokers    []tenantports.UserAccessRevoker `group:"userAccessRevokers"`
 }
 
@@ -84,6 +85,7 @@ type Service struct {
 	contentGate    contentscanports.Gate
 	accessRevokers []tenantports.UserAccessRevoker
 	ssoConfigs     tenantports.SSOConfigRepository
+	passwordStepUp sessionports.PasswordStepUp
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -108,6 +110,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		authEvents:     p.AuthEvents,
 		contentGate:    p.ContentGate,
 		accessRevokers: p.AccessRevokers,
+		passwordStepUp: p.PasswordStepUp,
 		ssoConfigs:     p.SSOConfigs,
 	}
 }
@@ -139,7 +142,8 @@ func (s *Service) BulkUpdateStatus(
 ) ([]*tenant.User, error) {
 	log := s.l.With(
 		zap.String("operation", "BulkUpdateStatus"),
-		zap.Any("request", req),
+		zap.Int("userCount", len(req.UserIDs)),
+		zap.String("status", req.Status.String()),
 	)
 
 	if req.Status != domaintypes.StatusActive &&
@@ -323,7 +327,8 @@ func (s *Service) SwitchOrganization(
 ) (*SessionChangeResult, error) {
 	log := s.l.With(
 		zap.String("operation", "SwitchOrganization"),
-		zap.Any("request", req),
+		zap.String("sessionId", req.SessionID.String()),
+		zap.String("organizationId", req.OrganizationID.String()),
 	)
 
 	sess, err := s.sr.Get(ctx, req.SessionID)
@@ -739,7 +744,9 @@ func (s *Service) ChangeMyPassword(
 		return nil, err
 	}
 
-	if err = user.VerifyCredentials(req.CurrentPassword); err != nil {
+	if err = s.passwordStepUp.GuardPassword(ctx, tenantInfo, func() error {
+		return user.VerifyCredentials(req.CurrentPassword)
+	}); err != nil {
 		return nil, err
 	}
 

@@ -9,21 +9,18 @@ TRENOVA_<SECTION>_<KEY> variables, which override these keys.
 key a Secret supplies is written here empty: the variable fills it, and an
 empty one fails validation instead of running with a default. */ -}}
 {{- $origin := include "trenova.origin" . -}}
-{{- $enforced := include "trenova.rlsEnforced" . -}}
 {{- $database := dict
   "host" (include "trenova.postgresHost" .)
   "port" 5432
   "name" .Values.postgres.database
-  "user" (ternary .Values.postgres.appRole .Values.postgres.owner (eq $enforced "true"))
+  "user" .Values.postgres.appRole
   "password" ""
-  "sslMode" "require"
-  "rls" (dict "mode" .Values.postgres.rlsMode)
+  "sslMode" "verify-full"
+  "sslRootCert" "/certs/postgres/ca.crt"
+  "system" (dict "user" .Values.postgres.systemRole "password" "" "maxOpenConns" 8)
+  "migrator" (dict "user" .Values.postgres.owner "password" "")
+  "rls" (dict "mode" .Values.postgres.rlsMode "scopeKeyId" "" "scopeKey" "")
 -}}
-{{- if $enforced }}
-{{- $_ := set $database "system" (dict "user" .Values.postgres.systemRole "password" "" "maxOpenConns" 8) -}}
-{{- $_ := set $database "migrator" (dict "user" .Values.postgres.owner "password" "") -}}
-{{- $_ := set $database "rls" (dict "mode" .Values.postgres.rlsMode "scopeKeyId" "" "scopeKey" "") -}}
-{{- end }}
 {{- $storage := dict
   "provider" "minio"
   "bucket" .Values.storage.bucket

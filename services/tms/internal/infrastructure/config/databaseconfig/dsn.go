@@ -49,14 +49,17 @@ func (c *Config) CacheListenDSN(appName string) string {
 }
 
 func (c *Config) dsnAt(appName, host string, port int, user, password string) string {
+	query := "sslmode=" + url.QueryEscape(c.SSLMode)
+	if c.SSLRootCert != "" {
+		query += "&sslrootcert=" + url.QueryEscape(c.SSLRootCert)
+	}
+
 	dsn := url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(user, password),
-		Host:   net.JoinHostPort(host, strconv.Itoa(port)),
-		Path:   "/" + c.Name,
-		RawQuery: "sslmode=" + url.QueryEscape(c.SSLMode) +
-			"&application_name=" + url.QueryEscape(appName) +
-			"&connect_timeout=10",
+		Scheme:   "postgres",
+		User:     url.UserPassword(user, password),
+		Host:     net.JoinHostPort(host, strconv.Itoa(port)),
+		Path:     "/" + c.Name,
+		RawQuery: query + "&application_name=" + url.QueryEscape(appName) + "&connect_timeout=10",
 	}
 
 	return dsn.String()

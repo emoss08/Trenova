@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	ErrNoEncryptionKeyID  = errors.New("no encryption key ID in metadata")
-	ErrCiphertextTooShort = errors.New("ciphertext too short")
+	ErrNoEncryptionKeyID     = errors.New("no encryption key ID in metadata")
+	ErrCiphertextTooShort    = errors.New("ciphertext too short")
+	ErrEncryptionKeyNotFound = errors.New("encryption key not found for ID")
+	ErrEncryptionKeyTooShort = errors.New("encryption key is shorter than 32 bytes for ID")
 )
 
 type ErrorType string

@@ -58,6 +58,12 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 		return TemporalClientResult{}, fmt.Errorf("configure temporal client: %w", err)
 	}
 
+	if cfg.Security.EnableEncryption {
+		if err = temporaltype.CheckEncryptionKey(cfg.Security.EncryptionKeyID); err != nil {
+			return TemporalClientResult{}, fmt.Errorf("configure temporal encryption: %w", err)
+		}
+	}
+
 	if cfg.Security.EnableEncryption || cfg.Security.EnableCompression {
 		clientOptions.DataConverter = temporaltype.NewEncryptionDataConverter(
 			temporaltype.DataConverterOptions{
@@ -67,13 +73,6 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 				CompressionThreshold: cfg.Security.CompressionThreshold,
 			},
 		)
-
-		if cfg.Security.EnableEncryption {
-			log.Warn(
-				"encryption enabled - ensure TEMPORAL_ENCRYPTION_KEY environment variable is set",
-				zap.String("keyID", cfg.Security.EncryptionKeyID),
-			)
-		}
 	}
 
 	clientOptions.Logger = p.SDKLog

@@ -286,7 +286,6 @@ func (h *Handler) generatePDF(c *gin.Context) {
 		&invoiceports.InvoicePreviewRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo(authCtx),
-			BaseURL:    baseURL(c),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -309,7 +308,6 @@ func (h *Handler) sendPlan(c *gin.Context) {
 		&invoiceports.InvoiceSendPlanRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo(authCtx),
-			BaseURL:    baseURL(c),
 		},
 	)
 	if err != nil {
@@ -331,7 +329,6 @@ func (h *Handler) send(c *gin.Context) {
 		&invoiceports.InvoiceSendRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo(authCtx),
-			BaseURL:    baseURL(c),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -377,6 +374,8 @@ func (h *Handler) downloadSharedDocument(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	c.Header("Cache-Control", "no-store")
+	c.Header("Referrer-Policy", "no-referrer")
 	c.Header("Content-Disposition", result.ContentDisposition)
 	c.Data(http.StatusOK, result.ContentType, result.Body)
 }
@@ -452,15 +451,4 @@ func tenantInfo(authCtx *authctx.AuthContext) pagination.TenantInfo {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-}
-
-func baseURL(c *gin.Context) string {
-	scheme := c.GetHeader("X-Forwarded-Proto")
-	if scheme == "" {
-		scheme = "https"
-		if c.Request.TLS == nil {
-			scheme = "http"
-		}
-	}
-	return scheme + "://" + c.Request.Host
 }

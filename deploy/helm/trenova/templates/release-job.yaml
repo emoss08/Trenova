@@ -4,7 +4,7 @@ order the database needs it:
 
   prepare        superuser: the owner, Temporal's and GTC's roles, the temporal databases
   migrate        trenova-db up, as the owner: migrations and reference seeds
-  rls-roles      the application and system roles (rlsMode enforce/observe)
+  rls-roles      the application and system roles
   publication    superuser: GTC's publication and its grants
   bootstrap      the first organization and administrator, when configured
 
@@ -48,8 +48,7 @@ spec:
               value: {{ .Values.postgres.database }}
             {{- include "trenova.secretEnv" (dict "name" "PGUSER" "secret" $superuser "key" "username") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "PGPASSWORD" "secret" $superuser "key" "password") | nindent 12 }}
-            - name: PGSSLMODE
-              value: require
+            {{- include "trenova.postgresTlsEnv" . | nindent 12 }}
             - name: PGCONNECT_TIMEOUT
               value: "5"
             - name: OWNER
@@ -68,6 +67,7 @@ spec:
             - name: files
               mountPath: /files
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
         - name: migrate
           image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.dbImage) }}
           imagePullPolicy: {{ include "trenova.pullPolicy" .Values.tms.dbImage }}
@@ -84,7 +84,6 @@ spec:
             {{- toYaml .Values.tms.release.resources | nindent 12 }}
           volumeMounts:
             {{- include "trenova.tmsVolumeMounts" . | nindent 12 }}
-        {{- if include "trenova.rlsEnforced" . }}
         - name: rls-roles
           image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.image) }}
           imagePullPolicy: {{ include "trenova.pullPolicy" .Values.tms.image }}
@@ -101,7 +100,6 @@ spec:
             {{- toYaml .Values.tms.release.resources | nindent 12 }}
           volumeMounts:
             {{- include "trenova.tmsVolumeMounts" . | nindent 12 }}
-        {{- end }}
         - name: publication
           image: {{ include "trenova.image" (dict "root" . "image" .Values.postgres.image) }}
           command: [sh, /files/db-publication.sh]
@@ -112,8 +110,7 @@ spec:
               value: {{ .Values.postgres.database }}
             {{- include "trenova.secretEnv" (dict "name" "PGUSER" "secret" $superuser "key" "username") | nindent 12 }}
             {{- include "trenova.secretEnv" (dict "name" "PGPASSWORD" "secret" $superuser "key" "password") | nindent 12 }}
-            - name: PGSSLMODE
-              value: require
+            {{- include "trenova.postgresTlsEnv" . | nindent 12 }}
             - name: SINKS_FILE
               value: /files/gtc-sinks.yaml
             - name: GTC_ROLE
@@ -125,6 +122,7 @@ spec:
             - name: files
               mountPath: /files
               readOnly: true
+            {{- include "trenova.postgresCaMount" . | nindent 12 }}
       containers:
         - name: bootstrap
           image: {{ include "trenova.image" (dict "root" . "image" .Values.tms.image) }}

@@ -212,6 +212,23 @@ func TestTranscript_NamesAnUntitledThreadAndAMissingAgent(t *testing.T) {
 	assert.NotContains(t, transcript.Body, "## Proposals")
 }
 
+func TestWriteToolMessage_ShowsAFailuresWordsWithoutTheModelsFence(t *testing.T) {
+	t.Parallel()
+
+	var b strings.Builder
+	writeToolMessage(&b, &conversation.Message{
+		Role:        conversation.RoleTool,
+		ToolName:    "report_list",
+		ToolFailed:  true,
+		ToolVerdict: aitrace.OutcomeFailed,
+		Content:     toolresult.FenceFailure("report_list", "no such report"),
+	}, false)
+
+	assert.Contains(t, b.String(), "no such report")
+	assert.NotContains(t, b.String(), toolresult.UntrustedOpenTag)
+	assert.NotContains(t, b.String(), toolresult.UntrustedCloseTag)
+}
+
 // A result that contains a code fence of its own cannot close the
 // transcript's fence early and spill JSON into the prose.
 func TestTranscript_FencesAResultLongerThanItsOwnBackticks(t *testing.T) {

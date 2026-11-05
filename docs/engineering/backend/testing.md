@@ -88,6 +88,25 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
   `keel.MaxRoundTrips(0)` asserts that a cached path touches no database
   (`postgres/runtime_integration_test.go`).
 
+## When a test fails
+
+Group failures by message before opening any of them: one bad seed has failed every suite that
+uses the fixtures. A test that fails on its own setup has proved nothing about the rule it is named
+for. The `trenova-test-triage` skill walks through telling a stale rig from a real bug.
+
+- A service that gains a dependency breaks every test building it by hand, with a nil pointer in a
+  production frame. Supply the dependency in the test; `fx` builds every dependency, so production
+  gets no nil guard for it.
+- A test of what happens when a dependency is missing covers a branch that no longer exists. Delete
+  it rather than keeping the branch.
+- Fixture seeds run in a system transaction, where a tenant-scoped helper is refused and a tenant
+  scope on the context conflicts with the transaction's. Set the derived value on the row instead
+  (`accountingfixtures/40_receivables.go` sets the lane). An in-package integration test can't
+  import `seededtest` from a package the fixtures import, because that is a cycle; use an external
+  `_test` package.
+- `go vet -tags=integration,nomsgpack,devlog ./...` compiles every integration test without running
+  one. Run it after a refactor: `task test` doesn't build them, so they can rot unseen.
+
 ## Running them
 
 The Taskfile and CI set `GOFLAGS=-tags=nomsgpack,devlog`; a `-tags` on the command line replaces

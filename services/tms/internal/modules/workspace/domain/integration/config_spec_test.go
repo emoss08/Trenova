@@ -6,6 +6,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestPostmarkWebhookCredentialsAreSealed(t *testing.T) {
+	t.Parallel()
+
+	for _, field := range ConfigSpecs[TypePostmark].Fields {
+		if field.Key == WebhookSigningSecretField {
+			assert.True(t, field.Sensitive)
+			assert.False(t, field.Required)
+			return
+		}
+	}
+
+	t.Fatal("Postmark has no webhook credentials field")
+}
+
 func TestEveryURLConfigFieldIdentifiesTheTarget(t *testing.T) {
 	t.Parallel()
 

@@ -2,12 +2,10 @@ package authservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -31,8 +29,12 @@ func (s *Service) beginLoginAttempt(
 ) (*sessionports.LoginThrottleDecision, error) {
 	decision, err := s.throttle.Begin(ctx, key)
 	if err != nil {
-		s.l.Warn("login throttle check failed; allowing the attempt", zap.Error(err))
-		return nil, nil //nolint:nilnil // the throttle fails open
+		s.l.Error("login throttle check failed; refusing the attempt", zap.Error(err))
+		attempt.fail(authErrorThrottleUnavailable)
+		return nil, errortypes.NewRateLimitError(
+			"emailAddress",
+			"Sign-in is briefly unavailable. Try again in a moment.",
+		).WithRetryAfter(sessionports.LoginThrottleUnavailableRetry).WithInternal(err)
 	}
 	if !decision.Blocked {
 		return decision, nil
@@ -57,7 +59,7 @@ func (s *Service) recordLoginFailure(
 	ctx context.Context,
 	decision *sessionports.LoginThrottleDecision,
 ) {
-	if decision == nil || !decision.Tripped {
+	if !decision.Tripped {
 		return
 	}
 
@@ -151,36 +153,4 @@ func (s *Service) organizationAllowsLogin(
 	}
 
 	return resolved.AllowsLogin(), nil
-}
-
-func (s *Service) CreateSessionForUser(
-	ctx context.Context,
-	req *tenantports.CreateSessionForUserRequest,
-) (resp *tenantports.LoginResponse, err error) {
-	if req == nil || req.User == nil {
-		return nil, errortypes.NewAuthenticationError("A user is required to start a session")
-	}
-
-	usr := req.User
-	provider := strings.TrimSpace(req.AuthProvider)
-	if provider == "" {
-		provider = iamports.AuthEventProviderPassword
-	}
-
-	attempt := newAuthAttempt(provider)
-	attempt.forUser(usr)
-	defer func() { s.recordAuthAttempt(ctx, attempt, err) }()
-
-	if err = usr.ValidateStatus(); err != nil {
-		attempt.fail(authErrorAccountUnavailable)
-		return nil, err
-	}
-
-	return s.createLoginResponse(userScope(ctx, usr), usr, loginSessionContext{
-		AuthProvider:          provider,
-		AuthenticatorAAL:      1,
-		FederationFAL:         1,
-		LastReauthenticatedAt: timeutils.NowUnix(),
-		RiskDecision:          riskDecisionAllow,
-	})
 }

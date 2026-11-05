@@ -371,6 +371,7 @@ func (h *Handler) handleResendWebhook(c *gin.Context) {
 	}
 	tenantInfo, signingSecret, err := h.service.ResolveTenantByWebhookToken(
 		c.Request.Context(),
+		email.ProviderResend,
 		token,
 	)
 	if err != nil {
@@ -467,13 +468,17 @@ func (h *Handler) handlePostmarkWebhook(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	tenantInfo, err := h.service.ResolveTenantByProviderWebhookToken(
+	tenantInfo, credentials, err := h.service.ResolveTenantByWebhookToken(
 		c.Request.Context(),
 		email.ProviderPostmark,
 		token,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+	if err = webhooksig.VerifyBasicAuth(credentials, c.GetHeader("Authorization")); err != nil {
+		c.Status(http.StatusUnauthorized)
 		return
 	}
 

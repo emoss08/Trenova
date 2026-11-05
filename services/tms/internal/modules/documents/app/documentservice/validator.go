@@ -19,6 +19,25 @@ var dangerousExtensions = []string{
 	".lnk", ".inf", ".reg", ".vb", ".vbe", ".jse", ".sct", ".pyc",
 }
 
+var contentTypesByExtension = map[string]string{
+	".pdf":  "application/pdf",
+	".jpg":  "image/jpeg",
+	".jpeg": "image/jpeg",
+	".png":  "image/png",
+	".webp": "image/webp",
+	".gif":  "image/gif",
+	".tif":  "image/tiff",
+	".tiff": "image/tiff",
+	".heic": "image/heic",
+	".heif": "image/heif",
+	".doc":  "application/msword",
+	".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+	".xls":  "application/vnd.ms-excel",
+	".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	".txt":  "text/plain",
+	".csv":  "text/csv",
+}
+
 type ValidatorParams struct {
 	fx.In
 
@@ -73,8 +92,7 @@ func (v *Validator) validateFileMetadata(
 		)
 	}
 
-	ext := strings.ToLower(filepath.Ext(filename))
-	if slices.Contains(dangerousExtensions, ext) {
+	if slices.Contains(dangerousExtensions, fileExtension(filename)) {
 		multiErr.Add(
 			"file",
 			errortypes.ErrInvalidFormat,
@@ -82,7 +100,7 @@ func (v *Validator) validateFileMetadata(
 		)
 	}
 
-	if contentType != "" && !v.allowsContentType(contentType) {
+	if !v.allowsContentType(resolvedContentType(filename, contentType)) {
 		multiErr.Add(
 			"file",
 			errortypes.ErrInvalidFormat,
@@ -95,6 +113,18 @@ func (v *Validator) validateFileMetadata(
 	}
 
 	return nil
+}
+
+func fileExtension(filename string) string {
+	return strings.ToLower(filepath.Ext(strings.TrimRight(filename, ". ")))
+}
+
+func resolvedContentType(filename, declared string) string {
+	if strings.TrimSpace(declared) != "" {
+		return declared
+	}
+
+	return contentTypesByExtension[fileExtension(filename)]
 }
 
 func (v *Validator) allowsContentType(contentType string) bool {

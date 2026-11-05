@@ -214,6 +214,13 @@ func (s *Service) Approve(
 	if me := s.validator.ValidateApprove(entity); me != nil {
 		return nil, me
 	}
+	if entity.RequestedByID == userID {
+		return nil, errortypes.NewValidationError(
+			"reversalId",
+			errortypes.ErrInvalidOperation,
+			"You requested this reversal, so someone else must approve it",
+		)
+	}
 	original := *entity
 	now := timeutils.NowUnix()
 	entity.Status = journalreversal.StatusApproved
@@ -443,6 +450,13 @@ func (s *Service) Post(
 	}
 	original := *entity
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if err := s.validator.HoldPostingPeriod(
+			txCtx,
+			resolved.ResolvedFiscalPeriodID,
+			req.TenantInfo,
+		); err != nil {
+			return err
+		}
 		if err := s.journalPostingRepo.CreatePosting(
 			txCtx,
 			journalentryports.CreateJournalPostingParams{

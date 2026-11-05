@@ -43,7 +43,6 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 				payload, ok := args[0].(*billingcontract.GenerateInvoicePDFPayload)
 				return ok &&
 					payload.InvoiceID == invoiceID &&
-					payload.BaseURL == "https://billing.example.test" &&
 					payload.OrganizationID == orgID &&
 					payload.BusinessUnitID == buID &&
 					payload.UserID == userID
@@ -72,7 +71,6 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 		&invoiceports.InvoicePreviewRequest{
 			InvoiceID:  invoiceID,
 			TenantInfo: tenantInfo,
-			BaseURL:    "https://billing.example.test",
 		},
 		testutil.NewSessionActor(userID, orgID, buID),
 	)

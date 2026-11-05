@@ -41,7 +41,6 @@ type AutoPostFailurePayload struct {
 type SendInvoiceEmailPayload struct {
 	temporaltype.BasePayload
 	InvoiceID     pulid.ID                  `json:"invoiceId"`
-	BaseURL       string                    `json:"baseUrl"`
 	PrincipalType kernelports.PrincipalType `json:"principalType"`
 	PrincipalID   pulid.ID                  `json:"principalId"`
 	APIKeyID      pulid.ID                  `json:"apiKeyId"`
@@ -50,7 +49,6 @@ type SendInvoiceEmailPayload struct {
 type GenerateInvoicePDFPayload struct {
 	temporaltype.BasePayload
 	InvoiceID     pulid.ID                  `json:"invoiceId"`
-	BaseURL       string                    `json:"baseUrl"`
 	PrincipalType kernelports.PrincipalType `json:"principalType"`
 	PrincipalID   pulid.ID                  `json:"principalId"`
 	APIKeyID      pulid.ID                  `json:"apiKeyId"`

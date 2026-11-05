@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { invoicePanelPath } from "@/lib/invoice-links";
+import { openInNewTab } from "@/lib/open-in-new-tab";
 import {
   invoiceRegisterTableGraphQLConfig,
   type InvoiceRegisterRow,
@@ -47,7 +48,7 @@ export default function InvoiceRegisterTable() {
         hidden: (row) => !row.original.shipmentId,
         onClick: (row) => {
           if (row.original.shipmentId) {
-            window.open(shipmentPanelPath(row.original.shipmentId), "_blank");
+            openInNewTab(shipmentPanelPath(row.original.shipmentId));
           }
         },
       },

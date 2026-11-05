@@ -162,7 +162,6 @@ func (a *Activities) SendInvoiceEmailActivity(
 	result, err := a.invoiceSend.SendFromWorkflow(ctx, &invoiceports.InvoiceSendRequest{
 		InvoiceID:  payload.InvoiceID,
 		TenantInfo: tenantInfo,
-		BaseURL:    payload.BaseURL,
 		StartedAt:  payload.Timestamp,
 	}, &permissionports.RequestActor{
 		PrincipalType:  payload.PrincipalType,
@@ -300,7 +299,6 @@ func (a *Activities) CompleteInvoicePDFGenerationActivity(
 		&invoiceports.AutoSendInvoiceAfterPDFGenerationRequest{
 			InvoiceID:  payload.InvoiceID,
 			TenantInfo: tenantInfo,
-			BaseURL:    payload.BaseURL,
 			StartedAt:  payload.Timestamp,
 		},
 		&permissionports.RequestActor{

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,6 +18,7 @@ type MemorySubjectRef struct {
 type GetAgentMemoryByIDRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
+	Actor      *permissionports.RequestActor
 }
 
 type ListAgentMemoriesByIDsRequest struct {
@@ -30,9 +32,13 @@ type ListAgentMemoryReplacementsRequest struct {
 }
 
 type ListAgentMemoryConnectionRequest struct {
-	Filter  *pagination.QueryOptions `json:"filter"`
-	Cursor  pagination.CursorInfo    `json:"-"`
-	Columns []string                 `json:"-"`
+	Filter       *pagination.QueryOptions      `json:"filter"`
+	Cursor       pagination.CursorInfo         `json:"-"`
+	Columns      []string                      `json:"-"`
+	TenantInfo   pagination.TenantInfo         `json:"-"`
+	Actor        *permissionports.RequestActor `json:"-"`
+	Reader       agentmemory.MemoryReader      `json:"-"`
+	AllAudiences bool                          `json:"-"`
 }
 
 // ListActiveAgentMemoriesRequest reads the memories a prompt may carry: the

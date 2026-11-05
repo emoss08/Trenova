@@ -17,9 +17,4 @@ export const updateService = {
     const response = await api.get<UpdateStatus>("/system/update-status");
     return safeParse(updateStatusSchema, response, "Update Status");
   },
-
-  checkForUpdates: async (): Promise<UpdateStatus> => {
-    const response = await api.post<UpdateStatus>("/system/check-updates");
-    return safeParse(updateStatusSchema, response, "Update Status");
-  },
 };

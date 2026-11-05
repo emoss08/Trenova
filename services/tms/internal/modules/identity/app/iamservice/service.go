@@ -1,13 +1,14 @@
 package iamservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
-	"slices"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -43,6 +44,7 @@ type Params struct {
 	Logger         *zap.Logger
 	SecurityConfig *securityconfig.Config
 	Plans          platformplanports.PlanService
+	RoleGrants     permissionports.RoleGrantGuard
 }
 
 type service struct {
@@ -53,6 +55,7 @@ type service struct {
 	l         *zap.Logger
 	plans     platformplanports.PlanService
 	issuers   httpsafe.Policy
+	grants    permissionports.RoleGrantGuard
 }
 
 func New(p Params) iamports.IAMService {
@@ -64,6 +67,7 @@ func New(p Params) iamports.IAMService {
 		l:         p.Logger.Named("service.iam"),
 		plans:     p.Plans,
 		issuers:   p.SecurityConfig.SSOIssuerPolicy(),
+		grants:    p.RoleGrants,
 	}
 }
 
@@ -355,10 +359,7 @@ func (s *service) UpdateSCIMDirectory(
 	id pulid.ID,
 	entity *iam.SCIMDirectory,
 ) (*iam.SCIMDirectory, error) {
-	existing, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	existing, err := s.ownedSCIMDirectory(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
 	}
@@ -390,10 +391,7 @@ func (s *service) DeleteSCIMDirectory(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	existing, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	existing, err := s.ownedSCIMDirectory(ctx, tenantInfo, id)
 	if err != nil {
 		return err
 	}
@@ -411,6 +409,25 @@ func (s *service) DeleteSCIMDirectory(
 		comment:    "SCIM directory deleted",
 	})
 	return nil
+}
+
+func (s *service) ownedSCIMDirectory(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) (*iam.SCIMDirectory, error) {
+	directory, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if directory.OrganizationID != tenantInfo.OrgID {
+		return nil, errortypes.NewNotFoundError("SCIM directory not found")
+	}
+
+	return directory, nil
 }
 
 func (s *service) ListSCIMTokens(
@@ -432,6 +449,14 @@ func (s *service) CreateSCIMToken(
 			errortypes.ErrRequired,
 			"SCIM token request is required",
 		)
+	}
+
+	if _, err := s.ownedSCIMDirectory(
+		ctx,
+		pagination.TenantInfo{OrgID: orgID},
+		directoryID,
+	); err != nil {
+		return nil, err
 	}
 
 	generated, err := generateSCIMToken()
@@ -592,6 +617,10 @@ func (s *service) CreateSCIMGroupRoleMapping(
 	entity.BusinessUnitID = tenantInfo.BuID
 	entity.DirectoryID = directoryID
 
+	if err := s.requireMappingAllowed(ctx, tenantInfo, entity); err != nil {
+		return nil, err
+	}
+
 	created, err := s.repo.CreateSCIMGroupRoleMapping(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -619,6 +648,10 @@ func (s *service) UpdateSCIMGroupRoleMapping(
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
 
+	if err := s.requireMappingAllowed(ctx, tenantInfo, entity); err != nil {
+		return nil, err
+	}
+
 	updated, err := s.repo.UpdateSCIMGroupRoleMapping(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -634,6 +667,18 @@ func (s *service) UpdateSCIMGroupRoleMapping(
 		metadata:   map[string]any{metadataMappingID: id.String()},
 	})
 	return updated, nil
+}
+
+func (s *service) requireMappingAllowed(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *iam.SCIMGroupRoleMapping,
+) error {
+	if _, err := s.ownedSCIMDirectory(ctx, tenantInfo, entity.DirectoryID); err != nil {
+		return err
+	}
+
+	return s.grants.RequireCanGrantRole(ctx, tenantInfo, entity.RoleID)
 }
 
 func (s *service) DeleteSCIMGroupRoleMapping(

@@ -173,6 +173,8 @@ type CapturePairingPreview {
   osVersion: String!
   "The address the request came from."
   clientIp: String!
+  "Whether that request reached Trenova from the network the person reading this is on."
+  sameNetwork: Boolean!
   expiresAt: Timestamp!
 }
 

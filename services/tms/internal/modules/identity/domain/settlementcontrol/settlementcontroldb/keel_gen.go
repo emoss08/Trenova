@@ -39,20 +39,21 @@ var settlementControlsTable = schema.Table{
 		{Name: "variance_lookback_weeks", Quoted: `"variance_lookback_weeks"`, Field: "VarianceLookbackWeeks", Kind: schema.KindInt64, Flags: 0, Label: `Variance Lookback Weeks`, JSON: `varianceLookbackWeeks`},
 		{Name: "default_escrow_interest_rate", Quoted: `"default_escrow_interest_rate"`, Field: "DefaultEscrowInterestRate", Kind: schema.KindOther, Flags: 0, Label: `Default Escrow Interest Rate`, JSON: `defaultEscrowInterestRate`},
 		{Name: "escrow_interest_frequency_months", Quoted: `"escrow_interest_frequency_months"`, Field: "EscrowInterestFrequencyMonths", Kind: schema.KindInt64, Flags: 0, Label: `Escrow Interest Frequency Months`, JSON: `escrowInterestFrequencyMonths`},
+		{Name: "require_separate_approver", Quoted: `"require_separate_approver"`, Field: "RequireSeparateApprover", Kind: schema.KindBool, Flags: 0, Label: `Require Separate Approver`, JSON: `requireSeparateApprover`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
 	Returning:    nil,
-	Version:      16,
+	Version:      17,
 	AutoID:       0,
-	AutoCreate:   17,
-	AutoUpdate:   18,
+	AutoCreate:   18,
+	AutoUpdate:   19,
 	IDPrefix:     "stlc_",
 	New:          newSettlementControl,
 	NewN:         newNSettlementControl,
@@ -83,6 +84,7 @@ type SettlementControlsTable struct {
 	VarianceLookbackWeeks         keel.Int64Col
 	DefaultEscrowInterestRate     keelkinds.DecimalDecimalCol
 	EscrowInterestFrequencyMonths keel.Int64Col
+	RequireSeparateApprover       keel.BoolCol
 	Version                       keel.Int64Col
 	CreatedAt                     keel.Int64Col
 	UpdatedAt                     keel.Int64Col
@@ -107,9 +109,10 @@ var SettlementControls = &SettlementControlsTable{
 	VarianceLookbackWeeks:         keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 13}},
 	DefaultEscrowInterestRate:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 14}}},
 	EscrowInterestFrequencyMonths: keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 15}},
-	Version:                       keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 16}},
-	CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 17}},
-	UpdatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 18}},
+	RequireSeparateApprover:       keel.BoolCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 16}},
+	Version:                       keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 17}},
+	CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 18}},
+	UpdatedAt:                     keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 19}},
 }
 
 // BuildSettlementControls builds the table of settlement_controls for ref. Generated relation and alias methods call it.
@@ -132,9 +135,10 @@ func BuildSettlementControls(r *keel.Ref) *SettlementControlsTable {
 		VarianceLookbackWeeks:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		DefaultEscrowInterestRate:     keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 14}}},
 		EscrowInterestFrequencyMonths: keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		Version:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		UpdatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		RequireSeparateApprover:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
+		Version:                       keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CreatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		UpdatedAt:                     keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
 
@@ -554,10 +558,12 @@ func ptrSettlementControl(p unsafe.Pointer, c int32) any {
 	case 15:
 		return (*int64)(unsafe.Pointer(&r.EscrowInterestFrequencyMonths))
 	case 16:
-		return &r.Version
+		return &r.RequireSeparateApprover
 	case 17:
-		return &r.CreatedAt
+		return &r.Version
 	case 18:
+		return &r.CreatedAt
+	case 19:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -599,10 +605,12 @@ func valueSettlementControl(p unsafe.Pointer, c int32) any {
 	case 15:
 		return int64(r.EscrowInterestFrequencyMonths)
 	case 16:
-		return r.Version
+		return r.RequireSeparateApprover
 	case 17:
-		return r.CreatedAt
+		return r.Version
 	case 18:
+		return r.CreatedAt
+	case 19:
 		return r.UpdatedAt
 	}
 	return nil

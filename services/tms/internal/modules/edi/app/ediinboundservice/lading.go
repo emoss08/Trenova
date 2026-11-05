@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
@@ -23,7 +24,10 @@ import (
 	"github.com/emoss08/trenova/pkg/x12"
 )
 
-var errNoReceivingVersion = errors.New("the partner has no active Lading version")
+var (
+	errNoReceivingVersion = errors.New("the partner has no active Lading version")
+	errInterchangeSender  = errors.New("the interchange sender is not this partner")
+)
 
 type readTransaction struct {
 	result   *lading.TransactionResult
@@ -65,6 +69,9 @@ func (s *Service) readFile(
 	}
 	if programs.Active == nil {
 		return nil, errNoReceivingVersion
+	}
+	if err = checkInterchangeSenders(programs.Active, interchange); err != nil {
+		return nil, err
 	}
 	r := &reading{
 		programs: programs,
@@ -115,6 +122,36 @@ func (s *Service) readFile(
 		}
 	}
 	return r, nil
+}
+
+func checkInterchangeSenders(program *edilading.Program, interchange *parsedInterchange) error {
+	partner := program.Manifest.Partner
+	if partner == nil || partner.Interchange == nil || partner.Interchange.Them == nil {
+		return nil
+	}
+	them := partner.Interchange.Them
+	for index := range interchange.reading.Interchanges {
+		header := interchange.reading.Interchanges[index].Header
+		if header == nil {
+			continue
+		}
+		if !sameISAValue(header.SenderQualifier, them.Qualifier) ||
+			!sameISAValue(header.SenderID, them.ID) {
+			return fmt.Errorf(
+				"%w: expected %s/%s, the file says %s/%s",
+				errInterchangeSender,
+				them.Qualifier,
+				them.ID,
+				strings.TrimSpace(header.SenderQualifier),
+				strings.TrimSpace(header.SenderID),
+			)
+		}
+	}
+	return nil
+}
+
+func sameISAValue(a, b string) bool {
+	return strings.EqualFold(strings.TrimSpace(a), strings.TrimSpace(b))
 }
 
 func receivedSets(interchange *parsedInterchange) []edidocument.TransactionSet {

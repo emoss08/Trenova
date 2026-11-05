@@ -736,9 +736,11 @@ func (r *QueryResolver) AgentMemories(ctx context.Context, input gqlmodel.DataTa
 	result, err := r.AgentMemoryService.ListConnection(
 		ctx,
 		&agentmemoryports.ListAgentMemoryConnectionRequest{
-			Filter:  tableInput.Filter,
-			Cursor:  tableInput.Cursor,
-			Columns: agentMemoryColumns(ctx, "edges.node"),
+			Filter:     tableInput.Filter,
+			Cursor:     tableInput.Cursor,
+			Columns:    agentMemoryColumns(ctx, "edges.node"),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Actor:      actorutil.FromAuthContext(authCtx),
 		},
 	)
 	if err != nil {
@@ -831,6 +833,7 @@ func (r *QueryResolver) AgentMemory(ctx context.Context, id string) (*agentmemor
 	return r.AgentMemoryService.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         memoryID,
 		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Actor:      actorutil.FromAuthContext(authCtx),
 	})
 }
 

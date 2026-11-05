@@ -722,17 +722,22 @@ func targetChanged(spec integration.IntegrationSpec, existing, final map[string]
 		if !field.Target {
 			continue
 		}
-		before := integration.ReadConfigString(existing, field.Key)
-		if before == "" {
-			before = field.Default
-		}
-		after := integration.ReadConfigString(final, field.Key)
+		before := targetValue(existing, &field)
+		after := targetValue(final, &field)
 		if strings.TrimRight(before, "/") != strings.TrimRight(after, "/") {
 			return true
 		}
 	}
 
 	return false
+}
+
+func targetValue(config map[string]any, field *integration.ConfigFieldSpec) string {
+	if value := integration.ReadConfigString(config, field.Key); value != "" {
+		return value
+	}
+
+	return field.Default
 }
 
 func isAllowedBaseURL(value string, policy httpsafe.Policy) bool {

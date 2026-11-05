@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -150,6 +151,27 @@ func (v *Validator) ResolvePostingPeriod(
 		return nil, 0, me
 	}
 	return period, accountingDate, nil
+}
+
+func (v *Validator) HoldPostingPeriod(
+	ctx context.Context,
+	periodID pulid.ID,
+	tenant pagination.TenantInfo,
+) error {
+	period, err := v.fiscalRepo.GetByIDForUpdate(
+		ctx,
+		fiscalperiodports.GetFiscalPeriodByIDRequest{ID: periodID, TenantInfo: tenant},
+	)
+	if err != nil {
+		return err
+	}
+	if !journalposting.AcceptsPostings(period.Status) {
+		return errortypes.NewConflictError(
+			"The fiscal period closed while this reversal was posting. Post it again.",
+		)
+	}
+
+	return nil
 }
 
 func (v *Validator) ValidateApprove(entity *journalreversal.Reversal) *errortypes.MultiError {

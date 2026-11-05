@@ -19,6 +19,12 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { integration } from "@/lib/queries/integration";
+import {
+  generatePostmarkCredentials,
+  postmarkSecret,
+  webhookUrl,
+  type BasicCredentials,
+} from "@/routes/admin/inbound-mailboxes/_components/webhook-url";
 import { integrationService } from "@/services/integration";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,7 +34,7 @@ import {
   InfoCircleIcon,
   MailCheckIcon,
 } from "@trenova/shared/components/icons";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { IntegrationConnectHeader } from "../shared/integration-connect-header";
 
@@ -52,17 +58,33 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
         serverToken: "",
         baseUrl: "https://api.postmarkapp.com",
         messageStream: "outbound",
+        webhookSigningSecret: "",
         webhookToken: "",
       },
     },
   });
-  const { control, reset, handleSubmit } = form;
+  const { control, reset, handleSubmit, setValue } = form;
+  const [webhookCredentials, setWebhookCredentials] = useState<BasicCredentials>();
 
   const response = configQuery.data;
   const hasServerToken =
     response?.fields?.some((field) => field.key === "serverToken" && field.hasValue) ?? false;
+  const hasWebhookCredentials =
+    response?.fields?.some((field) => field.key === "webhookSigningSecret" && field.hasValue) ??
+    false;
   const webhookToken = useWatch({ control, name: "configuration.webhookToken" });
-  const webhookURL = useMemo(() => buildPostmarkWebhookURL(webhookToken), [webhookToken]);
+  const webhookURL = useMemo(
+    () => buildPostmarkWebhookURL(webhookToken, webhookCredentials),
+    [webhookToken, webhookCredentials],
+  );
+
+  const generateWebhookCredentials = () => {
+    const credentials = generatePostmarkCredentials();
+    setWebhookCredentials(credentials);
+    setValue("configuration.webhookSigningSecret", postmarkSecret(credentials), {
+      shouldDirty: true,
+    });
+  };
 
   useEffect(() => {
     if (!open || !response) {
@@ -78,6 +100,7 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
           "https://api.postmarkapp.com",
         messageStream:
           response.fields.find((field) => field.key === "messageStream")?.value || "outbound",
+        webhookSigningSecret: "",
         webhookToken: response.fields.find((field) => field.key === "webhookToken")?.value || "",
       },
     });
@@ -156,13 +179,43 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
             />
           </FormControl>
           <FormControl cols="full">
+            <SensitiveField
+              name="configuration.webhookSigningSecret"
+              control={control}
+              label={
+                hasWebhookCredentials
+                  ? t("Webhook credentials (leave blank to keep existing credentials)")
+                  : t("Webhook credentials")
+              }
+              autoComplete="off"
+              placeholder={hasWebhookCredentials ? "********" : "postmark:password"}
+              description={t(
+                "Postmark sends these with every webhook. Trenova refuses delivery events without them.",
+              )}
+            />
+            <Button
+              type="button"
+              size="xs"
+              variant="outline"
+              className="mt-2"
+              onClick={generateWebhookCredentials}
+            >
+              {hasWebhookCredentials
+                ? t("Replace webhook credentials")
+                : t("Generate webhook credentials")}
+            </Button>
+          </FormControl>
+          <FormControl cols="full">
             <InputField
               name="configuration.webhookToken"
               control={control}
               label={
                 <span className="inline-flex items-center gap-1.5">
                   {t("Webhook token")}
-                  <PostmarkWebhookHelpPopover webhookURL={webhookURL} />
+                  <PostmarkWebhookHelpPopover
+                    webhookURL={webhookURL}
+                    carriesCredentials={webhookCredentials !== undefined}
+                  />
                 </span>
               }
               readOnly
@@ -189,18 +242,26 @@ export function PostmarkIntegrationForm({ open, onClose }: { open: boolean; onCl
   );
 }
 
-function buildPostmarkWebhookURL(webhookToken?: string) {
+function buildPostmarkWebhookURL(webhookToken?: string, credentials?: BasicCredentials) {
   if (!webhookToken || typeof window === "undefined") {
     return "";
   }
 
-  return new URL(
+  const target = new URL(
     `${API_BASE_URL}/webhooks/email/postmark/${encodeURIComponent(webhookToken)}/`,
     window.location.origin,
-  ).toString();
+  );
+
+  return webhookUrl(target.origin, window.location.origin, target.pathname, credentials);
 }
 
-function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
+function PostmarkWebhookHelpPopover({
+  webhookURL,
+  carriesCredentials,
+}: {
+  webhookURL: string;
+  carriesCredentials: boolean;
+}) {
   const t = useT();
 
   const { copy, isCopied } = useCopyToClipboard();
@@ -234,6 +295,13 @@ function PostmarkWebhookHelpPopover({ webhookURL }: { webhookURL: string }) {
           <code className="bg-muted text-foreground block max-w-full overflow-x-auto rounded-md px-2 py-1.5">
             {webhookURL || t("Save once to generate the webhook URL.")}
           </code>
+          {!carriesCredentials && (
+            <p className="text-muted-foreground">
+              {t(
+                "Trenova refuses webhooks without credentials. Generate them above to put them in this URL, then save.",
+              )}
+            </p>
+          )}
           <div className="space-y-1">
             <p className="text-muted-foreground">{t("Enable these Postmark triggers:")}</p>
             <div className="flex flex-wrap gap-1">

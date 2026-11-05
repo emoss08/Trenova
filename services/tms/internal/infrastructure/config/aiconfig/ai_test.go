@@ -92,3 +92,15 @@ func TestAIConfig_ToolDisclosureThresholdDefaultsToTwelve(t *testing.T) {
 	assert.Equal(t, 12,
 		(&aiconfig.Config{ToolDisclosureThreshold: &negative}).GetToolDisclosureThreshold())
 }
+
+func TestPrivateNetworkProvidersAreOffUnlessSet(t *testing.T) {
+	t.Parallel()
+
+	var absent *aiconfig.Config
+	assert.False(t, absent.PrivateNetworkProvidersAllowed())
+	assert.False(t, (&aiconfig.Config{}).PrivateNetworkProvidersAllowed())
+	assert.True(
+		t,
+		(&aiconfig.Config{PrivateNetworkProviders: true}).PrivateNetworkProvidersAllowed(),
+	)
+}

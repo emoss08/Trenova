@@ -287,6 +287,9 @@ func (s *Service) processInboundFile(
 			partner.Name,
 		))
 	}
+	if errors.Is(err, errInterchangeSender) {
+		return s.quarantineFile(ctx, file, err.Error())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -515,8 +518,11 @@ func (s *Service) recordInboundMessage(
 			transaction.version,
 			documentType.DefaultVersion,
 		),
-		Status:                   status,
-		InterchangeControlNumber: file.InterchangeControlNumber,
+		Status: status,
+		InterchangeControlNumber: stringutils.FirstNonEmpty(
+			transaction.interchangeControlNumber,
+			file.InterchangeControlNumber,
+		),
 		GroupControlNumber:       transaction.groupControlNumber,
 		TransactionControlNumber: transaction.controlNumber,
 		SegmentCount:             int64(len(transaction.segments)),

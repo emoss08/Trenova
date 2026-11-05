@@ -502,6 +502,20 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 	return nil
 }
 
+func (s *Service) RequireCanGrantRole(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	roleID pulid.ID,
+) error {
+	_, err := s.validateAssignmentPrivileges(ctx, &AssignRoleRequest{
+		ActorID:        tenantInfo.UserID,
+		OrganizationID: tenantInfo.OrgID,
+		Assignment:     &rbac.UserRoleAssignment{RoleID: roleID},
+	}, s.l.With(zap.String("operation", "RequireCanGrantRole")))
+
+	return err
+}
+
 func (s *Service) validateAssignmentPrivileges(
 	ctx context.Context,
 	req *AssignRoleRequest,

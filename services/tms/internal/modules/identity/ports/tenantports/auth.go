@@ -193,13 +193,4 @@ type AuthService interface {
 	) (*AuthenticatedPrincipal, error)
 	VerifyMFAChallenge(ctx context.Context, req VerifyMFAChallengeRequest) (*LoginResponse, error)
 	SignOut(ctx context.Context, token string) error
-	CreateSessionForUser(
-		ctx context.Context,
-		req *CreateSessionForUserRequest,
-	) (*LoginResponse, error)
-}
-
-type CreateSessionForUserRequest struct {
-	User         *tenant.User
-	AuthProvider string
 }

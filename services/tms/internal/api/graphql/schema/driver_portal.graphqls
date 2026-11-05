@@ -65,10 +65,10 @@ type WorkerPortalStatus {
 type InviteWorkerToPortalResult {
   invitation: PortalInvitation!
   """
-  Shareable invitation link. Also emailed to the driver when an email provider
-  is configured; surface this so dispatch can text it manually if needed.
+  The invitation link, given only when the email could not be sent, so someone
+  can pass it to the driver by hand. Once emailed it is the driver's alone.
   """
-  inviteUrl: String!
+  inviteUrl: String
   emailSent: Boolean!
 }
 

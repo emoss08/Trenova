@@ -42,8 +42,8 @@ func (h *Handler) receiveAS2Message(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 		return
 	}
-	if result.AsyncMDN {
-		h.sendAsyncAS2MDN(c.Request.Context(), request.ReceiptDeliveryOption, result)
+	if result.AsyncMDNURL != "" {
+		h.sendAsyncAS2MDN(c.Request.Context(), result.AsyncMDNURL, result)
 		c.Status(http.StatusOK)
 		return
 	}
